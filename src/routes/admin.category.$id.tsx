@@ -102,7 +102,17 @@ function CategoryEditor({
         className="mt-4 space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
-          onSave({ name, slug: slugify(slug), tagline, description, icon_url: iconUrl, published });
+          onSave({
+            name,
+            slug: slugify(slug),
+            tagline,
+            description,
+            icon_url: iconUrl,
+            published,
+            name_es: nameEs.trim() || null,
+            tagline_es: taglineEs.trim() || null,
+            description_es: descriptionEs.trim() || null,
+          });
         }}
       >
         <div className="grid sm:grid-cols-2 gap-4">
@@ -155,6 +165,24 @@ function CategoryEditor({
           <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
           Published (visible to the public)
         </label>
+
+        <div className="border-t border-border pt-4 space-y-4">
+          <div>
+            <h3 className="font-display text-lg font-semibold">Spanish translation</h3>
+            <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
+          </div>
+          <LabeledInput label="Name (ES)" value={nameEs} onChange={setNameEs} />
+          <LabeledInput label="Tagline (ES)" value={taglineEs} onChange={setTaglineEs} />
+          <label className="block">
+            <span className="text-sm font-medium">Description (ES)</span>
+            <textarea
+              rows={3}
+              value={descriptionEs}
+              onChange={(e) => setDescriptionEs(e.target.value)}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </label>
+        </div>
         <div className="flex justify-end">
           <button
             type="submit"
