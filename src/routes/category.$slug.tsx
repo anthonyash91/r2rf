@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, pickLang } from "@/lib/i18n";
 import { ArrowLeft, ExternalLink, Download, ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/category/$slug")({
@@ -21,7 +21,7 @@ const typeStyles: Record<string, string> = {
 
 function CategoryPage() {
   const { slug } = Route.useParams();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["category", slug],
@@ -89,9 +89,9 @@ function CategoryPage() {
                   />
                 )}
                 <div className="max-w-3xl">
-                  <p className="text-sm font-medium text-[var(--color-accent)]">{data.category.tagline}</p>
-                  <h1 className="mt-2 font-display text-5xl font-bold tracking-tight">{data.category.name}</h1>
-                  <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{data.category.description}</p>
+                  <p className="text-sm font-medium text-[var(--color-accent)]">{pickLang(lang, data.category.tagline, data.category.tagline_es)}</p>
+                  <h1 className="mt-2 font-display text-5xl font-bold tracking-tight">{pickLang(lang, data.category.name, data.category.name_es)}</h1>
+                  <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{pickLang(lang, data.category.description, data.category.description_es)}</p>
                 </div>
               </div>
             </div>
@@ -109,6 +109,11 @@ function CategoryPage() {
                     const wrapperProps = item.url
                       ? { href: item.url, target: "_blank", rel: "noopener noreferrer" }
                       : {};
+                    const title = pickLang(lang, item.title, item.title_es);
+                    const description = pickLang(lang, item.description, item.description_es);
+                    const source = pickLang(lang, item.source, item.source_es);
+                    const fileUrl = lang === "es" && item.file_url_es ? item.file_url_es : item.file_url;
+                    const fileName = lang === "es" && item.file_url_es ? (item.file_name_es ?? item.file_name) : item.file_name;
                     return (
                       <li key={item.id}>
                         <Wrapper
@@ -124,24 +129,24 @@ function CategoryPage() {
                           <div className="flex-1">
                             <div className="flex items-start gap-2">
                               <h3 className="font-display text-lg font-semibold text-foreground leading-snug">
-                                {item.title}
+                                {title}
                               </h3>
                               {item.url && <ExternalLink className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />}
                             </div>
-                            {item.description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{item.description}</p>}
-                            {item.file_url && (
+                            {description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{description}</p>}
+                            {fileUrl && (
                               <a
-                                href={item.file_url}
+                                href={fileUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
                                 className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-accent)] hover:underline"
                               >
                                 <Download className="h-3.5 w-3.5" />
-                                {item.file_name || t("category.downloadFile")}
+                                {fileName || t("category.downloadFile")}
                               </a>
                             )}
-                            {item.source && <p className="mt-2 text-xs text-muted-foreground/80">{t("category.source")} · {item.source}</p>}
+                            {source && <p className="mt-2 text-xs text-muted-foreground/80">{t("category.source")} · {source}</p>}
                           </div>
                         </Wrapper>
                       </li>
