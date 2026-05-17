@@ -133,3 +133,46 @@ export function pickLang<T>(lang: Language, en: T, es: T | null | undefined): T 
   }
   return en;
 }
+
+const TYPE_ES: Record<string, string> = {
+  article: "Artículo",
+  video: "Video",
+  podcast: "Pódcast",
+  worksheet: "Hoja de trabajo",
+  meeting: "Reunión",
+  guide: "Guía",
+};
+
+/** Translate a content type label (Article, Video, etc.) into the active language. */
+export function translateType(lang: Language, type: string): string {
+  if (lang !== "es" || !type) return type;
+  return TYPE_ES[type.trim().toLowerCase()] ?? type;
+}
+
+/** Translate duration strings like "8 min read", "1 hr 20 min", "45 sec". */
+export function translateDuration(lang: Language, duration: string): string {
+  if (lang !== "es" || !duration) return duration;
+  const units: Record<string, string> = {
+    sec: "seg",
+    second: "segundo",
+    seconds: "segundos",
+    min: "min",
+    minute: "minuto",
+    minutes: "minutos",
+    hr: "h",
+    hrs: "h",
+    hour: "hora",
+    hours: "horas",
+    day: "día",
+    days: "días",
+    week: "semana",
+    weeks: "semanas",
+    read: "de lectura",
+    watch: "de video",
+    listen: "de audio",
+  };
+  return duration.replace(/[A-Za-z]+/g, (word) => {
+    const lower = word.toLowerCase();
+    return units[lower] ?? word;
+  });
+}
