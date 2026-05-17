@@ -267,8 +267,6 @@ function ItemEditor({
   const [duration, setDuration] = useState(item?.duration ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [url, setUrl] = useState(item?.url ?? "");
-  const [fileUrl, setFileUrl] = useState<string | null>(item?.file_url ?? null);
-  const [fileName, setFileName] = useState<string | null>(item?.file_name ?? null);
   const [published, setPublished] = useState(item?.published ?? true);
 
   return (
@@ -283,8 +281,8 @@ function ItemEditor({
           duration: duration.trim(),
           description: description.trim(),
           url: url.trim() || null,
-          file_url: fileUrl,
-          file_name: fileName,
+          file_url: null,
+          file_name: null,
           published,
         });
       }}
@@ -311,15 +309,10 @@ function ItemEditor({
         <LabeledInput label="Source" value={source} onChange={setSource} />
         <LabeledInput label="Duration" value={duration} onChange={setDuration} placeholder="8 min read" />
       </div>
-      <LabeledInput label="URL (optional)" value={url} onChange={setUrl} placeholder="https://…" type="url" />
-      <div className="block">
-        <span className="text-sm font-medium">File (optional)</span>
-        <div className="mt-1">
-          <FileUploader
-            fileUrl={fileUrl}
-            fileName={fileName}
-            onChange={(u, n) => { setFileUrl(u); setFileName(n); }}
-          />
+      <div>
+        <LabeledInput label="URL (optional)" value={url} onChange={setUrl} placeholder="https://…" type="url" />
+        <div className="mt-2">
+          <FileUploader onUploaded={(u) => setUrl(u)} />
         </div>
       </div>
       <label className="block">
