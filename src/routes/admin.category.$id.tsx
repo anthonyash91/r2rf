@@ -284,6 +284,7 @@ function ItemEditor({
   onSave: (v: Partial<ContentItem> & { id?: string }) => void;
   busy: boolean;
 }) {
+  const qc = useQueryClient();
   const [title, setTitle] = useState(item?.title ?? "");
   const [type, setType] = useState(item?.type ?? "Article");
   const [addingType, setAddingType] = useState(false);
@@ -311,6 +312,25 @@ function ItemEditor({
     setType(v);
     setAddingType(false);
     setNewType("");
+  };
+
+  const cancelNewType = () => {
+    setAddingType(false);
+    setNewType("");
+  };
+
+  const deleteType = async (t: string) => {
+    if (!confirm(`Delete type "${t}"? Any items using it will be changed to "Article".`)) return;
+    const { error } = await supabase
+      .from("content_items")
+      .update({ type: "Article" })
+      .eq("type", t);
+    if (error) { toast.error(error.message); return; }
+    if (type === t) setType("Article");
+    toast.success(`Deleted type "${t}"`);
+    qc.invalidateQueries({ queryKey: ["content-types"] });
+    qc.invalidateQueries({ queryKey: ["admin", "category"] });
+    qc.invalidateQueries({ queryKey: ["category"] });
   };
 
   return (
