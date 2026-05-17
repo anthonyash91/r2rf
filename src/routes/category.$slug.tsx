@@ -72,7 +72,7 @@ function CategoryPage() {
                   <img
                     src={data.category.icon_url}
                     alt=""
-                    className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border border-border bg-muted flex-shrink-0"
+                    className="h-36 w-36 sm:h-44 sm:w-44 rounded-2xl object-cover border border-border bg-muted flex-shrink-0"
                   />
                 )}
                 <div className="max-w-3xl">

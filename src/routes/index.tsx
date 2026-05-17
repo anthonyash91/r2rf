@@ -69,7 +69,7 @@ function Index() {
                 key={c.id}
                 to="/category/$slug"
                 params={{ slug: c.slug }}
-                className="group relative flex flex-col justify-between rounded-2xl border border-border bg-card p-6 h-56 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
+                className="group relative flex flex-col justify-between rounded-2xl border border-border bg-card p-6 h-72 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -77,10 +77,10 @@ function Index() {
                       <img
                         src={c.icon_url}
                         alt=""
-                        className="h-20 w-20 rounded-xl object-cover border border-border bg-muted"
+                        className="h-32 w-32 rounded-xl object-cover border border-border bg-muted"
                       />
                     ) : (
-                      <div className="h-20 w-20 rounded-xl border border-dashed border-border bg-muted/40" />
+                      <div className="h-32 w-32 rounded-xl border border-dashed border-border bg-muted/40" />
                     )}
                     <span className="font-display text-sm font-medium text-[var(--color-gold)]">
                       {String(i + 1).padStart(2, "0")}
