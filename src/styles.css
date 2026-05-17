@@ -102,3 +102,12 @@
     letter-spacing: -0.02em;
   }
 }
+
+@layer base {
+  a, button, [role="button"], summary, label[for], select {
+    cursor: pointer;
+  }
+  a:disabled, button:disabled, [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
