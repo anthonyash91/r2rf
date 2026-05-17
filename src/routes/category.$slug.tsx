@@ -122,9 +122,9 @@ function CategoryPage() {
                         >
                           <div className="flex-shrink-0 flex sm:flex-col gap-2 sm:gap-1 sm:w-28">
                             <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium ${typeStyles[item.type] ?? typeStyles.Article}`}>
-                              {item.type}
+                              {translateType(lang, item.type)}
                             </span>
-                            {item.duration && <span className="text-xs text-muted-foreground sm:mt-1">{item.duration}</span>}
+                            {item.duration && <span className="text-xs text-muted-foreground sm:mt-1">{translateDuration(lang, item.duration)}</span>}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-start gap-2">
