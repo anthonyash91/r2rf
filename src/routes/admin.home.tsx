@@ -1,0 +1,156 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { ArrowLeft, Save } from "lucide-react";
+
+export const Route = createFileRoute("/admin/home")({
+  component: AdminHomePage,
+});
+
+type HomeHero = {
+  eyebrow: string;
+  heading_prefix: string;
+  heading_emphasis: string;
+  heading_suffix: string;
+  subheading: string;
+};
+
+const DEFAULTS: HomeHero = {
+  eyebrow: "",
+  heading_prefix: "",
+  heading_emphasis: "",
+  heading_suffix: "",
+  subheading: "",
+};
+
+function AdminHomePage() {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "site_settings", "home_hero"],
+    queryFn: async (): Promise<HomeHero> => {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "home_hero")
+        .maybeSingle();
+      if (error) throw error;
+      return { ...DEFAULTS, ...((data?.value as Partial<HomeHero>) ?? {}) };
+    },
+  });
+
+  const [hero, setHero] = useState<HomeHero>(DEFAULTS);
+  useEffect(() => { if (data) setHero(data); }, [data]);
+
+  const saveMut = useMutation({
+    mutationFn: async (value: HomeHero) => {
+      const { error } = await supabase
+        .from("site_settings")
+        .upsert({ key: "home_hero", value }, { onConflict: "key" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Saved");
+      qc.invalidateQueries({ queryKey: ["admin", "site_settings", "home_hero"] });
+      qc.invalidateQueries({ queryKey: ["site_settings", "home_hero"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <div>
+      <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> Back to admin
+      </Link>
+
+      <section className="mt-6 rounded-2xl border border-border bg-card p-6">
+        <h1 className="font-display text-2xl font-semibold">Home page header</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Edit the eyebrow, headline, and subheading shown at the top of the home page. The headline is split into three parts; the middle part is shown in accent italic.
+        </p>
+
+        {isLoading ? (
+          <p className="mt-6 text-muted-foreground">Loading…</p>
+        ) : (
+          <form
+            className="mt-6 space-y-4"
+            onSubmit={(e) => { e.preventDefault(); saveMut.mutate(hero); }}
+          >
+            <Field label="Eyebrow (small pill above headline)">
+              <input
+                value={hero.eyebrow}
+                onChange={(e) => setHero({ ...hero, eyebrow: e.target.value })}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+            </Field>
+            <div className="grid sm:grid-cols-3 gap-4">
+              <Field label="Headline — prefix">
+                <input
+                  value={hero.heading_prefix}
+                  onChange={(e) => setHero({ ...hero, heading_prefix: e.target.value })}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </Field>
+              <Field label="Headline — emphasis (italic accent)">
+                <input
+                  value={hero.heading_emphasis}
+                  onChange={(e) => setHero({ ...hero, heading_emphasis: e.target.value })}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </Field>
+              <Field label="Headline — suffix">
+                <input
+                  value={hero.heading_suffix}
+                  onChange={(e) => setHero({ ...hero, heading_suffix: e.target.value })}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </Field>
+            </div>
+            <Field label="Subheading">
+              <textarea
+                rows={3}
+                value={hero.subheading}
+                onChange={(e) => setHero({ ...hero, subheading: e.target.value })}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+            </Field>
+
+            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">Preview</p>
+              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                {hero.eyebrow || "—"}
+              </div>
+              <h2 className="mt-4 font-display text-3xl font-bold tracking-tight">
+                {hero.heading_prefix}{" "}
+                <span className="italic text-[var(--color-accent)]">{hero.heading_emphasis}</span>{" "}
+                {hero.heading_suffix}
+              </h2>
+              <p className="mt-3 text-muted-foreground">{hero.subheading}</p>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={saveMut.isPending}
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              >
+                <Save className="h-4 w-4" /> Save
+              </button>
+            </div>
+          </form>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium">{label}</span>
+      <div className="mt-1">{children}</div>
+    </label>
+  );
+}

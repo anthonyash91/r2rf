@@ -95,12 +95,20 @@ function AdminCategoriesPage() {
           <h1 className="font-display text-3xl font-semibold">Categories</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage the library structure.</p>
         </div>
-        <button
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          <Plus className="h-4 w-4" /> New category
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/admin/home"
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            Edit home header
+          </Link>
+          <button
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" /> New category
+          </button>
+        </div>
       </div>
 
       {creating && (
