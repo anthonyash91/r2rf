@@ -138,7 +138,7 @@ function CategoryPage() {
                                 className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-accent)] hover:underline"
                               >
                                 <Download className="h-3.5 w-3.5" />
-                                {item.file_name || "Download file"}
+                                {item.file_name || t("category.downloadFile")}
                               </a>
                             )}
                             {item.source && <p className="mt-2 text-xs text-muted-foreground/80">Source · {item.source}</p>}
