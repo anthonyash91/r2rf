@@ -1,0 +1,2 @@
+insert into storage.buckets (id, name, public) values ('category-icons','category-icons',true) on conflict (id) do nothing;
+create policy "Public read category-icons" on storage.objects for select using (bucket_id = 'category-icons');

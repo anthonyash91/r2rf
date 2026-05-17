@@ -1,0 +1,6 @@
+update public.categories set icon_url = 'https://cbtuensdajctotobxbym.supabase.co/storage/v1/object/public/category-icons/aa.png' where slug = 'alcoholics-anonymous';
+update public.categories set icon_url = 'https://cbtuensdajctotobxbym.supabase.co/storage/v1/object/public/category-icons/na.png' where slug = 'narcotics-anonymous';
+update public.categories set icon_url = 'https://cbtuensdajctotobxbym.supabase.co/storage/v1/object/public/category-icons/reentry.png' where slug = 'reentry-to-recovery';
+update public.categories set icon_url = 'https://cbtuensdajctotobxbym.supabase.co/storage/v1/object/public/category-icons/parenting.png' where slug = 'parenting';
+update public.categories set icon_url = 'https://cbtuensdajctotobxbym.supabase.co/storage/v1/object/public/category-icons/health.png' where slug = 'health-and-wellness';
+update public.categories set icon_url = 'https://cbtuensdajctotobxbym.supabase.co/storage/v1/object/public/category-icons/workforce.png' where slug = 'workforce-integration';
