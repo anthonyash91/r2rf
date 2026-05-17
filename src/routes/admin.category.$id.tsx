@@ -312,6 +312,16 @@ function ItemEditor({
         <LabeledInput label="Duration" value={duration} onChange={setDuration} placeholder="8 min read" />
       </div>
       <LabeledInput label="URL (optional)" value={url} onChange={setUrl} placeholder="https://…" type="url" />
+      <div className="block">
+        <span className="text-sm font-medium">File (optional)</span>
+        <div className="mt-1">
+          <FileUploader
+            fileUrl={fileUrl}
+            fileName={fileName}
+            onChange={(u, n) => { setFileUrl(u); setFileName(n); }}
+          />
+        </div>
+      </div>
       <label className="block">
         <span className="text-sm font-medium">Description</span>
         <textarea
