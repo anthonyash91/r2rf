@@ -21,6 +21,7 @@ const typeStyles: Record<string, string> = {
 
 function CategoryPage() {
   const { slug } = Route.useParams();
+  const { t } = useI18n();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["category", slug],
