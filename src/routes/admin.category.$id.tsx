@@ -461,7 +461,13 @@ function ItemEditor({
       <div>
         <LabeledInput label="URL (optional)" value={url} onChange={setUrl} placeholder="https://…" type="url" />
         <div className="mt-2">
-          <FileUploader onUploaded={(u) => setUrl(u)} />
+          <FileUploader
+            onUploaded={async (u, name) => {
+              setUrl(u);
+              const estimated = await estimateDuration(u, name);
+              if (estimated) setDuration(estimated);
+            }}
+          />
         </div>
       </div>
       <label className="block">
@@ -512,4 +518,55 @@ function LabeledInput({
       />
     </label>
   );
+}
+
+function extOf(url: string, name: string | null): string {
+  const src = (name ?? url).toLowerCase().split("?")[0].split("#")[0];
+  const m = src.match(/\.([a-z0-9]+)$/);
+  return m?.[1] ?? "";
+}
+
+const AUDIO_EXT = new Set(["mp3", "wav", "m4a", "aac", "ogg", "oga", "flac", "webm", "opus"]);
+const VIDEO_EXT = new Set(["mp4", "mov", "webm", "mkv", "avi", "m4v"]);
+
+function formatMediaDuration(seconds: number): string {
+  if (!isFinite(seconds) || seconds <= 0) return "";
+  if (seconds < 60) return `${Math.round(seconds)} sec`;
+  const totalMin = Math.round(seconds / 60);
+  if (totalMin < 60) return `${totalMin} min`;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return m ? `${h} hr ${m} min` : `${h} hr`;
+}
+
+function probeMediaDuration(url: string, kind: "audio" | "video"): Promise<number> {
+  return new Promise((resolve) => {
+    const el = document.createElement(kind);
+    el.preload = "metadata";
+    el.src = url;
+    const done = (v: number) => { el.src = ""; resolve(v); };
+    el.onloadedmetadata = () => done(el.duration);
+    el.onerror = () => done(0);
+    setTimeout(() => done(0), 15000);
+  });
+}
+
+async function estimateDuration(url: string, name: string | null): Promise<string> {
+  const ext = extOf(url, name);
+  if (!ext) return "";
+  if (AUDIO_EXT.has(ext)) return formatMediaDuration(await probeMediaDuration(url, "audio"));
+  if (VIDEO_EXT.has(ext)) return formatMediaDuration(await probeMediaDuration(url, "video"));
+  if (ext === "pdf") {
+    try {
+      const res = await fetch(url, { method: "HEAD" });
+      const len = Number(res.headers.get("content-length") ?? 0);
+      if (len > 0) {
+        // ~80 KB per page, ~2 min per page reading time
+        const pages = Math.max(1, Math.round(len / 80_000));
+        const minutes = Math.max(1, pages * 2);
+        return `${minutes} min read`;
+      }
+    } catch {}
+  }
+  return "";
 }
