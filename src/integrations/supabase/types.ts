@@ -56,6 +56,8 @@ export type Database = {
           created_at: string
           description: string
           duration: string
+          file_name: string | null
+          file_url: string | null
           id: string
           published: boolean
           sort_order: number
@@ -70,6 +72,8 @@ export type Database = {
           created_at?: string
           description?: string
           duration?: string
+          file_name?: string | null
+          file_url?: string | null
           id?: string
           published?: boolean
           sort_order?: number
@@ -84,6 +88,8 @@ export type Database = {
           created_at?: string
           description?: string
           duration?: string
+          file_name?: string | null
+          file_url?: string | null
           id?: string
           published?: boolean
           sort_order?: number
