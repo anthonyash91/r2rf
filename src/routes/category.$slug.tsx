@@ -80,7 +80,7 @@ function CategoryPage() {
         <section className="mx-auto max-w-5xl px-6 py-12">
           <h2 className="font-display text-xl font-semibold mb-6">{category.items.length} resources</h2>
           <ul className="divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden">
-            {category.items.map((item) => {
+            {category.items.map((item: typeof category.items[number]) => {
               const Wrapper: any = item.url ? "a" : "div";
               const wrapperProps = item.url
                 ? { href: item.url, target: "_blank", rel: "noopener noreferrer" }
