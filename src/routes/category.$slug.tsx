@@ -97,7 +97,7 @@ function CategoryPage() {
 
           <main className="flex-1">
             <section className="mx-auto max-w-5xl px-6 py-12">
-              <h2 className="font-display text-xl font-semibold mb-6">{data.items.length} resources</h2>
+              <h2 className="font-display text-xl font-semibold mb-6">{data.items.length} {data.items.length === 1 ? "resource" : "resources"}</h2>
               {data.items.length === 0 ? (
                 <p className="text-muted-foreground">No content yet — check back soon.</p>
               ) : (
