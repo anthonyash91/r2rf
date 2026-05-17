@@ -1,26 +1,90 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { categories } from "@/lib/categories";
+import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Reentry to Recovery — Content Library" },
+      { name: "description", content: "A curated library of resources for health, parenting, employment, and recovery after reentry." },
+      { property: "og:title", content: "Reentry to Recovery — Content Library" },
+      { property: "og:description", content: "Resources for the road back — wellness, family, work, and recovery." },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
+function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen flex flex-col">
+      <SiteHeader />
+
+      <section className="border-b border-border/60">
+        <div className="mx-auto max-w-6xl px-6 pt-20 pb-16">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+              A library for the road back
+            </div>
+            <h1 className="mt-6 font-display text-5xl sm:text-6xl font-bold tracking-tight text-foreground">
+              Trusted resources for{" "}
+              <span className="italic text-[var(--color-accent)]">every step</span>{" "}
+              of reentry and recovery.
+            </h1>
+            <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
+              Pick a category to explore guides, videos, worksheets, and meetings — vetted and organized for the moments that matter.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <main className="flex-1">
+        <section className="mx-auto max-w-6xl px-6 py-16" id="categories">
+          <div className="flex items-end justify-between mb-8">
+            <h2 className="font-display text-2xl font-semibold">Categories</h2>
+            <span className="text-sm text-muted-foreground">{categories.length} collections</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {categories.map((c, i) => (
+              <Link
+                key={c.slug}
+                to="/category/$slug"
+                params={{ slug: c.slug }}
+                className="group relative flex flex-col justify-between rounded-2xl border border-border bg-card p-6 h-56 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
+              >
+                <div className="flex items-start justify-between">
+                  <span className="font-display text-sm font-medium text-[var(--color-gold)]">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)]" />
+                </div>
+                <div>
+                  <h3 className="font-display text-2xl font-semibold text-foreground leading-tight">
+                    {c.name}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{c.tagline}</p>
+                  <p className="mt-3 text-xs text-muted-foreground/80">
+                    {c.items.length} resources
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section id="about" className="border-t border-border/60 bg-[var(--color-secondary)]">
+          <div className="mx-auto max-w-6xl px-6 py-16 grid md:grid-cols-2 gap-10">
+            <h2 className="font-display text-3xl font-semibold">Built for the people doing the hard work.</h2>
+            <p className="text-muted-foreground leading-relaxed">
+              Reentry to Recovery is a free, ad-free library curated for people rebuilding their lives — and for the families, counselors, sponsors, and case managers walking alongside them. Every item here was chosen for clarity, dignity, and usefulness in the first 90 days and beyond.
+            </p>
+          </div>
+        </section>
+      </main>
+
+      <SiteFooter />
     </div>
   );
-}
-
-function Index() {
-  return <PlaceholderIndex />;
 }
