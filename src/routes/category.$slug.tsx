@@ -67,12 +67,12 @@ function CategoryPage() {
               <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowLeft className="h-4 w-4" /> All categories
               </Link>
-              <div className="mt-6 flex items-start gap-6">
+              <div className="mt-6 flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
                 {data.category.icon_url && (
                   <img
                     src={data.category.icon_url}
                     alt=""
-                    className="h-36 w-36 sm:h-44 sm:w-44 rounded-2xl object-cover border border-border bg-muted flex-shrink-0"
+                    className="h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 rounded-2xl object-cover border border-border bg-muted flex-shrink-0"
                   />
                 )}
                 <div className="max-w-3xl">

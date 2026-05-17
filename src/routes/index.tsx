@@ -69,30 +69,30 @@ function Index() {
                 key={c.id}
                 to="/category/$slug"
                 params={{ slug: c.slug }}
-                className="group relative flex flex-col justify-between rounded-2xl border border-border bg-card p-6 h-72 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
+                className="group relative flex flex-col rounded-2xl border border-border bg-card p-5 sm:p-6 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    {c.icon_url ? (
-                      <img
-                        src={c.icon_url}
-                        alt=""
-                        className="h-32 w-32 rounded-xl object-cover border border-border bg-muted"
-                      />
-                    ) : (
-                      <div className="h-32 w-32 rounded-xl border border-dashed border-border bg-muted/40" />
-                    )}
-                    <span className="font-display text-sm font-medium text-[var(--color-gold)]">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                  </div>
+                  <span className="font-display text-sm font-medium text-[var(--color-gold)]">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
                   <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)]" />
                 </div>
-                <div>
-                  <h3 className="font-display text-2xl font-semibold text-foreground leading-tight">
+                <div className="mt-4 flex justify-center">
+                  {c.icon_url ? (
+                    <img
+                      src={c.icon_url}
+                      alt=""
+                      className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl object-cover border border-border bg-muted"
+                    />
+                  ) : (
+                    <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl border border-dashed border-border bg-muted/40" />
+                  )}
+                </div>
+                <div className="mt-3">
+                  <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
                     {c.name}
                   </h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{c.tagline}</p>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{c.tagline}</p>
                 </div>
               </Link>
             ))}
