@@ -88,9 +88,9 @@ function Index() {
       <main className="flex-1">
         <section className="mx-auto max-w-6xl px-6 py-6" id="categories">
           <div className="flex items-end justify-between mb-8">
-            <h2 className="font-display text-2xl font-semibold">Categories</h2>
+            <h2 className="font-display text-2xl font-semibold">{t("home.categories")}</h2>
             <span className="text-sm text-muted-foreground">
-              {isLoading ? "Loading…" : `${categories.length} collections`}
+              {isLoading ? t("home.loading") : t("home.collections", { count: categories.length })}
             </span>
           </div>
 
