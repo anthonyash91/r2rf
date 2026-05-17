@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { categories } from "@/lib/categories";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { ArrowUpRight } from "lucide-react";
 
@@ -16,6 +18,19 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { data: categories = [], isLoading } = useQuery({
+    queryKey: ["categories", "public"],
+    queryFn: async (): Promise<Category[]> => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("published", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data as Category[];
+    },
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -43,13 +58,15 @@ function Index() {
         <section className="mx-auto max-w-6xl px-6 py-16" id="categories">
           <div className="flex items-end justify-between mb-8">
             <h2 className="font-display text-2xl font-semibold">Categories</h2>
-            <span className="text-sm text-muted-foreground">{categories.length} collections</span>
+            <span className="text-sm text-muted-foreground">
+              {isLoading ? "Loading…" : `${categories.length} collections`}
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {categories.map((c, i) => (
               <Link
-                key={c.slug}
+                key={c.id}
                 to="/category/$slug"
                 params={{ slug: c.slug }}
                 className="group relative flex flex-col justify-between rounded-2xl border border-border bg-card p-6 h-56 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
@@ -65,21 +82,12 @@ function Index() {
                     {c.name}
                   </h3>
                   <p className="mt-2 text-sm text-muted-foreground">{c.tagline}</p>
-                  <p className="mt-3 text-xs text-muted-foreground/80">
-                    {c.items.length} resources
-                  </p>
                 </div>
               </Link>
             ))}
-          </div>
-        </section>
-
-        <section id="about" className="border-t border-border/60 bg-[var(--color-secondary)]">
-          <div className="mx-auto max-w-6xl px-6 py-16 grid md:grid-cols-2 gap-10">
-            <h2 className="font-display text-3xl font-semibold">Built for the people doing the hard work.</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              Reentry to Recovery is a free, ad-free library curated for people rebuilding their lives — and for the families, counselors, sponsors, and case managers walking alongside them. Every item here was chosen for clarity, dignity, and usefulness in the first 90 days and beyond.
-            </p>
+            {!isLoading && categories.length === 0 && (
+              <p className="text-muted-foreground col-span-full">No categories yet.</p>
+            )}
           </div>
         </section>
       </main>

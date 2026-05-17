@@ -1,6 +1,9 @@
 import { Link } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
+  const { user, isAdmin } = useAuth();
   return (
     <header className="border-b border-border/60 bg-background/80 backdrop-blur sticky top-0 z-50">
       <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
@@ -13,11 +16,27 @@ export function SiteHeader() {
             <div className="text-xs text-muted-foreground">Content library</div>
           </div>
         </Link>
-        <nav className="hidden sm:flex items-center gap-6 text-sm font-medium text-muted-foreground">
-          <Link to="/" className="hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
+        <nav className="flex items-center gap-5 text-sm font-medium text-muted-foreground">
+          <Link to="/" className="hidden sm:inline hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
             Categories
           </Link>
-          <a href="#about" className="hover:text-foreground transition-colors">About</a>
+          {isAdmin && (
+            <Link to="/admin" className="hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
+              Admin
+            </Link>
+          )}
+          {user ? (
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="hover:text-foreground transition-colors"
+            >
+              Sign out
+            </button>
+          ) : (
+            <Link to="/auth" className="hover:text-foreground transition-colors">
+              Sign in
+            </Link>
+          )}
         </nav>
       </div>
     </header>
