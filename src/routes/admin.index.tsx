@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Eye, EyeOff } from "lucide-react";
+import { SortableList } from "@/components/SortableList";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
@@ -69,6 +70,24 @@ function AdminCategoriesPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const [order, setOrder] = useState<Category[]>([]);
+  useEffect(() => { setOrder(categories); }, [categories]);
+
+  const reorderMut = useMutation({
+    mutationFn: async (next: Category[]) => {
+      await Promise.all(
+        next.map((c, i) =>
+          supabase.from("categories").update({ sort_order: i + 1 }).eq("id", c.id),
+        ),
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "categories"] });
+      qc.invalidateQueries({ queryKey: ["categories"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   return (
     <div>
       <div className="flex items-end justify-between">
@@ -98,9 +117,12 @@ function AdminCategoriesPage() {
         ) : categories.length === 0 ? (
           <div className="p-6 text-muted-foreground">No categories yet.</div>
         ) : (
-          <ul className="divide-y divide-border">
-            {categories.map((c) => (
-              <li key={c.id} className="flex items-center gap-4 p-4">
+          <SortableList
+            className="divide-y divide-border"
+            items={order}
+            onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
+            renderItem={(c) => (
+              <div className="flex items-center gap-4 p-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-display text-lg font-semibold truncate">{c.name}</h3>
@@ -136,9 +158,10 @@ function AdminCategoriesPage() {
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
-              </li>
-            ))}
-          </ul>
+              </div>
+            )}
+          />
+
         )}
       </div>
     </div>

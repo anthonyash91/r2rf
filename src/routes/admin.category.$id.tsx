@@ -6,6 +6,7 @@ import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/c
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X } from "lucide-react";
 import { FileUploader } from "@/components/FileUploader";
+import { SortableList } from "@/components/SortableList";
 
 export const Route = createFileRoute("/admin/category/$id")({
   component: AdminCategoryPage,
@@ -131,6 +132,8 @@ function CategoryEditor({
 function ContentManager({ categoryId, items }: { categoryId: string; items: ContentItem[] }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
+  const [order, setOrder] = useState<ContentItem[]>([]);
+  useEffect(() => { setOrder(items); }, [items]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin", "category", categoryId] });
@@ -189,6 +192,18 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
     onError: (e: any) => toast.error(e.message),
   });
 
+  const reorderMut = useMutation({
+    mutationFn: async (next: ContentItem[]) => {
+      await Promise.all(
+        next.map((it, i) =>
+          supabase.from("content_items").update({ sort_order: i + 1 }).eq("id", it.id),
+        ),
+      );
+    },
+    onSuccess: invalidate,
+    onError: (e: any) => toast.error(e.message),
+  });
+
   return (
     <section className="mt-8">
       <div className="flex items-end justify-between">
@@ -210,42 +225,50 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
         />
       )}
 
-      <ul className="mt-6 divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden">
-        {items.length === 0 && <li className="p-6 text-muted-foreground">No items yet.</li>}
-        {items.map((item) => (
-          <li key={item.id} className="flex items-center gap-3 p-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{item.type}</span>
-                {!item.published && (
-                  <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>
-                )}
-                <h3 className="font-medium truncate">{item.title}</h3>
+      <div className="mt-6 rounded-2xl border border-border bg-card overflow-hidden">
+        {order.length === 0 ? (
+          <p className="p-6 text-muted-foreground">No items yet.</p>
+        ) : (
+          <SortableList
+            className="divide-y divide-border"
+            items={order}
+            onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
+            renderItem={(item) => (
+              <div className="flex items-center gap-3 p-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{item.type}</span>
+                    {!item.published && (
+                      <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>
+                    )}
+                    <h3 className="font-medium truncate">{item.title}</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate">{item.source} · {item.duration}</p>
+                </div>
+                <button
+                  title={item.published ? "Unpublish" : "Publish"}
+                  onClick={() => togglePublish.mutate(item)}
+                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                >
+                  {item.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                </button>
+                <button
+                  onClick={() => setEditing(item)}
+                  className="rounded-md px-3 py-1.5 text-sm hover:bg-muted"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => { if (confirm(`Delete "${item.title}"?`)) deleteMut.mutate(item.id); }}
+                  className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
-              <p className="text-xs text-muted-foreground truncate">{item.source} · {item.duration}</p>
-            </div>
-            <button
-              title={item.published ? "Unpublish" : "Publish"}
-              onClick={() => togglePublish.mutate(item)}
-              className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-            >
-              {item.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-            </button>
-            <button
-              onClick={() => setEditing(item)}
-              className="rounded-md px-3 py-1.5 text-sm hover:bg-muted"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => { if (confirm(`Delete "${item.title}"?`)) deleteMut.mutate(item.id); }}
-              className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </li>
-        ))}
-      </ul>
+            )}
+          />
+        )}
+      </div>
     </section>
   );
 }
