@@ -154,7 +154,7 @@ function CategoryPage() {
             {data.others.length > 0 && (
               <section className="mx-auto max-w-5xl px-6 pb-16">
                 <div className="border-t border-border/60 pt-12">
-                  <h2 className="font-display text-xl font-semibold mb-6">Explore other categories</h2>
+                  <h2 className="font-display text-xl font-semibold mb-6">{t("category.exploreOthers")}</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {data.others.map((other) => (
                       <Link
