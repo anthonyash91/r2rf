@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { useI18n } from "@/lib/i18n";
 import { ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
