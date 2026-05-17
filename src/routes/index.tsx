@@ -17,6 +17,22 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+type HomeHero = {
+  eyebrow: string;
+  heading_prefix: string;
+  heading_emphasis: string;
+  heading_suffix: string;
+  subheading: string;
+};
+
+const DEFAULT_HERO: HomeHero = {
+  eyebrow: "A library for the road back",
+  heading_prefix: "Trusted resources for",
+  heading_emphasis: "every step",
+  heading_suffix: "of reentry and recovery.",
+  subheading: "Pick a category to explore guides, videos, worksheets, and meetings — vetted and organized for the moments that matter.",
+};
+
 function Index() {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories", "public"],
@@ -31,6 +47,19 @@ function Index() {
     },
   });
 
+  const { data: hero = DEFAULT_HERO } = useQuery({
+    queryKey: ["site_settings", "home_hero"],
+    queryFn: async (): Promise<HomeHero> => {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "home_hero")
+        .maybeSingle();
+      if (error) throw error;
+      return { ...DEFAULT_HERO, ...((data?.value as Partial<HomeHero>) ?? {}) };
+    },
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -40,15 +69,15 @@ function Index() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-              A library for the road back
+              {hero.eyebrow}
             </div>
             <h1 className="mt-6 font-display text-5xl sm:text-6xl font-bold tracking-tight text-foreground">
-              Trusted resources for{" "}
-              <span className="italic text-[var(--color-accent)]">every step</span>{" "}
-              of reentry and recovery.
+              {hero.heading_prefix}{" "}
+              <span className="italic text-[var(--color-accent)]">{hero.heading_emphasis}</span>{" "}
+              {hero.heading_suffix}
             </h1>
             <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-              Pick a category to explore guides, videos, worksheets, and meetings — vetted and organized for the moments that matter.
+              {hero.subheading}
             </p>
           </div>
         </div>
