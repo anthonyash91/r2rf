@@ -77,22 +77,22 @@ function Index() {
                   </span>
                   <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)]" />
                 </div>
-                <div className="mt-4 flex items-center gap-4">
+                <div className="mt-4 flex justify-start">
                   {c.icon_url ? (
                     <img
                       src={c.icon_url}
                       alt=""
-                      className="h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28 shrink-0 rounded-xl object-cover border border-border bg-muted"
+                      className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl object-cover border border-border bg-muted"
                     />
                   ) : (
-                    <div className="h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28 shrink-0 rounded-xl border border-dashed border-border bg-muted/40" />
+                    <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl border border-dashed border-border bg-muted/40" />
                   )}
-                  <div className="min-w-0">
-                    <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
-                      {c.name}
-                    </h3>
-                    <p className="mt-1.5 text-sm text-muted-foreground">{c.tagline}</p>
-                  </div>
+                </div>
+                <div className="mt-3">
+                  <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
+                    {c.name}
+                  </h3>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{c.tagline}</p>
                 </div>
               </Link>
             ))}
