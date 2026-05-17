@@ -123,3 +123,13 @@ export function useI18n() {
   if (!ctx) throw new Error("useI18n must be used inside I18nProvider");
   return ctx;
 }
+
+/** Pick a localized value, falling back to the English value when the Spanish one is empty. */
+export function pickLang<T>(lang: Language, en: T, es: T | null | undefined): T {
+  if (lang === "es") {
+    if (es === null || es === undefined) return en;
+    if (typeof es === "string" && es.trim() === "") return en;
+    return es as T;
+  }
+  return en;
+}

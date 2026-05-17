@@ -18,6 +18,9 @@ export type Category = {
   icon_url: string | null;
   sort_order: number;
   published: boolean;
+  name_es: string | null;
+  tagline_es: string | null;
+  description_es: string | null;
 };
 
 export type ContentItem = {
@@ -33,6 +36,11 @@ export type ContentItem = {
   file_name: string | null;
   sort_order: number;
   published: boolean;
+  title_es: string | null;
+  description_es: string | null;
+  source_es: string | null;
+  file_url_es: string | null;
+  file_name_es: string | null;
 };
 
 export function slugify(s: string) {

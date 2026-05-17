@@ -18,37 +18,46 @@ export type Database = {
         Row: {
           created_at: string
           description: string
+          description_es: string | null
           icon_url: string | null
           id: string
           name: string
+          name_es: string | null
           published: boolean
           slug: string
           sort_order: number
           tagline: string
+          tagline_es: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           description?: string
+          description_es?: string | null
           icon_url?: string | null
           id?: string
           name: string
+          name_es?: string | null
           published?: boolean
           slug: string
           sort_order?: number
           tagline?: string
+          tagline_es?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           description?: string
+          description_es?: string | null
           icon_url?: string | null
           id?: string
           name?: string
+          name_es?: string | null
           published?: boolean
           slug?: string
           sort_order?: number
           tagline?: string
+          tagline_es?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -58,14 +67,19 @@ export type Database = {
           category_id: string
           created_at: string
           description: string
+          description_es: string | null
           duration: string
           file_name: string | null
+          file_name_es: string | null
           file_url: string | null
+          file_url_es: string | null
           id: string
           published: boolean
           sort_order: number
           source: string
+          source_es: string | null
           title: string
+          title_es: string | null
           type: string
           updated_at: string
           url: string | null
@@ -74,14 +88,19 @@ export type Database = {
           category_id: string
           created_at?: string
           description?: string
+          description_es?: string | null
           duration?: string
           file_name?: string | null
+          file_name_es?: string | null
           file_url?: string | null
+          file_url_es?: string | null
           id?: string
           published?: boolean
           sort_order?: number
           source?: string
+          source_es?: string | null
           title: string
+          title_es?: string | null
           type?: string
           updated_at?: string
           url?: string | null
@@ -90,14 +109,19 @@ export type Database = {
           category_id?: string
           created_at?: string
           description?: string
+          description_es?: string | null
           duration?: string
           file_name?: string | null
+          file_name_es?: string | null
           file_url?: string | null
+          file_url_es?: string | null
           id?: string
           published?: boolean
           sort_order?: number
           source?: string
+          source_es?: string | null
           title?: string
+          title_es?: string | null
           type?: string
           updated_at?: string
           url?: string | null

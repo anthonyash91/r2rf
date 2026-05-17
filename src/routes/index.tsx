@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, pickLang } from "@/lib/i18n";
 import { ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -24,6 +24,11 @@ type HomeHero = {
   heading_emphasis: string;
   heading_suffix: string;
   subheading: string;
+  eyebrow_es?: string;
+  heading_prefix_es?: string;
+  heading_emphasis_es?: string;
+  heading_suffix_es?: string;
+  subheading_es?: string;
 };
 
 const DEFAULT_HERO: HomeHero = {
@@ -35,7 +40,7 @@ const DEFAULT_HERO: HomeHero = {
 };
 
 function Index() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories", "public"],
     queryFn: async (): Promise<Category[]> => {
@@ -62,6 +67,12 @@ function Index() {
     },
   });
 
+  const heroEyebrow = pickLang(lang, hero.eyebrow, hero.eyebrow_es);
+  const heroPrefix = pickLang(lang, hero.heading_prefix, hero.heading_prefix_es);
+  const heroEmphasis = pickLang(lang, hero.heading_emphasis, hero.heading_emphasis_es);
+  const heroSuffix = pickLang(lang, hero.heading_suffix, hero.heading_suffix_es);
+  const heroSubheading = pickLang(lang, hero.subheading, hero.subheading_es);
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -71,15 +82,15 @@ function Index() {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-              {hero.eyebrow}
+              {heroEyebrow}
             </div>
             <h1 className="mt-6 font-display text-5xl sm:text-6xl font-bold tracking-tight text-foreground">
-              {hero.heading_prefix}{" "}
-              <span className="italic text-[var(--color-accent)]">{hero.heading_emphasis}</span>{" "}
-              {hero.heading_suffix}
+              {heroPrefix}{" "}
+              <span className="italic text-[var(--color-accent)]">{heroEmphasis}</span>{" "}
+              {heroSuffix}
             </h1>
             <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-              {hero.subheading}
+              {heroSubheading}
             </p>
           </div>
         </div>
@@ -121,9 +132,9 @@ function Index() {
                 </div>
                 <div className="mt-3">
                   <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
-                    {c.name}
+                    {pickLang(lang, c.name, c.name_es)}
                   </h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{c.tagline}</p>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
                 </div>
               </Link>
             ))}
