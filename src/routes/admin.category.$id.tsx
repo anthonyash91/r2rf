@@ -6,6 +6,7 @@ import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/c
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X } from "lucide-react";
 import { FileUploader } from "@/components/FileUploader";
+import { SortableList } from "@/components/SortableList";
 
 export const Route = createFileRoute("/admin/category/$id")({
   component: AdminCategoryPage,
