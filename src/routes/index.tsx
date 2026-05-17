@@ -77,10 +77,10 @@ function Index() {
                       <img
                         src={c.icon_url}
                         alt=""
-                        className="h-10 w-10 rounded-lg object-cover border border-border bg-muted"
+                        className="h-20 w-20 rounded-xl object-cover border border-border bg-muted"
                       />
                     ) : (
-                      <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40" />
+                      <div className="h-20 w-20 rounded-xl border border-dashed border-border bg-muted/40" />
                     )}
                     <span className="font-display text-sm font-medium text-[var(--color-gold)]">
                       {String(i + 1).padStart(2, "0")}
