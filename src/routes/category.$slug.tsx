@@ -67,10 +67,19 @@ function CategoryPage() {
               <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowLeft className="h-4 w-4" /> All categories
               </Link>
-              <div className="mt-6 max-w-3xl">
-                <p className="text-sm font-medium text-[var(--color-accent)]">{data.category.tagline}</p>
-                <h1 className="mt-2 font-display text-5xl font-bold tracking-tight">{data.category.name}</h1>
-                <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{data.category.description}</p>
+              <div className="mt-6 flex items-start gap-6">
+                {data.category.icon_url && (
+                  <img
+                    src={data.category.icon_url}
+                    alt=""
+                    className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border border-border bg-muted flex-shrink-0"
+                  />
+                )}
+                <div className="max-w-3xl">
+                  <p className="text-sm font-medium text-[var(--color-accent)]">{data.category.tagline}</p>
+                  <h1 className="mt-2 font-display text-5xl font-bold tracking-tight">{data.category.name}</h1>
+                  <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{data.category.description}</p>
+                </div>
               </div>
             </div>
           </section>
