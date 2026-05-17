@@ -39,7 +39,18 @@ function CategoryPage() {
         .eq("published", true)
         .order("sort_order", { ascending: true });
       if (e2) throw e2;
-      return { category: cat as Category, items: (items ?? []) as ContentItem[] };
+      const { data: others, error: e3 } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("published", true)
+        .neq("id", cat.id)
+        .order("sort_order", { ascending: true });
+      if (e3) throw e3;
+      return {
+        category: cat as Category,
+        items: (items ?? []) as ContentItem[],
+        others: (others ?? []) as Category[],
+      };
     },
   });
 
