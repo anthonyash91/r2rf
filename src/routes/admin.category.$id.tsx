@@ -267,6 +267,8 @@ function ItemEditor({
   const [duration, setDuration] = useState(item?.duration ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [url, setUrl] = useState(item?.url ?? "");
+  const [fileUrl, setFileUrl] = useState<string | null>(item?.file_url ?? null);
+  const [fileName, setFileName] = useState<string | null>(item?.file_name ?? null);
   const [published, setPublished] = useState(item?.published ?? true);
 
   return (
@@ -281,6 +283,8 @@ function ItemEditor({
           duration: duration.trim(),
           description: description.trim(),
           url: url.trim() || null,
+          file_url: fileUrl,
+          file_name: fileName,
           published,
         });
       }}
