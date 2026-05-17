@@ -128,7 +128,7 @@ function Index() {
               </Link>
             ))}
             {!isLoading && categories.length === 0 && (
-              <p className="text-muted-foreground col-span-full">No categories yet.</p>
+              <p className="text-muted-foreground col-span-full">{t("home.empty")}</p>
             )}
           </div>
         </section>
