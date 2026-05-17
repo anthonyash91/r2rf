@@ -96,6 +96,7 @@ function CategoryEditor({
     setNameEs(category.name_es ?? "");
     setTaglineEs(category.tagline_es ?? "");
     setDescriptionEs(category.description_es ?? "");
+    if (category.name_es || category.tagline_es || category.description_es) setShowEs(true);
   }, [category]);
 
   return (
