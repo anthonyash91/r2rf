@@ -6,9 +6,11 @@ import { Upload } from "lucide-react";
 
 type Props = {
   onUploaded: (fileUrl: string, fileName: string | null) => void;
+  label?: string;
+  mimeTypes?: string[];
 };
 
-export function FileUploader({ onUploaded }: Props) {
+export function FileUploader({ onUploaded, label = "Upload file to fill URL", mimeTypes }: Props) {
   const fetchConfig = useServerFn(getBytescaleConfig);
   const { data, isLoading, error } = useQuery({
     queryKey: ["bytescale-config"],
@@ -29,6 +31,7 @@ export function FileUploader({ onUploaded }: Props) {
         apiKey: data.apiKey,
         maxFileCount: 1,
         showFinishButton: true,
+        ...(mimeTypes ? { mimeTypes } : {}),
       }}
       onComplete={(files) => {
         const f = files[0];
@@ -41,7 +44,7 @@ export function FileUploader({ onUploaded }: Props) {
           onClick={onClick}
           className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
         >
-          <Upload className="h-4 w-4" /> Upload file to fill URL
+          <Upload className="h-4 w-4" /> {label}
         </button>
       )}
     </UploadButton>
