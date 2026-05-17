@@ -141,7 +141,7 @@ function CategoryPage() {
                                 {item.file_name || t("category.downloadFile")}
                               </a>
                             )}
-                            {item.source && <p className="mt-2 text-xs text-muted-foreground/80">Source · {item.source}</p>}
+                            {item.source && <p className="mt-2 text-xs text-muted-foreground/80">{t("category.source")} · {item.source}</p>}
                           </div>
                         </Wrapper>
                       </li>
