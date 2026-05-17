@@ -45,7 +45,7 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border/60 mt-24">
+    <footer className="border-t border-border/60 mt-6">
       <div className="mx-auto max-w-6xl px-6 py-10 text-sm text-muted-foreground flex flex-col sm:flex-row gap-3 justify-between">
         <div>© {new Date().getFullYear()} Reentry to Recovery</div>
         <div>If you are in crisis, call or text <span className="text-foreground font-medium">988</span>.</div>
