@@ -564,7 +564,10 @@ async function estimateDuration(url: string, name: string | null): Promise<strin
         // ~80 KB per page, ~2 min per page reading time
         const pages = Math.max(1, Math.round(len / 80_000));
         const minutes = Math.max(1, pages * 2);
-        return `${minutes} min read`;
+        if (minutes < 60) return `${minutes} min read`;
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        return m ? `${h} hr ${m} min read` : `${h} hr read`;
       }
     } catch {}
   }
