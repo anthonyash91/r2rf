@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X } from "lucide-react";
+import { FileUploader } from "@/components/FileUploader";
 
 export const Route = createFileRoute("/admin/category/$id")({
   component: AdminCategoryPage,
