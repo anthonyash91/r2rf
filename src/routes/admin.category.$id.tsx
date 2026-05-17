@@ -370,7 +370,7 @@ function ItemEditor({
                 onChange={(e) => setNewType(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") { e.preventDefault(); commitNewType(); }
-                  if (e.key === "Escape") { setAddingType(false); setNewType(""); }
+                  if (e.key === "Escape") { cancelNewType(); }
                 }}
                 placeholder="New type name"
                 className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -381,6 +381,13 @@ function ItemEditor({
                 className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 Add
+              </button>
+              <button
+                type="button"
+                onClick={cancelNewType}
+                className="rounded-md px-3 py-2 text-sm hover:bg-muted"
+              >
+                Cancel
               </button>
             </div>
           ) : (
@@ -395,6 +402,23 @@ function ItemEditor({
               {typeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
               <option value="__new__">+ Add new type…</option>
             </select>
+          )}
+          {!addingType && typeOptions.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {typeOptions.map((t) => (
+                <span key={t} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  {t}
+                  <button
+                    type="button"
+                    onClick={() => deleteType(t)}
+                    title={`Delete type "${t}"`}
+                    className="rounded-full hover:bg-destructive/10 hover:text-destructive p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
           )}
         </label>
         <LabeledInput label="Source" value={source} onChange={setSource} />
