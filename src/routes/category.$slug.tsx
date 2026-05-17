@@ -61,7 +61,7 @@ function CategoryPage() {
       <SiteHeader />
 
       {isLoading && (
-        <div className="flex-1 mx-auto max-w-5xl px-6 py-24 text-muted-foreground">Loading…</div>
+        <div className="flex-1 mx-auto max-w-5xl px-6 py-24 text-muted-foreground">{t("home.loading")}</div>
       )}
 
       {error && !isLoading && (
