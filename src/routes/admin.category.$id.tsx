@@ -263,11 +263,32 @@ function ItemEditor({
 }) {
   const [title, setTitle] = useState(item?.title ?? "");
   const [type, setType] = useState(item?.type ?? "Article");
+  const [addingType, setAddingType] = useState(false);
+  const [newType, setNewType] = useState("");
   const [source, setSource] = useState(item?.source ?? "");
   const [duration, setDuration] = useState(item?.duration ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [url, setUrl] = useState(item?.url ?? "");
   const [published, setPublished] = useState(item?.published ?? true);
+
+  const { data: existingTypes = [] } = useQuery({
+    queryKey: ["content-types"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("content_items").select("type");
+      if (error) throw error;
+      return Array.from(new Set((data ?? []).map((r: { type: string }) => r.type).filter(Boolean)));
+    },
+  });
+
+  const typeOptions = Array.from(new Set([...CONTENT_TYPES, ...existingTypes, type].filter(Boolean)));
+
+  const commitNewType = () => {
+    const v = newType.trim();
+    if (!v) return;
+    setType(v);
+    setAddingType(false);
+    setNewType("");
+  };
 
   return (
     <form
@@ -298,13 +319,40 @@ function ItemEditor({
       <div className="grid sm:grid-cols-3 gap-4">
         <label className="block">
           <span className="text-sm font-medium">Type</span>
-          <select
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            {CONTENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
+          {addingType ? (
+            <div className="mt-1 flex gap-2">
+              <input
+                autoFocus
+                value={newType}
+                onChange={(e) => setNewType(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); commitNewType(); }
+                  if (e.key === "Escape") { setAddingType(false); setNewType(""); }
+                }}
+                placeholder="New type name"
+                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+              <button
+                type="button"
+                onClick={commitNewType}
+                className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Add
+              </button>
+            </div>
+          ) : (
+            <select
+              value={type}
+              onChange={(e) => {
+                if (e.target.value === "__new__") setAddingType(true);
+                else setType(e.target.value);
+              }}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              {typeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+              <option value="__new__">+ Add new type…</option>
+            </select>
+          )}
         </label>
         <LabeledInput label="Source" value={source} onChange={setSource} />
         <LabeledInput label="Duration" value={duration} onChange={setDuration} placeholder="8 min read" />
