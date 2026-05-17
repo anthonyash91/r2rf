@@ -132,6 +132,8 @@ function CategoryEditor({
 function ContentManager({ categoryId, items }: { categoryId: string; items: ContentItem[] }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
+  const [order, setOrder] = useState<ContentItem[]>([]);
+  useEffect(() => { setOrder(items); }, [items]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin", "category", categoryId] });
