@@ -107,6 +107,18 @@ function CategoryPage() {
                               {item.url && <ExternalLink className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />}
                             </div>
                             {item.description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{item.description}</p>}
+                            {item.file_url && (
+                              <a
+                                href={item.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-accent)] hover:underline"
+                              >
+                                <Download className="h-3.5 w-3.5" />
+                                {item.file_name || "Download file"}
+                              </a>
+                            )}
                             {item.source && <p className="mt-2 text-xs text-muted-foreground/80">Source · {item.source}</p>}
                           </div>
                         </Wrapper>
