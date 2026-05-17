@@ -28,6 +28,8 @@ export type ContentItem = {
   duration: string;
   description: string;
   url: string | null;
+  file_url: string | null;
+  file_name: string | null;
   sort_order: number;
   published: boolean;
 };

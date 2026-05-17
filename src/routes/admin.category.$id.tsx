@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X } from "lucide-react";
+import { FileUploader } from "@/components/FileUploader";
 
 export const Route = createFileRoute("/admin/category/$id")({
   component: AdminCategoryPage,
@@ -151,6 +152,8 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
           duration: values.duration ?? "",
           description: values.description ?? "",
           url: values.url ?? null,
+          file_url: values.file_url ?? null,
+          file_name: values.file_name ?? null,
           published: values.published ?? true,
           sort_order: (items.at(-1)?.sort_order ?? 0) + 1,
         });
@@ -264,6 +267,8 @@ function ItemEditor({
   const [duration, setDuration] = useState(item?.duration ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [url, setUrl] = useState(item?.url ?? "");
+  const [fileUrl, setFileUrl] = useState<string | null>(item?.file_url ?? null);
+  const [fileName, setFileName] = useState<string | null>(item?.file_name ?? null);
   const [published, setPublished] = useState(item?.published ?? true);
 
   return (
@@ -278,6 +283,8 @@ function ItemEditor({
           duration: duration.trim(),
           description: description.trim(),
           url: url.trim() || null,
+          file_url: fileUrl,
+          file_name: fileName,
           published,
         });
       }}
@@ -305,6 +312,16 @@ function ItemEditor({
         <LabeledInput label="Duration" value={duration} onChange={setDuration} placeholder="8 min read" />
       </div>
       <LabeledInput label="URL (optional)" value={url} onChange={setUrl} placeholder="https://…" type="url" />
+      <div className="block">
+        <span className="text-sm font-medium">File (optional)</span>
+        <div className="mt-1">
+          <FileUploader
+            fileUrl={fileUrl}
+            fileName={fileName}
+            onChange={(u, n) => { setFileUrl(u); setFileName(n); }}
+          />
+        </div>
+      </div>
       <label className="block">
         <span className="text-sm font-medium">Description</span>
         <textarea
