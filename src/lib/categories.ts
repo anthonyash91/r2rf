@@ -15,6 +15,7 @@ export type Category = {
   name: string;
   tagline: string;
   description: string;
+  icon_url: string | null;
   sort_order: number;
   published: boolean;
 };

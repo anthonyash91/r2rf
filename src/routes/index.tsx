@@ -72,9 +72,20 @@ function Index() {
                 className="group relative flex flex-col justify-between rounded-2xl border border-border bg-card p-6 h-56 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-start justify-between">
-                  <span className="font-display text-sm font-medium text-[var(--color-gold)]">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    {c.icon_url ? (
+                      <img
+                        src={c.icon_url}
+                        alt=""
+                        className="h-10 w-10 rounded-lg object-cover border border-border bg-muted"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40" />
+                    )}
+                    <span className="font-display text-sm font-medium text-[var(--color-gold)]">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                  </div>
                   <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)]" />
                 </div>
                 <div>
