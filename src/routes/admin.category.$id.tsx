@@ -82,6 +82,9 @@ function CategoryEditor({
   const [nameEs, setNameEs] = useState(category.name_es ?? "");
   const [taglineEs, setTaglineEs] = useState(category.tagline_es ?? "");
   const [descriptionEs, setDescriptionEs] = useState(category.description_es ?? "");
+  const [showEs, setShowEs] = useState(
+    !!(category.name_es || category.tagline_es || category.description_es),
+  );
 
   useEffect(() => {
     setName(category.name);
