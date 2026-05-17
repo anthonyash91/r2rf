@@ -51,7 +51,15 @@ function AdminHomePage() {
   });
 
   const [hero, setHero] = useState<HomeHero>(DEFAULTS);
-  useEffect(() => { if (data) setHero(data); }, [data]);
+  const [showEs, setShowEs] = useState(false);
+  useEffect(() => {
+    if (data) {
+      setHero(data);
+      if (data.eyebrow_es || data.heading_prefix_es || data.heading_emphasis_es || data.heading_suffix_es || data.subheading_es) {
+        setShowEs(true);
+      }
+    }
+  }, [data]);
 
   const saveMut = useMutation({
     mutationFn: async (value: HomeHero) => {
