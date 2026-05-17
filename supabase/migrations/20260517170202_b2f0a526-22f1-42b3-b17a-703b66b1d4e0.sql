@@ -1,0 +1,1 @@
+ALTER TABLE public.content_items ADD COLUMN file_url text, ADD COLUMN file_name text;
