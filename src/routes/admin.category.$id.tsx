@@ -152,6 +152,8 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
           duration: values.duration ?? "",
           description: values.description ?? "",
           url: values.url ?? null,
+          file_url: values.file_url ?? null,
+          file_name: values.file_name ?? null,
           published: values.published ?? true,
           sort_order: (items.at(-1)?.sort_order ?? 0) + 1,
         });
