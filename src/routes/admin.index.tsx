@@ -117,9 +117,12 @@ function AdminCategoriesPage() {
         ) : categories.length === 0 ? (
           <div className="p-6 text-muted-foreground">No categories yet.</div>
         ) : (
-          <ul className="divide-y divide-border">
-            {categories.map((c) => (
-              <li key={c.id} className="flex items-center gap-4 p-4">
+          <SortableList
+            className="divide-y divide-border"
+            items={order}
+            onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
+            renderItem={(c) => (
+              <div className="flex items-center gap-4 p-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-display text-lg font-semibold truncate">{c.name}</h3>
@@ -155,9 +158,10 @@ function AdminCategoriesPage() {
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
-              </li>
-            ))}
-          </ul>
+              </div>
+            )}
+          />
+
         )}
       </div>
     </div>
