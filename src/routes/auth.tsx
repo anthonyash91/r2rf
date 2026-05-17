@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const { user, loading } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const [email, setEmail] = useState("");
@@ -33,14 +35,14 @@ function AuthPage() {
           options: { emailRedirectTo: `${window.location.origin}/admin` },
         });
         if (error) throw error;
-        toast.success("Account created. Check your email to confirm.");
+        toast.success(t("auth.created"));
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         navigate({ to: "/admin" });
       }
     } catch (err: any) {
-      toast.error(err.message ?? "Authentication failed");
+      toast.error(err.message ?? t("auth.failed"));
     } finally {
       setBusy(false);
     }
@@ -51,15 +53,15 @@ function AuthPage() {
       <SiteHeader />
       <main className="flex-1 mx-auto w-full max-w-md px-6 py-16">
         <h1 className="font-display text-3xl font-semibold">
-          {mode === "sign-in" ? "Sign in" : "Create account"}
+          {mode === "sign-in" ? t("auth.signIn") : t("auth.createAccount")}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Admin access for managing the content library.
+          {t("auth.subtitle")}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <div>
-            <label className="text-sm font-medium">Email</label>
+            <label className="text-sm font-medium">{t("auth.email")}</label>
             <input
               type="email"
               required
@@ -69,7 +71,7 @@ function AuthPage() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Password</label>
+            <label className="text-sm font-medium">{t("auth.password")}</label>
             <input
               type="password"
               required
@@ -84,7 +86,7 @@ function AuthPage() {
             disabled={busy}
             className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           >
-            {busy ? "…" : mode === "sign-in" ? "Sign in" : "Create account"}
+            {busy ? "…" : mode === "sign-in" ? t("auth.signIn") : t("auth.createAccount")}
           </button>
         </form>
 
@@ -92,12 +94,12 @@ function AuthPage() {
           onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
           className="mt-4 text-sm text-muted-foreground hover:text-foreground"
         >
-          {mode === "sign-in" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+          {mode === "sign-in" ? t("auth.toggleToSignUp") : t("auth.toggleToSignIn")}
         </button>
 
         <p className="mt-8 text-xs text-muted-foreground">
-          After signing up, you'll need admin access granted from the backend.
-          <Link to="/" className="ml-1 underline">Back to site</Link>
+          {t("auth.note")}
+          <Link to="/" className="ml-1 underline">{t("auth.backToSite")}</Link>
         </p>
       </main>
       <SiteFooter />

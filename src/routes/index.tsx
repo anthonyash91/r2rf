@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { useI18n } from "@/lib/i18n";
 import { ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -34,6 +35,7 @@ const DEFAULT_HERO: HomeHero = {
 };
 
 function Index() {
+  const { t } = useI18n();
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories", "public"],
     queryFn: async (): Promise<Category[]> => {
@@ -86,9 +88,9 @@ function Index() {
       <main className="flex-1">
         <section className="mx-auto max-w-6xl px-6 py-6" id="categories">
           <div className="flex items-end justify-between mb-8">
-            <h2 className="font-display text-2xl font-semibold">Categories</h2>
+            <h2 className="font-display text-2xl font-semibold">{t("home.categories")}</h2>
             <span className="text-sm text-muted-foreground">
-              {isLoading ? "Loading…" : `${categories.length} collections`}
+              {isLoading ? t("home.loading") : t("home.collections", { count: categories.length })}
             </span>
           </div>
 
@@ -126,7 +128,7 @@ function Index() {
               </Link>
             ))}
             {!isLoading && categories.length === 0 && (
-              <p className="text-muted-foreground col-span-full">No categories yet.</p>
+              <p className="text-muted-foreground col-span-full">{t("home.empty")}</p>
             )}
           </div>
         </section>

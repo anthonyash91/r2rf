@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { useI18n } from "@/lib/i18n";
 import { ArrowLeft, ExternalLink, Download, ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/category/$slug")({
@@ -20,6 +21,7 @@ const typeStyles: Record<string, string> = {
 
 function CategoryPage() {
   const { slug } = Route.useParams();
+  const { t } = useI18n();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["category", slug],
@@ -59,14 +61,14 @@ function CategoryPage() {
       <SiteHeader />
 
       {isLoading && (
-        <div className="flex-1 mx-auto max-w-5xl px-6 py-24 text-muted-foreground">Loading…</div>
+        <div className="flex-1 mx-auto max-w-5xl px-6 py-24 text-muted-foreground">{t("home.loading")}</div>
       )}
 
       {error && !isLoading && (
         <div className="flex-1 mx-auto max-w-2xl px-6 py-24 text-center">
-          <h1 className="font-display text-4xl font-semibold">Category not found</h1>
+          <h1 className="font-display text-4xl font-semibold">{t("category.notFound")}</h1>
           <Link to="/" className="mt-6 inline-flex items-center gap-2 text-[var(--color-accent)] font-medium">
-            <ArrowLeft className="h-4 w-4" /> Back to all categories
+            <ArrowLeft className="h-4 w-4" /> {t("category.backToAll")}
           </Link>
         </div>
       )}
@@ -76,7 +78,7 @@ function CategoryPage() {
           <section className="border-b border-border/60 bg-gradient-to-b from-[var(--color-secondary)] to-background">
             <div className="mx-auto max-w-5xl px-6 pt-12 pb-16">
               <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <ArrowLeft className="h-4 w-4" /> All categories
+                <ArrowLeft className="h-4 w-4" /> {t("category.allCategories")}
               </Link>
               <div className="mt-6 flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
                 {data.category.icon_url && (
@@ -97,9 +99,9 @@ function CategoryPage() {
 
           <main className="flex-1">
             <section className="mx-auto max-w-5xl px-6 py-12">
-              <h2 className="font-display text-xl font-semibold mb-6">{data.items.length} {data.items.length === 1 ? "resource" : "resources"}</h2>
+              <h2 className="font-display text-xl font-semibold mb-6">{data.items.length} {data.items.length === 1 ? t("category.resource") : t("category.resources")}</h2>
               {data.items.length === 0 ? (
-                <p className="text-muted-foreground">No content yet — check back soon.</p>
+                <p className="text-muted-foreground">{t("category.noContent")}</p>
               ) : (
                 <ul className="divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden">
                   {data.items.map((item) => {
@@ -136,10 +138,10 @@ function CategoryPage() {
                                 className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-accent)] hover:underline"
                               >
                                 <Download className="h-3.5 w-3.5" />
-                                {item.file_name || "Download file"}
+                                {item.file_name || t("category.downloadFile")}
                               </a>
                             )}
-                            {item.source && <p className="mt-2 text-xs text-muted-foreground/80">Source · {item.source}</p>}
+                            {item.source && <p className="mt-2 text-xs text-muted-foreground/80">{t("category.source")} · {item.source}</p>}
                           </div>
                         </Wrapper>
                       </li>
@@ -152,7 +154,7 @@ function CategoryPage() {
             {data.others.length > 0 && (
               <section className="mx-auto max-w-5xl px-6 pb-16">
                 <div className="border-t border-border/60 pt-12">
-                  <h2 className="font-display text-xl font-semibold mb-6">Explore other categories</h2>
+                  <h2 className="font-display text-xl font-semibold mb-6">{t("category.exploreOthers")}</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {data.others.map((other) => (
                       <Link
