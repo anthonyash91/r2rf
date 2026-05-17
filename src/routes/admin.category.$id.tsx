@@ -461,7 +461,13 @@ function ItemEditor({
       <div>
         <LabeledInput label="URL (optional)" value={url} onChange={setUrl} placeholder="https://…" type="url" />
         <div className="mt-2">
-          <FileUploader onUploaded={(u) => setUrl(u)} />
+          <FileUploader
+            onUploaded={async (u, name) => {
+              setUrl(u);
+              const estimated = await estimateDuration(u, name);
+              if (estimated) setDuration(estimated);
+            }}
+          />
         </div>
       </div>
       <label className="block">
