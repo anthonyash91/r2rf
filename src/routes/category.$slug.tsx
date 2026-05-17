@@ -66,9 +66,9 @@ function CategoryPage() {
 
       {error && !isLoading && (
         <div className="flex-1 mx-auto max-w-2xl px-6 py-24 text-center">
-          <h1 className="font-display text-4xl font-semibold">Category not found</h1>
+          <h1 className="font-display text-4xl font-semibold">{t("category.notFound")}</h1>
           <Link to="/" className="mt-6 inline-flex items-center gap-2 text-[var(--color-accent)] font-medium">
-            <ArrowLeft className="h-4 w-4" /> Back to all categories
+            <ArrowLeft className="h-4 w-4" /> {t("category.backToAll")}
           </Link>
         </div>
       )}
