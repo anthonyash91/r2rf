@@ -70,6 +70,24 @@ function AdminCategoriesPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const [order, setOrder] = useState<Category[]>([]);
+  useEffect(() => { setOrder(categories); }, [categories]);
+
+  const reorderMut = useMutation({
+    mutationFn: async (next: Category[]) => {
+      await Promise.all(
+        next.map((c, i) =>
+          supabase.from("categories").update({ sort_order: i + 1 }).eq("id", c.id),
+        ),
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "categories"] });
+      qc.invalidateQueries({ queryKey: ["categories"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   return (
     <div>
       <div className="flex items-end justify-between">
