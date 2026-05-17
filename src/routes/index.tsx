@@ -35,6 +35,7 @@ const DEFAULT_HERO: HomeHero = {
 };
 
 function Index() {
+  const { t } = useI18n();
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories", "public"],
     queryFn: async (): Promise<Category[]> => {
