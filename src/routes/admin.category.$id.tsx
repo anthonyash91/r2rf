@@ -556,54 +556,75 @@ function ItemEditor({
         Published
       </label>
 
-      <div className="border-t border-border pt-4 space-y-4">
-        <div>
-          <h4 className="font-display text-base font-semibold">Spanish translation</h4>
-          <p className="text-xs text-muted-foreground">Leave blank to fall back to the English version when Spanish is selected.</p>
-        </div>
-        <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
-        <div className="grid sm:grid-cols-2 gap-4">
-          <LabeledInput label="Source (ES)" value={sourceEs} onChange={setSourceEs} />
-        </div>
-        <label className="block">
-          <span className="text-sm font-medium">Description (ES)</span>
-          <textarea
-            rows={3}
-            value={descriptionEs}
-            onChange={(e) => setDescriptionEs(e.target.value)}
-            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          />
-        </label>
-        <div>
-          <span className="text-sm font-medium">Spanish file (optional)</span>
-          <p className="text-xs text-muted-foreground">Shown to visitors viewing the site in Spanish. Falls back to the English file if omitted.</p>
-          {fileUrlEs ? (
-            <div className="mt-2 flex items-center gap-3">
-              <a
-                href={fileUrlEs}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-[var(--color-accent)] underline truncate max-w-xs"
-              >
-                {fileNameEs || fileUrlEs}
-              </a>
-              <button
-                type="button"
-                onClick={() => { setFileUrlEs(null); setFileNameEs(null); }}
-                className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5 text-xs hover:bg-muted text-muted-foreground"
-              >
-                Remove
-              </button>
+      {showEs ? (
+        <div className="border-t border-border pt-4 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h4 className="font-display text-base font-semibold">Spanish translation</h4>
+              <p className="text-xs text-muted-foreground">Leave blank to fall back to the English version when Spanish is selected.</p>
             </div>
-          ) : null}
-          <div className="mt-2">
-            <FileUploader
-              label={fileUrlEs ? "Replace Spanish file" : "Upload Spanish file"}
-              onUploaded={(u, name) => { setFileUrlEs(u); setFileNameEs(name ?? null); }}
+            <button
+              type="button"
+              onClick={() => setShowEs(false)}
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+            >
+              Hide
+            </button>
+          </div>
+          <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
+          <div className="grid sm:grid-cols-2 gap-4">
+            <LabeledInput label="Source (ES)" value={sourceEs} onChange={setSourceEs} />
+          </div>
+          <label className="block">
+            <span className="text-sm font-medium">Description (ES)</span>
+            <textarea
+              rows={3}
+              value={descriptionEs}
+              onChange={(e) => setDescriptionEs(e.target.value)}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
+          </label>
+          <div>
+            <span className="text-sm font-medium">Spanish file (optional)</span>
+            <p className="text-xs text-muted-foreground">Shown to visitors viewing the site in Spanish. Falls back to the English file if omitted.</p>
+            {fileUrlEs ? (
+              <div className="mt-2 flex items-center gap-3">
+                <a
+                  href={fileUrlEs}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-[var(--color-accent)] underline truncate max-w-xs"
+                >
+                  {fileNameEs || fileUrlEs}
+                </a>
+                <button
+                  type="button"
+                  onClick={() => { setFileUrlEs(null); setFileNameEs(null); }}
+                  className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5 text-xs hover:bg-muted text-muted-foreground"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : null}
+            <div className="mt-2">
+              <FileUploader
+                label={fileUrlEs ? "Replace Spanish file" : "Upload Spanish file"}
+                onUploaded={(u, name) => { setFileUrlEs(u); setFileNameEs(name ?? null); }}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="border-t border-border pt-4">
+          <button
+            type="button"
+            onClick={() => setShowEs(true)}
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+          >
+            + Add Spanish translation
+          </button>
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onCancel} className="rounded-md px-4 py-2 text-sm hover:bg-muted">
           Cancel
