@@ -199,15 +199,6 @@ function AdminHomePage() {
                 </button>
               </div>
             )}
-              <Field label="Subheading (ES)">
-                <textarea
-                  rows={3}
-                  value={hero.subheading_es}
-                  onChange={(e) => setHero({ ...hero, subheading_es: e.target.value })}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                />
-              </Field>
-            </div>
 
             <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5">
               <p className="text-xs uppercase tracking-wide text-muted-foreground mb-3">Preview</p>
