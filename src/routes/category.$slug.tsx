@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { ArrowLeft, ExternalLink, Download } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/category/$slug")({
   component: CategoryPage,
@@ -39,7 +39,18 @@ function CategoryPage() {
         .eq("published", true)
         .order("sort_order", { ascending: true });
       if (e2) throw e2;
-      return { category: cat as Category, items: (items ?? []) as ContentItem[] };
+      const { data: others, error: e3 } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("published", true)
+        .neq("id", cat.id)
+        .order("sort_order", { ascending: true });
+      if (e3) throw e3;
+      return {
+        category: cat as Category,
+        items: (items ?? []) as ContentItem[],
+        others: (others ?? []) as Category[],
+      };
     },
   });
 
@@ -137,6 +148,41 @@ function CategoryPage() {
                 </ul>
               )}
             </section>
+
+            {data.others.length > 0 && (
+              <section className="mx-auto max-w-5xl px-6 pb-16">
+                <div className="border-t border-border/60 pt-12">
+                  <h2 className="font-display text-xl font-semibold mb-6">Explore other categories</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {data.others.map((other) => (
+                      <Link
+                        key={other.id}
+                        to="/category/$slug"
+                        params={{ slug: other.slug }}
+                        className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--color-accent)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]"
+                      >
+                        {other.icon_url ? (
+                          <img
+                            src={other.icon_url}
+                            alt=""
+                            className="h-14 w-14 rounded-xl object-cover border border-border bg-muted flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="h-14 w-14 rounded-xl border border-dashed border-border bg-muted/40 flex-shrink-0" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-display text-base font-semibold text-foreground leading-tight truncate">
+                            {other.name}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-muted-foreground truncate">{other.tagline}</p>
+                        </div>
+                        <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)] flex-shrink-0" />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
           </main>
         </>
       )}
