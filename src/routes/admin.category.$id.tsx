@@ -392,6 +392,9 @@ function ItemEditor({
   const [sourceEs, setSourceEs] = useState(item?.source_es ?? "");
   const [fileUrlEs, setFileUrlEs] = useState<string | null>(item?.file_url_es ?? null);
   const [fileNameEs, setFileNameEs] = useState<string | null>(item?.file_name_es ?? null);
+  const [showEs, setShowEs] = useState(
+    !!(item?.title_es || item?.description_es || item?.source_es || item?.file_url_es),
+  );
 
   const { data: existingTypes = [] } = useQuery({
     queryKey: ["content-types"],
