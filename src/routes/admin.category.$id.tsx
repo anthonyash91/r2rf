@@ -183,6 +183,15 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
     onError: (e: any) => toast.error(e.message),
   });
 
+  const deleteMut = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("content_items").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Deleted"); invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const reorderMut = useMutation({
     mutationFn: async (next: ContentItem[]) => {
       await Promise.all(
