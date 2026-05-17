@@ -179,9 +179,9 @@ function CategoryPage() {
                         )}
                         <div className="min-w-0 flex-1">
                           <h3 className="font-display text-base font-semibold text-foreground leading-tight truncate">
-                            {other.name}
+                            {pickLang(lang, other.name, other.name_es)}
                           </h3>
-                          <p className="mt-0.5 text-xs text-muted-foreground truncate">{other.tagline}</p>
+                          <p className="mt-0.5 text-xs text-muted-foreground truncate">{pickLang(lang, other.tagline, other.tagline_es)}</p>
                         </div>
                         <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)] flex-shrink-0" />
                       </Link>
