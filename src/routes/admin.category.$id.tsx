@@ -585,27 +585,14 @@ function ItemEditor({
             />
           </label>
           <div>
-            <span className="text-sm font-medium">Spanish file (optional)</span>
-            <p className="text-xs text-muted-foreground">Shown to visitors viewing the site in Spanish. Falls back to the English file if omitted.</p>
-            {fileUrlEs ? (
-              <div className="mt-2 flex items-center gap-3">
-                <a
-                  href={fileUrlEs}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-[var(--color-accent)] underline truncate max-w-xs"
-                >
-                  {fileNameEs || fileUrlEs}
-                </a>
-                <button
-                  type="button"
-                  onClick={() => { setFileUrlEs(null); setFileNameEs(null); }}
-                  className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-1.5 text-xs hover:bg-muted text-muted-foreground"
-                >
-                  Remove
-                </button>
-              </div>
-            ) : null}
+            <LabeledInput
+              label="URL (ES, optional)"
+              value={fileUrlEs ?? ""}
+              onChange={(v) => setFileUrlEs(v.trim() ? v : null)}
+              placeholder="https://…"
+              type="url"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">Shown to visitors viewing the site in Spanish. Falls back to the English link if omitted.</p>
             <div className="mt-2">
               <FileUploader
                 label={fileUrlEs ? "Replace Spanish file" : "Upload Spanish file"}
