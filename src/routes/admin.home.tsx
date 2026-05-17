@@ -134,41 +134,71 @@ function AdminHomePage() {
               />
             </Field>
 
-            <div className="border-t border-border pt-6 space-y-4">
-              <div>
-                <h2 className="font-display text-lg font-semibold">Spanish translation</h2>
-                <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
+            {showEs ? (
+              <div className="border-t border-border pt-6 space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="font-display text-lg font-semibold">Spanish translation</h2>
+                    <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowEs(false)}
+                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                  >
+                    Hide
+                  </button>
+                </div>
+                <Field label="Eyebrow (ES)">
+                  <input
+                    value={hero.eyebrow_es}
+                    onChange={(e) => setHero({ ...hero, eyebrow_es: e.target.value })}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </Field>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  <Field label="Headline — prefix (ES)">
+                    <input
+                      value={hero.heading_prefix_es}
+                      onChange={(e) => setHero({ ...hero, heading_prefix_es: e.target.value })}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  </Field>
+                  <Field label="Headline — emphasis (ES)">
+                    <input
+                      value={hero.heading_emphasis_es}
+                      onChange={(e) => setHero({ ...hero, heading_emphasis_es: e.target.value })}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  </Field>
+                  <Field label="Headline — suffix (ES)">
+                    <input
+                      value={hero.heading_suffix_es}
+                      onChange={(e) => setHero({ ...hero, heading_suffix_es: e.target.value })}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  </Field>
+                </div>
+                <Field label="Subheading (ES)">
+                  <textarea
+                    rows={3}
+                    value={hero.subheading_es}
+                    onChange={(e) => setHero({ ...hero, subheading_es: e.target.value })}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </Field>
               </div>
-              <Field label="Eyebrow (ES)">
-                <input
-                  value={hero.eyebrow_es}
-                  onChange={(e) => setHero({ ...hero, eyebrow_es: e.target.value })}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                />
-              </Field>
-              <div className="grid sm:grid-cols-3 gap-4">
-                <Field label="Headline — prefix (ES)">
-                  <input
-                    value={hero.heading_prefix_es}
-                    onChange={(e) => setHero({ ...hero, heading_prefix_es: e.target.value })}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  />
-                </Field>
-                <Field label="Headline — emphasis (ES)">
-                  <input
-                    value={hero.heading_emphasis_es}
-                    onChange={(e) => setHero({ ...hero, heading_emphasis_es: e.target.value })}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  />
-                </Field>
-                <Field label="Headline — suffix (ES)">
-                  <input
-                    value={hero.heading_suffix_es}
-                    onChange={(e) => setHero({ ...hero, heading_suffix_es: e.target.value })}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  />
-                </Field>
+            ) : (
+              <div className="border-t border-border pt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEs(true)}
+                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+                >
+                  + Add Spanish translation
+                </button>
               </div>
+            )}
               <Field label="Subheading (ES)">
                 <textarea
                   rows={3}
