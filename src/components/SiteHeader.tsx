@@ -43,16 +43,16 @@ export function SiteHeader() {
           </Link>
           {canAccessAdmin && (
             <Link to="/admin" className="hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
-              {t("nav.admin")}
+              Admin
             </Link>
           )}
           {showAuthLink && (user ? (
             <button onClick={() => supabase.auth.signOut()} className="hover:text-foreground transition-colors">
-              {t("nav.signOut")}
+              Sign out
             </button>
           ) : (
             <Link to="/auth" className="hover:text-foreground transition-colors">
-              {t("nav.signIn")}
+              Sign in
             </Link>
           ))}
           <button
@@ -95,7 +95,7 @@ export function SiteHeader() {
             </Link>
             {canAccessAdmin && (
               <Link to="/admin" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
-                {t("nav.admin")}
+                Admin
               </Link>
             )}
             {showAuthLink && (user ? (
@@ -103,11 +103,11 @@ export function SiteHeader() {
                 onClick={() => { setOpen(false); supabase.auth.signOut(); }}
                 className="py-2 text-left hover:text-foreground transition-colors"
               >
-                {t("nav.signOut")}
+                Sign out
               </button>
             ) : (
               <Link to="/auth" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
-                {t("nav.signIn")}
+                Sign in
               </Link>
             ))}
           </div>
