@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -12,6 +12,11 @@ export function SiteHeader() {
   const { user, canAccessAdmin } = useAuth();
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/" });
+  };
   const checkAuthIp = useServerFn(isAuthIpAllowed);
   const { data: authIp } = useQuery({
     queryKey: ["auth-ip-allowed"],
@@ -47,7 +52,7 @@ export function SiteHeader() {
             </Link>
           )}
           {showAuthLink && (user ? (
-            <button onClick={() => supabase.auth.signOut()} className="hover:text-foreground transition-colors">
+            <button onClick={handleSignOut} className="hover:text-foreground transition-colors">
               Sign out
             </button>
           ) : (
@@ -100,7 +105,7 @@ export function SiteHeader() {
             )}
             {showAuthLink && (user ? (
               <button
-                onClick={() => { setOpen(false); supabase.auth.signOut(); }}
+                onClick={() => { setOpen(false); handleSignOut(); }}
                 className="py-2 text-left hover:text-foreground transition-colors"
               >
                 Sign out
