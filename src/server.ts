@@ -2,7 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { getAllowedIps, getClientIp, renderBlockedPage } from "./lib/ip-allowlist";
+import { getAllowedIps, getAuthAllowedIps, getClientIp, renderBlockedPage } from "./lib/ip-allowlist";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
