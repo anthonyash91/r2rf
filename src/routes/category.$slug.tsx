@@ -268,6 +268,35 @@ function CategoryPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!audioPlayer} onOpenChange={(open) => !open && setAudioPlayer(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogTitle className="text-base font-semibold pr-8 break-words">{audioPlayer?.title ?? "Audio"}</DialogTitle>
+          {audioPlayer && (
+            <audio
+              key={audioPlayer.url}
+              src={audioPlayer.url}
+              controls
+              autoPlay
+              className="w-full mt-2"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!pdfViewer} onOpenChange={(open) => !open && setPdfViewer(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden">
+          <DialogTitle className="sr-only">{pdfViewer?.title ?? "PDF"}</DialogTitle>
+          {pdfViewer && (
+            <iframe
+              key={pdfViewer.url}
+              src={pdfViewer.url}
+              title={pdfViewer.title}
+              className="w-full h-[85vh] bg-background"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
