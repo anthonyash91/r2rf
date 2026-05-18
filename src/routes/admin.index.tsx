@@ -162,6 +162,12 @@ function AdminCategoriesPage() {
                 Edit home header
               </Link>
               <Link
+                to="/admin/custom-home-pages"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+              >
+                Custom home pages
+              </Link>
+              <Link
                 to="/admin/certificate"
                 className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
               >
