@@ -152,6 +152,7 @@ export function translateType(lang: Language, type: string): string {
 /** Translate duration strings like "8 min read", "1 hr 20 min", "45 sec". */
 export function translateDuration(lang: Language, duration: string): string {
   if (lang !== "es" || !duration) return duration;
+  if (duration.trim().toLowerCase() === "click for more") return "haz clic para más";
   const units: Record<string, string> = {
     sec: "seg",
     second: "segundo",
