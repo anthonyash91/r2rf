@@ -70,7 +70,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                   params={{ id: c.id }}
                   title="Edit category"
                   aria-label="Edit category"
-                  className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-md border border-border bg-background/90 backdrop-blur px-2 py-1 text-xs font-medium text-foreground hover:bg-muted hover:border-[var(--color-accent)] shadow-sm"
+                  className="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1 rounded-md border border-border bg-background/90 backdrop-blur px-2 py-1 text-xs font-medium text-foreground hover:bg-muted hover:border-[var(--color-accent)] shadow-sm"
                 >
                   <Pencil className="h-3.5 w-3.5" /> Edit
                 </Link>
