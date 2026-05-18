@@ -105,7 +105,7 @@ function Index() {
             </span>
           </div>
 
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 [column-fill:_balance]">
+          <div className="columns-1 sm:columns-2 lg:columns-4 gap-5 [column-fill:_balance]">
             {categories.map((c, i) => (
               <Link
                 key={c.id}
