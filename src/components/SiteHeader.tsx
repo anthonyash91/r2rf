@@ -120,7 +120,7 @@ export function SiteHeader() {
 export function SiteFooter() {
   const { t } = useI18n();
   return (
-    <footer className="border-t border-border/60 mt-6">
+    <footer className="border-t border-border/60 mt-0">
       <div className="mx-auto max-w-6xl px-6 py-10 text-sm text-muted-foreground flex flex-col sm:flex-row gap-3 justify-between">
         <div>© {new Date().getFullYear()} Reentry to Recovery</div>
         <div>{t("footer.crisis")} <span className="text-foreground font-medium">988</span>.</div>
