@@ -264,33 +264,50 @@ function CategoryPage() {
               <section className="mx-auto max-w-5xl px-6 pb-20">
                 <div className="border-t border-border/60 pt-20">
                   <h2 className="font-display text-xl font-semibold mb-6">{t("category.exploreOthers")}</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {data.others.map((other) => (
-                      <Link
-                        key={other.id}
-                        to="/category/$slug"
-                        params={{ slug: other.slug }}
-                        className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--color-accent)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]"
-                      >
-                        {other.icon_url ? (
-                          <img
-                            src={other.icon_url}
-                            alt=""
-                            className="h-14 w-14 rounded-xl object-cover border border-border bg-muted flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="h-14 w-14 rounded-xl border border-dashed border-border bg-muted/40 flex-shrink-0" />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-display text-base font-semibold text-foreground leading-tight truncate">
-                            {pickLang(lang, other.name, other.name_es)}
-                          </h3>
-                          <p className="mt-0.5 text-xs text-muted-foreground truncate">{pickLang(lang, other.tagline, other.tagline_es)}</p>
-                        </div>
-                        <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)] flex-shrink-0" />
-                      </Link>
-                    ))}
-                  </div>
+                  <Carousel opts={{ align: "start", loop: false }} className="relative">
+                    <CarouselContent>
+                      {Array.from({ length: Math.ceil(data.others.length / 9) }).map((_, slideIdx) => {
+                        const slide = data.others.slice(slideIdx * 9, slideIdx * 9 + 9);
+                        return (
+                          <CarouselItem key={slideIdx}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {slide.map((other) => (
+                                <Link
+                                  key={other.id}
+                                  to="/category/$slug"
+                                  params={{ slug: other.slug }}
+                                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--color-accent)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]"
+                                >
+                                  {other.icon_url ? (
+                                    <img
+                                      src={other.icon_url}
+                                      alt=""
+                                      className="h-14 w-14 rounded-xl object-cover border border-border bg-muted flex-shrink-0"
+                                    />
+                                  ) : (
+                                    <div className="h-14 w-14 rounded-xl border border-dashed border-border bg-muted/40 flex-shrink-0" />
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <h3 className="font-display text-base font-semibold text-foreground leading-tight truncate">
+                                      {pickLang(lang, other.name, other.name_es)}
+                                    </h3>
+                                    <p className="mt-0.5 text-xs text-muted-foreground truncate">{pickLang(lang, other.tagline, other.tagline_es)}</p>
+                                  </div>
+                                  <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)] flex-shrink-0" />
+                                </Link>
+                              ))}
+                            </div>
+                          </CarouselItem>
+                        );
+                      })}
+                    </CarouselContent>
+                    {data.others.length > 9 && (
+                      <>
+                        <CarouselPrevious className="left-0 -translate-x-1/2" />
+                        <CarouselNext className="right-0 translate-x-1/2" />
+                      </>
+                    )}
+                  </Carousel>
                 </div>
               </section>
             )}
