@@ -361,7 +361,8 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-            )}
+              );
+            }}
           />
         )}
       </div>
