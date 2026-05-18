@@ -665,7 +665,25 @@ function ItemEditor({
         <LabeledInput label="Duration" value={duration} onChange={setDuration} placeholder="8 min read" />
       </div>
       <div>
-        <LabeledInput label="URL (optional)" value={url} onChange={setUrl} placeholder="https://…" type="url" />
+        <label className="block">
+          <span className="text-sm font-medium">URL (optional)</span>
+          <input
+            type="url"
+            placeholder="https://…"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onBlur={async (e) => {
+              const v = e.target.value.trim();
+              if (!v) return;
+              const kind = mediaKindFor(type, v, null);
+              if (!kind) return;
+              const seconds = await probeMediaDuration(v, kind);
+              const formatted = formatMediaDuration(seconds);
+              if (formatted) setDuration(formatted);
+            }}
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          />
+        </label>
         <div className="mt-2">
           <FileUploader
             onUploaded={async (u, name) => {
