@@ -4,7 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { generateCategoryCopy } from "@/lib/category-ai.functions";
 
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
@@ -118,6 +120,28 @@ function CategoryEditor({
     if (category.name_es || category.tagline_es || category.description_es) setShowEs(true);
   }, [category]);
 
+  const generate = useServerFn(generateCategoryCopy);
+  const [generating, setGenerating] = useState(false);
+
+  async function handleAutoGenerate() {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast.error("Enter a name first");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const result = await generate({ data: { name: trimmed } });
+      if (result.tagline) setTagline(result.tagline);
+      if (result.description) setDescription(result.description);
+      toast.success("Generated tagline and description");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to generate");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   return (
     <section className="mt-6 rounded-2xl border border-border bg-card p-6">
       <h1 className="font-display text-2xl font-semibold">Edit category</h1>
@@ -141,6 +165,18 @@ function CategoryEditor({
         <div className="grid sm:grid-cols-2 gap-4">
           <LabeledInput label="Name" value={name} onChange={setName} />
           <LabeledInput label="Slug" value={slug} onChange={(v) => setSlug(slugify(v))} />
+        </div>
+        <div>
+          <button
+            type="button"
+            onClick={handleAutoGenerate}
+            disabled={generating || !name.trim()}
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+          >
+            <Sparkles className="h-4 w-4" />
+            {generating ? "Generating…" : "Auto-generate tagline & description"}
+          </button>
+          <p className="mt-1 text-xs text-muted-foreground">Uses the Name to draft copy. You can edit the result.</p>
         </div>
         <LabeledInput label="Tagline" value={tagline} onChange={setTagline} />
         <label className="block">
