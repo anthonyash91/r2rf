@@ -249,13 +249,15 @@ function ContentManager({ categoryId, items, initialEditId }: { categoryId: stri
   useEffect(() => {
     if (!initialEditId) return;
     const target = items.find((it) => it.id === initialEditId);
-    if (target) {
-      setEditing(target);
-      setTimeout(() => {
-        editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 50);
-    }
+    if (target) setEditing(target);
   }, [initialEditId, items]);
+  useEffect(() => {
+    if (!editing) return;
+    const t = setTimeout(() => {
+      editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+    return () => clearTimeout(t);
+  }, [editing]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin", "category", categoryId] });
