@@ -787,10 +787,9 @@ function ItemEditor({
             onClick={() => {
               setShowEs(true);
               runAddEs(
-                { title, source, description },
+                { title, description },
                 (t) => {
                   if (t.title) setTitleEs(t.title);
-                  if (t.source) setSourceEs(t.source);
                   if (t.description) setDescriptionEs(t.description);
                 },
                 "Content item metadata in a learning library",
