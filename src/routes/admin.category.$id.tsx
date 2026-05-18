@@ -169,6 +169,7 @@ function CategoryEditor({
               <FileUploader
                 label={iconUrl ? "Replace icon" : "Upload icon"}
                 mimeTypes={["image/*"]}
+                existingFileUrl={iconUrl}
                 onUploaded={(u) => setIconUrl(u)}
               />
               {iconUrl && (
