@@ -19,6 +19,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [signedUp, setSignedUp] = useState(false);
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/admin" });
@@ -36,6 +37,7 @@ function AuthPage() {
         });
         if (error) throw error;
         toast.success(t("auth.created"));
+        setSignedUp(true);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -52,50 +54,61 @@ function AuthPage() {
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <main className="flex-1 mx-auto w-full max-w-md px-6 py-16">
-        <h1 className="font-display text-3xl font-semibold">
-          {mode === "sign-in" ? t("auth.signIn") : t("auth.createAccount")}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {t("auth.subtitle")}
-        </p>
+        {signedUp ? (
+          <>
+            <h1 className="font-display text-3xl font-semibold">{t("auth.createAccount")}</h1>
+            <div className="mt-8 rounded-md border border-border bg-muted/40 p-6 text-sm">
+              Your account has been created. Please verify your account using the email we sent you.
+            </div>
+          </>
+        ) : (
+          <>
+            <h1 className="font-display text-3xl font-semibold">
+              {mode === "sign-in" ? t("auth.signIn") : t("auth.createAccount")}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {t("auth.subtitle")}
+            </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-          <div>
-            <label className="text-sm font-medium">{t("auth.email")}</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium">{t("auth.password")}</label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-          >
-            {busy ? "…" : mode === "sign-in" ? t("auth.signIn") : t("auth.createAccount")}
-          </button>
-        </form>
+            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+              <div>
+                <label className="text-sm font-medium">{t("auth.email")}</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">{t("auth.password")}</label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={busy}
+                className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              >
+                {busy ? "…" : mode === "sign-in" ? t("auth.signIn") : t("auth.createAccount")}
+              </button>
+            </form>
 
-        <button
-          onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
-          className="mt-4 text-sm text-muted-foreground hover:text-foreground"
-        >
-          {mode === "sign-in" ? t("auth.toggleToSignUp") : t("auth.toggleToSignIn")}
-        </button>
+            <button
+              onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
+              className="mt-4 text-sm text-muted-foreground hover:text-foreground"
+            >
+              {mode === "sign-in" ? t("auth.toggleToSignUp") : t("auth.toggleToSignIn")}
+            </button>
+          </>
+        )}
 
         <p className="mt-8 text-xs text-muted-foreground">
           {t("auth.note")}
