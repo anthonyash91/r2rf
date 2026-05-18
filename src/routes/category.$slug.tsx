@@ -264,7 +264,7 @@ function CategoryPage() {
               <section className="mx-auto max-w-5xl px-6 pb-20">
                 <div className="border-t border-border/60 pt-20">
                   <h2 className="font-display text-xl font-semibold mb-6">{t("category.exploreOthers")}</h2>
-                  <Carousel opts={{ align: "start", loop: false }} className="relative">
+                  <Carousel opts={{ align: "start", loop: false }} className="relative px-10 sm:px-14 lg:px-16">
                     <CarouselContent>
                       {Array.from({ length: Math.ceil(data.others.length / 9) }).map((_, slideIdx) => {
                         const slide = data.others.slice(slideIdx * 9, slideIdx * 9 + 9);
@@ -303,8 +303,8 @@ function CategoryPage() {
                     </CarouselContent>
                     {data.others.length > 9 && (
                       <>
-                        <CarouselPrevious className="left-0 -translate-x-[150%]" />
-                        <CarouselNext className="right-0 translate-x-[150%]" />
+                        <CarouselPrevious className="left-0" />
+                        <CarouselNext className="right-0" />
                       </>
                     )}
                   </Carousel>
