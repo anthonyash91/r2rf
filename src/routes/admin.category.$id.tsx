@@ -357,14 +357,20 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
                       <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>
                     )}
                     <h3 className="font-medium truncate">{item.title}</h3>
-                    {itemNeedsTranslation(item) && (
-                      <span
-                        title="Missing Spanish translation"
-                        className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
-                      >
-                        <Languages className="h-3 w-3" /> Needs ES
-                      </span>
-                    )}
+                    {(() => {
+                      const s = itemTranslationStatus(item);
+                      if (s === "complete") return null;
+                      const label = s === "missing" ? "Needs ES" : "Partially translated";
+                      const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
+                      return (
+                        <span
+                          title={title}
+                          className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
+                        >
+                          <Languages className="h-3 w-3" /> {label}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{item.source} · {item.duration}</p>
                 </div>
