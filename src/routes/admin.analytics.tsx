@@ -192,11 +192,11 @@ function exportCsv(
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines: string[] = [];
-  lines.push(["Category", "Category slug", "Item title", "Item type", "Views", "Clicks"].join(","));
+  lines.push(["Category", "Category slug", "Item title", "Item type", "Added", "Views", "Clicks"].join(","));
   for (const row of aggregated.rows) {
-    lines.push([esc(row.category.name), esc(row.category.slug), "", "", row.views, row.clicks].join(","));
+    lines.push([esc(row.category.name), esc(row.category.slug), "", "", esc(fmtDate(row.category.created_at)), row.views, row.clicks].join(","));
     for (const { item, clicks } of row.items) {
-      lines.push([esc(row.category.name), esc(row.category.slug), esc(item.title), esc(item.type), "", clicks].join(","));
+      lines.push([esc(row.category.name), esc(row.category.slug), esc(item.title), esc(item.type), esc(fmtDate(item.created_at)), "", clicks].join(","));
     }
   }
   const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
