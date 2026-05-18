@@ -692,10 +692,14 @@ function ItemEditor({
               const v = e.target.value.trim();
               if (!v) return;
               const kind = mediaKindFor(type, v, null);
-              if (!kind) return;
-              const seconds = await probeMediaDuration(v, kind);
-              const formatted = formatMediaDuration(seconds);
-              if (formatted) setDuration(formatted);
+              if (kind) {
+                const seconds = await probeMediaDuration(v, kind);
+                const formatted = formatMediaDuration(seconds);
+                if (formatted) setDuration(formatted);
+                return;
+              }
+              const estimated = await estimateDuration(v, null);
+              if (estimated) setDuration(estimated);
             }}
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />
