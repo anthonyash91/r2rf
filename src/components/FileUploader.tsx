@@ -31,6 +31,10 @@ export function FileUploader({ onUploaded, label = "Upload file to fill URL", mi
         apiKey: data.apiKey,
         maxFileCount: 1,
         showFinishButton: true,
+        path: {
+          folderPath: "/uploads",
+          fileName: "{ORIGINAL_FILE_NAME}{ORIGINAL_FILE_EXT}",
+        },
         ...(mimeTypes ? { mimeTypes } : {}),
       }}
       onComplete={(files) => {
