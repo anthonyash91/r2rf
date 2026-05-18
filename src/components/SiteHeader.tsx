@@ -105,7 +105,7 @@ export function SiteHeader() {
             )}
             {showAuthLink && (user ? (
               <button
-                onClick={() => { setOpen(false); supabase.auth.signOut(); }}
+                onClick={() => { setOpen(false); handleSignOut(); }}
                 className="py-2 text-left hover:text-foreground transition-colors"
               >
                 Sign out
