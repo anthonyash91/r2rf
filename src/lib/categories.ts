@@ -21,6 +21,7 @@ export type Category = {
   name_es: string | null;
   tagline_es: string | null;
   description_es: string | null;
+  created_at?: string;
 };
 
 export type ContentItem = {
