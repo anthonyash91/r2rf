@@ -195,8 +195,7 @@ function Index() {
             </div>
 
             <div className="mt-10 max-w-3xl">
-              <div className="inline-flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-sm sm:text-base font-medium text-foreground">
-                <ArrowUpRight className="h-5 w-5 shrink-0 text-[var(--color-accent)]" />
+              <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm sm:text-base font-medium text-foreground">
                 You can find the certificate program on your tablet home screen inside the Reentry to Recovery folder
               </div>
             </div>
