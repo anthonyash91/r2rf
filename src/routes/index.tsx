@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { useI18n, pickLang } from "@/lib/i18n";
+import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { ArrowUpRight } from "lucide-react";
 
 function useColumnCount() {
