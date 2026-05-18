@@ -32,9 +32,9 @@ export const deleteBytescaleFileIfExists = createServerFn({ method: "POST" })
       headers: { Authorization: `Bearer ${secret}` },
     });
 
-    // 204 = deleted, 404 = didn't exist (both fine)
-    if (res.status === 204 || res.status === 404) {
-      return { deleted: res.status === 204 };
+    // 200/204 = deleted, 404 = didn't exist (all fine)
+    if (res.ok || res.status === 404) {
+      return { deleted: res.ok };
     }
     const body = await res.text().catch(() => "");
     throw new Error(`Bytescale delete failed (${res.status}): ${body}`);
