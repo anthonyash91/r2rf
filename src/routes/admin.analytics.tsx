@@ -219,3 +219,54 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
     </span>
   );
 }
+
+function CategorySection({ row }: { row: AggregatedRow }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 border-b border-border bg-muted/30 text-left hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
+          {row.category.icon_url ? (
+            <img src={row.category.icon_url} alt="" className="h-10 w-10 rounded-lg object-cover border border-border bg-muted flex-shrink-0" />
+          ) : (
+            <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
+          )}
+          <div className="min-w-0">
+            <h2 className="font-display text-lg font-semibold truncate">{row.category.name}</h2>
+            <p className="text-xs text-muted-foreground truncate">/{row.category.slug}</p>
+          </div>
+        </div>
+        <div className="flex gap-2 flex-shrink-0">
+          <Stat icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "view" : "views"} value={row.views} />
+          <Stat icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "click" : "clicks"} value={row.clicks} />
+        </div>
+      </button>
+      {open && (
+        row.items.length === 0 ? (
+          <p className="p-5 text-sm text-muted-foreground">No content items.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {row.items.map(({ item, clicks }) => (
+              <li key={item.id} className="flex items-center gap-3 p-4">
+                <span className="text-xs font-medium rounded-full bg-muted px-2 py-0.5 text-muted-foreground flex-shrink-0">
+                  {item.type}
+                </span>
+                <span className="flex-1 min-w-0 truncate text-sm">{item.title}</span>
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium tabular-nums">
+                  <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
+                  {clicks.toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )
+      )}
+    </section>
+  );
+}
