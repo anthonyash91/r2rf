@@ -8,11 +8,11 @@ import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { ArrowUpRight } from "lucide-react";
 
 function useColumnCount() {
-  const [cols, setCols] = useState(4);
+  const [cols, setCols] = useState(3);
   useEffect(() => {
     const compute = () => {
       const w = window.innerWidth;
-      if (w >= 1024) setCols(4);
+      if (w >= 1024) setCols(3);
       else if (w >= 640) setCols(2);
       else setCols(1);
     };
