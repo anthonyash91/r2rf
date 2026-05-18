@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Shield, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, Shield, ArrowLeft, LogIn } from "lucide-react";
 
 export const Route = createFileRoute("/admin/ip-allowlist")({
   component: AdminIpAllowlistPage,
@@ -19,15 +19,69 @@ type IpRow = {
 const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 
 function AdminIpAllowlistPage() {
+  return (
+    <div>
+      <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> Back to admin
+      </Link>
+      <div className="mt-6">
+        <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+          <Shield className="h-7 w-7" /> IP Allowlists
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Control which IP addresses can reach the site and the login page. Changes take effect within ~30 seconds.
+        </p>
+      </div>
+
+      <div className="mt-8">
+        <AllowlistSection
+          table="ip_allowlist"
+          queryKey={["admin", "ip_allowlist"]}
+          icon={<Shield className="h-5 w-5" />}
+          title="Site allowlist"
+          description="Only requests from these IPs can reach any page on the site."
+          emptyMessage="No IPs allowed — the site is currently inaccessible to everyone."
+        />
+      </div>
+
+      <div className="mt-8">
+        <AllowlistSection
+          table="auth_ip_allowlist"
+          queryKey={["admin", "auth_ip_allowlist"]}
+          icon={<LogIn className="h-5 w-5" />}
+          title="Login / sign-up allowlist"
+          description="Only requests from these IPs can load the /auth page. Applied in addition to the site allowlist."
+          emptyMessage="No IPs allowed — the login page is currently inaccessible to everyone."
+        />
+      </div>
+    </div>
+  );
+}
+
+function AllowlistSection({
+  table,
+  queryKey,
+  icon,
+  title,
+  description,
+  emptyMessage,
+}: {
+  table: "ip_allowlist" | "auth_ip_allowlist";
+  queryKey: readonly unknown[];
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  emptyMessage: string;
+}) {
   const qc = useQueryClient();
   const [ip, setIp] = useState("");
   const [label, setLabel] = useState("");
 
   const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["admin", "ip_allowlist"],
+    queryKey,
     queryFn: async (): Promise<IpRow[]> => {
       const { data, error } = await supabase
-        .from("ip_allowlist")
+        .from(table)
         .select("*")
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -37,26 +91,26 @@ function AdminIpAllowlistPage() {
 
   const addMut = useMutation({
     mutationFn: async (input: { ip_address: string; label: string }) => {
-      const { error } = await supabase.from("ip_allowlist").insert(input);
+      const { error } = await supabase.from(table).insert(input);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("IP added to allowlist");
+      toast.success("IP added");
       setIp("");
       setLabel("");
-      qc.invalidateQueries({ queryKey: ["admin", "ip_allowlist"] });
+      qc.invalidateQueries({ queryKey });
     },
     onError: (e: any) => toast.error(e.message),
   });
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ip_allowlist").delete().eq("id", id);
+      const { error } = await supabase.from(table).delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("IP removed");
-      qc.invalidateQueries({ queryKey: ["admin", "ip_allowlist"] });
+      qc.invalidateQueries({ queryKey });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -72,22 +126,16 @@ function AdminIpAllowlistPage() {
   }
 
   return (
-    <div>
-      <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Back to admin
-      </Link>
-      <div className="mt-6">
-        <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-          <Shield className="h-7 w-7" /> IP Allowlist
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Only requests from these IP addresses can reach the site. Changes take effect within ~30 seconds.
-        </p>
+    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="p-6 border-b border-border">
+        <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+          {icon} {title}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
 
-      <form onSubmit={handleAdd} className="mt-6 rounded-2xl border border-border bg-card p-6">
-        <h2 className="font-display text-lg font-semibold">Add IP address</h2>
-        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto]">
+      <form onSubmit={handleAdd} className="p-6 border-b border-border">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto]">
           <div>
             <label className="text-sm font-medium">IPv4 address</label>
             <input
@@ -117,13 +165,11 @@ function AdminIpAllowlistPage() {
         </div>
       </form>
 
-      <div className="mt-8 rounded-2xl border border-border bg-card overflow-hidden">
+      <div>
         {isLoading ? (
           <div className="p-6 text-muted-foreground">Loading…</div>
         ) : rows.length === 0 ? (
-          <div className="p-6 text-muted-foreground">
-            No IPs allowed — the site is currently inaccessible to everyone.
-          </div>
+          <div className="p-6 text-muted-foreground">{emptyMessage}</div>
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((r) => (
@@ -137,7 +183,7 @@ function AdminIpAllowlistPage() {
                 <button
                   title="Remove"
                   onClick={() => {
-                    if (confirm(`Remove ${r.ip_address} from the allowlist?`)) {
+                    if (confirm(`Remove ${r.ip_address} from this allowlist?`)) {
                       deleteMut.mutate(r.id);
                     }
                   }}
@@ -150,6 +196,6 @@ function AdminIpAllowlistPage() {
           </ul>
         )}
       </div>
-    </div>
+    </section>
   );
 }
