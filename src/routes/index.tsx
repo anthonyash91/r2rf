@@ -142,7 +142,7 @@ function Index() {
 
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-6xl px-6 py-20">
-          <div className="max-w-3xl">
+          <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
               {heroEyebrow}
@@ -176,7 +176,7 @@ function Index() {
 
         <section className="border-t border-border/60">
           <div className="mx-auto max-w-6xl px-6 py-20">
-            <div className="max-w-3xl">
+            <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
                 New Program
@@ -194,7 +194,7 @@ function Index() {
               </p>
             </div>
 
-            <div className="mt-10 max-w-3xl">
+            <div className="mt-10">
               <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm sm:text-base font-medium text-foreground">
                 You can find the certificate program on your tablet home screen inside the Reentry to Recovery folder
               </div>
