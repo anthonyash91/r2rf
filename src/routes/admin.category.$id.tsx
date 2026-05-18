@@ -692,10 +692,14 @@ function ItemEditor({
               const v = e.target.value.trim();
               if (!v) return;
               const kind = mediaKindFor(type, v, null);
-              if (!kind) return;
-              const seconds = await probeMediaDuration(v, kind);
-              const formatted = formatMediaDuration(seconds);
-              if (formatted) setDuration(formatted);
+              if (kind) {
+                const seconds = await probeMediaDuration(v, kind);
+                const formatted = formatMediaDuration(seconds);
+                if (formatted) setDuration(formatted);
+                return;
+              }
+              const estimated = await estimateDuration(v, null);
+              if (estimated) setDuration(estimated);
             }}
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />
@@ -885,19 +889,34 @@ async function estimateDuration(url: string, name: string | null): Promise<strin
   if (AUDIO_EXT.has(ext)) return formatMediaDuration(await probeMediaDuration(url, "audio"));
   if (VIDEO_EXT.has(ext)) return formatMediaDuration(await probeMediaDuration(url, "video"));
   if (ext === "pdf") {
-    try {
-      const res = await fetch(url, { method: "HEAD" });
-      const len = Number(res.headers.get("content-length") ?? 0);
-      if (len > 0) {
-        // ~80 KB per page, ~2 min per page reading time
-        const pages = Math.max(1, Math.round(len / 80_000));
-        const minutes = Math.max(1, pages * 2);
-        if (minutes < 60) return `${minutes} min read`;
-        const h = Math.floor(minutes / 60);
-        const m = minutes % 60;
-        return m ? `${h} hr ${m} min read` : `${h} hr read`;
-      }
-    } catch {}
+    const minutes = await estimatePdfReadMinutes(url);
+    if (minutes > 0) {
+      if (minutes < 60) return `${minutes} min read`;
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return m ? `${h} hr ${m} min read` : `${h} hr read`;
+    }
   }
   return "";
+}
+
+async function estimatePdfReadMinutes(url: string): Promise<number> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return 0;
+    const buf = await res.arrayBuffer();
+    const bytes = buf.byteLength;
+    // Count PDF pages by scanning for "/Type /Page" objects (excluding "/Pages").
+    const text = new TextDecoder("latin1").decode(new Uint8Array(buf));
+    const matches = text.match(/\/Type\s*\/Page(?![s\w])/g);
+    const pages = matches?.length ?? 0;
+    // Reading time: ~2 min/page. Add a small bump for dense/image-heavy PDFs
+    // by ensuring at least ~1 min per 250 KB of file size.
+    const byPages = pages * 2;
+    const bySize = Math.round(bytes / (250 * 1024));
+    const minutes = Math.max(byPages, bySize);
+    return Math.max(1, minutes);
+  } catch {
+    return 0;
+  }
 }
