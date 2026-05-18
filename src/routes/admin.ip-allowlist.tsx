@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Shield } from "lucide-react";
+import { Plus, Trash2, Shield, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/admin/ip-allowlist")({
   component: AdminIpAllowlistPage,
@@ -73,21 +73,16 @@ function AdminIpAllowlistPage() {
 
   return (
     <div>
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-            <Shield className="h-7 w-7" /> IP Allowlist
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Only requests from these IP addresses can reach the site. Changes take effect within ~30 seconds.
-          </p>
-        </div>
-        <Link
-          to="/admin"
-          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-        >
-          Back to admin
-        </Link>
+      <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> Back to admin
+      </Link>
+      <div className="mt-6">
+        <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+          <Shield className="h-7 w-7" /> IP Allowlist
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Only requests from these IP addresses can reach the site. Changes take effect within ~30 seconds.
+        </p>
       </div>
 
       <form onSubmit={handleAdd} className="mt-6 rounded-2xl border border-border bg-card p-6">
