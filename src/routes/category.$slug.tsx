@@ -242,6 +242,7 @@ function CategoryPage() {
                           <Link
                             to="/admin/category/$id"
                             params={{ id: data.category.id }}
+                            search={{ edit: item.id }}
                             title="Edit content"
                             aria-label="Edit content"
                             onClick={(e) => e.stopPropagation()}
