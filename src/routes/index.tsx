@@ -12,7 +12,7 @@ function useColumnCount() {
   useEffect(() => {
     const compute = () => {
       const w = window.innerWidth;
-      if (w >= 1024) setCols(4);
+      if (w >= 1024) setCols(3);
       else if (w >= 640) setCols(2);
       else setCols(1);
     };
