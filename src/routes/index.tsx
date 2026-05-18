@@ -1,10 +1,73 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { useI18n, pickLang } from "@/lib/i18n";
+import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { ArrowUpRight } from "lucide-react";
+
+function useColumnCount() {
+  const [cols, setCols] = useState(4);
+  useEffect(() => {
+    const compute = () => {
+      const w = window.innerWidth;
+      if (w >= 1024) setCols(4);
+      else if (w >= 640) setCols(2);
+      else setCols(1);
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, []);
+  return cols;
+}
+
+function MasonryCategories({ categories, lang }: { categories: Category[]; lang: Language }) {
+  const cols = useColumnCount();
+  const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
+  categories.forEach((c, i) => buckets[i % cols].push({ c, i }));
+  return (
+    <div className="flex gap-5 items-start">
+      {buckets.map((bucket, ci) => (
+        <div key={ci} className="flex-1 flex flex-col gap-5 min-w-0">
+          {bucket.map(({ c, i }) => (
+            <Link
+              key={c.id}
+              to="/category/$slug"
+              params={{ slug: c.slug }}
+              className="group relative flex flex-col rounded-2xl border border-border bg-card p-5 sm:p-6 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
+            >
+              <div className="flex items-start justify-between">
+                <span className="font-display text-sm font-medium text-[var(--color-gold)]">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)]" />
+              </div>
+              <div className="mt-4 flex justify-start">
+                {c.icon_url ? (
+                  <img
+                    src={c.icon_url}
+                    alt=""
+                    className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl object-cover border border-border bg-muted"
+                  />
+                ) : (
+                  <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl border border-dashed border-border bg-muted/40" />
+                )}
+              </div>
+              <div className="mt-3">
+                <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
+                  {pickLang(lang, c.name, c.name_es)}
+                </h3>
+                <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -105,43 +168,10 @@ function Index() {
             </span>
           </div>
 
-          <div className="columns-1 sm:columns-2 lg:columns-4 gap-5 [column-fill:_balance]">
-            {categories.map((c, i) => (
-              <Link
-                key={c.id}
-                to="/category/$slug"
-                params={{ slug: c.slug }}
-                className="group relative mb-5 flex flex-col break-inside-avoid rounded-2xl border border-border bg-card p-5 sm:p-6 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
-              >
-                <div className="flex items-start justify-between">
-                  <span className="font-display text-sm font-medium text-[var(--color-gold)]">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)]" />
-                </div>
-                <div className="mt-4 flex justify-start">
-                  {c.icon_url ? (
-                    <img
-                      src={c.icon_url}
-                      alt=""
-                      className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl object-cover border border-border bg-muted"
-                    />
-                  ) : (
-                    <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl border border-dashed border-border bg-muted/40" />
-                  )}
-                </div>
-                <div className="mt-3">
-                  <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
-                    {pickLang(lang, c.name, c.name_es)}
-                  </h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
-                </div>
-              </Link>
-            ))}
-            {!isLoading && categories.length === 0 && (
-              <p className="text-muted-foreground col-span-full">{t("home.empty")}</p>
-            )}
-          </div>
+          <MasonryCategories categories={categories} lang={lang} />
+          {!isLoading && categories.length === 0 && (
+            <p className="text-muted-foreground">{t("home.empty")}</p>
+          )}
         </section>
       </main>
 
