@@ -21,6 +21,7 @@ type UserRow = {
   email: string;
   created_at: string;
   last_sign_in_at: string | null;
+  email_confirmed_at: string | null;
   roles: string[];
 };
 
@@ -165,6 +166,15 @@ function UserItem({
               {isAdmin && (
                 <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary border border-primary/30">
                   <Shield className="h-3 w-3" /> admin
+                </span>
+              )}
+              {user.email_confirmed_at ? (
+                <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-600 border border-emerald-500/30">
+                  Verified
+                </span>
+              ) : (
+                <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-amber-500/10 px-2 py-0.5 text-amber-600 border border-amber-500/30">
+                  Unverified
                 </span>
               )}
             </div>
