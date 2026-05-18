@@ -141,7 +141,7 @@ function Index() {
       <SiteHeader />
 
       <section className="border-b border-border/60">
-        <div className="mx-auto max-w-6xl px-6 pt-20 pb-16">
+        <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
@@ -160,7 +160,7 @@ function Index() {
       </section>
 
       <main className="flex-1">
-        <section className="mx-auto max-w-6xl px-6 py-6" id="categories">
+        <section className="mx-auto max-w-6xl px-6 py-20" id="categories">
           <div className="flex items-end justify-between mb-8">
             <h2 className="font-display text-2xl font-semibold">{t("home.categories")}</h2>
             <span className="text-sm text-muted-foreground">
@@ -175,7 +175,7 @@ function Index() {
         </section>
 
         <section className="border-t border-border/60">
-          <div className="mx-auto max-w-6xl px-6 pt-20 pb-24">
+          <div className="mx-auto max-w-6xl px-6 py-20">
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />

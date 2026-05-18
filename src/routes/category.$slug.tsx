@@ -107,7 +107,7 @@ function CategoryPage() {
       {data && (
         <>
           <section className="border-b border-border/60 bg-gradient-to-b from-[var(--color-secondary)] to-background">
-            <div className="mx-auto max-w-5xl px-6 pt-12 pb-16">
+            <div className="mx-auto max-w-5xl px-6 py-20">
               <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowLeft className="h-4 w-4" /> {t("category.allCategories")}
               </Link>
@@ -129,7 +129,7 @@ function CategoryPage() {
           </section>
 
           <main className="flex-1">
-            <section className="mx-auto max-w-5xl px-6 py-12">
+            <section className="mx-auto max-w-5xl px-6 py-20">
               <h2 className="font-display text-xl font-semibold mb-6">{data.items.length} {data.items.length === 1 ? t("category.resource") : t("category.resources")}</h2>
               {data.items.length === 0 ? (
                 <p className="text-muted-foreground">{t("category.noContent")}</p>
@@ -235,8 +235,8 @@ function CategoryPage() {
             </section>
 
             {data.others.length > 0 && (
-              <section className="mx-auto max-w-5xl px-6 pb-12">
-                <div className="border-t border-border/60 pt-12">
+              <section className="mx-auto max-w-5xl px-6 pb-20">
+                <div className="border-t border-border/60 pt-20">
                   <h2 className="font-display text-xl font-semibold mb-6">{t("category.exploreOthers")}</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {data.others.map((other) => (
