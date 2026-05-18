@@ -344,12 +344,20 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
               return (
               <div className={`flex items-center gap-3 p-4 transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-medium rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{item.type}</span>
                     {!item.published && (
                       <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>
                     )}
                     <h3 className="font-medium truncate">{item.title}</h3>
+                    {itemNeedsTranslation(item) && (
+                      <span
+                        title="Missing Spanish translation"
+                        className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
+                      >
+                        <Languages className="h-3 w-3" /> Needs ES
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{item.source} · {item.duration}</p>
                 </div>
