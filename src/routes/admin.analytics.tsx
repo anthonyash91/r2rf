@@ -183,6 +183,13 @@ type AggregatedRow = {
   items: { item: ContentItem; clicks: number }[];
 };
 
+function fmtDate(iso?: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
 function exportCsv(
   aggregated: { rows: AggregatedRow[]; totalViews: number; totalClicks: number },
   range: RangeKey,
