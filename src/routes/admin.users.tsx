@@ -58,7 +58,7 @@ function AdminUsersPage() {
     onError: (e: any) => toast.error(e.message),
   });
   const roleMut = useMutation({
-    mutationFn: (input: { userId: string; role: "admin"; enabled: boolean }) => setRole({ data: input }),
+    mutationFn: (input: { userId: string; role: "admin" | "contributor"; enabled: boolean }) => setRole({ data: input }),
     onSuccess: () => { toast.success("Role updated"); invalidate(); },
     onError: (e: any) => toast.error(e.message),
   });
