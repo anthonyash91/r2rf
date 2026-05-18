@@ -472,11 +472,13 @@ function ContentManager({ categoryId, categoryName, items, initialEditId }: { ca
 
 function ItemEditor({
   item,
+  categoryName,
   onCancel,
   onSave,
   busy,
 }: {
   item: ContentItem | null;
+  categoryName: string;
   onCancel: () => void;
   onSave: (v: Partial<ContentItem> & { id?: string }) => void;
   busy: boolean;
