@@ -159,16 +159,26 @@ export const translateToSpanish = createServerFn({ method: "POST" })
 
     const json = await res.json();
     const content = json?.choices?.[0]?.message?.content ?? "{}";
-    let parsed: { fields?: Record<string, unknown> } = {};
+    let parsed: any = {};
     try {
       parsed = JSON.parse(content);
     } catch {
       parsed = {};
     }
+    // Accept either {fields: {...}} or a flat {...} object keyed by field names.
+    const source: Record<string, unknown> =
+      parsed && typeof parsed === "object" && parsed.fields && typeof parsed.fields === "object"
+        ? parsed.fields
+        : parsed && typeof parsed === "object"
+          ? parsed
+          : {};
     const out: Record<string, string> = {};
     for (const key of Object.keys(payload)) {
-      const v = parsed.fields?.[key];
-      if (typeof v === "string") out[key] = v.trim();
+      const v = source[key];
+      if (typeof v === "string" && v.trim()) out[key] = v.trim();
+    }
+    if (Object.keys(out).length === 0) {
+      console.error("translateToSpanish: empty result", { content });
     }
     return { fields: out };
   });
