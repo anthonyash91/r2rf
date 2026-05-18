@@ -16,6 +16,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AdminIpAllowlistRouteImport } from './routes/admin.ip-allowlist'
 import { Route as AdminHomeRouteImport } from './routes/admin.home'
+import { Route as AdminCertificateRouteImport } from './routes/admin.certificate'
 import { Route as AdminCategoryIdRouteImport } from './routes/admin.category.$id'
 
 const AuthRoute = AuthRouteImport.update({
@@ -53,6 +54,11 @@ const AdminHomeRoute = AdminHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCertificateRoute = AdminCertificateRouteImport.update({
+  id: '/certificate',
+  path: '/certificate',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCategoryIdRoute = AdminCategoryIdRouteImport.update({
   id: '/category/$id',
   path: '/category/$id',
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/admin/certificate': typeof AdminCertificateRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin/certificate': typeof AdminCertificateRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/admin/certificate': typeof AdminCertificateRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/admin/certificate'
     | '/admin/home'
     | '/admin/ip-allowlist'
     | '/category/$slug'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/admin/certificate'
     | '/admin/home'
     | '/admin/ip-allowlist'
     | '/category/$slug'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/admin/certificate'
     | '/admin/home'
     | '/admin/ip-allowlist'
     | '/category/$slug'
@@ -179,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminHomeRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/certificate': {
+      id: '/admin/certificate'
+      path: '/certificate'
+      fullPath: '/admin/certificate'
+      preLoaderRoute: typeof AdminCertificateRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/category/$id': {
       id: '/admin/category/$id'
       path: '/category/$id'
@@ -190,6 +209,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminCertificateRoute: typeof AdminCertificateRoute
   AdminHomeRoute: typeof AdminHomeRoute
   AdminIpAllowlistRoute: typeof AdminIpAllowlistRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -197,6 +217,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminCertificateRoute: AdminCertificateRoute,
   AdminHomeRoute: AdminHomeRoute,
   AdminIpAllowlistRoute: AdminIpAllowlistRoute,
   AdminIndexRoute: AdminIndexRoute,

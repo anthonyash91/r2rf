@@ -102,6 +102,30 @@ const DEFAULT_HERO: HomeHero = {
   subheading: "Pick a category to explore guides, videos, worksheets, and meetings — vetted and organized for the moments that matter.",
 };
 
+type CertHero = {
+  eyebrow: string;
+  heading_prefix: string;
+  heading_emphasis: string;
+  heading_suffix: string;
+  subheading: string;
+  callout: string;
+  eyebrow_es?: string;
+  heading_prefix_es?: string;
+  heading_emphasis_es?: string;
+  heading_suffix_es?: string;
+  subheading_es?: string;
+  callout_es?: string;
+};
+
+const DEFAULT_CERT: CertHero = {
+  eyebrow: "New Program",
+  heading_prefix: "Earn certificates that",
+  heading_emphasis: "change",
+  heading_suffix: "the road ahead.",
+  subheading: "The Reentry to Recovery Certificate Program offers coursework designed for incarcerated learners — recognized credentials that may help shorten sentences, satisfy probationary requirements, and build the skills that carry forward into recovery, work, and family life.",
+  callout: "You can find the certificate program on your tablet home screen inside the Reentry to Recovery folder",
+};
+
 function Index() {
   const { t, lang } = useI18n();
   const { data: categories = [], isLoading } = useQuery({
@@ -129,6 +153,26 @@ function Index() {
       return { ...DEFAULT_HERO, ...((data?.value as Partial<HomeHero>) ?? {}) };
     },
   });
+
+  const { data: cert = DEFAULT_CERT } = useQuery({
+    queryKey: ["site_settings", "certificate_hero"],
+    queryFn: async (): Promise<CertHero> => {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "certificate_hero")
+        .maybeSingle();
+      if (error) throw error;
+      return { ...DEFAULT_CERT, ...((data?.value as Partial<CertHero>) ?? {}) };
+    },
+  });
+
+  const certEyebrow = pickLang(lang, cert.eyebrow, cert.eyebrow_es);
+  const certPrefix = pickLang(lang, cert.heading_prefix, cert.heading_prefix_es);
+  const certEmphasis = pickLang(lang, cert.heading_emphasis, cert.heading_emphasis_es);
+  const certSuffix = pickLang(lang, cert.heading_suffix, cert.heading_suffix_es);
+  const certSubheading = pickLang(lang, cert.subheading, cert.subheading_es);
+  const certCallout = pickLang(lang, cert.callout, cert.callout_es);
 
   const heroEyebrow = pickLang(lang, hero.eyebrow, hero.eyebrow_es);
   const heroPrefix = pickLang(lang, hero.heading_prefix, hero.heading_prefix_es);
@@ -179,24 +223,21 @@ function Index() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                New Program
+                {certEyebrow}
               </div>
               <h2 className="mt-6 font-display text-5xl sm:text-6xl font-bold tracking-tight text-foreground">
-                Earn certificates that{" "}
-                <span className="italic text-[var(--color-accent)]">change</span>{" "}
-                the road ahead.
+                {certPrefix}{" "}
+                <span className="italic text-[var(--color-accent)]">{certEmphasis}</span>{" "}
+                {certSuffix}
               </h2>
               <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-                The Reentry to Recovery Certificate Program offers coursework designed for
-                incarcerated learners — recognized credentials that may help shorten sentences,
-                satisfy probationary requirements, and build the skills that carry forward into
-                recovery, work, and family life.
+                {certSubheading}
               </p>
             </div>
 
             <div className="mt-10">
               <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm sm:text-base font-medium text-foreground">
-                You can find the certificate program on your tablet home screen inside the Reentry to Recovery folder
+                {certCallout}
               </div>
             </div>
           </div>

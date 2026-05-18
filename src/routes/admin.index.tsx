@@ -126,6 +126,12 @@ function AdminCategoriesPage() {
           >
             Edit home header
           </Link>
+          <Link
+            to="/admin/certificate"
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            Edit certificate section
+          </Link>
           <button
             onClick={() => setCreating(true)}
             className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
