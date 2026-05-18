@@ -6,8 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/use-auth";
 
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
@@ -50,6 +51,7 @@ const typeStyles: Record<string, string> = {
 function CategoryPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
+  const { isAdmin } = useAuth();
   const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
   const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
@@ -187,7 +189,7 @@ function CategoryPage() {
                               : null;
 
                     return (
-                      <li key={item.id}>
+                      <li key={item.id} className="relative">
                         <Wrapper
                           {...wrapperProps}
                           className="w-full text-left flex flex-col sm:flex-row sm:items-start gap-4 p-6 hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
@@ -236,6 +238,18 @@ function CategoryPage() {
                             {source && <p className="mt-2 text-xs text-muted-foreground/80">{t("category.source")} · {source}</p>}
                           </div>
                         </Wrapper>
+                        {isAdmin && (
+                          <Link
+                            to="/admin/category/$id"
+                            params={{ id: data.category.id }}
+                            title="Edit content"
+                            aria-label="Edit content"
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-md border border-border bg-background/90 backdrop-blur px-2 py-1 text-xs font-medium text-foreground hover:bg-muted hover:border-[var(--color-accent)] shadow-sm"
+                          >
+                            <Pencil className="h-3.5 w-3.5" /> Edit
+                          </Link>
+                        )}
                       </li>
                     );
                   })}

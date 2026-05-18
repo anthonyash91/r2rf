@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, type Language } from "@/lib/i18n";
-import { ArrowUpRight } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { ArrowUpRight, Pencil } from "lucide-react";
 
 function useColumnCount() {
   const [cols, setCols] = useState(3);
@@ -25,6 +26,7 @@ function useColumnCount() {
 
 function MasonryCategories({ categories, lang }: { categories: Category[]; lang: Language }) {
   const cols = useColumnCount();
+  const { isAdmin } = useAuth();
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
   categories.forEach((c, i) => buckets[i % cols].push({ c, i }));
   return (
@@ -32,36 +34,48 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
       {buckets.map((bucket, ci) => (
         <div key={ci} className="flex-1 flex flex-col gap-9 min-w-0">
           {bucket.map(({ c, i }) => (
-            <Link
-              key={c.id}
-              to="/category/$slug"
-              params={{ slug: c.slug }}
-              className="group relative flex flex-col rounded-2xl border border-border bg-card p-7 sm:p-8 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
-            >
-              <div className="flex items-start justify-between">
-                <span className="font-display text-sm font-medium text-[var(--color-gold)]">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)]" />
-              </div>
-              <div className="mt-4 flex justify-start">
-                {c.icon_url ? (
-                  <img
-                    src={c.icon_url}
-                    alt=""
-                    className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl object-cover border border-border bg-muted"
-                  />
-                ) : (
-                  <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl border border-dashed border-border bg-muted/40" />
-                )}
-              </div>
-              <div className="mt-3">
-                <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
-                  {pickLang(lang, c.name, c.name_es)}
-                </h3>
-                <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
-              </div>
-            </Link>
+            <div key={c.id} className="relative">
+              <Link
+                to="/category/$slug"
+                params={{ slug: c.slug }}
+                className="group relative flex flex-col rounded-2xl border border-border bg-card p-7 sm:p-8 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
+              >
+                <div className="flex items-start justify-between">
+                  <span className="font-display text-sm font-medium text-[var(--color-gold)]">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)]" />
+                </div>
+                <div className="mt-4 flex justify-start">
+                  {c.icon_url ? (
+                    <img
+                      src={c.icon_url}
+                      alt=""
+                      className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl object-cover border border-border bg-muted"
+                    />
+                  ) : (
+                    <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl border border-dashed border-border bg-muted/40" />
+                  )}
+                </div>
+                <div className="mt-3">
+                  <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
+                    {pickLang(lang, c.name, c.name_es)}
+                  </h3>
+                  <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
+                </div>
+              </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin/category/$id"
+                  params={{ id: c.id }}
+                  title="Edit category"
+                  aria-label="Edit category"
+                  className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-md border border-border bg-background/90 backdrop-blur px-2 py-1 text-xs font-medium text-foreground hover:bg-muted hover:border-[var(--color-accent)] shadow-sm"
+                >
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </Link>
+              )}
+            </div>
           ))}
         </div>
       ))}
