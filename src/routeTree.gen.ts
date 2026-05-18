@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminIpAllowlistRouteImport } from './routes/admin.ip-allowlist'
 import { Route as AdminHomeRouteImport } from './routes/admin.home'
 import { Route as AdminCertificateRouteImport } from './routes/admin.certificate'
@@ -44,6 +45,11 @@ const CategorySlugRoute = CategorySlugRouteImport.update({
   id: '/category/$slug',
   path: '/category/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminIpAllowlistRoute = AdminIpAllowlistRouteImport.update({
   id: '/ip-allowlist',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
+  '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
+  '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
+  '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/admin/certificate'
     | '/admin/home'
     | '/admin/ip-allowlist'
+    | '/admin/users'
     | '/category/$slug'
     | '/admin/'
     | '/admin/category/$id'
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/admin/certificate'
     | '/admin/home'
     | '/admin/ip-allowlist'
+    | '/admin/users'
     | '/category/$slug'
     | '/admin'
     | '/admin/category/$id'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/admin/certificate'
     | '/admin/home'
     | '/admin/ip-allowlist'
+    | '/admin/users'
     | '/category/$slug'
     | '/admin/'
     | '/admin/category/$id'
@@ -189,6 +201,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CategorySlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/ip-allowlist': {
       id: '/admin/ip-allowlist'
       path: '/ip-allowlist'
@@ -232,6 +251,7 @@ interface AdminRouteChildren {
   AdminCertificateRoute: typeof AdminCertificateRoute
   AdminHomeRoute: typeof AdminHomeRoute
   AdminIpAllowlistRoute: typeof AdminIpAllowlistRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminCategoryIdRoute: typeof AdminCategoryIdRoute
 }
@@ -241,6 +261,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCertificateRoute: AdminCertificateRoute,
   AdminHomeRoute: AdminHomeRoute,
   AdminIpAllowlistRoute: AdminIpAllowlistRoute,
+  AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminCategoryIdRoute: AdminCategoryIdRoute,
 }
@@ -256,3 +277,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
