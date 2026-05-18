@@ -10,19 +10,21 @@ export const Route = createFileRoute("/admin")({
     if (!session?.user) {
       throw redirect({ to: "/auth", search: { redirect: location.href } });
     }
-    const { data: roleRow } = await supabase
+    const { data: roleRows } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", session.user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-    return { isAdminPreloaded: !!roleRow };
+      .eq("user_id", session.user.id);
+    const roles = (roleRows ?? []).map((r: any) => r.role as string);
+    return {
+      isAdminPreloaded: roles.includes("admin"),
+      isContributorPreloaded: roles.includes("contributor"),
+    };
   },
   component: AdminLayout,
 });
 
 function AdminLayout() {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, canAccessAdmin, loading } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -30,12 +32,12 @@ function AdminLayout() {
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-10">
         {loading || !user ? (
           <p className="text-muted-foreground">Loading…</p>
-        ) : !isAdmin ? (
+        ) : !canAccessAdmin ? (
           <div className="rounded-2xl border border-border bg-card p-8">
             <h1 className="font-display text-2xl font-semibold">Admin access required</h1>
             <p className="mt-2 text-muted-foreground">
               You're signed in as <span className="font-medium text-foreground">{user.email}</span>,
-              but your account doesn't have the <code>admin</code> role.
+              but your account doesn't have an admin or contributor role.
             </p>
             <Link to="/" className="mt-6 inline-block text-sm text-[var(--color-accent)] underline">
               Back to site
