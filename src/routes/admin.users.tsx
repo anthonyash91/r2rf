@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,6 +14,7 @@ import {
 } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/admin/users")({
+  beforeLoad: requireAdminBeforeLoad,
   component: AdminUsersPage,
 });
 
@@ -56,7 +58,7 @@ function AdminUsersPage() {
     onError: (e: any) => toast.error(e.message),
   });
   const roleMut = useMutation({
-    mutationFn: (input: { userId: string; role: "admin"; enabled: boolean }) => setRole({ data: input }),
+    mutationFn: (input: { userId: string; role: "admin" | "contributor"; enabled: boolean }) => setRole({ data: input }),
     onSuccess: () => { toast.success("Role updated"); invalidate(); },
     onError: (e: any) => toast.error(e.message),
   });
@@ -90,6 +92,7 @@ function AdminUsersPage() {
                 onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
                 onSendReset={() => resetMut.mutate({ email: u.email })}
                 onToggleAdmin={(enabled) => roleMut.mutate({ userId: u.id, role: "admin", enabled })}
+                onToggleContributor={(enabled) => roleMut.mutate({ userId: u.id, role: "contributor", enabled })}
               />
             ))}
           </ul>
@@ -105,12 +108,14 @@ function UserItem({
   onSetPassword,
   onSendReset,
   onToggleAdmin,
+  onToggleContributor,
 }: {
   user: UserRow;
   onChangeEmail: (email: string) => void;
   onSetPassword: (password: string) => void;
   onSendReset: () => void;
   onToggleAdmin: (enabled: boolean) => void;
+  onToggleContributor: (enabled: boolean) => void;
 }) {
   const [editingEmail, setEditingEmail] = useState(false);
   const [emailDraft, setEmailDraft] = useState(user.email);
@@ -118,6 +123,7 @@ function UserItem({
   const [pw, setPw] = useState("");
 
   const isAdmin = user.roles.includes("admin");
+  const isContributor = user.roles.includes("contributor");
 
   return (
     <li className="p-4 sm:p-5">
@@ -168,6 +174,11 @@ function UserItem({
                   <Shield className="h-3 w-3" /> admin
                 </span>
               )}
+              {isContributor && (
+                <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-sky-500/10 px-2 py-0.5 text-sky-600 border border-sky-500/30">
+                  <Shield className="h-3 w-3" /> contributor
+                </span>
+              )}
               {user.email_confirmed_at ? (
                 <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-600 border border-emerald-500/30">
                   Verified
@@ -211,6 +222,17 @@ function UserItem({
           >
             {isAdmin ? <ShieldOff className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
             {isAdmin ? "Revoke admin" : "Make admin"}
+          </button>
+          <button
+            onClick={() => onToggleContributor(!isContributor)}
+            className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium ${
+              isContributor
+                ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                : "border-input bg-background hover:bg-muted"
+            }`}
+          >
+            {isContributor ? <ShieldOff className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
+            {isContributor ? "Revoke contributor" : "Make contributor"}
           </button>
         </div>
       </div>

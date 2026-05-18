@@ -9,7 +9,7 @@ import { isAuthIpAllowed } from "@/lib/auth-ip.functions";
 import { Languages, Menu, X } from "lucide-react";
 
 export function SiteHeader() {
-  const { user, isAdmin } = useAuth();
+  const { user, canAccessAdmin } = useAuth();
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
   const checkAuthIp = useServerFn(isAuthIpAllowed);
@@ -41,7 +41,7 @@ export function SiteHeader() {
           <Link to="/" className="hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
             {t("nav.categories")}
           </Link>
-          {isAdmin && (
+          {canAccessAdmin && (
             <Link to="/admin" className="hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
               {t("nav.admin")}
             </Link>
@@ -93,7 +93,7 @@ export function SiteHeader() {
             <Link to="/" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
               {t("nav.categories")}
             </Link>
-            {isAdmin && (
+            {canAccessAdmin && (
               <Link to="/admin" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
                 {t("nav.admin")}
               </Link>

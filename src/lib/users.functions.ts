@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-type Role = "admin";
+type Role = "admin" | "contributor";
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", {
@@ -108,7 +108,7 @@ export const setUserRole = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        role: z.literal("admin"),
+        role: z.enum(["admin", "contributor"]),
         enabled: z.boolean(),
       })
       .parse(input),
