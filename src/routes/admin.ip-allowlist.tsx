@@ -19,6 +19,39 @@ type IpRow = {
 const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 
 function AdminIpAllowlistPage() {
+  const qc = useQueryClient();
+  const [ip, setIp] = useState("");
+  const [label, setLabel] = useState("");
+
+  const addBothMut = useMutation({
+    mutationFn: async (input: { ip_address: string; label: string }) => {
+      const [a, b] = await Promise.all([
+        supabase.from("ip_allowlist").insert(input),
+        supabase.from("auth_ip_allowlist").insert(input),
+      ]);
+      if (a.error) throw a.error;
+      if (b.error) throw b.error;
+    },
+    onSuccess: () => {
+      toast.success("IP added to both allowlists");
+      setIp("");
+      setLabel("");
+      qc.invalidateQueries({ queryKey: ["admin", "ip_allowlist"] });
+      qc.invalidateQueries({ queryKey: ["admin", "auth_ip_allowlist"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  function handleAddBoth(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = ip.trim();
+    if (!IP_REGEX.test(trimmed)) {
+      toast.error("Enter a valid IPv4 address");
+      return;
+    }
+    addBothMut.mutate({ ip_address: trimmed, label: label.trim() });
+  }
+
   return (
     <div>
       <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -32,6 +65,45 @@ function AdminIpAllowlistPage() {
           Control which IP addresses can reach the site and the login page. Changes take effect within ~30 seconds.
         </p>
       </div>
+
+      <section className="mt-8 rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="p-6 border-b border-border">
+          <h2 className="font-display text-xl font-semibold">Add to both allowlists</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Adds the IP to the site allowlist and the login / sign-up allowlist in one step.
+          </p>
+        </div>
+        <form onSubmit={handleAddBoth} className="p-6">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto]">
+            <div>
+              <label className="text-sm font-medium">IPv4 address</label>
+              <input
+                required
+                value={ip}
+                onChange={(e) => setIp(e.target.value)}
+                placeholder="192.168.1.1"
+                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Label (optional)</label>
+              <input
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="Office"
+                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={addBothMut.isPending}
+              className="self-end inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            >
+              <Plus className="h-4 w-4" /> Add to both
+            </button>
+          </div>
+        </form>
+      </section>
 
       <div className="mt-8">
         <AllowlistSection
