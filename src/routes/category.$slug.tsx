@@ -153,6 +153,7 @@ function CategoryPage() {
                       if (mediaKind === "video") setVideoPlayer(payload);
                       else if (mediaKind === "audio") setAudioPlayer(payload);
                       else if (mediaKind === "pdf") setPdfViewer(payload);
+                      else if (mediaKind === "image") setImageViewer(payload);
                     };
 
                     let Wrapper: any = "div";
