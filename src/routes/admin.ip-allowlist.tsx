@@ -267,6 +267,34 @@ function AllowlistSection({
         </div>
       </form>
 
+      {allowBulk && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            bulkMut.mutate(bulk);
+          }}
+          className="p-6 border-b border-border"
+        >
+          <label className="text-sm font-medium">Bulk add (one IPv4 address per line)</label>
+          <textarea
+            value={bulk}
+            onChange={(e) => setBulk(e.target.value)}
+            rows={5}
+            placeholder={"192.168.1.1\n10.0.0.42\n203.0.113.7"}
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+          />
+          <div className="mt-3 flex justify-end">
+            <button
+              type="submit"
+              disabled={bulkMut.isPending || bulk.trim() === ""}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            >
+              <Plus className="h-4 w-4" /> Add all
+            </button>
+          </div>
+        </form>
+      )}
+
       <div>
         {isLoading ? (
           <div className="p-6 text-muted-foreground">Loading…</div>
