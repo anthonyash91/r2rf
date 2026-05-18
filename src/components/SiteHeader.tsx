@@ -9,7 +9,7 @@ import { isAuthIpAllowed } from "@/lib/auth-ip.functions";
 import { Languages, Menu, X } from "lucide-react";
 
 export function SiteHeader() {
-  const { user, isAdmin } = useAuth();
+  const { user, canAccessAdmin } = useAuth();
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
   const checkAuthIp = useServerFn(isAuthIpAllowed);
