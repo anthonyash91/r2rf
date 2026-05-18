@@ -98,7 +98,7 @@ export function SiteHeader() {
                 {t("nav.admin")}
               </Link>
             )}
-            {user ? (
+            {showAuthLink && (user ? (
               <button
                 onClick={() => { setOpen(false); supabase.auth.signOut(); }}
                 className="py-2 text-left hover:text-foreground transition-colors"
@@ -109,7 +109,7 @@ export function SiteHeader() {
               <Link to="/auth" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
                 {t("nav.signIn")}
               </Link>
-            )}
+            ))}
           </div>
         </nav>
       )}
