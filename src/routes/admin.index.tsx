@@ -272,6 +272,15 @@ function NewCategoryForm({
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       </Field>
+      <label className="block">
+        <span className="text-sm font-medium">Description</span>
+        <textarea
+          rows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        />
+      </label>
 
       <div>
         <span className="text-sm font-medium">Icon</span>
