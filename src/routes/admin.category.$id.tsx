@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
@@ -23,11 +23,15 @@ import { FileUploader } from "@/components/FileUploader";
 import { SortableList } from "@/components/SortableList";
 
 export const Route = createFileRoute("/admin/category/$id")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    edit: typeof search.edit === "string" ? search.edit : undefined,
+  }),
   component: AdminCategoryPage,
 });
 
 function AdminCategoryPage() {
   const { id } = Route.useParams();
+  const { edit } = Route.useSearch();
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -71,7 +75,7 @@ function AdminCategoryPage() {
       ) : (
         <>
           <CategoryEditor category={data.category} onSave={(v) => saveCategory.mutate(v)} busy={saveCategory.isPending} />
-          <ContentManager categoryId={id} items={data.items} />
+          <ContentManager categoryId={id} items={data.items} initialEditId={edit} />
         </>
       )}
     </div>
@@ -236,11 +240,22 @@ function CategoryEditor({
   );
 }
 
-function ContentManager({ categoryId, items }: { categoryId: string; items: ContentItem[] }) {
+function ContentManager({ categoryId, items, initialEditId }: { categoryId: string; items: ContentItem[]; initialEditId?: string }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
   const [order, setOrder] = useState<ContentItem[]>([]);
+  const editorRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => { setOrder(items); }, [items]);
+  useEffect(() => {
+    if (!initialEditId) return;
+    const target = items.find((it) => it.id === initialEditId);
+    if (target) {
+      setEditing(target);
+      setTimeout(() => {
+        editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  }, [initialEditId, items]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin", "category", categoryId] });
@@ -329,12 +344,14 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
       </div>
 
       {editing && (
-        <ItemEditor
-          item={editing === "new" ? null : editing}
-          onCancel={() => setEditing(null)}
-          onSave={(v) => saveMut.mutate(v)}
-          busy={saveMut.isPending}
-        />
+        <div ref={editorRef}>
+          <ItemEditor
+            item={editing === "new" ? null : editing}
+            onCancel={() => setEditing(null)}
+            onSave={(v) => saveMut.mutate(v)}
+            busy={saveMut.isPending}
+          />
+        </div>
       )}
 
       <div className="mt-6 rounded-2xl border border-border bg-card overflow-hidden">
