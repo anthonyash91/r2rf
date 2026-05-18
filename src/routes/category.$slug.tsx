@@ -135,21 +135,38 @@ function CategoryPage() {
                     const source = pickLang(lang, item.source, item.source_es);
                     const fileUrl = lang === "es" && item.file_url_es ? item.file_url_es : item.file_url;
                     const fileName = lang === "es" && item.file_url_es ? (item.file_name_es ?? item.file_name) : item.file_name;
-                    const videoSrc = isVideoUrl(fileUrl) ? fileUrl : isVideoUrl(item.url) ? item.url : null;
-                    const isVideo = !!videoSrc;
+                    const fileMedia = detectMedia(fileUrl);
+                    const urlMedia = detectMedia(item.url);
+                    const mediaKind: MediaKind | null = fileMedia ?? urlMedia;
+                    const mediaSrc = fileMedia ? fileUrl : urlMedia ? item.url : null;
+                    const isMedia = !!mediaKind && !!mediaSrc;
+
+                    const openMedia = () => {
+                      if (!isMedia) return;
+                      const payload = { url: mediaSrc!, title };
+                      if (mediaKind === "video") setVideoPlayer(payload);
+                      else if (mediaKind === "audio") setAudioPlayer(payload);
+                      else if (mediaKind === "pdf") setPdfViewer(payload);
+                    };
 
                     let Wrapper: any = "div";
                     let wrapperProps: any = {};
-                    if (isVideo) {
+                    if (isMedia) {
                       Wrapper = "button";
-                      wrapperProps = {
-                        type: "button",
-                        onClick: () => setVideoPlayer({ url: videoSrc!, title }),
-                      };
+                      wrapperProps = { type: "button", onClick: openMedia };
                     } else if (item.url) {
                       Wrapper = "a";
                       wrapperProps = { href: item.url, target: "_blank", rel: "noopener noreferrer" };
                     }
+
+                    const MediaIcon =
+                      mediaKind === "video"
+                        ? PlayCircle
+                        : mediaKind === "audio"
+                          ? Headphones
+                          : mediaKind === "pdf"
+                            ? FileText
+                            : null;
 
                     return (
                       <li key={item.id}>
@@ -168,14 +185,14 @@ function CategoryPage() {
                               <h3 className="font-display text-lg font-semibold text-foreground leading-snug">
                                 {title}
                               </h3>
-                              {isVideo ? (
-                                <PlayCircle className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
+                              {MediaIcon ? (
+                                <MediaIcon className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
                               ) : item.url ? (
                                 <ExternalLink className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
                               ) : null}
                             </div>
                             {description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{description}</p>}
-                            {fileUrl && !isVideo && (
+                            {fileUrl && !isMedia && (
                               <a
                                 href={fileUrl}
                                 target="_blank"
