@@ -317,6 +317,20 @@ function CategoryPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!imageViewer} onOpenChange={(open) => !open && setImageViewer(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden bg-black border-0">
+          <DialogTitle className="sr-only">{imageViewer?.title ?? "Image"}</DialogTitle>
+          {imageViewer && (
+            <img
+              key={imageViewer.url}
+              src={imageViewer.url}
+              alt={imageViewer.title}
+              className="w-full h-auto max-h-[85vh] object-contain bg-black"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
