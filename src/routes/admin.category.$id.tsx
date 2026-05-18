@@ -166,6 +166,18 @@ function CategoryEditor({
           <LabeledInput label="Name" value={name} onChange={setName} />
           <LabeledInput label="Slug" value={slug} onChange={(v) => setSlug(slugify(v))} />
         </div>
+        <div>
+          <button
+            type="button"
+            onClick={handleAutoGenerate}
+            disabled={generating || !name.trim()}
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+          >
+            <Sparkles className="h-4 w-4" />
+            {generating ? "Generating…" : "Auto-generate tagline & description"}
+          </button>
+          <p className="mt-1 text-xs text-muted-foreground">Uses the Name to draft copy. You can edit the result.</p>
+        </div>
         <LabeledInput label="Tagline" value={tagline} onChange={setTagline} />
         <label className="block">
           <span className="text-sm font-medium">Description</span>
