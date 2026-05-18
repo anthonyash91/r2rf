@@ -88,6 +88,10 @@ function CategoryPage() {
     },
   });
 
+  useEffect(() => {
+    if (data?.category.id) trackCategoryView(data.category.id);
+  }, [data?.category.id]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
