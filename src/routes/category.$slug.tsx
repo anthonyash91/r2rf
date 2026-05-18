@@ -52,6 +52,7 @@ function CategoryPage() {
   const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
   const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
+  const [imageViewer, setImageViewer] = useState<{ url: string; title: string } | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["category", slug],
