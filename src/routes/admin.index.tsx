@@ -193,19 +193,37 @@ function NewCategoryForm({
   busy,
 }: {
   onCancel: () => void;
-  onSubmit: (v: { name: string; slug: string; tagline: string }) => void;
+  onSubmit: (v: {
+    name: string;
+    slug: string;
+    tagline: string;
+    name_es: string | null;
+    tagline_es: string | null;
+    description_es: string | null;
+  }) => void;
   busy: boolean;
 }) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [tagline, setTagline] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [nameEs, setNameEs] = useState("");
+  const [taglineEs, setTaglineEs] = useState("");
+  const [descriptionEs, setDescriptionEs] = useState("");
+  const [showEs, setShowEs] = useState(false);
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit({ name: name.trim(), slug: slug.trim() || slugify(name), tagline: tagline.trim() });
+        onSubmit({
+          name: name.trim(),
+          slug: slug.trim() || slugify(name),
+          tagline: tagline.trim(),
+          name_es: nameEs.trim() || null,
+          tagline_es: taglineEs.trim() || null,
+          description_es: descriptionEs.trim() || null,
+        });
       }}
       className="mt-6 rounded-2xl border border-border bg-card p-6 space-y-4"
     >
@@ -238,6 +256,58 @@ function NewCategoryForm({
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       </Field>
+
+      {showEs ? (
+        <div className="border-t border-border pt-4 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-display text-base font-semibold">Spanish translation</h3>
+              <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowEs(false)}
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+            >
+              Hide
+            </button>
+          </div>
+          <Field label="Name (ES)">
+            <input
+              value={nameEs}
+              onChange={(e) => setNameEs(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </Field>
+          <Field label="Tagline (ES)">
+            <input
+              value={taglineEs}
+              onChange={(e) => setTaglineEs(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </Field>
+          <label className="block">
+            <span className="text-sm font-medium">Description (ES)</span>
+            <textarea
+              rows={3}
+              value={descriptionEs}
+              onChange={(e) => setDescriptionEs(e.target.value)}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </label>
+        </div>
+      ) : (
+        <div className="border-t border-border pt-4">
+          <button
+            type="button"
+            onClick={() => setShowEs(true)}
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+          >
+            + Add Spanish translation
+          </button>
+        </div>
+      )}
+
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onCancel} className="rounded-md px-4 py-2 text-sm hover:bg-muted">
           Cancel
@@ -251,6 +321,15 @@ function NewCategoryForm({
         </button>
       </div>
     </form>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="text-sm font-medium">{label}</span>
+      <div className="mt-1">{children}</div>
+    </label>
   );
 }
 
