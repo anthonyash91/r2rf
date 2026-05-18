@@ -48,7 +48,7 @@ export const listUsers = createServerFn({ method: "GET" })
     };
   });
 
-const userIdSchema = z.object({ userId: z.string().uuid() });
+
 
 export const updateUserEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
