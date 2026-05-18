@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { trackCategoryView, trackContentClick } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
@@ -87,6 +88,10 @@ function CategoryPage() {
     },
   });
 
+  useEffect(() => {
+    if (data?.category.id) trackCategoryView(data.category.id);
+  }, [data?.category.id]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -156,14 +161,18 @@ function CategoryPage() {
                       else if (mediaKind === "image") setImageViewer(payload);
                     };
 
+                    const handleActivate = () => {
+                      trackContentClick(item.id, data.category.id);
+                    };
+
                     let Wrapper: any = "div";
                     let wrapperProps: any = {};
                     if (isMedia) {
                       Wrapper = "button";
-                      wrapperProps = { type: "button", onClick: openMedia };
+                      wrapperProps = { type: "button", onClick: () => { handleActivate(); openMedia(); } };
                     } else if (item.url) {
                       Wrapper = "a";
-                      wrapperProps = { href: item.url, target: "_blank", rel: "noopener noreferrer" };
+                      wrapperProps = { href: item.url, target: "_blank", rel: "noopener noreferrer", onClick: handleActivate };
                     }
 
                     const MediaIcon =
@@ -217,7 +226,7 @@ function CategoryPage() {
                                 href={fileUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(e) => { e.stopPropagation(); handleActivate(); }}
                                 className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-accent)] hover:underline"
                               >
                                 <Download className="h-3.5 w-3.5" />

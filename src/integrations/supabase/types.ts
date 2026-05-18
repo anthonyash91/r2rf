@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          category_id: string | null
+          content_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+        }
+        Insert: {
+          category_id?: string | null
+          content_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+        }
+        Update: {
+          category_id?: string | null
+          content_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_events_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
