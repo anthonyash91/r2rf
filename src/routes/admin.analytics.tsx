@@ -183,6 +183,13 @@ type AggregatedRow = {
   items: { item: ContentItem; clicks: number }[];
 };
 
+function fmtDate(iso?: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
 function exportCsv(
   aggregated: { rows: AggregatedRow[]; totalViews: number; totalClicks: number },
   range: RangeKey,
@@ -192,11 +199,11 @@ function exportCsv(
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines: string[] = [];
-  lines.push(["Category", "Category slug", "Item title", "Item type", "Views", "Clicks"].join(","));
+  lines.push(["Category", "Category slug", "Item title", "Item type", "Added", "Views", "Clicks"].join(","));
   for (const row of aggregated.rows) {
-    lines.push([esc(row.category.name), esc(row.category.slug), "", "", row.views, row.clicks].join(","));
+    lines.push([esc(row.category.name), esc(row.category.slug), "", "", esc(fmtDate(row.category.created_at)), row.views, row.clicks].join(","));
     for (const { item, clicks } of row.items) {
-      lines.push([esc(row.category.name), esc(row.category.slug), esc(item.title), esc(item.type), "", clicks].join(","));
+      lines.push([esc(row.category.name), esc(row.category.slug), esc(item.title), esc(item.type), esc(fmtDate(item.created_at)), "", clicks].join(","));
     }
   }
   const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
@@ -239,7 +246,10 @@ function CategorySection({ row }: { row: AggregatedRow }) {
           )}
           <div className="min-w-0">
             <h2 className="font-display text-lg font-semibold truncate">{row.category.name}</h2>
-            <p className="text-xs text-muted-foreground truncate">/{row.category.slug}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              /{row.category.slug}
+              {row.category.created_at && <> · Added {fmtDate(row.category.created_at)}</>}
+            </p>
           </div>
         </div>
         <div className="flex gap-2 flex-shrink-0">
@@ -257,7 +267,12 @@ function CategorySection({ row }: { row: AggregatedRow }) {
                 <span className="text-xs font-medium rounded-full bg-muted px-2 py-0.5 text-muted-foreground flex-shrink-0">
                   {item.type}
                 </span>
-                <span className="flex-1 min-w-0 truncate text-sm">{item.title}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-sm">{item.title}</p>
+                  {item.created_at && (
+                    <p className="text-xs text-muted-foreground">Added {fmtDate(item.created_at)}</p>
+                  )}
+                </div>
                 <span className="inline-flex items-center gap-1.5 text-sm font-medium tabular-nums">
                   <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
                   {clicks.toLocaleString()}
