@@ -6,11 +6,18 @@ import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Eye, EyeOff, Languages } from "lucide-react";
 
-function categoryNeedsTranslation(c: Category) {
-  if (!c.name_es?.trim()) return true;
-  if (c.tagline?.trim() && !c.tagline_es?.trim()) return true;
-  if (c.description?.trim() && !c.description_es?.trim()) return true;
-  return false;
+function categoryTranslationStatus(c: Category): "complete" | "partial" | "missing" {
+  const pairs: Array<[string | null | undefined, string | null | undefined]> = [
+    [c.name, c.name_es],
+    [c.tagline?.trim() ? c.tagline : null, c.tagline_es],
+    [c.description?.trim() ? c.description : null, c.description_es],
+  ];
+  const required = pairs.filter(([en]) => !!en?.toString().trim());
+  if (required.length === 0) return "complete";
+  const translated = required.filter(([, es]) => !!es?.toString().trim()).length;
+  if (translated === 0) return "missing";
+  if (translated < required.length) return "partial";
+  return "complete";
 }
 import { SortableList } from "@/components/SortableList";
 import { FileUploader } from "@/components/FileUploader";
