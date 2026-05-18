@@ -191,7 +191,7 @@ function Index() {
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
               {heroEyebrow}
             </div>
-            <h1 className="mt-6 font-display text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
+            <h1 className="group relative flex flex-col rounded-2xl border border-border bg-card p-5 sm:p-6 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)] pl-[34px] pr-[34px] pt-[34px] pb-[34px] px-[24px] py-[24px]">
               {heroPrefix}{" "}
               <span className="italic text-[var(--color-accent)]">{heroEmphasis}</span>{" "}
               {heroSuffix}
