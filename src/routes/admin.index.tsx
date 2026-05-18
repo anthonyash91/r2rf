@@ -6,6 +6,7 @@ import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Eye, EyeOff } from "lucide-react";
 import { SortableList } from "@/components/SortableList";
+import { FileUploader } from "@/components/FileUploader";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
@@ -32,6 +33,8 @@ function AdminCategoriesPage() {
       name: string;
       slug: string;
       tagline: string;
+      icon_url: string | null;
+      published: boolean;
       name_es: string | null;
       tagline_es: string | null;
       description_es: string | null;
@@ -40,6 +43,8 @@ function AdminCategoriesPage() {
         name: input.name,
         slug: input.slug,
         tagline: input.tagline,
+        icon_url: input.icon_url,
+        published: input.published,
         name_es: input.name_es,
         tagline_es: input.tagline_es,
         description_es: input.description_es,
@@ -197,6 +202,8 @@ function NewCategoryForm({
     name: string;
     slug: string;
     tagline: string;
+    icon_url: string | null;
+    published: boolean;
     name_es: string | null;
     tagline_es: string | null;
     description_es: string | null;
@@ -207,6 +214,8 @@ function NewCategoryForm({
   const [slug, setSlug] = useState("");
   const [tagline, setTagline] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const [published, setPublished] = useState(true);
   const [nameEs, setNameEs] = useState("");
   const [taglineEs, setTaglineEs] = useState("");
   const [descriptionEs, setDescriptionEs] = useState("");
@@ -220,6 +229,8 @@ function NewCategoryForm({
           name: name.trim(),
           slug: slug.trim() || slugify(name),
           tagline: tagline.trim(),
+          icon_url: iconUrl,
+          published,
           name_es: nameEs.trim() || null,
           tagline_es: taglineEs.trim() || null,
           description_es: descriptionEs.trim() || null,
@@ -256,6 +267,44 @@ function NewCategoryForm({
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       </Field>
+
+      <div>
+        <span className="text-sm font-medium">Icon</span>
+        <div className="mt-2 flex items-center gap-4">
+          {iconUrl ? (
+            <img
+              src={iconUrl}
+              alt="Category icon"
+              className="h-16 w-16 rounded-lg object-cover border border-border bg-muted"
+            />
+          ) : (
+            <div className="h-16 w-16 rounded-lg border border-dashed border-border bg-muted/40 grid place-items-center text-xs text-muted-foreground">
+              No icon
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <FileUploader
+              label={iconUrl ? "Replace icon" : "Upload icon"}
+              mimeTypes={["image/*"]}
+              onUploaded={(u) => setIconUrl(u)}
+            />
+            {iconUrl && (
+              <button
+                type="button"
+                onClick={() => setIconUrl(null)}
+                className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted text-muted-foreground"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <label className="inline-flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+        Published (visible to the public)
+      </label>
 
       {showEs ? (
         <div className="border-t border-border pt-4 space-y-4">
