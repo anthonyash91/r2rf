@@ -822,6 +822,16 @@ function extOf(url: string, name: string | null): string {
 const AUDIO_EXT = new Set(["mp3", "wav", "m4a", "aac", "ogg", "oga", "flac", "webm", "opus"]);
 const VIDEO_EXT = new Set(["mp4", "mov", "webm", "mkv", "avi", "m4v"]);
 
+function mediaKindFor(type: string, url: string, name: string | null): "audio" | "video" | null {
+  const ext = extOf(url, name);
+  if (AUDIO_EXT.has(ext)) return "audio";
+  if (VIDEO_EXT.has(ext)) return "video";
+  const t = type.toLowerCase();
+  if (t.includes("podcast") || t.includes("audio")) return "audio";
+  if (t.includes("video")) return "video";
+  return null;
+}
+
 function formatMediaDuration(seconds: number): string {
   if (!isFinite(seconds) || seconds <= 0) return "";
   if (seconds < 60) return `${Math.round(seconds)} sec`;
