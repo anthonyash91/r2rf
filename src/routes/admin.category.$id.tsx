@@ -250,6 +250,11 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
           url: values.url ?? null,
           file_url: values.file_url ?? null,
           file_name: values.file_name ?? null,
+          title_es: values.title_es ?? null,
+          description_es: values.description_es ?? null,
+          source_es: values.source_es ?? null,
+          file_url_es: values.file_url_es ?? null,
+          file_name_es: values.file_name_es ?? null,
           published: values.published ?? true,
           sort_order: (items.at(-1)?.sort_order ?? 0) + 1,
         });
