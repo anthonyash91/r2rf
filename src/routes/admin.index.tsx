@@ -183,14 +183,20 @@ function AdminCategoriesPage() {
                         Draft
                       </span>
                     )}
-                    {categoryNeedsTranslation(c) && (
-                      <span
-                        title="Missing Spanish translation"
-                        className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
-                      >
-                        <Languages className="h-3 w-3" /> Needs ES
-                      </span>
-                    )}
+                    {(() => {
+                      const s = categoryTranslationStatus(c);
+                      if (s === "complete") return null;
+                      const label = s === "missing" ? "Needs ES" : "Partially translated";
+                      const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
+                      return (
+                        <span
+                          title={title}
+                          className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
+                        >
+                          <Languages className="h-3 w-3" /> {label}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">/{c.slug} · {c.tagline}</p>
                 </div>
