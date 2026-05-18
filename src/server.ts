@@ -71,6 +71,10 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const ip = getClientIp(request);
+      const pathname = new URL(request.url).pathname;
+      // Allow the self-service passkey endpoint through the site allowlist
+      // so blocked visitors can request access with a shared passkey.
+      const isPasskeyEndpoint = pathname === "/api/public/site-passkey";
       let allowed = false;
       try {
         const allowlist = await getAllowedIps();
@@ -78,7 +82,7 @@ export default {
       } catch (err) {
         console.error("[ip-allowlist] check failed:", err);
       }
-      if (!allowed) {
+      if (!allowed && !isPasskeyEndpoint) {
         return new Response(renderBlockedPage(ip, "site"), {
           status: 403,
           headers: { "content-type": "text/html; charset=utf-8" },
