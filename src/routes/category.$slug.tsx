@@ -82,10 +82,11 @@ function CategoryPage() {
         .neq("id", cat.id)
         .order("sort_order", { ascending: true });
       if (e3) throw e3;
+      const shuffled = [...(others ?? [])].sort(() => Math.random() - 0.5).slice(0, 9);
       return {
         category: cat as Category,
         items: (items ?? []) as ContentItem[],
-        others: (others ?? []) as Category[],
+        others: shuffled as Category[],
       };
     },
   });
