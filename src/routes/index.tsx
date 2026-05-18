@@ -105,13 +105,13 @@ function Index() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 [column-fill:_balance]">
             {categories.map((c, i) => (
               <Link
                 key={c.id}
                 to="/category/$slug"
                 params={{ slug: c.slug }}
-                className="group relative flex flex-col rounded-2xl border border-border bg-card p-5 sm:p-6 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
+                className="group relative mb-5 flex flex-col break-inside-avoid rounded-2xl border border-border bg-card p-5 sm:p-6 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-start justify-between">
                   <span className="font-display text-sm font-medium text-[var(--color-gold)]">
