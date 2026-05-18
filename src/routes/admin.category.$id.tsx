@@ -78,7 +78,7 @@ function AdminCategoryPage() {
       ) : (
         <>
           <CategoryEditor category={data.category} onSave={(v) => saveCategory.mutate(v)} busy={saveCategory.isPending} />
-          <ContentManager categoryId={id} items={data.items} initialEditId={edit} />
+          <ContentManager categoryId={id} categoryName={data.category.name} items={data.items} initialEditId={edit} />
         </>
       )}
     </div>
