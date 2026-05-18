@@ -120,6 +120,28 @@ function CategoryEditor({
     if (category.name_es || category.tagline_es || category.description_es) setShowEs(true);
   }, [category]);
 
+  const generate = useServerFn(generateCategoryCopy);
+  const [generating, setGenerating] = useState(false);
+
+  async function handleAutoGenerate() {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast.error("Enter a name first");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const result = await generate({ data: { name: trimmed } });
+      if (result.tagline) setTagline(result.tagline);
+      if (result.description) setDescription(result.description);
+      toast.success("Generated tagline and description");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to generate");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   return (
     <section className="mt-6 rounded-2xl border border-border bg-card p-6">
       <h1 className="font-display text-2xl font-semibold">Edit category</h1>
