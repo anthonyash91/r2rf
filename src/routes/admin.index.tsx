@@ -130,36 +130,40 @@ function AdminCategoriesPage() {
           <p className="mt-1 text-sm text-muted-foreground">Manage the library structure.</p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <Link
-            to="/admin/users"
-            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-          >
-            Users
-          </Link>
-          <Link
-            to="/admin/ip-allowlist"
-            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-          >
-            IP allowlist
-          </Link>
-          <Link
-            to="/admin/analytics"
-            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-          >
-            Analytics
-          </Link>
-          <Link
-            to="/admin/home"
-            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-          >
-            Edit home header
-          </Link>
-          <Link
-            to="/admin/certificate"
-            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-          >
-            Edit certificate section
-          </Link>
+          {isAdmin && (
+            <>
+              <Link
+                to="/admin/users"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+              >
+                Users
+              </Link>
+              <Link
+                to="/admin/ip-allowlist"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+              >
+                IP allowlist
+              </Link>
+              <Link
+                to="/admin/analytics"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+              >
+                Analytics
+              </Link>
+              <Link
+                to="/admin/home"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+              >
+                Edit home header
+              </Link>
+              <Link
+                to="/admin/certificate"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+              >
+                Edit certificate section
+              </Link>
+            </>
+          )}
           <button
             onClick={() => setCreating(true)}
             className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
