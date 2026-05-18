@@ -268,6 +268,44 @@ function NewCategoryForm({
         />
       </Field>
 
+      <div>
+        <span className="text-sm font-medium">Icon</span>
+        <div className="mt-2 flex items-center gap-4">
+          {iconUrl ? (
+            <img
+              src={iconUrl}
+              alt="Category icon"
+              className="h-16 w-16 rounded-lg object-cover border border-border bg-muted"
+            />
+          ) : (
+            <div className="h-16 w-16 rounded-lg border border-dashed border-border bg-muted/40 grid place-items-center text-xs text-muted-foreground">
+              No icon
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <FileUploader
+              label={iconUrl ? "Replace icon" : "Upload icon"}
+              mimeTypes={["image/*"]}
+              onUploaded={(u) => setIconUrl(u)}
+            />
+            {iconUrl && (
+              <button
+                type="button"
+                onClick={() => setIconUrl(null)}
+                className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted text-muted-foreground"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <label className="inline-flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+        Published (visible to the public)
+      </label>
+
       {showEs ? (
         <div className="border-t border-border pt-4 space-y-4">
           <div className="flex items-start justify-between gap-4">
