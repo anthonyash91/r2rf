@@ -41,7 +41,7 @@ export function SiteHeader() {
           <Link to="/" className="hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
             {t("nav.categories")}
           </Link>
-          {isAdmin && (
+          {canAccessAdmin && (
             <Link to="/admin" className="hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
               {t("nav.admin")}
             </Link>
@@ -93,7 +93,7 @@ export function SiteHeader() {
             <Link to="/" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
               {t("nav.categories")}
             </Link>
-            {isAdmin && (
+            {canAccessAdmin && (
               <Link to="/admin" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
                 {t("nav.admin")}
               </Link>
