@@ -90,7 +90,6 @@ export default {
       }
 
       // Additional gate for the login/sign-up page.
-      const pathname = new URL(request.url).pathname;
       if (pathname === "/auth" || pathname.startsWith("/auth/")) {
         let authAllowed = false;
         try {
