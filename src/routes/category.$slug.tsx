@@ -1,10 +1,17 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+
+const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
+function isVideoUrl(url: string | null | undefined) {
+  return !!url && VIDEO_EXT.test(url);
+}
 
 export const Route = createFileRoute("/category/$slug")({
   component: CategoryPage,
