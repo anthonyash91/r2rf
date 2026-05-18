@@ -12,15 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SpanishRouteImport } from './routes/spanish'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as CustomHomeRouteImport } from './routes/$customHome'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminIpAllowlistRouteImport } from './routes/admin.ip-allowlist'
 import { Route as AdminHomeRouteImport } from './routes/admin.home'
+import { Route as AdminCustomHomePagesRouteImport } from './routes/admin.custom-home-pages'
 import { Route as AdminCertificateRouteImport } from './routes/admin.certificate'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as ApiPublicSitePasskeyRouteImport } from './routes/api/public/site-passkey'
+import { Route as AdminCustomHomePagesIdRouteImport } from './routes/admin.custom-home-pages.$id'
 import { Route as AdminCategoryIdRouteImport } from './routes/admin.category.$id'
 
 const SpanishRoute = SpanishRouteImport.update({
@@ -36,6 +39,11 @@ const AuthRoute = AuthRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustomHomeRoute = CustomHomeRouteImport.update({
+  id: '/$customHome',
+  path: '/$customHome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -68,6 +76,11 @@ const AdminHomeRoute = AdminHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCustomHomePagesRoute = AdminCustomHomePagesRouteImport.update({
+  id: '/custom-home-pages',
+  path: '/custom-home-pages',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCertificateRoute = AdminCertificateRouteImport.update({
   id: '/certificate',
   path: '/certificate',
@@ -83,6 +96,11 @@ const ApiPublicSitePasskeyRoute = ApiPublicSitePasskeyRouteImport.update({
   path: '/api/public/site-passkey',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminCustomHomePagesIdRoute = AdminCustomHomePagesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminCustomHomePagesRoute,
+} as any)
 const AdminCategoryIdRoute = AdminCategoryIdRouteImport.update({
   id: '/category/$id',
   path: '/category/$id',
@@ -91,98 +109,117 @@ const AdminCategoryIdRoute = AdminCategoryIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
+  '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
+  '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$customHome': typeof CustomHomeRoute
   '/auth': typeof AuthRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
+  '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
+  '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
+  '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
+  '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$customHome'
     | '/admin'
     | '/auth'
     | '/spanish'
     | '/admin/analytics'
     | '/admin/certificate'
+    | '/admin/custom-home-pages'
     | '/admin/home'
     | '/admin/ip-allowlist'
     | '/admin/users'
     | '/category/$slug'
     | '/admin/'
     | '/admin/category/$id'
+    | '/admin/custom-home-pages/$id'
     | '/api/public/site-passkey'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$customHome'
     | '/auth'
     | '/spanish'
     | '/admin/analytics'
     | '/admin/certificate'
+    | '/admin/custom-home-pages'
     | '/admin/home'
     | '/admin/ip-allowlist'
     | '/admin/users'
     | '/category/$slug'
     | '/admin'
     | '/admin/category/$id'
+    | '/admin/custom-home-pages/$id'
     | '/api/public/site-passkey'
   id:
     | '__root__'
     | '/'
+    | '/$customHome'
     | '/admin'
     | '/auth'
     | '/spanish'
     | '/admin/analytics'
     | '/admin/certificate'
+    | '/admin/custom-home-pages'
     | '/admin/home'
     | '/admin/ip-allowlist'
     | '/admin/users'
     | '/category/$slug'
     | '/admin/'
     | '/admin/category/$id'
+    | '/admin/custom-home-pages/$id'
     | '/api/public/site-passkey'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CustomHomeRoute: typeof CustomHomeRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   SpanishRoute: typeof SpanishRoute
@@ -211,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$customHome': {
+      id: '/$customHome'
+      path: '/$customHome'
+      fullPath: '/$customHome'
+      preLoaderRoute: typeof CustomHomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -255,6 +299,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminHomeRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/custom-home-pages': {
+      id: '/admin/custom-home-pages'
+      path: '/custom-home-pages'
+      fullPath: '/admin/custom-home-pages'
+      preLoaderRoute: typeof AdminCustomHomePagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/certificate': {
       id: '/admin/certificate'
       path: '/certificate'
@@ -276,6 +327,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitePasskeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/custom-home-pages/$id': {
+      id: '/admin/custom-home-pages/$id'
+      path: '/$id'
+      fullPath: '/admin/custom-home-pages/$id'
+      preLoaderRoute: typeof AdminCustomHomePagesIdRouteImport
+      parentRoute: typeof AdminCustomHomePagesRoute
+    }
     '/admin/category/$id': {
       id: '/admin/category/$id'
       path: '/category/$id'
@@ -286,9 +344,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminCustomHomePagesRouteChildren {
+  AdminCustomHomePagesIdRoute: typeof AdminCustomHomePagesIdRoute
+}
+
+const AdminCustomHomePagesRouteChildren: AdminCustomHomePagesRouteChildren = {
+  AdminCustomHomePagesIdRoute: AdminCustomHomePagesIdRoute,
+}
+
+const AdminCustomHomePagesRouteWithChildren =
+  AdminCustomHomePagesRoute._addFileChildren(AdminCustomHomePagesRouteChildren)
+
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCertificateRoute: typeof AdminCertificateRoute
+  AdminCustomHomePagesRoute: typeof AdminCustomHomePagesRouteWithChildren
   AdminHomeRoute: typeof AdminHomeRoute
   AdminIpAllowlistRoute: typeof AdminIpAllowlistRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -299,6 +369,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminCertificateRoute: AdminCertificateRoute,
+  AdminCustomHomePagesRoute: AdminCustomHomePagesRouteWithChildren,
   AdminHomeRoute: AdminHomeRoute,
   AdminIpAllowlistRoute: AdminIpAllowlistRoute,
   AdminUsersRoute: AdminUsersRoute,
@@ -310,6 +381,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CustomHomeRoute: CustomHomeRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   SpanishRoute: SpanishRoute,
@@ -319,3 +391,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
