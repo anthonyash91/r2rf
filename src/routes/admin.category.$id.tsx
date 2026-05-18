@@ -911,7 +911,7 @@ async function estimateDuration(url: string, name: string | null, type: string):
 
 function defaultDurationForType(type: string): string {
   const t = type.toLowerCase();
-  if (t.includes("link")) return "click for more";
+  if (t.includes("link")) return "Click for more";
   if (t.includes("video")) return "5 min watch";
   if (t.includes("podcast") || t.includes("audio")) return "20 min listen";
   if (t.includes("article")) return "5 min read";
