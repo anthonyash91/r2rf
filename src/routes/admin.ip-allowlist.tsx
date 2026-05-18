@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Trash2, Shield, ArrowLeft, LogIn } from "lucide-react";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/admin/ip-allowlist")({
   beforeLoad: requireAdminBeforeLoad,
@@ -22,6 +23,7 @@ const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]
 
 function AdminIpAllowlistPage() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [ip, setIp] = useState("");
   const [label, setLabel] = useState("");
 
@@ -314,10 +316,14 @@ function AllowlistSection({
                 </div>
                 <button
                   title="Remove"
-                  onClick={() => {
-                    if (confirm(`Remove ${r.ip_address} from this allowlist?`)) {
-                      deleteMut.mutate(r.id);
-                    }
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: `Remove ${r.ip_address}?`,
+                      description: "This IP will be removed from the allowlist.",
+                      confirmLabel: "Remove",
+                      destructive: true,
+                    });
+                    if (ok) deleteMut.mutate(r.id);
                   }}
                   className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                 >
