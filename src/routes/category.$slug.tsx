@@ -178,7 +178,18 @@ function CategoryPage() {
                             <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium ${typeStyles[item.type] ?? typeStyles.Article}`}>
                               {translateType(lang, item.type)}
                             </span>
-                            {item.duration && <span className="text-xs text-muted-foreground sm:mt-1">{translateDuration(lang, item.duration)}</span>}
+                            {item.duration && (
+                              <span className="text-xs text-muted-foreground sm:mt-1">
+                                {translateDuration(
+                                  lang,
+                                  mediaKind === "video"
+                                    ? `${item.duration} watch`
+                                    : mediaKind === "audio"
+                                      ? `${item.duration} listen`
+                                      : item.duration,
+                                )}
+                              </span>
+                            )}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-start gap-2">
