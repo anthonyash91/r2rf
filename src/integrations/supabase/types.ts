@@ -199,6 +199,69 @@ export type Database = {
           },
         ]
       }
+      custom_home_page_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          custom_home_page_id: string
+          id: string
+          sort_order: number
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          custom_home_page_id: string
+          id?: string
+          sort_order?: number
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          custom_home_page_id?: string
+          id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_home_page_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_home_page_categories_custom_home_page_id_fkey"
+            columns: ["custom_home_page_id"]
+            isOneToOne: false
+            referencedRelation: "custom_home_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_home_pages: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ip_allowlist: {
         Row: {
           created_at: string
