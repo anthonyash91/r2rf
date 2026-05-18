@@ -28,9 +28,9 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
   categories.forEach((c, i) => buckets[i % cols].push({ c, i }));
   return (
-    <div className="flex gap-5 items-start">
+    <div className="flex gap-7 items-start">
       {buckets.map((bucket, ci) => (
-        <div key={ci} className="flex-1 flex flex-col gap-5 min-w-0">
+        <div key={ci} className="flex-1 flex flex-col gap-7 min-w-0">
           {bucket.map(({ c, i }) => (
             <Link
               key={c.id}
