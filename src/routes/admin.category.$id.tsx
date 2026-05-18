@@ -445,6 +445,7 @@ function ItemEditor({
   busy: boolean;
 }) {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [title, setTitle] = useState(item?.title ?? "");
   const [type, setType] = useState(item?.type ?? "Article");
   const [addingType, setAddingType] = useState(false);
@@ -488,7 +489,13 @@ function ItemEditor({
   };
 
   const deleteType = async (t: string) => {
-    if (!confirm(`Delete type "${t}"? Any items using it will be changed to "Article".`)) return;
+    const ok = await confirm({
+      title: `Delete type "${t}"?`,
+      description: `Any items using this type will be changed to "Article".`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     const { error } = await supabase
       .from("content_items")
       .update({ type: "Article" })
