@@ -102,6 +102,30 @@ const DEFAULT_HERO: HomeHero = {
   subheading: "Pick a category to explore guides, videos, worksheets, and meetings — vetted and organized for the moments that matter.",
 };
 
+type CertHero = {
+  eyebrow: string;
+  heading_prefix: string;
+  heading_emphasis: string;
+  heading_suffix: string;
+  subheading: string;
+  callout: string;
+  eyebrow_es?: string;
+  heading_prefix_es?: string;
+  heading_emphasis_es?: string;
+  heading_suffix_es?: string;
+  subheading_es?: string;
+  callout_es?: string;
+};
+
+const DEFAULT_CERT: CertHero = {
+  eyebrow: "New Program",
+  heading_prefix: "Earn certificates that",
+  heading_emphasis: "change",
+  heading_suffix: "the road ahead.",
+  subheading: "The Reentry to Recovery Certificate Program offers coursework designed for incarcerated learners — recognized credentials that may help shorten sentences, satisfy probationary requirements, and build the skills that carry forward into recovery, work, and family life.",
+  callout: "You can find the certificate program on your tablet home screen inside the Reentry to Recovery folder",
+};
+
 function Index() {
   const { t, lang } = useI18n();
   const { data: categories = [], isLoading } = useQuery({
