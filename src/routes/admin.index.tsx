@@ -195,6 +195,15 @@ function AdminCategoriesPage() {
             onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
             renderItem={(c) => (
               <div className="flex items-center gap-4 p-4 pl-[24px]">
+                {c.icon_url ? (
+                  <img
+                    src={c.icon_url}
+                    alt={`${c.name} icon`}
+                    className="h-12 w-12 rounded-lg object-cover border border-border bg-muted shrink-0"
+                  />
+                ) : (
+                  <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-display text-lg font-semibold truncate">{c.name}</h3>
@@ -219,6 +228,9 @@ function AdminCategoriesPage() {
                     })()}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">/{c.slug} · {c.tagline}</p>
+                  {c.description && (
+                    <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
+                  )}
                 </div>
                 <button
                   title={c.published ? "Unpublish" : "Publish"}
