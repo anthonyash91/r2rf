@@ -1,26 +1,33 @@
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { Languages } from "lucide-react";
+import { Languages, Menu, X } from "lucide-react";
 
 export function SiteHeader() {
   const { user, isAdmin } = useAuth();
   const { lang, setLang, t } = useI18n();
+  const [open, setOpen] = useState(false);
+
+  const toggleLang = () => setLang(lang === "en" ? "es" : "en");
+
   return (
     <header className="border-b border-border/60 bg-background/80 backdrop-blur sticky top-0 z-50">
-      <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground font-display font-bold">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
+        <Link to="/" className="flex items-center gap-2 group min-w-0">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-display font-bold">
             R
           </span>
-          <div className="leading-tight">
-            <div className="font-display font-semibold text-foreground">Reentry to Recovery</div>
-            <div className="text-xs text-muted-foreground">{t("site.tagline")}</div>
+          <div className="leading-tight min-w-0">
+            <div className="font-display font-semibold text-foreground truncate">Reentry to Recovery</div>
+            <div className="hidden sm:block text-xs text-muted-foreground truncate">{t("site.tagline")}</div>
           </div>
         </Link>
-        <nav className="flex items-center gap-5 text-sm font-medium text-muted-foreground">
-          <Link to="/" className="hidden sm:inline hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
+
+        {/* Desktop nav */}
+        <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-muted-foreground">
+          <Link to="/" className="hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
             {t("nav.categories")}
           </Link>
           {isAdmin && (
@@ -29,10 +36,7 @@ export function SiteHeader() {
             </Link>
           )}
           {user ? (
-            <button
-              onClick={() => supabase.auth.signOut()}
-              className="hover:text-foreground transition-colors"
-            >
+            <button onClick={() => supabase.auth.signOut()} className="hover:text-foreground transition-colors">
               {t("nav.signOut")}
             </button>
           ) : (
@@ -41,7 +45,7 @@ export function SiteHeader() {
             </Link>
           )}
           <button
-            onClick={() => setLang(lang === "en" ? "es" : "en")}
+            onClick={toggleLang}
             aria-label="Toggle language"
             className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
           >
@@ -49,7 +53,55 @@ export function SiteHeader() {
             {t("nav.language")}
           </button>
         </nav>
+
+        {/* Mobile controls */}
+        <div className="flex md:hidden items-center gap-2">
+          <button
+            onClick={toggleLang}
+            aria-label="Toggle language"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
+          >
+            <Languages className="h-3.5 w-3.5" />
+            <span className="uppercase">{lang}</span>
+          </button>
+          <button
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Toggle menu"
+            aria-expanded={open}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-card text-foreground hover:border-[var(--color-accent)] transition-colors"
+          >
+            {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile menu */}
+      {open && (
+        <nav className="md:hidden border-t border-border/60 bg-background">
+          <div className="mx-auto max-w-6xl px-4 py-3 flex flex-col gap-1 text-sm font-medium text-muted-foreground">
+            <Link to="/" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
+              {t("nav.categories")}
+            </Link>
+            {isAdmin && (
+              <Link to="/admin" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
+                {t("nav.admin")}
+              </Link>
+            )}
+            {user ? (
+              <button
+                onClick={() => { setOpen(false); supabase.auth.signOut(); }}
+                className="py-2 text-left hover:text-foreground transition-colors"
+              >
+                {t("nav.signOut")}
+              </button>
+            ) : (
+              <Link to="/auth" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
+                {t("nav.signIn")}
+              </Link>
+            )}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
