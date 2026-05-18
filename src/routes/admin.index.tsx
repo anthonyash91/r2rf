@@ -25,7 +25,7 @@ function categoryTranslationStatus(c: Category): "complete" | "partial" | "missi
 import { SortableList } from "@/components/SortableList";
 import { FileUploader } from "@/components/FileUploader";
 import { useConfirm } from "@/components/ConfirmDialog";
-import { useTranslateToSpanish } from "@/components/TranslateButton";
+import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,

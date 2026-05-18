@@ -22,7 +22,7 @@ function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "mis
   return "complete";
 }
 import { FileUploader } from "@/components/FileUploader";
-import { useTranslateToSpanish } from "@/components/TranslateButton";
+import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { SortableList } from "@/components/SortableList";
 import { useConfirm } from "@/components/ConfirmDialog";
 
