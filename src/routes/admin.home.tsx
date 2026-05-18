@@ -136,6 +136,23 @@ function AdminHomePage() {
               />
             </Field>
 
+            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Preview</p>
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">EN</span>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                {hero.eyebrow || "—"}
+              </div>
+              <h2 className="mt-4 font-display text-3xl font-bold tracking-tight">
+                {hero.heading_prefix}{" "}
+                <span className="italic text-[var(--color-accent)]">{hero.heading_emphasis}</span>{" "}
+                {hero.heading_suffix}
+              </h2>
+              <p className="mt-3 text-muted-foreground">{hero.subheading}</p>
+            </div>
+
             {showEs ? (
               <div className="border-t border-border pt-6 space-y-4">
                 <div className="flex items-start justify-between gap-4">
@@ -189,6 +206,23 @@ function AdminHomePage() {
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </Field>
+
+                <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Preview</p>
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">ES</span>
+                  </div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                    {hero.eyebrow_es || hero.eyebrow || "—"}
+                  </div>
+                  <h2 className="mt-4 font-display text-3xl font-bold tracking-tight">
+                    {hero.heading_prefix_es || hero.heading_prefix}{" "}
+                    <span className="italic text-[var(--color-accent)]">{hero.heading_emphasis_es || hero.heading_emphasis}</span>{" "}
+                    {hero.heading_suffix_es || hero.heading_suffix}
+                  </h2>
+                  <p className="mt-3 text-muted-foreground">{hero.subheading_es || hero.subheading}</p>
+                </div>
               </div>
             ) : (
               <div className="border-t border-border pt-6">
