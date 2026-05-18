@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { UploadButton } from "@bytescale/upload-widget-react";
-import { getBytescaleConfig } from "@/lib/bytescale.functions";
+import { getBytescaleConfig, deleteBytescaleFileIfExists } from "@/lib/bytescale.functions";
 import { Upload } from "lucide-react";
 
 type Props = {
@@ -12,6 +12,7 @@ type Props = {
 
 export function FileUploader({ onUploaded, label = "Upload file to fill URL", mimeTypes }: Props) {
   const fetchConfig = useServerFn(getBytescaleConfig);
+  const deleteIfExists = useServerFn(deleteBytescaleFileIfExists);
   const { data, isLoading, error } = useQuery({
     queryKey: ["bytescale-config"],
     queryFn: () => fetchConfig(),
@@ -36,6 +37,18 @@ export function FileUploader({ onUploaded, label = "Upload file to fill URL", mi
           fileName: "{ORIGINAL_FILE_NAME}{ORIGINAL_FILE_EXT}",
         },
         ...(mimeTypes ? { mimeTypes } : {}),
+        onPreUpload: async (file) => {
+          // Sanitize to match the path template above; replace disallowed chars with "_"
+          const original = file.name ?? "";
+          const safe = original.replace(/[^A-Za-z0-9._\- ]/g, "_");
+          if (!safe) return undefined;
+          try {
+            await deleteIfExists({ data: { filePath: `/uploads/${safe}` } });
+          } catch (err) {
+            return { errorMessage: `Could not replace existing file: ${(err as Error).message}` };
+          }
+          return undefined;
+        },
       }}
       onComplete={(files) => {
         const f = files[0];
