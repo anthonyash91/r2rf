@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Languages } from "lucide-react";
+import { Languages, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { translateToSpanish } from "@/lib/category-ai.functions";
 
 /**
  * Hook for triggering English -> Spanish translation imperatively.
- * Use this when you want to wire auto-translation into another action
- * (e.g. the "Add Spanish translation" button).
  */
 export function useTranslateToSpanish() {
   const translate = useServerFn(translateToSpanish);
@@ -46,33 +44,20 @@ export function useTranslateToSpanish() {
   return { run, busy };
 }
 
-type Props = {
-  /** English values to translate, keyed by stable field name. Empty values are skipped. */
-  fields: Record<string, string>;
-  /** Called with the Spanish translations (same keys as provided). */
-  onTranslated: (translations: Record<string, string>) => void;
-  /** Optional short context to guide the translator (e.g. "Category card on a content library"). */
-  context?: string;
-  label?: string;
-  className?: string;
-};
-
-export function TranslateButton({ fields, onTranslated, context, label, className }: Props) {
-  const { run, busy } = useTranslateToSpanish();
-  const hasAny = Object.values(fields).some((v) => v && v.trim());
-
+/**
+ * Loading indicator shown inside a Spanish translation section while
+ * translation is in flight.
+ */
+export function TranslatingIndicator({ label }: { label?: string } = {}) {
   return (
-    <button
-      type="button"
-      onClick={() => run(fields, onTranslated, context)}
-      disabled={busy || !hasAny}
-      className={
-        className ??
-        "inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
-      }
+    <div
+      role="status"
+      aria-live="polite"
+      className="inline-flex items-center gap-2 rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-muted-foreground"
     >
+      <Loader2 className="h-4 w-4 animate-spin" />
       <Languages className="h-4 w-4" />
-      {busy ? "Translating…" : label ?? "Translate from English"}
-    </button>
+      <span>{label ?? "Translating from English…"}</span>
+    </div>
   );
 }
