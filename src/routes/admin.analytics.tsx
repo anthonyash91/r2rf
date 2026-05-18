@@ -116,7 +116,7 @@ function AdminAnalyticsPage() {
             Category views and content clicks across the site.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           {RANGE_OPTIONS.map((opt) => (
             <button
               key={opt.key}
@@ -130,6 +130,13 @@ function AdminAnalyticsPage() {
               {opt.label}
             </button>
           ))}
+          <button
+            onClick={() => aggregated && exportCsv(aggregated, range)}
+            disabled={!aggregated}
+            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="h-4 w-4" /> Export CSV
+          </button>
         </div>
       </div>
 
