@@ -6,11 +6,18 @@ import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/c
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages } from "lucide-react";
 
-function itemNeedsTranslation(item: ContentItem) {
-  if (!item.title_es?.trim()) return true;
-  if (item.description?.trim() && !item.description_es?.trim()) return true;
-  if (item.source?.trim() && !item.source_es?.trim()) return true;
-  return false;
+function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
+  const pairs: Array<[string | null | undefined, string | null | undefined]> = [
+    [item.title, item.title_es],
+    [item.description?.trim() ? item.description : null, item.description_es],
+    [item.source?.trim() ? item.source : null, item.source_es],
+  ];
+  const required = pairs.filter(([en]) => !!en?.toString().trim());
+  if (required.length === 0) return "complete";
+  const translated = required.filter(([, es]) => !!es?.toString().trim()).length;
+  if (translated === 0) return "missing";
+  if (translated < required.length) return "partial";
+  return "complete";
 }
 import { FileUploader } from "@/components/FileUploader";
 import { SortableList } from "@/components/SortableList";
