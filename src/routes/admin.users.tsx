@@ -245,5 +245,3 @@ function UserItem({
   );
 }
 
-import { toast as _toast } from "sonner";
-void _toast;
