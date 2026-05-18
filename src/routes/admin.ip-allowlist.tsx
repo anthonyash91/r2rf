@@ -153,6 +153,7 @@ function AllowlistSection({
   allowBulk?: boolean;
 }) {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [ip, setIp] = useState("");
   const [label, setLabel] = useState("");
   const [bulk, setBulk] = useState("");
