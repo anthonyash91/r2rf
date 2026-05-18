@@ -176,7 +176,7 @@ function Index() {
 
         <section className="border-t border-border/60">
           <div className="mx-auto max-w-6xl px-6 py-20">
-            <div className="max-w-3xl">
+            <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
                 New Program
