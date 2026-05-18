@@ -161,8 +161,8 @@ function AdminAnalyticsPage() {
                       </div>
                     </div>
                     <div className="flex gap-2 flex-shrink-0">
-                      <Stat icon={<Eye className="h-3.5 w-3.5" />} label="views" value={row.views} />
-                      <Stat icon={<MousePointerClick className="h-3.5 w-3.5" />} label="clicks" value={row.clicks} />
+                      <Stat icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "view" : "views"} value={row.views} />
+                      <Stat icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "click" : "clicks"} value={row.clicks} />
                     </div>
                   </div>
                   {row.items.length === 0 ? (
