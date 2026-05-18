@@ -280,7 +280,7 @@ function CategoryPage() {
               <section className="mx-auto max-w-5xl px-6 pb-20">
                 <div className="border-t border-border/60 pt-20">
                   <h2 className="font-display text-xl font-semibold mb-6">{t("category.exploreOthers")}</h2>
-                  <Carousel opts={{ align: "start", loop: false }} className="relative px-10 sm:px-14 lg:px-16">
+                  <Carousel setApi={setOthersApi} opts={{ align: "start", loop: false }} className="relative">
                     <CarouselContent>
                       {Array.from({ length: Math.ceil(data.others.length / 9) }).map((_, slideIdx) => {
                         const slide = data.others.slice(slideIdx * 9, slideIdx * 9 + 9);
@@ -317,11 +317,22 @@ function CategoryPage() {
                         );
                       })}
                     </CarouselContent>
-                    {data.others.length > 9 && (
-                      <>
-                        <CarouselPrevious className="left-0" />
-                        <CarouselNext className="right-0" />
-                      </>
+                    {othersCount > 1 && (
+                      <div className="mt-6 flex items-center justify-center gap-4">
+                        <CarouselPrevious className="static translate-y-0" />
+                        <div className="flex items-center gap-2">
+                          {Array.from({ length: othersCount }).map((_, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              aria-label={`Go to slide ${i + 1}`}
+                              onClick={() => othersApi?.scrollTo(i)}
+                              className={`h-2 rounded-full transition-all ${i === othersCurrent ? "w-6 bg-[var(--color-accent)]" : "w-2 bg-border hover:bg-muted-foreground/50"}`}
+                            />
+                          ))}
+                        </div>
+                        <CarouselNext className="static translate-y-0" />
+                      </div>
                     )}
                   </Carousel>
                 </div>
