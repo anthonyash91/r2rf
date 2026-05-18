@@ -223,24 +223,21 @@ function Index() {
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                New Program
+                {certEyebrow}
               </div>
               <h2 className="mt-6 font-display text-5xl sm:text-6xl font-bold tracking-tight text-foreground">
-                Earn certificates that{" "}
-                <span className="italic text-[var(--color-accent)]">change</span>{" "}
-                the road ahead.
+                {certPrefix}{" "}
+                <span className="italic text-[var(--color-accent)]">{certEmphasis}</span>{" "}
+                {certSuffix}
               </h2>
               <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-                The Reentry to Recovery Certificate Program offers coursework designed for
-                incarcerated learners — recognized credentials that may help shorten sentences,
-                satisfy probationary requirements, and build the skills that carry forward into
-                recovery, work, and family life.
+                {certSubheading}
               </p>
             </div>
 
             <div className="mt-10">
               <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm sm:text-base font-medium text-foreground">
-                You can find the certificate program on your tablet home screen inside the Reentry to Recovery folder
+                {certCallout}
               </div>
             </div>
           </div>
