@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, BarChart3, Eye, MousePointerClick } from "lucide-react";
+import { ArrowLeft, BarChart3, Download, Eye, MousePointerClick } from "lucide-react";
 import type { Category, ContentItem } from "@/lib/categories";
 
 export const Route = createFileRoute("/admin/analytics")({
@@ -116,7 +116,7 @@ function AdminAnalyticsPage() {
             Category views and content clicks across the site.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           {RANGE_OPTIONS.map((opt) => (
             <button
               key={opt.key}
@@ -130,6 +130,13 @@ function AdminAnalyticsPage() {
               {opt.label}
             </button>
           ))}
+          <button
+            onClick={() => aggregated && exportCsv(aggregated, range)}
+            disabled={!aggregated}
+            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="h-4 w-4" /> Export CSV
+          </button>
         </div>
       </div>
 
@@ -203,6 +210,40 @@ function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: str
       <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{value.toLocaleString()}</p>
     </div>
   );
+}
+
+type AggregatedRow = {
+  category: Category;
+  views: number;
+  clicks: number;
+  items: { item: ContentItem; clicks: number }[];
+};
+
+function exportCsv(
+  aggregated: { rows: AggregatedRow[]; totalViews: number; totalClicks: number },
+  range: RangeKey,
+) {
+  const esc = (v: string | number) => {
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines: string[] = [];
+  lines.push(["Category", "Category slug", "Item title", "Item type", "Views", "Clicks"].join(","));
+  for (const row of aggregated.rows) {
+    lines.push([esc(row.category.name), esc(row.category.slug), "", "", row.views, row.clicks].join(","));
+    for (const { item, clicks } of row.items) {
+      lines.push([esc(row.category.name), esc(row.category.slug), esc(item.title), esc(item.type), "", clicks].join(","));
+    }
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `analytics-${range}-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
