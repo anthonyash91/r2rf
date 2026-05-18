@@ -202,6 +202,8 @@ function NewCategoryForm({
     name: string;
     slug: string;
     tagline: string;
+    icon_url: string | null;
+    published: boolean;
     name_es: string | null;
     tagline_es: string | null;
     description_es: string | null;
@@ -212,6 +214,8 @@ function NewCategoryForm({
   const [slug, setSlug] = useState("");
   const [tagline, setTagline] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [iconUrl, setIconUrl] = useState<string | null>(null);
+  const [published, setPublished] = useState(true);
   const [nameEs, setNameEs] = useState("");
   const [taglineEs, setTaglineEs] = useState("");
   const [descriptionEs, setDescriptionEs] = useState("");
@@ -225,6 +229,8 @@ function NewCategoryForm({
           name: name.trim(),
           slug: slug.trim() || slugify(name),
           tagline: tagline.trim(),
+          icon_url: iconUrl,
+          published,
           name_es: nameEs.trim() || null,
           tagline_es: taglineEs.trim() || null,
           description_es: descriptionEs.trim() || null,
