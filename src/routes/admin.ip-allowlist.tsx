@@ -137,6 +137,7 @@ function AllowlistSection({
   title,
   description,
   emptyMessage,
+  allowBulk = false,
 }: {
   table: "ip_allowlist" | "auth_ip_allowlist";
   queryKey: readonly unknown[];
@@ -144,6 +145,7 @@ function AllowlistSection({
   title: string;
   description: string;
   emptyMessage: string;
+  allowBulk?: boolean;
 }) {
   const qc = useQueryClient();
   const [ip, setIp] = useState("");
