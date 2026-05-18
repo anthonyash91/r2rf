@@ -1,14 +1,25 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
+import { isAuthIpAllowed } from "@/lib/auth-ip.functions";
 import { Languages, Menu, X } from "lucide-react";
 
 export function SiteHeader() {
   const { user, isAdmin } = useAuth();
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
+  const checkAuthIp = useServerFn(isAuthIpAllowed);
+  const { data: authIp } = useQuery({
+    queryKey: ["auth-ip-allowed"],
+    queryFn: () => checkAuthIp(),
+    staleTime: 60_000,
+  });
+  // Show auth link to signed-in users (so they can sign out) or to visitors whose IP is allowed.
+  const showAuthLink = !!user || authIp?.allowed === true;
 
   const toggleLang = () => setLang(lang === "en" ? "es" : "en");
 
