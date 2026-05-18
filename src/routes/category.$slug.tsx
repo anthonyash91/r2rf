@@ -246,9 +246,9 @@ function CategoryPage() {
                             title="Edit content"
                             aria-label="Edit content"
                             onClick={(e) => e.stopPropagation()}
-                            className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-md border border-border bg-background/90 backdrop-blur px-2 py-1 text-xs font-medium text-foreground hover:bg-muted hover:border-[var(--color-accent)] shadow-sm"
+                            className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
                           >
-                            <Pencil className="h-3.5 w-3.5" /> Edit
+                            <Pencil className="h-4 w-4" /> Edit
                           </Link>
                         )}
                       </li>
