@@ -128,7 +128,7 @@ function CategoryPage() {
                 )}
                 <div className="max-w-3xl">
                   <p className="text-sm font-medium text-[var(--color-accent)]">{pickLang(lang, data.category.tagline, data.category.tagline_es)}</p>
-                  <h1 className="mt-2 font-display text-5xl font-bold tracking-tight">{pickLang(lang, data.category.name, data.category.name_es)}</h1>
+                  <h1 className="mt-2 font-display font-bold tracking-tight text-4xl">{pickLang(lang, data.category.name, data.category.name_es)}</h1>
                   <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{pickLang(lang, data.category.description, data.category.description_es)}</p>
                 </div>
               </div>
