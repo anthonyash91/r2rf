@@ -194,7 +194,7 @@ function AdminCategoriesPage() {
             items={order}
             onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
             renderItem={(c) => (
-              <div className="flex items-center gap-4 p-4">
+              <div className="flex items-center gap-4 p-4 pl-[24px]">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-display text-lg font-semibold truncate">{c.name}</h3>
