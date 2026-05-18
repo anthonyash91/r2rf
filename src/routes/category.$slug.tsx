@@ -106,7 +106,7 @@ function CategoryPage() {
 
       {data && (
         <>
-          <section className="bg-background">
+          <section className="border-b border-border/60 bg-background">
             <div className="mx-auto max-w-5xl px-6 py-20">
               <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowLeft className="h-4 w-4" /> {t("category.allCategories")}
