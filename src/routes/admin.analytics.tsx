@@ -212,6 +212,40 @@ function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: str
   );
 }
 
+type AggregatedRow = {
+  category: Category;
+  views: number;
+  clicks: number;
+  items: { item: ContentItem; clicks: number }[];
+};
+
+function exportCsv(
+  aggregated: { rows: AggregatedRow[]; totalViews: number; totalClicks: number },
+  range: RangeKey,
+) {
+  const esc = (v: string | number) => {
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines: string[] = [];
+  lines.push(["Category", "Category slug", "Item title", "Item type", "Views", "Clicks"].join(","));
+  for (const row of aggregated.rows) {
+    lines.push([esc(row.category.name), esc(row.category.slug), "", "", row.views, row.clicks].join(","));
+    for (const { item, clicks } of row.items) {
+      lines.push([esc(row.category.name), esc(row.category.slug), esc(item.title), esc(item.type), "", clicks].join(","));
+    }
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `analytics-${range}-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
