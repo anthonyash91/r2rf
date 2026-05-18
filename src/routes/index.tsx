@@ -55,11 +55,11 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                   )}
                 </div>
                 <div className="mt-3">
-                  <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
-                    <span className="font-display text-xl sm:text-2xl font-semibold text-[var(--color-gold)] mr-2 align-middle">
+                  <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight flex items-baseline gap-2">
+                    <span className="text-[var(--color-gold)]">
                       {String(i + 1).padStart(2, "0")}
                     </span>
-                    {pickLang(lang, c.name, c.name_es)}
+                    <span>{pickLang(lang, c.name, c.name_es)}</span>
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
                 </div>
