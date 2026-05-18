@@ -6,11 +6,18 @@ import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/c
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages } from "lucide-react";
 
-function itemNeedsTranslation(item: ContentItem) {
-  if (!item.title_es?.trim()) return true;
-  if (item.description?.trim() && !item.description_es?.trim()) return true;
-  if (item.source?.trim() && !item.source_es?.trim()) return true;
-  return false;
+function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
+  const pairs: Array<[string | null | undefined, string | null | undefined]> = [
+    [item.title, item.title_es],
+    [item.description?.trim() ? item.description : null, item.description_es],
+    [item.source?.trim() ? item.source : null, item.source_es],
+  ];
+  const required = pairs.filter(([en]) => !!en?.toString().trim());
+  if (required.length === 0) return "complete";
+  const translated = required.filter(([, es]) => !!es?.toString().trim()).length;
+  if (translated === 0) return "missing";
+  if (translated < required.length) return "partial";
+  return "complete";
 }
 import { FileUploader } from "@/components/FileUploader";
 import { SortableList } from "@/components/SortableList";
@@ -350,14 +357,20 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
                       <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>
                     )}
                     <h3 className="font-medium truncate">{item.title}</h3>
-                    {itemNeedsTranslation(item) && (
-                      <span
-                        title="Missing Spanish translation"
-                        className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
-                      >
-                        <Languages className="h-3 w-3" /> Needs ES
-                      </span>
-                    )}
+                    {(() => {
+                      const s = itemTranslationStatus(item);
+                      if (s === "complete") return null;
+                      const label = s === "missing" ? "Needs ES" : "Partially translated";
+                      const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
+                      return (
+                        <span
+                          title={title}
+                          className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
+                        >
+                          <Languages className="h-3 w-3" /> {label}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{item.source} · {item.duration}</p>
                 </div>

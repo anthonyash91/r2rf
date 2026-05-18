@@ -6,11 +6,18 @@ import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Eye, EyeOff, Languages } from "lucide-react";
 
-function categoryNeedsTranslation(c: Category) {
-  if (!c.name_es?.trim()) return true;
-  if (c.tagline?.trim() && !c.tagline_es?.trim()) return true;
-  if (c.description?.trim() && !c.description_es?.trim()) return true;
-  return false;
+function categoryTranslationStatus(c: Category): "complete" | "partial" | "missing" {
+  const pairs: Array<[string | null | undefined, string | null | undefined]> = [
+    [c.name, c.name_es],
+    [c.tagline?.trim() ? c.tagline : null, c.tagline_es],
+    [c.description?.trim() ? c.description : null, c.description_es],
+  ];
+  const required = pairs.filter(([en]) => !!en?.toString().trim());
+  if (required.length === 0) return "complete";
+  const translated = required.filter(([, es]) => !!es?.toString().trim()).length;
+  if (translated === 0) return "missing";
+  if (translated < required.length) return "partial";
+  return "complete";
 }
 import { SortableList } from "@/components/SortableList";
 import { FileUploader } from "@/components/FileUploader";
@@ -176,14 +183,20 @@ function AdminCategoriesPage() {
                         Draft
                       </span>
                     )}
-                    {categoryNeedsTranslation(c) && (
-                      <span
-                        title="Missing Spanish translation"
-                        className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
-                      >
-                        <Languages className="h-3 w-3" /> Needs ES
-                      </span>
-                    )}
+                    {(() => {
+                      const s = categoryTranslationStatus(c);
+                      if (s === "complete") return null;
+                      const label = s === "missing" ? "Needs ES" : "Partially translated";
+                      const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
+                      return (
+                        <span
+                          title={title}
+                          className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
+                        >
+                          <Languages className="h-3 w-3" /> {label}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">/{c.slug} · {c.tagline}</p>
                 </div>
