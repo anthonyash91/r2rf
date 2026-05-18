@@ -52,7 +52,7 @@ export function SiteHeader() {
             </Link>
           )}
           {showAuthLink && (user ? (
-            <button onClick={() => supabase.auth.signOut()} className="hover:text-foreground transition-colors">
+            <button onClick={handleSignOut} className="hover:text-foreground transition-colors">
               Sign out
             </button>
           ) : (
