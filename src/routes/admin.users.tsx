@@ -174,6 +174,11 @@ function UserItem({
                   <Shield className="h-3 w-3" /> admin
                 </span>
               )}
+              {isContributor && (
+                <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-sky-500/10 px-2 py-0.5 text-sky-600 border border-sky-500/30">
+                  <Shield className="h-3 w-3" /> contributor
+                </span>
+              )}
               {user.email_confirmed_at ? (
                 <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-600 border border-emerald-500/30">
                   Verified
