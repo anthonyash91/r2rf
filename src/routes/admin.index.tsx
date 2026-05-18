@@ -216,6 +216,7 @@ function NewCategoryForm({
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [tagline, setTagline] = useState("");
+  const [description, setDescription] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [published, setPublished] = useState(true);
