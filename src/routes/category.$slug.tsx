@@ -5,12 +5,27 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
+const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
+const PDF_EXT = /\.pdf(\?|#|$)/i;
 function isVideoUrl(url: string | null | undefined) {
   return !!url && VIDEO_EXT.test(url);
+}
+function isAudioUrl(url: string | null | undefined) {
+  return !!url && AUDIO_EXT.test(url);
+}
+function isPdfUrl(url: string | null | undefined) {
+  return !!url && PDF_EXT.test(url);
+}
+type MediaKind = "video" | "audio" | "pdf";
+function detectMedia(url: string | null | undefined): MediaKind | null {
+  if (isVideoUrl(url)) return "video";
+  if (isAudioUrl(url)) return "audio";
+  if (isPdfUrl(url)) return "pdf";
+  return null;
 }
 
 export const Route = createFileRoute("/category/$slug")({
@@ -30,6 +45,8 @@ function CategoryPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
   const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
+  const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
+  const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["category", slug],
@@ -118,21 +135,38 @@ function CategoryPage() {
                     const source = pickLang(lang, item.source, item.source_es);
                     const fileUrl = lang === "es" && item.file_url_es ? item.file_url_es : item.file_url;
                     const fileName = lang === "es" && item.file_url_es ? (item.file_name_es ?? item.file_name) : item.file_name;
-                    const videoSrc = isVideoUrl(fileUrl) ? fileUrl : isVideoUrl(item.url) ? item.url : null;
-                    const isVideo = !!videoSrc;
+                    const fileMedia = detectMedia(fileUrl);
+                    const urlMedia = detectMedia(item.url);
+                    const mediaKind: MediaKind | null = fileMedia ?? urlMedia;
+                    const mediaSrc = fileMedia ? fileUrl : urlMedia ? item.url : null;
+                    const isMedia = !!mediaKind && !!mediaSrc;
+
+                    const openMedia = () => {
+                      if (!isMedia) return;
+                      const payload = { url: mediaSrc!, title };
+                      if (mediaKind === "video") setVideoPlayer(payload);
+                      else if (mediaKind === "audio") setAudioPlayer(payload);
+                      else if (mediaKind === "pdf") setPdfViewer(payload);
+                    };
 
                     let Wrapper: any = "div";
                     let wrapperProps: any = {};
-                    if (isVideo) {
+                    if (isMedia) {
                       Wrapper = "button";
-                      wrapperProps = {
-                        type: "button",
-                        onClick: () => setVideoPlayer({ url: videoSrc!, title }),
-                      };
+                      wrapperProps = { type: "button", onClick: openMedia };
                     } else if (item.url) {
                       Wrapper = "a";
                       wrapperProps = { href: item.url, target: "_blank", rel: "noopener noreferrer" };
                     }
+
+                    const MediaIcon =
+                      mediaKind === "video"
+                        ? PlayCircle
+                        : mediaKind === "audio"
+                          ? Headphones
+                          : mediaKind === "pdf"
+                            ? FileText
+                            : null;
 
                     return (
                       <li key={item.id}>
@@ -151,14 +185,14 @@ function CategoryPage() {
                               <h3 className="font-display text-lg font-semibold text-foreground leading-snug">
                                 {title}
                               </h3>
-                              {isVideo ? (
-                                <PlayCircle className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
+                              {MediaIcon ? (
+                                <MediaIcon className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
                               ) : item.url ? (
                                 <ExternalLink className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
                               ) : null}
                             </div>
                             {description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{description}</p>}
-                            {fileUrl && !isVideo && (
+                            {fileUrl && !isMedia && (
                               <a
                                 href={fileUrl}
                                 target="_blank"
@@ -230,6 +264,35 @@ function CategoryPage() {
               controls
               autoPlay
               className="w-full h-auto max-h-[80vh] bg-black"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!audioPlayer} onOpenChange={(open) => !open && setAudioPlayer(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogTitle className="text-base font-semibold pr-8 break-words">{audioPlayer?.title ?? "Audio"}</DialogTitle>
+          {audioPlayer && (
+            <audio
+              key={audioPlayer.url}
+              src={audioPlayer.url}
+              controls
+              autoPlay
+              className="w-full mt-2"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!pdfViewer} onOpenChange={(open) => !open && setPdfViewer(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden">
+          <DialogTitle className="sr-only">{pdfViewer?.title ?? "PDF"}</DialogTitle>
+          {pdfViewer && (
+            <iframe
+              key={pdfViewer.url}
+              src={pdfViewer.url}
+              title={pdfViewer.title}
+              className="w-full h-[85vh] bg-background"
             />
           )}
         </DialogContent>
