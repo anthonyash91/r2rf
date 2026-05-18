@@ -5,7 +5,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Eye, EyeOff, Languages } from "lucide-react";
+import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { generateCategoryCopy } from "@/lib/category-ai.functions";
 
 function categoryTranslationStatus(c: Category): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
@@ -302,6 +304,27 @@ function NewCategoryForm({
   const [taglineEs, setTaglineEs] = useState("");
   const [descriptionEs, setDescriptionEs] = useState("");
   const [showEs, setShowEs] = useState(false);
+  const generate = useServerFn(generateCategoryCopy);
+  const [generating, setGenerating] = useState(false);
+
+  async function handleAutoGenerate() {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast.error("Enter a name first");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const result = await generate({ data: { name: trimmed } });
+      if (result.tagline) setTagline(result.tagline);
+      if (result.description) setDescription(result.description);
+      toast.success("Generated tagline and description");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to generate");
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   return (
     <form
@@ -342,6 +365,18 @@ function NewCategoryForm({
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />
         </Field>
+      </div>
+      <div>
+        <button
+          type="button"
+          onClick={handleAutoGenerate}
+          disabled={generating || !name.trim()}
+          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+        >
+          <Sparkles className="h-4 w-4" />
+          {generating ? "Generating…" : "Auto-generate tagline & description"}
+        </button>
+        <p className="mt-1 text-xs text-muted-foreground">Uses the Name to draft copy. You can edit the result.</p>
       </div>
       <Field label="Tagline">
         <input
