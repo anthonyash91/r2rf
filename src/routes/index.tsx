@@ -28,9 +28,9 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
   categories.forEach((c, i) => buckets[i % cols].push({ c, i }));
   return (
-    <div className="flex gap-5 items-start">
+    <div className="flex gap-7 items-start">
       {buckets.map((bucket, ci) => (
-        <div key={ci} className="flex-1 flex flex-col gap-5 min-w-0">
+        <div key={ci} className="flex-1 flex flex-col gap-7 min-w-0">
           {bucket.map(({ c, i }) => (
             <Link
               key={c.id}
@@ -191,7 +191,7 @@ function Index() {
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
               {heroEyebrow}
             </div>
-            <h1 className="mt-6 font-display text-5xl sm:text-6xl font-bold tracking-tight text-foreground">
+            <h1 className="mt-6 font-display text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
               {heroPrefix}{" "}
               <span className="italic text-[var(--color-accent)]">{heroEmphasis}</span>{" "}
               {heroSuffix}
@@ -225,7 +225,7 @@ function Index() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
                 {certEyebrow}
               </div>
-              <h2 className="mt-6 font-display text-5xl sm:text-6xl font-bold tracking-tight text-foreground">
+              <h2 className="mt-6 font-display text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
                 {certPrefix}{" "}
                 <span className="italic text-[var(--color-accent)]">{certEmphasis}</span>{" "}
                 {certSuffix}
