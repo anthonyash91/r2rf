@@ -57,6 +57,22 @@ function CategoryPage() {
   const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
   const [imageViewer, setImageViewer] = useState<{ url: string; title: string } | null>(null);
+  const [othersApi, setOthersApi] = useState<CarouselApi>();
+  const [othersCurrent, setOthersCurrent] = useState(0);
+  const [othersCount, setOthersCount] = useState(0);
+
+  useEffect(() => {
+    if (!othersApi) return;
+    setOthersCount(othersApi.scrollSnapList().length);
+    setOthersCurrent(othersApi.selectedScrollSnap());
+    const onSelect = () => setOthersCurrent(othersApi.selectedScrollSnap());
+    othersApi.on("select", onSelect);
+    othersApi.on("reInit", () => {
+      setOthersCount(othersApi.scrollSnapList().length);
+      setOthersCurrent(othersApi.selectedScrollSnap());
+    });
+    return () => { othersApi.off("select", onSelect); };
+  }, [othersApi]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["category", slug],
