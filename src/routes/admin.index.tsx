@@ -33,6 +33,7 @@ function AdminCategoriesPage() {
       name: string;
       slug: string;
       tagline: string;
+      description: string;
       icon_url: string | null;
       published: boolean;
       name_es: string | null;
@@ -43,6 +44,7 @@ function AdminCategoriesPage() {
         name: input.name,
         slug: input.slug,
         tagline: input.tagline,
+        description: input.description,
         icon_url: input.icon_url,
         published: input.published,
         name_es: input.name_es,
