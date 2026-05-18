@@ -511,7 +511,7 @@ function ItemEditor({
   const [published, setPublished] = useState(item?.published ?? true);
   const [titleEs, setTitleEs] = useState(item?.title_es ?? "");
   const [descriptionEs, setDescriptionEs] = useState(item?.description_es ?? "");
-  const [sourceEs, setSourceEs] = useState(item?.source_es ?? "");
+  
   const [fileUrlEs, setFileUrlEs] = useState<string | null>(item?.file_url_es ?? null);
   const [fileNameEs, setFileNameEs] = useState<string | null>(item?.file_name_es ?? null);
   const [showEs, setShowEs] = useState(
