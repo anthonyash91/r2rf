@@ -40,10 +40,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                 params={{ slug: c.slug }}
                 className="group relative flex flex-col rounded-2xl border border-border bg-card p-7 sm:p-8 transition-all hover:border-[var(--color-accent)] hover:-translate-y-1 hover:shadow-[var(--shadow-card)]"
               >
-                <div className="flex items-start justify-between">
-                  <span className="font-display text-sm font-medium text-[var(--color-gold)]">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
+                <div className="flex items-start justify-end">
                   <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)]" />
                 </div>
                 <div className="mt-4 flex justify-start">
@@ -59,6 +56,9 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                 </div>
                 <div className="mt-3">
                   <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
+                    <span className="font-display text-sm font-medium text-[var(--color-gold)] mr-2 align-middle">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
                     {pickLang(lang, c.name, c.name_es)}
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
