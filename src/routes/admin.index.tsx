@@ -33,6 +33,7 @@ function AdminCategoriesPage() {
       name: string;
       slug: string;
       tagline: string;
+      description: string;
       icon_url: string | null;
       published: boolean;
       name_es: string | null;
@@ -43,6 +44,7 @@ function AdminCategoriesPage() {
         name: input.name,
         slug: input.slug,
         tagline: input.tagline,
+        description: input.description,
         icon_url: input.icon_url,
         published: input.published,
         name_es: input.name_es,
@@ -202,6 +204,7 @@ function NewCategoryForm({
     name: string;
     slug: string;
     tagline: string;
+    description: string;
     icon_url: string | null;
     published: boolean;
     name_es: string | null;
@@ -213,6 +216,7 @@ function NewCategoryForm({
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [tagline, setTagline] = useState("");
+  const [description, setDescription] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [published, setPublished] = useState(true);
@@ -229,6 +233,7 @@ function NewCategoryForm({
           name: name.trim(),
           slug: slug.trim() || slugify(name),
           tagline: tagline.trim(),
+          description: description.trim(),
           icon_url: iconUrl,
           published,
           name_es: nameEs.trim() || null,
@@ -267,6 +272,15 @@ function NewCategoryForm({
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
         />
       </Field>
+      <label className="block">
+        <span className="text-sm font-medium">Description</span>
+        <textarea
+          rows={3}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        />
+      </label>
 
       <div>
         <span className="text-sm font-medium">Icon</span>
