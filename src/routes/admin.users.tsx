@@ -223,6 +223,17 @@ function UserItem({
             {isAdmin ? <ShieldOff className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
             {isAdmin ? "Revoke admin" : "Make admin"}
           </button>
+          <button
+            onClick={() => onToggleContributor(!isContributor)}
+            className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium ${
+              isContributor
+                ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                : "border-input bg-background hover:bg-muted"
+            }`}
+          >
+            {isContributor ? <ShieldOff className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
+            {isContributor ? "Revoke contributor" : "Make contributor"}
+          </button>
         </div>
       </div>
 
