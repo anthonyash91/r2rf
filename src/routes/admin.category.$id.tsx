@@ -388,6 +388,7 @@ function ContentManager({ categoryId, categoryName, items, initialEditId }: { ca
         <div ref={editorRef}>
           <ItemEditor
             item={editing === "new" ? null : editing}
+            categoryName={categoryName}
             onCancel={() => setEditing(null)}
             onSave={(v) => saveMut.mutate(v)}
             busy={saveMut.isPending}
