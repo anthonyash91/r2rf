@@ -344,12 +344,14 @@ function ContentManager({ categoryId, items, initialEditId }: { categoryId: stri
       </div>
 
       {editing && (
-        <ItemEditor
-          item={editing === "new" ? null : editing}
-          onCancel={() => setEditing(null)}
-          onSave={(v) => saveMut.mutate(v)}
-          busy={saveMut.isPending}
-        />
+        <div ref={editorRef}>
+          <ItemEditor
+            item={editing === "new" ? null : editing}
+            onCancel={() => setEditing(null)}
+            onSave={(v) => saveMut.mutate(v)}
+            busy={saveMut.isPending}
+          />
+        </div>
       )}
 
       <div className="mt-6 rounded-2xl border border-border bg-card overflow-hidden">
