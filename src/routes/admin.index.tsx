@@ -29,6 +29,7 @@ export const Route = createFileRoute("/admin/")({
 
 function AdminCategoriesPage() {
   const qc = useQueryClient();
+  const { isAdmin } = useAuth();
   const [creating, setCreating] = useState(false);
 
   const { data: categories = [], isLoading } = useQuery({
