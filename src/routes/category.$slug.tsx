@@ -173,7 +173,9 @@ function CategoryPage() {
                           ? Headphones
                           : mediaKind === "pdf"
                             ? FileText
-                            : null;
+                            : mediaKind === "image"
+                              ? ImageIcon
+                              : null;
 
                     return (
                       <li key={item.id}>
