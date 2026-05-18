@@ -53,6 +53,30 @@ export type Database = {
           },
         ]
       }
+      auth_ip_allowlist: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: string
+          label?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string
+          label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
