@@ -79,10 +79,28 @@ export default {
         console.error("[ip-allowlist] check failed:", err);
       }
       if (!allowed) {
-        return new Response(renderBlockedPage(ip), {
+        return new Response(renderBlockedPage(ip, "site"), {
           status: 403,
           headers: { "content-type": "text/html; charset=utf-8" },
         });
+      }
+
+      // Additional gate for the login/sign-up page.
+      const pathname = new URL(request.url).pathname;
+      if (pathname === "/auth" || pathname.startsWith("/auth/")) {
+        let authAllowed = false;
+        try {
+          const authList = await getAuthAllowedIps();
+          authAllowed = !!ip && authList.has(ip);
+        } catch (err) {
+          console.error("[auth-ip-allowlist] check failed:", err);
+        }
+        if (!authAllowed) {
+          return new Response(renderBlockedPage(ip, "auth"), {
+            status: 403,
+            headers: { "content-type": "text/html; charset=utf-8" },
+          });
+        }
       }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
