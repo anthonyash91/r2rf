@@ -43,6 +43,7 @@ export const listUsers = createServerFn({ method: "GET" })
         email: u.email ?? "",
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at ?? null,
+        email_confirmed_at: (u as any).email_confirmed_at ?? null,
         roles: rolesByUser.get(u.id) ?? [],
       })),
     };
