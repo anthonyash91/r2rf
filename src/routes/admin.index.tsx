@@ -304,6 +304,27 @@ function NewCategoryForm({
   const [taglineEs, setTaglineEs] = useState("");
   const [descriptionEs, setDescriptionEs] = useState("");
   const [showEs, setShowEs] = useState(false);
+  const generate = useServerFn(generateCategoryCopy);
+  const [generating, setGenerating] = useState(false);
+
+  async function handleAutoGenerate() {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast.error("Enter a name first");
+      return;
+    }
+    setGenerating(true);
+    try {
+      const result = await generate({ data: { name: trimmed } });
+      if (result.tagline) setTagline(result.tagline);
+      if (result.description) setDescription(result.description);
+      toast.success("Generated tagline and description");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to generate");
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   return (
     <form
