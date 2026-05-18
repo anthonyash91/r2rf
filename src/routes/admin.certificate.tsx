@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
-import { TranslateButton } from "@/components/TranslateButton";
+import { TranslateButton, useTranslateToSpanish } from "@/components/TranslateButton";
 
 export const Route = createFileRoute("/admin/certificate")({
   beforeLoad: requireAdminBeforeLoad,
@@ -74,6 +74,8 @@ function AdminCertificatePage() {
       }
     }
   }, [data]);
+
+  const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
 
   const saveMut = useMutation({
     mutationFn: async (value: CertHero) => {
@@ -288,10 +290,34 @@ function AdminCertificatePage() {
               <div className="border-t border-border pt-6">
                 <button
                   type="button"
-                  onClick={() => setShowEs(true)}
-                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+                  disabled={addEsBusy}
+                  onClick={() => {
+                    setShowEs(true);
+                    runAddEs(
+                      {
+                        eyebrow: hero.eyebrow,
+                        heading_prefix: hero.heading_prefix,
+                        heading_emphasis: hero.heading_emphasis,
+                        heading_suffix: hero.heading_suffix,
+                        subheading: hero.subheading,
+                        callout: hero.callout,
+                      },
+                      (t) =>
+                        setHero((prev) => ({
+                          ...prev,
+                          eyebrow_es: t.eyebrow ?? prev.eyebrow_es,
+                          heading_prefix_es: t.heading_prefix ?? prev.heading_prefix_es,
+                          heading_emphasis_es: t.heading_emphasis ?? prev.heading_emphasis_es,
+                          heading_suffix_es: t.heading_suffix ?? prev.heading_suffix_es,
+                          subheading_es: t.subheading ?? prev.subheading_es,
+                          callout_es: t.callout ?? prev.callout_es,
+                        })),
+                      "Certificate program section copy on the home page",
+                    );
+                  }}
+                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
                 >
-                  + Add Spanish translation
+                  {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
                 </button>
               </div>
             )}

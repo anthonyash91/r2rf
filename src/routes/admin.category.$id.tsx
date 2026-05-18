@@ -22,7 +22,7 @@ function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "mis
   return "complete";
 }
 import { FileUploader } from "@/components/FileUploader";
-import { TranslateButton } from "@/components/TranslateButton";
+import { TranslateButton, useTranslateToSpanish } from "@/components/TranslateButton";
 import { SortableList } from "@/components/SortableList";
 import { useConfirm } from "@/components/ConfirmDialog";
 
@@ -107,6 +107,7 @@ function CategoryEditor({
   const [showEs, setShowEs] = useState(
     !!(category.name_es || category.tagline_es || category.description_es),
   );
+  const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
 
   useEffect(() => {
     setName(category.name);
@@ -267,10 +268,22 @@ function CategoryEditor({
           <div className="border-t border-border pt-4">
             <button
               type="button"
-              onClick={() => setShowEs(true)}
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+              disabled={addEsBusy}
+              onClick={() => {
+                setShowEs(true);
+                runAddEs(
+                  { name, tagline, description },
+                  (t) => {
+                    if (t.name) setNameEs(t.name);
+                    if (t.tagline) setTaglineEs(t.tagline);
+                    if (t.description) setDescriptionEs(t.description);
+                  },
+                  "Category metadata for a content library",
+                );
+              }}
+              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
             >
-              + Add Spanish translation
+              {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
             </button>
           </div>
         )}
@@ -512,6 +525,7 @@ function ItemEditor({
   const [showEs, setShowEs] = useState(
     !!(item?.title_es || item?.description_es || item?.source_es || item?.file_url_es),
   );
+  const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
 
   const generateDesc = useServerFn(generateContentDescription);
   const [generatingDesc, setGeneratingDesc] = useState(false);
@@ -788,10 +802,22 @@ function ItemEditor({
         <div className="border-t border-border pt-4">
           <button
             type="button"
-            onClick={() => setShowEs(true)}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+            disabled={addEsBusy}
+            onClick={() => {
+              setShowEs(true);
+              runAddEs(
+                { title, source, description },
+                (t) => {
+                  if (t.title) setTitleEs(t.title);
+                  if (t.source) setSourceEs(t.source);
+                  if (t.description) setDescriptionEs(t.description);
+                },
+                "Content item metadata in a learning library",
+              );
+            }}
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
           >
-            + Add Spanish translation
+            {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
           </button>
         </div>
       )}
