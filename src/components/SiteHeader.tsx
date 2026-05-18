@@ -12,6 +12,11 @@ export function SiteHeader() {
   const { user, canAccessAdmin } = useAuth();
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate({ to: "/" });
+  };
   const checkAuthIp = useServerFn(isAuthIpAllowed);
   const { data: authIp } = useQuery({
     queryKey: ["auth-ip-allowed"],
