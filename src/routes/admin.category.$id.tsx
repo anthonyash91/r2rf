@@ -511,7 +511,7 @@ function ItemEditor({
   const [published, setPublished] = useState(item?.published ?? true);
   const [titleEs, setTitleEs] = useState(item?.title_es ?? "");
   const [descriptionEs, setDescriptionEs] = useState(item?.description_es ?? "");
-  const [sourceEs, setSourceEs] = useState(item?.source_es ?? "");
+  
   const [fileUrlEs, setFileUrlEs] = useState<string | null>(item?.file_url_es ?? null);
   const [fileNameEs, setFileNameEs] = useState<string | null>(item?.file_name_es ?? null);
   const [showEs, setShowEs] = useState(
@@ -601,7 +601,7 @@ function ItemEditor({
           published,
           title_es: titleEs.trim() || null,
           description_es: descriptionEs.trim() || null,
-          source_es: sourceEs.trim() || null,
+          source_es: null,
           file_url_es: fileUrlEs,
           file_name_es: fileNameEs,
         });
@@ -753,9 +753,6 @@ function ItemEditor({
           </div>
           {addEsBusy && <TranslatingIndicator />}
           <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
-          <div className="grid sm:grid-cols-2 gap-4">
-            <LabeledInput label="Source (ES)" value={sourceEs} onChange={setSourceEs} />
-          </div>
           <label className="block">
             <span className="text-sm font-medium">Description (ES)</span>
             <textarea
@@ -790,10 +787,9 @@ function ItemEditor({
             onClick={() => {
               setShowEs(true);
               runAddEs(
-                { title, source, description },
+                { title, description },
                 (t) => {
                   if (t.title) setTitleEs(t.title);
-                  if (t.source) setSourceEs(t.source);
                   if (t.description) setDescriptionEs(t.description);
                 },
                 "Content item metadata in a learning library",
