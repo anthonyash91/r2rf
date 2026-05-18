@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
-import { TranslateButton, useTranslateToSpanish } from "@/components/TranslateButton";
+import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 
 export const Route = createFileRoute("/admin/certificate")({
   beforeLoad: requireAdminBeforeLoad,
@@ -195,28 +195,7 @@ function AdminCertificatePage() {
                     Hide
                   </button>
                 </div>
-                <TranslateButton
-                  context="Certificate program section copy on the home page"
-                  fields={{
-                    eyebrow: hero.eyebrow,
-                    heading_prefix: hero.heading_prefix,
-                    heading_emphasis: hero.heading_emphasis,
-                    heading_suffix: hero.heading_suffix,
-                    subheading: hero.subheading,
-                    callout: hero.callout,
-                  }}
-                  onTranslated={(t) =>
-                    setHero((prev) => ({
-                      ...prev,
-                      eyebrow_es: t.eyebrow ?? prev.eyebrow_es,
-                      heading_prefix_es: t.heading_prefix ?? prev.heading_prefix_es,
-                      heading_emphasis_es: t.heading_emphasis ?? prev.heading_emphasis_es,
-                      heading_suffix_es: t.heading_suffix ?? prev.heading_suffix_es,
-                      subheading_es: t.subheading ?? prev.subheading_es,
-                      callout_es: t.callout ?? prev.callout_es,
-                    }))
-                  }
-                />
+                {addEsBusy && <TranslatingIndicator />}
                 <Field label="Eyebrow (ES)">
                   <input
                     value={hero.eyebrow_es}
