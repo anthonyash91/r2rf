@@ -113,6 +113,7 @@ function AdminIpAllowlistPage() {
           title="Site allowlist"
           description="Only requests from these IPs can reach any page on the site."
           emptyMessage="No IPs allowed — the site is currently inaccessible to everyone."
+          allowBulk
         />
       </div>
 
