@@ -46,7 +46,7 @@ export function SiteHeader() {
               {t("nav.admin")}
             </Link>
           )}
-          {user ? (
+          {showAuthLink && (user ? (
             <button onClick={() => supabase.auth.signOut()} className="hover:text-foreground transition-colors">
               {t("nav.signOut")}
             </button>
@@ -54,7 +54,7 @@ export function SiteHeader() {
             <Link to="/auth" className="hover:text-foreground transition-colors">
               {t("nav.signIn")}
             </Link>
-          )}
+          ))}
           <button
             onClick={toggleLang}
             aria-label="Toggle language"
