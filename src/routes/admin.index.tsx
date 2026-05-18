@@ -25,7 +25,7 @@ function categoryTranslationStatus(c: Category): "complete" | "partial" | "missi
 import { SortableList } from "@/components/SortableList";
 import { FileUploader } from "@/components/FileUploader";
 import { useConfirm } from "@/components/ConfirmDialog";
-import { TranslateButton } from "@/components/TranslateButton";
+import { TranslateButton, useTranslateToSpanish } from "@/components/TranslateButton";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
@@ -305,6 +305,7 @@ function NewCategoryForm({
   const [taglineEs, setTaglineEs] = useState("");
   const [descriptionEs, setDescriptionEs] = useState("");
   const [showEs, setShowEs] = useState(false);
+  const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
   const generate = useServerFn(generateCategoryCopy);
   const [generating, setGenerating] = useState(false);
 
@@ -486,10 +487,22 @@ function NewCategoryForm({
         <div className="border-t border-border pt-4">
           <button
             type="button"
-            onClick={() => setShowEs(true)}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+            disabled={addEsBusy}
+            onClick={() => {
+              setShowEs(true);
+              runAddEs(
+                { name, tagline, description },
+                (t) => {
+                  if (t.name) setNameEs(t.name);
+                  if (t.tagline) setTaglineEs(t.tagline);
+                  if (t.description) setDescriptionEs(t.description);
+                },
+                "Category metadata for a content library",
+              );
+            }}
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
           >
-            + Add Spanish translation
+            {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
           </button>
         </div>
       )}
