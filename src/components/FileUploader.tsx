@@ -17,10 +17,11 @@ type Props = {
 function extractBytescaleFilePath(url: string): string | null {
   try {
     const u = new URL(url);
+    const decode = (p: string) => { try { return decodeURIComponent(p); } catch { return p; } };
     const m = u.pathname.match(/\/(raw|image|video|audio)\/(.+)$/);
-    if (m) return "/" + m[2];
+    if (m) return decode("/" + m[2]);
     const up = u.pathname.indexOf("/uploads/");
-    if (up !== -1) return u.pathname.slice(up);
+    if (up !== -1) return decode(u.pathname.slice(up));
     return null;
   } catch {
     return null;
