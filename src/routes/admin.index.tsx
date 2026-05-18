@@ -4,7 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Eye, EyeOff } from "lucide-react";
+import { Pencil, Plus, Trash2, Eye, EyeOff, Languages } from "lucide-react";
+
+function categoryNeedsTranslation(c: Category) {
+  if (!c.name_es?.trim()) return true;
+  if (c.tagline?.trim() && !c.tagline_es?.trim()) return true;
+  if (c.description?.trim() && !c.description_es?.trim()) return true;
+  return false;
+}
 import { SortableList } from "@/components/SortableList";
 import { FileUploader } from "@/components/FileUploader";
 
