@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
@@ -240,11 +240,22 @@ function CategoryEditor({
   );
 }
 
-function ContentManager({ categoryId, items }: { categoryId: string; items: ContentItem[] }) {
+function ContentManager({ categoryId, items, initialEditId }: { categoryId: string; items: ContentItem[]; initialEditId?: string }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
   const [order, setOrder] = useState<ContentItem[]>([]);
+  const editorRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => { setOrder(items); }, [items]);
+  useEffect(() => {
+    if (!initialEditId) return;
+    const target = items.find((it) => it.id === initialEditId);
+    if (target) {
+      setEditing(target);
+      setTimeout(() => {
+        editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  }, [initialEditId, items]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin", "category", categoryId] });
