@@ -6,7 +6,7 @@ import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/c
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { generateCategoryCopy } from "@/lib/category-ai.functions";
+import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
