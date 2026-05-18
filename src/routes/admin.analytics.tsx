@@ -267,7 +267,12 @@ function CategorySection({ row }: { row: AggregatedRow }) {
                 <span className="text-xs font-medium rounded-full bg-muted px-2 py-0.5 text-muted-foreground flex-shrink-0">
                   {item.type}
                 </span>
-                <span className="flex-1 min-w-0 truncate text-sm">{item.title}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-sm">{item.title}</p>
+                  {item.created_at && (
+                    <p className="text-xs text-muted-foreground">Added {fmtDate(item.created_at)}</p>
+                  )}
+                </div>
                 <span className="inline-flex items-center gap-1.5 text-sm font-medium tabular-nums">
                   <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
                   {clicks.toLocaleString()}
