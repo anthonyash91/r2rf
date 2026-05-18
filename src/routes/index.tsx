@@ -194,39 +194,11 @@ function Index() {
               </p>
             </div>
 
-            <ul className="mt-10 grid sm:grid-cols-2 gap-x-10 gap-y-4 max-w-3xl text-foreground">
-              <li className="flex items-start gap-3">
-                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                Court & parole-board recognized certificates
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                Self-paced modules across every category
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                Counts toward probationary requirements
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                Practical skills for life after release
-              </li>
-            </ul>
-
-            <div className="mt-10 flex flex-wrap gap-3">
-              <a
-                href="#categories"
-                className="inline-flex items-center gap-2 rounded-full bg-[var(--color-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--color-accent-foreground)] transition-transform hover:-translate-y-0.5"
-              >
-                Explore the program
-                <ArrowUpRight className="h-4 w-4" />
-              </a>
-              <a
-                href="mailto:info@reentrytorecovery.org?subject=Certificate%20Program"
-                className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-              >
-                Contact us
-              </a>
+            <div className="mt-10 max-w-3xl">
+              <div className="inline-flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-sm sm:text-base font-medium text-foreground">
+                <ArrowUpRight className="h-5 w-5 shrink-0 text-[var(--color-accent)]" />
+                You can find the certificate program on your tablet home screen inside the Reentry to Recovery folder
+              </div>
             </div>
           </div>
         </section>
