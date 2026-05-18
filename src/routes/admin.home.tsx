@@ -136,7 +136,7 @@ function AdminHomePage() {
               />
             </Field>
 
-            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5">
+            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5 mb-[30px]">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Preview</p>
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">EN</span>
@@ -207,7 +207,7 @@ function AdminHomePage() {
                   />
                 </Field>
 
-                <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5">
+                <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5 mb-[30px]">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Preview</p>
                     <span className="text-[10px] uppercase tracking-wide text-muted-foreground">ES</span>
