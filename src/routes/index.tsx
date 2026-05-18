@@ -194,7 +194,7 @@ function Index() {
               </p>
             </div>
 
-            <div className="mt-10 max-w-3xl">
+            <div className="mt-10">
               <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm sm:text-base font-medium text-foreground">
                 You can find the certificate program on your tablet home screen inside the Reentry to Recovery folder
               </div>
