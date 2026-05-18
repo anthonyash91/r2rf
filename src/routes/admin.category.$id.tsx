@@ -696,9 +696,13 @@ function ItemEditor({
                 const seconds = await probeMediaDuration(v, kind);
                 const formatted = formatMediaDuration(seconds);
                 if (formatted) setDuration(formatted);
+                else {
+                  const fallback = defaultDurationForType(type);
+                  if (fallback) setDuration(fallback);
+                }
                 return;
               }
-              const estimated = await estimateDuration(v, null);
+              const estimated = await estimateDuration(v, null, type);
               if (estimated) setDuration(estimated);
             }}
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -708,7 +712,7 @@ function ItemEditor({
           <FileUploader
             onUploaded={async (u, name) => {
               setUrl(u);
-              const estimated = await estimateDuration(u, name);
+              const estimated = await estimateDuration(u, name, type);
               if (estimated) setDuration(estimated);
             }}
           />
