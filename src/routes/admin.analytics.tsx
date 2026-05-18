@@ -138,8 +138,8 @@ function AdminAnalyticsPage() {
       ) : (
         <>
           <div className="mt-6 grid sm:grid-cols-2 gap-4">
-            <SummaryCard icon={<Eye className="h-5 w-5" />} label="Category views" value={aggregated.totalViews} />
-            <SummaryCard icon={<MousePointerClick className="h-5 w-5" />} label="Content clicks" value={aggregated.totalClicks} />
+            <SummaryCard icon={<Eye className="h-5 w-5" />} label={aggregated.totalViews === 1 ? "Category view" : "Category views"} value={aggregated.totalViews} />
+            <SummaryCard icon={<MousePointerClick className="h-5 w-5" />} label={aggregated.totalClicks === 1 ? "Content click" : "Content clicks"} value={aggregated.totalClicks} />
           </div>
 
           <div className="mt-8 space-y-6">
