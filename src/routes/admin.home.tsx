@@ -64,6 +64,8 @@ function AdminHomePage() {
     }
   }, [data]);
 
+  const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
+
   const saveMut = useMutation({
     mutationFn: async (value: HomeHero) => {
       const { error } = await supabase
