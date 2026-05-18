@@ -696,9 +696,13 @@ function ItemEditor({
                 const seconds = await probeMediaDuration(v, kind);
                 const formatted = formatMediaDuration(seconds);
                 if (formatted) setDuration(formatted);
+                else {
+                  const fallback = defaultDurationForType(type);
+                  if (fallback) setDuration(fallback);
+                }
                 return;
               }
-              const estimated = await estimateDuration(v, null);
+              const estimated = await estimateDuration(v, null, type);
               if (estimated) setDuration(estimated);
             }}
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -708,7 +712,7 @@ function ItemEditor({
           <FileUploader
             onUploaded={async (u, name) => {
               setUrl(u);
-              const estimated = await estimateDuration(u, name);
+              const estimated = await estimateDuration(u, name, type);
               if (estimated) setDuration(estimated);
             }}
           />
@@ -883,21 +887,37 @@ function probeMediaDuration(url: string, kind: "audio" | "video"): Promise<numbe
   });
 }
 
-async function estimateDuration(url: string, name: string | null): Promise<string> {
+async function estimateDuration(url: string, name: string | null, type: string): Promise<string> {
   const ext = extOf(url, name);
-  if (!ext) return "";
-  if (AUDIO_EXT.has(ext)) return formatMediaDuration(await probeMediaDuration(url, "audio"));
-  if (VIDEO_EXT.has(ext)) return formatMediaDuration(await probeMediaDuration(url, "video"));
-  if (ext === "pdf") {
-    const minutes = await estimatePdfReadMinutes(url);
-    if (minutes > 0) {
-      if (minutes < 60) return `${minutes} min read`;
-      const h = Math.floor(minutes / 60);
-      const m = minutes % 60;
-      return m ? `${h} hr ${m} min read` : `${h} hr read`;
+  if (ext) {
+    if (AUDIO_EXT.has(ext)) {
+      const f = formatMediaDuration(await probeMediaDuration(url, "audio"));
+      if (f) return f;
+    } else if (VIDEO_EXT.has(ext)) {
+      const f = formatMediaDuration(await probeMediaDuration(url, "video"));
+      if (f) return f;
+    } else if (ext === "pdf") {
+      const minutes = await estimatePdfReadMinutes(url);
+      if (minutes > 0) {
+        if (minutes < 60) return `${minutes} min read`;
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        return m ? `${h} hr ${m} min read` : `${h} hr read`;
+      }
     }
   }
-  return "";
+  return defaultDurationForType(type);
+}
+
+function defaultDurationForType(type: string): string {
+  const t = type.toLowerCase();
+  if (t.includes("video")) return "5 min watch";
+  if (t.includes("podcast") || t.includes("audio")) return "20 min listen";
+  if (t.includes("article")) return "5 min read";
+  if (t.includes("guide")) return "10 min read";
+  if (t.includes("worksheet")) return "10 min";
+  if (t.includes("meeting")) return "30 min";
+  return "5 min";
 }
 
 async function estimatePdfReadMinutes(url: string): Promise<number> {
