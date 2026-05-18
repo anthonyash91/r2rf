@@ -28,11 +28,21 @@ function AdminCategoriesPage() {
   });
 
   const createMut = useMutation({
-    mutationFn: async (input: { name: string; slug: string; tagline: string }) => {
+    mutationFn: async (input: {
+      name: string;
+      slug: string;
+      tagline: string;
+      name_es: string | null;
+      tagline_es: string | null;
+      description_es: string | null;
+    }) => {
       const { error } = await supabase.from("categories").insert({
         name: input.name,
         slug: input.slug,
         tagline: input.tagline,
+        name_es: input.name_es,
+        tagline_es: input.tagline_es,
+        description_es: input.description_es,
         sort_order: (categories.at(-1)?.sort_order ?? 0) + 1,
       });
       if (error) throw error;
@@ -45,6 +55,7 @@ function AdminCategoriesPage() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
 
   const togglePublish = useMutation({
     mutationFn: async (cat: Category) => {
