@@ -226,7 +226,7 @@ function CategoryPage() {
                                 href={fileUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(e) => { e.stopPropagation(); handleActivate(); }}
                                 className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-accent)] hover:underline"
                               >
                                 <Download className="h-3.5 w-3.5" />
