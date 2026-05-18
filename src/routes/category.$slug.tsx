@@ -1,10 +1,17 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+
+const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
+function isVideoUrl(url: string | null | undefined) {
+  return !!url && VIDEO_EXT.test(url);
+}
 
 export const Route = createFileRoute("/category/$slug")({
   component: CategoryPage,
@@ -22,6 +29,7 @@ const typeStyles: Record<string, string> = {
 function CategoryPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
+  const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["category", slug],
@@ -105,20 +113,32 @@ function CategoryPage() {
               ) : (
                 <ul className="divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden">
                   {data.items.map((item) => {
-                    const Wrapper: any = item.url ? "a" : "div";
-                    const wrapperProps = item.url
-                      ? { href: item.url, target: "_blank", rel: "noopener noreferrer" }
-                      : {};
                     const title = pickLang(lang, item.title, item.title_es);
                     const description = pickLang(lang, item.description, item.description_es);
                     const source = pickLang(lang, item.source, item.source_es);
                     const fileUrl = lang === "es" && item.file_url_es ? item.file_url_es : item.file_url;
                     const fileName = lang === "es" && item.file_url_es ? (item.file_name_es ?? item.file_name) : item.file_name;
+                    const videoSrc = isVideoUrl(fileUrl) ? fileUrl : isVideoUrl(item.url) ? item.url : null;
+                    const isVideo = !!videoSrc;
+
+                    let Wrapper: any = "div";
+                    let wrapperProps: any = {};
+                    if (isVideo) {
+                      Wrapper = "button";
+                      wrapperProps = {
+                        type: "button",
+                        onClick: () => setVideoPlayer({ url: videoSrc!, title }),
+                      };
+                    } else if (item.url) {
+                      Wrapper = "a";
+                      wrapperProps = { href: item.url, target: "_blank", rel: "noopener noreferrer" };
+                    }
+
                     return (
                       <li key={item.id}>
                         <Wrapper
                           {...wrapperProps}
-                          className="flex flex-col sm:flex-row sm:items-start gap-4 p-6 hover:bg-[var(--color-secondary)]/60 transition-colors"
+                          className="w-full text-left flex flex-col sm:flex-row sm:items-start gap-4 p-6 hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
                         >
                           <div className="flex-shrink-0 flex sm:flex-col gap-2 sm:gap-1 sm:w-28">
                             <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium ${typeStyles[item.type] ?? typeStyles.Article}`}>
@@ -131,10 +151,14 @@ function CategoryPage() {
                               <h3 className="font-display text-lg font-semibold text-foreground leading-snug">
                                 {title}
                               </h3>
-                              {item.url && <ExternalLink className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />}
+                              {isVideo ? (
+                                <PlayCircle className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
+                              ) : item.url ? (
+                                <ExternalLink className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
+                              ) : null}
                             </div>
                             {description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{description}</p>}
-                            {fileUrl && (
+                            {fileUrl && !isVideo && (
                               <a
                                 href={fileUrl}
                                 target="_blank"
@@ -195,6 +219,21 @@ function CategoryPage() {
       )}
 
       <SiteFooter />
+
+      <Dialog open={!!videoPlayer} onOpenChange={(open) => !open && setVideoPlayer(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0">
+          <DialogTitle className="sr-only">{videoPlayer?.title ?? "Video"}</DialogTitle>
+          {videoPlayer && (
+            <video
+              key={videoPlayer.url}
+              src={videoPlayer.url}
+              controls
+              autoPlay
+              className="w-full h-auto max-h-[80vh] bg-black"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
