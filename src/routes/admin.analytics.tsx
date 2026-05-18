@@ -246,7 +246,10 @@ function CategorySection({ row }: { row: AggregatedRow }) {
           )}
           <div className="min-w-0">
             <h2 className="font-display text-lg font-semibold truncate">{row.category.name}</h2>
-            <p className="text-xs text-muted-foreground truncate">/{row.category.slug}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              /{row.category.slug}
+              {row.category.created_at && <> · Added {fmtDate(row.category.created_at)}</>}
+            </p>
           </div>
         </div>
         <div className="flex gap-2 flex-shrink-0">
