@@ -4,7 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages } from "lucide-react";
+
+function itemNeedsTranslation(item: ContentItem) {
+  if (!item.title_es?.trim()) return true;
+  if (item.description?.trim() && !item.description_es?.trim()) return true;
+  if (item.source?.trim() && !item.source_es?.trim()) return true;
+  return false;
+}
 import { FileUploader } from "@/components/FileUploader";
 import { SortableList } from "@/components/SortableList";
 
@@ -337,12 +344,20 @@ function ContentManager({ categoryId, items }: { categoryId: string; items: Cont
               return (
               <div className={`flex items-center gap-3 p-4 transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-medium rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{item.type}</span>
                     {!item.published && (
                       <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>
                     )}
                     <h3 className="font-medium truncate">{item.title}</h3>
+                    {itemNeedsTranslation(item) && (
+                      <span
+                        title="Missing Spanish translation"
+                        className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
+                      >
+                        <Languages className="h-3 w-3" /> Needs ES
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{item.source} · {item.duration}</p>
                 </div>

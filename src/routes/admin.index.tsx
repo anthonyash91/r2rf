@@ -4,7 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Eye, EyeOff } from "lucide-react";
+import { Pencil, Plus, Trash2, Eye, EyeOff, Languages } from "lucide-react";
+
+function categoryNeedsTranslation(c: Category) {
+  if (!c.name_es?.trim()) return true;
+  if (c.tagline?.trim() && !c.tagline_es?.trim()) return true;
+  if (c.description?.trim() && !c.description_es?.trim()) return true;
+  return false;
+}
 import { SortableList } from "@/components/SortableList";
 import { FileUploader } from "@/components/FileUploader";
 
@@ -162,11 +169,19 @@ function AdminCategoriesPage() {
             renderItem={(c) => (
               <div className="flex items-center gap-4 p-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-display text-lg font-semibold truncate">{c.name}</h3>
                     {!c.published && (
                       <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
                         Draft
+                      </span>
+                    )}
+                    {categoryNeedsTranslation(c) && (
+                      <span
+                        title="Missing Spanish translation"
+                        className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
+                      >
+                        <Languages className="h-3 w-3" /> Needs ES
                       </span>
                     )}
                   </div>
