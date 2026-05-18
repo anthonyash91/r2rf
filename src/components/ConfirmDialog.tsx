@@ -55,14 +55,14 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
             )}
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => settle(false)}>
+            <AlertDialogCancel onClick={() => settle(false)} className="shadow-none">
               {opts.cancelLabel ?? "Cancel"}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => settle(true)}
               className={cn(
-                opts.destructive &&
-                  buttonVariants({ variant: "destructive" }),
+                opts.destructive && buttonVariants({ variant: "destructive" }),
+                "shadow-none",
               )}
             >
               {opts.confirmLabel ?? "Confirm"}
