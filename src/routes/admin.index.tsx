@@ -129,6 +129,12 @@ function AdminCategoriesPage() {
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           <Link
+            to="/admin/users"
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            Users
+          </Link>
+          <Link
             to="/admin/ip-allowlist"
             className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
           >
