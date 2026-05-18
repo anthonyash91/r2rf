@@ -22,6 +22,7 @@ function categoryTranslationStatus(c: Category): "complete" | "partial" | "missi
 }
 import { SortableList } from "@/components/SortableList";
 import { FileUploader } from "@/components/FileUploader";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/admin/")({
 function AdminCategoriesPage() {
   const qc = useQueryClient();
   const { isAdmin } = useAuth();
+  const confirm = useConfirm();
   const [creating, setCreating] = useState(false);
 
   const { data: categories = [], isLoading } = useQuery({
@@ -235,8 +237,14 @@ function AdminCategoriesPage() {
                 </Link>
                 <button
                   title="Delete"
-                  onClick={() => {
-                    if (confirm(`Delete "${c.name}" and all its content?`)) deleteMut.mutate(c.id);
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: `Delete "${c.name}"?`,
+                      description: "This will permanently delete the category and all its content.",
+                      confirmLabel: "Delete",
+                      destructive: true,
+                    });
+                    if (ok) deleteMut.mutate(c.id);
                   }}
                   className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                 >

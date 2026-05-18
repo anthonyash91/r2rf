@@ -21,6 +21,7 @@ function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "mis
 }
 import { FileUploader } from "@/components/FileUploader";
 import { SortableList } from "@/components/SortableList";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/admin/category/$id")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -243,6 +244,7 @@ function CategoryEditor({
 
 function ContentManager({ categoryId, items, initialEditId }: { categoryId: string; items: ContentItem[]; initialEditId?: string }) {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
   const [order, setOrder] = useState<ContentItem[]>([]);
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -408,7 +410,15 @@ function ContentManager({ categoryId, items, initialEditId }: { categoryId: stri
                   Edit
                 </button>
                 <button
-                  onClick={() => { if (confirm(`Delete "${item.title}"?`)) deleteMut.mutate(item.id); }}
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: `Delete "${item.title}"?`,
+                      description: "This content will be permanently removed.",
+                      confirmLabel: "Delete",
+                      destructive: true,
+                    });
+                    if (ok) deleteMut.mutate(item.id);
+                  }}
                   className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -435,6 +445,7 @@ function ItemEditor({
   busy: boolean;
 }) {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const [title, setTitle] = useState(item?.title ?? "");
   const [type, setType] = useState(item?.type ?? "Article");
   const [addingType, setAddingType] = useState(false);
@@ -478,7 +489,13 @@ function ItemEditor({
   };
 
   const deleteType = async (t: string) => {
-    if (!confirm(`Delete type "${t}"? Any items using it will be changed to "Article".`)) return;
+    const ok = await confirm({
+      title: `Delete type "${t}"?`,
+      description: `Any items using this type will be changed to "Article".`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
     const { error } = await supabase
       .from("content_items")
       .update({ type: "Article" })

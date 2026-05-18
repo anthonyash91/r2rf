@@ -10,6 +10,7 @@ import {
 
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
+import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -116,8 +117,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
-        <Outlet />
-        <Toaster />
+        <ConfirmDialogProvider>
+          <Outlet />
+          <Toaster />
+        </ConfirmDialogProvider>
       </I18nProvider>
     </QueryClientProvider>
   );
