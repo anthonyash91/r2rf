@@ -135,6 +135,12 @@ function AdminCategoriesPage() {
             IP allowlist
           </Link>
           <Link
+            to="/admin/analytics"
+            className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            Analytics
+          </Link>
+          <Link
             to="/admin/home"
             className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
           >
