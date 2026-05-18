@@ -108,12 +108,14 @@ function UserItem({
   onSetPassword,
   onSendReset,
   onToggleAdmin,
+  onToggleContributor,
 }: {
   user: UserRow;
   onChangeEmail: (email: string) => void;
   onSetPassword: (password: string) => void;
   onSendReset: () => void;
   onToggleAdmin: (enabled: boolean) => void;
+  onToggleContributor: (enabled: boolean) => void;
 }) {
   const [editingEmail, setEditingEmail] = useState(false);
   const [emailDraft, setEmailDraft] = useState(user.email);
@@ -121,6 +123,7 @@ function UserItem({
   const [pw, setPw] = useState("");
 
   const isAdmin = user.roles.includes("admin");
+  const isContributor = user.roles.includes("contributor");
 
   return (
     <li className="p-4 sm:p-5">
