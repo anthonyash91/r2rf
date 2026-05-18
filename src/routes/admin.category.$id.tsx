@@ -601,7 +601,7 @@ function ItemEditor({
           published,
           title_es: titleEs.trim() || null,
           description_es: descriptionEs.trim() || null,
-          source_es: sourceEs.trim() || null,
+          source_es: null,
           file_url_es: fileUrlEs,
           file_name_es: fileNameEs,
         });
