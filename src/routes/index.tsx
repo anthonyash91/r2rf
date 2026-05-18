@@ -174,59 +174,59 @@ function Index() {
           )}
         </section>
 
-        <section className="mt-12 border-t border-border/60">
-          <div className="mx-auto max-w-6xl px-6 py-20">
-            <div className="relative overflow-hidden rounded-3xl border border-border bg-[var(--gradient-hero)] p-10 sm:p-14 shadow-[var(--shadow-elegant)]">
-              <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-[var(--color-gold)]/20 blur-3xl" aria-hidden />
-              <div className="absolute -bottom-32 -left-20 h-80 w-80 rounded-full bg-[var(--color-accent)]/30 blur-3xl" aria-hidden />
-              <div className="relative max-w-3xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-gold)]/40 bg-black/20 px-3 py-1 text-xs font-medium text-[var(--color-gold)] backdrop-blur">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                  New Program
-                </div>
-                <h2 className="mt-6 font-display text-4xl sm:text-5xl font-bold tracking-tight text-[var(--color-primary-foreground)]">
-                  Reentry to Recovery{" "}
-                  <span className="italic text-[var(--color-gold)]">Certificate Program</span>
-                </h2>
-                <p className="mt-5 text-lg leading-relaxed text-[var(--color-primary-foreground)]/85">
-                  Earn recognized certificates from inside. Coursework designed for incarcerated
-                  learners that may help shorten sentences or satisfy probationary requirements —
-                  while building the skills that carry forward into recovery, work, and family life.
-                </p>
-                <ul className="mt-6 grid sm:grid-cols-2 gap-3 text-[var(--color-primary-foreground)]/90">
-                  <li className="flex items-start gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                    Court & parole-board recognized certificates
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                    Self-paced modules across every category
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                    Counts toward probationary requirements
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                    Practical skills for life after release
-                  </li>
-                </ul>
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <a
-                    href="#categories"
-                    className="inline-flex items-center gap-2 rounded-full bg-[var(--color-gold)] px-5 py-2.5 text-sm font-semibold text-[var(--color-gold-foreground)] transition-transform hover:-translate-y-0.5"
-                  >
-                    Explore the program
-                    <ArrowUpRight className="h-4 w-4" />
-                  </a>
-                  <a
-                    href="mailto:info@reentrytorecovery.org?subject=Certificate%20Program"
-                    className="inline-flex items-center gap-2 rounded-full border border-[var(--color-primary-foreground)]/40 px-5 py-2.5 text-sm font-semibold text-[var(--color-primary-foreground)] transition-colors hover:bg-[var(--color-primary-foreground)]/10"
-                  >
-                    Contact us
-                  </a>
-                </div>
+        <section className="border-t border-border/60">
+          <div className="mx-auto max-w-6xl px-6 pt-20 pb-24">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                New Program
               </div>
+              <h2 className="mt-6 font-display text-5xl sm:text-6xl font-bold tracking-tight text-foreground">
+                Earn certificates that{" "}
+                <span className="italic text-[var(--color-accent)]">change</span>{" "}
+                the road ahead.
+              </h2>
+              <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
+                The Reentry to Recovery Certificate Program offers coursework designed for
+                incarcerated learners — recognized credentials that may help shorten sentences,
+                satisfy probationary requirements, and build the skills that carry forward into
+                recovery, work, and family life.
+              </p>
+            </div>
+
+            <ul className="mt-10 grid sm:grid-cols-2 gap-x-10 gap-y-4 max-w-3xl text-foreground">
+              <li className="flex items-start gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                Court & parole-board recognized certificates
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                Self-paced modules across every category
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                Counts toward probationary requirements
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                Practical skills for life after release
+              </li>
+            </ul>
+
+            <div className="mt-10 flex flex-wrap gap-3">
+              <a
+                href="#categories"
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--color-accent)] px-5 py-2.5 text-sm font-semibold text-[var(--color-accent-foreground)] transition-transform hover:-translate-y-0.5"
+              >
+                Explore the program
+                <ArrowUpRight className="h-4 w-4" />
+              </a>
+              <a
+                href="mailto:info@reentrytorecovery.org?subject=Certificate%20Program"
+                className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+              >
+                Contact us
+              </a>
             </div>
           </div>
         </section>
