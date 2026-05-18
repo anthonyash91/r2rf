@@ -753,9 +753,6 @@ function ItemEditor({
           </div>
           {addEsBusy && <TranslatingIndicator />}
           <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
-          <div className="grid sm:grid-cols-2 gap-4">
-            <LabeledInput label="Source (ES)" value={sourceEs} onChange={setSourceEs} />
-          </div>
           <label className="block">
             <span className="text-sm font-medium">Description (ES)</span>
             <textarea
