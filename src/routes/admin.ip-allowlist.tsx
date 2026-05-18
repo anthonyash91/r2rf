@@ -113,6 +113,7 @@ function AdminIpAllowlistPage() {
           title="Site allowlist"
           description="Only requests from these IPs can reach any page on the site."
           emptyMessage="No IPs allowed — the site is currently inaccessible to everyone."
+          allowBulk
         />
       </div>
 
@@ -137,6 +138,7 @@ function AllowlistSection({
   title,
   description,
   emptyMessage,
+  allowBulk = false,
 }: {
   table: "ip_allowlist" | "auth_ip_allowlist";
   queryKey: readonly unknown[];
@@ -144,10 +146,38 @@ function AllowlistSection({
   title: string;
   description: string;
   emptyMessage: string;
+  allowBulk?: boolean;
 }) {
   const qc = useQueryClient();
   const [ip, setIp] = useState("");
   const [label, setLabel] = useState("");
+  const [bulk, setBulk] = useState("");
+
+  const bulkMut = useMutation({
+    mutationFn: async (rawText: string) => {
+      const lines = rawText
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+      const invalid = lines.filter((l) => !IP_REGEX.test(l));
+      if (invalid.length > 0) {
+        throw new Error(`Invalid IPv4 address(es): ${invalid.slice(0, 3).join(", ")}${invalid.length > 3 ? "…" : ""}`);
+      }
+      const unique = Array.from(new Set(lines));
+      if (unique.length === 0) throw new Error("Enter at least one IP address");
+      const { error } = await supabase
+        .from(table)
+        .insert(unique.map((ip_address) => ({ ip_address, label: "" })));
+      if (error) throw error;
+      return unique.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`Added ${count} IP${count === 1 ? "" : "s"}`);
+      setBulk("");
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey,
@@ -236,6 +266,34 @@ function AllowlistSection({
           </button>
         </div>
       </form>
+
+      {allowBulk && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            bulkMut.mutate(bulk);
+          }}
+          className="p-6 border-b border-border"
+        >
+          <label className="text-sm font-medium">Bulk add (one IPv4 address per line)</label>
+          <textarea
+            value={bulk}
+            onChange={(e) => setBulk(e.target.value)}
+            rows={5}
+            placeholder={"192.168.1.1\n10.0.0.42\n203.0.113.7"}
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+          />
+          <div className="mt-3 flex justify-end">
+            <button
+              type="submit"
+              disabled={bulkMut.isPending || bulk.trim() === ""}
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            >
+              <Plus className="h-4 w-4" /> Add all
+            </button>
+          </div>
+        </form>
+      )}
 
       <div>
         {isLoading ? (
