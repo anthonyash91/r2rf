@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SpanishRouteImport } from './routes/spanish'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -21,6 +22,11 @@ import { Route as AdminCertificateRouteImport } from './routes/admin.certificate
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminCategoryIdRouteImport } from './routes/admin.category.$id'
 
+const SpanishRoute = SpanishRouteImport.update({
+  id: '/spanish',
+  path: '/spanish',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/home': typeof AdminHomeRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/home': typeof AdminHomeRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/home': typeof AdminHomeRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/spanish'
     | '/admin/analytics'
     | '/admin/certificate'
     | '/admin/home'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/spanish'
     | '/admin/analytics'
     | '/admin/certificate'
     | '/admin/home'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/spanish'
     | '/admin/analytics'
     | '/admin/certificate'
     | '/admin/home'
@@ -161,11 +173,19 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  SpanishRoute: typeof SpanishRoute
   CategorySlugRoute: typeof CategorySlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/spanish': {
+      id: '/spanish'
+      path: '/spanish'
+      fullPath: '/spanish'
+      preLoaderRoute: typeof SpanishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -272,6 +292,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  SpanishRoute: SpanishRoute,
   CategorySlugRoute: CategorySlugRoute,
 }
 export const routeTree = rootRouteImport
