@@ -8,9 +8,26 @@ type Props = {
   onUploaded: (fileUrl: string, fileName: string | null) => void;
   label?: string;
   mimeTypes?: string[];
+  /** Existing Bytescale file URL — if provided, that exact file is deleted before the new upload. */
+  existingFileUrl?: string | null;
 };
 
-export function FileUploader({ onUploaded, label = "Upload file to fill URL", mimeTypes }: Props) {
+// Extract the Bytescale filePath (e.g. "/uploads/foo.png") from a stored URL.
+// Strips any cache-busting query string and the CDN/account/transformation prefix.
+function extractBytescaleFilePath(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const m = u.pathname.match(/\/(raw|image|video|audio)\/(.+)$/);
+    if (m) return "/" + m[2];
+    const up = u.pathname.indexOf("/uploads/");
+    if (up !== -1) return u.pathname.slice(up);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function FileUploader({ onUploaded, label = "Upload file to fill URL", mimeTypes, existingFileUrl }: Props) {
   const fetchConfig = useServerFn(getBytescaleConfig);
   const deleteIfExists = useServerFn(deleteBytescaleFileIfExists);
   const { data, isLoading, error } = useQuery({
@@ -41,9 +58,17 @@ export function FileUploader({ onUploaded, label = "Upload file to fill URL", mi
           // Sanitize to match the path template above; replace disallowed chars with "_"
           const original = file.name ?? "";
           const safe = original.replace(/[^A-Za-z0-9._\- ]/g, "_");
-          if (!safe) return undefined;
+          const targets = new Set<string>();
+          if (safe) targets.add(`/uploads/${safe}`);
+          // Also remove the previous file if its path differs from the new upload's path
+          if (existingFileUrl) {
+            const prev = extractBytescaleFilePath(existingFileUrl);
+            if (prev) targets.add(prev);
+          }
           try {
-            await deleteIfExists({ data: { filePath: `/uploads/${safe}` } });
+            await Promise.all(
+              Array.from(targets).map((filePath) => deleteIfExists({ data: { filePath } })),
+            );
           } catch (err) {
             return { errorMessage: `Could not replace existing file: ${(err as Error).message}` };
           }
@@ -52,7 +77,13 @@ export function FileUploader({ onUploaded, label = "Upload file to fill URL", mi
       }}
       onComplete={(files) => {
         const f = files[0];
-        if (f) onUploaded(f.fileUrl, f.originalFile.originalFileName ?? null);
+        if (f) {
+          // Append a cache-buster so a re-upload with the same filename still produces a
+          // changed URL (forces DB update + bypasses browser/CDN cache of the old image).
+          const sep = f.fileUrl.includes("?") ? "&" : "?";
+          const bustedUrl = `${f.fileUrl}${sep}v=${Date.now()}`;
+          onUploaded(bustedUrl, f.originalFile.originalFileName ?? null);
+        }
       }}
     >
       {({ onClick }) => (
