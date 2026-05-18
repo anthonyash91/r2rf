@@ -292,7 +292,7 @@ function CategoryPage() {
                                   key={other.id}
                                   to="/category/$slug"
                                   params={{ slug: other.slug }}
-                                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--color-accent)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]"
+                                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
                                 >
                                   {other.icon_url ? (
                                     <img
