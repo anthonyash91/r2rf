@@ -23,11 +23,15 @@ import { FileUploader } from "@/components/FileUploader";
 import { SortableList } from "@/components/SortableList";
 
 export const Route = createFileRoute("/admin/category/$id")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    edit: typeof search.edit === "string" ? search.edit : undefined,
+  }),
   component: AdminCategoryPage,
 });
 
 function AdminCategoryPage() {
   const { id } = Route.useParams();
+  const { edit } = Route.useSearch();
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -71,7 +75,7 @@ function AdminCategoryPage() {
       ) : (
         <>
           <CategoryEditor category={data.category} onSave={(v) => saveCategory.mutate(v)} busy={saveCategory.isPending} />
-          <ContentManager categoryId={id} items={data.items} />
+          <ContentManager categoryId={id} items={data.items} initialEditId={edit} />
         </>
       )}
     </div>
