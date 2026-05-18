@@ -5,12 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
 const PDF_EXT = /\.pdf(\?|#|$)/i;
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp|avif|svg|bmp|heic|heif)(\?|#|$)/i;
 function isVideoUrl(url: string | null | undefined) {
   return !!url && VIDEO_EXT.test(url);
 }
@@ -20,11 +21,15 @@ function isAudioUrl(url: string | null | undefined) {
 function isPdfUrl(url: string | null | undefined) {
   return !!url && PDF_EXT.test(url);
 }
-type MediaKind = "video" | "audio" | "pdf";
+function isImageUrl(url: string | null | undefined) {
+  return !!url && IMAGE_EXT.test(url);
+}
+type MediaKind = "video" | "audio" | "pdf" | "image";
 function detectMedia(url: string | null | undefined): MediaKind | null {
   if (isVideoUrl(url)) return "video";
   if (isAudioUrl(url)) return "audio";
   if (isPdfUrl(url)) return "pdf";
+  if (isImageUrl(url)) return "image";
   return null;
 }
 
@@ -47,6 +52,7 @@ function CategoryPage() {
   const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
   const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
+  const [imageViewer, setImageViewer] = useState<{ url: string; title: string } | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["category", slug],
@@ -147,6 +153,7 @@ function CategoryPage() {
                       if (mediaKind === "video") setVideoPlayer(payload);
                       else if (mediaKind === "audio") setAudioPlayer(payload);
                       else if (mediaKind === "pdf") setPdfViewer(payload);
+                      else if (mediaKind === "image") setImageViewer(payload);
                     };
 
                     let Wrapper: any = "div";
@@ -166,7 +173,9 @@ function CategoryPage() {
                           ? Headphones
                           : mediaKind === "pdf"
                             ? FileText
-                            : null;
+                            : mediaKind === "image"
+                              ? ImageIcon
+                              : null;
 
                     return (
                       <li key={item.id}>
@@ -304,6 +313,20 @@ function CategoryPage() {
               src={pdfViewer.url}
               title={pdfViewer.title}
               className="w-full h-[85vh] bg-background"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!imageViewer} onOpenChange={(open) => !open && setImageViewer(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden bg-black border-0">
+          <DialogTitle className="sr-only">{imageViewer?.title ?? "Image"}</DialogTitle>
+          {imageViewer && (
+            <img
+              key={imageViewer.url}
+              src={imageViewer.url}
+              alt={imageViewer.title}
+              className="w-full h-auto max-h-[85vh] object-contain bg-black"
             />
           )}
         </DialogContent>
