@@ -92,6 +92,7 @@ function AdminUsersPage() {
                 onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
                 onSendReset={() => resetMut.mutate({ email: u.email })}
                 onToggleAdmin={(enabled) => roleMut.mutate({ userId: u.id, role: "admin", enabled })}
+                onToggleContributor={(enabled) => roleMut.mutate({ userId: u.id, role: "contributor", enabled })}
               />
             ))}
           </ul>
