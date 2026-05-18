@@ -278,7 +278,7 @@ function CategoryEditor({
   );
 }
 
-function ContentManager({ categoryId, items, initialEditId }: { categoryId: string; items: ContentItem[]; initialEditId?: string }) {
+function ContentManager({ categoryId, categoryName, items, initialEditId }: { categoryId: string; categoryName: string; items: ContentItem[]; initialEditId?: string }) {
   const qc = useQueryClient();
   const confirm = useConfirm();
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
