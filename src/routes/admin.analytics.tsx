@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,7 @@ import { ArrowLeft, BarChart3, ChevronDown, Download, Eye, MousePointerClick } f
 import type { Category, ContentItem } from "@/lib/categories";
 
 export const Route = createFileRoute("/admin/analytics")({
+  beforeLoad: requireAdminBeforeLoad,
   component: AdminAnalyticsPage,
 });
 

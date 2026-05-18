@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -13,6 +14,7 @@ import {
 } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/admin/users")({
+  beforeLoad: requireAdminBeforeLoad,
   component: AdminUsersPage,
 });
 

@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
 
 export const Route = createFileRoute("/admin/certificate")({
+  beforeLoad: requireAdminBeforeLoad,
   component: AdminCertificatePage,
 });
 
