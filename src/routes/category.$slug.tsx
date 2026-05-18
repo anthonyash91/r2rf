@@ -29,6 +29,7 @@ const typeStyles: Record<string, string> = {
 function CategoryPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
+  const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["category", slug],
