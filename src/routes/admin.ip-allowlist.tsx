@@ -151,6 +151,33 @@ function AllowlistSection({
   const qc = useQueryClient();
   const [ip, setIp] = useState("");
   const [label, setLabel] = useState("");
+  const [bulk, setBulk] = useState("");
+
+  const bulkMut = useMutation({
+    mutationFn: async (rawText: string) => {
+      const lines = rawText
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+      const invalid = lines.filter((l) => !IP_REGEX.test(l));
+      if (invalid.length > 0) {
+        throw new Error(`Invalid IPv4 address(es): ${invalid.slice(0, 3).join(", ")}${invalid.length > 3 ? "…" : ""}`);
+      }
+      const unique = Array.from(new Set(lines));
+      if (unique.length === 0) throw new Error("Enter at least one IP address");
+      const { error } = await supabase
+        .from(table)
+        .insert(unique.map((ip_address) => ({ ip_address, label: "" })));
+      if (error) throw error;
+      return unique.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`Added ${count} IP${count === 1 ? "" : "s"}`);
+      setBulk("");
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey,
