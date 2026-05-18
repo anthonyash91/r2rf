@@ -233,6 +233,7 @@ function NewCategoryForm({
           name: name.trim(),
           slug: slug.trim() || slugify(name),
           tagline: tagline.trim(),
+          description: description.trim(),
           icon_url: iconUrl,
           published,
           name_es: nameEs.trim() || null,
