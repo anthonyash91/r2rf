@@ -303,8 +303,8 @@ function CategoryPage() {
                     </CarouselContent>
                     {data.others.length > 9 && (
                       <>
-                        <CarouselPrevious className="left-0 -translate-x-[150%]" />
-                        <CarouselNext className="right-0 translate-x-[150%]" />
+                        <CarouselPrevious className="left-0" />
+                        <CarouselNext className="right-0" />
                       </>
                     )}
                   </Carousel>
