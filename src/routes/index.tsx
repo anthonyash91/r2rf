@@ -1,10 +1,27 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { ArrowUpRight } from "lucide-react";
+
+function useColumnCount() {
+  const [cols, setCols] = useState(4);
+  useEffect(() => {
+    const compute = () => {
+      const w = window.innerWidth;
+      if (w >= 1024) setCols(4);
+      else if (w >= 640) setCols(2);
+      else setCols(1);
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, []);
+  return cols;
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
