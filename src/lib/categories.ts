@@ -42,6 +42,7 @@ export type ContentItem = {
   source_es: string | null;
   file_url_es: string | null;
   file_name_es: string | null;
+  created_at?: string;
 };
 
 export function slugify(s: string) {
