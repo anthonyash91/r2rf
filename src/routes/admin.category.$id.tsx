@@ -22,7 +22,7 @@ function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "mis
   return "complete";
 }
 import { FileUploader } from "@/components/FileUploader";
-import { TranslateButton, useTranslateToSpanish } from "@/components/TranslateButton";
+import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { SortableList } from "@/components/SortableList";
 import { useConfirm } from "@/components/ConfirmDialog";
 
@@ -243,15 +243,7 @@ function CategoryEditor({
                 Hide
               </button>
             </div>
-            <TranslateButton
-              context="Category metadata for a content library"
-              fields={{ name, tagline, description }}
-              onTranslated={(t) => {
-                if (t.name) setNameEs(t.name);
-                if (t.tagline) setTaglineEs(t.tagline);
-                if (t.description) setDescriptionEs(t.description);
-              }}
-            />
+            {addEsBusy && <TranslatingIndicator />}
             <LabeledInput label="Name (ES)" value={nameEs} onChange={setNameEs} />
             <LabeledInput label="Tagline (ES)" value={taglineEs} onChange={setTaglineEs} />
             <label className="block">
@@ -759,15 +751,7 @@ function ItemEditor({
               Hide
             </button>
           </div>
-          <TranslateButton
-            context="Content item metadata in a learning library"
-            fields={{ title, source, description }}
-            onTranslated={(t) => {
-              if (t.title) setTitleEs(t.title);
-              if (t.source) setSourceEs(t.source);
-              if (t.description) setDescriptionEs(t.description);
-            }}
-          />
+          {addEsBusy && <TranslatingIndicator />}
           <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
           <div className="grid sm:grid-cols-2 gap-4">
             <LabeledInput label="Source (ES)" value={sourceEs} onChange={setSourceEs} />
