@@ -161,14 +161,18 @@ function CategoryPage() {
                       else if (mediaKind === "image") setImageViewer(payload);
                     };
 
+                    const handleActivate = () => {
+                      trackContentClick(item.id, data.category.id);
+                    };
+
                     let Wrapper: any = "div";
                     let wrapperProps: any = {};
                     if (isMedia) {
                       Wrapper = "button";
-                      wrapperProps = { type: "button", onClick: openMedia };
+                      wrapperProps = { type: "button", onClick: () => { handleActivate(); openMedia(); } };
                     } else if (item.url) {
                       Wrapper = "a";
-                      wrapperProps = { href: item.url, target: "_blank", rel: "noopener noreferrer" };
+                      wrapperProps = { href: item.url, target: "_blank", rel: "noopener noreferrer", onClick: handleActivate };
                     }
 
                     const MediaIcon =
