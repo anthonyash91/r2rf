@@ -219,6 +219,21 @@ function CategoryPage() {
       )}
 
       <SiteFooter />
+
+      <Dialog open={!!videoPlayer} onOpenChange={(open) => !open && setVideoPlayer(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0">
+          <DialogTitle className="sr-only">{videoPlayer?.title ?? "Video"}</DialogTitle>
+          {videoPlayer && (
+            <video
+              key={videoPlayer.url}
+              src={videoPlayer.url}
+              controls
+              autoPlay
+              className="w-full h-auto max-h-[80vh] bg-black"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
