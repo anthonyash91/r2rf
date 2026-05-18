@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
 const PDF_EXT = /\.pdf(\?|#|$)/i;
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp|avif|svg|bmp|heic|heif)(\?|#|$)/i;
 function isVideoUrl(url: string | null | undefined) {
   return !!url && VIDEO_EXT.test(url);
 }
@@ -20,11 +21,15 @@ function isAudioUrl(url: string | null | undefined) {
 function isPdfUrl(url: string | null | undefined) {
   return !!url && PDF_EXT.test(url);
 }
-type MediaKind = "video" | "audio" | "pdf";
+function isImageUrl(url: string | null | undefined) {
+  return !!url && IMAGE_EXT.test(url);
+}
+type MediaKind = "video" | "audio" | "pdf" | "image";
 function detectMedia(url: string | null | undefined): MediaKind | null {
   if (isVideoUrl(url)) return "video";
   if (isAudioUrl(url)) return "audio";
   if (isPdfUrl(url)) return "pdf";
+  if (isImageUrl(url)) return "image";
   return null;
 }
 
