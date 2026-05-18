@@ -107,7 +107,7 @@ export const setUserRole = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        role: z.enum(["admin", "moderator", "user"]),
+        role: z.literal("admin"),
         enabled: z.boolean(),
       })
       .parse(input),
@@ -115,12 +115,8 @@ export const setUserRole = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    // Prevent self-demotion from admin to avoid lockout
-    if (
-      data.userId === context.userId &&
-      data.role === "admin" &&
-      !data.enabled
-    ) {
+    // Prevent self-demotion to avoid lockout
+    if (data.userId === context.userId && !data.enabled) {
       throw new Error("You cannot remove the admin role from your own account.");
     }
 
