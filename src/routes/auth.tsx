@@ -19,6 +19,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [signedUp, setSignedUp] = useState(false);
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/admin" });
