@@ -154,6 +154,26 @@ function Index() {
     },
   });
 
+  const { data: cert = DEFAULT_CERT } = useQuery({
+    queryKey: ["site_settings", "certificate_hero"],
+    queryFn: async (): Promise<CertHero> => {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "certificate_hero")
+        .maybeSingle();
+      if (error) throw error;
+      return { ...DEFAULT_CERT, ...((data?.value as Partial<CertHero>) ?? {}) };
+    },
+  });
+
+  const certEyebrow = pickLang(lang, cert.eyebrow, cert.eyebrow_es);
+  const certPrefix = pickLang(lang, cert.heading_prefix, cert.heading_prefix_es);
+  const certEmphasis = pickLang(lang, cert.heading_emphasis, cert.heading_emphasis_es);
+  const certSuffix = pickLang(lang, cert.heading_suffix, cert.heading_suffix_es);
+  const certSubheading = pickLang(lang, cert.subheading, cert.subheading_es);
+  const certCallout = pickLang(lang, cert.callout, cert.callout_es);
+
   const heroEyebrow = pickLang(lang, hero.eyebrow, hero.eyebrow_es);
   const heroPrefix = pickLang(lang, hero.heading_prefix, hero.heading_prefix_es);
   const heroEmphasis = pickLang(lang, hero.heading_emphasis, hero.heading_emphasis_es);
