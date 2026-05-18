@@ -5,12 +5,27 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
+const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
+const PDF_EXT = /\.pdf(\?|#|$)/i;
 function isVideoUrl(url: string | null | undefined) {
   return !!url && VIDEO_EXT.test(url);
+}
+function isAudioUrl(url: string | null | undefined) {
+  return !!url && AUDIO_EXT.test(url);
+}
+function isPdfUrl(url: string | null | undefined) {
+  return !!url && PDF_EXT.test(url);
+}
+type MediaKind = "video" | "audio" | "pdf";
+function detectMedia(url: string | null | undefined): MediaKind | null {
+  if (isVideoUrl(url)) return "video";
+  if (isAudioUrl(url)) return "audio";
+  if (isPdfUrl(url)) return "pdf";
+  return null;
 }
 
 export const Route = createFileRoute("/category/$slug")({
