@@ -225,7 +225,7 @@ function Index() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
                 {certEyebrow}
               </div>
-              <h2 className="mt-6 font-display text-5xl sm:text-6xl font-bold tracking-tight text-foreground">
+              <h2 className="mt-6 font-display text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
                 {certPrefix}{" "}
                 <span className="italic text-[var(--color-accent)]">{certEmphasis}</span>{" "}
                 {certSuffix}
