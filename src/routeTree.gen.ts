@@ -20,6 +20,7 @@ import { Route as AdminIpAllowlistRouteImport } from './routes/admin.ip-allowlis
 import { Route as AdminHomeRouteImport } from './routes/admin.home'
 import { Route as AdminCertificateRouteImport } from './routes/admin.certificate'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as ApiPublicSitePasskeyRouteImport } from './routes/api/public/site-passkey'
 import { Route as AdminCategoryIdRouteImport } from './routes/admin.category.$id'
 
 const SpanishRoute = SpanishRouteImport.update({
@@ -77,6 +78,11 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiPublicSitePasskeyRoute = ApiPublicSitePasskeyRouteImport.update({
+  id: '/api/public/site-passkey',
+  path: '/api/public/site-passkey',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCategoryIdRoute = AdminCategoryIdRouteImport.update({
   id: '/category/$id',
   path: '/category/$id',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/category/$slug': typeof CategorySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
+  '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/category/$slug': typeof CategorySlugRoute
   '/admin': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
+  '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/category/$slug': typeof CategorySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
+  '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/admin/'
     | '/admin/category/$id'
+    | '/api/public/site-passkey'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/admin'
     | '/admin/category/$id'
+    | '/api/public/site-passkey'
   id:
     | '__root__'
     | '/'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/category/$slug'
     | '/admin/'
     | '/admin/category/$id'
+    | '/api/public/site-passkey'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   SpanishRoute: typeof SpanishRoute
   CategorySlugRoute: typeof CategorySlugRoute
+  ApiPublicSitePasskeyRoute: typeof ApiPublicSitePasskeyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -256,6 +269,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/public/site-passkey': {
+      id: '/api/public/site-passkey'
+      path: '/api/public/site-passkey'
+      fullPath: '/api/public/site-passkey'
+      preLoaderRoute: typeof ApiPublicSitePasskeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/category/$id': {
       id: '/admin/category/$id'
       path: '/category/$id'
@@ -294,6 +314,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   SpanishRoute: SpanishRoute,
   CategorySlugRoute: CategorySlugRoute,
+  ApiPublicSitePasskeyRoute: ApiPublicSitePasskeyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
