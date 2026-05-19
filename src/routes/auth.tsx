@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { recordMySignupIp } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — Reentry to Recovery" }] }),
