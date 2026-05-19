@@ -338,6 +338,7 @@ function CategoryEditor({
 function ContentManager({ categoryId, categoryName, items, initialEditId }: { categoryId: string; categoryName: string; items: ContentItem[]; initialEditId?: string }) {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const { lang } = useI18n();
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
   const [order, setOrder] = useState<ContentItem[]>([]);
   const editorRef = useRef<HTMLDivElement | null>(null);
