@@ -225,7 +225,7 @@ function CategoryPage() {
                               : null;
 
                     return (
-                      <li key={item.id} className="relative">
+                      <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24">
                         <Wrapper
                           {...wrapperProps}
                           className="w-full text-left flex flex-col sm:flex-row sm:items-start gap-4 p-6 hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
