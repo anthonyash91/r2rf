@@ -277,6 +277,16 @@ function AdminCategoriesPage() {
                   {c.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                 </button>
                 <Link
+                  to="/category/$slug"
+                  params={{ slug: c.slug }}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                  title="View on site"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+                <Link
                   to="/admin/category/$id"
                   params={{ id: c.id }}
                   className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
