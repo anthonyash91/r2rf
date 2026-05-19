@@ -7,6 +7,7 @@ type NavLink = {
   label: string;
   icon: typeof LayoutGrid;
   exact?: boolean;
+  matchPrefixes?: string[];
   adminOnly?: boolean;
 };
 
