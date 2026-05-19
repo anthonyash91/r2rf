@@ -307,7 +307,7 @@ function AdminCustomHomePageEdit() {
               );
             })()
           )}
-          <p className="mt-4 text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground my-[8px] mt-[8px]">
             Only published categories appear publicly on the custom home page, even if drafts are selected here.
           </p>
         </section>
