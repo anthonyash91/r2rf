@@ -62,7 +62,7 @@ export const Route = createFileRoute("/api/public/site-passkey")({
             "Content-Type": "application/json",
             Prefer: "resolution=merge-duplicates,return=minimal",
           },
-          body: JSON.stringify({ ip_address: ip, label: "Self-added via passkey" }),
+          body: JSON.stringify({ ip_address: ip, label: parsed.label }),
         });
         if (!res.ok && res.status !== 409) {
           const txt = await res.text();
