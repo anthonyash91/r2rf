@@ -55,6 +55,24 @@ function AdminCategoriesPage() {
     },
   });
 
+  const { data: customHomePagesByCategory = {} } = useQuery({
+    queryKey: ["admin", "category-custom-home-pages"],
+    queryFn: async (): Promise<Record<string, { id: string; name: string; slug: string }[]>> => {
+      const { data, error } = await supabase
+        .from("custom_home_page_categories")
+        .select("category_id, custom_home_pages:custom_home_page_id(id, name, slug)");
+      if (error) throw error;
+      const map: Record<string, { id: string; name: string; slug: string }[]> = {};
+      for (const row of (data ?? []) as any[]) {
+        const page = row.custom_home_pages;
+        if (!page) continue;
+        (map[row.category_id] ??= []).push({ id: page.id, name: page.name || page.slug, slug: page.slug });
+      }
+      for (const k of Object.keys(map)) map[k].sort((a, b) => a.name.localeCompare(b.name));
+      return map;
+    },
+  });
+
   const createMut = useMutation({
     mutationFn: async (input: {
       name: string;
@@ -199,7 +217,7 @@ function AdminCategoriesPage() {
             items={order}
             onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
             renderItem={(c) => (
-              <div className={`flex items-center gap-4 p-4 pl-[10px] ${c.home_page_mode === "custom" ? "bg-[var(--color-accent)]/5 border-l-4 border-l-[var(--color-accent)] pl-[6px]" : ""}`}>
+              <div className="flex items-center gap-4 p-4 pl-[10px]">
                 {c.icon_url ? (
                   <img
                     src={c.icon_url}
@@ -243,6 +261,25 @@ function AdminCategoriesPage() {
                   <p className="text-xs text-muted-foreground truncate">/{c.slug} · {c.tagline}</p>
                   {c.description && (
                     <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
+                  )}
+                  {c.home_page_mode === "custom" && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground">On:</span>
+                      {(customHomePagesByCategory[c.id] ?? []).length === 0 ? (
+                        <span className="text-xs text-muted-foreground italic">No custom home pages</span>
+                      ) : (
+                        (customHomePagesByCategory[c.id] ?? []).map((p) => (
+                          <Link
+                            key={p.id}
+                            to="/admin/custom-home-pages/$id"
+                            params={{ id: p.id }}
+                            className="text-xs rounded-full bg-[var(--color-accent)]/10 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/20"
+                          >
+                            {p.name}
+                          </Link>
+                        ))
+                      )}
+                    </div>
                   )}
                 </div>
                 <button
