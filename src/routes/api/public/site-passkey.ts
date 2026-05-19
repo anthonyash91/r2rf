@@ -56,13 +56,12 @@ async function upsertAttempt(
   ip: string,
   failedCount: number,
   block: boolean,
-  label: string,
 ): Promise<void> {
   const body = {
     ip_address: ip,
     failed_count: failedCount,
     last_attempt_at: new Date().toISOString(),
-    ...(block ? { blocked_at: new Date().toISOString(), label } : {}),
+    ...(block ? { blocked_at: new Date().toISOString() } : {}),
   };
   const res = await fetch(`${url}/rest/v1/ip_passkey_attempts?on_conflict=ip_address`, {
     method: "POST",
@@ -113,7 +112,7 @@ export const Route = createFileRoute("/api/public/site-passkey")({
         if (!ok) {
           const nextCount = (existing?.failed_count ?? 0) + 1;
           const shouldBlock = nextCount >= MAX_ATTEMPTS;
-          await upsertAttempt(url, key, ip, nextCount, shouldBlock, parsed.label);
+          await upsertAttempt(url, key, ip, nextCount, shouldBlock);
           invalidateAllowlistCache();
           if (shouldBlock) {
             return Response.json(
