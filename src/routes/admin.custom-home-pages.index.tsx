@@ -114,6 +114,7 @@ function AdminCustomHomePagesList() {
     setName("");
     setSlug("");
     setDescription("");
+    setAllowedIpsText("");
     setSlugTouched(false);
     setSelected(new Set(defaultIds));
   };
