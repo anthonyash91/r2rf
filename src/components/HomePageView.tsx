@@ -68,7 +68,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
               {s.hasRecent && (
                 <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
                   <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
-                  New content added
+                  {t("category.newContentAdded")}
                 </span>
               )}
               <Link
