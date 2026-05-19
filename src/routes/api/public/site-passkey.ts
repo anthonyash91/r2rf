@@ -7,6 +7,8 @@ import { getClientIp, invalidateAllowlistCache } from "@/lib/ip-allowlist";
 const SITE_PASSKEY_HASH =
   "6c9e159dc6e0cd154e100e11f55b73edb90ab57bef07c73f2865f6fa0ac46ff9";
 
+const MAX_ATTEMPTS = 5;
+
 const Body = z.object({
   passkey: z.string().min(1).max(64),
   label: z.string().trim().min(1).max(80),
@@ -27,6 +29,56 @@ function timingSafeEqualHex(a: string, b: string): boolean {
   return diff === 0;
 }
 
+type AttemptRow = {
+  id: string;
+  ip_address: string;
+  failed_count: number;
+  blocked_at: string | null;
+};
+
+async function fetchAttempt(
+  url: string,
+  key: string,
+  ip: string,
+): Promise<AttemptRow | null> {
+  const res = await fetch(
+    `${url}/rest/v1/ip_passkey_attempts?ip_address=eq.${encodeURIComponent(ip)}&select=id,ip_address,failed_count,blocked_at`,
+    { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+  );
+  if (!res.ok) return null;
+  const rows = (await res.json()) as AttemptRow[];
+  return rows[0] ?? null;
+}
+
+async function upsertAttempt(
+  url: string,
+  key: string,
+  ip: string,
+  failedCount: number,
+  block: boolean,
+  label: string,
+): Promise<void> {
+  const body = {
+    ip_address: ip,
+    failed_count: failedCount,
+    last_attempt_at: new Date().toISOString(),
+    ...(block ? { blocked_at: new Date().toISOString(), label } : {}),
+  };
+  const res = await fetch(`${url}/rest/v1/ip_passkey_attempts?on_conflict=ip_address`, {
+    method: "POST",
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    console.error("[site-passkey] attempt upsert failed:", res.status, await res.text());
+  }
+}
+
 export const Route = createFileRoute("/api/public/site-passkey")({
   server: {
     handlers: {
@@ -34,6 +86,18 @@ export const Route = createFileRoute("/api/public/site-passkey")({
         const ip = getClientIp(request);
         if (!ip) {
           return Response.json({ error: "Could not determine IP" }, { status: 400 });
+        }
+
+        const url = process.env.SUPABASE_URL;
+        const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        if (!url || !key) {
+          return Response.json({ error: "Server misconfigured" }, { status: 500 });
+        }
+
+        // If this IP is already blocked, short-circuit immediately.
+        const existing = await fetchAttempt(url, key, ip);
+        if (existing?.blocked_at) {
+          return Response.json({ error: "Permanently blocked", blocked: true }, { status: 403 });
         }
 
         let parsed: { passkey: string; label: string };
@@ -44,14 +108,34 @@ export const Route = createFileRoute("/api/public/site-passkey")({
         }
 
         const hash = await sha256Hex(parsed.passkey.trim());
-        if (!timingSafeEqualHex(hash, SITE_PASSKEY_HASH)) {
-          return Response.json({ error: "Incorrect passkey" }, { status: 401 });
+        const ok = timingSafeEqualHex(hash, SITE_PASSKEY_HASH);
+
+        if (!ok) {
+          const nextCount = (existing?.failed_count ?? 0) + 1;
+          const shouldBlock = nextCount >= MAX_ATTEMPTS;
+          await upsertAttempt(url, key, ip, nextCount, shouldBlock, parsed.label);
+          invalidateAllowlistCache();
+          if (shouldBlock) {
+            return Response.json(
+              { error: "Permanently blocked", blocked: true },
+              { status: 403 },
+            );
+          }
+          return Response.json(
+            { error: "Incorrect passkey", remaining: MAX_ATTEMPTS - nextCount },
+            { status: 401 },
+          );
         }
 
-        const url = process.env.SUPABASE_URL;
-        const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        if (!url || !key) {
-          return Response.json({ error: "Server misconfigured" }, { status: 500 });
+        // Successful unlock — clear any prior failed attempts and add to allowlist.
+        if (existing) {
+          await fetch(
+            `${url}/rest/v1/ip_passkey_attempts?ip_address=eq.${encodeURIComponent(ip)}`,
+            {
+              method: "DELETE",
+              headers: { apikey: key, Authorization: `Bearer ${key}` },
+            },
+          );
         }
 
         const res = await fetch(`${url}/rest/v1/ip_allowlist`, {

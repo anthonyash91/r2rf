@@ -2,7 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { getAllowedIps, getAuthAllowedIps, getClientIp, getCustomHomeRestrictions, renderBlockedPage } from "./lib/ip-allowlist";
+import { getAllowedIps, getAuthAllowedIps, getBlockedIps, getClientIp, getCustomHomeRestrictions, renderBlockedPage } from "./lib/ip-allowlist";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -82,6 +82,22 @@ export default {
       const hasPasskeyCookie = (request.headers.get("cookie") ?? "")
         .split(";")
         .some((c) => c.trim().startsWith("site_passkey_ok="));
+      // Check the permanent blocklist first — blocked IPs see the permanent
+      // message and cannot retry via the passkey endpoint.
+      let isBlocked = false;
+      try {
+        const blocked = await getBlockedIps();
+        isBlocked = !!ip && blocked.has(ip);
+      } catch (err) {
+        console.error("[ip-blocklist] check failed:", err);
+      }
+      if (isBlocked) {
+        return new Response(renderBlockedPage(ip, "permanent"), {
+          status: 403,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      }
+
       let allowed = false;
       try {
         const allowlist = await getAllowedIps();
