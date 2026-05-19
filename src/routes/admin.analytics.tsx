@@ -242,7 +242,7 @@ function CategorySection({ row }: { row: AggregatedRow }) {
         <div className="flex items-center gap-3 min-w-0">
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
           {row.category.icon_url ? (
-            <img src={row.category.icon_url} alt="" className="h-10 w-10 rounded-lg object-cover border border-border bg-muted flex-shrink-0" />
+            <img src={row.category.icon_url} alt="" className="h-10 w-10 object-cover border border-border bg-muted flex-shrink-0 rounded-md" />
           ) : (
             <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
           )}
