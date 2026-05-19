@@ -267,7 +267,7 @@ function CategorySection({ row }: { row: AggregatedRow }) {
           <ul className="divide-y divide-border">
             {row.items.map(({ item, clicks }) => (
               <li key={item.id} className="flex items-center gap-3 p-4">
-                <span className="text-xs font-medium rounded-full bg-muted px-2 py-0.5 text-muted-foreground flex-shrink-0">
+                <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium flex-shrink-0 ${typeBadgeClass(item.type)}`}>
                   {item.type}
                 </span>
                 <div className="flex-1 min-w-0">
