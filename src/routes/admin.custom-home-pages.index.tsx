@@ -299,8 +299,10 @@ function AdminCustomHomePagesList() {
             {categories.length === 0 ? (
               <p className="text-sm text-muted-foreground">No categories exist yet.</p>
             ) : (
-              <ul className="divide-y divide-border rounded-md border border-border">
-                {categories.map((c) => {
+              (() => {
+                const defaultCats = categories.filter((c) => c.home_page_mode === "default");
+                const customCats = categories.filter((c) => c.home_page_mode === "custom");
+                const renderRow = (c: Category) => {
                   const checked = selected.has(c.id);
                   return (
                     <li key={c.id}>
@@ -340,8 +342,35 @@ function AdminCustomHomePagesList() {
                       </label>
                     </li>
                   );
-                })}
-              </ul>
+                };
+                const Group = ({ title, items }: { title: string; items: Category[] }) => {
+                  const selectedInGroup = items.filter((c) => selected.has(c.id)).length;
+                  return (
+                    <details open className="rounded-md border border-border group">
+                      <summary className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer select-none text-sm font-medium hover:bg-muted/50">
+                        <span>
+                          {title}{" "}
+                          <span className="text-xs font-normal text-muted-foreground">
+                            ({selectedInGroup}/{items.length} selected)
+                          </span>
+                        </span>
+                        <span className="text-xs text-muted-foreground group-open:rotate-90 transition-transform">▶</span>
+                      </summary>
+                      {items.length === 0 ? (
+                        <p className="px-3 py-2 text-xs text-muted-foreground italic border-t border-border">None</p>
+                      ) : (
+                        <ul className="divide-y divide-border border-t border-border">{items.map(renderRow)}</ul>
+                      )}
+                    </details>
+                  );
+                };
+                return (
+                  <div className="space-y-2">
+                    <Group title="Default categories" items={defaultCats} />
+                    <Group title="Custom categories" items={customCats} />
+                  </div>
+                );
+              })()
             )}
             <p className="mt-2 text-xs text-muted-foreground">
               Only published categories appear publicly, even if drafts are selected.
