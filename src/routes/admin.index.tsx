@@ -210,7 +210,7 @@ function AdminCategoriesPage() {
                     <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-x-2 gap-y-1.5 flex-wrap">
+                    <div className="flex items-center gap-x-2 gap-y-[10px] flex-wrap">
                       <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
                       <span
                         title="Content items in this category"
