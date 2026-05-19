@@ -53,7 +53,10 @@ function AdminLayout() {
             </Link>
           </div>
         ) : (
-          <Outlet />
+          <>
+            <AdminNav />
+            <Outlet />
+          </>
         )}
       </main>
       <SiteFooter />
