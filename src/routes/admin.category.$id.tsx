@@ -465,7 +465,7 @@ function ContentManager({ categoryId, categoryName, items, initialEditId }: { ca
               <div className={`flex items-center gap-3 p-4 transition-opacity pl-[6px] ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium rounded-full bg-muted px-2 py-0.5 text-muted-foreground">{item.type}</span>
+                    <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${typeBadgeClass(item.type)}`}>{item.type}</span>
                     {!item.published && (
                       <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>
                     )}
