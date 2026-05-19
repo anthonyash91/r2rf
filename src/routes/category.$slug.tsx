@@ -37,18 +37,11 @@ function detectMedia(url: string | null | undefined): MediaKind | null {
   return null;
 }
 
+import { typeBadgeClass } from "@/lib/type-badge";
+
 export const Route = createFileRoute("/category/$slug")({
   component: CategoryPage,
 });
-
-const typeStyles: Record<string, string> = {
-  Article: "bg-[var(--color-secondary)] text-[var(--color-primary)]",
-  Video: "bg-[var(--color-accent)]/10 text-[var(--color-accent)]",
-  Podcast: "bg-[var(--color-gold)]/20 text-[var(--color-foreground)]",
-  Worksheet: "bg-[var(--color-primary)]/10 text-[var(--color-primary)]",
-  Meeting: "bg-[var(--color-accent)]/15 text-[var(--color-accent)]",
-  Guide: "bg-[var(--color-gold)]/15 text-[var(--color-foreground)]",
-};
 
 function CategoryPage() {
   const { slug } = Route.useParams();
