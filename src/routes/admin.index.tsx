@@ -198,117 +198,121 @@ function AdminCategoriesPage() {
             items={order}
             onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
             renderItem={(c) => (
-              <div className="flex items-center gap-4 p-4 pl-[10px]">
-                {c.icon_url ? (
-                  <img
-                    src={c.icon_url}
-                    alt={`${c.name} icon`}
-                    className="h-12 w-12 rounded-lg object-cover border border-border bg-muted shrink-0"
-                  />
-                ) : (
-                  <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-x-2 gap-y-1.5 flex-wrap">
-                    <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
-                    <span
-                      title="Content items in this category"
-                      className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border tabular-nums"
-                    >
-                      {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
-                    </span>
-                    {c.home_page_mode === "custom" && (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 pl-[10px]">
+                <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                  {c.icon_url ? (
+                    <img
+                      src={c.icon_url}
+                      alt={`${c.name} icon`}
+                      className="h-12 w-12 rounded-lg object-cover border border-border bg-muted shrink-0"
+                    />
+                  ) : (
+                    <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-x-2 gap-y-1.5 flex-wrap">
+                      <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
                       <span
-                        title="Only shown on selected custom home pages"
-                        className="shrink-0 text-xs rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
+                        title="Content items in this category"
+                        className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border tabular-nums"
                       >
-                        Custom
+                        {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
                       </span>
-                    )}
-                    {!c.published && (
-                      <span className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border">
-                        Draft
-                      </span>
-                    )}
-                    {(() => {
-                      const s = categoryTranslationStatus(c);
-                      if (s === "complete") return null;
-                      const label = s === "missing" ? "Needs ES" : "Partially translated";
-                      const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
-                      return (
+                      {c.home_page_mode === "custom" && (
                         <span
-                          title={title}
-                          className="shrink-0 inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
+                          title="Only shown on selected custom home pages"
+                          className="shrink-0 text-xs rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
                         >
-                          <Languages className="h-3 w-3" /> {label}
+                          Custom
                         </span>
-                      );
-                    })()}
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">/{c.slug} · {c.tagline}</p>
-                  {c.description && (
-                    <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
-                  )}
-                  {c.home_page_mode === "custom" && (
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs text-muted-foreground">Custom home page:</span>
-                      {(customHomePagesByCategory[c.id] ?? []).length === 0 ? (
-                        <span className="text-xs text-muted-foreground italic">No custom home pages</span>
-                      ) : (
-                        (customHomePagesByCategory[c.id] ?? []).map((p) => (
-                          <Link
-                            key={p.id}
-                            to="/admin/custom-home-pages/$id"
-                            params={{ id: p.id }}
-                            className="text-xs rounded-full bg-[var(--color-accent)]/10 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/20"
-                          >
-                            {p.name}
-                          </Link>
-                        ))
                       )}
+                      {!c.published && (
+                        <span className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border">
+                          Draft
+                        </span>
+                      )}
+                      {(() => {
+                        const s = categoryTranslationStatus(c);
+                        if (s === "complete") return null;
+                        const label = s === "missing" ? "Needs ES" : "Partially translated";
+                        const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
+                        return (
+                          <span
+                            title={title}
+                            className="shrink-0 inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
+                          >
+                            <Languages className="h-3 w-3" /> {label}
+                          </span>
+                        );
+                      })()}
                     </div>
-                  )}
+                    <p className="text-xs text-muted-foreground break-words">/{c.slug} · {c.tagline}</p>
+                    {c.description && (
+                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
+                    )}
+                    {c.home_page_mode === "custom" && (
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">Custom home page:</span>
+                        {(customHomePagesByCategory[c.id] ?? []).length === 0 ? (
+                          <span className="text-xs text-muted-foreground italic">No custom home pages</span>
+                        ) : (
+                          (customHomePagesByCategory[c.id] ?? []).map((p) => (
+                            <Link
+                              key={p.id}
+                              to="/admin/custom-home-pages/$id"
+                              params={{ id: p.id }}
+                              className="text-xs rounded-full bg-[var(--color-accent)]/10 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/20"
+                            >
+                              {p.name}
+                            </Link>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <button
-                  title={c.published ? "Unpublish" : "Publish"}
-                  onClick={() => togglePublish.mutate(c)}
-                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-                >
-                  {c.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                </button>
-                <Link
-                  to="/category/$slug"
-                  params={{ slug: c.slug }}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-                  title="View on site"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Link>
-                <Link
-                  to="/admin/category/$id"
-                  params={{ id: c.id }}
-                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-                  title="Edit"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Link>
-                <button
-                  title="Delete"
-                  onClick={async () => {
-                    const ok = await confirm({
-                      title: `Delete "${c.name}"?`,
-                      description: "This will permanently delete the category and all its content.",
-                      confirmLabel: "Delete",
-                      destructive: true,
-                    });
-                    if (ok) deleteMut.mutate(c.id);
-                  }}
-                  className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-1 self-end sm:self-center shrink-0 border-t sm:border-t-0 border-border pt-2 sm:pt-0 w-full sm:w-auto justify-end">
+                  <button
+                    title={c.published ? "Unpublish" : "Publish"}
+                    onClick={() => togglePublish.mutate(c)}
+                    className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                  >
+                    {c.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  </button>
+                  <Link
+                    to="/category/$slug"
+                    params={{ slug: c.slug }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                    title="View on site"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    to="/admin/category/$id"
+                    params={{ id: c.id }}
+                    className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                    title="Edit"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                  <button
+                    title="Delete"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: `Delete "${c.name}"?`,
+                        description: "This will permanently delete the category and all its content.",
+                        confirmLabel: "Delete",
+                        destructive: true,
+                      });
+                      if (ok) deleteMut.mutate(c.id);
+                    }}
+                    className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             )}
           />
