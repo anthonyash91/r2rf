@@ -790,13 +790,33 @@ function ItemEditor({
               <h4 className="font-display text-base font-semibold">Spanish translation</h4>
               <p className="text-xs text-muted-foreground">Leave blank to fall back to the English version when Spanish is selected.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowEs(false)}
-              className="text-xs text-muted-foreground hover:text-foreground underline"
-            >
-              Hide
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={addEsBusy}
+                onClick={() => {
+                  runAddEs(
+                    { title, description },
+                    (t) => {
+                      if (t.title) setTitleEs(t.title);
+                      if (t.description) setDescriptionEs(t.description);
+                    },
+                    "Content item metadata in a learning library",
+                  );
+                }}
+                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-60"
+              >
+                <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
+                {addEsBusy ? "Translating…" : "Regenerate"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowEs(false)}
+                className="text-xs text-muted-foreground hover:text-foreground underline"
+              >
+                Hide
+              </button>
+            </div>
           </div>
           {addEsBusy && <TranslatingIndicator />}
           <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
