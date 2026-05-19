@@ -164,15 +164,26 @@ function AllowlistSection({
         .split(/\r?\n/)
         .map((l) => l.trim())
         .filter(Boolean);
-      const invalid = lines.filter((l) => !IP_REGEX.test(l));
+      const parsed = lines.map((line) => {
+        const commaIdx = line.indexOf(",");
+        const ip = (commaIdx === -1 ? line : line.slice(0, commaIdx)).trim();
+        const label = commaIdx === -1 ? "" : line.slice(commaIdx + 1).trim().slice(0, 80);
+        return { ip_address: ip, label };
+      });
+      const invalid = parsed.filter((p) => !IP_REGEX.test(p.ip_address));
       if (invalid.length > 0) {
-        throw new Error(`Invalid IPv4 address(es): ${invalid.slice(0, 3).join(", ")}${invalid.length > 3 ? "…" : ""}`);
+        throw new Error(
+          `Invalid IPv4 address(es): ${invalid.slice(0, 3).map((p) => p.ip_address).join(", ")}${invalid.length > 3 ? "…" : ""}`,
+        );
       }
-      const unique = Array.from(new Set(lines));
+      const seen = new Set<string>();
+      const unique = parsed.filter((p) => {
+        if (seen.has(p.ip_address)) return false;
+        seen.add(p.ip_address);
+        return true;
+      });
       if (unique.length === 0) throw new Error("Enter at least one IP address");
-      const { error } = await supabase
-        .from(table)
-        .insert(unique.map((ip_address) => ({ ip_address, label: "" })));
+      const { error } = await supabase.from(table).insert(unique);
       if (error) throw error;
       return unique.length;
     },
@@ -280,12 +291,14 @@ function AllowlistSection({
           }}
           className="p-6 border-b border-border"
         >
-          <label className="text-sm font-medium">Bulk add (one IPv4 address per line)</label>
+          <label className="text-sm font-medium">
+            Bulk add (one per line — <span className="font-mono">IP,label</span>; label is optional)
+          </label>
           <textarea
             value={bulk}
             onChange={(e) => setBulk(e.target.value)}
             rows={5}
-            placeholder={"192.168.1.1\n10.0.0.42\n203.0.113.7"}
+            placeholder={"192.168.1.1,Office\n10.0.0.42,Home\n203.0.113.7"}
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
           />
           <div className="mt-3 flex justify-end">
