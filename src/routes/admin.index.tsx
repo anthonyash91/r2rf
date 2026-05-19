@@ -205,7 +205,7 @@ function AdminCategoriesPage() {
                       </span>
                     )}
                     {!c.published && (
-                      <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+                      <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border">
                         Draft
                       </span>
                     )}
