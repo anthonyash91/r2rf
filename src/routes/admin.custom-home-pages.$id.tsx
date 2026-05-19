@@ -32,7 +32,7 @@ function AdminCustomHomePageEdit() {
     queryFn: async () => {
       const { data: page, error: e1 } = await supabase
         .from("custom_home_pages")
-        .select("id, slug, name")
+        .select("id, slug, name, description")
         .eq("id", id)
         .maybeSingle();
       if (e1) throw e1;
@@ -62,12 +62,14 @@ function AdminCustomHomePageEdit() {
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (data?.page) {
       setName(data.page.name ?? "");
       setSlug(data.page.slug ?? "");
+      setDescription((data.page as any).description ?? "");
     }
     if (data?.selectedIds) {
       setSelected(new Set(data.selectedIds));
