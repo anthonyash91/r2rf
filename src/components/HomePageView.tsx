@@ -7,22 +7,28 @@ import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { Pencil } from "lucide-react";
 
-function useCategoryItemCounts(categoryIds: string[]) {
+type CategoryStats = { count: number; hasRecent: boolean };
+
+function useCategoryItemStats(categoryIds: string[]) {
   return useQuery({
-    queryKey: ["category-item-counts", [...categoryIds].sort().join(",")],
+    queryKey: ["category-item-stats", [...categoryIds].sort().join(",")],
     enabled: categoryIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("content_items")
-        .select("category_id")
+        .select("category_id, created_at")
         .eq("published", true)
         .in("category_id", categoryIds);
       if (error) throw error;
-      const counts: Record<string, number> = {};
-      (data ?? []).forEach((row: { category_id: string }) => {
-        counts[row.category_id] = (counts[row.category_id] ?? 0) + 1;
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const stats: Record<string, CategoryStats> = {};
+      (data ?? []).forEach((row: { category_id: string; created_at: string }) => {
+        const s = stats[row.category_id] ?? { count: 0, hasRecent: false };
+        s.count += 1;
+        if (new Date(row.created_at).getTime() >= cutoff) s.hasRecent = true;
+        stats[row.category_id] = s;
       });
-      return counts;
+      return stats;
     },
   });
 }
@@ -46,7 +52,7 @@ function useColumnCount() {
 function MasonryCategories({ categories, lang }: { categories: Category[]; lang: Language }) {
   const cols = useColumnCount();
   const { isAdmin } = useAuth();
-  const { data: counts = {} } = useCategoryItemCounts(categories.map((c) => c.id));
+  const { data: stats = {} } = useCategoryItemStats(categories.map((c) => c.id));
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
   categories.forEach((c, i) => buckets[i % cols].push({ c, i }));
   return (
@@ -54,9 +60,16 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
       {buckets.map((bucket, ci) => (
         <div key={ci} className="flex-1 flex flex-col gap-9 min-w-0">
           {bucket.map(({ c }) => {
-            const count = counts[c.id] ?? 0;
+            const s = stats[c.id] ?? { count: 0, hasRecent: false };
+            const count = s.count;
             return (
             <div key={c.id} className="relative">
+              {s.hasRecent && (
+                <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
+                  <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
+                  New content added
+                </span>
+              )}
               <Link
                 to="/category/$slug"
                 params={{ slug: c.slug }}
