@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 
@@ -253,13 +253,34 @@ function CategoryEditor({
                 <h3 className="font-display text-lg font-semibold">Spanish translation</h3>
                 <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowEs(false)}
-                className="text-xs text-muted-foreground hover:text-foreground underline"
-              >
-                Hide
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  disabled={addEsBusy}
+                  onClick={() => {
+                    runAddEs(
+                      { name, tagline, description },
+                      (t) => {
+                        if (t.name) setNameEs(t.name);
+                        if (t.tagline) setTaglineEs(t.tagline);
+                        if (t.description) setDescriptionEs(t.description);
+                      },
+                      "Category metadata for a content library",
+                    );
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-60"
+                >
+                  <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
+                  {addEsBusy ? "Translating…" : "Regenerate"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEs(false)}
+                  className="text-xs text-muted-foreground hover:text-foreground underline"
+                >
+                  Hide
+                </button>
+              </div>
             </div>
             {addEsBusy && <TranslatingIndicator />}
             <LabeledInput label="Name (ES)" value={nameEs} onChange={setNameEs} />
@@ -769,13 +790,33 @@ function ItemEditor({
               <h4 className="font-display text-base font-semibold">Spanish translation</h4>
               <p className="text-xs text-muted-foreground">Leave blank to fall back to the English version when Spanish is selected.</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowEs(false)}
-              className="text-xs text-muted-foreground hover:text-foreground underline"
-            >
-              Hide
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={addEsBusy}
+                onClick={() => {
+                  runAddEs(
+                    { title, description },
+                    (t) => {
+                      if (t.title) setTitleEs(t.title);
+                      if (t.description) setDescriptionEs(t.description);
+                    },
+                    "Content item metadata in a learning library",
+                  );
+                }}
+                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-60"
+              >
+                <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
+                {addEsBusy ? "Translating…" : "Regenerate"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowEs(false)}
+                className="text-xs text-muted-foreground hover:text-foreground underline"
+              >
+                Hide
+              </button>
+            </div>
           </div>
           {addEsBusy && <TranslatingIndicator />}
           <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />

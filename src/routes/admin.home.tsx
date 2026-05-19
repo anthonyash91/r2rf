@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, RefreshCw } from "lucide-react";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 
 export const Route = createFileRoute("/admin/home")({
@@ -163,13 +163,44 @@ function AdminHomePage() {
                     <h2 className="font-display text-lg font-semibold">Spanish translation</h2>
                     <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowEs(false)}
-                    className="text-xs text-muted-foreground hover:text-foreground underline"
-                  >
-                    Hide
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={addEsBusy}
+                      onClick={() => {
+                        runAddEs(
+                          {
+                            eyebrow: hero.eyebrow,
+                            heading_prefix: hero.heading_prefix,
+                            heading_emphasis: hero.heading_emphasis,
+                            heading_suffix: hero.heading_suffix,
+                            subheading: hero.subheading,
+                          },
+                          (t) =>
+                            setHero((prev) => ({
+                              ...prev,
+                              eyebrow_es: t.eyebrow ?? prev.eyebrow_es,
+                              heading_prefix_es: t.heading_prefix ?? prev.heading_prefix_es,
+                              heading_emphasis_es: t.heading_emphasis ?? prev.heading_emphasis_es,
+                              heading_suffix_es: t.heading_suffix ?? prev.heading_suffix_es,
+                              subheading_es: t.subheading ?? prev.subheading_es,
+                            })),
+                          "Home page hero copy",
+                        );
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-60"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
+                      {addEsBusy ? "Translating…" : "Regenerate"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowEs(false)}
+                      className="text-xs text-muted-foreground hover:text-foreground underline"
+                    >
+                      Hide
+                    </button>
+                  </div>
                 </div>
                 {addEsBusy && <TranslatingIndicator />}
                 <Field label="Eyebrow (ES)">
