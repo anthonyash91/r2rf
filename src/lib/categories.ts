@@ -9,6 +9,8 @@ export const CONTENT_TYPES: ContentType[] = [
   "Guide",
 ];
 
+export type HomePageMode = "default" | "custom";
+
 export type Category = {
   id: string;
   slug: string;
@@ -18,6 +20,7 @@ export type Category = {
   icon_url: string | null;
   sort_order: number;
   published: boolean;
+  home_page_mode: HomePageMode;
   name_es: string | null;
   tagline_es: string | null;
   description_es: string | null;
