@@ -5,9 +5,15 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles } from "lucide-react";
+import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles, Menu } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy } from "@/lib/category-ai.functions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function categoryTranslationStatus(c: Category): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
@@ -134,47 +140,50 @@ function AdminCategoriesPage() {
           <h1 className="font-display text-3xl font-semibold">Categories</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage the library structure.</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          {isAdmin && (
-            <>
-              <Link
-                to="/admin/users"
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-              >
-                Users
-              </Link>
-              <Link
-                to="/admin/ip-allowlist"
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-              >
-                IP allowlist
-              </Link>
-              <Link
-                to="/admin/analytics"
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-              >
-                Analytics
-              </Link>
-              <Link
-                to="/admin/home"
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-              >
-                Edit home header
-              </Link>
-              <Link
-                to="/admin/custom-home-pages"
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-              >
-                Custom home pages
-              </Link>
-              <Link
-                to="/admin/certificate"
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted"
-              >
-                Edit certificate section
-              </Link>
-            </>
-          )}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          {isAdmin && (() => {
+            const navLinks = [
+              { to: "/admin/users", label: "Users" },
+              { to: "/admin/ip-allowlist", label: "IP allowlist" },
+              { to: "/admin/analytics", label: "Analytics" },
+              { to: "/admin/home", label: "Edit home header" },
+              { to: "/admin/custom-home-pages", label: "Custom home pages" },
+              { to: "/admin/certificate", label: "Edit certificate section" },
+            ];
+            return (
+              <>
+                {/* Inline nav on xl screens */}
+                <nav className="hidden xl:flex xl:flex-wrap xl:items-center xl:gap-2">
+                  {navLinks.map((l) => (
+                    <Link
+                      key={l.to}
+                      to={l.to}
+                      className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </nav>
+                {/* Dropdown on smaller screens */}
+                <div className="xl:hidden">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted">
+                      <Menu className="h-4 w-4" /> Admin menu
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      {navLinks.map((l) => (
+                        <DropdownMenuItem key={l.to} asChild>
+                          <Link to={l.to} className="cursor-pointer">
+                            {l.label}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </>
+            );
+          })()}
           <button
             onClick={() => setCreating(true)}
             className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
