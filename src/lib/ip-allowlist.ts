@@ -65,9 +65,41 @@ export async function getAuthAllowedIps(): Promise<Set<string>> {
   return authInflight;
 }
 
+export async function getBlockedIps(): Promise<Set<string>> {
+  const now = Date.now();
+  if (blockedCache && blockedCache.expiresAt > now) return blockedCache.ips;
+  if (blockedInflight) return blockedInflight;
+  blockedInflight = fetchBlockedIps()
+    .then((ips) => {
+      blockedCache = { ips, expiresAt: Date.now() + CACHE_TTL_MS };
+      return ips;
+    })
+    .finally(() => {
+      blockedInflight = null;
+    });
+  return blockedInflight;
+}
+
+async function fetchBlockedIps(): Promise<Set<string>> {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return new Set();
+  const res = await fetch(
+    `${url}/rest/v1/ip_passkey_attempts?select=ip_address&blocked_at=not.is.null`,
+    { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+  );
+  if (!res.ok) {
+    console.error("[ip-allowlist] Fetch blocked failed:", res.status, await res.text());
+    return new Set();
+  }
+  const rows = (await res.json()) as Array<{ ip_address: string }>;
+  return new Set(rows.map((r) => r.ip_address.trim()));
+}
+
 export function invalidateAllowlistCache() {
   siteCache = null;
   authCache = null;
+  blockedCache = null;
   customHomeCache = null;
 }
 
