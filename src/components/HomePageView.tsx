@@ -93,7 +93,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
                   <p className="mt-3 text-xs font-medium uppercase tracking-wide text-[var(--color-gold)]">
-                    {count} {count === 1 ? "item" : "items"}
+                    {count} {t(count === 1 ? "home.item" : "home.items")}
                   </p>
                 </div>
               </Link>
