@@ -211,6 +211,12 @@ function AdminCategoriesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-display text-lg font-semibold truncate">{c.name}</h3>
+                    <span
+                      title="Content items in this category"
+                      className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border tabular-nums"
+                    >
+                      {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
+                    </span>
                     {c.home_page_mode === "custom" && (
                       <span
                         title="Only shown on selected custom home pages"
