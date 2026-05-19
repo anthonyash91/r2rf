@@ -18,6 +18,12 @@ const RESERVED_SLUGS = new Set([
   "logout",
 ]);
 
+const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+const parseIps = (text: string): string[] => {
+  const parts = text.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+  return Array.from(new Set(parts));
+};
+
 export const Route = createFileRoute("/admin/custom-home-pages/$id")({
   beforeLoad: requireAdminBeforeLoad,
   component: AdminCustomHomePageEdit,
