@@ -4,27 +4,38 @@
 // the same palettes so styling stays consistent everywhere.
 
 const PALETTES = [
-  // emerald
+  // 0 emerald
   "bg-[oklch(0.95_0.02_165)] text-[oklch(0.35_0.05_165)] border-[oklch(0.85_0.03_165)]",
-  // gold
+  // 1 gold
   "bg-[oklch(0.95_0.03_85)] text-[oklch(0.42_0.05_85)] border-[oklch(0.85_0.05_85)]",
-  // teal
+  // 2 teal
   "bg-[oklch(0.95_0.02_210)] text-[oklch(0.40_0.05_215)] border-[oklch(0.83_0.03_210)]",
-  // terracotta
+  // 3 terracotta
   "bg-[oklch(0.95_0.02_45)] text-[oklch(0.45_0.06_40)] border-[oklch(0.85_0.04_45)]",
-  // plum
+  // 4 plum
   "bg-[oklch(0.95_0.02_330)] text-[oklch(0.42_0.05_330)] border-[oklch(0.85_0.03_330)]",
-  // moss
+  // 5 moss
   "bg-[oklch(0.95_0.02_140)] text-[oklch(0.38_0.05_145)] border-[oklch(0.83_0.03_140)]",
+  // 6 indigo
+  "bg-[oklch(0.95_0.02_280)] text-[oklch(0.40_0.06_280)] border-[oklch(0.85_0.03_280)]",
+  // 7 rose
+  "bg-[oklch(0.95_0.02_15)] text-[oklch(0.45_0.06_15)] border-[oklch(0.85_0.04_15)]",
+  // 8 slate
+  "bg-[oklch(0.95_0.01_250)] text-[oklch(0.40_0.03_250)] border-[oklch(0.84_0.02_250)]",
 ];
 
+// Explicit assignments for common types so each gets a unique color
+// (case-insensitive). Anything not listed is hashed across PALETTES.
 const KNOWN: Record<string, number> = {
-  Article: 0,
-  Video: 3,
-  Podcast: 1,
-  Worksheet: 2,
-  Meeting: 5,
-  Guide: 4,
+  article: 0,
+  podcast: 1,
+  worksheet: 2,
+  video: 3,
+  guide: 4,
+  meeting: 5,
+  audio: 6,
+  pdf: 7,
+  link: 8,
 };
 
 function hash(s: string) {
@@ -34,7 +45,7 @@ function hash(s: string) {
 }
 
 export function typeBadgeClass(type: string | null | undefined): string {
-  const key = (type ?? "").trim();
-  const idx = key in KNOWN ? KNOWN[key] : hash(key.toLowerCase()) % PALETTES.length;
+  const key = (type ?? "").trim().toLowerCase();
+  const idx = key in KNOWN ? KNOWN[key] : hash(key) % PALETTES.length;
   return `border ${PALETTES[idx]}`;
 }
