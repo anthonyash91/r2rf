@@ -32,24 +32,15 @@ function CustomHomePage() {
         .order("sort_order", { ascending: true });
       if (e2) throw e2;
 
-      // Default-mode categories always appear; explicitly-selected custom ones also appear.
-      const { data: defaults, error: e3 } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("published", true)
-        .eq("home_page_mode", "default")
-        .order("sort_order", { ascending: true });
-      if (e3) throw e3;
-
       const selectedIds = (links ?? []).map((l) => l.category_id);
       let selected: Category[] = [];
       if (selectedIds.length > 0) {
-        const { data: cats, error: e4 } = await supabase
+        const { data: cats, error: e3 } = await supabase
           .from("categories")
           .select("*")
           .eq("published", true)
           .in("id", selectedIds);
-        if (e4) throw e4;
+        if (e3) throw e3;
         selected = (cats ?? []) as Category[];
       }
 
@@ -60,15 +51,7 @@ function CustomHomePage() {
         .slice()
         .sort((a, b) => (linkOrder.get(a.id) ?? 0) - (linkOrder.get(b.id) ?? 0));
 
-      // De-dupe in case a category is both "default" and explicitly selected.
-      const seen = new Set<string>();
-      const categories = [...(defaults as Category[]), ...selectedSorted].filter((c) => {
-        if (seen.has(c.id)) return false;
-        seen.add(c.id);
-        return true;
-      });
-
-      return { page, categories };
+      return { page, categories: selectedSorted };
     },
   });
 
