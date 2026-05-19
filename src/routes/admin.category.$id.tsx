@@ -763,7 +763,7 @@ function ItemEditor({
             </div>
           )}
         </label>
-        <LabeledInput label="Source" value={source} onChange={setSource} />
+        <LabeledInput label="Source" value={source} onChange={setSource} suggestions={sourceSuggestions} />
         <div>
           <LabeledInput label="Duration" value={duration} onChange={setDuration} placeholder="8 min read" />
           {extOf(url, null) === "pdf" && (
