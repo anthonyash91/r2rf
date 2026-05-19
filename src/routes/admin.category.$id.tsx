@@ -335,7 +335,7 @@ function CategoryEditor({
   );
 }
 
-function ContentManager({ categoryId, categoryName, items, initialEditId }: { categoryId: string; categoryName: string; items: ContentItem[]; initialEditId?: string }) {
+function ContentManager({ categoryId, categoryName, categorySlug, items, initialEditId }: { categoryId: string; categoryName: string; categorySlug: string; items: ContentItem[]; initialEditId?: string }) {
   const qc = useQueryClient();
   const confirm = useConfirm();
   const { lang } = useI18n();
