@@ -109,7 +109,8 @@ function AdminCustomHomePagesList() {
         throw new Error(`"/${finalSlug}" is reserved. Choose a different slug.`);
       }
 
-      const selectedSet = new Set(input.selectedIds);
+
+
 
 
 
