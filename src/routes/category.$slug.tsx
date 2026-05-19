@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
+import { withActionWord } from "@/lib/duration";
 import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
