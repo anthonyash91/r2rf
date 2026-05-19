@@ -406,59 +406,59 @@ function AdminCustomHomePagesList() {
           <div className="p-6 text-muted-foreground">No custom home pages yet.</div>
         ) : (
           <ul className="divide-y divide-border">
-            {pages.map((p) => (
-              <li key={p.id} className="flex items-center gap-4 p-4 pl-[24px]">
+            {pages.map((p) => {
+              const linked = pageCategoryIds[p.id] ?? new Set<string>();
+              const excludedDefaults = categories.filter(
+                (c) => c.home_page_mode === "default" && !linked.has(c.id),
+              );
+              const includedCustoms = categories.filter(
+                (c) => c.home_page_mode === "custom" && linked.has(c.id),
+              );
+              const hasSections = excludedDefaults.length > 0 || includedCustoms.length > 0;
+              const Chips = ({ items, tone }: { items: Category[]; tone: "excluded" | "included" }) => (
+                <ul className="mt-1 flex flex-wrap gap-1.5">
+                  {items.map((c) => (
+                    <li
+                      key={c.id}
+                      className={
+                        tone === "excluded"
+                          ? "text-xs rounded-full border border-dashed border-border bg-muted/40 px-2 py-0.5 text-muted-foreground line-through"
+                          : "text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary"
+                      }
+                    >
+                      {c.name}
+                    </li>
+                  ))}
+                </ul>
+              );
+              return (
+              <li key={p.id} className={`flex items-center gap-4 p-4 pl-[24px]${hasSections ? " pb-[24px]" : ""}`}>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-display text-lg font-semibold truncate">{p.name || p.slug}</h3>
                   <p className="text-xs text-muted-foreground truncate">/{p.slug}</p>
                   {p.description && (
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description}</p>
                   )}
-                  {(() => {
-                    const linked = pageCategoryIds[p.id] ?? new Set<string>();
-                    const excludedDefaults = categories.filter(
-                      (c) => c.home_page_mode === "default" && !linked.has(c.id),
-                    );
-                    const includedCustoms = categories.filter(
-                      (c) => c.home_page_mode === "custom" && linked.has(c.id),
-                    );
-                    const Chips = ({ items, tone }: { items: Category[]; tone: "excluded" | "included" }) => (
-                      <ul className="mt-1 flex flex-wrap gap-1.5">
-                        {items.map((c) => (
-                          <li
-                            key={c.id}
-                            className={
-                              tone === "excluded"
-                                ? "text-xs rounded-full border border-dashed border-border bg-muted/40 px-2 py-0.5 text-muted-foreground line-through"
-                                : "text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary"
-                            }
-                          >
-                            {c.name}
-                          </li>
-                        ))}
-                      </ul>
-                    );
-                    return (
-                      <div className="mt-3 space-y-2">
-                        {excludedDefaults.length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground">
-                              Excluded default categories
-                            </p>
-                            <Chips items={excludedDefaults} tone="excluded" />
-                          </div>
-                        )}
-                        {includedCustoms.length > 0 && (
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground">
-                              Included custom categories
-                            </p>
-                            <Chips items={includedCustoms} tone="included" />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
+                  {hasSections && (
+                    <div className="mt-3 space-y-3">
+                      {excludedDefaults.length > 0 && (
+                        <div className="border-t border-border pt-3">
+                          <p className="text-xs font-medium text-muted-foreground">
+                            Excluded default categories
+                          </p>
+                          <Chips items={excludedDefaults} tone="excluded" />
+                        </div>
+                      )}
+                      {includedCustoms.length > 0 && (
+                        <div className="border-t border-border pt-3">
+                          <p className="text-xs font-medium text-muted-foreground">
+                            Included custom categories
+                          </p>
+                          <Chips items={includedCustoms} tone="included" />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <a
                   href={`/${p.slug}`}
