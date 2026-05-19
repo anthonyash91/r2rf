@@ -28,15 +28,14 @@ const PALETTES = [
 // (case-insensitive). Anything not listed is hashed across PALETTES.
 const KNOWN: Record<string, number> = {
   article: 0,
-  video: 3,
   podcast: 1,
   worksheet: 2,
-  meeting: 5,
+  video: 3,
   guide: 4,
-  pdf: 2,
+  meeting: 5,
   audio: 6,
+  pdf: 7,
   link: 8,
-  image: 7,
 };
 
 function hash(s: string) {
