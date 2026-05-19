@@ -164,15 +164,26 @@ function AllowlistSection({
         .split(/\r?\n/)
         .map((l) => l.trim())
         .filter(Boolean);
-      const invalid = lines.filter((l) => !IP_REGEX.test(l));
+      const parsed = lines.map((line) => {
+        const commaIdx = line.indexOf(",");
+        const ip = (commaIdx === -1 ? line : line.slice(0, commaIdx)).trim();
+        const label = commaIdx === -1 ? "" : line.slice(commaIdx + 1).trim().slice(0, 80);
+        return { ip_address: ip, label };
+      });
+      const invalid = parsed.filter((p) => !IP_REGEX.test(p.ip_address));
       if (invalid.length > 0) {
-        throw new Error(`Invalid IPv4 address(es): ${invalid.slice(0, 3).join(", ")}${invalid.length > 3 ? "…" : ""}`);
+        throw new Error(
+          `Invalid IPv4 address(es): ${invalid.slice(0, 3).map((p) => p.ip_address).join(", ")}${invalid.length > 3 ? "…" : ""}`,
+        );
       }
-      const unique = Array.from(new Set(lines));
+      const seen = new Set<string>();
+      const unique = parsed.filter((p) => {
+        if (seen.has(p.ip_address)) return false;
+        seen.add(p.ip_address);
+        return true;
+      });
       if (unique.length === 0) throw new Error("Enter at least one IP address");
-      const { error } = await supabase
-        .from(table)
-        .insert(unique.map((ip_address) => ({ ip_address, label: "" })));
+      const { error } = await supabase.from(table).insert(unique);
       if (error) throw error;
       return unique.length;
     },
