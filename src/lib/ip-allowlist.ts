@@ -151,12 +151,17 @@ export function getClientIp(request: Request): string | null {
   return null;
 }
 
-export function renderBlockedPage(ip: string | null, scope: "site" | "auth" | "custom-home" = "site"): string {
+export function renderBlockedPage(
+  ip: string | null,
+  scope: "site" | "auth" | "custom-home" | "permanent" = "site",
+): string {
   const safeIp = (ip ?? "unknown").replace(/[<>&"']/g, "");
   const message = scope === "auth"
     ? "The login page is only available from approved IP addresses."
     : scope === "custom-home"
     ? "This page is only available from approved IP addresses. Contact the administrator to request access."
+    : scope === "permanent"
+    ? "You have unsuccessfully entered the passkey too many times. Your IP has been logged and you have been permanently blocked from this website."
     : "This site is only available from approved IP addresses.";
 
   const passkeyForm = scope === "site" ? `
@@ -173,6 +178,9 @@ export function renderBlockedPage(ip: string | null, scope: "site" | "auth" | "c
     </div>
     <p id="pk-msg" style="margin:0;font-size:13px;min-height:18px"></p>
   </form>
+  <div id="pk-blocked" style="display:none;margin-top:24px;padding:16px;background:#3a1212;border:1px solid #7a2222;border-radius:8px;color:#fca5a5;font-size:14px;line-height:1.5">
+    You have unsuccessfully entered the passkey too many times. Your IP has been logged and you have been permanently blocked from this website.
+  </div>
   <script>
     (function(){
       var f=document.getElementById('pk-form');
@@ -180,6 +188,7 @@ export function renderBlockedPage(ip: string | null, scope: "site" | "auth" | "c
       var lbl=document.getElementById('pk-label');
       var msg=document.getElementById('pk-msg');
       var btn=document.getElementById('pk-submit');
+      var blocked=document.getElementById('pk-blocked');
       f.addEventListener('submit',function(e){
         e.preventDefault();
         var labelVal=(lbl.value||'').trim();
@@ -192,7 +201,14 @@ export function renderBlockedPage(ip: string | null, scope: "site" | "auth" | "c
         }).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})})
         .then(function(res){
           if(res.ok){msg.style.color='#34d399';msg.textContent='Access granted. Reloading…';setTimeout(function(){location.reload()},800);}
-          else{msg.style.color='#f87171';msg.textContent=(res.j&&res.j.error)||'Incorrect passkey';btn.disabled=false;}
+          else if(res.j&&res.j.blocked){f.style.display='none';msg.textContent='';blocked.style.display='block';}
+          else{
+            var remaining=res.j&&typeof res.j.remaining==='number'?res.j.remaining:null;
+            var base=(res.j&&res.j.error)||'Incorrect passkey';
+            msg.style.color='#f87171';
+            msg.textContent=remaining!==null?base+' — '+remaining+' attempt'+(remaining===1?'':'s')+' remaining':base;
+            btn.disabled=false;
+          }
         }).catch(function(){msg.style.color='#f87171';msg.textContent='Network error';btn.disabled=false;});
       });
     })();
