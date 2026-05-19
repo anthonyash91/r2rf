@@ -493,7 +493,8 @@ function AdminCustomHomePagesList() {
                   <Trash2 className="h-4 w-4" />
                 </button>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>
