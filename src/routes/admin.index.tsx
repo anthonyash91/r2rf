@@ -262,6 +262,25 @@ function AdminCategoriesPage() {
                   {c.description && (
                     <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
                   )}
+                  {c.home_page_mode === "custom" && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground">On:</span>
+                      {(customHomePagesByCategory[c.id] ?? []).length === 0 ? (
+                        <span className="text-xs text-muted-foreground italic">No custom home pages</span>
+                      ) : (
+                        (customHomePagesByCategory[c.id] ?? []).map((p) => (
+                          <Link
+                            key={p.id}
+                            to="/admin/custom-home-pages/$id"
+                            params={{ id: p.id }}
+                            className="text-xs rounded-full bg-[var(--color-accent)]/10 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/20"
+                          >
+                            {p.name}
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
                 <button
                   title={c.published ? "Unpublish" : "Publish"}
