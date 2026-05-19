@@ -27,9 +27,8 @@ function CustomHomePage() {
 
       const { data: links, error: e2 } = await supabase
         .from("custom_home_page_categories")
-        .select("category_id, sort_order")
-        .eq("custom_home_page_id", page.id)
-        .order("sort_order", { ascending: true });
+        .select("category_id")
+        .eq("custom_home_page_id", page.id);
       if (e2) throw e2;
 
       const selectedIds = (links ?? []).map((l) => l.category_id);
@@ -39,19 +38,13 @@ function CustomHomePage() {
           .from("categories")
           .select("*")
           .eq("published", true)
-          .in("id", selectedIds);
+          .in("id", selectedIds)
+          .order("sort_order", { ascending: true });
         if (e3) throw e3;
         selected = (cats ?? []) as Category[];
       }
 
-      const linkOrder = new Map(
-        (links ?? []).map((l, idx) => [l.category_id, l.sort_order ?? idx]),
-      );
-      const selectedSorted = selected
-        .slice()
-        .sort((a, b) => (linkOrder.get(a.id) ?? 0) - (linkOrder.get(b.id) ?? 0));
-
-      return { page, categories: selectedSorted };
+      return { page, categories: selected };
     },
   });
 
