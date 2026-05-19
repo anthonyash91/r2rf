@@ -209,24 +209,24 @@ function AdminCategoriesPage() {
                   <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-display text-lg font-semibold truncate">{c.name}</h3>
+                  <div className="flex items-center gap-x-2 gap-y-1.5 flex-wrap">
+                    <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
                     <span
                       title="Content items in this category"
-                      className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border tabular-nums"
+                      className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border tabular-nums"
                     >
                       {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
                     </span>
                     {c.home_page_mode === "custom" && (
                       <span
                         title="Only shown on selected custom home pages"
-                        className="text-xs rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
+                        className="shrink-0 text-xs rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
                       >
                         Custom
                       </span>
                     )}
                     {!c.published && (
-                      <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border">
+                      <span className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border">
                         Draft
                       </span>
                     )}
@@ -238,7 +238,7 @@ function AdminCategoriesPage() {
                       return (
                         <span
                           title={title}
-                          className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
+                          className="shrink-0 inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
                         >
                           <Languages className="h-3 w-3" /> {label}
                         </span>
