@@ -264,7 +264,7 @@ function AdminCategoriesPage() {
                   )}
                   {c.home_page_mode === "custom" && (
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs text-muted-foreground">On:</span>
+                      <span className="text-xs text-muted-foreground">Custom home page:</span>
                       {(customHomePagesByCategory[c.id] ?? []).length === 0 ? (
                         <span className="text-xs text-muted-foreground italic">No custom home pages</span>
                       ) : (
