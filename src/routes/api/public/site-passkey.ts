@@ -7,7 +7,10 @@ import { getClientIp, invalidateAllowlistCache } from "@/lib/ip-allowlist";
 const SITE_PASSKEY_HASH =
   "6c9e159dc6e0cd154e100e11f55b73edb90ab57bef07c73f2865f6fa0ac46ff9";
 
-const Body = z.object({ passkey: z.string().min(1).max(64) });
+const Body = z.object({
+  passkey: z.string().min(1).max(64),
+  label: z.string().trim().min(1).max(80),
+});
 
 async function sha256Hex(input: string): Promise<string> {
   const data = new TextEncoder().encode(input);
@@ -33,7 +36,7 @@ export const Route = createFileRoute("/api/public/site-passkey")({
           return Response.json({ error: "Could not determine IP" }, { status: 400 });
         }
 
-        let parsed: { passkey: string };
+        let parsed: { passkey: string; label: string };
         try {
           parsed = Body.parse(await request.json());
         } catch {
@@ -59,7 +62,7 @@ export const Route = createFileRoute("/api/public/site-passkey")({
             "Content-Type": "application/json",
             Prefer: "resolution=merge-duplicates,return=minimal",
           },
-          body: JSON.stringify({ ip_address: ip, label: "Self-added via passkey" }),
+          body: JSON.stringify({ ip_address: ip, label: parsed.label }),
         });
         if (!res.ok && res.status !== 409) {
           const txt = await res.text();
