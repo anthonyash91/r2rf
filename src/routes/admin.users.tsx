@@ -33,6 +33,7 @@ type UserRow = {
 
 function AdminUsersPage() {
   const qc = useQueryClient();
+  const confirm = useConfirm();
   const list = useServerFn(listUsers);
   const updateEmail = useServerFn(updateUserEmail);
   const setPassword = useServerFn(setUserPassword);
