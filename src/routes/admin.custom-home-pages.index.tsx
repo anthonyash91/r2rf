@@ -139,16 +139,16 @@ function AdminCustomHomePagesList() {
 
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Custom home page created");
       setCreating(false);
       resetForm();
       qc.invalidateQueries({ queryKey: ["admin", "custom_home_pages"] });
+      qc.invalidateQueries({ queryKey: ["admin", "custom_home_pages", "categories"] });
       qc.invalidateQueries({ queryKey: ["admin", "categories", "all"] });
       qc.invalidateQueries({ queryKey: ["admin", "categories"] });
       qc.invalidateQueries({ queryKey: ["categories"] });
       qc.invalidateQueries({ queryKey: ["custom-home"] });
-      navigate({ to: "/admin/custom-home-pages/$id", params: { id: data.id } });
     },
     onError: (e: any) => toast.error(e.message),
   });
