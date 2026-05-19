@@ -13,11 +13,11 @@ type NavLink = {
 const links: NavLink[] = [
   { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true },
-  { to: "/admin/ip-allowlist", label: "IP allowlist", icon: Shield, adminOnly: true },
+  { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
-  { to: "/admin/home", label: "Home header", icon: Home, adminOnly: true },
-  { to: "/admin/custom-home-pages", label: "Custom home pages", icon: Globe, adminOnly: true },
-  { to: "/admin/certificate", label: "Certificate", icon: Award, adminOnly: true },
+  { to: "/admin/custom-home-pages", label: "Home Pages", icon: Globe, adminOnly: true },
+  { to: "/admin/home", label: "Home Header", icon: Home, adminOnly: true },
+  { to: "/admin/certificate", label: "Certificate Footer", icon: Award, adminOnly: true },
 ];
 
 export function AdminNav() {
