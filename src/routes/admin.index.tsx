@@ -63,6 +63,7 @@ function AdminCategoriesPage() {
       description: string;
       icon_url: string | null;
       published: boolean;
+      home_page_mode: "default" | "custom";
       name_es: string | null;
       tagline_es: string | null;
       description_es: string | null;
@@ -74,6 +75,7 @@ function AdminCategoriesPage() {
         description: input.description,
         icon_url: input.icon_url,
         published: input.published,
+        home_page_mode: input.home_page_mode,
         name_es: input.name_es,
         tagline_es: input.tagline_es,
         description_es: input.description_es,
@@ -288,6 +290,7 @@ function NewCategoryForm({
     description: string;
     icon_url: string | null;
     published: boolean;
+    home_page_mode: "default" | "custom";
     name_es: string | null;
     tagline_es: string | null;
     description_es: string | null;
@@ -301,6 +304,7 @@ function NewCategoryForm({
   const [slugTouched, setSlugTouched] = useState(false);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [published, setPublished] = useState(true);
+  const [homePageMode, setHomePageMode] = useState<"default" | "custom">("default");
   const [nameEs, setNameEs] = useState("");
   const [taglineEs, setTaglineEs] = useState("");
   const [descriptionEs, setDescriptionEs] = useState("");
@@ -339,6 +343,7 @@ function NewCategoryForm({
           description: description.trim(),
           icon_url: iconUrl,
           published,
+          home_page_mode: homePageMode,
           name_es: nameEs.trim() || null,
           tagline_es: taglineEs.trim() || null,
           description_es: descriptionEs.trim() || null,
@@ -429,6 +434,17 @@ function NewCategoryForm({
           </div>
         </div>
       </div>
+
+      <Field label="Home Page">
+        <select
+          value={homePageMode}
+          onChange={(e) => setHomePageMode(e.target.value as "default" | "custom")}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          <option value="default">Default (main home page + all custom home pages)</option>
+          <option value="custom">Custom (only on selected custom home pages)</option>
+        </select>
+      </Field>
 
       <label className="inline-flex items-center gap-2 text-sm">
         <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />

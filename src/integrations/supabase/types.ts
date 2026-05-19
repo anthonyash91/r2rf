@@ -82,6 +82,7 @@ export type Database = {
           created_at: string
           description: string
           description_es: string | null
+          home_page_mode: string
           icon_url: string | null
           id: string
           name: string
@@ -97,6 +98,7 @@ export type Database = {
           created_at?: string
           description?: string
           description_es?: string | null
+          home_page_mode?: string
           icon_url?: string | null
           id?: string
           name: string
@@ -112,6 +114,7 @@ export type Database = {
           created_at?: string
           description?: string
           description_es?: string | null
+          home_page_mode?: string
           icon_url?: string | null
           id?: string
           name?: string

@@ -101,6 +101,9 @@ function CategoryEditor({
   const [description, setDescription] = useState(category.description);
   const [iconUrl, setIconUrl] = useState<string | null>(category.icon_url);
   const [published, setPublished] = useState(category.published);
+  const [homePageMode, setHomePageMode] = useState<"default" | "custom">(
+    category.home_page_mode ?? "default",
+  );
   const [nameEs, setNameEs] = useState(category.name_es ?? "");
   const [taglineEs, setTaglineEs] = useState(category.tagline_es ?? "");
   const [descriptionEs, setDescriptionEs] = useState(category.description_es ?? "");
@@ -116,6 +119,7 @@ function CategoryEditor({
     setDescription(category.description);
     setIconUrl(category.icon_url);
     setPublished(category.published);
+    setHomePageMode(category.home_page_mode ?? "default");
     setNameEs(category.name_es ?? "");
     setTaglineEs(category.tagline_es ?? "");
     setDescriptionEs(category.description_es ?? "");
@@ -158,6 +162,7 @@ function CategoryEditor({
             description,
             icon_url: iconUrl,
             published,
+            home_page_mode: homePageMode,
             name_es: nameEs.trim() || null,
             tagline_es: taglineEs.trim() || null,
             description_es: descriptionEs.trim() || null,
@@ -223,10 +228,23 @@ function CategoryEditor({
             </div>
           </div>
         </div>
+        <label className="block">
+          <span className="text-sm font-medium">Home Page</span>
+          <select
+            value={homePageMode}
+            onChange={(e) => setHomePageMode(e.target.value as "default" | "custom")}
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="default">Default (main home page + all custom home pages)</option>
+            <option value="custom">Custom (only on selected custom home pages)</option>
+          </select>
+        </label>
+
         <label className="inline-flex items-center gap-2 text-sm">
           <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
           Published (visible to the public)
         </label>
+
 
         {showEs ? (
           <div className="border-t border-border pt-4 space-y-4">
