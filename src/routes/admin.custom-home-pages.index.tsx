@@ -283,6 +283,21 @@ function AdminCustomHomePagesList() {
             <p className="mt-1 text-xs text-muted-foreground">Optional, admin-only note.</p>
           </label>
 
+          <label className="block">
+            <span className="text-sm font-medium">Whitelist IPs</span>
+            <textarea
+              value={allowedIpsText}
+              onChange={(e) => setAllowedIpsText(e.target.value)}
+              placeholder="Leave blank for public access. One IPv4 per line, or comma-separated."
+              rows={3}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              If empty, anyone with the link can access this page. If one or more IPs are listed, only those IPs can access it.
+            </p>
+          </label>
+
+
           <div>
             <div className="flex items-center justify-between mb-2">
               <div>
