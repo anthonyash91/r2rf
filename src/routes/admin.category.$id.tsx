@@ -340,10 +340,14 @@ function ContentManager({ categoryId, categoryName, items, initialEditId }: { ca
   const [order, setOrder] = useState<ContentItem[]>([]);
   const editorRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => { setOrder(items); }, [items]);
+  const didAutoOpenRef = useRef(false);
   useEffect(() => {
-    if (!initialEditId) return;
+    if (!initialEditId || didAutoOpenRef.current) return;
     const target = items.find((it) => it.id === initialEditId);
-    if (target) setEditing(target);
+    if (target) {
+      setEditing(target);
+      didAutoOpenRef.current = true;
+    }
   }, [initialEditId, items]);
   useEffect(() => {
     if (!editing) return;
