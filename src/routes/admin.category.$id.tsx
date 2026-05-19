@@ -547,6 +547,23 @@ function ItemEditor({
 }) {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const { data: sourceSuggestions = [] } = useQuery({
+    queryKey: ["admin", "content-sources"],
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from("content_items")
+        .select("source")
+        .not("source", "is", null)
+        .limit(1000);
+      if (error) throw error;
+      const set = new Set<string>();
+      for (const row of (data ?? []) as { source: string | null }[]) {
+        const s = (row.source ?? "").trim();
+        if (s) set.add(s);
+      }
+      return Array.from(set).sort((a, b) => a.localeCompare(b));
+    },
+  });
   const [title, setTitle] = useState(item?.title ?? "");
   const [type, setType] = useState(item?.type ?? "Article");
   const [addingType, setAddingType] = useState(false);
