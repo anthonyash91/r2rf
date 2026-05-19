@@ -32,7 +32,7 @@ function AdminCustomHomePageEdit() {
     queryFn: async () => {
       const { data: page, error: e1 } = await supabase
         .from("custom_home_pages")
-        .select("id, slug, name")
+        .select("id, slug, name, description")
         .eq("id", id)
         .maybeSingle();
       if (e1) throw e1;
@@ -62,12 +62,14 @@ function AdminCustomHomePageEdit() {
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (data?.page) {
       setName(data.page.name ?? "");
       setSlug(data.page.slug ?? "");
+      setDescription((data.page as any).description ?? "");
     }
     if (data?.selectedIds) {
       setSelected(new Set(data.selectedIds));
@@ -84,7 +86,7 @@ function AdminCustomHomePageEdit() {
 
       const { error: e1 } = await supabase
         .from("custom_home_pages")
-        .update({ name: name.trim(), slug: finalSlug })
+        .update({ name: name.trim(), slug: finalSlug, description: description.trim() })
         .eq("id", id);
       if (e1) throw e1;
 
@@ -192,6 +194,18 @@ function AdminCustomHomePageEdit() {
               </div>
             </label>
           </div>
+
+          <label className="block">
+            <span className="text-sm font-medium">Description</span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What is this custom home page for? (admin note)"
+              rows={3}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">Optional, admin-only note.</p>
+          </label>
         </section>
 
         <section className="rounded-2xl border border-border bg-card p-6">

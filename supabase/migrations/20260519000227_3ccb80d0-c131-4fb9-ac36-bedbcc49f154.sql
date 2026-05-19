@@ -1,0 +1,1 @@
+ALTER TABLE public.custom_home_pages ADD COLUMN IF NOT EXISTS description text NOT NULL DEFAULT '';
