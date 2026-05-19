@@ -27,11 +27,9 @@ export function AdminNav() {
   const visible = links.filter((l) => !l.adminOnly || isAdmin);
 
   return (
-    <nav
-      aria-label="Admin"
-      className="mb-8 -mx-2 overflow-x-auto"
-    >
-      <ul className="flex items-center gap-1 px-2 min-w-max">
+    <nav aria-label="Admin" className="mb-8 -mx-2 overflow-x-auto">
+      <ul className="flex flex-wrap items-center justify-center gap-1.5 px-2">
+
         {visible.map((l) => {
           const active = l.exact ? pathname === l.to : pathname === l.to || pathname.startsWith(l.to + "/");
           const Icon = l.icon;
