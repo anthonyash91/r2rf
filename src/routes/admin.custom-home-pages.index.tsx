@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin/custom-home-pages/")({
 function AdminCustomHomePagesList() {
   const qc = useQueryClient();
   const confirm = useConfirm();
-  const navigate = useNavigate();
+  
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -64,6 +64,27 @@ function AdminCustomHomePagesList() {
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return data as Category[];
+    },
+  });
+
+  const { data: pageCategories = {} } = useQuery({
+    queryKey: ["admin", "custom_home_pages", "categories"],
+    queryFn: async (): Promise<Record<string, { id: string; name: string; sort_order: number }[]>> => {
+      const { data, error } = await supabase
+        .from("custom_home_page_categories")
+        .select("custom_home_page_id, sort_order, categories:category_id(id, name, sort_order)")
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      const map: Record<string, { id: string; name: string; sort_order: number }[]> = {};
+      for (const row of (data ?? []) as any[]) {
+        if (!row.categories) continue;
+        const list = map[row.custom_home_page_id] ?? (map[row.custom_home_page_id] = []);
+        list.push(row.categories);
+      }
+      for (const k of Object.keys(map)) {
+        map[k].sort((a, b) => a.sort_order - b.sort_order);
+      }
+      return map;
     },
   });
 
@@ -139,16 +160,16 @@ function AdminCustomHomePagesList() {
 
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success("Custom home page created");
       setCreating(false);
       resetForm();
       qc.invalidateQueries({ queryKey: ["admin", "custom_home_pages"] });
+      qc.invalidateQueries({ queryKey: ["admin", "custom_home_pages", "categories"] });
       qc.invalidateQueries({ queryKey: ["admin", "categories", "all"] });
       qc.invalidateQueries({ queryKey: ["admin", "categories"] });
       qc.invalidateQueries({ queryKey: ["categories"] });
       qc.invalidateQueries({ queryKey: ["custom-home"] });
-      navigate({ to: "/admin/custom-home-pages/$id", params: { id: data.id } });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -370,6 +391,24 @@ function AdminCustomHomePagesList() {
                   {p.description && (
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description}</p>
                   )}
+                  {(() => {
+                    const cats = pageCategories[p.id] ?? [];
+                    if (cats.length === 0) {
+                      return <p className="mt-2 text-xs text-muted-foreground italic">No categories</p>;
+                    }
+                    return (
+                      <ul className="mt-2 flex flex-wrap gap-1.5">
+                        {cats.map((c) => (
+                          <li
+                            key={c.id}
+                            className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground"
+                          >
+                            {c.name}
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  })()}
                 </div>
                 <a
                   href={`/${p.slug}`}
