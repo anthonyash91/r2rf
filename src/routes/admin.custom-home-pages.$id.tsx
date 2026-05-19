@@ -71,10 +71,15 @@ function AdminCustomHomePageEdit() {
       setSlug(data.page.slug ?? "");
       setDescription((data.page as any).description ?? "");
     }
-    if (data?.selectedIds) {
-      setSelected(new Set(data.selectedIds));
+    if (data?.selectedIds && categories.length > 0) {
+      const initial = new Set<string>(data.selectedIds);
+      // Default-mode categories show on every custom home page, so pre-check them.
+      for (const c of categories) {
+        if (c.home_page_mode === "default") initial.add(c.id);
+      }
+      setSelected(initial);
     }
-  }, [data]);
+  }, [data, categories]);
 
   const saveMut = useMutation({
     mutationFn: async () => {
@@ -90,6 +95,20 @@ function AdminCustomHomePageEdit() {
         .eq("id", id);
       if (e1) throw e1;
 
+      // Any default-mode category that the admin unchecked should no longer be
+      // a default — flip it to 'custom' so it's removed from this page (and
+      // stops appearing automatically on the main + other custom home pages).
+      const demoted = categories
+        .filter((c) => c.home_page_mode === "default" && !selected.has(c.id))
+        .map((c) => c.id);
+      if (demoted.length > 0) {
+        const { error: eDemote } = await supabase
+          .from("categories")
+          .update({ home_page_mode: "custom" })
+          .in("id", demoted);
+        if (eDemote) throw eDemote;
+      }
+
       // Replace selections
       const { error: e2 } = await supabase
         .from("custom_home_page_categories")
@@ -97,9 +116,16 @@ function AdminCustomHomePageEdit() {
         .eq("custom_home_page_id", id);
       if (e2) throw e2;
 
-      // Preserve order based on each category's sort_order
+      // Preserve order based on each category's sort_order. Skip default-mode
+      // categories that are still default — they show via the default rule and
+      // don't need an explicit junction row.
+      const stillDefault = new Set(
+        categories
+          .filter((c) => c.home_page_mode === "default" && selected.has(c.id))
+          .map((c) => c.id),
+      );
       const orderedIds = categories
-        .filter((c) => selected.has(c.id))
+        .filter((c) => selected.has(c.id) && !stillDefault.has(c.id))
         .map((c) => c.id);
 
       if (orderedIds.length > 0) {
@@ -118,6 +144,9 @@ function AdminCustomHomePageEdit() {
       toast.success("Saved");
       qc.invalidateQueries({ queryKey: ["admin", "custom_home_page", id] });
       qc.invalidateQueries({ queryKey: ["admin", "custom_home_pages"] });
+      qc.invalidateQueries({ queryKey: ["admin", "categories", "all"] });
+      qc.invalidateQueries({ queryKey: ["admin", "categories"] });
+      qc.invalidateQueries({ queryKey: ["categories"] });
       qc.invalidateQueries({ queryKey: ["custom-home"] });
     },
     onError: (e: any) => toast.error(e.message),
