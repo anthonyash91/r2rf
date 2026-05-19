@@ -254,7 +254,7 @@ function AdminCustomHomePageEdit() {
                         <img
                           src={c.icon_url}
                           alt=""
-                          className="h-10 w-10 rounded-lg object-cover border border-border bg-muted shrink-0"
+                          className="h-10 w-10 object-cover border border-border bg-muted shrink-0 rounded-md"
                         />
                       ) : (
                         <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
