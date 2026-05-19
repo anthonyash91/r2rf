@@ -337,6 +337,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_signup_ips: {
+        Row: {
+          created_at: string
+          ip_address: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ip_address: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ip_address?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
