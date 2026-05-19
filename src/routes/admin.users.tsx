@@ -246,12 +246,12 @@ function UserItem({
               </button>
               {isAdmin && (
                 <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary border border-primary/30">
-                  <Shield className="h-3 w-3" /> admin
+                  <Shield className="h-3 w-3" /> Admin
                 </span>
               )}
               {isContributor && (
                 <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-sky-500/10 px-2 py-0.5 text-sky-600 border border-sky-500/30">
-                  <Shield className="h-3 w-3" /> contributor
+                  <Shield className="h-3 w-3" /> Contributor
                 </span>
               )}
               {user.email_confirmed_at ? (
