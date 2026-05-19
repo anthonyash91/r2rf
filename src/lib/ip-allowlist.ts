@@ -9,6 +9,10 @@ let siteInflight: Promise<Set<string>> | null = null;
 let authCache: Cache | null = null;
 let authInflight: Promise<Set<string>> | null = null;
 
+type CustomHomeCache = { restrictions: Map<string, Set<string>>; expiresAt: number };
+let customHomeCache: CustomHomeCache | null = null;
+let customHomeInflight: Promise<Map<string, Set<string>>> | null = null;
+
 async function fetchTable(table: string): Promise<Set<string>> {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
