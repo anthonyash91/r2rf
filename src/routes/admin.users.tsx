@@ -15,6 +15,7 @@ import {
   deleteUser,
 } from "@/lib/users.functions";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/admin/users")({
   beforeLoad: requireAdminBeforeLoad,
