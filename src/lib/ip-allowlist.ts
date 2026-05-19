@@ -117,10 +117,12 @@ export function getClientIp(request: Request): string | null {
   return null;
 }
 
-export function renderBlockedPage(ip: string | null, scope: "site" | "auth" = "site"): string {
+export function renderBlockedPage(ip: string | null, scope: "site" | "auth" | "custom-home" = "site"): string {
   const safeIp = (ip ?? "unknown").replace(/[<>&"']/g, "");
   const message = scope === "auth"
     ? "The login page is only available from approved IP addresses."
+    : scope === "custom-home"
+    ? "This page is only available from approved IP addresses. Contact the administrator to request access."
     : "This site is only available from approved IP addresses.";
 
   const passkeyForm = scope === "site" ? `

@@ -115,7 +115,7 @@ export default {
           const restrictions = await getCustomHomeRestrictions();
           const allowedForSlug = restrictions.get(firstSegment);
           if (allowedForSlug && (!ip || !allowedForSlug.has(ip))) {
-            return new Response(renderBlockedPage(ip, "site"), {
+            return new Response(renderBlockedPage(ip, "custom-home"), {
               status: 403,
               headers: { "content-type": "text/html; charset=utf-8" },
             });
