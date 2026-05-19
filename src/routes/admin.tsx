@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { setActiveCustomHome } from "@/lib/custom-home-context";
+import { AdminNav } from "@/components/AdminNav";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Reentry to Recovery" }] }),
@@ -52,7 +53,10 @@ function AdminLayout() {
             </Link>
           </div>
         ) : (
-          <Outlet />
+          <>
+            <AdminNav />
+            <Outlet />
+          </>
         )}
       </main>
       <SiteFooter />
