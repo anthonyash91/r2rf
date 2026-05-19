@@ -101,7 +101,7 @@ export function SiteHeader() {
       {open && (
         <nav className="md:hidden border-t border-border/60 bg-background">
           <div className="mx-auto max-w-6xl px-4 py-3 flex flex-col gap-1 text-sm font-medium text-muted-foreground">
-            <Link to="/" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
+            <Link {...homeLinkProps} onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
               {t("nav.categories")}
             </Link>
             {canAccessAdmin && (
