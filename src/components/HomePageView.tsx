@@ -200,7 +200,7 @@ export function HomePageView({
           <div className="flex items-end justify-between mb-8">
             <h2 className="font-display text-2xl font-semibold">{t("home.categories")}</h2>
             <span className="text-sm text-muted-foreground">
-              {isLoading ? t("home.loading") : t("home.collections", { count: categories.length })}
+              {isLoading ? t("home.loading") : t(categories.length === 1 ? "home.collection" : "home.collections", { count: categories.length })}
             </span>
           </div>
 
