@@ -173,6 +173,10 @@ export function translateDuration(lang: Language, duration: string): string {
     read: "de lectura",
     watch: "de video",
     listen: "de audio",
+    complete: "para completar",
+    meeting: "de reunión",
+    call: "de llamada",
+    view: "de vista",
   };
   return duration.replace(/[A-Za-z]+/g, (word) => {
     const lower = word.toLowerCase();
