@@ -285,13 +285,13 @@ function UserItem({
 
 
         <TooltipProvider delayDuration={150}>
-          <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
+          <div className="flex flex-wrap items-center justify-end gap-1 shrink-0">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={onSendReset}
                   aria-label="Send password reset email"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-input bg-background hover:bg-muted"
+                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
                 >
                   <Send className="h-4 w-4" />
                 </button>
@@ -304,7 +304,7 @@ function UserItem({
                 <button
                   onClick={() => setPwOpen((v) => !v)}
                   aria-label="Set password"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-input bg-background hover:bg-muted"
+                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
                 >
                   <KeyRound className="h-4 w-4" />
                 </button>
@@ -320,10 +320,10 @@ function UserItem({
                     onToggleAdmin(!isAdmin);
                   }}
                   aria-label={isAdmin ? "Revoke admin" : "Make admin"}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-md border ${
+                  className={`p-2 rounded-md ${
                     isAdmin
-                      ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                      : "border-input bg-background hover:bg-muted"
+                      ? "text-destructive hover:bg-destructive/10"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
                   {isAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
@@ -337,10 +337,10 @@ function UserItem({
                 <button
                   onClick={() => onToggleContributor(!isContributor)}
                   aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-md border ${
+                  className={`p-2 rounded-md ${
                     isContributor
-                      ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                      : "border-input bg-background hover:bg-muted"
+                      ? "text-destructive hover:bg-destructive/10"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
                   {isContributor ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
@@ -349,14 +349,12 @@ function UserItem({
               <TooltipContent>{isContributor ? "Revoke contributor" : "Make contributor"}</TooltipContent>
             </Tooltip>
 
-            <div className="mx-1 h-6 w-px bg-border" aria-hidden />
-
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   onClick={onDelete}
                   aria-label="Delete user"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-destructive/30 text-destructive hover:bg-destructive/10"
+                  className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
