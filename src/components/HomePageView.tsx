@@ -7,6 +7,26 @@ import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { ArrowUpRight, Pencil } from "lucide-react";
 
+function useCategoryItemCounts(categoryIds: string[]) {
+  return useQuery({
+    queryKey: ["category-item-counts", [...categoryIds].sort().join(",")],
+    enabled: categoryIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("content_items")
+        .select("category_id")
+        .eq("published", true)
+        .in("category_id", categoryIds);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      (data ?? []).forEach((row: { category_id: string }) => {
+        counts[row.category_id] = (counts[row.category_id] ?? 0) + 1;
+      });
+      return counts;
+    },
+  });
+}
+
 function useColumnCount() {
   const [cols, setCols] = useState(3);
   useEffect(() => {
