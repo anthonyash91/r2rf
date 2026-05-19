@@ -565,6 +565,7 @@ function ItemEditor({
 
   const generateDesc = useServerFn(generateContentDescription);
   const [generatingDesc, setGeneratingDesc] = useState(false);
+  const [pdfEstimating, setPdfEstimating] = useState(false);
 
   // Auto-recalculate duration when the PDF URL changes (after initial mount).
   const initialPdfUrlRef = useRef(item?.url ?? "");
@@ -574,9 +575,14 @@ function ItemEditor({
     if (u === initialPdfUrlRef.current) return;
     initialPdfUrlRef.current = u;
     let cancelled = false;
+    setPdfEstimating(true);
     (async () => {
-      const estimated = await estimateDuration(u, null, type);
-      if (!cancelled && estimated) setDuration(estimated);
+      try {
+        const estimated = await estimateDuration(u, null, type);
+        if (!cancelled && estimated) setDuration(estimated);
+      } finally {
+        if (!cancelled) setPdfEstimating(false);
+      }
     })();
     return () => { cancelled = true; };
   }, [url, type]);
