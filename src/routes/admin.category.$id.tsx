@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
 import { typeBadgeClass } from "@/lib/type-badge";
 import { withActionWord } from "@/lib/duration";
+import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -337,6 +338,7 @@ function CategoryEditor({
 function ContentManager({ categoryId, categoryName, items, initialEditId }: { categoryId: string; categoryName: string; items: ContentItem[]; initialEditId?: string }) {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const { lang } = useI18n();
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
   const [order, setOrder] = useState<ContentItem[]>([]);
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -491,7 +493,7 @@ function ContentManager({ categoryId, categoryName, items, initialEditId }: { ca
                       );
                     })()}
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-[8px]">{item.source} · {withActionWord(item.duration, item.type)}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-[8px]">{item.source} · {translateDuration(lang, withActionWord(item.duration, item.type))}</p>
                 </div>
                 <button
                   title={item.published ? "Unpublish" : "Publish"}
