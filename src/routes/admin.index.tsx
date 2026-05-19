@@ -199,7 +199,7 @@ function AdminCategoriesPage() {
             items={order}
             onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
             renderItem={(c) => (
-              <div className="flex items-center gap-4 p-4 pl-[10px]">
+              <div className={`flex items-center gap-4 p-4 pl-[10px] ${c.home_page_mode === "custom" ? "bg-[var(--color-accent)]/5 border-l-4 border-l-[var(--color-accent)] pl-[6px]" : ""}`}>
                 {c.icon_url ? (
                   <img
                     src={c.icon_url}
@@ -212,6 +212,14 @@ function AdminCategoriesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-display text-lg font-semibold truncate">{c.name}</h3>
+                    {c.home_page_mode === "custom" && (
+                      <span
+                        title="Only shown on selected custom home pages"
+                        className="text-xs rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
+                      >
+                        Custom
+                      </span>
+                    )}
                     {!c.published && (
                       <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
                         Draft
