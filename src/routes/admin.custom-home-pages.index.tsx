@@ -27,7 +27,7 @@ type CustomHomePage = {
   created_at: string;
 };
 
-export const Route = createFileRoute("/admin/custom-home-pages")({
+export const Route = createFileRoute("/admin/custom-home-pages/")({
   beforeLoad: requireAdminBeforeLoad,
   component: AdminCustomHomePagesList,
 });
