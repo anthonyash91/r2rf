@@ -75,14 +75,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "Reentry to Recovery Content Library" },
+      { name: "description", content: "A content library app organizing resources into categories like health, parenting, and recovery." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Reentry to Recovery Content Library" },
+      { property: "og:description", content: "A content library app organizing resources into categories like health, parenting, and recovery." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Reentry to Recovery Content Library" },
+      { name: "twitter:description", content: "A content library app organizing resources into categories like health, parenting, and recovery." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9ed0cc49-157b-4559-95b1-f495752a5737/id-preview-13f8dbe8--6f0fcf41-83c7-4eb3-97f2-c7493c88f39a.lovable.app-1779161474168.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9ed0cc49-157b-4559-95b1-f495752a5737/id-preview-13f8dbe8--6f0fcf41-83c7-4eb3-97f2-c7493c88f39a.lovable.app-1779161474168.png" },
     ],
     links: [
       {
