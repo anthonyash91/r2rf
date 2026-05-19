@@ -40,6 +40,7 @@ function AdminCategoryPage() {
   const { id } = Route.useParams();
   const { edit } = Route.useSearch();
   const qc = useQueryClient();
+  const { lang } = useI18n();
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "category", id],
