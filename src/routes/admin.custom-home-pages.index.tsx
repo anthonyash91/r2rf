@@ -72,12 +72,28 @@ function AdminCustomHomePagesList() {
     [categories, selected],
   );
 
+  const defaultIds = useMemo(
+    () => categories.filter((c) => c.home_page_mode === "default").map((c) => c.id),
+    [categories],
+  );
+
+  // Pre-check default-mode categories whenever the form opens or categories load.
+  useEffect(() => {
+    if (creating) {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        for (const id of defaultIds) next.add(id);
+        return next;
+      });
+    }
+  }, [creating, defaultIds]);
+
   const resetForm = () => {
     setName("");
     setSlug("");
     setDescription("");
     setSlugTouched(false);
-    setSelected(new Set());
+    setSelected(new Set(defaultIds));
   };
 
   const createMut = useMutation({
