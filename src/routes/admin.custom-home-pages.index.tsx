@@ -224,6 +224,7 @@ function AdminCustomHomePagesList() {
               name,
               slug,
               description,
+              allowedIps: parseIps(allowedIpsText),
               selectedIds: orderedSelectedIds,
             });
           }}
