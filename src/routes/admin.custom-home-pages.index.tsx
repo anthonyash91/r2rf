@@ -109,19 +109,10 @@ function AdminCustomHomePagesList() {
         throw new Error(`"/${finalSlug}" is reserved. Choose a different slug.`);
       }
 
-      // Any default-mode category the admin unchecked should be demoted to
-      // 'custom' so it stops appearing automatically everywhere.
-      const selectedSet = new Set(input.selectedIds);
-      const demoted = categories
-        .filter((c) => c.home_page_mode === "default" && !selectedSet.has(c.id))
-        .map((c) => c.id);
-      if (demoted.length > 0) {
-        const { error: eDemote } = await supabase
-          .from("categories")
-          .update({ home_page_mode: "custom" })
-          .in("id", demoted);
-        if (eDemote) throw eDemote;
-      }
+
+
+
+
 
       const { data, error } = await supabase
         .from("custom_home_pages")
@@ -134,14 +125,13 @@ function AdminCustomHomePagesList() {
         .single();
       if (error) throw error;
 
-      // Skip junction rows for categories that remain 'default' — they appear
-      // via the default rule and don't need an explicit link.
-      const stillDefault = new Set(
-        categories
-          .filter((c) => c.home_page_mode === "default" && selectedSet.has(c.id))
-          .map((c) => c.id),
+      // Skip junction rows for default-mode categories — they appear via the
+      // default rule and don't need an explicit link.
+      const defaultSet = new Set(
+        categories.filter((c) => c.home_page_mode === "default").map((c) => c.id),
       );
-      const explicitIds = input.selectedIds.filter((cid) => !stillDefault.has(cid));
+      const explicitIds = input.selectedIds.filter((cid) => !defaultSet.has(cid));
+
 
       if (explicitIds.length > 0) {
         const rows = explicitIds.map((cid, idx) => ({
