@@ -747,17 +747,28 @@ function ItemEditor({
         <div>
           <LabeledInput label="Duration" value={duration} onChange={setDuration} placeholder="8 min read" />
           {extOf(url, null) === "pdf" && (
-            <button
-              type="button"
-              onClick={async () => {
-                const estimated = await estimateDuration(url, null, type);
-                if (estimated) setDuration(estimated);
-              }}
-              className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted"
-            >
-              <RefreshCw className="h-3 w-3" />
-              Recalculate PDF duration
-            </button>
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                disabled={pdfEstimating}
+                onClick={async () => {
+                  setPdfEstimating(true);
+                  try {
+                    const estimated = await estimateDuration(url, null, type);
+                    if (estimated) setDuration(estimated);
+                  } finally {
+                    setPdfEstimating(false);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-60"
+              >
+                <RefreshCw className={`h-3 w-3 ${pdfEstimating ? "animate-spin" : ""}`} />
+                {pdfEstimating ? "Calculating PDF duration…" : "Recalculate PDF duration"}
+              </button>
+              {pdfEstimating && (
+                <span className="text-xs text-muted-foreground">Reading PDF to estimate reading time…</span>
+              )}
+            </div>
           )}
         </div>
       </div>
