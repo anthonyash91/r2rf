@@ -785,13 +785,13 @@ function ItemEditor({
           {!addingType && typeOptions.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {typeOptions.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                <span key={t} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${typeBadgeClass(t)}`}>
                   {t}
                   <button
                     type="button"
                     onClick={() => deleteType(t)}
                     title={`Delete type "${t}"`}
-                    className="rounded-full hover:bg-destructive/10 hover:text-destructive p-0.5"
+                    className="rounded-full hover:bg-black/10 dark:hover:bg-white/10 p-0.5"
                   >
                     <X className="h-3 w-3" />
                   </button>
