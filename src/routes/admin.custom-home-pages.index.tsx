@@ -440,26 +440,22 @@ function AdminCustomHomePagesList() {
                     );
                     return (
                       <div className="mt-3 space-y-2">
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">
-                            Excluded default categories
-                          </p>
-                          {excludedDefaults.length === 0 ? (
-                            <p className="mt-1 text-xs text-muted-foreground italic">None</p>
-                          ) : (
+                        {excludedDefaults.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Excluded default categories
+                            </p>
                             <Chips items={excludedDefaults} tone="excluded" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">
-                            Included custom categories
-                          </p>
-                          {includedCustoms.length === 0 ? (
-                            <p className="mt-1 text-xs text-muted-foreground italic">None</p>
-                          ) : (
+                          </div>
+                        )}
+                        {includedCustoms.length > 0 && (
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground">
+                              Included custom categories
+                            </p>
                             <Chips items={includedCustoms} tone="included" />
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
