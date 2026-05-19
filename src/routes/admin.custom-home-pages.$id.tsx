@@ -194,6 +194,18 @@ function AdminCustomHomePageEdit() {
               </div>
             </label>
           </div>
+
+          <label className="block">
+            <span className="text-sm font-medium">Description</span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What is this custom home page for? (admin note)"
+              rows={3}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">Optional, admin-only note.</p>
+          </label>
         </section>
 
         <section className="rounded-2xl border border-border bg-card p-6">
