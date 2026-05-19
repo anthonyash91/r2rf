@@ -68,6 +68,8 @@ const translations: Record<Language, Dict> = {
     "category.downloadFile": "Descargar archivo",
     "category.source": "Fuente",
     "category.exploreOthers": "Explore otras categorías",
+    "category.newContent": "Contenido nuevo",
+    "category.newContentAdded": "Nuevo contenido agregado",
 
     "auth.signIn": "Iniciar sesión",
     "auth.createAccount": "Crear cuenta",
