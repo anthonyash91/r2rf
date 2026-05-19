@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
-import { ArrowUpRight, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 function useCategoryItemCounts(categoryIds: string[]) {
   return useQuery({
