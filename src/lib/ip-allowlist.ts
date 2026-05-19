@@ -66,6 +66,45 @@ export async function getAuthAllowedIps(): Promise<Set<string>> {
 export function invalidateAllowlistCache() {
   siteCache = null;
   authCache = null;
+  customHomeCache = null;
+}
+
+async function fetchCustomHomeRestrictions(): Promise<Map<string, Set<string>>> {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const map = new Map<string, Set<string>>();
+  if (!url || !key) {
+    console.error("[ip-allowlist] Missing SUPABASE_URL/SERVICE_ROLE_KEY for custom-home restrictions");
+    return map;
+  }
+  const res = await fetch(`${url}/rest/v1/custom_home_pages?select=slug,allowed_ips`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
+  });
+  if (!res.ok) {
+    console.error("[ip-allowlist] Fetch custom_home_pages failed:", res.status, await res.text());
+    return map;
+  }
+  const rows = (await res.json()) as Array<{ slug: string; allowed_ips: string[] | null }>;
+  for (const row of rows) {
+    const ips = (row.allowed_ips ?? []).map((s) => s.trim()).filter(Boolean);
+    if (ips.length > 0) map.set(row.slug, new Set(ips));
+  }
+  return map;
+}
+
+export async function getCustomHomeRestrictions(): Promise<Map<string, Set<string>>> {
+  const now = Date.now();
+  if (customHomeCache && customHomeCache.expiresAt > now) return customHomeCache.restrictions;
+  if (customHomeInflight) return customHomeInflight;
+  customHomeInflight = fetchCustomHomeRestrictions()
+    .then((restrictions) => {
+      customHomeCache = { restrictions, expiresAt: Date.now() + CACHE_TTL_MS };
+      return restrictions;
+    })
+    .finally(() => {
+      customHomeInflight = null;
+    });
+  return customHomeInflight;
 }
 
 export function getClientIp(request: Request): string | null {
