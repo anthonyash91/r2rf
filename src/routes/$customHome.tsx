@@ -56,6 +56,12 @@ function CustomHomePage() {
     throw notFound();
   }
 
+  useEffect(() => {
+    if (data?.page?.slug) {
+      setActiveCustomHome(data.page.slug);
+    }
+  }, [data?.page?.slug]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
