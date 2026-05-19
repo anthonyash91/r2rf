@@ -54,6 +54,7 @@ function CategoryPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
   const { isAdmin } = useAuth();
+  const activeCustomHome = useActiveCustomHome();
   const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
   const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
