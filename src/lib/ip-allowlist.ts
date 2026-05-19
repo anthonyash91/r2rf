@@ -127,7 +127,10 @@ export function renderBlockedPage(ip: string | null, scope: "site" | "auth" | "c
 
   const passkeyForm = scope === "site" ? `
   <form id="pk-form" style="margin-top:24px;display:flex;flex-direction:column;gap:10px;text-align:left">
-    <label for="pk-input" style="font-size:13px;color:#a1a1aa">Have an access passkey?</label>
+    <label for="pk-label" style="font-size:13px;color:#a1a1aa">Your name or label</label>
+    <input id="pk-label" type="text" autocomplete="name" placeholder="e.g. Jane Doe" required maxlength="80"
+      style="background:#1f1f23;border:1px solid #2e2e34;color:#e8e8ea;padding:10px 12px;border-radius:8px;font-size:14px;outline:none"/>
+    <label for="pk-input" style="font-size:13px;color:#a1a1aa;margin-top:4px">Access passkey</label>
     <div style="display:flex;gap:8px">
       <input id="pk-input" type="password" autocomplete="off" placeholder="Enter passkey" required maxlength="64"
         style="flex:1;background:#1f1f23;border:1px solid #2e2e34;color:#e8e8ea;padding:10px 12px;border-radius:8px;font-size:14px;outline:none"/>
@@ -140,15 +143,18 @@ export function renderBlockedPage(ip: string | null, scope: "site" | "auth" | "c
     (function(){
       var f=document.getElementById('pk-form');
       var inp=document.getElementById('pk-input');
+      var lbl=document.getElementById('pk-label');
       var msg=document.getElementById('pk-msg');
       var btn=document.getElementById('pk-submit');
       f.addEventListener('submit',function(e){
         e.preventDefault();
+        var labelVal=(lbl.value||'').trim();
+        if(!labelVal){msg.style.color='#f87171';msg.textContent='Please enter a label';return;}
         msg.style.color='#a1a1aa';msg.textContent='Checking…';btn.disabled=true;
         fetch('/api/public/site-passkey',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({passkey:inp.value})
+          body:JSON.stringify({passkey:inp.value,label:labelVal})
         }).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})})
         .then(function(res){
           if(res.ok){msg.style.color='#34d399';msg.textContent='Access granted. Reloading…';setTimeout(function(){location.reload()},800);}
