@@ -162,10 +162,14 @@ function AdminUsersPage() {
                 onSendReset={() => resetMut.mutate({ email: u.email })}
                 onToggleAdmin={(enabled) => roleMut.mutate({ userId: u.id, role: "admin", enabled })}
                 onToggleContributor={(enabled) => roleMut.mutate({ userId: u.id, role: "contributor", enabled })}
-                onDelete={() => {
-                  if (confirm(`Permanently delete ${u.email}? This cannot be undone.`)) {
-                    deleteMut.mutate({ userId: u.id });
-                  }
+                onDelete={async () => {
+                  const ok = await confirm({
+                    title: "Delete user?",
+                    description: `Permanently delete ${u.email}? This cannot be undone.`,
+                    confirmLabel: "Delete",
+                    destructive: true,
+                  });
+                  if (ok) deleteMut.mutate({ userId: u.id });
                 }}
               />
             ))}
