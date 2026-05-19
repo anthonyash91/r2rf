@@ -391,6 +391,24 @@ function AdminCustomHomePagesList() {
                   {p.description && (
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description}</p>
                   )}
+                  {(() => {
+                    const cats = pageCategories[p.id] ?? [];
+                    if (cats.length === 0) {
+                      return <p className="mt-2 text-xs text-muted-foreground italic">No categories</p>;
+                    }
+                    return (
+                      <ul className="mt-2 flex flex-wrap gap-1.5">
+                        {cats.map((c) => (
+                          <li
+                            key={c.id}
+                            className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground"
+                          >
+                            {c.name}
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  })()}
                 </div>
                 <a
                   href={`/${p.slug}`}
