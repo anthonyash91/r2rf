@@ -343,6 +343,7 @@ function NewCategoryForm({
           description: description.trim(),
           icon_url: iconUrl,
           published,
+          home_page_mode: homePageMode,
           name_es: nameEs.trim() || null,
           tagline_es: taglineEs.trim() || null,
           description_es: descriptionEs.trim() || null,
