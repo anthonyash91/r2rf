@@ -376,68 +376,75 @@ function AllowlistRow({
   });
 
   return (
-    <li className="flex items-center gap-4 p-4 pl-[24px]">
-      <div className="flex-1 min-w-0">
-        <p className="font-mono text-sm">{row.ip_address}</p>
-        {editing ? (
+    <li className="p-4 pl-[24px]">
+      <div className="flex items-center gap-4">
+        <div className="flex-1 min-w-0">
+          <p className="font-mono text-sm">{row.ip_address}</p>
+          {row.label && !editing && (
+            <p className="text-xs text-muted-foreground truncate">{row.label}</p>
+          )}
+        </div>
+        <button
+          title="Edit label"
+          onClick={() => {
+            setDraft(row.label ?? "");
+            setEditing((v) => !v);
+          }}
+          className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+        <button
+          title="Remove"
+          onClick={onDelete}
+          className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      {editing && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            updateMut.mutate(draft.trim());
+          }}
+          className="mt-3 flex flex-col sm:flex-row gap-2"
+        >
           <input
             autoFocus
             value={draft}
+            maxLength={80}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") updateMut.mutate(draft.trim());
               if (e.key === "Escape") {
                 setDraft(row.label ?? "");
                 setEditing(false);
               }
             }}
-            placeholder="Label"
-            className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1 text-xs"
+            placeholder="Label (e.g. Office)"
+            className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
           />
-        ) : (
-          row.label && (
-            <p className="text-xs text-muted-foreground truncate">{row.label}</p>
-          )
-        )}
-      </div>
-      {editing ? (
-        <>
-          <button
-            title="Save"
-            disabled={updateMut.isPending}
-            onClick={() => updateMut.mutate(draft.trim())}
-            className="p-2 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary disabled:opacity-60"
-          >
-            <Check className="h-4 w-4" />
-          </button>
-          <button
-            title="Cancel"
-            onClick={() => {
-              setDraft(row.label ?? "");
-              setEditing(false);
-            }}
-            className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </>
-      ) : (
-        <>
-          <button
-            title="Edit label"
-            onClick={() => setEditing(true)}
-            className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-          <button
-            title="Remove"
-            onClick={onDelete}
-            className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(row.label ?? "");
+                setEditing(false);
+              }}
+              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={updateMut.isPending}
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            >
+              Update label
+            </button>
+          </div>
+        </form>
       )}
     </li>
   );
