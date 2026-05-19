@@ -56,13 +56,12 @@ async function upsertAttempt(
   ip: string,
   failedCount: number,
   block: boolean,
-  label: string,
 ): Promise<void> {
   const body = {
     ip_address: ip,
     failed_count: failedCount,
     last_attempt_at: new Date().toISOString(),
-    ...(block ? { blocked_at: new Date().toISOString(), label } : {}),
+    ...(block ? { blocked_at: new Date().toISOString() } : {}),
   };
   const res = await fetch(`${url}/rest/v1/ip_passkey_attempts?on_conflict=ip_address`, {
     method: "POST",
