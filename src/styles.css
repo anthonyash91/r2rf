@@ -37,6 +37,10 @@
   --color-ring: var(--ring);
 }
 
+@utility rounded-full {
+  border-radius: var(--radius);
+}
+
 :root {
   --radius: 0.75rem;
   /* Emerald Prestige */
