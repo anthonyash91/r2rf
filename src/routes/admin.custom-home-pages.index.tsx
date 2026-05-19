@@ -67,22 +67,16 @@ function AdminCustomHomePagesList() {
     },
   });
 
-  const { data: pageCategories = {} } = useQuery({
+  const { data: pageCategoryIds = {} } = useQuery({
     queryKey: ["admin", "custom_home_pages", "categories"],
-    queryFn: async (): Promise<Record<string, { id: string; name: string; sort_order: number }[]>> => {
+    queryFn: async (): Promise<Record<string, Set<string>>> => {
       const { data, error } = await supabase
         .from("custom_home_page_categories")
-        .select("custom_home_page_id, sort_order, categories:category_id(id, name, sort_order)")
-        .order("sort_order", { ascending: true });
+        .select("custom_home_page_id, category_id");
       if (error) throw error;
-      const map: Record<string, { id: string; name: string; sort_order: number }[]> = {};
-      for (const row of (data ?? []) as any[]) {
-        if (!row.categories) continue;
-        const list = map[row.custom_home_page_id] ?? (map[row.custom_home_page_id] = []);
-        list.push(row.categories);
-      }
-      for (const k of Object.keys(map)) {
-        map[k].sort((a, b) => a.sort_order - b.sort_order);
+      const map: Record<string, Set<string>> = {};
+      for (const row of (data ?? []) as { custom_home_page_id: string; category_id: string }[]) {
+        (map[row.custom_home_page_id] ??= new Set()).add(row.category_id);
       }
       return map;
     },
