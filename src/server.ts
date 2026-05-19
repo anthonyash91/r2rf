@@ -2,7 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { getAllowedIps, getAuthAllowedIps, getClientIp, renderBlockedPage } from "./lib/ip-allowlist";
+import { getAllowedIps, getAuthAllowedIps, getClientIp, getCustomHomeRestrictions, renderBlockedPage } from "./lib/ip-allowlist";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -103,6 +103,25 @@ export default {
             status: 403,
             headers: { "content-type": "text/html; charset=utf-8" },
           });
+        }
+      }
+
+      // Per-custom-home-page IP restriction. The slug is the first path segment
+      // (TanStack catch-all route `/$customHome`). Only enforce if the slug
+      // has a non-empty allowed_ips list.
+      const firstSegment = pathname.split("/")[1] ?? "";
+      if (firstSegment) {
+        try {
+          const restrictions = await getCustomHomeRestrictions();
+          const allowedForSlug = restrictions.get(firstSegment);
+          if (allowedForSlug && (!ip || !allowedForSlug.has(ip))) {
+            return new Response(renderBlockedPage(ip, "site"), {
+              status: 403,
+              headers: { "content-type": "text/html; charset=utf-8" },
+            });
+          }
+        } catch (err) {
+          console.error("[custom-home-restrictions] check failed:", err);
         }
       }
       const handler = await getServerEntry();

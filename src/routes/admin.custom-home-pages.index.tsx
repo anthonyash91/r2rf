@@ -40,8 +40,15 @@ function AdminCustomHomePagesList() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
+  const [allowedIpsText, setAllowedIpsText] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+  const parseIps = (text: string): string[] => {
+    const parts = text.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+    return Array.from(new Set(parts));
+  };
 
   const { data: pages = [], isLoading } = useQuery({
     queryKey: ["admin", "custom_home_pages"],
@@ -107,6 +114,7 @@ function AdminCustomHomePagesList() {
     setName("");
     setSlug("");
     setDescription("");
+    setAllowedIpsText("");
     setSlugTouched(false);
     setSelected(new Set(defaultIds));
   };
@@ -116,6 +124,7 @@ function AdminCustomHomePagesList() {
       name: string;
       slug: string;
       description: string;
+      allowedIps: string[];
       selectedIds: string[];
     }) => {
       const finalSlug = slugify(input.slug || input.name);
@@ -123,11 +132,10 @@ function AdminCustomHomePagesList() {
       if (RESERVED_SLUGS.has(finalSlug)) {
         throw new Error(`"/${finalSlug}" is reserved. Choose a different slug.`);
       }
-
-
-
-
-
+      const invalidIps = input.allowedIps.filter((ip) => !IP_REGEX.test(ip));
+      if (invalidIps.length > 0) {
+        throw new Error(`Invalid IPv4 address(es): ${invalidIps.join(", ")}`);
+      }
 
       const { data, error } = await supabase
         .from("custom_home_pages")
@@ -135,6 +143,7 @@ function AdminCustomHomePagesList() {
           name: input.name.trim(),
           slug: finalSlug,
           description: input.description.trim(),
+          allowed_ips: input.allowedIps,
         })
         .select("id")
         .single();
@@ -215,6 +224,7 @@ function AdminCustomHomePagesList() {
               name,
               slug,
               description,
+              allowedIps: parseIps(allowedIpsText),
               selectedIds: orderedSelectedIds,
             });
           }}
@@ -272,6 +282,21 @@ function AdminCustomHomePagesList() {
             />
             <p className="mt-1 text-xs text-muted-foreground">Optional, admin-only note.</p>
           </label>
+
+          <label className="block">
+            <span className="text-sm font-medium">Whitelist IPs</span>
+            <textarea
+              value={allowedIpsText}
+              onChange={(e) => setAllowedIpsText(e.target.value)}
+              placeholder="Leave blank for public access. One IPv4 per line, or comma-separated."
+              rows={3}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              If empty, anyone with the link can access this page. If one or more IPs are listed, only those IPs can access it.
+            </p>
+          </label>
+
 
           <div>
             <div className="flex items-center justify-between mb-2">

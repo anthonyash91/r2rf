@@ -1,0 +1,1 @@
+ALTER TABLE public.custom_home_pages ADD COLUMN IF NOT EXISTS allowed_ips text[] NOT NULL DEFAULT ARRAY[]::text[];

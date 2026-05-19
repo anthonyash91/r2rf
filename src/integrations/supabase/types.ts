@@ -243,6 +243,7 @@ export type Database = {
       }
       custom_home_pages: {
         Row: {
+          allowed_ips: string[]
           created_at: string
           description: string
           id: string
@@ -251,6 +252,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allowed_ips?: string[]
           created_at?: string
           description?: string
           id?: string
@@ -259,6 +261,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allowed_ips?: string[]
           created_at?: string
           description?: string
           id?: string

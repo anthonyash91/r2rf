@@ -18,6 +18,12 @@ const RESERVED_SLUGS = new Set([
   "logout",
 ]);
 
+const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+const parseIps = (text: string): string[] => {
+  const parts = text.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+  return Array.from(new Set(parts));
+};
+
 export const Route = createFileRoute("/admin/custom-home-pages/$id")({
   beforeLoad: requireAdminBeforeLoad,
   component: AdminCustomHomePageEdit,
@@ -32,7 +38,7 @@ function AdminCustomHomePageEdit() {
     queryFn: async () => {
       const { data: page, error: e1 } = await supabase
         .from("custom_home_pages")
-        .select("id, slug, name, description")
+        .select("id, slug, name, description, allowed_ips")
         .eq("id", id)
         .maybeSingle();
       if (e1) throw e1;
@@ -63,6 +69,7 @@ function AdminCustomHomePageEdit() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
+  const [allowedIpsText, setAllowedIpsText] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -70,6 +77,8 @@ function AdminCustomHomePageEdit() {
       setName(data.page.name ?? "");
       setSlug(data.page.slug ?? "");
       setDescription((data.page as any).description ?? "");
+      const ips = ((data.page as any).allowed_ips ?? []) as string[];
+      setAllowedIpsText(ips.join("\n"));
     }
     if (data?.selectedIds && categories.length > 0) {
       setSelected(new Set<string>(data.selectedIds));
@@ -83,10 +92,15 @@ function AdminCustomHomePageEdit() {
       if (RESERVED_SLUGS.has(finalSlug)) {
         throw new Error(`"/${finalSlug}" is reserved. Choose a different slug.`);
       }
+      const allowedIps = parseIps(allowedIpsText);
+      const invalidIps = allowedIps.filter((ip) => !IP_REGEX.test(ip));
+      if (invalidIps.length > 0) {
+        throw new Error(`Invalid IPv4 address(es): ${invalidIps.join(", ")}`);
+      }
 
       const { error: e1 } = await supabase
         .from("custom_home_pages")
-        .update({ name: name.trim(), slug: finalSlug, description: description.trim() })
+        .update({ name: name.trim(), slug: finalSlug, description: description.trim(), allowed_ips: allowedIps })
         .eq("id", id);
       if (e1) throw e1;
 
@@ -207,6 +221,20 @@ function AdminCustomHomePageEdit() {
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
             <p className="mt-1 text-xs text-muted-foreground">Optional, admin-only note.</p>
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-medium">Whitelist IPs</span>
+            <textarea
+              value={allowedIpsText}
+              onChange={(e) => setAllowedIpsText(e.target.value)}
+              placeholder="Leave blank for public access. One IPv4 per line, or comma-separated."
+              rows={3}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              If empty, anyone with the link can access this page. If one or more IPs are listed, only those IPs can access it.
+            </p>
           </label>
         </section>
 
