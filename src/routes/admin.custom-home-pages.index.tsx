@@ -378,7 +378,7 @@ function AdminCustomHomePagesList() {
         ) : (
           <ul className="divide-y divide-border">
             {pages.map((p) => (
-              <li key={p.id} className="flex items-center gap-4 p-4 pl-[25px]">
+              <li key={p.id} className="flex items-center gap-4 p-4">
                 <div className="flex-1 min-w-0">
                   <h3 className="font-display text-lg font-semibold truncate">{p.name || p.slug}</h3>
                   <p className="text-xs text-muted-foreground truncate">/{p.slug}</p>
