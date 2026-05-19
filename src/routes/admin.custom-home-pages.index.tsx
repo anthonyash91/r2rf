@@ -132,11 +132,10 @@ function AdminCustomHomePagesList() {
       if (RESERVED_SLUGS.has(finalSlug)) {
         throw new Error(`"/${finalSlug}" is reserved. Choose a different slug.`);
       }
-
-
-
-
-
+      const invalidIps = input.allowedIps.filter((ip) => !IP_REGEX.test(ip));
+      if (invalidIps.length > 0) {
+        throw new Error(`Invalid IPv4 address(es): ${invalidIps.join(", ")}`);
+      }
 
       const { data, error } = await supabase
         .from("custom_home_pages")
