@@ -20,6 +20,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  useEffect(() => {
+    setActiveCustomHome(null);
+  }, []);
+
+
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories", "public"],
     queryFn: async (): Promise<Category[]> => {
