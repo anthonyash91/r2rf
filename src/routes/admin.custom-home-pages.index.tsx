@@ -346,7 +346,7 @@ function AdminCustomHomePagesList() {
                 const Group = ({ title, items }: { title: string; items: Category[] }) => {
                   const selectedInGroup = items.filter((c) => selected.has(c.id)).length;
                   return (
-                    <details open className="rounded-md border border-border group">
+                    <details open className="rounded-md border border-border group mt-[15px]">
                       <summary className="flex items-center justify-between gap-2 px-3 py-2 cursor-pointer select-none text-sm font-medium hover:bg-muted/50">
                         <span>
                           {title}{" "}
