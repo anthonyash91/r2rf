@@ -28,6 +28,12 @@ export const Route = createFileRoute("/admin")({
 function AdminLayout() {
   const { user, canAccessAdmin, loading } = useAuth();
 
+  useEffect(() => {
+    setActiveCustomHome(null);
+  }, []);
+
+
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
