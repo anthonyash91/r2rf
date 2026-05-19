@@ -315,6 +315,13 @@ function UserItem({
             {isContributor ? <ShieldOff className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
             {isContributor ? "Revoke contributor" : "Make contributor"}
           </button>
+          <button
+            onClick={onDelete}
+            title="Delete user"
+            className="inline-flex items-center gap-1.5 rounded-md border border-destructive/30 text-destructive px-3 py-1.5 text-xs font-medium hover:bg-destructive/10"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </button>
         </div>
       </div>
 
