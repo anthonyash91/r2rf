@@ -40,14 +40,14 @@ function AuthPage() {
         });
         if (error) throw error;
         if (data.session) {
-          try { await recordIp({}); } catch {}
+          try { await recordIp(); } catch {}
         }
         toast.success(t("auth.created"));
         setSignedUp(true);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        try { await recordIp({}); } catch {}
+        try { await recordIp(); } catch {}
         navigate({ to: "/admin" });
       }
     } catch (err: any) {
