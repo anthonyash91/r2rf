@@ -46,41 +46,41 @@ function useColumnCount() {
 function MasonryCategories({ categories, lang }: { categories: Category[]; lang: Language }) {
   const cols = useColumnCount();
   const { isAdmin } = useAuth();
+  const { data: counts = {} } = useCategoryItemCounts(categories.map((c) => c.id));
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
   categories.forEach((c, i) => buckets[i % cols].push({ c, i }));
   return (
     <div className="flex gap-9 items-start">
       {buckets.map((bucket, ci) => (
         <div key={ci} className="flex-1 flex flex-col gap-9 min-w-0">
-          {bucket.map(({ c, i }) => (
+          {bucket.map(({ c }) => {
+            const count = counts[c.id] ?? 0;
+            return (
             <div key={c.id} className="relative">
               <Link
                 to="/category/$slug"
                 params={{ slug: c.slug }}
                 className="group relative flex flex-col rounded-2xl border border-border bg-card p-7 sm:p-8 transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
               >
-                <div className="flex items-start justify-between">
-                  <span className="font-display text-sm font-medium text-[var(--color-gold)]">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <ArrowUpRight className="h-5 w-5 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)]" />
-                </div>
-                <div className="mt-4 flex justify-start">
+                <div className="flex justify-center">
                   {c.icon_url ? (
                     <img
                       src={c.icon_url}
                       alt=""
-                      className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl object-cover border border-border bg-muted"
+                      className="h-48 w-48 sm:h-56 sm:w-56 lg:h-64 lg:w-64 rounded-xl object-cover border border-border bg-muted"
                     />
                   ) : (
-                    <div className="h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-xl border border-dashed border-border bg-muted/40" />
+                    <div className="h-48 w-48 sm:h-56 sm:w-56 lg:h-64 lg:w-64 rounded-xl border border-dashed border-border bg-muted/40" />
                   )}
                 </div>
-                <div className="mt-3">
+                <div className="mt-5">
                   <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
                     {pickLang(lang, c.name, c.name_es)}
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
+                  <p className="mt-3 text-xs font-medium uppercase tracking-wide text-[var(--color-gold)]">
+                    {count} {count === 1 ? "item" : "items"}
+                  </p>
                 </div>
               </Link>
               {isAdmin && (
