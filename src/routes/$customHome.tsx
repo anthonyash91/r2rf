@@ -1,9 +1,11 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { HomePageView } from "@/components/HomePageView";
+import { setActiveCustomHome } from "@/lib/custom-home-context";
 
 export const Route = createFileRoute("/$customHome")({
   component: CustomHomePage,
