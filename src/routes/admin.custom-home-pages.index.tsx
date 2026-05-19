@@ -442,7 +442,7 @@ function AdminCustomHomePagesList() {
                   {excludedDefaults.length > 0 && (
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       <span className="text-xs text-muted-foreground">Excluded default categories:</span>
-                      <Chips items={excludedDefaults} />
+                      <Chips items={excludedDefaults} excluded />
                     </div>
                   )}
                   {includedCustoms.length > 0 && (
