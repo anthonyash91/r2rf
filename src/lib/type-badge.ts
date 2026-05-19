@@ -5,17 +5,17 @@
 
 const PALETTES = [
   // emerald
-  "bg-[oklch(0.93_0.05_165)] text-[oklch(0.32_0.07_165)] border-[oklch(0.78_0.07_165)]",
+  "bg-[oklch(0.95_0.02_165)] text-[oklch(0.35_0.05_165)] border-[oklch(0.85_0.03_165)]",
   // gold
-  "bg-[oklch(0.94_0.07_85)] text-[oklch(0.38_0.09_85)] border-[oklch(0.78_0.12_85)]",
+  "bg-[oklch(0.95_0.03_85)] text-[oklch(0.42_0.05_85)] border-[oklch(0.85_0.05_85)]",
   // teal
-  "bg-[oklch(0.92_0.05_200)] text-[oklch(0.35_0.09_220)] border-[oklch(0.72_0.08_210)]",
+  "bg-[oklch(0.95_0.02_210)] text-[oklch(0.40_0.05_215)] border-[oklch(0.83_0.03_210)]",
   // terracotta
-  "bg-[oklch(0.92_0.05_45)] text-[oklch(0.42_0.12_40)] border-[oklch(0.75_0.10_45)]",
+  "bg-[oklch(0.95_0.02_45)] text-[oklch(0.45_0.06_40)] border-[oklch(0.85_0.04_45)]",
   // plum
-  "bg-[oklch(0.92_0.04_330)] text-[oklch(0.38_0.10_330)] border-[oklch(0.72_0.08_330)]",
+  "bg-[oklch(0.95_0.02_330)] text-[oklch(0.42_0.05_330)] border-[oklch(0.85_0.03_330)]",
   // moss
-  "bg-[oklch(0.93_0.05_140)] text-[oklch(0.35_0.09_145)] border-[oklch(0.72_0.08_140)]",
+  "bg-[oklch(0.95_0.02_140)] text-[oklch(0.38_0.05_145)] border-[oklch(0.83_0.03_140)]",
 ];
 
 const KNOWN: Record<string, number> = {
