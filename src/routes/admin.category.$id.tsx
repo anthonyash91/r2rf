@@ -491,7 +491,7 @@ function ContentManager({ categoryId, categoryName, items, initialEditId }: { ca
                       );
                     })()}
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-[8px]">{item.source} · {item.duration}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-[8px]">{item.source} · {withActionWord(item.duration, item.type)}</p>
                 </div>
                 <button
                   title={item.published ? "Unpublish" : "Publish"}
