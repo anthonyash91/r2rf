@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { recordMySignupIp } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — Reentry to Recovery" }] }),
@@ -20,6 +22,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [signedUp, setSignedUp] = useState(false);
+  const recordIp = useServerFn(recordMySignupIp);
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/admin" });
@@ -30,17 +33,21 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "sign-up") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: `${window.location.origin}/admin` },
         });
         if (error) throw error;
+        if (data.session) {
+          try { await recordIp(); } catch {}
+        }
         toast.success(t("auth.created"));
         setSignedUp(true);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        try { await recordIp(); } catch {}
         navigate({ to: "/admin" });
       }
     } catch (err: any) {
@@ -49,6 +56,8 @@ function AuthPage() {
       setBusy(false);
     }
   }
+
+
 
   return (
     <div className="min-h-screen flex flex-col">
