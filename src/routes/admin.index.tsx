@@ -199,7 +199,7 @@ function AdminCategoriesPage() {
             items={order}
             onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
             renderItem={(c) => (
-              <div className={`flex items-center gap-4 p-4 pl-[10px] ${c.home_page_mode === "custom" ? "bg-[var(--color-accent)]/5 border-l-4 border-l-[var(--color-accent)] pl-[6px]" : ""}`}>
+              <div className="flex items-center gap-4 p-4 pl-[10px]">
                 {c.icon_url ? (
                   <img
                     src={c.icon_url}
