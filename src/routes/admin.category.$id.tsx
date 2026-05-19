@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
 import { typeBadgeClass } from "@/lib/type-badge";
 import { withActionWord } from "@/lib/duration";
+import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
