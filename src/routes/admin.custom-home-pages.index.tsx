@@ -40,8 +40,15 @@ function AdminCustomHomePagesList() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
+  const [allowedIpsText, setAllowedIpsText] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+  const parseIps = (text: string): string[] => {
+    const parts = text.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+    return Array.from(new Set(parts));
+  };
 
   const { data: pages = [], isLoading } = useQuery({
     queryKey: ["admin", "custom_home_pages"],
