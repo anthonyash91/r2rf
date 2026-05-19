@@ -8,6 +8,8 @@ let siteCache: Cache | null = null;
 let siteInflight: Promise<Set<string>> | null = null;
 let authCache: Cache | null = null;
 let authInflight: Promise<Set<string>> | null = null;
+let blockedCache: Cache | null = null;
+let blockedInflight: Promise<Set<string>> | null = null;
 
 type CustomHomeCache = { restrictions: Map<string, Set<string>>; expiresAt: number };
 let customHomeCache: CustomHomeCache | null = null;
