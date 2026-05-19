@@ -7,7 +7,7 @@ import { typeBadgeClass } from "@/lib/type-badge";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 
@@ -82,7 +82,7 @@ function AdminCategoryPage() {
       ) : (
         <>
           <CategoryEditor category={data.category} onSave={(v) => saveCategory.mutate(v)} busy={saveCategory.isPending} />
-          <ContentManager categoryId={id} categoryName={data.category.name} items={data.items} initialEditId={edit} />
+          <ContentManager categoryId={id} categoryName={data.category.name} categorySlug={data.category.slug} items={data.items} initialEditId={edit} />
         </>
       )}
     </div>
@@ -335,7 +335,7 @@ function CategoryEditor({
   );
 }
 
-function ContentManager({ categoryId, categoryName, items, initialEditId }: { categoryId: string; categoryName: string; items: ContentItem[]; initialEditId?: string }) {
+function ContentManager({ categoryId, categoryName, categorySlug, items, initialEditId }: { categoryId: string; categoryName: string; categorySlug: string; items: ContentItem[]; initialEditId?: string }) {
   const qc = useQueryClient();
   const confirm = useConfirm();
   const { lang } = useI18n();
@@ -502,6 +502,17 @@ function ContentManager({ categoryId, categoryName, items, initialEditId }: { ca
                 >
                   {item.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                 </button>
+                <Link
+                  to="/category/$slug"
+                  params={{ slug: categorySlug }}
+                  hash={`item-${item.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="View on site"
+                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
                 <button
                   onClick={() => setEditing(item)}
                   className="rounded-md px-3 py-1.5 text-sm hover:bg-muted"
