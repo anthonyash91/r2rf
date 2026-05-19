@@ -291,12 +291,14 @@ function AllowlistSection({
           }}
           className="p-6 border-b border-border"
         >
-          <label className="text-sm font-medium">Bulk add (one IPv4 address per line)</label>
+          <label className="text-sm font-medium">
+            Bulk add (one per line — <span className="font-mono">IP,label</span>; label is optional)
+          </label>
           <textarea
             value={bulk}
             onChange={(e) => setBulk(e.target.value)}
             rows={5}
-            placeholder={"192.168.1.1\n10.0.0.42\n203.0.113.7"}
+            placeholder={"192.168.1.1,Office\n10.0.0.42,Home\n203.0.113.7"}
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
           />
           <div className="mt-3 flex justify-end">
