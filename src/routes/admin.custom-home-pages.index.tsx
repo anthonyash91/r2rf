@@ -143,6 +143,7 @@ function AdminCustomHomePagesList() {
           name: input.name.trim(),
           slug: finalSlug,
           description: input.description.trim(),
+          allowed_ips: input.allowedIps,
         })
         .select("id")
         .single();
