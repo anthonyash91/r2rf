@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin/custom-home-pages/")({
 function AdminCustomHomePagesList() {
   const qc = useQueryClient();
   const confirm = useConfirm();
-  const navigate = useNavigate();
+  
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
