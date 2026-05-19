@@ -502,6 +502,17 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                 >
                   {item.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                 </button>
+                <Link
+                  to="/category/$slug"
+                  params={{ slug: categorySlug }}
+                  hash={`item-${item.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="View on site"
+                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
                 <button
                   onClick={() => setEditing(item)}
                   className="rounded-md px-3 py-1.5 text-sm hover:bg-muted"
