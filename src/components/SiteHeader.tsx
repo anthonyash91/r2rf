@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { isAuthIpAllowed } from "@/lib/auth-ip.functions";
-import { useActiveCustomHome, setActiveCustomHome } from "@/lib/custom-home-context";
+import { useActiveCustomHome } from "@/lib/custom-home-context";
 import { Languages, Menu, X } from "lucide-react";
 
 export function SiteHeader() {
