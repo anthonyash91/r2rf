@@ -77,7 +77,7 @@ function CategoryPage() {
   }, [othersApi]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["category", slug],
+    queryKey: ["category", slug, activeCustomHome],
     queryFn: async () => {
       const { data: cat, error: e1 } = await supabase
         .from("categories")
@@ -101,7 +101,29 @@ function CategoryPage() {
         .neq("id", cat.id)
         .order("sort_order", { ascending: true });
       if (e3) throw e3;
-      const shuffled = [...(others ?? [])].sort(() => Math.random() - 0.5);
+
+      // Determine which custom-mode categories are allowed:
+      // only those attached to the currently active custom home (if any).
+      let allowedCustomIds = new Set<string>();
+      if (activeCustomHome) {
+        const { data: page } = await supabase
+          .from("custom_home_pages")
+          .select("id")
+          .eq("slug", activeCustomHome)
+          .maybeSingle();
+        if (page) {
+          const { data: links } = await supabase
+            .from("custom_home_page_categories")
+            .select("category_id")
+            .eq("custom_home_page_id", page.id);
+          allowedCustomIds = new Set((links ?? []).map((l) => l.category_id));
+        }
+      }
+
+      const filtered = (others ?? []).filter((c) =>
+        c.home_page_mode === "custom" ? allowedCustomIds.has(c.id) : true
+      );
+      const shuffled = [...filtered].sort(() => Math.random() - 0.5);
       return {
         category: cat as Category,
         items: (items ?? []) as ContentItem[],
