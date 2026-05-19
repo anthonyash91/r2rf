@@ -307,14 +307,7 @@ function AdminCustomHomePagesList() {
             </p>
           </div>
 
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={createMut.isPending}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-            >
-              {createMut.isPending ? "Creating…" : "Create"}
-            </button>
+          <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={() => {
@@ -324,6 +317,13 @@ function AdminCustomHomePagesList() {
               className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
             >
               Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createMut.isPending}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            >
+              {createMut.isPending ? "Creating…" : "Create"}
             </button>
           </div>
         </form>
