@@ -290,6 +290,7 @@ function NewCategoryForm({
     description: string;
     icon_url: string | null;
     published: boolean;
+    home_page_mode: "default" | "custom";
     name_es: string | null;
     tagline_es: string | null;
     description_es: string | null;
@@ -303,6 +304,7 @@ function NewCategoryForm({
   const [slugTouched, setSlugTouched] = useState(false);
   const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [published, setPublished] = useState(true);
+  const [homePageMode, setHomePageMode] = useState<"default" | "custom">("default");
   const [nameEs, setNameEs] = useState("");
   const [taglineEs, setTaglineEs] = useState("");
   const [descriptionEs, setDescriptionEs] = useState("");
