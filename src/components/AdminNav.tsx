@@ -2,15 +2,23 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { LayoutGrid, Users, Shield, BarChart3, Home, Globe, Award } from "lucide-react";
 
-const links = [
-  { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true, adminOnly: false },
+type NavLink = {
+  to: string;
+  label: string;
+  icon: typeof LayoutGrid;
+  exact?: boolean;
+  adminOnly?: boolean;
+};
+
+const links: NavLink[] = [
+  { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true },
   { to: "/admin/ip-allowlist", label: "IP allowlist", icon: Shield, adminOnly: true },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
   { to: "/admin/home", label: "Home header", icon: Home, adminOnly: true },
   { to: "/admin/custom-home-pages", label: "Custom home pages", icon: Globe, adminOnly: true },
   { to: "/admin/certificate", label: "Certificate", icon: Award, adminOnly: true },
-] as const;
+];
 
 export function AdminNav() {
   const { isAdmin } = useAuth();
