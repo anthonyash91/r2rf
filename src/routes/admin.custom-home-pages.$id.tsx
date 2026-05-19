@@ -95,20 +95,6 @@ function AdminCustomHomePageEdit() {
         .eq("id", id);
       if (e1) throw e1;
 
-      // Any default-mode category that the admin unchecked should no longer be
-      // a default — flip it to 'custom' so it's removed from this page (and
-      // stops appearing automatically on the main + other custom home pages).
-      const demoted = categories
-        .filter((c) => c.home_page_mode === "default" && !selected.has(c.id))
-        .map((c) => c.id);
-      if (demoted.length > 0) {
-        const { error: eDemote } = await supabase
-          .from("categories")
-          .update({ home_page_mode: "custom" })
-          .in("id", demoted);
-        if (eDemote) throw eDemote;
-      }
-
       // Replace selections
       const { error: e2 } = await supabase
         .from("custom_home_page_categories")
@@ -117,16 +103,17 @@ function AdminCustomHomePageEdit() {
       if (e2) throw e2;
 
       // Preserve order based on each category's sort_order. Skip default-mode
-      // categories that are still default — they show via the default rule and
-      // don't need an explicit junction row.
-      const stillDefault = new Set(
-        categories
-          .filter((c) => c.home_page_mode === "default" && selected.has(c.id))
-          .map((c) => c.id),
+      // categories — they show via the default rule and don't need an explicit
+      // junction row. Unchecking a default category here is effectively a no-op
+      // (it still appears via the default rule); to remove it, change the
+      // category's Home Page setting to "Custom".
+      const defaultSet = new Set(
+        categories.filter((c) => c.home_page_mode === "default").map((c) => c.id),
       );
       const orderedIds = categories
-        .filter((c) => selected.has(c.id) && !stillDefault.has(c.id))
+        .filter((c) => selected.has(c.id) && !defaultSet.has(c.id))
         .map((c) => c.id);
+
 
       if (orderedIds.length > 0) {
         const rows = orderedIds.map((cid, idx) => ({
