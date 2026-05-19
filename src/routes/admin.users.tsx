@@ -283,52 +283,87 @@ function UserItem({
         </div>
 
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={onSendReset}
-            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-          >
-            <Send className="h-3.5 w-3.5" /> Send reset email
-          </button>
-          <button
-            onClick={() => setPwOpen((v) => !v)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-          >
-            <KeyRound className="h-3.5 w-3.5" /> Set password
-          </button>
-          <button
-            onClick={() => {
-              if (isAdmin && !confirm(`Remove admin role from ${user.email}?`)) return;
-              onToggleAdmin(!isAdmin);
-            }}
-            className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium ${
-              isAdmin
-                ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                : "border-input bg-background hover:bg-muted"
-            }`}
-          >
-            {isAdmin ? <ShieldOff className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
-            {isAdmin ? "Revoke admin" : "Make admin"}
-          </button>
-          <button
-            onClick={() => onToggleContributor(!isContributor)}
-            className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium ${
-              isContributor
-                ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                : "border-input bg-background hover:bg-muted"
-            }`}
-          >
-            {isContributor ? <ShieldOff className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5" />}
-            {isContributor ? "Revoke contributor" : "Make contributor"}
-          </button>
-          <button
-            onClick={onDelete}
-            title="Delete user"
-            className="inline-flex items-center gap-1.5 rounded-md border border-destructive/30 text-destructive px-3 py-1.5 text-xs font-medium hover:bg-destructive/10"
-          >
-            <Trash2 className="h-3.5 w-3.5" /> Delete
-          </button>
-        </div>
+        <TooltipProvider delayDuration={150}>
+          <div className="flex flex-wrap items-center gap-1.5 lg:justify-end shrink-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onSendReset}
+                  aria-label="Send password reset email"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-input bg-background hover:bg-muted"
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Send reset email</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setPwOpen((v) => !v)}
+                  aria-label="Set password"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-input bg-background hover:bg-muted"
+                >
+                  <KeyRound className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Set password</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => {
+                    if (isAdmin && !confirm(`Remove admin role from ${user.email}?`)) return;
+                    onToggleAdmin(!isAdmin);
+                  }}
+                  aria-label={isAdmin ? "Revoke admin" : "Make admin"}
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-md border ${
+                    isAdmin
+                      ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                      : "border-input bg-background hover:bg-muted"
+                  }`}
+                >
+                  {isAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{isAdmin ? "Revoke admin" : "Make admin"}</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => onToggleContributor(!isContributor)}
+                  aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-md border ${
+                    isContributor
+                      ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                      : "border-input bg-background hover:bg-muted"
+                  }`}
+                >
+                  {isContributor ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{isContributor ? "Revoke contributor" : "Make contributor"}</TooltipContent>
+            </Tooltip>
+
+            <div className="mx-1 h-6 w-px bg-border" aria-hidden />
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onDelete}
+                  aria-label="Delete user"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-destructive/30 text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Delete user</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </div>
 
       {pwOpen && (
