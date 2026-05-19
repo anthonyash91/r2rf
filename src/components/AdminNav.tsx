@@ -12,7 +12,7 @@ type NavLink = {
 };
 
 const links: NavLink[] = [
-  { to: "/admin", label: "Categories", icon: LayoutGrid, matchPrefixes: ["/admin/category"] },
+  { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true, matchPrefixes: ["/admin/category"] },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true },
   { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
