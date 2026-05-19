@@ -1,7 +1,9 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { setActiveCustomHome } from "@/lib/custom-home-context";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Reentry to Recovery" }] }),
@@ -25,6 +27,12 @@ export const Route = createFileRoute("/admin")({
 
 function AdminLayout() {
   const { user, canAccessAdmin, loading } = useAuth();
+
+  useEffect(() => {
+    setActiveCustomHome(null);
+  }, []);
+
+
 
   return (
     <div className="min-h-screen flex flex-col">

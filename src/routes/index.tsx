@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { HomePageView } from "@/components/HomePageView";
+import { setActiveCustomHome } from "@/lib/custom-home-context";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,6 +20,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  useEffect(() => {
+    setActiveCustomHome(null);
+  }, []);
+
+
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories", "public"],
     queryFn: async (): Promise<Category[]> => {
