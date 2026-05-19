@@ -941,11 +941,14 @@ function ItemEditor({
 }
 
 function LabeledInput({
-  label, value, onChange, type = "text", placeholder, required,
+  label, value, onChange, type = "text", placeholder, required, suggestions,
 }: {
   label: string; value: string; onChange: (v: string) => void;
-  type?: string; placeholder?: string; required?: boolean;
+  type?: string; placeholder?: string; required?: boolean; suggestions?: string[];
 }) {
+  const listId = suggestions && suggestions.length > 0
+    ? `dl-${label.replace(/\s+/g, "-").toLowerCase()}`
+    : undefined;
   return (
     <label className="block">
       <span className="text-sm font-medium">{label}</span>
@@ -955,8 +958,14 @@ function LabeledInput({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        list={listId}
         className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
+      {listId && (
+        <datalist id={listId}>
+          {suggestions!.map((s) => <option key={s} value={s} />)}
+        </datalist>
+      )}
     </label>
   );
 }
