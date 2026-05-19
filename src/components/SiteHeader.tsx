@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { isAuthIpAllowed } from "@/lib/auth-ip.functions";
+import { useActiveCustomHome, setActiveCustomHome } from "@/lib/custom-home-context";
 import { Languages, Menu, X } from "lucide-react";
 
 export function SiteHeader() {
@@ -13,6 +14,7 @@ export function SiteHeader() {
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const activeCustomHome = useActiveCustomHome();
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/" });
