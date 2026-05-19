@@ -547,6 +547,23 @@ function ItemEditor({
 }) {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const { data: sourceSuggestions = [] } = useQuery({
+    queryKey: ["admin", "content-sources"],
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from("content_items")
+        .select("source")
+        .not("source", "is", null)
+        .limit(1000);
+      if (error) throw error;
+      const set = new Set<string>();
+      for (const row of (data ?? []) as { source: string | null }[]) {
+        const s = (row.source ?? "").trim();
+        if (s) set.add(s);
+      }
+      return Array.from(set).sort((a, b) => a.localeCompare(b));
+    },
+  });
   const [title, setTitle] = useState(item?.title ?? "");
   const [type, setType] = useState(item?.type ?? "Article");
   const [addingType, setAddingType] = useState(false);
@@ -746,7 +763,7 @@ function ItemEditor({
             </div>
           )}
         </label>
-        <LabeledInput label="Source" value={source} onChange={setSource} />
+        <LabeledInput label="Source" value={source} onChange={setSource} suggestions={sourceSuggestions} />
         <div>
           <LabeledInput label="Duration" value={duration} onChange={setDuration} placeholder="8 min read" />
           {extOf(url, null) === "pdf" && (
@@ -941,11 +958,14 @@ function ItemEditor({
 }
 
 function LabeledInput({
-  label, value, onChange, type = "text", placeholder, required,
+  label, value, onChange, type = "text", placeholder, required, suggestions,
 }: {
   label: string; value: string; onChange: (v: string) => void;
-  type?: string; placeholder?: string; required?: boolean;
+  type?: string; placeholder?: string; required?: boolean; suggestions?: string[];
 }) {
+  const listId = suggestions && suggestions.length > 0
+    ? `dl-${label.replace(/\s+/g, "-").toLowerCase()}`
+    : undefined;
   return (
     <label className="block">
       <span className="text-sm font-medium">{label}</span>
@@ -955,8 +975,14 @@ function LabeledInput({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        list={listId}
         className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
+      {listId && (
+        <datalist id={listId}>
+          {suggestions!.map((s) => <option key={s} value={s} />)}
+        </datalist>
+      )}
     </label>
   );
 }
