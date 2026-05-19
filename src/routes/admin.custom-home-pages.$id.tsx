@@ -72,12 +72,7 @@ function AdminCustomHomePageEdit() {
       setDescription((data.page as any).description ?? "");
     }
     if (data?.selectedIds && categories.length > 0) {
-      const initial = new Set<string>(data.selectedIds);
-      // Default-mode categories show on every custom home page, so pre-check them.
-      for (const c of categories) {
-        if (c.home_page_mode === "default") initial.add(c.id);
-      }
-      setSelected(initial);
+      setSelected(new Set<string>(data.selectedIds));
     }
   }, [data, categories]);
 
@@ -102,18 +97,9 @@ function AdminCustomHomePageEdit() {
         .eq("custom_home_page_id", id);
       if (e2) throw e2;
 
-      // Preserve order based on each category's sort_order. Skip default-mode
-      // categories — they show via the default rule and don't need an explicit
-      // junction row. Unchecking a default category here is effectively a no-op
-      // (it still appears via the default rule); to remove it, change the
-      // category's Home Page setting to "Custom".
-      const defaultSet = new Set(
-        categories.filter((c) => c.home_page_mode === "default").map((c) => c.id),
-      );
       const orderedIds = categories
-        .filter((c) => selected.has(c.id) && !defaultSet.has(c.id))
+        .filter((c) => selected.has(c.id))
         .map((c) => c.id);
-
 
       if (orderedIds.length > 0) {
         const rows = orderedIds.map((cid, idx) => ({

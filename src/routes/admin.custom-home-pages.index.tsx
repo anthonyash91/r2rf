@@ -125,16 +125,8 @@ function AdminCustomHomePagesList() {
         .single();
       if (error) throw error;
 
-      // Skip junction rows for default-mode categories — they appear via the
-      // default rule and don't need an explicit link.
-      const defaultSet = new Set(
-        categories.filter((c) => c.home_page_mode === "default").map((c) => c.id),
-      );
-      const explicitIds = input.selectedIds.filter((cid) => !defaultSet.has(cid));
-
-
-      if (explicitIds.length > 0) {
-        const rows = explicitIds.map((cid, idx) => ({
+      if (input.selectedIds.length > 0) {
+        const rows = input.selectedIds.map((cid, idx) => ({
           custom_home_page_id: data.id,
           category_id: cid,
           sort_order: idx,
