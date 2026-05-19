@@ -95,7 +95,8 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                 </Link>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       ))}
     </div>
