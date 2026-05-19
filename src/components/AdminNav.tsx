@@ -13,11 +13,11 @@ type NavLink = {
 const links: NavLink[] = [
   { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true },
-  { to: "/admin/ip-allowlist", label: "IP allowlist", icon: Shield, adminOnly: true },
+  { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
-  { to: "/admin/home", label: "Home header", icon: Home, adminOnly: true },
-  { to: "/admin/custom-home-pages", label: "Custom home pages", icon: Globe, adminOnly: true },
-  { to: "/admin/certificate", label: "Certificate", icon: Award, adminOnly: true },
+  { to: "/admin/custom-home-pages", label: "Home Pages", icon: Globe, adminOnly: true },
+  { to: "/admin/home", label: "Home Header", icon: Home, adminOnly: true },
+  { to: "/admin/certificate", label: "Certificate Footer", icon: Award, adminOnly: true },
 ];
 
 export function AdminNav() {
@@ -27,11 +27,9 @@ export function AdminNav() {
   const visible = links.filter((l) => !l.adminOnly || isAdmin);
 
   return (
-    <nav
-      aria-label="Admin"
-      className="mb-8 -mx-2 overflow-x-auto"
-    >
-      <ul className="flex items-center gap-1 px-2 min-w-max">
+    <nav aria-label="Admin" className="mb-8 -mx-2 overflow-x-auto">
+      <ul className="flex flex-wrap items-center justify-center gap-1.5 px-2">
+
         {visible.map((l) => {
           const active = l.exact ? pathname === l.to : pathname === l.to || pathname.startsWith(l.to + "/");
           const Icon = l.icon;
