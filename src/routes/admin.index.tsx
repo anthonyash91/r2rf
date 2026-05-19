@@ -152,35 +152,20 @@ function AdminCategoriesPage() {
             ];
             return (
               <>
-                {/* Inline nav on xl screens */}
-                <nav className="hidden xl:flex xl:flex-wrap xl:items-center xl:gap-2">
-                  {navLinks.map((l) => (
-                    <Link
-                      key={l.to}
-                      to={l.to}
-                      className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-muted"
-                    >
-                      {l.label}
-                    </Link>
-                  ))}
-                </nav>
-                {/* Dropdown on smaller screens */}
-                <div className="xl:hidden">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted">
-                      <Menu className="h-4 w-4" /> Admin menu
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      {navLinks.map((l) => (
-                        <DropdownMenuItem key={l.to} asChild>
-                          <Link to={l.to} className="cursor-pointer">
-                            {l.label}
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted">
+                    <Menu className="h-4 w-4" /> Admin menu
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    {navLinks.map((l) => (
+                      <DropdownMenuItem key={l.to} asChild>
+                        <Link to={l.to} className="cursor-pointer">
+                          {l.label}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             );
           })()}
