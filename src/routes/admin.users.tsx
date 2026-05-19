@@ -27,6 +27,7 @@ type UserRow = {
   last_sign_in_at: string | null;
   email_confirmed_at: string | null;
   roles: string[];
+  signup_ip: string | null;
 };
 
 function AdminUsersPage() {
