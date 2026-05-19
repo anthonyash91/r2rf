@@ -235,14 +235,7 @@ function CategoryPage() {
                             </span>
                             {item.duration && (
                               <span className="text-xs text-muted-foreground sm:mt-1">
-                                {translateDuration(
-                                  lang,
-                                  mediaKind === "video"
-                                    ? `${item.duration} watch`
-                                    : mediaKind === "audio"
-                                      ? `${item.duration} listen`
-                                      : item.duration,
-                                )}
+                                {translateDuration(lang, withActionWord(item.duration, item.type))}
                               </span>
                             )}
                           </div>
