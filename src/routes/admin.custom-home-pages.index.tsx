@@ -415,21 +415,17 @@ function AdminCustomHomePagesList() {
                 (c) => c.home_page_mode === "custom" && linked.has(c.id),
               );
               const hasSections = excludedDefaults.length > 0 || includedCustoms.length > 0;
-              const Chips = ({ items, tone }: { items: Category[]; tone: "excluded" | "included" }) => (
-                <ul className="mt-1 flex flex-wrap gap-1.5">
+              const Chips = ({ items }: { items: Category[] }) => (
+                <>
                   {items.map((c) => (
-                    <li
+                    <span
                       key={c.id}
-                      className={
-                        tone === "excluded"
-                          ? "text-xs rounded-full border border-dashed border-border bg-muted/40 px-2 py-0.5 text-muted-foreground line-through"
-                          : "text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary"
-                      }
+                      className="text-xs rounded-full bg-[var(--color-accent)]/10 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
                     >
                       {c.name}
-                    </li>
+                    </span>
                   ))}
-                </ul>
+                </>
               );
               return (
               <li key={p.id} className={`flex items-center gap-4 p-4 pl-[24px]${hasSections ? " pb-[24px]" : ""}`}>
@@ -439,24 +435,16 @@ function AdminCustomHomePagesList() {
                   {p.description && (
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description}</p>
                   )}
-                  {hasSections && (
-                    <div className="mt-3 space-y-3">
-                      {excludedDefaults.length > 0 && (
-                        <div className="border-t border-border pt-3">
-                          <p className="text-xs font-medium text-muted-foreground">
-                            Excluded default categories
-                          </p>
-                          <Chips items={excludedDefaults} tone="excluded" />
-                        </div>
-                      )}
-                      {includedCustoms.length > 0 && (
-                        <div className="border-t border-border pt-3">
-                          <p className="text-xs font-medium text-muted-foreground">
-                            Included custom categories
-                          </p>
-                          <Chips items={includedCustoms} tone="included" />
-                        </div>
-                      )}
+                  {excludedDefaults.length > 0 && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground">Excluded default categories:</span>
+                      <Chips items={excludedDefaults} />
+                    </div>
+                  )}
+                  {includedCustoms.length > 0 && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground">Included custom categories:</span>
+                      <Chips items={includedCustoms} />
                     </div>
                   )}
                 </div>
