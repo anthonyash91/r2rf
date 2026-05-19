@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles, RefreshCw } from "lucide-react";
+import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles, RefreshCw, ExternalLink } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy } from "@/lib/category-ai.functions";
 
@@ -276,6 +276,16 @@ function AdminCategoriesPage() {
                 >
                   {c.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                 </button>
+                <Link
+                  to="/category/$slug"
+                  params={{ slug: c.slug }}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                  title="View on site"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
                 <Link
                   to="/admin/category/$id"
                   params={{ id: c.id }}
