@@ -260,7 +260,7 @@ function UserItem({
             <button
               type="button"
               onClick={() => { setPw(""); setPwOpen(false); }}
-              className="rounded-md px-3 py-1.5 text-xs hover:bg-muted"
+              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
             >
               Cancel
             </button>
