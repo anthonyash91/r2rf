@@ -221,8 +221,16 @@ function CategoryPage() {
                               ? ImageIcon
                               : null;
 
+                    const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000;
+
                     return (
                       <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24">
+                        {isNew && (
+                          <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
+                            <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
+                            New content
+                          </span>
+                        )}
                         <Wrapper
                           {...wrapperProps}
                           className="w-full text-left flex flex-col sm:flex-row sm:items-start gap-4 p-6 hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
