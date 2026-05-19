@@ -241,6 +241,7 @@ export type Database = {
       custom_home_pages: {
         Row: {
           created_at: string
+          description: string
           id: string
           name: string
           slug: string
@@ -248,6 +249,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          description?: string
           id?: string
           name?: string
           slug: string
@@ -255,6 +257,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          description?: string
           id?: string
           name?: string
           slug?: string
