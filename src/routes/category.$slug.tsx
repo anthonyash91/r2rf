@@ -226,7 +226,7 @@ function CategoryPage() {
                     return (
                       <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24">
                         {isNew && (
-                          <span className={`absolute top-3 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm ${isAdmin ? "right-[6.5rem]" : "right-3 mr-[7px] mt-[7px]"}`}>
+                          <span className="absolute top-3 right-3 mr-[7px] mt-[7px] z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
                             <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                             New content
                           </span>
@@ -280,7 +280,7 @@ function CategoryPage() {
                             title="Edit content"
                             aria-label="Edit content"
                             onClick={(e) => e.stopPropagation()}
-                            className="absolute top-3 right-3 z-10 inline-flex items-center justify-center rounded-md border border-input bg-background p-2 hover:bg-muted"
+                            className="absolute bottom-3 right-3 z-10 inline-flex items-center justify-center rounded-md border border-input bg-background p-2 hover:bg-muted"
                           >
                             <Pencil className="h-4 w-4" />
                           </Link>
