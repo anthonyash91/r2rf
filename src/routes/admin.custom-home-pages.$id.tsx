@@ -72,12 +72,7 @@ function AdminCustomHomePageEdit() {
       setDescription((data.page as any).description ?? "");
     }
     if (data?.selectedIds && categories.length > 0) {
-      const initial = new Set<string>(data.selectedIds);
-      // Default-mode categories show on every custom home page, so pre-check them.
-      for (const c of categories) {
-        if (c.home_page_mode === "default") initial.add(c.id);
-      }
-      setSelected(initial);
+      setSelected(new Set<string>(data.selectedIds));
     }
   }, [data, categories]);
 
