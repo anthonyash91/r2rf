@@ -8,61 +8,53 @@ import { HomePageView } from "@/components/HomePageView";
 import { setActiveCustomHome } from "@/lib/custom-home-context";
 
 export const Route = createFileRoute("/$customHome")({
+  loader: async ({ params }) => {
+    const { data: page, error } = await supabase
+      .from("custom_home_pages")
+      .select("id, slug, name")
+      .eq("slug", params.customHome)
+      .maybeSingle();
+    if (error) throw error;
+    if (!page) throw notFound();
+    return { pageId: page.id, slug: page.slug };
+  },
   component: CustomHomePage,
 });
 
 function CustomHomePage() {
-  const { customHome } = Route.useParams();
+  const { pageId, slug } = Route.useLoaderData();
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["custom-home", customHome],
+  const { data: categories, isLoading } = useQuery({
+    queryKey: ["custom-home-categories", pageId],
     queryFn: async () => {
-      const { data: page, error: e1 } = await supabase
-        .from("custom_home_pages")
-        .select("id, slug, name")
-        .eq("slug", customHome)
-        .maybeSingle();
-      if (e1) throw e1;
-      if (!page) return null;
-
       const { data: links, error: e2 } = await supabase
         .from("custom_home_page_categories")
         .select("category_id")
-        .eq("custom_home_page_id", page.id);
+        .eq("custom_home_page_id", pageId);
       if (e2) throw e2;
 
       const selectedIds = (links ?? []).map((l) => l.category_id);
-      let selected: Category[] = [];
-      if (selectedIds.length > 0) {
-        const { data: cats, error: e3 } = await supabase
-          .from("categories")
-          .select("*")
-          .eq("published", true)
-          .in("id", selectedIds)
-          .order("sort_order", { ascending: true });
-        if (e3) throw e3;
-        selected = (cats ?? []) as Category[];
-      }
+      if (selectedIds.length === 0) return [] as Category[];
 
-      return { page, categories: selected };
+      const { data: cats, error: e3 } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("published", true)
+        .in("id", selectedIds)
+        .order("sort_order", { ascending: true });
+      if (e3) throw e3;
+      return (cats ?? []) as Category[];
     },
   });
 
   useEffect(() => {
-    if (data?.page?.slug) {
-      setActiveCustomHome(data.page.slug);
-    }
-  }, [data?.page?.slug]);
-
-  if (!isLoading && !error && data === null) {
-    throw notFound();
-  }
-
+    setActiveCustomHome(slug);
+  }, [slug]);
 
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <HomePageView categories={data?.categories ?? []} isLoading={isLoading} />
+      <HomePageView categories={categories ?? []} isLoading={isLoading} />
       <SiteFooter />
     </div>
   );
