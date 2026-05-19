@@ -37,18 +37,11 @@ function detectMedia(url: string | null | undefined): MediaKind | null {
   return null;
 }
 
+import { typeBadgeClass } from "@/lib/type-badge";
+
 export const Route = createFileRoute("/category/$slug")({
   component: CategoryPage,
 });
-
-const typeStyles: Record<string, string> = {
-  Article: "bg-[var(--color-secondary)] text-[var(--color-primary)]",
-  Video: "bg-[var(--color-accent)]/10 text-[var(--color-accent)]",
-  Podcast: "bg-[var(--color-gold)]/20 text-[var(--color-foreground)]",
-  Worksheet: "bg-[var(--color-primary)]/10 text-[var(--color-primary)]",
-  Meeting: "bg-[var(--color-accent)]/15 text-[var(--color-accent)]",
-  Guide: "bg-[var(--color-gold)]/15 text-[var(--color-foreground)]",
-};
 
 function CategoryPage() {
   const { slug } = Route.useParams();
@@ -237,7 +230,7 @@ function CategoryPage() {
                           className="w-full text-left flex flex-col sm:flex-row sm:items-start gap-4 p-6 hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
                         >
                           <div className="flex-shrink-0 flex sm:flex-col gap-2 sm:gap-1 sm:w-28">
-                            <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium ${typeStyles[item.type] ?? typeStyles.Article}`}>
+                            <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium ${typeBadgeClass(item.type)}`}>
                               {translateType(lang, item.type)}
                             </span>
                             {item.duration && (
