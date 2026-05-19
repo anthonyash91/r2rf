@@ -124,6 +124,7 @@ function AdminCustomHomePagesList() {
       name: string;
       slug: string;
       description: string;
+      allowedIps: string[];
       selectedIds: string[];
     }) => {
       const finalSlug = slugify(input.slug || input.name);
