@@ -52,6 +52,7 @@ function useColumnCount() {
 function MasonryCategories({ categories, lang }: { categories: Category[]; lang: Language }) {
   const cols = useColumnCount();
   const { isAdmin } = useAuth();
+  const { t } = useI18n();
   const { data: stats = {} } = useCategoryItemStats(categories.map((c) => c.id));
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
   categories.forEach((c, i) => buckets[i % cols].push({ c, i }));
