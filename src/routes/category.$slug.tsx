@@ -10,6 +10,7 @@ import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
 import { useAuth } from "@/hooks/use-auth";
+import { useActiveCustomHome } from "@/lib/custom-home-context";
 
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
