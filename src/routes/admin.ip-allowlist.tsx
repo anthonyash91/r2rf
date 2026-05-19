@@ -308,7 +308,7 @@ function AllowlistSection({
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((r) => (
-              <li key={r.id} className="flex items-center gap-4 p-4 pl-[24px]">
+              <li key={r.id} className="flex items-center gap-4 p-4 pl-[25px]">
                 <div className="flex-1 min-w-0">
                   <p className="font-mono text-sm">{r.ip_address}</p>
                   {r.label && (
