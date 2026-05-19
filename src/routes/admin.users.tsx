@@ -4,13 +4,15 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X } from "lucide-react";
+import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe } from "lucide-react";
 import {
   listUsers,
   updateUserEmail,
   setUserPassword,
   sendPasswordResetEmail,
   setUserRole,
+  createUser,
+  deleteUser,
 } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/admin/users")({
