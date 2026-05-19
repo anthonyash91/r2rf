@@ -67,22 +67,16 @@ function AdminCustomHomePagesList() {
     },
   });
 
-  const { data: pageCategories = {} } = useQuery({
+  const { data: pageCategoryIds = {} } = useQuery({
     queryKey: ["admin", "custom_home_pages", "categories"],
-    queryFn: async (): Promise<Record<string, { id: string; name: string; sort_order: number }[]>> => {
+    queryFn: async (): Promise<Record<string, Set<string>>> => {
       const { data, error } = await supabase
         .from("custom_home_page_categories")
-        .select("custom_home_page_id, sort_order, categories:category_id(id, name, sort_order)")
-        .order("sort_order", { ascending: true });
+        .select("custom_home_page_id, category_id");
       if (error) throw error;
-      const map: Record<string, { id: string; name: string; sort_order: number }[]> = {};
-      for (const row of (data ?? []) as any[]) {
-        if (!row.categories) continue;
-        const list = map[row.custom_home_page_id] ?? (map[row.custom_home_page_id] = []);
-        list.push(row.categories);
-      }
-      for (const k of Object.keys(map)) {
-        map[k].sort((a, b) => a.sort_order - b.sort_order);
+      const map: Record<string, Set<string>> = {};
+      for (const row of (data ?? []) as { custom_home_page_id: string; category_id: string }[]) {
+        (map[row.custom_home_page_id] ??= new Set()).add(row.category_id);
       }
       return map;
     },
@@ -392,21 +386,52 @@ function AdminCustomHomePagesList() {
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.description}</p>
                   )}
                   {(() => {
-                    const cats = pageCategories[p.id] ?? [];
-                    if (cats.length === 0) {
-                      return <p className="mt-2 text-xs text-muted-foreground italic">No categories</p>;
-                    }
-                    return (
-                      <ul className="mt-2 flex flex-wrap gap-1.5">
-                        {cats.map((c) => (
+                    const linked = pageCategoryIds[p.id] ?? new Set<string>();
+                    const excludedDefaults = categories.filter(
+                      (c) => c.home_page_mode === "default" && !linked.has(c.id),
+                    );
+                    const includedCustoms = categories.filter(
+                      (c) => c.home_page_mode === "custom" && linked.has(c.id),
+                    );
+                    const Chips = ({ items, tone }: { items: Category[]; tone: "excluded" | "included" }) => (
+                      <ul className="mt-1 flex flex-wrap gap-1.5">
+                        {items.map((c) => (
                           <li
                             key={c.id}
-                            className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground"
+                            className={
+                              tone === "excluded"
+                                ? "text-xs rounded-full border border-dashed border-border bg-muted/40 px-2 py-0.5 text-muted-foreground line-through"
+                                : "text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary"
+                            }
                           >
                             {c.name}
                           </li>
                         ))}
                       </ul>
+                    );
+                    return (
+                      <div className="mt-3 space-y-2">
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">
+                            Excluded default categories
+                          </p>
+                          {excludedDefaults.length === 0 ? (
+                            <p className="mt-1 text-xs text-muted-foreground italic">None</p>
+                          ) : (
+                            <Chips items={excludedDefaults} tone="excluded" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground">
+                            Included custom categories
+                          </p>
+                          {includedCustoms.length === 0 ? (
+                            <p className="mt-1 text-xs text-muted-foreground italic">None</p>
+                          ) : (
+                            <Chips items={includedCustoms} tone="included" />
+                          )}
+                        </div>
+                      </div>
                     );
                   })()}
                 </div>
