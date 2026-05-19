@@ -7,22 +7,28 @@ import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { Pencil } from "lucide-react";
 
-function useCategoryItemCounts(categoryIds: string[]) {
+type CategoryStats = { count: number; hasRecent: boolean };
+
+function useCategoryItemStats(categoryIds: string[]) {
   return useQuery({
-    queryKey: ["category-item-counts", [...categoryIds].sort().join(",")],
+    queryKey: ["category-item-stats", [...categoryIds].sort().join(",")],
     enabled: categoryIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("content_items")
-        .select("category_id")
+        .select("category_id, created_at")
         .eq("published", true)
         .in("category_id", categoryIds);
       if (error) throw error;
-      const counts: Record<string, number> = {};
-      (data ?? []).forEach((row: { category_id: string }) => {
-        counts[row.category_id] = (counts[row.category_id] ?? 0) + 1;
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const stats: Record<string, CategoryStats> = {};
+      (data ?? []).forEach((row: { category_id: string; created_at: string }) => {
+        const s = stats[row.category_id] ?? { count: 0, hasRecent: false };
+        s.count += 1;
+        if (new Date(row.created_at).getTime() >= cutoff) s.hasRecent = true;
+        stats[row.category_id] = s;
       });
-      return counts;
+      return stats;
     },
   });
 }
