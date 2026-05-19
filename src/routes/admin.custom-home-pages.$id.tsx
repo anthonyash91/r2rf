@@ -71,10 +71,15 @@ function AdminCustomHomePageEdit() {
       setSlug(data.page.slug ?? "");
       setDescription((data.page as any).description ?? "");
     }
-    if (data?.selectedIds) {
-      setSelected(new Set(data.selectedIds));
+    if (data?.selectedIds && categories.length > 0) {
+      const initial = new Set<string>(data.selectedIds);
+      // Default-mode categories show on every custom home page, so pre-check them.
+      for (const c of categories) {
+        if (c.home_page_mode === "default") initial.add(c.id);
+      }
+      setSelected(initial);
     }
-  }, [data]);
+  }, [data, categories]);
 
   const saveMut = useMutation({
     mutationFn: async () => {
