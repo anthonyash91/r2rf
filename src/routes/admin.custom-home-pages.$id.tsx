@@ -38,7 +38,7 @@ function AdminCustomHomePageEdit() {
     queryFn: async () => {
       const { data: page, error: e1 } = await supabase
         .from("custom_home_pages")
-        .select("id, slug, name, description")
+        .select("id, slug, name, description, allowed_ips")
         .eq("id", id)
         .maybeSingle();
       if (e1) throw e1;
