@@ -101,6 +101,9 @@ function CategoryEditor({
   const [description, setDescription] = useState(category.description);
   const [iconUrl, setIconUrl] = useState<string | null>(category.icon_url);
   const [published, setPublished] = useState(category.published);
+  const [homePageMode, setHomePageMode] = useState<"default" | "custom">(
+    category.home_page_mode ?? "default",
+  );
   const [nameEs, setNameEs] = useState(category.name_es ?? "");
   const [taglineEs, setTaglineEs] = useState(category.tagline_es ?? "");
   const [descriptionEs, setDescriptionEs] = useState(category.description_es ?? "");
@@ -116,6 +119,7 @@ function CategoryEditor({
     setDescription(category.description);
     setIconUrl(category.icon_url);
     setPublished(category.published);
+    setHomePageMode(category.home_page_mode ?? "default");
     setNameEs(category.name_es ?? "");
     setTaglineEs(category.tagline_es ?? "");
     setDescriptionEs(category.description_es ?? "");
