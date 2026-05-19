@@ -7,7 +7,7 @@ import { typeBadgeClass } from "@/lib/type-badge";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 
@@ -515,9 +515,11 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                 </Link>
                 <button
                   onClick={() => setEditing(item)}
-                  className="rounded-md px-3 py-1.5 text-sm hover:bg-muted"
+                  title="Edit"
+                  aria-label="Edit"
+                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
                 >
-                  Edit
+                  <Pencil className="h-4 w-4" />
                 </button>
                 <button
                   onClick={async () => {
