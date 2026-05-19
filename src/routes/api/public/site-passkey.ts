@@ -36,7 +36,7 @@ export const Route = createFileRoute("/api/public/site-passkey")({
           return Response.json({ error: "Could not determine IP" }, { status: 400 });
         }
 
-        let parsed: { passkey: string };
+        let parsed: { passkey: string; label: string };
         try {
           parsed = Body.parse(await request.json());
         } catch {
