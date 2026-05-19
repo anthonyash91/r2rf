@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
 import { typeBadgeClass } from "@/lib/type-badge";
+import { withActionWord } from "@/lib/duration";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -490,7 +491,7 @@ function ContentManager({ categoryId, categoryName, items, initialEditId }: { ca
                       );
                     })()}
                   </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mt-[8px]">{item.source} · {item.duration}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-[8px]">{item.source} · {withActionWord(item.duration, item.type)}</p>
                 </div>
                 <button
                   title={item.published ? "Unpublish" : "Publish"}
@@ -1004,17 +1005,21 @@ async function estimateDuration(url: string, name: string | null, type: string):
   if (ext) {
     if (AUDIO_EXT.has(ext)) {
       const f = formatMediaDuration(await probeMediaDuration(url, "audio"));
-      if (f) return f;
+      if (f) return withActionWord(f, type || "audio");
     } else if (VIDEO_EXT.has(ext)) {
       const f = formatMediaDuration(await probeMediaDuration(url, "video"));
-      if (f) return f;
+      if (f) return withActionWord(f, type || "video");
     } else if (ext === "pdf") {
       const minutes = await estimatePdfReadMinutes(url);
       if (minutes > 0) {
-        if (minutes < 60) return `${minutes} min read`;
-        const h = Math.floor(minutes / 60);
-        const m = minutes % 60;
-        return m ? `${h} hr ${m} min read` : `${h} hr read`;
+        let base: string;
+        if (minutes < 60) base = `${minutes} min`;
+        else {
+          const h = Math.floor(minutes / 60);
+          const m = minutes % 60;
+          base = m ? `${h} hr ${m} min` : `${h} hr`;
+        }
+        return withActionWord(base, type || "pdf");
       }
     }
   }
@@ -1028,9 +1033,9 @@ function defaultDurationForType(type: string): string {
   if (t.includes("podcast") || t.includes("audio")) return "20 min listen";
   if (t.includes("article")) return "5 min read";
   if (t.includes("guide")) return "10 min read";
-  if (t.includes("worksheet")) return "10 min";
-  if (t.includes("meeting")) return "30 min";
-  return "5 min";
+  if (t.includes("worksheet")) return "10 min complete";
+  if (t.includes("meeting")) return "30 min meeting";
+  return withActionWord("5 min", type);
 }
 
 async function estimatePdfReadMinutes(url: string): Promise<number> {
