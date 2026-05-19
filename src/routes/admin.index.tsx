@@ -155,34 +155,6 @@ function AdminCategoriesPage() {
           <p className="mt-1 text-sm text-muted-foreground">Manage the library structure.</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          {isAdmin && (() => {
-            const navLinks = [
-              { to: "/admin/users", label: "Users" },
-              { to: "/admin/ip-allowlist", label: "IP allowlist" },
-              { to: "/admin/analytics", label: "Analytics" },
-              { to: "/admin/home", label: "Edit home header" },
-              { to: "/admin/custom-home-pages", label: "Custom home pages" },
-              { to: "/admin/certificate", label: "Edit certificate section" },
-            ];
-            return (
-              <>
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted">
-                    <Menu className="h-4 w-4" /> Admin menu
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    {navLinks.map((l) => (
-                      <DropdownMenuItem key={l.to} asChild>
-                        <Link to={l.to} className="cursor-pointer">
-                          {l.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            );
-          })()}
           <button
             onClick={() => setCreating(true)}
             className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
