@@ -55,6 +55,24 @@ function AdminCategoriesPage() {
     },
   });
 
+  const { data: customHomePagesByCategory = {} } = useQuery({
+    queryKey: ["admin", "category-custom-home-pages"],
+    queryFn: async (): Promise<Record<string, { id: string; name: string; slug: string }[]>> => {
+      const { data, error } = await supabase
+        .from("custom_home_page_categories")
+        .select("category_id, custom_home_pages:custom_home_page_id(id, name, slug)");
+      if (error) throw error;
+      const map: Record<string, { id: string; name: string; slug: string }[]> = {};
+      for (const row of (data ?? []) as any[]) {
+        const page = row.custom_home_pages;
+        if (!page) continue;
+        (map[row.category_id] ??= []).push({ id: page.id, name: page.name || page.slug, slug: page.slug });
+      }
+      for (const k of Object.keys(map)) map[k].sort((a, b) => a.name.localeCompare(b.name));
+      return map;
+    },
+  });
+
   const createMut = useMutation({
     mutationFn: async (input: {
       name: string;
