@@ -990,17 +990,12 @@ async function estimatePdfReadMinutes(url: string): Promise<number> {
     const res = await fetch(url);
     if (!res.ok) return 0;
     const buf = await res.arrayBuffer();
-    const bytes = buf.byteLength;
-    // Count PDF pages by scanning for "/Type /Page" objects (excluding "/Pages").
-    const text = new TextDecoder("latin1").decode(new Uint8Array(buf));
-    const matches = text.match(/\/Type\s*\/Page(?![s\w])/g);
-    const pages = matches?.length ?? 0;
-    // Reading time: ~2 min/page. Add a small bump for dense/image-heavy PDFs
-    // by ensuring at least ~1 min per 250 KB of file size.
-    const byPages = pages * 2;
-    const bySize = Math.round(bytes / (250 * 1024));
-    const minutes = Math.max(byPages, bySize);
-    return Math.max(1, minutes);
+    const { PDFDocument } = await import("pdf-lib");
+    const doc = await PDFDocument.load(buf, { ignoreEncryption: true, throwOnInvalidObject: false });
+    const pages = doc.getPageCount();
+    if (pages <= 0) return 0;
+    // Assume ~1.5 minutes per page of typical reading material.
+    return Math.max(1, Math.round(pages * 1.5));
   } catch {
     return 0;
   }
