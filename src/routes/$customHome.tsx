@@ -1,9 +1,11 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { HomePageView } from "@/components/HomePageView";
+import { setActiveCustomHome } from "@/lib/custom-home-context";
 
 export const Route = createFileRoute("/$customHome")({
   component: CustomHomePage,
@@ -50,9 +52,16 @@ function CustomHomePage() {
     },
   });
 
+  useEffect(() => {
+    if (data?.page?.slug) {
+      setActiveCustomHome(data.page.slug);
+    }
+  }, [data?.page?.slug]);
+
   if (!isLoading && !error && data === null) {
     throw notFound();
   }
+
 
   return (
     <div className="min-h-screen flex flex-col">
