@@ -33,7 +33,7 @@ export const Route = createFileRoute("/admin/")({
 
 function AdminCategoriesPage() {
   const qc = useQueryClient();
-  const { isAdmin } = useAuth();
+  useAuth();
   const confirm = useConfirm();
   const [creating, setCreating] = useState(false);
 
