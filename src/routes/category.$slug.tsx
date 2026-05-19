@@ -151,10 +151,7 @@ function CategoryPage() {
         <>
           <section className="border-b border-border/60 bg-background">
             <div className="mx-auto max-w-5xl px-6 py-20">
-              <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <ArrowLeft className="h-4 w-4" /> {t("category.allCategories")}
-              </Link>
-              <div className="mt-6 flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
+              <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
                 {data.category.icon_url && (
                   <img
                     src={data.category.icon_url}
