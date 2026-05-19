@@ -722,7 +722,22 @@ function ItemEditor({
           )}
         </label>
         <LabeledInput label="Source" value={source} onChange={setSource} />
-        <LabeledInput label="Duration" value={duration} onChange={setDuration} placeholder="8 min read" />
+        <div>
+          <LabeledInput label="Duration" value={duration} onChange={setDuration} placeholder="8 min read" />
+          {extOf(url, null) === "pdf" && (
+            <button
+              type="button"
+              onClick={async () => {
+                const estimated = await estimateDuration(url, null, type);
+                if (estimated) setDuration(estimated);
+              }}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Recalculate PDF duration
+            </button>
+          )}
+        </div>
       </div>
       <div>
         <label className="block">
