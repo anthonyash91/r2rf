@@ -415,12 +415,16 @@ function AdminCustomHomePagesList() {
                 (c) => c.home_page_mode === "custom" && linked.has(c.id),
               );
               const hasSections = excludedDefaults.length > 0 || includedCustoms.length > 0;
-              const Chips = ({ items }: { items: Category[] }) => (
+              const Chips = ({ items, excluded = false }: { items: Category[]; excluded?: boolean }) => (
                 <>
                   {items.map((c) => (
                     <span
                       key={c.id}
-                      className="text-xs rounded-full bg-[var(--color-accent)]/10 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
+                      className={
+                        excluded
+                          ? "text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border [text-decoration:line-through_dotted]"
+                          : "text-xs rounded-full bg-[var(--color-accent)]/10 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
+                      }
                     >
                       {c.name}
                     </span>
@@ -438,7 +442,7 @@ function AdminCustomHomePagesList() {
                   {excludedDefaults.length > 0 && (
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       <span className="text-xs text-muted-foreground">Excluded default categories:</span>
-                      <Chips items={excludedDefaults} />
+                      <Chips items={excludedDefaults} excluded />
                     </div>
                   )}
                   {includedCustoms.length > 0 && (
