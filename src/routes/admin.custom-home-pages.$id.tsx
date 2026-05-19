@@ -69,6 +69,7 @@ function AdminCustomHomePageEdit() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
+  const [allowedIpsText, setAllowedIpsText] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -76,6 +77,8 @@ function AdminCustomHomePageEdit() {
       setName(data.page.name ?? "");
       setSlug(data.page.slug ?? "");
       setDescription((data.page as any).description ?? "");
+      const ips = ((data.page as any).allowed_ips ?? []) as string[];
+      setAllowedIpsText(ips.join("\n"));
     }
     if (data?.selectedIds && categories.length > 0) {
       setSelected(new Set<string>(data.selectedIds));
