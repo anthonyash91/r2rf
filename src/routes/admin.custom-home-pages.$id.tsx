@@ -86,7 +86,7 @@ function AdminCustomHomePageEdit() {
 
       const { error: e1 } = await supabase
         .from("custom_home_pages")
-        .update({ name: name.trim(), slug: finalSlug })
+        .update({ name: name.trim(), slug: finalSlug, description: description.trim() })
         .eq("id", id);
       if (e1) throw e1;
 
