@@ -73,7 +73,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                     <div className="h-48 w-48 sm:h-56 sm:w-56 lg:h-64 lg:w-64 rounded-xl border border-dashed border-border bg-muted/40" />
                   )}
                 </div>
-                <div className="mt-5">
+                <div className="mt-5 text-center">
                   <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
                     {pickLang(lang, c.name, c.name_es)}
                   </h3>
