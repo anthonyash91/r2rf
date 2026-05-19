@@ -25,6 +25,7 @@ function Index() {
         .from("categories")
         .select("*")
         .eq("published", true)
+        .eq("home_page_mode", "default")
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return data as Category[];
