@@ -67,6 +67,21 @@ function AdminCategoriesPage() {
     },
   });
 
+  const { data: itemCountsByCategory = {} } = useQuery({
+    queryKey: ["admin", "category-item-counts"],
+    queryFn: async (): Promise<Record<string, number>> => {
+      const { data, error } = await supabase
+        .from("content_items")
+        .select("category_id");
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const row of (data ?? []) as { category_id: string }[]) {
+        counts[row.category_id] = (counts[row.category_id] ?? 0) + 1;
+      }
+      return counts;
+    },
+  });
+
   const createMut = useMutation({
     mutationFn: async (input: {
       name: string;
