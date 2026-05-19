@@ -295,6 +295,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ip_passkey_attempts: {
+        Row: {
+          blocked_at: string | null
+          created_at: string
+          failed_count: number
+          id: string
+          ip_address: string
+          last_attempt_at: string
+          updated_at: string
+        }
+        Insert: {
+          blocked_at?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          ip_address: string
+          last_attempt_at?: string
+          updated_at?: string
+        }
+        Update: {
+          blocked_at?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          ip_address?: string
+          last_attempt_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           created_at: string
