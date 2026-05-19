@@ -108,6 +108,21 @@ function AdminCustomHomePagesList() {
       if (RESERVED_SLUGS.has(finalSlug)) {
         throw new Error(`"/${finalSlug}" is reserved. Choose a different slug.`);
       }
+
+      // Any default-mode category the admin unchecked should be demoted to
+      // 'custom' so it stops appearing automatically everywhere.
+      const selectedSet = new Set(input.selectedIds);
+      const demoted = categories
+        .filter((c) => c.home_page_mode === "default" && !selectedSet.has(c.id))
+        .map((c) => c.id);
+      if (demoted.length > 0) {
+        const { error: eDemote } = await supabase
+          .from("categories")
+          .update({ home_page_mode: "custom" })
+          .in("id", demoted);
+        if (eDemote) throw eDemote;
+      }
+
       const { data, error } = await supabase
         .from("custom_home_pages")
         .insert({
@@ -119,8 +134,17 @@ function AdminCustomHomePagesList() {
         .single();
       if (error) throw error;
 
-      if (input.selectedIds.length > 0) {
-        const rows = input.selectedIds.map((cid, idx) => ({
+      // Skip junction rows for categories that remain 'default' — they appear
+      // via the default rule and don't need an explicit link.
+      const stillDefault = new Set(
+        categories
+          .filter((c) => c.home_page_mode === "default" && selectedSet.has(c.id))
+          .map((c) => c.id),
+      );
+      const explicitIds = input.selectedIds.filter((cid) => !stillDefault.has(cid));
+
+      if (explicitIds.length > 0) {
+        const rows = explicitIds.map((cid, idx) => ({
           custom_home_page_id: data.id,
           category_id: cid,
           sort_order: idx,
@@ -138,6 +162,10 @@ function AdminCustomHomePagesList() {
       setCreating(false);
       resetForm();
       qc.invalidateQueries({ queryKey: ["admin", "custom_home_pages"] });
+      qc.invalidateQueries({ queryKey: ["admin", "categories", "all"] });
+      qc.invalidateQueries({ queryKey: ["admin", "categories"] });
+      qc.invalidateQueries({ queryKey: ["categories"] });
+      qc.invalidateQueries({ queryKey: ["custom-home"] });
       navigate({ to: "/admin/custom-home-pages/$id", params: { id: data.id } });
     },
     onError: (e: any) => toast.error(e.message),
