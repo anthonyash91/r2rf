@@ -641,7 +641,7 @@ function ItemEditor({
               <button
                 type="button"
                 onClick={cancelNewType}
-                className="rounded-md px-3 py-2 text-sm hover:bg-muted"
+                className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
               >
                 Cancel
               </button>
@@ -810,7 +810,7 @@ function ItemEditor({
         </div>
       )}
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="rounded-md px-4 py-2 text-sm hover:bg-muted">
+        <button type="button" onClick={onCancel} className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted">
           Cancel
         </button>
         <button
