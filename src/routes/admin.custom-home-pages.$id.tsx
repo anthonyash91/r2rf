@@ -92,10 +92,15 @@ function AdminCustomHomePageEdit() {
       if (RESERVED_SLUGS.has(finalSlug)) {
         throw new Error(`"/${finalSlug}" is reserved. Choose a different slug.`);
       }
+      const allowedIps = parseIps(allowedIpsText);
+      const invalidIps = allowedIps.filter((ip) => !IP_REGEX.test(ip));
+      if (invalidIps.length > 0) {
+        throw new Error(`Invalid IPv4 address(es): ${invalidIps.join(", ")}`);
+      }
 
       const { error: e1 } = await supabase
         .from("custom_home_pages")
-        .update({ name: name.trim(), slug: finalSlug, description: description.trim() })
+        .update({ name: name.trim(), slug: finalSlug, description: description.trim(), allowed_ips: allowedIps })
         .eq("id", id);
       if (e1) throw e1;
 
