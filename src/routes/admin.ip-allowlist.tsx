@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Shield, ArrowLeft, LogIn } from "lucide-react";
+import { Plus, Trash2, Shield, ArrowLeft, LogIn, Pencil, Check, X } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/admin/ip-allowlist")({
@@ -308,33 +308,124 @@ function AllowlistSection({
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((r) => (
-              <li key={r.id} className="flex items-center gap-4 p-4 pl-[24px]">
-                <div className="flex-1 min-w-0">
-                  <p className="font-mono text-sm">{r.ip_address}</p>
-                  {r.label && (
-                    <p className="text-xs text-muted-foreground truncate">{r.label}</p>
-                  )}
-                </div>
-                <button
-                  title="Remove"
-                  onClick={async () => {
-                    const ok = await confirm({
-                      title: `Remove ${r.ip_address}?`,
-                      description: "This IP will be removed from the allowlist.",
-                      confirmLabel: "Remove",
-                      destructive: true,
-                    });
-                    if (ok) deleteMut.mutate(r.id);
-                  }}
-                  className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </li>
+              <AllowlistRow
+                key={r.id}
+                row={r}
+                table={table}
+                queryKey={queryKey}
+                onDelete={async () => {
+                  const ok = await confirm({
+                    title: `Remove ${r.ip_address}?`,
+                    description: "This IP will be removed from the allowlist.",
+                    confirmLabel: "Remove",
+                    destructive: true,
+                  });
+                  if (ok) deleteMut.mutate(r.id);
+                }}
+              />
             ))}
           </ul>
         )}
       </div>
     </section>
+  );
+}
+
+function AllowlistRow({
+  row,
+  table,
+  queryKey,
+  onDelete,
+}: {
+  row: IpRow;
+  table: "ip_allowlist" | "auth_ip_allowlist";
+  queryKey: readonly unknown[];
+  onDelete: () => void;
+}) {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(row.label ?? "");
+
+  const updateMut = useMutation({
+    mutationFn: async (newLabel: string) => {
+      const { error } = await supabase
+        .from(table)
+        .update({ label: newLabel })
+        .eq("id", row.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Label updated");
+      setEditing(false);
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <li className="flex items-center gap-4 p-4 pl-[24px]">
+      <div className="flex-1 min-w-0">
+        <p className="font-mono text-sm">{row.ip_address}</p>
+        {editing ? (
+          <input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") updateMut.mutate(draft.trim());
+              if (e.key === "Escape") {
+                setDraft(row.label ?? "");
+                setEditing(false);
+              }
+            }}
+            placeholder="Label"
+            className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1 text-xs"
+          />
+        ) : (
+          row.label && (
+            <p className="text-xs text-muted-foreground truncate">{row.label}</p>
+          )
+        )}
+      </div>
+      {editing ? (
+        <>
+          <button
+            title="Save"
+            disabled={updateMut.isPending}
+            onClick={() => updateMut.mutate(draft.trim())}
+            className="p-2 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary disabled:opacity-60"
+          >
+            <Check className="h-4 w-4" />
+          </button>
+          <button
+            title="Cancel"
+            onClick={() => {
+              setDraft(row.label ?? "");
+              setEditing(false);
+            }}
+            className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </>
+      ) : (
+        <>
+          <button
+            title="Edit label"
+            onClick={() => setEditing(true)}
+            className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button
+            title="Remove"
+            onClick={onDelete}
+            className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </>
+      )}
+    </li>
   );
 }
