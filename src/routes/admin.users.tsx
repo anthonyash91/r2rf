@@ -14,6 +14,7 @@ import {
   createUser,
   deleteUser,
 } from "@/lib/users.functions";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 export const Route = createFileRoute("/admin/users")({
   beforeLoad: requireAdminBeforeLoad,
