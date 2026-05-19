@@ -14,11 +14,6 @@
   --radius-xl: var(--radius);
   --radius-2xl: var(--radius);
   --radius-3xl: var(--radius);
-}
-
-@utility rounded-full {
-  border-radius: var(--radius);
-}
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -40,6 +35,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+}
+
+@utility rounded-full {
+  border-radius: var(--radius);
 }
 
 :root {
