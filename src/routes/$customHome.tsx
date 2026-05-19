@@ -32,23 +32,43 @@ function CustomHomePage() {
         .order("sort_order", { ascending: true });
       if (e2) throw e2;
 
-      const ids = (links ?? []).map((l) => l.category_id);
-      if (ids.length === 0) return { page, categories: [] as Category[] };
-
-      const { data: cats, error: e3 } = await supabase
+      // Default-mode categories always appear; explicitly-selected custom ones also appear.
+      const { data: defaults, error: e3 } = await supabase
         .from("categories")
         .select("*")
         .eq("published", true)
-        .in("id", ids);
+        .eq("home_page_mode", "default")
+        .order("sort_order", { ascending: true });
       if (e3) throw e3;
 
-      const orderMap = new Map(
+      const selectedIds = (links ?? []).map((l) => l.category_id);
+      let selected: Category[] = [];
+      if (selectedIds.length > 0) {
+        const { data: cats, error: e4 } = await supabase
+          .from("categories")
+          .select("*")
+          .eq("published", true)
+          .in("id", selectedIds);
+        if (e4) throw e4;
+        selected = (cats ?? []) as Category[];
+      }
+
+      const linkOrder = new Map(
         (links ?? []).map((l, idx) => [l.category_id, l.sort_order ?? idx]),
       );
-      const sorted = ((cats ?? []) as Category[]).slice().sort(
-        (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0),
-      );
-      return { page, categories: sorted };
+      const selectedSorted = selected
+        .slice()
+        .sort((a, b) => (linkOrder.get(a.id) ?? 0) - (linkOrder.get(b.id) ?? 0));
+
+      // De-dupe in case a category is both "default" and explicitly selected.
+      const seen = new Set<string>();
+      const categories = [...(defaults as Category[]), ...selectedSorted].filter((c) => {
+        if (seen.has(c.id)) return false;
+        seen.add(c.id);
+        return true;
+      });
+
+      return { page, categories };
     },
   });
 
