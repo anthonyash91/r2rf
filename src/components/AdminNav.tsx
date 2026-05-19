@@ -7,11 +7,12 @@ type NavLink = {
   label: string;
   icon: typeof LayoutGrid;
   exact?: boolean;
+  matchPrefixes?: string[];
   adminOnly?: boolean;
 };
 
 const links: NavLink[] = [
-  { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true },
+  { to: "/admin", label: "Categories", icon: LayoutGrid, matchPrefixes: ["/admin/category"] },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true },
   { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
@@ -31,14 +32,16 @@ export function AdminNav() {
       <ul className="flex flex-wrap items-center justify-center gap-1.5 px-2">
 
         {visible.map((l) => {
-          const active = l.exact ? pathname === l.to : pathname === l.to || pathname.startsWith(l.to + "/");
+          const active =
+            (l.exact ? pathname === l.to : pathname === l.to || pathname.startsWith(l.to + "/")) ||
+            (l.matchPrefixes?.some((p) => pathname === p || pathname.startsWith(p + "/")) ?? false);
           const Icon = l.icon;
           return (
             <li key={l.to}>
               <Link
                 to={l.to as any}
                 className={[
-                  "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors whitespace-nowrap",
+                  "inline-flex items-center gap-2 rounded-md border px-3.5 py-1.5 text-sm font-medium transition-colors whitespace-nowrap",
                   active
                     ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-[var(--color-accent-foreground,white)] shadow-sm"
                     : "border-border bg-card text-muted-foreground hover:border-[var(--color-accent)]/40 hover:text-foreground",
