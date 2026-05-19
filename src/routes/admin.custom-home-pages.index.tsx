@@ -67,6 +67,27 @@ function AdminCustomHomePagesList() {
     },
   });
 
+  const { data: pageCategories = {} } = useQuery({
+    queryKey: ["admin", "custom_home_pages", "categories"],
+    queryFn: async (): Promise<Record<string, { id: string; name: string; sort_order: number }[]>> => {
+      const { data, error } = await supabase
+        .from("custom_home_page_categories")
+        .select("custom_home_page_id, sort_order, categories:category_id(id, name, sort_order)")
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      const map: Record<string, { id: string; name: string; sort_order: number }[]> = {};
+      for (const row of (data ?? []) as any[]) {
+        if (!row.categories) continue;
+        const list = map[row.custom_home_page_id] ?? (map[row.custom_home_page_id] = []);
+        list.push(row.categories);
+      }
+      for (const k of Object.keys(map)) {
+        map[k].sort((a, b) => a.sort_order - b.sort_order);
+      }
+      return map;
+    },
+  });
+
   const allChecked = useMemo(
     () => categories.length > 0 && categories.every((c) => selected.has(c.id)),
     [categories, selected],
