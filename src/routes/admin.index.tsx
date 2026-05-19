@@ -63,6 +63,7 @@ function AdminCategoriesPage() {
       description: string;
       icon_url: string | null;
       published: boolean;
+      home_page_mode: "default" | "custom";
       name_es: string | null;
       tagline_es: string | null;
       description_es: string | null;
@@ -74,6 +75,7 @@ function AdminCategoriesPage() {
         description: input.description,
         icon_url: input.icon_url,
         published: input.published,
+        home_page_mode: input.home_page_mode,
         name_es: input.name_es,
         tagline_es: input.tagline_es,
         description_es: input.description_es,
