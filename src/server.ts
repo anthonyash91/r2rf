@@ -75,6 +75,13 @@ export default {
       // Allow the self-service passkey endpoint through the site allowlist
       // so blocked visitors can request access with a shared passkey.
       const isPasskeyEndpoint = pathname === "/api/public/site-passkey";
+      // A successful passkey unlock sets this cookie so the immediate reload
+      // works even if the new request lands on a different worker isolate
+      // (whose in-memory allowlist cache hasn't been invalidated yet) or
+      // before the freshly inserted row is visible.
+      const hasPasskeyCookie = (request.headers.get("cookie") ?? "")
+        .split(";")
+        .some((c) => c.trim().startsWith("site_passkey_ok="));
       let allowed = false;
       try {
         const allowlist = await getAllowedIps();
@@ -82,7 +89,7 @@ export default {
       } catch (err) {
         console.error("[ip-allowlist] check failed:", err);
       }
-      if (!allowed && !isPasskeyEndpoint) {
+      if (!allowed && !isPasskeyEndpoint && !hasPasskeyCookie) {
         return new Response(renderBlockedPage(ip, "site"), {
           status: 403,
           headers: { "content-type": "text/html; charset=utf-8" },

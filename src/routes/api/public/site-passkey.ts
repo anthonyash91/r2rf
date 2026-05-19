@@ -71,7 +71,17 @@ export const Route = createFileRoute("/api/public/site-passkey")({
         }
 
         invalidateAllowlistCache();
-        return Response.json({ ok: true, ip });
+        return Response.json(
+          { ok: true, ip },
+          {
+            headers: {
+              // Grant immediate access on the reload following a successful
+              // unlock. Short-lived: the IP is now persisted in the allowlist
+              // and will be picked up by the normal check after caches refresh.
+              "Set-Cookie": "site_passkey_ok=1; Path=/; Max-Age=300; SameSite=Lax; Secure; HttpOnly",
+            },
+          },
+        );
       },
     },
   },
