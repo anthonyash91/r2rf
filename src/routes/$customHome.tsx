@@ -52,15 +52,16 @@ function CustomHomePage() {
     },
   });
 
-  if (!isLoading && !error && data === null) {
-    throw notFound();
-  }
-
   useEffect(() => {
     if (data?.page?.slug) {
       setActiveCustomHome(data.page.slug);
     }
   }, [data?.page?.slug]);
+
+  if (!isLoading && !error && data === null) {
+    throw notFound();
+  }
+
 
   return (
     <div className="min-h-screen flex flex-col">
