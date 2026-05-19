@@ -60,7 +60,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
               <Link
                 to="/category/$slug"
                 params={{ slug: c.slug }}
-                className="group relative flex flex-col rounded-2xl border border-border bg-card p-7 sm:p-8 transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
+                className="group relative flex flex-col rounded-2xl border border-border bg-card p-7 sm:p-8 transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)] pb-[36px] pl-[32px] pt-[44px]"
               >
                 <div className="flex justify-center">
                   {c.icon_url ? (
