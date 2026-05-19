@@ -7,7 +7,10 @@ import { getClientIp, invalidateAllowlistCache } from "@/lib/ip-allowlist";
 const SITE_PASSKEY_HASH =
   "6c9e159dc6e0cd154e100e11f55b73edb90ab57bef07c73f2865f6fa0ac46ff9";
 
-const Body = z.object({ passkey: z.string().min(1).max(64) });
+const Body = z.object({
+  passkey: z.string().min(1).max(64),
+  label: z.string().trim().min(1).max(80),
+});
 
 async function sha256Hex(input: string): Promise<string> {
   const data = new TextEncoder().encode(input);
