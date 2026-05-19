@@ -256,19 +256,19 @@ function UserItem({
             placeholder="New password (min 8 chars)"
             className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono"
           />
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Update password
-            </button>
+          <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={() => { setPw(""); setPwOpen(false); }}
               className="rounded-md px-3 py-1.5 text-xs hover:bg-muted"
             >
               Cancel
+            </button>
+            <button
+              type="submit"
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Update password
             </button>
           </div>
         </form>
