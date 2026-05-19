@@ -30,10 +30,14 @@ export function SiteHeader() {
 
   const toggleLang = () => setLang(lang === "en" ? "es" : "en");
 
+  const homeLinkProps = activeCustomHome
+    ? ({ to: "/$customHome", params: { customHome: activeCustomHome } } as const)
+    : ({ to: "/" } as const);
+
   return (
     <header className="border-b border-border/60 bg-background/80 backdrop-blur sticky top-0 z-50">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
-        <Link to="/" className="flex items-center gap-2 group min-w-0">
+        <Link {...homeLinkProps} className="flex items-center gap-2 group min-w-0">
           <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-display font-bold">
             R
           </span>
@@ -45,7 +49,7 @@ export function SiteHeader() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-muted-foreground">
-          <Link to="/" className="hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
+          <Link {...homeLinkProps} className="hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
             {t("nav.categories")}
           </Link>
           {canAccessAdmin && (
