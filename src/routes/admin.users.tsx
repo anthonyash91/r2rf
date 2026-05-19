@@ -285,7 +285,7 @@ function UserItem({
 
 
         <TooltipProvider delayDuration={150}>
-          <div className="flex flex-wrap items-center gap-1.5 lg:justify-end shrink-0">
+          <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
