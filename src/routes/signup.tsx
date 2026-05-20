@@ -35,7 +35,7 @@ function SignupPage() {
   const [answer, setAnswer] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
-  const [securityAnswers, setSecurityAnswers] = useState<SecurityAnswerInput[]>([]);
+  
 
   // Reset flow
   const [resetStep, setResetStep] = useState<1 | 2>(1);
