@@ -149,7 +149,7 @@ function DashboardPage() {
             </div>
           ) : (
             <div className="mt-4 space-y-4">
-              <SecurityQuestionsForm onChange={setPending} rows={3} />
+              <SecurityQuestionsForm onChange={setPending} rows={2} />
               <div className="flex gap-2">
                 <button
                   onClick={handleSave}
