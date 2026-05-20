@@ -31,6 +31,12 @@ type UserRow = {
   email_confirmed_at: string | null;
   roles: string[];
   signup_ip: string | null;
+  profile: { username: string; facility: string } | null;
+};
+
+const FACILITY_LABELS: Record<string, string> = {
+  pennington_sd: "Pennington, SD",
+  campbell_ky: "Campbell, KY",
 };
 
 function AdminUsersPage() {
