@@ -39,24 +39,23 @@ export default function PdfViewer({ url }: { url: string }) {
   return (
     <div className="flex h-[min(85dvh,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] min-h-0 w-full flex-col bg-background">
       <div ref={containerRef} className="min-h-0 flex-1 overflow-auto p-2">
-        <div style={{ width: pageWidth || undefined }} className="mx-auto max-w-none">
-          <Document
-            file={url}
-            onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-            loading={<div className="p-8 text-sm text-muted-foreground">Loading PDF…</div>}
-            error={<div className="p-8 text-sm text-destructive">Failed to load PDF.</div>}
-          >
-            {pageWidth > 0 && (
-              <Page
-                pageNumber={pageNumber}
-                width={pageWidth}
-                className="max-w-none"
-                renderAnnotationLayer={false}
-                renderTextLayer={false}
-              />
-            )}
-          </Document>
-        </div>
+        <Document
+          file={url}
+          onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+          loading={<div className="p-8 text-sm text-muted-foreground">Loading PDF…</div>}
+          error={<div className="p-8 text-sm text-destructive">Failed to load PDF.</div>}
+        >
+          {pageWidth > 0 && (
+            <Page
+              key={pageWidth}
+              pageNumber={pageNumber}
+              width={pageWidth}
+              className="mx-auto max-w-none"
+              renderAnnotationLayer={false}
+              renderTextLayer={false}
+            />
+          )}
+        </Document>
       </div>
 
       {numPages > 1 && (
