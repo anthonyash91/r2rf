@@ -111,7 +111,7 @@ const translations: Record<Language, Dict> = {
     "nav.admin": "Administración",
     "nav.signIn": "Iniciar sesión",
     "nav.signOut": "Cerrar sesión",
-    "nav.signUp": "Registrarse",
+    "nav.signUp": "Iniciar sesión",
     "nav.dashboard": "Panel",
     "nav.adminSignIn": "Inicio de sesión de administrador",
     "nav.adminSignOut": "Cerrar sesión de administrador",
