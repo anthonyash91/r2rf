@@ -333,6 +333,7 @@ function AdminUsersPage() {
 
 function UserItem({
   user,
+  facilityLabel,
   onChangeEmail,
   onSetPassword,
   onSendReset,
@@ -342,6 +343,7 @@ function UserItem({
   onResetSecurity,
 }: {
   user: UserRow;
+  facilityLabel: string;
   onChangeEmail: (email: string) => void;
   onSetPassword: (password: string) => void;
   onSendReset: () => void;
@@ -368,7 +370,7 @@ function UserItem({
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-mono text-sm truncate">{user.profile!.username}</span>
               <span className="inline-flex items-center gap-1 text-xs rounded-full bg-muted px-2 py-0.5 text-foreground border border-border">
-                {FACILITY_LABELS[user.profile!.facility] ?? user.profile!.facility}
+                {facilityLabel || user.profile!.facility}
               </span>
               {user.roles.includes("user") && (
                 <span className="inline-flex items-center gap-1 text-xs rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground border border-border">
