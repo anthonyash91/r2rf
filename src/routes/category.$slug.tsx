@@ -393,7 +393,7 @@ function CategoryPage() {
       </Dialog>
 
       <Dialog open={!!pdfViewer} onOpenChange={(open) => !open && setPdfViewer(null)}>
-        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden">
+        <DialogContent className="w-[95vw] sm:max-w-[95vw] p-0 overflow-hidden">
           <DialogTitle className="sr-only">{pdfViewer?.title ?? "PDF"}</DialogTitle>
           {pdfViewer && (
             <Suspense fallback={<div className="p-8 text-sm text-muted-foreground h-[85vh]">Loading PDF…</div>}>
