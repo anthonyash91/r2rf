@@ -229,6 +229,15 @@ function AdminUsersPage() {
               });
               if (ok) deleteMut.mutate({ userId: u.id });
             }}
+            onResetSecurity={async () => {
+              const ok = await confirm({
+                title: "Reset security questions?",
+                description: `Clear ${u.profile?.username || u.email}'s security questions? They'll be required to choose new ones the next time they sign in.`,
+                confirmLabel: "Reset",
+                destructive: true,
+              });
+              if (ok) clearSecMut.mutate({ userId: u.id });
+            }}
           />
         );
 
