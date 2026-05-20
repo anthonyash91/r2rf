@@ -71,8 +71,8 @@ export default function PdfViewer({ url }: { url: string }) {
       </div>
 
       {numPages > 1 && (
-        <div className="shrink-0 overflow-x-auto border-t border-border bg-card p-2">
-          <div className="flex min-w-max items-center justify-center gap-3">
+        <div className="shrink-0 border-t border-border bg-card p-2">
+          <div className="flex items-center justify-center gap-3">
             <Button
               type="button"
               variant="outline"
