@@ -57,7 +57,7 @@ function SortableRow({ id, children }: { id: string; children: ReactNode }) {
         type="button"
         {...attributes}
         {...listeners}
-        className="flex items-center pl-4 pr-4 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+        className="flex items-center pl-4 pr-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
         aria-label="Drag to reorder"
       >
         <GripVertical className="h-4 w-4" />
