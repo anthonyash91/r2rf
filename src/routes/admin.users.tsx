@@ -58,6 +58,8 @@ function AdminUsersPage() {
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [showAddFacilities, setShowAddFacilities] = useState(false);
   const [newFacilityLabels, setNewFacilityLabels] = useState("");
+  const [editingFacilityId, setEditingFacilityId] = useState<string | null>(null);
+  const [editingFacilityLabel, setEditingFacilityLabel] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
