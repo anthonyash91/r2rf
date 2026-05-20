@@ -19,33 +19,43 @@ export default function PdfViewer({ url }: { url: string }) {
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setWidth(el.clientWidth));
+    const update = () => setWidth(el.clientWidth);
+    const ro = new ResizeObserver(update);
     ro.observe(el);
-    setWidth(el.clientWidth);
-    return () => ro.disconnect();
+    window.addEventListener("resize", update);
+    update();
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
   }, []);
 
   useEffect(() => { setPageNumber(1); }, [url]);
 
+  const pageWidth = width > 0 ? Math.max(width - 16, 700) : 0;
+
   return (
     <div className="flex flex-col w-full h-[85vh] bg-background">
-      <div ref={containerRef} className="flex-1 overflow-auto flex items-start justify-center p-2">
-        <Document
-          file={url}
-          onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-          loading={<div className="p-8 text-sm text-muted-foreground">Loading PDF…</div>}
-          error={<div className="p-8 text-sm text-destructive">Failed to load PDF.</div>}
-        >
-          {width > 0 && (
-            <Page
-              pageNumber={pageNumber}
-              width={Math.max(width - 16, 700)}
-              renderAnnotationLayer={false}
-              renderTextLayer={false}
-            />
-          )}
-        </Document>
+      <div ref={containerRef} className="flex-1 overflow-auto p-2">
+        <div style={{ width: pageWidth || undefined }} className="mx-auto">
+          <Document
+            file={url}
+            onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+            loading={<div className="p-8 text-sm text-muted-foreground">Loading PDF…</div>}
+            error={<div className="p-8 text-sm text-destructive">Failed to load PDF.</div>}
+          >
+            {pageWidth > 0 && (
+              <Page
+                pageNumber={pageNumber}
+                width={pageWidth}
+                renderAnnotationLayer={false}
+                renderTextLayer={false}
+              />
+            )}
+          </Document>
+        </div>
       </div>
+
       {numPages > 1 && (
         <div className="flex items-center justify-center gap-3 border-t border-border bg-card p-2">
           <Button
