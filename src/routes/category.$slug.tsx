@@ -11,6 +11,7 @@ import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n"
 import { withActionWord } from "@/lib/duration";
 import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveCustomHome } from "@/lib/custom-home-context";
@@ -55,6 +56,7 @@ function CategoryPage() {
   const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
   const [imageViewer, setImageViewer] = useState<{ url: string; title: string } | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [othersApi, setOthersApi] = useState<CarouselApi>();
   const [othersCurrent, setOthersCurrent] = useState(0);
   const [othersCount, setOthersCount] = useState(0);
@@ -172,12 +174,57 @@ function CategoryPage() {
 
           <main className="flex-1">
             <section className="mx-auto max-w-5xl px-6 py-20">
-              <h2 className="font-display text-xl font-semibold mb-6">{data.items.length} {data.items.length === 1 ? t("category.resource") : t("category.resources")}</h2>
-              {data.items.length === 0 ? (
+              {(() => {
+                const itemsWithKind = data.items.map((item) => {
+                  const fileUrl = lang === "es" && item.file_url_es ? item.file_url_es : item.file_url;
+                  const fileMedia = detectMedia(fileUrl);
+                  const urlMedia = detectMedia(item.url);
+                  const mediaKind: MediaKind | null = fileMedia ?? urlMedia;
+                  const filterKey: string = mediaKind ?? (item.url ? "link" : "other");
+                  return { item, filterKey };
+                });
+                const availableKinds = Array.from(new Set(itemsWithKind.map((i) => i.filterKey)));
+                const filterOrder = ["video", "audio", "pdf", "image", "link", "other"];
+                const filterLabels: Record<string, string> = {
+                  video: "Video",
+                  audio: "Audio",
+                  pdf: "PDF",
+                  image: "Image",
+                  link: "Link",
+                  other: "Other",
+                };
+                const filteredItems = typeFilter === "all"
+                  ? data.items
+                  : itemsWithKind.filter((i) => i.filterKey === typeFilter).map((i) => i.item);
+                const orderedKinds = filterOrder.filter((k) => availableKinds.includes(k));
+                const showFilter = orderedKinds.length > 1;
+                return (
+                  <>
+                    <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <h2 className="font-display text-xl font-semibold">
+                        {filteredItems.length} {filteredItems.length === 1 ? t("category.resource") : t("category.resources")}
+                      </h2>
+                      {showFilter && (
+                        <div className="sm:ml-auto">
+                          <Select value={typeFilter} onValueChange={setTypeFilter}>
+                            <SelectTrigger className="w-full sm:w-[180px]">
+                              <SelectValue placeholder="Filter by type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All types</SelectItem>
+                              {orderedKinds.map((k) => (
+                                <SelectItem key={k} value={k}>{filterLabels[k]}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+              {filteredItems.length === 0 ? (
                 <p className="text-muted-foreground">{t("category.noContent")}</p>
               ) : (
                 <ul className="divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden">
-                  {data.items.map((item) => {
+                  {filteredItems.map((item) => {
                     const title = pickLang(lang, item.title, item.title_es);
                     const description = pickLang(lang, item.description, item.description_es);
                     const source = pickLang(lang, item.source, item.source_es);
@@ -292,6 +339,9 @@ function CategoryPage() {
                   })}
                 </ul>
               )}
+                  </>
+                );
+              })()}
             </section>
 
             {data.others.length > 0 && (
