@@ -28,6 +28,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
