@@ -62,7 +62,7 @@ export function SiteHeader() {
           )}
           {isUser && (
             <Link to="/dashboard" className="hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
-              Dashboard
+              {t("nav.dashboard")}
             </Link>
           )}
           {user ? (
@@ -72,7 +72,7 @@ export function SiteHeader() {
           ) : (
             <>
               <Link to="/signup" className="hover:text-foreground transition-colors">
-                Sign up
+                {t("nav.signUp")}
               </Link>
               {showAuthLink && (
                 <Link to="/auth" className="hover:text-foreground transition-colors">
@@ -126,7 +126,7 @@ export function SiteHeader() {
             )}
             {isUser && (
               <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
-                Dashboard
+                {t("nav.dashboard")}
               </Link>
             )}
             {user ? (
@@ -139,7 +139,7 @@ export function SiteHeader() {
             ) : (
               <>
                 <Link to="/signup" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
-                  Sign up
+                  {t("nav.signUp")}
                 </Link>
                 {showAuthLink && (
                   <Link to="/auth" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
