@@ -56,11 +56,24 @@ function AdminUsersPage() {
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
+  const [showAddFacilities, setShowAddFacilities] = useState(false);
+  const [newFacilityLabels, setNewFacilityLabels] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
     queryFn: () => list(),
   });
+
+  const fetchFacilities = useServerFn(listFacilities);
+  const addFacilitiesFn = useServerFn(addFacilities);
+  const facilitiesQuery = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilities(),
+  });
+  const facilities = facilitiesQuery.data?.facilities ?? [];
+  const facilityLabelMap: Record<string, string> = Object.fromEntries(
+    facilities.map((f) => [f.value, f.label]),
+  );
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["admin", "users"] });
 
