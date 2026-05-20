@@ -111,66 +111,14 @@ function AdminUsersPage() {
       <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to admin
       </Link>
-      <div className="mt-6 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-            <Users className="h-7 w-7" /> Users
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Add users, edit emails, reset passwords, and manage access.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          disabled={showCreate}
-          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
-        >
-          <UserPlus className="h-4 w-4" /> Add user
-        </button>
+      <div className="mt-6">
+        <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+          <Users className="h-7 w-7" /> Users
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Add users, edit emails, reset passwords, and manage access.
+        </p>
       </div>
-
-      {showCreate && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
-            createMut.mutate({ email: newEmail.trim(), password: newPassword });
-          }}
-          className="mt-4 rounded-2xl border border-border bg-card p-4 sm:p-5 flex flex-col sm:flex-row gap-2"
-        >
-          <input
-            type="email"
-            required
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-            placeholder="user@example.com"
-            className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
-          />
-          <input
-            type="text"
-            autoComplete="new-password"
-            required
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Password (min 8 chars)"
-            className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
-          />
-          <button
-            type="button"
-            onClick={() => { setShowCreate(false); setNewEmail(""); setNewPassword(""); }}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={createMut.isPending}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-          >
-            Create
-          </button>
-        </form>
-      )}
 
       {(() => {
         if (isLoading) {
