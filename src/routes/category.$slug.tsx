@@ -207,7 +207,7 @@ function CategoryPage() {
                       {showFilter && (
                         <div className="sm:ml-auto">
                           <Select value={typeFilter} onValueChange={setTypeFilter}>
-                            <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectTrigger className="w-full sm:w-[180px] shadow-none">
                               <SelectValue placeholder="Filter by type" />
                             </SelectTrigger>
                             <SelectContent>
