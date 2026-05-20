@@ -20,6 +20,7 @@ const VERB_RE = /\b(read|watch|listen|complete|meeting|call|view)\b/i;
 export function withActionWord(duration: string | null | undefined, type: string | null | undefined): string {
   const t = (type ?? "").trim().toLowerCase();
   if (t.includes("image")) return "View image";
+  if (t.includes("article")) return "Read article";
   const d = (duration ?? "").trim();
   if (!d) return "";
   if (VERB_RE.test(d)) return d;
