@@ -55,7 +55,6 @@ function AdminUsersPage() {
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
-  const [facilityFilter, setFacilityFilter] = useState<string>("all");
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
@@ -63,7 +62,6 @@ function AdminUsersPage() {
   });
 
   const fetchFacilities = useServerFn(listFacilities);
-  const addFacilitiesFn = useServerFn(addFacilities);
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
     queryFn: () => fetchFacilities(),
@@ -112,35 +110,6 @@ function AdminUsersPage() {
   const clearSecMut = useMutation({
     mutationFn: (input: { userId: string }) => clearSecFn({ data: input }),
     onSuccess: () => toast.success("Security questions reset. User must set new ones on next sign-in."),
-    onError: (e: any) => toast.error(e.message),
-  });
-  const addFacilitiesMut = useMutation({
-    mutationFn: (input: { facilities: { label: string }[] }) => addFacilitiesFn({ data: input }),
-    onSuccess: (res) => {
-      toast.success(`Added ${res.inserted} facility${res.inserted === 1 ? "" : "s"}`);
-      setNewFacilityLabels("");
-      setShowAddFacilities(false);
-      qc.invalidateQueries({ queryKey: ["facilities"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-  const updateFacilityFn = useServerFn(updateFacility);
-  const deleteFacilityFn = useServerFn(deleteFacility);
-  const updateFacilityMut = useMutation({
-    mutationFn: (input: { id: string; label: string }) => updateFacilityFn({ data: input }),
-    onSuccess: () => {
-      toast.success("Facility updated");
-      setEditingFacilityId(null);
-      qc.invalidateQueries({ queryKey: ["facilities"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-  const deleteFacilityMut = useMutation({
-    mutationFn: (input: { id: string }) => deleteFacilityFn({ data: input }),
-    onSuccess: () => {
-      toast.success("Facility deleted");
-      qc.invalidateQueries({ queryKey: ["facilities"] });
-    },
     onError: (e: any) => toast.error(e.message),
   });
 
