@@ -1,11 +1,17 @@
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { getMyProfile } from "@/lib/user-signup.functions";
 import { facilityLabel } from "@/lib/user-signup";
-import { User as UserIcon, Building2, Calendar } from "lucide-react";
+import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
+import { questionLabel } from "@/lib/security-questions";
+import { useI18n } from "@/lib/i18n";
+import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
+import { User as UserIcon, Building2, Calendar, Shield } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Reentry to Recovery" }] }),
@@ -19,19 +25,52 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPage() {
+  const { t } = useI18n();
+  const queryClient = useQueryClient();
   const fetchProfile = useServerFn(getMyProfile);
+  const fetchQuestions = useServerFn(getMySecurityQuestions);
+  const submitUpdate = useServerFn(updateSecurityAnswers);
+
   const { data, isLoading } = useQuery({
     queryKey: ["my-profile"],
     queryFn: () => fetchProfile(),
   });
+  const questionsQuery = useQuery({
+    queryKey: ["my-security-questions"],
+    queryFn: () => fetchQuestions(),
+  });
+
+  const [editing, setEditing] = useState(false);
+  const [pending, setPending] = useState<SecurityAnswerInput[]>([]);
+  const [busy, setBusy] = useState(false);
 
   const profile = data?.profile;
+  const currentKeys = questionsQuery.data?.keys ?? [];
+
+  async function handleSave() {
+    if (pending.length < 2) {
+      toast.error(t("security.needTwo"));
+      return;
+    }
+    setBusy(true);
+    try {
+      await submitUpdate({ data: { answers: pending.slice(0, 2) } });
+      toast.success(t("security.updateSuccess"));
+      setEditing(false);
+      setPending([]);
+      queryClient.invalidateQueries({ queryKey: ["my-security-questions"] });
+    } catch (err: any) {
+      toast.error(err.message ?? t("signup.genericError"));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <main className="flex-1 mx-auto w-full max-w-3xl px-6 py-12">
-        <h1 className="font-display text-3xl font-semibold">Dashboard</h1>
+        <h1 className="font-display text-3xl font-semibold">{t("nav.dashboard")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Your account information.</p>
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-6">
@@ -46,13 +85,13 @@ function DashboardPage() {
             <dl className="grid gap-5 sm:grid-cols-2">
               <div>
                 <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <UserIcon className="h-3.5 w-3.5" /> Username
+                  <UserIcon className="h-3.5 w-3.5" /> {t("signup.username")}
                 </dt>
                 <dd className="mt-1 font-medium">{profile.username}</dd>
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <Building2 className="h-3.5 w-3.5" /> Facility
+                  <Building2 className="h-3.5 w-3.5" /> {t("signup.facility")}
                 </dt>
                 <dd className="mt-1 font-medium">{facilityLabel(profile.facility)}</dd>
               </div>
@@ -65,6 +104,60 @@ function DashboardPage() {
                 </dd>
               </div>
             </dl>
+          )}
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold flex items-center gap-2">
+                <Shield className="h-4 w-4" /> {t("security.heading")}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t("security.intro")}</p>
+            </div>
+            {!editing && (
+              <button
+                onClick={() => setEditing(true)}
+                className="shrink-0 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:border-[var(--color-accent)] transition-colors"
+              >
+                {t("security.update")}
+              </button>
+            )}
+          </div>
+
+          {!editing ? (
+            <div className="mt-4">
+              {currentKeys.length === 0 ? (
+                <p className="text-sm text-muted-foreground">—</p>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {currentKeys.map((k) => (
+                    <li key={k} className="text-foreground">
+                      • {questionLabel(t, k)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <div className="mt-4 space-y-4">
+              <SecurityQuestionsForm onChange={setPending} rows={3} />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={busy}
+                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                >
+                  {busy ? "…" : t("security.save")}
+                </button>
+                <button
+                  onClick={() => { setEditing(false); setPending([]); }}
+                  className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:border-[var(--color-accent)] transition-colors"
+                >
+                  {t("security.cancel")}
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </main>
