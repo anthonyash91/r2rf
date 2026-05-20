@@ -223,3 +223,19 @@ export const setUserRole = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+export const clearUserSecurityAnswers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ userId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { error } = await supabaseAdmin
+      .from("user_security_answers")
+      .delete()
+      .eq("user_id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
