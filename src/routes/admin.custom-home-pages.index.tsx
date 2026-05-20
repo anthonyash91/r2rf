@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 const RESERVED_SLUGS = new Set([
   "admin",
@@ -404,16 +405,16 @@ function AdminCustomHomePagesList() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => {
                 setCreating(false);
                 resetForm();
               }}
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
             >
               Cancel
-            </button>
+            </Button>
             <button
               type="submit"
               disabled={createMut.isPending}

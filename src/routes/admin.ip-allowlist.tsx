@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Shield, ArrowLeft, LogIn, Pencil, Ban } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin/ip-allowlist")({
   beforeLoad: requireAdminBeforeLoad,
@@ -543,16 +544,16 @@ function AllowlistRow({
             className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
           />
           <div className="flex justify-end gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => {
                 setDraft(row.label ?? "");
                 setEditing(false);
               }}
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
             >
               Cancel
-            </button>
+            </Button>
             <button
               type="submit"
               disabled={updateMut.isPending}
