@@ -15,7 +15,6 @@ export const listFacilities = createServerFn({ method: "GET" }).handler(async ()
   const { data, error } = await supabaseAdmin
     .from("facilities")
     .select("id, value, label, sort_order")
-    .order("sort_order", { ascending: true })
     .order("label", { ascending: true });
   if (error) throw new Error(error.message);
   return {
