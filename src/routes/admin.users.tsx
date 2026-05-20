@@ -15,7 +15,7 @@ import {
   deleteUser,
   clearUserSecurityAnswers,
 } from "@/lib/users.functions";
-import { listFacilities, addFacilities } from "@/lib/facilities.functions";
+import { listFacilities, addFacilities, updateFacility, deleteFacility } from "@/lib/facilities.functions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
