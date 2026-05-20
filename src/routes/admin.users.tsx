@@ -286,6 +286,7 @@ function UserItem({
   onToggleAdmin,
   onToggleContributor,
   onDelete,
+  onResetSecurity,
 }: {
   user: UserRow;
   onChangeEmail: (email: string) => void;
@@ -294,6 +295,7 @@ function UserItem({
   onToggleAdmin: (enabled: boolean) => void;
   onToggleContributor: (enabled: boolean) => void;
   onDelete: () => void;
+  onResetSecurity: () => void;
 }) {
   const [editingEmail, setEditingEmail] = useState(false);
   const [emailDraft, setEmailDraft] = useState(user.email);
