@@ -7,6 +7,7 @@ import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const RESERVED_SLUGS = new Set([
   "admin",
