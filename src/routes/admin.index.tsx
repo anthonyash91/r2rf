@@ -214,7 +214,7 @@ function AdminCategoriesPage() {
                     <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
                   )}
                   <div className="@container flex-1 min-w-0">
-                    <div className="flex flex-col-reverse gap-y-[10px] @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
+                    <div className="flex flex-col-reverse gap-y-1 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
                       <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
                       <div className="flex flex-wrap items-center gap-2 @lg:contents">
                         <span
