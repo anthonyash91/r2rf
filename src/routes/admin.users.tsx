@@ -295,12 +295,77 @@ function AdminUsersPage() {
               <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
                 {facilities.length ? (
                   <ul className="divide-y divide-border">
-                    {facilities.map((f) => (
-                      <li key={f.value} className="p-4 sm:p-5 flex items-center justify-between gap-3">
-                        <span className="text-sm font-medium">{f.label}</span>
-                        <code className="text-xs text-muted-foreground font-mono">{f.value}</code>
-                      </li>
-                    ))}
+                    {facilities.map((f) => {
+                      const isEditing = editingFacilityId === f.id;
+                      return (
+                        <li key={f.value} className="p-4 sm:p-5 flex items-center justify-between gap-3">
+                          {isEditing ? (
+                            <>
+                              <input
+                                value={editingFacilityLabel}
+                                onChange={(e) => setEditingFacilityLabel(e.target.value)}
+                                className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                                autoFocus
+                              />
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    const label = editingFacilityLabel.trim();
+                                    if (!label) { toast.error("Label required"); return; }
+                                    updateFacilityMut.mutate({ id: f.id, label });
+                                  }}
+                                  disabled={updateFacilityMut.isPending}
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setEditingFacilityId(null)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-3 min-w-0">
+                                <span className="text-sm font-medium truncate">{f.label}</span>
+                                <code className="text-xs text-muted-foreground font-mono truncate">{f.value}</code>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setEditingFacilityId(f.id);
+                                    setEditingFacilityLabel(f.label);
+                                  }}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={async () => {
+                                    const ok = await confirm({
+                                      title: "Delete facility?",
+                                      description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
+                                      confirmLabel: "Delete",
+                                      destructive: true,
+                                    });
+                                    if (ok) deleteFacilityMut.mutate({ id: f.id });
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <div className="p-6 text-muted-foreground text-sm">No facilities yet.</div>
