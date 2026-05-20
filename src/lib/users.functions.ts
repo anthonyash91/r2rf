@@ -80,17 +80,24 @@ export const createUser = createServerFn({ method: "POST" })
         email: z.string().trim().email().max(255),
         password: z.string().min(8).max(72),
         emailConfirm: z.boolean().optional(),
+        role: z.enum(["admin", "contributor"]).optional(),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { error } = await supabaseAdmin.auth.admin.createUser({
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
       email_confirm: data.emailConfirm ?? true,
     });
     if (error) throw new Error(error.message);
+    if (data.role && created.user) {
+      const { error: roleErr } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: created.user.id, role: data.role });
+      if (roleErr) throw new Error(roleErr.message);
+    }
     return { ok: true };
   });
 
