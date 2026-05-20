@@ -68,18 +68,26 @@ function AdminFacilitiesPage() {
       <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to admin
       </Link>
-      <div className="mt-6">
-        <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-          <Building2 className="h-7 w-7" /> Facilities
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage facilities available in the signup form's facility dropdown.
-        </p>
+      <div className="mt-6 flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+            <Building2 className="h-7 w-7" /> Facilities
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage facilities available in the signup form's facility dropdown.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowAdd(true)}
+          disabled={showAdd}
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+        >
+          <Plus className="h-4 w-4" /> Add facilities
+        </button>
       </div>
 
       <section className="mt-8">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h2 className="font-display text-xl font-semibold">All facilities</h2>
+
           <button
             onClick={() => setShowAdd(true)}
             disabled={showAdd}
