@@ -235,7 +235,7 @@ function AdminUsersPage() {
                     className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
                   />
                   <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "contributor")}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectTrigger className="h-[38px] w-full sm:w-[180px]">
                       <SelectValue placeholder="Role" />
                     </SelectTrigger>
                     <SelectContent>
