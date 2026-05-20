@@ -50,6 +50,7 @@ function AdminUsersPage() {
   const setRole = useServerFn(setUserRole);
   const createFn = useServerFn(createUser);
   const deleteFn = useServerFn(deleteUser);
+  const clearSecFn = useServerFn(clearUserSecurityAnswers);
 
   const [showCreate, setShowCreate] = useState(false);
   const [newEmail, setNewEmail] = useState("");
