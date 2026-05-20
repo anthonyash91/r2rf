@@ -14,7 +14,7 @@ import {
 import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
 import { syntheticEmail, FACILITY_OPTIONS } from "@/lib/user-signup";
 import { questionLabel } from "@/lib/security-questions";
-import { type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/signup")({
