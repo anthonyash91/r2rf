@@ -18,6 +18,7 @@ import {
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/admin/users")({
   beforeLoad: requireAdminBeforeLoad,
@@ -55,6 +56,7 @@ function AdminUsersPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [facilityFilter, setFacilityFilter] = useState<string>("all");
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
@@ -262,13 +264,33 @@ function AdminUsersPage() {
               <p className="mt-1 text-xs text-muted-foreground">
                 Regular user accounts that signed up from the public form.
               </p>
-              <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
-                {regularUsers.length ? (
-                  <ul className="divide-y divide-border">{regularUsers.map(renderItem)}</ul>
-                ) : (
-                  <div className="p-6 text-muted-foreground text-sm">No users yet.</div>
-                )}
+              <div className="mt-3 flex justify-end">
+                <Select value={facilityFilter} onValueChange={setFacilityFilter}>
+                  <SelectTrigger className="w-[220px]">
+                    <SelectValue placeholder="Filter by facility" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All facilities</SelectItem>
+                    {Object.entries(FACILITY_LABELS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+              {(() => {
+                const filtered = facilityFilter === "all"
+                  ? regularUsers
+                  : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
+                return (
+                  <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+                    {filtered.length ? (
+                      <ul className="divide-y divide-border">{filtered.map(renderItem)}</ul>
+                    ) : (
+                      <div className="p-6 text-muted-foreground text-sm">No users for this facility.</div>
+                    )}
+                  </div>
+                );
+              })()}
             </section>
           </>
         );
