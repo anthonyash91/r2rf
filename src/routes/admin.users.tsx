@@ -399,18 +399,20 @@ function UserItem({
 
         <TooltipProvider delayDuration={150}>
           <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={onSendReset}
-                  aria-label="Send password reset email"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Send reset email</TooltipContent>
-            </Tooltip>
+            {!isRegularUser && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onSendReset}
+                    aria-label="Send password reset email"
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Send reset email</TooltipContent>
+              </Tooltip>
+            )}
 
             <Tooltip>
               <TooltipTrigger asChild>
@@ -425,41 +427,60 @@ function UserItem({
               <TooltipContent>Set password</TooltipContent>
             </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => {
-                    onToggleAdmin(!isAdmin);
-                  }}
-                  aria-label={isAdmin ? "Revoke admin" : "Make admin"}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
-                    isAdmin
-                      ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                      : "border-input bg-background hover:bg-muted"
-                  }`}
-                >
-                  {isAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{isAdmin ? "Revoke admin" : "Make admin"}</TooltipContent>
-            </Tooltip>
+            {isRegularUser && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onResetSecurity}
+                    aria-label="Reset security questions"
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Reset security questions</TooltipContent>
+              </Tooltip>
+            )}
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => onToggleContributor(!isContributor)}
-                  aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
-                    isContributor
-                      ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                      : "border-input bg-background hover:bg-muted"
-                  }`}
-                >
-                  {isContributor ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{isContributor ? "Revoke contributor" : "Make contributor"}</TooltipContent>
-            </Tooltip>
+            {!isRegularUser && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        onToggleAdmin(!isAdmin);
+                      }}
+                      aria-label={isAdmin ? "Revoke admin" : "Make admin"}
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
+                        isAdmin
+                          ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                          : "border-input bg-background hover:bg-muted"
+                      }`}
+                    >
+                      {isAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isAdmin ? "Revoke admin" : "Make admin"}</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => onToggleContributor(!isContributor)}
+                      aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
+                        isContributor
+                          ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                          : "border-input bg-background hover:bg-muted"
+                      }`}
+                    >
+                      {isContributor ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isContributor ? "Revoke contributor" : "Make contributor"}</TooltipContent>
+                </Tooltip>
+              </>
+            )}
 
             <div className="mx-1 h-6 w-px bg-border" aria-hidden />
 
