@@ -538,6 +538,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                       </TooltipTrigger>
                       <TooltipContent>Edit</TooltipContent>
                     </Tooltip>
+                    <div className="mx-1 h-6 w-px bg-border" aria-hidden />
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
