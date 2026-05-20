@@ -199,6 +199,66 @@ function AdminUsersPage() {
               <p className="mt-1 text-xs text-muted-foreground">
                 Accounts with admin or contributor access.
               </p>
+              <div className="mt-3 flex justify-end">
+                <button
+                  onClick={() => setShowCreate(true)}
+                  disabled={showCreate}
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+                >
+                  <UserPlus className="h-4 w-4" /> Add admin user
+                </button>
+              </div>
+              {showCreate && (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+                    createMut.mutate({ email: newEmail.trim(), password: newPassword, role: newRole });
+                  }}
+                  className="mt-3 rounded-2xl border border-border bg-card p-4 sm:p-5 flex flex-col sm:flex-row gap-2"
+                >
+                  <input
+                    type="email"
+                    required
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="user@example.com"
+                    className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                  />
+                  <input
+                    type="text"
+                    autoComplete="new-password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Password (min 8 chars)"
+                    className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                  />
+                  <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "contributor")}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                      <SelectValue placeholder="Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="contributor">Contributor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <button
+                    type="button"
+                    onClick={() => { setShowCreate(false); setNewEmail(""); setNewPassword(""); setNewRole("admin"); }}
+                    className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={createMut.isPending}
+                    className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  >
+                    Create
+                  </button>
+                </form>
+              )}
               <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
                 {adminUsers.length ? (
                   <ul className="divide-y divide-border">{adminUsers.map(renderItem)}</ul>
