@@ -187,6 +187,14 @@ export const setUserRole = createServerFn({ method: "POST" })
     }
 
     if (data.enabled) {
+      // Enforce single-role: remove any other roles before assigning the new one
+      const { error: delErr } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.userId)
+        .neq("role", data.role);
+      if (delErr) throw new Error(delErr.message);
+
       const { error } = await supabaseAdmin
         .from("user_roles")
         .upsert(
