@@ -1,0 +1,205 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireAdminBeforeLoad } from "@/lib/admin-guards";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { ArrowLeft, Building2, Plus, Pencil, Trash2, Check, X } from "lucide-react";
+import {
+  listFacilities,
+  addFacilities,
+  updateFacility,
+  deleteFacility,
+} from "@/lib/facilities.functions";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { Button } from "@/components/ui/button";
+
+export const Route = createFileRoute("/admin/facilities")({
+  beforeLoad: requireAdminBeforeLoad,
+  component: AdminFacilitiesPage,
+});
+
+function AdminFacilitiesPage() {
+  const qc = useQueryClient();
+  const confirm = useConfirm();
+
+  const fetchFacilities = useServerFn(listFacilities);
+  const addFacilitiesFn = useServerFn(addFacilities);
+  const updateFacilityFn = useServerFn(updateFacility);
+  const deleteFacilityFn = useServerFn(deleteFacility);
+
+  const [showAdd, setShowAdd] = useState(false);
+  const [newLabels, setNewLabels] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingLabel, setEditingLabel] = useState("");
+
+  const facilitiesQuery = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilities(),
+  });
+  const facilities = facilitiesQuery.data?.facilities ?? [];
+
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["facilities"] });
+
+  const addMut = useMutation({
+    mutationFn: (input: { facilities: { label: string }[] }) => addFacilitiesFn({ data: input }),
+    onSuccess: (res) => {
+      toast.success(`Added ${res.inserted} facility${res.inserted === 1 ? "" : "s"}`);
+      setNewLabels("");
+      setShowAdd(false);
+      invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const updateMut = useMutation({
+    mutationFn: (input: { id: string; label: string }) => updateFacilityFn({ data: input }),
+    onSuccess: () => { toast.success("Facility updated"); setEditingId(null); invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const deleteMut = useMutation({
+    mutationFn: (input: { id: string }) => deleteFacilityFn({ data: input }),
+    onSuccess: () => { toast.success("Facility deleted"); invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  return (
+    <div>
+      <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-4 w-4" /> Back to admin
+      </Link>
+      <div className="mt-6">
+        <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+          <Building2 className="h-7 w-7" /> Facilities
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Manage facilities available in the signup form's facility dropdown.
+        </p>
+      </div>
+
+      <section className="mt-8">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <h2 className="font-display text-xl font-semibold">All facilities</h2>
+          <button
+            onClick={() => setShowAdd(true)}
+            disabled={showAdd}
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+          >
+            <Plus className="h-4 w-4" /> Add facilities
+          </button>
+        </div>
+
+        {showAdd && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const labels = newLabels.split("\n").map((l) => l.trim()).filter(Boolean);
+              if (!labels.length) { toast.error("Enter at least one facility"); return; }
+              addMut.mutate({ facilities: labels.map((label) => ({ label })) });
+            }}
+            className="mt-3 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-2"
+          >
+            <label className="text-sm font-medium">New facilities (one per line)</label>
+            <textarea
+              value={newLabels}
+              onChange={(e) => setNewLabels(e.target.value)}
+              rows={4}
+              placeholder={"e.g.\nSpringfield, IL\nAustin, TX"}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => { setShowAdd(false); setNewLabels(""); }}
+                className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={addMut.isPending}
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              >
+                Add
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+          {facilitiesQuery.isLoading ? (
+            <div className="p-6 text-muted-foreground text-sm">Loading…</div>
+          ) : facilities.length ? (
+            <ul className="divide-y divide-border">
+              {facilities.map((f) => {
+                const isEditing = editingId === f.id;
+                return (
+                  <li key={f.value} className="p-4 sm:p-5 flex items-center justify-between gap-3">
+                    {isEditing ? (
+                      <>
+                        <input
+                          value={editingLabel}
+                          onChange={(e) => setEditingLabel(e.target.value)}
+                          className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                          autoFocus
+                        />
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              const label = editingLabel.trim();
+                              if (!label) { toast.error("Label required"); return; }
+                              updateMut.mutate({ id: f.id, label });
+                            }}
+                            disabled={updateMut.isPending}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="text-sm font-medium truncate">{f.label}</span>
+                          <code className="text-xs text-muted-foreground font-mono truncate">{f.value}</code>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => { setEditingId(f.id); setEditingLabel(f.label); }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={async () => {
+                              const ok = await confirm({
+                                title: "Delete facility?",
+                                description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
+                                confirmLabel: "Delete",
+                                destructive: true,
+                              });
+                              if (ok) deleteMut.mutate({ id: f.id });
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="p-6 text-muted-foreground text-sm">No facilities yet.</div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
