@@ -30,7 +30,9 @@ export default function PdfViewer({ url }: { url: string }) {
     };
   }, []);
 
-  useEffect(() => { setPageNumber(1); }, [url]);
+  useEffect(() => {
+    setPageNumber(1);
+  }, [url]);
 
   const pageWidth = width > 0 ? Math.max(width - 16, 1) : 0;
 
@@ -60,27 +62,27 @@ export default function PdfViewer({ url }: { url: string }) {
       {numPages > 1 && (
         <div className="shrink-0 overflow-x-auto border-t border-border bg-card p-2">
           <div className="flex min-w-max items-center justify-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
-            disabled={pageNumber <= 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium tabular-nums min-w-[80px] text-center">
-            {pageNumber} / {numPages}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
-            disabled={pageNumber >= numPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+              disabled={pageNumber <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium tabular-nums min-w-[80px] text-center">
+              {pageNumber} / {numPages}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
+              disabled={pageNumber >= numPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       )}
