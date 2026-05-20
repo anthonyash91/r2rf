@@ -46,6 +46,8 @@ function DashboardPage() {
 
   const profile = data?.profile;
   const currentKeys = questionsQuery.data?.keys ?? [];
+  const mustSetup = !questionsQuery.isLoading && currentKeys.length < 2;
+  const isEditing = editing || mustSetup;
 
   async function handleSave() {
     if (pending.length < 2) {
