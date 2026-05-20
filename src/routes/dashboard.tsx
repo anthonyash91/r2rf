@@ -129,7 +129,7 @@ function DashboardPage() {
 
           {mustSetup && (
             <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
-              An administrator has reset your security questions. Please choose new ones to continue using your account.
+              {t("security.setupPrompt")}
             </div>
           )}
 
