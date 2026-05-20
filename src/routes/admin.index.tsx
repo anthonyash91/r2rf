@@ -275,7 +275,7 @@ function AdminCategoriesPage() {
                   </div>
                 </div>
                 <TooltipProvider delayDuration={150}>
-                  <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 border-t sm:border-t-0 border-border pt-2 sm:pt-0 w-full sm:w-auto justify-end">
+                  <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
