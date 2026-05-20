@@ -28,7 +28,7 @@ function SignupPage() {
   const { user, loading } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>("sign-up");
+  const [mode, setMode] = useState<Mode>("sign-in");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [facility, setFacility] = useState<string>(FACILITY_OPTIONS[0].value);
