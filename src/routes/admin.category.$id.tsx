@@ -802,17 +802,21 @@ function ItemEditor({
               </button>
             </div>
           ) : (
-            <select
+            <Select
               value={type}
-              onChange={(e) => {
-                if (e.target.value === "__new__") setAddingType(true);
-                else setType(e.target.value);
+              onValueChange={(v) => {
+                if (v === "__new__") setAddingType(true);
+                else setType(v);
               }}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
-              {typeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
-              <option value="__new__">+ Add new type…</option>
-            </select>
+              <SelectTrigger className="mt-1 w-full shadow-none">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {typeOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                <SelectItem value="__new__">+ Add new type…</SelectItem>
+              </SelectContent>
+            </Select>
           )}
           {!addingType && typeOptions.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
