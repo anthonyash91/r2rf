@@ -117,7 +117,7 @@ function DashboardPage() {
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">{t("security.intro")}</p>
             </div>
-            {!editing && (
+            {!isEditing && (
               <button
                 onClick={() => setEditing(true)}
                 className="shrink-0 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:border-[var(--color-accent)] transition-colors"
@@ -127,7 +127,13 @@ function DashboardPage() {
             )}
           </div>
 
-          {!editing ? (
+          {mustSetup && (
+            <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+              An administrator has reset your security questions. Please choose new ones to continue using your account.
+            </div>
+          )}
+
+          {!isEditing ? (
             <div className="mt-4">
               {currentKeys.length === 0 ? (
                 <p className="text-sm text-muted-foreground">—</p>
@@ -152,16 +158,19 @@ function DashboardPage() {
                 >
                   {busy ? "…" : t("security.save")}
                 </button>
-                <button
-                  onClick={() => { setEditing(false); setPending([]); }}
-                  className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:border-[var(--color-accent)] transition-colors"
-                >
-                  {t("security.cancel")}
-                </button>
+                {!mustSetup && (
+                  <button
+                    onClick={() => { setEditing(false); setPending([]); }}
+                    className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:border-[var(--color-accent)] transition-colors"
+                  >
+                    {t("security.cancel")}
+                  </button>
+                )}
               </div>
             </div>
           )}
         </div>
+
       </main>
       <SiteFooter />
     </div>
