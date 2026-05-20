@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -16,17 +16,27 @@ export default function PdfViewer({ url }: { url: string }) {
   const [width, setWidth] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const update = () => setWidth(el.clientWidth);
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const nextWidth = Math.floor(el.getBoundingClientRect().width);
+        setWidth((currentWidth) => (currentWidth === nextWidth ? currentWidth : nextWidth));
+      });
+    };
     const ro = new ResizeObserver(update);
     ro.observe(el);
     window.addEventListener("resize", update);
+    window.visualViewport?.addEventListener("resize", update);
     update();
     return () => {
+      cancelAnimationFrame(frame);
       ro.disconnect();
       window.removeEventListener("resize", update);
+      window.visualViewport?.removeEventListener("resize", update);
     };
   }, []);
 
@@ -37,10 +47,12 @@ export default function PdfViewer({ url }: { url: string }) {
   const pageWidth = width > 0 ? Math.max(width - 16, 1) : 0;
 
   return (
-    <div className="flex h-[min(85dvh,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] min-h-0 w-full flex-col bg-background">
-      <div ref={containerRef} className="min-h-0 flex-1 overflow-auto p-2">
+    <div className="flex h-[min(85dvh,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden bg-background">
+      <div ref={containerRef} className="min-h-0 w-full min-w-0 max-w-full flex-1 overflow-auto p-2">
         <Document
           file={url}
+          key={url}
+          className="mx-auto w-fit max-w-none"
           onLoadSuccess={({ numPages }) => setNumPages(numPages)}
           loading={<div className="p-8 text-sm text-muted-foreground">Loading PDF…</div>}
           error={<div className="p-8 text-sm text-destructive">Failed to load PDF.</div>}
