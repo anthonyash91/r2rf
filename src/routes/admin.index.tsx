@@ -212,10 +212,10 @@ function AdminCategoriesPage() {
                   ) : (
                     <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
                   )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-col-reverse gap-y-[10px] sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2">
+                  <div className="@container flex-1 min-w-0">
+                    <div className="flex flex-col-reverse gap-y-[10px] @md:flex-row @md:flex-nowrap @md:items-center @md:gap-x-2">
                       <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
-                      <div className="flex flex-wrap items-center gap-2 sm:contents">
+                      <div className="flex flex-wrap items-center gap-2 @md:contents">
                         <span
                           title="Content items in this category"
                           className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border tabular-nums"
