@@ -6,7 +6,14 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getClientIp } from "./ip-allowlist";
 
 const FACILITIES = ["pennington_sd", "campbell_ky"] as const;
-const SYNTHETIC_EMAIL_DOMAIN = "users.local";
+const CHALLENGE_TTL_MS = 5 * 60 * 1000;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const RATE_LIMIT_MAX = 3;
+const USER_EMAIL_DOMAIN = "users.local";
+
+function syntheticEmailLocal(username: string): string {
+  return `${username.toLowerCase()}@${USER_EMAIL_DOMAIN}`;
+}
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const RATE_LIMIT_MAX = 3;
