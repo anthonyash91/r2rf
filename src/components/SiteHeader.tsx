@@ -28,8 +28,8 @@ export function SiteHeader() {
   // Show admin auth link to visitors whose IP is allowed (admin sign-in is IP-gated).
   const showAuthLink = authIp?.allowed === true;
   const isAdminUser = isAdmin || isContributor;
-  const signOutLabel = isAdminUser ? "Admin Sign Out" : "Sign out";
-  const signInLabel = "Admin Sign In";
+  const signOutLabel = isAdminUser ? t("nav.adminSignOut") : t("nav.signOut");
+  const signInLabel = t("nav.adminSignIn");
 
   const toggleLang = () => setLang(lang === "en" ? "es" : "en");
 
@@ -62,7 +62,7 @@ export function SiteHeader() {
           )}
           {isUser && (
             <Link to="/dashboard" className="hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
-              Dashboard
+              {t("nav.dashboard")}
             </Link>
           )}
           {user ? (
@@ -72,7 +72,7 @@ export function SiteHeader() {
           ) : (
             <>
               <Link to="/signup" className="hover:text-foreground transition-colors">
-                Sign up
+                {t("nav.signUp")}
               </Link>
               {showAuthLink && (
                 <Link to="/auth" className="hover:text-foreground transition-colors">
@@ -126,7 +126,7 @@ export function SiteHeader() {
             )}
             {isUser && (
               <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
-                Dashboard
+                {t("nav.dashboard")}
               </Link>
             )}
             {user ? (
@@ -139,7 +139,7 @@ export function SiteHeader() {
             ) : (
               <>
                 <Link to="/signup" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
-                  Sign up
+                  {t("nav.signUp")}
                 </Link>
                 {showAuthLink && (
                   <Link to="/auth" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
