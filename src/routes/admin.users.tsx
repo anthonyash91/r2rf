@@ -15,12 +15,11 @@ import {
   deleteUser,
   clearUserSecurityAnswers,
 } from "@/lib/users.functions";
-import { listFacilities, addFacilities, updateFacility, deleteFacility } from "@/lib/facilities.functions";
+import { listFacilities } from "@/lib/facilities.functions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/admin/users")({
   beforeLoad: requireAdminBeforeLoad,
@@ -56,10 +55,7 @@ function AdminUsersPage() {
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
-  const [showAddFacilities, setShowAddFacilities] = useState(false);
-  const [newFacilityLabels, setNewFacilityLabels] = useState("");
-  const [editingFacilityId, setEditingFacilityId] = useState<string | null>(null);
-  const [editingFacilityLabel, setEditingFacilityLabel] = useState("");
+  const [facilityFilter, setFacilityFilter] = useState<string>("all");
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
