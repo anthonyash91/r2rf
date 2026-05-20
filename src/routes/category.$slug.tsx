@@ -56,6 +56,7 @@ function CategoryPage() {
   const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
   const [imageViewer, setImageViewer] = useState<{ url: string; title: string } | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [othersApi, setOthersApi] = useState<CarouselApi>();
   const [othersCurrent, setOthersCurrent] = useState(0);
   const [othersCount, setOthersCount] = useState(0);
