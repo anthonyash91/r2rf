@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getClientIp } from "./ip-allowlist";
 
-type Role = "admin" | "contributor";
+type Role = "admin" | "contributor" | "user";
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", {
@@ -38,6 +38,11 @@ export const listUsers = createServerFn({ method: "GET" })
       .select("user_id, ip_address")
       .in("user_id", idsForQuery);
 
+    const { data: profileRows } = await supabaseAdmin
+      .from("user_profiles")
+      .select("user_id, username, facility")
+      .in("user_id", idsForQuery);
+
     const rolesByUser = new Map<string, Role[]>();
     for (const r of roleRows ?? []) {
       const arr = rolesByUser.get(r.user_id) ?? [];
@@ -48,6 +53,11 @@ export const listUsers = createServerFn({ method: "GET" })
     const ipByUser = new Map<string, string>();
     for (const r of ipRows ?? []) ipByUser.set(r.user_id, r.ip_address);
 
+    const profileByUser = new Map<string, { username: string; facility: string }>();
+    for (const p of profileRows ?? []) {
+      profileByUser.set(p.user_id, { username: p.username, facility: p.facility });
+    }
+
     return {
       users: usersData.users.map((u) => ({
         id: u.id,
@@ -57,6 +67,7 @@ export const listUsers = createServerFn({ method: "GET" })
         email_confirmed_at: (u as any).email_confirmed_at ?? null,
         roles: rolesByUser.get(u.id) ?? [],
         signup_ip: ipByUser.get(u.id) ?? null,
+        profile: profileByUser.get(u.id) ?? null,
       })),
     };
   });

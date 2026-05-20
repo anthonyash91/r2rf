@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
-export type AppRole = "admin" | "contributor";
+export type AppRole = "admin" | "contributor" | "user";
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -40,6 +40,7 @@ export function useAuth() {
 
   const isAdmin = roles.includes("admin");
   const isContributor = roles.includes("contributor");
+  const isUser = roles.includes("user");
 
   return {
     session,
@@ -47,6 +48,7 @@ export function useAuth() {
     roles,
     isAdmin,
     isContributor,
+    isUser,
     canAccessAdmin: isAdmin || isContributor,
     loading,
   };

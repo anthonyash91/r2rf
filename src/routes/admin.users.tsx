@@ -31,6 +31,12 @@ type UserRow = {
   email_confirmed_at: string | null;
   roles: string[];
   signup_ip: string | null;
+  profile: { username: string; facility: string } | null;
+};
+
+const FACILITY_LABELS: Record<string, string> = {
+  pennington_sd: "Pennington, SD",
+  campbell_ky: "Campbell, KY",
 };
 
 function AdminUsersPage() {
@@ -156,56 +162,101 @@ function AdminUsersPage() {
         </form>
       )}
 
-      <div className="mt-6 rounded-2xl border border-border bg-card overflow-hidden">
-        {isLoading ? (
-          <div className="p-6 text-muted-foreground">Loading…</div>
-        ) : !data?.users.length ? (
-          <div className="p-6 text-muted-foreground">No users yet.</div>
-        ) : (
-          <ul className="divide-y divide-border">
-            {data.users.map((u) => (
-              <UserItem
-                key={u.id}
-                user={u}
-                onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
-                onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
-                onSendReset={() => resetMut.mutate({ email: u.email })}
-                onToggleAdmin={async (enabled) => {
-                  const ok = await confirm({
-                    title: enabled ? "Make admin?" : "Revoke admin?",
-                    description: enabled
-                      ? `Grant admin role to ${u.email}? This will replace any existing role.`
-                      : `Remove admin role from ${u.email}?`,
-                    confirmLabel: enabled ? "Make admin" : "Revoke",
-                    destructive: !enabled,
-                  });
-                  if (ok) roleMut.mutate({ userId: u.id, role: "admin", enabled });
-                }}
-                onToggleContributor={async (enabled) => {
-                  const ok = await confirm({
-                    title: enabled ? "Make contributor?" : "Revoke contributor?",
-                    description: enabled
-                      ? `Grant contributor role to ${u.email}? This will replace any existing role.`
-                      : `Remove contributor role from ${u.email}?`,
-                    confirmLabel: enabled ? "Make contributor" : "Revoke",
-                    destructive: !enabled,
-                  });
-                  if (ok) roleMut.mutate({ userId: u.id, role: "contributor", enabled });
-                }}
-                onDelete={async () => {
-                  const ok = await confirm({
-                    title: "Delete user?",
-                    description: `Permanently delete ${u.email}? This cannot be undone.`,
-                    confirmLabel: "Delete",
-                    destructive: true,
-                  });
-                  if (ok) deleteMut.mutate({ userId: u.id });
-                }}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
+      {(() => {
+        if (isLoading) {
+          return (
+            <div className="mt-6 rounded-2xl border border-border bg-card p-6 text-muted-foreground">
+              Loading…
+            </div>
+          );
+        }
+        if (!data?.users.length) {
+          return (
+            <div className="mt-6 rounded-2xl border border-border bg-card p-6 text-muted-foreground">
+              No users yet.
+            </div>
+          );
+        }
+        const adminUsers = data.users.filter(
+          (u) => u.roles.includes("admin") || u.roles.includes("contributor"),
+        );
+        const regularUsers = data.users.filter(
+          (u) => !u.roles.includes("admin") && !u.roles.includes("contributor"),
+        );
+
+        const renderItem = (u: UserRow) => (
+          <UserItem
+            key={u.id}
+            user={u}
+            onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
+            onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
+            onSendReset={() => resetMut.mutate({ email: u.email })}
+            onToggleAdmin={async (enabled) => {
+              const ok = await confirm({
+                title: enabled ? "Make admin?" : "Revoke admin?",
+                description: enabled
+                  ? `Grant admin role to ${u.email}? This will replace any existing role.`
+                  : `Remove admin role from ${u.email}?`,
+                confirmLabel: enabled ? "Make admin" : "Revoke",
+                destructive: !enabled,
+              });
+              if (ok) roleMut.mutate({ userId: u.id, role: "admin", enabled });
+            }}
+            onToggleContributor={async (enabled) => {
+              const ok = await confirm({
+                title: enabled ? "Make contributor?" : "Revoke contributor?",
+                description: enabled
+                  ? `Grant contributor role to ${u.email}? This will replace any existing role.`
+                  : `Remove contributor role from ${u.email}?`,
+                confirmLabel: enabled ? "Make contributor" : "Revoke",
+                destructive: !enabled,
+              });
+              if (ok) roleMut.mutate({ userId: u.id, role: "contributor", enabled });
+            }}
+            onDelete={async () => {
+              const ok = await confirm({
+                title: "Delete user?",
+                description: `Permanently delete ${u.profile?.username || u.email}? This cannot be undone.`,
+                confirmLabel: "Delete",
+                destructive: true,
+              });
+              if (ok) deleteMut.mutate({ userId: u.id });
+            }}
+          />
+        );
+
+        return (
+          <>
+            <section className="mt-8">
+              <h2 className="font-display text-xl font-semibold">Admin Users</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Accounts with admin or contributor access.
+              </p>
+              <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+                {adminUsers.length ? (
+                  <ul className="divide-y divide-border">{adminUsers.map(renderItem)}</ul>
+                ) : (
+                  <div className="p-6 text-muted-foreground text-sm">No admin users.</div>
+                )}
+              </div>
+            </section>
+
+            <section className="mt-8">
+              <h2 className="font-display text-xl font-semibold">Users</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Regular user accounts that signed up from the public form.
+              </p>
+              <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+                {regularUsers.length ? (
+                  <ul className="divide-y divide-border">{regularUsers.map(renderItem)}</ul>
+                ) : (
+                  <div className="p-6 text-muted-foreground text-sm">No users yet.</div>
+                )}
+              </div>
+            </section>
+          </>
+        );
+      })()}
     </div>
   );
 }
@@ -236,11 +287,25 @@ function UserItem({
   const isAdmin = user.roles.includes("admin");
   const isContributor = user.roles.includes("contributor");
 
+  const isRegularUser = !!user.profile;
+
   return (
     <li className="p-4 sm:p-5">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="min-w-0 flex-1">
-          {editingEmail ? (
+          {isRegularUser ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono text-sm truncate">{user.profile!.username}</span>
+              <span className="inline-flex items-center gap-1 text-xs rounded-full bg-muted px-2 py-0.5 text-foreground border border-border">
+                {FACILITY_LABELS[user.profile!.facility] ?? user.profile!.facility}
+              </span>
+              {user.roles.includes("user") && (
+                <span className="inline-flex items-center gap-1 text-xs rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground border border-border">
+                  User
+                </span>
+              )}
+            </div>
+          ) : editingEmail ? (
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
               <input
@@ -311,6 +376,7 @@ function UserItem({
             )}
           </p>
         </div>
+
 
 
         <TooltipProvider delayDuration={150}>
