@@ -10,7 +10,7 @@ import { useActiveCustomHome } from "@/lib/custom-home-context";
 import { Languages, Menu, X } from "lucide-react";
 
 export function SiteHeader() {
-  const { user, canAccessAdmin } = useAuth();
+  const { user, canAccessAdmin, isUser } = useAuth();
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -57,15 +57,27 @@ export function SiteHeader() {
               Admin
             </Link>
           )}
-          {showAuthLink && (user ? (
+          {isUser && (
+            <Link to="/dashboard" className="hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
+              Dashboard
+            </Link>
+          )}
+          {user ? (
             <button onClick={handleSignOut} className="hover:text-foreground transition-colors">
               Sign out
             </button>
           ) : (
-            <Link to="/auth" className="hover:text-foreground transition-colors">
-              Sign in
-            </Link>
-          ))}
+            <>
+              <Link to="/signup" className="hover:text-foreground transition-colors">
+                Sign up
+              </Link>
+              {showAuthLink && (
+                <Link to="/auth" className="hover:text-foreground transition-colors">
+                  Sign in
+                </Link>
+              )}
+            </>
+          )}
           <button
             onClick={toggleLang}
             aria-label="Toggle language"
@@ -109,7 +121,12 @@ export function SiteHeader() {
                 Admin
               </Link>
             )}
-            {showAuthLink && (user ? (
+            {isUser && (
+              <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
+                Dashboard
+              </Link>
+            )}
+            {user ? (
               <button
                 onClick={() => { setOpen(false); handleSignOut(); }}
                 className="py-2 text-left hover:text-foreground transition-colors"
@@ -117,10 +134,17 @@ export function SiteHeader() {
                 Sign out
               </button>
             ) : (
-              <Link to="/auth" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
-                Sign in
-              </Link>
-            ))}
+              <>
+                <Link to="/signup" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
+                  Sign up
+                </Link>
+                {showAuthLink && (
+                  <Link to="/auth" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
+                    Sign in
+                  </Link>
+                )}
+              </>
+            )}
           </div>
         </nav>
       )}
