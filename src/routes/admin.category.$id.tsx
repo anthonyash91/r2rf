@@ -790,13 +790,13 @@ function ItemEditor({
               >
                 Add
               </button>
-              <Button
+              <button
                 type="button"
-                variant="outline"
+                className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                 onClick={cancelNewType}
               >
                 Cancel
-              </Button>
+              </button>
             </div>
           ) : (
             <select
@@ -1008,9 +1008,13 @@ function ItemEditor({
         </div>
       )}
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <button
+          type="button"
+          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+          onClick={onCancel}
+        >
           Cancel
-        </Button>
+        </button>
         <button
           type="submit"
           disabled={busy}
