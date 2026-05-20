@@ -200,7 +200,7 @@ function CategoryPage() {
                             <SelectContent>
                               <SelectItem value="all">All types</SelectItem>
                               {orderedKinds.map((k) => (
-                                <SelectItem key={k} value={k}>{filterLabels[k]}</SelectItem>
+                                <SelectItem key={k} value={k} className="capitalize">{translateType(lang, k)}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
