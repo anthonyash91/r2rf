@@ -332,7 +332,7 @@ function SignupPage() {
                     <label className="text-sm font-medium">{t("security.heading")}</label>
                     <p className="mt-1 text-xs text-muted-foreground">{t("security.intro")}</p>
                     <div className="mt-3">
-                      <SecurityQuestionsForm onChange={setSecurityAnswers} rows={3} />
+                      <SecurityQuestionsForm onChange={setSecurityAnswers} rows={2} />
                     </div>
                   </div>
 
