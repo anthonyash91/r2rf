@@ -394,8 +394,8 @@ function AdminCustomHomePagesList() {
                 };
                 return (
                   <div className="space-y-2">
-                    <Group title="Default categories" items={defaultCats} />
                     <Group title="Custom categories" items={customCats} />
+                    <Group title="Default categories" items={defaultCats} />
                   </div>
                 );
               })()
