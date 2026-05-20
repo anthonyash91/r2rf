@@ -269,11 +269,8 @@ function AdminUsersPage() {
             </section>
 
             <section className="mt-8">
-              <h2 className="font-display text-xl font-semibold">Users</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Regular user accounts that signed up from the public form.
-              </p>
-              <div className="mt-3 flex justify-end">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <h2 className="font-display text-xl font-semibold">Users</h2>
                 <Select value={facilityFilter} onValueChange={setFacilityFilter}>
                   <SelectTrigger className="w-[220px]">
                     <SelectValue placeholder="Filter by facility" />
@@ -286,6 +283,9 @@ function AdminUsersPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Regular user accounts that signed up from the public form.
+              </p>
               {(() => {
                 const filtered = facilityFilter === "all"
                   ? regularUsers
