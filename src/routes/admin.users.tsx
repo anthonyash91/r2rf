@@ -298,8 +298,8 @@ function AdminUsersPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All facilities</SelectItem>
-                    {Object.entries(FACILITY_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    {facilities.map((f) => (
+                      <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
