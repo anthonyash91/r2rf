@@ -329,8 +329,8 @@ function AdminCustomHomePageEdit() {
               };
               return (
                 <div className="space-y-2">
-                  {renderGroup("Default categories", defaultCats)}
                   {renderGroup("Custom categories", customCats)}
+                  {renderGroup("Default categories", defaultCats)}
                 </div>
               );
             })()
