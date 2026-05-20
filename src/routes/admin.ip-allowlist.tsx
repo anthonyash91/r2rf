@@ -544,16 +544,16 @@ function AllowlistRow({
             className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
           />
           <div className="flex justify-end gap-2">
-            <Button
+            <button
               type="button"
-              variant="outline"
+              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
               onClick={() => {
                 setDraft(row.label ?? "");
                 setEditing(false);
               }}
             >
               Cancel
-            </Button>
+            </button>
             <button
               type="submit"
               disabled={updateMut.isPending}
