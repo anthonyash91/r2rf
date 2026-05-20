@@ -10,7 +10,7 @@ import { useActiveCustomHome } from "@/lib/custom-home-context";
 import { Languages, Menu, X } from "lucide-react";
 
 export function SiteHeader() {
-  const { user, canAccessAdmin, isUser } = useAuth();
+  const { user, canAccessAdmin, isUser, isAdmin, isContributor } = useAuth();
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -25,8 +25,11 @@ export function SiteHeader() {
     queryFn: () => checkAuthIp(),
     staleTime: 60_000,
   });
-  // Show auth link to signed-in users (so they can sign out) or to visitors whose IP is allowed.
-  const showAuthLink = !!user || authIp?.allowed === true;
+  // Show admin auth link to visitors whose IP is allowed (admin sign-in is IP-gated).
+  const showAuthLink = authIp?.allowed === true;
+  const isAdminUser = isAdmin || isContributor;
+  const signOutLabel = isAdminUser ? "Admin Sign Out" : "Sign out";
+  const signInLabel = "Admin Sign In";
 
   const toggleLang = () => setLang(lang === "en" ? "es" : "en");
 
@@ -64,7 +67,7 @@ export function SiteHeader() {
           )}
           {user ? (
             <button onClick={handleSignOut} className="hover:text-foreground transition-colors">
-              Sign out
+              {signOutLabel}
             </button>
           ) : (
             <>
@@ -73,7 +76,7 @@ export function SiteHeader() {
               </Link>
               {showAuthLink && (
                 <Link to="/auth" className="hover:text-foreground transition-colors">
-                  Sign in
+                  {signInLabel}
                 </Link>
               )}
             </>
@@ -131,7 +134,7 @@ export function SiteHeader() {
                 onClick={() => { setOpen(false); handleSignOut(); }}
                 className="py-2 text-left hover:text-foreground transition-colors"
               >
-                Sign out
+                {signOutLabel}
               </button>
             ) : (
               <>
@@ -140,7 +143,7 @@ export function SiteHeader() {
                 </Link>
                 {showAuthLink && (
                   <Link to="/auth" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
-                    Sign in
+                    {signInLabel}
                   </Link>
                 )}
               </>
