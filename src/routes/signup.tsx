@@ -11,7 +11,10 @@ import {
   getSignupChallenge,
   signupUser,
 } from "@/lib/user-signup.functions";
+import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
 import { syntheticEmail, FACILITY_OPTIONS } from "@/lib/user-signup";
+import { questionLabel } from "@/lib/security-questions";
+import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/signup")({
@@ -19,20 +22,33 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
+type Mode = "sign-up" | "sign-in" | "reset";
+
 function SignupPage() {
   const { user, loading } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"sign-up" | "sign-in">("sign-up");
+  const [mode, setMode] = useState<Mode>("sign-up");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [facility, setFacility] = useState<string>(FACILITY_OPTIONS[0].value);
   const [answer, setAnswer] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
+  const [securityAnswers, setSecurityAnswers] = useState<SecurityAnswerInput[]>([]);
+
+  // Reset flow
+  const [resetStep, setResetStep] = useState<1 | 2>(1);
+  const [resetUsername, setResetUsername] = useState("");
+  const [resetQuestionKeys, setResetQuestionKeys] = useState<string[]>([]);
+  const [resetAnswer1, setResetAnswer1] = useState("");
+  const [resetAnswer2, setResetAnswer2] = useState("");
+  const [resetNewPassword, setResetNewPassword] = useState("");
 
   const getChallenge = useServerFn(getSignupChallenge);
   const submitSignup = useServerFn(signupUser);
+  const fetchResetQuestions = useServerFn(getResetQuestions);
+  const submitReset = useServerFn(resetPassword);
 
   const challengeQuery = useQuery({
     queryKey: ["signup-challenge"],
@@ -60,6 +76,10 @@ function SignupPage() {
           toast.error(t("signup.answerVerification"));
           return;
         }
+        if (securityAnswers.length < 2) {
+          toast.error(t("security.needTwo"));
+          return;
+        }
         await submitSignup({
           data: {
             username: uname,
@@ -68,6 +88,7 @@ function SignupPage() {
             challengeToken: challengeQuery.data.token,
             challengeAnswer: ans,
             honeypot,
+            securityAnswers: securityAnswers.slice(0, 2),
           },
         });
         const { error } = await supabase.auth.signInWithPassword({
@@ -94,116 +115,278 @@ function SignupPage() {
     }
   }
 
+  async function handleResetStart(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const uname = resetUsername.trim().toLowerCase();
+      const { keys } = await fetchResetQuestions({ data: { username: uname } });
+      setResetQuestionKeys(keys);
+      setResetStep(2);
+    } catch (err: any) {
+      toast.error(err.message ?? t("signup.genericError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleResetSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const uname = resetUsername.trim().toLowerCase();
+      await submitReset({
+        data: {
+          username: uname,
+          answers: [
+            { key: resetQuestionKeys[0], value: resetAnswer1 },
+            { key: resetQuestionKeys[1], value: resetAnswer2 },
+          ],
+          newPassword: resetNewPassword,
+        },
+      });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: syntheticEmail(uname),
+        password: resetNewPassword,
+      });
+      if (error) throw error;
+      toast.success(t("security.resetSuccess"));
+      navigate({ to: "/dashboard" });
+    } catch (err: any) {
+      toast.error(err.message ?? t("signup.genericError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <main className="flex-1 mx-auto w-full max-w-md px-6 py-16">
-        <h1 className="font-display text-3xl font-semibold">
-          {mode === "sign-up" ? t("signup.title") : t("signup.signInTitle")}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {mode === "sign-up"
-            ? t("signup.subtitleSignUp")
-            : t("signup.subtitleSignIn")}
-        </p>
+        {mode === "reset" ? (
+          <>
+            <h1 className="font-display text-3xl font-semibold">{t("security.resetTitle")}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {resetStep === 1 ? t("security.resetStep1") : t("security.resetStep2")}
+            </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4" autoComplete="off">
-          {/* honeypot */}
-          <div className="hidden" aria-hidden>
-            <label>
-              {t("signup.honeypot")}
-              <input
-                type="text"
-                tabIndex={-1}
-                autoComplete="off"
-                value={honeypot}
-                onChange={(e) => setHoneypot(e.target.value)}
-              />
-            </label>
-          </div>
+            {resetStep === 1 ? (
+              <form onSubmit={handleResetStart} className="mt-8 space-y-4">
+                <div>
+                  <label className="text-sm font-medium">{t("signup.username")}</label>
+                  <input
+                    type="text"
+                    required
+                    minLength={3}
+                    maxLength={32}
+                    pattern="[A-Za-z0-9_]{3,32}"
+                    value={resetUsername}
+                    onChange={(e) => setResetUsername(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                >
+                  {busy ? "…" : t("security.continue")}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleResetSubmit} className="mt-8 space-y-4">
+                <div>
+                  <label className="text-sm font-medium">
+                    {questionLabel(t, resetQuestionKeys[0] ?? "")}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    minLength={2}
+                    maxLength={200}
+                    value={resetAnswer1}
+                    onChange={(e) => setResetAnswer1(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">
+                    {questionLabel(t, resetQuestionKeys[1] ?? "")}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    minLength={2}
+                    maxLength={200}
+                    value={resetAnswer2}
+                    onChange={(e) => setResetAnswer2(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">{t("security.newPassword")}</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    maxLength={72}
+                    value={resetNewPassword}
+                    onChange={(e) => setResetNewPassword(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                >
+                  {busy ? "…" : t("security.resetSubmit")}
+                </button>
+              </form>
+            )}
 
-          <div>
-            <label className="text-sm font-medium">{t("signup.username")}</label>
-            <input
-              type="text"
-              required
-              minLength={3}
-              maxLength={32}
-              pattern="[A-Za-z0-9_]{3,32}"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              placeholder={t("signup.usernamePlaceholder")}
-            />
-          </div>
+            <button
+              onClick={() => {
+                setMode("sign-in");
+                setResetStep(1);
+                setResetAnswer1("");
+                setResetAnswer2("");
+                setResetNewPassword("");
+              }}
+              className="mt-4 text-sm text-muted-foreground hover:text-foreground"
+            >
+              {t("security.backToSignIn")}
+            </button>
+          </>
+        ) : (
+          <>
+            <h1 className="font-display text-3xl font-semibold">
+              {mode === "sign-up" ? t("signup.title") : t("signup.signInTitle")}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {mode === "sign-up" ? t("signup.subtitleSignUp") : t("signup.subtitleSignIn")}
+            </p>
 
-          <div>
-            <label className="text-sm font-medium">{t("signup.password")}</label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              maxLength={72}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
-          </div>
-
-          {mode === "sign-up" && (
-            <>
-              <div>
-                <label className="text-sm font-medium">{t("signup.facility")}</label>
-                <Select value={facility} onValueChange={setFacility}>
-                  <SelectTrigger className="mt-1 w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FACILITY_OPTIONS.map((f) => (
-                      <SelectItem key={f.value} value={f.value}>
-                        {t(`facility.${f.value}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <form onSubmit={handleSubmit} className="mt-8 space-y-4" autoComplete="off">
+              {/* honeypot */}
+              <div className="hidden" aria-hidden>
+                <label>
+                  {t("signup.honeypot")}
+                  <input
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                  />
+                </label>
               </div>
 
               <div>
-                <label className="text-sm font-medium">
-                  {t("signup.verification")}{" "}
-                  {challengeQuery.data
-                    ? t("signup.verificationQuestion", { a: challengeQuery.data.a, b: challengeQuery.data.b })
-                    : t("signup.loading")}
-                </label>
+                <label className="text-sm font-medium">{t("signup.username")}</label>
                 <input
-                  type="number"
+                  type="text"
                   required
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
+                  minLength={3}
+                  maxLength={32}
+                  pattern="[A-Za-z0-9_]{3,32}"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder={t("signup.usernamePlaceholder")}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">{t("signup.password")}</label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  maxLength={72}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
               </div>
-            </>
-          )}
 
-          <button
-            type="submit"
-            disabled={busy || (mode === "sign-up" && !challengeQuery.data)}
-            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-          >
-            {busy ? "…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
-          </button>
-        </form>
+              {mode === "sign-up" && (
+                <>
+                  <div>
+                    <label className="text-sm font-medium">{t("signup.facility")}</label>
+                    <Select value={facility} onValueChange={setFacility}>
+                      <SelectTrigger className="mt-1 w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FACILITY_OPTIONS.map((f) => (
+                          <SelectItem key={f.value} value={f.value}>
+                            {t(`facility.${f.value}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-        <button
-          onClick={() => {
-            setMode(mode === "sign-up" ? "sign-in" : "sign-up");
-            setAnswer("");
-          }}
-          className="mt-4 text-sm text-muted-foreground hover:text-foreground"
-        >
-          {mode === "sign-up" ? t("signup.toggleToSignIn") : t("signup.toggleToSignUp")}
-        </button>
+                  <div className="pt-2">
+                    <label className="text-sm font-medium">{t("security.heading")}</label>
+                    <p className="mt-1 text-xs text-muted-foreground">{t("security.intro")}</p>
+                    <div className="mt-3">
+                      <SecurityQuestionsForm onChange={setSecurityAnswers} rows={3} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">
+                      {t("signup.verification")}{" "}
+                      {challengeQuery.data
+                        ? t("signup.verificationQuestion", { a: challengeQuery.data.a, b: challengeQuery.data.b })
+                        : t("signup.loading")}
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  </div>
+                </>
+              )}
+
+              <button
+                type="submit"
+                disabled={busy || (mode === "sign-up" && !challengeQuery.data)}
+                className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              >
+                {busy ? "…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
+              </button>
+            </form>
+
+            <div className="mt-4 flex flex-col gap-2">
+              <button
+                onClick={() => {
+                  setMode(mode === "sign-up" ? "sign-in" : "sign-up");
+                  setAnswer("");
+                }}
+                className="text-sm text-muted-foreground hover:text-foreground text-left"
+              >
+                {mode === "sign-up" ? t("signup.toggleToSignIn") : t("signup.toggleToSignUp")}
+              </button>
+              {mode === "sign-in" && (
+                <button
+                  onClick={() => {
+                    setMode("reset");
+                    setResetStep(1);
+                  }}
+                  className="text-sm text-muted-foreground hover:text-foreground text-left"
+                >
+                  {t("security.forgotPassword")}
+                </button>
+              )}
+            </div>
+          </>
+        )}
 
         <p className="mt-8 text-xs text-muted-foreground">
           <Link to="/" className="underline">{t("signup.backToSite")}</Link>
