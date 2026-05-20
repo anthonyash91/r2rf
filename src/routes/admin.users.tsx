@@ -167,6 +167,7 @@ function AdminUsersPage() {
           <UserItem
             key={u.id}
             user={u}
+            facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""}
             onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
             onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
             onSendReset={() => resetMut.mutate({ email: u.email })}
