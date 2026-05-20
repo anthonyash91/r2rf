@@ -28,6 +28,7 @@ import { FileUploader } from "@/components/FileUploader";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { SortableList } from "@/components/SortableList";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/admin/category/$id")({
   validateSearch: (search: Record<string, unknown>) => ({
