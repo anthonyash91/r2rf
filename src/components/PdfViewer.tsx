@@ -30,14 +30,16 @@ export default function PdfViewer({ url }: { url: string }) {
     };
   }, []);
 
-  useEffect(() => { setPageNumber(1); }, [url]);
+  useEffect(() => {
+    setPageNumber(1);
+  }, [url]);
 
-  const pageWidth = width > 0 ? Math.max(width - 16, 700) : 0;
+  const pageWidth = width > 0 ? Math.max(width - 16, 1) : 0;
 
   return (
-    <div className="flex flex-col w-full h-[85vh] bg-background">
-      <div ref={containerRef} className="flex-1 overflow-auto p-2">
-        <div style={{ width: pageWidth || undefined }} className="mx-auto">
+    <div className="flex h-[min(85dvh,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] min-h-0 w-full flex-col bg-background">
+      <div ref={containerRef} className="min-h-0 flex-1 overflow-auto p-2">
+        <div style={{ width: pageWidth || undefined }} className="mx-auto max-w-none">
           <Document
             file={url}
             onLoadSuccess={({ numPages }) => setNumPages(numPages)}
@@ -48,6 +50,7 @@ export default function PdfViewer({ url }: { url: string }) {
               <Page
                 pageNumber={pageNumber}
                 width={pageWidth}
+                className="max-w-none"
                 renderAnnotationLayer={false}
                 renderTextLayer={false}
               />
@@ -57,28 +60,30 @@ export default function PdfViewer({ url }: { url: string }) {
       </div>
 
       {numPages > 1 && (
-        <div className="flex items-center justify-center gap-3 border-t border-border bg-card p-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
-            disabled={pageNumber <= 1}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm font-medium tabular-nums min-w-[80px] text-center">
-            {pageNumber} / {numPages}
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
-            disabled={pageNumber >= numPages}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        <div className="shrink-0 overflow-x-auto border-t border-border bg-card p-2">
+          <div className="flex min-w-max items-center justify-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+              disabled={pageNumber <= 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm font-medium tabular-nums min-w-[80px] text-center">
+              {pageNumber} / {numPages}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
+              disabled={pageNumber >= numPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
     </div>
