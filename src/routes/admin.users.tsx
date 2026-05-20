@@ -291,7 +291,7 @@ function UserItem({
                 <button
                   onClick={onSendReset}
                   aria-label="Send password reset email"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-input bg-background hover:bg-muted"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
                 >
                   <Send className="h-4 w-4" />
                 </button>
@@ -304,7 +304,7 @@ function UserItem({
                 <button
                   onClick={() => setPwOpen((v) => !v)}
                   aria-label="Set password"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-input bg-background hover:bg-muted"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
                 >
                   <KeyRound className="h-4 w-4" />
                 </button>
@@ -320,7 +320,7 @@ function UserItem({
                     onToggleAdmin(!isAdmin);
                   }}
                   aria-label={isAdmin ? "Revoke admin" : "Make admin"}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-md border ${
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
                     isAdmin
                       ? "border-destructive/30 text-destructive hover:bg-destructive/10"
                       : "border-input bg-background hover:bg-muted"
@@ -337,7 +337,7 @@ function UserItem({
                 <button
                   onClick={() => onToggleContributor(!isContributor)}
                   aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-md border ${
+                  className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
                     isContributor
                       ? "border-destructive/30 text-destructive hover:bg-destructive/10"
                       : "border-input bg-background hover:bg-muted"
@@ -356,7 +356,7 @@ function UserItem({
                 <button
                   onClick={onDelete}
                   aria-label="Delete user"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-md border border-destructive/30 text-destructive hover:bg-destructive/10"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
