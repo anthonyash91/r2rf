@@ -26,6 +26,7 @@ import { SortableList } from "@/components/SortableList";
 import { FileUploader } from "@/components/FileUploader";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
