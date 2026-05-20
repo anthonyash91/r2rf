@@ -12,7 +12,8 @@ import {
   signupUser,
 } from "@/lib/user-signup.functions";
 import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
-import { syntheticEmail, FACILITY_OPTIONS } from "@/lib/user-signup";
+import { syntheticEmail } from "@/lib/user-signup";
+import { listFacilities } from "@/lib/facilities.functions";
 import { questionLabel } from "@/lib/security-questions";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,7 +32,7 @@ function SignupPage() {
   const [mode, setMode] = useState<Mode>("sign-in");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [facility, setFacility] = useState<string>(FACILITY_OPTIONS[0].value);
+  const [facility, setFacility] = useState<string>("");
   const [answer, setAnswer] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
@@ -48,6 +49,15 @@ function SignupPage() {
   const getChallenge = useServerFn(getSignupChallenge);
   const submitSignup = useServerFn(signupUser);
   const fetchResetQuestions = useServerFn(getResetQuestions);
+  const fetchFacilities = useServerFn(listFacilities);
+  const facilitiesQuery = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilities(),
+  });
+  const facilities = facilitiesQuery.data?.facilities ?? [];
+  useEffect(() => {
+    if (!facility && facilities.length) setFacility(facilities[0].value);
+  }, [facilities, facility]);
   const submitReset = useServerFn(resetPassword);
 
   const challengeQuery = useQuery({
@@ -314,11 +324,15 @@ function SignupPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {FACILITY_OPTIONS.map((f) => (
-                          <SelectItem key={f.value} value={f.value}>
-                            {t(`facility.${f.value}`)}
-                          </SelectItem>
-                        ))}
+                        {facilities.map((f) => {
+                          const i18nKey = `facility.${f.value}`;
+                          const translated = t(i18nKey);
+                          return (
+                            <SelectItem key={f.value} value={f.value}>
+                              {translated === i18nKey ? f.label : translated}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
