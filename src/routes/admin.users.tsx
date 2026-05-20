@@ -16,6 +16,7 @@ import {
 } from "@/lib/users.functions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin/users")({
   beforeLoad: requireAdminBeforeLoad,
@@ -387,13 +388,13 @@ function UserItem({
             className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono"
           />
           <div className="flex justify-end gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => { setPw(""); setPwOpen(false); }}
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
             >
               Cancel
-            </button>
+            </Button>
             <button
               type="submit"
               className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"

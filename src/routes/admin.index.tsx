@@ -27,6 +27,7 @@ import { FileUploader } from "@/components/FileUploader";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
@@ -607,9 +608,9 @@ function NewCategoryForm({
       )}
 
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onCancel} className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted">
+        <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
-        </button>
+        </Button>
         <button
           type="submit"
           disabled={busy}
