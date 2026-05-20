@@ -292,18 +292,28 @@ function AdminCategoriesPage() {
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Link
-                          to="/category/$slug"
-                          params={{ slug: c.slug }}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label="View on site"
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
+                        {c.published ? (
+                          <Link
+                            to="/category/$slug"
+                            params={{ slug: c.slug }}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="View on site"
+                            className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        ) : (
+                          <span
+                            aria-label="View on site (unavailable for drafts)"
+                            aria-disabled="true"
+                            className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background opacity-50 cursor-not-allowed"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </span>
+                        )}
                       </TooltipTrigger>
-                      <TooltipContent>View on site</TooltipContent>
+                      <TooltipContent>{c.published ? "View on site" : "Unavailable while draft"}</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
