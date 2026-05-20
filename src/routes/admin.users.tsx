@@ -162,8 +162,28 @@ function AdminUsersPage() {
                 onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
                 onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
                 onSendReset={() => resetMut.mutate({ email: u.email })}
-                onToggleAdmin={(enabled) => roleMut.mutate({ userId: u.id, role: "admin", enabled })}
-                onToggleContributor={(enabled) => roleMut.mutate({ userId: u.id, role: "contributor", enabled })}
+                onToggleAdmin={async (enabled) => {
+                  const ok = await confirm({
+                    title: enabled ? "Make admin?" : "Revoke admin?",
+                    description: enabled
+                      ? `Grant admin role to ${u.email}? This will replace any existing role.`
+                      : `Remove admin role from ${u.email}?`,
+                    confirmLabel: enabled ? "Make admin" : "Revoke",
+                    destructive: !enabled,
+                  });
+                  if (ok) roleMut.mutate({ userId: u.id, role: "admin", enabled });
+                }}
+                onToggleContributor={async (enabled) => {
+                  const ok = await confirm({
+                    title: enabled ? "Make contributor?" : "Revoke contributor?",
+                    description: enabled
+                      ? `Grant contributor role to ${u.email}? This will replace any existing role.`
+                      : `Remove contributor role from ${u.email}?`,
+                    confirmLabel: enabled ? "Make contributor" : "Revoke",
+                    destructive: !enabled,
+                  });
+                  if (ok) roleMut.mutate({ userId: u.id, role: "contributor", enabled });
+                }}
                 onDelete={async () => {
                   const ok = await confirm({
                     title: "Delete user?",
@@ -317,7 +337,6 @@ function UserItem({
               <TooltipTrigger asChild>
                 <button
                   onClick={() => {
-                    if (isAdmin && !confirm(`Remove admin role from ${user.email}?`)) return;
                     onToggleAdmin(!isAdmin);
                   }}
                   aria-label={isAdmin ? "Revoke admin" : "Make admin"}
