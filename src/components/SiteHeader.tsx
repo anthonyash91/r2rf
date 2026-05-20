@@ -28,8 +28,8 @@ export function SiteHeader() {
   // Show admin auth link to visitors whose IP is allowed (admin sign-in is IP-gated).
   const showAuthLink = authIp?.allowed === true;
   const isAdminUser = isAdmin || isContributor;
-  const signOutLabel = isAdminUser ? "Admin Sign Out" : "Sign out";
-  const signInLabel = "Admin Sign In";
+  const signOutLabel = isAdminUser ? t("nav.adminSignOut") : t("nav.signOut");
+  const signInLabel = t("nav.adminSignIn");
 
   const toggleLang = () => setLang(lang === "en" ? "es" : "en");
 
