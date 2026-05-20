@@ -77,6 +77,7 @@ const translations: Record<Language, Dict> = {
 
     "security.heading": "Security questions",
     "security.intro": "Choose 2 questions and provide answers. You'll use these to reset your password.",
+    "security.setupPrompt": "Please choose and answer two security questions. These security questions will be used to reset your password if ever needed.",
     "security.chooseQuestion": "Choose a question",
     "security.yourAnswer": "Your answer",
     "security.update": "Update security questions",
@@ -178,6 +179,7 @@ const translations: Record<Language, Dict> = {
 
     "security.heading": "Preguntas de seguridad",
     "security.intro": "Elija 2 preguntas y proporcione respuestas. Las usará para restablecer su contraseña.",
+    "security.setupPrompt": "Por favor elija y responda dos preguntas de seguridad. Estas preguntas se usarán para restablecer su contraseña si alguna vez lo necesita.",
     "security.chooseQuestion": "Elija una pregunta",
     "security.yourAnswer": "Su respuesta",
     "security.update": "Actualizar preguntas de seguridad",
