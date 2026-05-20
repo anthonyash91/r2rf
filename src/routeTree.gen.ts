@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SpanishRouteImport } from './routes/spanish'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CustomHomeRouteImport } from './routes/$customHome'
@@ -30,6 +32,16 @@ import { Route as AdminCategoryIdRouteImport } from './routes/admin.category.$id
 const SpanishRoute = SpanishRouteImport.update({
   id: '/spanish',
   path: '/spanish',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -119,6 +131,8 @@ export interface FileRoutesByFullPath {
   '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
@@ -137,6 +151,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$customHome': typeof CustomHomeRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
@@ -156,6 +172,8 @@ export interface FileRoutesById {
   '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
@@ -177,6 +195,8 @@ export interface FileRouteTypes {
     | '/$customHome'
     | '/admin'
     | '/auth'
+    | '/dashboard'
+    | '/signup'
     | '/spanish'
     | '/admin/analytics'
     | '/admin/certificate'
@@ -195,6 +215,8 @@ export interface FileRouteTypes {
     | '/'
     | '/$customHome'
     | '/auth'
+    | '/dashboard'
+    | '/signup'
     | '/spanish'
     | '/admin/analytics'
     | '/admin/certificate'
@@ -213,6 +235,8 @@ export interface FileRouteTypes {
     | '/$customHome'
     | '/admin'
     | '/auth'
+    | '/dashboard'
+    | '/signup'
     | '/spanish'
     | '/admin/analytics'
     | '/admin/certificate'
@@ -233,6 +257,8 @@ export interface RootRouteChildren {
   CustomHomeRoute: typeof CustomHomeRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  DashboardRoute: typeof DashboardRoute
+  SignupRoute: typeof SignupRoute
   SpanishRoute: typeof SpanishRoute
   CategorySlugRoute: typeof CategorySlugRoute
   ApiPublicSitePasskeyRoute: typeof ApiPublicSitePasskeyRoute
@@ -245,6 +271,20 @@ declare module '@tanstack/react-router' {
       path: '/spanish'
       fullPath: '/spanish'
       preLoaderRoute: typeof SpanishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -404,6 +444,8 @@ const rootRouteChildren: RootRouteChildren = {
   CustomHomeRoute: CustomHomeRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  DashboardRoute: DashboardRoute,
+  SignupRoute: SignupRoute,
   SpanishRoute: SpanishRoute,
   CategorySlugRoute: CategorySlugRoute,
   ApiPublicSitePasskeyRoute: ApiPublicSitePasskeyRoute,
@@ -411,3 +453,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
