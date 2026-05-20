@@ -9,9 +9,8 @@ import { toast } from "sonner";
 import {
   getSignupChallenge,
   signupUser,
-  syntheticEmail,
-  FACILITY_OPTIONS,
 } from "@/lib/user-signup.functions";
+import { syntheticEmail, FACILITY_OPTIONS } from "@/lib/user-signup";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/signup")({

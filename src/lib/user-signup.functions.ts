@@ -96,7 +96,7 @@ export const signupUser = createServerFn({ method: "POST" })
     const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
     if (exists) throw new Error("That username is already taken.");
 
-    const email = syntheticEmail(data.username);
+    const email = syntheticEmailLocal(data.username);
 
     const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -155,11 +155,3 @@ export const getMyProfile = createServerFn({ method: "GET" }).handler(async () =
   };
 });
 
-export const FACILITY_OPTIONS: { value: typeof FACILITIES[number]; label: string }[] = [
-  { value: "pennington_sd", label: "Pennington, SD" },
-  { value: "campbell_ky", label: "Campbell, KY" },
-];
-
-export function facilityLabel(value: string | null | undefined): string {
-  return FACILITY_OPTIONS.find((f) => f.value === value)?.label ?? (value ?? "");
-}

@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { getMyProfile, facilityLabel } from "@/lib/user-signup.functions";
+import { getMyProfile } from "@/lib/user-signup.functions";
+import { facilityLabel } from "@/lib/user-signup";
 import { User as UserIcon, Building2, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard")({
