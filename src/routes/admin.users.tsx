@@ -15,10 +15,12 @@ import {
   deleteUser,
   clearUserSecurityAnswers,
 } from "@/lib/users.functions";
+import { listFacilities, addFacilities } from "@/lib/facilities.functions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Building2, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/admin/users")({
   beforeLoad: requireAdminBeforeLoad,
@@ -36,10 +38,6 @@ type UserRow = {
   profile: { username: string; facility: string } | null;
 };
 
-const FACILITY_LABELS: Record<string, string> = {
-  pennington_sd: "Pennington, SD",
-  campbell_ky: "Campbell, KY",
-};
 
 function AdminUsersPage() {
   const qc = useQueryClient();
