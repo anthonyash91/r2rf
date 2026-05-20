@@ -218,6 +218,77 @@ function AdminUsersPage() {
           <>
             <section className="mt-8">
               <div className="flex items-center justify-between gap-4 flex-wrap">
+                <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+                  <Building2 className="h-5 w-5" /> Facilities
+                </h2>
+                <button
+                  onClick={() => setShowAddFacilities(true)}
+                  disabled={showAddFacilities}
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+                >
+                  <Plus className="h-4 w-4" /> Add facilities
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Facilities available in the signup form's facility dropdown.
+              </p>
+              {showAddFacilities && (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const labels = newFacilityLabels
+                      .split("\n")
+                      .map((l) => l.trim())
+                      .filter(Boolean);
+                    if (!labels.length) { toast.error("Enter at least one facility"); return; }
+                    addFacilitiesMut.mutate({ facilities: labels.map((label) => ({ label })) });
+                  }}
+                  className="mt-3 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-2"
+                >
+                  <label className="text-sm font-medium">New facilities (one per line)</label>
+                  <textarea
+                    value={newFacilityLabels}
+                    onChange={(e) => setNewFacilityLabels(e.target.value)}
+                    rows={4}
+                    placeholder={"e.g.\nSpringfield, IL\nAustin, TX"}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => { setShowAddFacilities(false); setNewFacilityLabels(""); }}
+                      className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={addFacilitiesMut.isPending}
+                      className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </form>
+              )}
+              <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+                {facilities.length ? (
+                  <ul className="divide-y divide-border">
+                    {facilities.map((f) => (
+                      <li key={f.value} className="p-4 sm:p-5 flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium">{f.label}</span>
+                        <code className="text-xs text-muted-foreground font-mono">{f.value}</code>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="p-6 text-muted-foreground text-sm">No facilities yet.</div>
+                )}
+              </div>
+            </section>
+
+            <section className="mt-8">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
                 <h2 className="font-display text-xl font-semibold">Admin Users</h2>
                 <button
                   onClick={() => setShowCreate(true)}
