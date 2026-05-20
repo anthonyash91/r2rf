@@ -7,6 +7,7 @@ import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const RESERVED_SLUGS = new Set([
   "admin",
@@ -477,38 +478,57 @@ function AdminCustomHomePagesList() {
                     </div>
                   )}
                 </div>
-                <a
-                  href={`/${p.slug}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  title="Open"
-                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-                <Link
-                  to="/admin/custom-home-pages/$id"
-                  params={{ id: p.id }}
-                  title="Edit"
-                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Link>
-                <button
-                  title="Delete"
-                  onClick={async () => {
-                    const ok = await confirm({
-                      title: `Delete "${p.name || p.slug}"?`,
-                      description: `This permanently deletes the /${p.slug} page. Underlying categories are not affected.`,
-                      confirmLabel: "Delete",
-                      destructive: true,
-                    });
-                    if (ok) deleteMut.mutate(p.id);
-                  }}
-                  className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <TooltipProvider delayDuration={150}>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a
+                          href={`/${p.slug}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="Open"
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent>Open</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to="/admin/custom-home-pages/$id"
+                          params={{ id: p.id }}
+                          aria-label="Edit"
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          aria-label="Delete"
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: `Delete "${p.name || p.slug}"?`,
+                              description: `This permanently deletes the /${p.slug} page. Underlying categories are not affected.`,
+                              confirmLabel: "Delete",
+                              destructive: true,
+                            });
+                            if (ok) deleteMut.mutate(p.id);
+                          }}
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
               </li>
               );
             })}

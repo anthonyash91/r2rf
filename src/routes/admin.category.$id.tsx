@@ -28,6 +28,7 @@ import { FileUploader } from "@/components/FileUploader";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { SortableList } from "@/components/SortableList";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/admin/category/$id")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -495,46 +496,70 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2 mt-[8px]">{item.source} · {translateDuration(lang, withActionWord(item.duration, item.type))}</p>
                 </div>
-                <button
-                  title={item.published ? "Unpublish" : "Publish"}
-                  onClick={() => togglePublish.mutate(item)}
-                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-                >
-                  {item.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                </button>
-                <Link
-                  to="/category/$slug"
-                  params={{ slug: categorySlug }}
-                  hash={`item-${item.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="View on site"
-                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Link>
-                <button
-                  onClick={() => setEditing(item)}
-                  title="Edit"
-                  aria-label="Edit"
-                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={async () => {
-                    const ok = await confirm({
-                      title: `Delete "${item.title}"?`,
-                      description: "This content will be permanently removed.",
-                      confirmLabel: "Delete",
-                      destructive: true,
-                    });
-                    if (ok) deleteMut.mutate(item.id);
-                  }}
-                  className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <TooltipProvider delayDuration={150}>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          aria-label={item.published ? "Unpublish" : "Publish"}
+                          onClick={() => togglePublish.mutate(item)}
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                        >
+                          {item.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>{item.published ? "Unpublish" : "Publish"}</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to="/category/$slug"
+                          params={{ slug: categorySlug }}
+                          hash={`item-${item.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="View on site"
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>View on site</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setEditing(item)}
+                          aria-label="Edit"
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          aria-label="Delete"
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: `Delete "${item.title}"?`,
+                              description: "This content will be permanently removed.",
+                              confirmLabel: "Delete",
+                              destructive: true,
+                            });
+                            if (ok) deleteMut.mutate(item.id);
+                          }}
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
               </div>
               );
             }}

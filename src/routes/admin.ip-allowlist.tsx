@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Trash2, Shield, ArrowLeft, LogIn, Pencil, Ban } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/admin/ip-allowlist")({
   beforeLoad: requireAdminBeforeLoad,
@@ -204,22 +205,29 @@ function BlockedSection() {
                     {new Date(r.blocked_at).toLocaleString()}
                   </p>
                 </div>
-                <button
-                  title="Unblock"
-                  onClick={async () => {
-                    const ok = await confirm({
-                      title: `Unblock ${r.ip_address}?`,
-                      description:
-                        "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
-                      confirmLabel: "Unblock",
-                      destructive: true,
-                    });
-                    if (ok) deleteMut.mutate(r.id);
-                  }}
-                  className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        aria-label="Unblock"
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: `Unblock ${r.ip_address}?`,
+                            description:
+                              "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
+                            confirmLabel: "Unblock",
+                            destructive: true,
+                          });
+                          if (ok) deleteMut.mutate(r.id);
+                        }}
+                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Unblock</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </li>
             ))}
           </ul>
@@ -478,23 +486,37 @@ function AllowlistRow({
             <p className="text-xs text-muted-foreground truncate">{row.label}</p>
           )}
         </div>
-        <button
-          title="Edit label"
-          onClick={() => {
-            setDraft(row.label ?? "");
-            setEditing((v) => !v);
-          }}
-          className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-        >
-          <Pencil className="h-4 w-4" />
-        </button>
-        <button
-          title="Remove"
-          onClick={onDelete}
-          className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <TooltipProvider delayDuration={150}>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  aria-label="Edit label"
+                  onClick={() => {
+                    setDraft(row.label ?? "");
+                    setEditing((v) => !v);
+                  }}
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Edit label</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  aria-label="Remove"
+                  onClick={onDelete}
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Remove</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </div>
 
       {editing && (
