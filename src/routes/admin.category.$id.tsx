@@ -442,7 +442,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         <h2 className="font-display text-2xl font-semibold">Content</h2>
         <button
           onClick={() => setEditing("new")}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          disabled={editing === "new"}
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
         >
           <Plus className="h-4 w-4" /> New item
         </button>
