@@ -76,7 +76,8 @@ export const signupUser = createServerFn({ method: "POST" })
             }),
           )
           .length(2)
-          .refine((arr) => arr[0].key !== arr[1].key, "Choose two different questions"),
+          .refine((arr) => arr[0].key !== arr[1].key, "Choose two different questions")
+          .optional(),
       })
       .parse(input),
   )
