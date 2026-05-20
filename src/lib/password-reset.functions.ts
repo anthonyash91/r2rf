@@ -1,10 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { timingSafeEqual, randomBytes, createHash } from "crypto";
+import { createHash } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getClientIp } from "./ip-allowlist";
-import { SECURITY_QUESTION_KEYS, normalizeAnswer } from "./security-questions";
+import { SECURITY_QUESTION_KEYS } from "./security-questions";
+import { hashAnswer, verifyAnswer } from "./security-hash.server";
 
 const USER_EMAIL_DOMAIN = "users.local";
 const RESET_WINDOW_MS = 60 * 60 * 1000;
@@ -12,30 +13,6 @@ const RESET_MAX_PER_IP = 8;
 
 function syntheticEmailLocal(username: string): string {
   return `${username.toLowerCase()}@${USER_EMAIL_DOMAIN}`;
-}
-
-// Hash format: sha256$<saltHex>$<hashHex>
-export function hashAnswer(answer: string): string {
-  const salt = randomBytes(16).toString("hex");
-  const norm = normalizeAnswer(answer);
-  const hash = createHash("sha256").update(`${salt}:${norm}`).digest("hex");
-  return `sha256$${salt}$${hash}`;
-}
-
-function verifyAnswer(answer: string, stored: string): boolean {
-  try {
-    const parts = stored.split("$");
-    if (parts.length !== 3 || parts[0] !== "sha256") return false;
-    const [, salt, expected] = parts;
-    const norm = normalizeAnswer(answer);
-    const got = createHash("sha256").update(`${salt}:${norm}`).digest("hex");
-    const a = Buffer.from(expected, "hex");
-    const b = Buffer.from(got, "hex");
-    if (a.length !== b.length) return false;
-    return timingSafeEqual(a, b);
-  } catch {
-    return false;
-  }
 }
 
 const answersSchema = z
