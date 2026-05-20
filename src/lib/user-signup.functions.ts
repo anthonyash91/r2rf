@@ -76,7 +76,8 @@ export const signupUser = createServerFn({ method: "POST" })
             }),
           )
           .length(2)
-          .refine((arr) => arr[0].key !== arr[1].key, "Choose two different questions"),
+          .refine((arr) => arr[0].key !== arr[1].key, "Choose two different questions")
+          .optional(),
       })
       .parse(input),
   )
@@ -137,17 +138,19 @@ export const signupUser = createServerFn({ method: "POST" })
       throw new Error(roleErr.message);
     }
 
-    const securityRows = data.securityAnswers.map((a) => ({
-      user_id: userId,
-      question_key: a.key,
-      answer_hash: hashAnswer(a.value),
-    }));
-    const { error: secErr } = await supabaseAdmin.from("user_security_answers").insert(securityRows);
-    if (secErr) {
-      await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
-      await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
-      await supabaseAdmin.auth.admin.deleteUser(userId);
-      throw new Error(secErr.message);
+    if (data.securityAnswers && data.securityAnswers.length === 2) {
+      const securityRows = data.securityAnswers.map((a) => ({
+        user_id: userId,
+        question_key: a.key,
+        answer_hash: hashAnswer(a.value),
+      }));
+      const { error: secErr } = await supabaseAdmin.from("user_security_answers").insert(securityRows);
+      if (secErr) {
+        await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+        await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+        throw new Error(secErr.message);
+      }
     }
 
     if (ip) {

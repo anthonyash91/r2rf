@@ -14,7 +14,7 @@ import {
 import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
 import { syntheticEmail, FACILITY_OPTIONS } from "@/lib/user-signup";
 import { questionLabel } from "@/lib/security-questions";
-import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/signup")({
@@ -35,7 +35,7 @@ function SignupPage() {
   const [answer, setAnswer] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
-  const [securityAnswers, setSecurityAnswers] = useState<SecurityAnswerInput[]>([]);
+  
 
   // Reset flow
   const [resetStep, setResetStep] = useState<1 | 2>(1);
@@ -76,10 +76,6 @@ function SignupPage() {
           toast.error(t("signup.answerVerification"));
           return;
         }
-        if (securityAnswers.length < 2) {
-          toast.error(t("security.needTwo"));
-          return;
-        }
         await submitSignup({
           data: {
             username: uname,
@@ -88,7 +84,6 @@ function SignupPage() {
             challengeToken: challengeQuery.data.token,
             challengeAnswer: ans,
             honeypot,
-            securityAnswers: securityAnswers.slice(0, 2),
           },
         });
         const { error } = await supabase.auth.signInWithPassword({
@@ -328,13 +323,8 @@ function SignupPage() {
                     </Select>
                   </div>
 
-                  <div className="pt-2">
-                    <label className="text-sm font-medium">{t("security.heading")}</label>
-                    <p className="mt-1 text-xs text-muted-foreground">{t("security.intro")}</p>
-                    <div className="mt-3">
-                      <SecurityQuestionsForm onChange={setSecurityAnswers} rows={2} />
-                    </div>
-                  </div>
+
+
 
                   <div>
                     <label className="text-sm font-medium">
