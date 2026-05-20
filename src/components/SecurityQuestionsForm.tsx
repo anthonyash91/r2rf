@@ -12,7 +12,7 @@ export type SecurityAnswerInput = { key: string; value: string };
 type Props = {
   /** Called whenever the user's selections change. Returns up to 2 valid answers. */
   onChange: (answers: SecurityAnswerInput[]) => void;
-  /** Show 2 or 3 rows. Defaults to 3 (pick any 2). */
+  /** Number of question rows to show. Defaults to 2. */
   rows?: 2 | 3;
 };
 
@@ -21,7 +21,7 @@ type Props = {
  * dropdown (so users can swap if a random pick doesn't apply) plus a
  * free-text answer. Reports the first up-to-2 fully-filled distinct rows.
  */
-export function SecurityQuestionsForm({ onChange, rows = 3 }: Props) {
+export function SecurityQuestionsForm({ onChange, rows = 2 }: Props) {
   const { t } = useI18n();
   const initialKeys = useMemo(() => pickRandomQuestionKeys(rows), [rows]);
   const [questionKeys, setQuestionKeys] = useState<string[]>(initialKeys);
