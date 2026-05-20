@@ -116,6 +116,16 @@ function AdminUsersPage() {
     onSuccess: () => toast.success("Security questions reset. User must set new ones on next sign-in."),
     onError: (e: any) => toast.error(e.message),
   });
+  const addFacilitiesMut = useMutation({
+    mutationFn: (input: { facilities: { label: string }[] }) => addFacilitiesFn({ data: input }),
+    onSuccess: (res) => {
+      toast.success(`Added ${res.inserted} facility${res.inserted === 1 ? "" : "s"}`);
+      setNewFacilityLabels("");
+      setShowAddFacilities(false);
+      qc.invalidateQueries({ queryKey: ["facilities"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   return (
     <div>
