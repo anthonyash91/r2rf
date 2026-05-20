@@ -195,11 +195,8 @@ function AdminUsersPage() {
         return (
           <>
             <section className="mt-8">
-              <h2 className="font-display text-xl font-semibold">Admin Users</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Accounts with admin or contributor access.
-              </p>
-              <div className="mt-3 flex justify-end">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <h2 className="font-display text-xl font-semibold">Admin Users</h2>
                 <button
                   onClick={() => setShowCreate(true)}
                   disabled={showCreate}
@@ -208,6 +205,9 @@ function AdminUsersPage() {
                   <UserPlus className="h-4 w-4" /> Add admin user
                 </button>
               </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Accounts with admin or contributor access.
+              </p>
               {showCreate && (
                 <form
                   onSubmit={(e) => {
