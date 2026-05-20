@@ -14,9 +14,6 @@ const USER_EMAIL_DOMAIN = "users.local";
 function syntheticEmailLocal(username: string): string {
   return `${username.toLowerCase()}@${USER_EMAIL_DOMAIN}`;
 }
-const CHALLENGE_TTL_MS = 5 * 60 * 1000;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
-const RATE_LIMIT_MAX = 3;
 
 function getSecret(): string {
   const s = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_URL || "fallback-signup-secret";
@@ -49,9 +46,8 @@ function verifyChallenge(token: string, answer: number): boolean {
   }
 }
 
-export function syntheticEmail(username: string): string {
-  return `${username.toLowerCase()}@${SYNTHETIC_EMAIL_DOMAIN}`;
-}
+
+
 
 export const getSignupChallenge = createServerFn({ method: "GET" }).handler(async () => {
   const a = randomInt(1, 10);
