@@ -56,6 +56,7 @@ function AdminUsersPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
 
   const { data, isLoading } = useQuery({
@@ -86,10 +87,10 @@ function AdminUsersPage() {
     onError: (e: any) => toast.error(e.message),
   });
   const createMut = useMutation({
-    mutationFn: (input: { email: string; password: string }) => createFn({ data: input }),
+    mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" }) => createFn({ data: input }),
     onSuccess: () => {
       toast.success("User created");
-      setNewEmail(""); setNewPassword(""); setShowCreate(false);
+      setNewEmail(""); setNewPassword(""); setNewRole("admin"); setShowCreate(false);
       invalidate();
     },
     onError: (e: any) => toast.error(e.message),
