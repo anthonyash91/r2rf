@@ -97,6 +97,11 @@ function AdminUsersPage() {
     onSuccess: () => { toast.success("User deleted"); invalidate(); },
     onError: (e: any) => toast.error(e.message),
   });
+  const clearSecMut = useMutation({
+    mutationFn: (input: { userId: string }) => clearSecFn({ data: input }),
+    onSuccess: () => toast.success("Security questions reset. User must set new ones on next sign-in."),
+    onError: (e: any) => toast.error(e.message),
+  });
 
   return (
     <div>
