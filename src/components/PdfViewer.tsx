@@ -39,7 +39,7 @@ export default function PdfViewer({ url }: { url: string }) {
           {width > 0 && (
             <Page
               pageNumber={pageNumber}
-              width={width - 16}
+              width={Math.max(width - 16, 700)}
               renderAnnotationLayer={false}
               renderTextLayer={false}
             />
