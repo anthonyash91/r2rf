@@ -287,11 +287,25 @@ function UserItem({
   const isAdmin = user.roles.includes("admin");
   const isContributor = user.roles.includes("contributor");
 
+  const isRegularUser = !!user.profile;
+
   return (
     <li className="p-4 sm:p-5">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="min-w-0 flex-1">
-          {editingEmail ? (
+          {isRegularUser ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono text-sm truncate">{user.profile!.username}</span>
+              <span className="inline-flex items-center gap-1 text-xs rounded-full bg-muted px-2 py-0.5 text-foreground border border-border">
+                {FACILITY_LABELS[user.profile!.facility] ?? user.profile!.facility}
+              </span>
+              {user.roles.includes("user") && (
+                <span className="inline-flex items-center gap-1 text-xs rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground border border-border">
+                  User
+                </span>
+              )}
+            </div>
+          ) : editingEmail ? (
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
               <input
@@ -362,6 +376,7 @@ function UserItem({
             )}
           </p>
         </div>
+
 
 
         <TooltipProvider delayDuration={150}>
