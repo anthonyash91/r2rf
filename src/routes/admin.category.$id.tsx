@@ -30,6 +30,7 @@ import { SortableList } from "@/components/SortableList";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/admin/category/$id")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -235,14 +236,15 @@ function CategoryEditor({
         </div>
         <label className="block">
           <span className="text-sm font-medium">Home Page</span>
-          <select
-            value={homePageMode}
-            onChange={(e) => setHomePageMode(e.target.value as "default" | "custom")}
-            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="default">Default (main home page + all custom home pages)</option>
-            <option value="custom">Custom (only on selected custom home pages)</option>
-          </select>
+          <Select value={homePageMode} onValueChange={(v) => setHomePageMode(v as "default" | "custom")}>
+            <SelectTrigger className="mt-1 w-full shadow-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default (main home page + all custom home pages)</SelectItem>
+              <SelectItem value="custom">Custom (only on selected custom home pages)</SelectItem>
+            </SelectContent>
+          </Select>
         </label>
 
         <label className="inline-flex items-center gap-2 text-sm">
@@ -800,17 +802,21 @@ function ItemEditor({
               </button>
             </div>
           ) : (
-            <select
+            <Select
               value={type}
-              onChange={(e) => {
-                if (e.target.value === "__new__") setAddingType(true);
-                else setType(e.target.value);
+              onValueChange={(v) => {
+                if (v === "__new__") setAddingType(true);
+                else setType(v);
               }}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             >
-              {typeOptions.map((t) => <option key={t} value={t}>{t}</option>)}
-              <option value="__new__">+ Add new type…</option>
-            </select>
+              <SelectTrigger className="mt-1 w-full shadow-none">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {typeOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                <SelectItem value="__new__">+ Add new type…</SelectItem>
+              </SelectContent>
+            </Select>
           )}
           {!addingType && typeOptions.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
