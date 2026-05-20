@@ -10,7 +10,7 @@ const translations: Record<Language, Dict> = {
     "nav.admin": "Admin",
     "nav.signIn": "Sign in",
     "nav.signOut": "Sign out",
-    "nav.signUp": "Sign up",
+    "nav.signUp": "Sign In",
     "nav.dashboard": "Dashboard",
     "nav.adminSignIn": "Admin Sign In",
     "nav.adminSignOut": "Admin Sign Out",
