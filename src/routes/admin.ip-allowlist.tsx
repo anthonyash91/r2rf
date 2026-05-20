@@ -205,22 +205,29 @@ function BlockedSection() {
                     {new Date(r.blocked_at).toLocaleString()}
                   </p>
                 </div>
-                <button
-                  title="Unblock"
-                  onClick={async () => {
-                    const ok = await confirm({
-                      title: `Unblock ${r.ip_address}?`,
-                      description:
-                        "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
-                      confirmLabel: "Unblock",
-                      destructive: true,
-                    });
-                    if (ok) deleteMut.mutate(r.id);
-                  }}
-                  className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        aria-label="Unblock"
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: `Unblock ${r.ip_address}?`,
+                            description:
+                              "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
+                            confirmLabel: "Unblock",
+                            destructive: true,
+                          });
+                          if (ok) deleteMut.mutate(r.id);
+                        }}
+                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>Unblock</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </li>
             ))}
           </ul>
