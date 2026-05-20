@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
-import { LayoutGrid, Users, Shield, BarChart3, Home, Globe, Award } from "lucide-react";
+import { LayoutGrid, Users, Shield, BarChart3, Home, Globe, Award, Building2 } from "lucide-react";
 
 type NavLink = {
   to: string;
@@ -14,6 +14,7 @@ type NavLink = {
 const links: NavLink[] = [
   { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true, matchPrefixes: ["/admin/category"] },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true },
+  { to: "/admin/facilities", label: "Facilities", icon: Building2, adminOnly: true },
   { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
   { to: "/admin/custom-home-pages", label: "Home Pages", icon: Globe, adminOnly: true },

@@ -21,6 +21,7 @@ import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminIpAllowlistRouteImport } from './routes/admin.ip-allowlist'
 import { Route as AdminHomeRouteImport } from './routes/admin.home'
+import { Route as AdminFacilitiesRouteImport } from './routes/admin.facilities'
 import { Route as AdminCustomHomePagesRouteImport } from './routes/admin.custom-home-pages'
 import { Route as AdminCertificateRouteImport } from './routes/admin.certificate'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
@@ -89,6 +90,11 @@ const AdminHomeRoute = AdminHomeRouteImport.update({
   path: '/home',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminFacilitiesRoute = AdminFacilitiesRouteImport.update({
+  id: '/facilities',
+  path: '/facilities',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCustomHomePagesRoute = AdminCustomHomePagesRouteImport.update({
   id: '/custom-home-pages',
   path: '/custom-home-pages',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
+  '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/users': typeof AdminUsersRoute
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
+  '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/users': typeof AdminUsersRoute
@@ -178,6 +186,7 @@ export interface FileRoutesById {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
+  '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/users': typeof AdminUsersRoute
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/certificate'
     | '/admin/custom-home-pages'
+    | '/admin/facilities'
     | '/admin/home'
     | '/admin/ip-allowlist'
     | '/admin/users'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/spanish'
     | '/admin/analytics'
     | '/admin/certificate'
+    | '/admin/facilities'
     | '/admin/home'
     | '/admin/ip-allowlist'
     | '/admin/users'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/certificate'
     | '/admin/custom-home-pages'
+    | '/admin/facilities'
     | '/admin/home'
     | '/admin/ip-allowlist'
     | '/admin/users'
@@ -350,6 +362,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminHomeRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/facilities': {
+      id: '/admin/facilities'
+      path: '/facilities'
+      fullPath: '/admin/facilities'
+      preLoaderRoute: typeof AdminFacilitiesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/custom-home-pages': {
       id: '/admin/custom-home-pages'
       path: '/custom-home-pages'
@@ -419,6 +438,7 @@ interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminCertificateRoute: typeof AdminCertificateRoute
   AdminCustomHomePagesRoute: typeof AdminCustomHomePagesRouteWithChildren
+  AdminFacilitiesRoute: typeof AdminFacilitiesRoute
   AdminHomeRoute: typeof AdminHomeRoute
   AdminIpAllowlistRoute: typeof AdminIpAllowlistRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -430,6 +450,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminCertificateRoute: AdminCertificateRoute,
   AdminCustomHomePagesRoute: AdminCustomHomePagesRouteWithChildren,
+  AdminFacilitiesRoute: AdminFacilitiesRoute,
   AdminHomeRoute: AdminHomeRoute,
   AdminIpAllowlistRoute: AdminIpAllowlistRoute,
   AdminUsersRoute: AdminUsersRoute,

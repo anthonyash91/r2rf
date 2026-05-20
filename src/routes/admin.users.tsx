@@ -15,12 +15,11 @@ import {
   deleteUser,
   clearUserSecurityAnswers,
 } from "@/lib/users.functions";
-import { listFacilities, addFacilities, updateFacility, deleteFacility } from "@/lib/facilities.functions";
+import { listFacilities } from "@/lib/facilities.functions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/admin/users")({
   beforeLoad: requireAdminBeforeLoad,
@@ -56,10 +55,6 @@ function AdminUsersPage() {
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
-  const [showAddFacilities, setShowAddFacilities] = useState(false);
-  const [newFacilityLabels, setNewFacilityLabels] = useState("");
-  const [editingFacilityId, setEditingFacilityId] = useState<string | null>(null);
-  const [editingFacilityLabel, setEditingFacilityLabel] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
@@ -67,7 +62,6 @@ function AdminUsersPage() {
   });
 
   const fetchFacilities = useServerFn(listFacilities);
-  const addFacilitiesFn = useServerFn(addFacilities);
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
     queryFn: () => fetchFacilities(),
@@ -116,35 +110,6 @@ function AdminUsersPage() {
   const clearSecMut = useMutation({
     mutationFn: (input: { userId: string }) => clearSecFn({ data: input }),
     onSuccess: () => toast.success("Security questions reset. User must set new ones on next sign-in."),
-    onError: (e: any) => toast.error(e.message),
-  });
-  const addFacilitiesMut = useMutation({
-    mutationFn: (input: { facilities: { label: string }[] }) => addFacilitiesFn({ data: input }),
-    onSuccess: (res) => {
-      toast.success(`Added ${res.inserted} facility${res.inserted === 1 ? "" : "s"}`);
-      setNewFacilityLabels("");
-      setShowAddFacilities(false);
-      qc.invalidateQueries({ queryKey: ["facilities"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-  const updateFacilityFn = useServerFn(updateFacility);
-  const deleteFacilityFn = useServerFn(deleteFacility);
-  const updateFacilityMut = useMutation({
-    mutationFn: (input: { id: string; label: string }) => updateFacilityFn({ data: input }),
-    onSuccess: () => {
-      toast.success("Facility updated");
-      setEditingFacilityId(null);
-      qc.invalidateQueries({ queryKey: ["facilities"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-  const deleteFacilityMut = useMutation({
-    mutationFn: (input: { id: string }) => deleteFacilityFn({ data: input }),
-    onSuccess: () => {
-      toast.success("Facility deleted");
-      qc.invalidateQueries({ queryKey: ["facilities"] });
-    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -237,141 +202,8 @@ function AdminUsersPage() {
 
         return (
           <>
-            <section className="mt-8">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-                  <Building2 className="h-5 w-5" /> Facilities
-                </h2>
-                <button
-                  onClick={() => setShowAddFacilities(true)}
-                  disabled={showAddFacilities}
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
-                >
-                  <Plus className="h-4 w-4" /> Add facilities
-                </button>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Facilities available in the signup form's facility dropdown.
-              </p>
-              {showAddFacilities && (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const labels = newFacilityLabels
-                      .split("\n")
-                      .map((l) => l.trim())
-                      .filter(Boolean);
-                    if (!labels.length) { toast.error("Enter at least one facility"); return; }
-                    addFacilitiesMut.mutate({ facilities: labels.map((label) => ({ label })) });
-                  }}
-                  className="mt-3 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-2"
-                >
-                  <label className="text-sm font-medium">New facilities (one per line)</label>
-                  <textarea
-                    value={newFacilityLabels}
-                    onChange={(e) => setNewFacilityLabels(e.target.value)}
-                    rows={4}
-                    placeholder={"e.g.\nSpringfield, IL\nAustin, TX"}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => { setShowAddFacilities(false); setNewFacilityLabels(""); }}
-                      className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={addFacilitiesMut.isPending}
-                      className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </form>
-              )}
-              <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
-                {facilities.length ? (
-                  <ul className="divide-y divide-border">
-                    {facilities.map((f) => {
-                      const isEditing = editingFacilityId === f.id;
-                      return (
-                        <li key={f.value} className="p-4 sm:p-5 flex items-center justify-between gap-3">
-                          {isEditing ? (
-                            <>
-                              <input
-                                value={editingFacilityLabel}
-                                onChange={(e) => setEditingFacilityLabel(e.target.value)}
-                                className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
-                                autoFocus
-                              />
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  size="sm"
-                                  onClick={() => {
-                                    const label = editingFacilityLabel.trim();
-                                    if (!label) { toast.error("Label required"); return; }
-                                    updateFacilityMut.mutate({ id: f.id, label });
-                                  }}
-                                  disabled={updateFacilityMut.isPending}
-                                >
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => setEditingFacilityId(null)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="flex items-center gap-3 min-w-0">
-                                <span className="text-sm font-medium truncate">{f.label}</span>
-                                <code className="text-xs text-muted-foreground font-mono truncate">{f.value}</code>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    setEditingFacilityId(f.id);
-                                    setEditingFacilityLabel(f.label);
-                                  }}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={async () => {
-                                    const ok = await confirm({
-                                      title: "Delete facility?",
-                                      description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
-                                      confirmLabel: "Delete",
-                                      destructive: true,
-                                    });
-                                    if (ok) deleteFacilityMut.mutate({ id: f.id });
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                              </div>
-                            </>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <div className="p-6 text-muted-foreground text-sm">No facilities yet.</div>
-                )}
-              </div>
-            </section>
+
+
 
             <section className="mt-8">
               <div className="flex items-center justify-between gap-4 flex-wrap">
