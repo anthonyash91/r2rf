@@ -1137,7 +1137,7 @@ function defaultDurationForType(type: string): string {
   if (t.includes("link")) return "Click for more";
   if (t.includes("video")) return "5 min watch";
   if (t.includes("podcast") || t.includes("audio")) return "20 min listen";
-  if (t.includes("article")) return "5 min read";
+  if (t.includes("article")) return "Read article";
   if (t.includes("guide")) return "10 min read";
   if (t.includes("worksheet")) return "10 min complete";
   if (t.includes("meeting")) return "30 min meeting";
