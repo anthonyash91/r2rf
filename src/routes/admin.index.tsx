@@ -272,48 +272,70 @@ function AdminCategoriesPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 self-end sm:self-center shrink-0 border-t sm:border-t-0 border-border pt-2 sm:pt-0 w-full sm:w-auto justify-end">
-                  <button
-                    title={c.published ? "Unpublish" : "Publish"}
-                    onClick={() => togglePublish.mutate(c)}
-                    className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-                  >
-                    {c.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                  </button>
-                  <Link
-                    to="/category/$slug"
-                    params={{ slug: c.slug }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-                    title="View on site"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    to="/admin/category/$id"
-                    params={{ id: c.id }}
-                    className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-                    title="Edit"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Link>
-                  <button
-                    title="Delete"
-                    onClick={async () => {
-                      const ok = await confirm({
-                        title: `Delete "${c.name}"?`,
-                        description: "This will permanently delete the category and all its content.",
-                        confirmLabel: "Delete",
-                        destructive: true,
-                      });
-                      if (ok) deleteMut.mutate(c.id);
-                    }}
-                    className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+                <TooltipProvider delayDuration={150}>
+                  <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 border-t sm:border-t-0 border-border pt-2 sm:pt-0 w-full sm:w-auto justify-end">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          aria-label={c.published ? "Unpublish" : "Publish"}
+                          onClick={() => togglePublish.mutate(c)}
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                        >
+                          {c.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>{c.published ? "Unpublish" : "Publish"}</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to="/category/$slug"
+                          params={{ slug: c.slug }}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="View on site"
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>View on site</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link
+                          to="/admin/category/$id"
+                          params={{ id: c.id }}
+                          aria-label="Edit"
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          aria-label="Delete"
+                          onClick={async () => {
+                            const ok = await confirm({
+                              title: `Delete "${c.name}"?`,
+                              description: "This will permanently delete the category and all its content.",
+                              confirmLabel: "Delete",
+                              destructive: true,
+                            });
+                            if (ok) deleteMut.mutate(c.id);
+                          }}
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Delete</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
               </div>
             )}
           />
