@@ -105,10 +105,10 @@ function AdminUsersPage() {
           </p>
         </div>
         <button
-          onClick={() => setShowCreate((v) => !v)}
+          onClick={() => setShowCreate(true)}
           className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          <UserPlus className="h-4 w-4" /> {showCreate ? "Cancel" : "Add user"}
+          <UserPlus className="h-4 w-4" /> Add user
         </button>
       </div>
 
@@ -139,9 +139,16 @@ function AdminUsersPage() {
             className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
           />
           <button
+            type="button"
+            onClick={() => { setShowCreate(false); setNewEmail(""); setNewPassword(""); }}
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+          >
+            Cancel
+          </button>
+          <button
             type="submit"
             disabled={createMut.isPending}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           >
             Create
           </button>
