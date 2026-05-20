@@ -191,7 +191,7 @@ function SignupPage() {
             disabled={busy || (mode === "sign-up" && !challengeQuery.data)}
             className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           >
-            {busy ? "…" : mode === "sign-up" ? "Create account" : "Sign in"}
+            {busy ? "…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
           </button>
         </form>
 
@@ -202,13 +202,11 @@ function SignupPage() {
           }}
           className="mt-4 text-sm text-muted-foreground hover:text-foreground"
         >
-          {mode === "sign-up"
-            ? "Already have an account? Sign in"
-            : "Need an account? Sign up"}
+          {mode === "sign-up" ? t("signup.toggleToSignIn") : t("signup.toggleToSignUp")}
         </button>
 
         <p className="mt-8 text-xs text-muted-foreground">
-          <Link to="/" className="underline">Back to site</Link>
+          <Link to="/" className="underline">{t("signup.backToSite")}</Link>
         </p>
       </main>
       <SiteFooter />
