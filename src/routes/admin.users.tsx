@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe } from "lucide-react";
+import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle } from "lucide-react";
 import {
   listUsers,
   updateUserEmail,
@@ -13,6 +13,7 @@ import {
   setUserRole,
   createUser,
   deleteUser,
+  clearUserSecurityAnswers,
 } from "@/lib/users.functions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -49,6 +50,7 @@ function AdminUsersPage() {
   const setRole = useServerFn(setUserRole);
   const createFn = useServerFn(createUser);
   const deleteFn = useServerFn(deleteUser);
+  const clearSecFn = useServerFn(clearUserSecurityAnswers);
 
   const [showCreate, setShowCreate] = useState(false);
   const [newEmail, setNewEmail] = useState("");
@@ -93,6 +95,11 @@ function AdminUsersPage() {
   const deleteMut = useMutation({
     mutationFn: (input: { userId: string }) => deleteFn({ data: input }),
     onSuccess: () => { toast.success("User deleted"); invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const clearSecMut = useMutation({
+    mutationFn: (input: { userId: string }) => clearSecFn({ data: input }),
+    onSuccess: () => toast.success("Security questions reset. User must set new ones on next sign-in."),
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -222,6 +229,15 @@ function AdminUsersPage() {
               });
               if (ok) deleteMut.mutate({ userId: u.id });
             }}
+            onResetSecurity={async () => {
+              const ok = await confirm({
+                title: "Reset security questions?",
+                description: `Clear ${u.profile?.username || u.email}'s security questions? They'll be required to choose new ones the next time they sign in.`,
+                confirmLabel: "Reset",
+                destructive: true,
+              });
+              if (ok) clearSecMut.mutate({ userId: u.id });
+            }}
           />
         );
 
@@ -270,6 +286,7 @@ function UserItem({
   onToggleAdmin,
   onToggleContributor,
   onDelete,
+  onResetSecurity,
 }: {
   user: UserRow;
   onChangeEmail: (email: string) => void;
@@ -278,6 +295,7 @@ function UserItem({
   onToggleAdmin: (enabled: boolean) => void;
   onToggleContributor: (enabled: boolean) => void;
   onDelete: () => void;
+  onResetSecurity: () => void;
 }) {
   const [editingEmail, setEditingEmail] = useState(false);
   const [emailDraft, setEmailDraft] = useState(user.email);
@@ -381,18 +399,20 @@ function UserItem({
 
         <TooltipProvider delayDuration={150}>
           <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={onSendReset}
-                  aria-label="Send password reset email"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Send reset email</TooltipContent>
-            </Tooltip>
+            {!isRegularUser && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onSendReset}
+                    aria-label="Send password reset email"
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Send reset email</TooltipContent>
+              </Tooltip>
+            )}
 
             <Tooltip>
               <TooltipTrigger asChild>
@@ -407,41 +427,60 @@ function UserItem({
               <TooltipContent>Set password</TooltipContent>
             </Tooltip>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => {
-                    onToggleAdmin(!isAdmin);
-                  }}
-                  aria-label={isAdmin ? "Revoke admin" : "Make admin"}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
-                    isAdmin
-                      ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                      : "border-input bg-background hover:bg-muted"
-                  }`}
-                >
-                  {isAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{isAdmin ? "Revoke admin" : "Make admin"}</TooltipContent>
-            </Tooltip>
+            {isRegularUser && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={onResetSecurity}
+                    aria-label="Reset security questions"
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                  >
+                    <HelpCircle className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Reset security questions</TooltipContent>
+              </Tooltip>
+            )}
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => onToggleContributor(!isContributor)}
-                  aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
-                  className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
-                    isContributor
-                      ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                      : "border-input bg-background hover:bg-muted"
-                  }`}
-                >
-                  {isContributor ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{isContributor ? "Revoke contributor" : "Make contributor"}</TooltipContent>
-            </Tooltip>
+            {!isRegularUser && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => {
+                        onToggleAdmin(!isAdmin);
+                      }}
+                      aria-label={isAdmin ? "Revoke admin" : "Make admin"}
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
+                        isAdmin
+                          ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                          : "border-input bg-background hover:bg-muted"
+                      }`}
+                    >
+                      {isAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isAdmin ? "Revoke admin" : "Make admin"}</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => onToggleContributor(!isContributor)}
+                      aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
+                        isContributor
+                          ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                          : "border-input bg-background hover:bg-muted"
+                      }`}
+                    >
+                      {isContributor ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isContributor ? "Revoke contributor" : "Make contributor"}</TooltipContent>
+                </Tooltip>
+              </>
+            )}
 
             <div className="mx-1 h-6 w-px bg-border" aria-hidden />
 
