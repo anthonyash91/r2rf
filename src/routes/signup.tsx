@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
 import {
   getSignupChallenge,
   signupUser,
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/signup")({
 
 function SignupPage() {
   const { user, loading } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"sign-up" | "sign-in">("sign-up");
   const [username, setUsername] = useState("");
@@ -50,12 +52,12 @@ function SignupPage() {
       const uname = username.trim().toLowerCase();
       if (mode === "sign-up") {
         if (!challengeQuery.data) {
-          toast.error("Loading verification, please wait.");
+          toast.error(t("signup.loadingVerification"));
           return;
         }
         const ans = Number(answer);
         if (!Number.isFinite(ans)) {
-          toast.error("Please answer the verification question.");
+          toast.error(t("signup.answerVerification"));
           return;
         }
         await submitSignup({
@@ -73,18 +75,18 @@ function SignupPage() {
           password,
         });
         if (error) throw error;
-        toast.success("Welcome!");
+        toast.success(t("signup.welcome"));
         navigate({ to: "/dashboard" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: syntheticEmail(uname),
           password,
         });
-        if (error) throw new Error("Incorrect username or password.");
+        if (error) throw new Error(t("signup.invalidLogin"));
         navigate({ to: "/dashboard" });
       }
     } catch (err: any) {
-      toast.error(err.message ?? "Something went wrong.");
+      toast.error(err.message ?? t("signup.genericError"));
       if (mode === "sign-up") challengeQuery.refetch();
       setAnswer("");
     } finally {
@@ -97,19 +99,19 @@ function SignupPage() {
       <SiteHeader />
       <main className="flex-1 mx-auto w-full max-w-md px-6 py-16">
         <h1 className="font-display text-3xl font-semibold">
-          {mode === "sign-up" ? "Create your account" : "Sign in"}
+          {mode === "sign-up" ? t("signup.title") : t("signup.signInTitle")}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {mode === "sign-up"
-            ? "Sign up with a username and password. No email required."
-            : "Sign in with your username and password."}
+            ? t("signup.subtitleSignUp")
+            : t("signup.subtitleSignIn")}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-4" autoComplete="off">
           {/* honeypot */}
           <div className="hidden" aria-hidden>
             <label>
-              Leave this field empty
+              {t("signup.honeypot")}
               <input
                 type="text"
                 tabIndex={-1}
@@ -121,7 +123,7 @@ function SignupPage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium">Username</label>
+            <label className="text-sm font-medium">{t("signup.username")}</label>
             <input
               type="text"
               required
@@ -131,12 +133,12 @@ function SignupPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              placeholder="e.g. jdoe_92"
+              placeholder={t("signup.usernamePlaceholder")}
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium">Password</label>
+            <label className="text-sm font-medium">{t("signup.password")}</label>
             <input
               type="password"
               required
@@ -151,7 +153,7 @@ function SignupPage() {
           {mode === "sign-up" && (
             <>
               <div>
-                <label className="text-sm font-medium">Facility</label>
+                <label className="text-sm font-medium">{t("signup.facility")}</label>
                 <Select value={facility} onValueChange={setFacility}>
                   <SelectTrigger className="mt-1 w-full">
                     <SelectValue />
@@ -159,7 +161,7 @@ function SignupPage() {
                   <SelectContent>
                     {FACILITY_OPTIONS.map((f) => (
                       <SelectItem key={f.value} value={f.value}>
-                        {f.label}
+                        {t(`facility.${f.value}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -168,10 +170,10 @@ function SignupPage() {
 
               <div>
                 <label className="text-sm font-medium">
-                  Verification:{" "}
+                  {t("signup.verification")}{" "}
                   {challengeQuery.data
-                    ? `What is ${challengeQuery.data.a} + ${challengeQuery.data.b}?`
-                    : "Loading…"}
+                    ? t("signup.verificationQuestion", { a: challengeQuery.data.a, b: challengeQuery.data.b })
+                    : t("signup.loading")}
                 </label>
                 <input
                   type="number"
