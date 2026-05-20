@@ -339,6 +339,9 @@ function CategoryPage() {
                   })}
                 </ul>
               )}
+                  </>
+                );
+              })()}
             </section>
 
             {data.others.length > 0 && (
