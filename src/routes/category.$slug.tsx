@@ -176,27 +176,14 @@ function CategoryPage() {
             <section className="mx-auto max-w-5xl px-6 py-20">
               {(() => {
                 const itemsWithKind = data.items.map((item) => {
-                  const fileUrl = lang === "es" && item.file_url_es ? item.file_url_es : item.file_url;
-                  const fileMedia = detectMedia(fileUrl);
-                  const urlMedia = detectMedia(item.url);
-                  const mediaKind: MediaKind | null = fileMedia ?? urlMedia;
-                  const filterKey: string = mediaKind ?? (item.url ? "link" : "other");
+                  const filterKey = (item.type ?? "other").trim().toLowerCase() || "other";
                   return { item, filterKey };
                 });
                 const availableKinds = Array.from(new Set(itemsWithKind.map((i) => i.filterKey)));
-                const filterOrder = ["video", "audio", "pdf", "image", "link", "other"];
-                const filterLabels: Record<string, string> = {
-                  video: "Video",
-                  audio: "Audio",
-                  pdf: "PDF",
-                  image: "Image",
-                  link: "Link",
-                  other: "Other",
-                };
                 const filteredItems = typeFilter === "all"
                   ? data.items
                   : itemsWithKind.filter((i) => i.filterKey === typeFilter).map((i) => i.item);
-                const orderedKinds = filterOrder.filter((k) => availableKinds.includes(k));
+                const orderedKinds = availableKinds.sort((a, b) => a.localeCompare(b));
                 const showFilter = orderedKinds.length > 1;
                 return (
                   <>
