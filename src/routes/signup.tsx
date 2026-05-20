@@ -76,10 +76,6 @@ function SignupPage() {
           toast.error(t("signup.answerVerification"));
           return;
         }
-        if (securityAnswers.length < 2) {
-          toast.error(t("security.needTwo"));
-          return;
-        }
         await submitSignup({
           data: {
             username: uname,
@@ -88,7 +84,6 @@ function SignupPage() {
             challengeToken: challengeQuery.data.token,
             challengeAnswer: ans,
             honeypot,
-            securityAnswers: securityAnswers.slice(0, 2),
           },
         });
         const { error } = await supabase.auth.signInWithPassword({
