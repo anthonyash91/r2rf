@@ -1,6 +1,8 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
+
+const PdfViewer = lazy(() => import("@/components/PdfViewer"));
 import { trackCategoryView, trackContentClick } from "@/lib/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
@@ -394,12 +396,9 @@ function CategoryPage() {
         <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden">
           <DialogTitle className="sr-only">{pdfViewer?.title ?? "PDF"}</DialogTitle>
           {pdfViewer && (
-            <iframe
-              key={pdfViewer.url}
-              src={pdfViewer.url}
-              title={pdfViewer.title}
-              className="w-full h-[85vh] bg-background"
-            />
+            <Suspense fallback={<div className="p-8 text-sm text-muted-foreground h-[85vh]">Loading PDF…</div>}>
+              <PdfViewer key={pdfViewer.url} url={pdfViewer.url} />
+            </Suspense>
           )}
         </DialogContent>
       </Dialog>
