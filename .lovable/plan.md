@@ -1,74 +1,81 @@
+## Feature: Security Questions for User Password Reset
 
-## Goal
-Add a public regular-user signup flow (no email), a user dashboard, and split the admin Users page into "Admin Users" and "Users" sections.
+Adds a self-service password reset flow for regular users (the `user` role) based on two security questions chosen at signup. Admins are unaffected.
 
-## Database (migration)
+### 1. Question bank
 
-1. Add `'user'` to the `app_role` enum.
-2. Create `public.user_profiles`:
-   - `user_id uuid PK references auth.users on delete cascade`
-   - `username text unique not null` (lowercased)
-   - `facility text not null` (e.g. `pennington_sd`, `campbell_ky`)
-   - `created_at`, `updated_at`
-   - RLS: users can read/update their own row; admins manage all.
-3. RLS allow username uniqueness lookup via a `SECURITY DEFINER` function `public.username_exists(text)` so the signup form can validate without exposing the table publicly.
+A fixed pool of ~10 simple questions, e.g.:
+- What was the name of your first pet?
+- What city were you born in?
+- What is your mother's maiden name?
+- What was the make of your first car?
+- What was the name of your elementary school?
+- What is your favorite food?
+- What was your childhood nickname?
+- What street did you grow up on?
+- What is your favorite color?
+- What is your favorite movie?
 
-## Server functions
+On each signup the form randomly picks 3 from the bank and asks the user to pick any 2 and answer them (so users aren't locked into a single pair). Both question + answer are stored. Questions are also translated to Spanish via the existing i18n system.
 
-`src/lib/user-signup.functions.ts` (no auth middleware, uses `supabaseAdmin`):
+### 2. Database
 
-- `getSignupChallenge()` — returns `{ token, a, b }`. Token = base64(`${a}:${b}:${expiresAt}:${hmac}`) signed with `SIGNUP_CHALLENGE_SECRET` (auto-generated fallback). Used as math captcha.
-- `signupUser({ username, password, facility, challengeToken, challengeAnswer, honeypot })`:
-  - Reject if honeypot non-empty.
-  - Verify HMAC token, expiry (<5 min), and that `a+b === answer`.
-  - Rate limit: max 3 signups per IP per hour via `user_signup_ips` lookup.
-  - Validate username `^[a-z0-9_]{3,32}$`, password 8–72.
-  - Create auth user with synthetic email `${username}@users.local`, `email_confirm: true`.
-  - Insert `user_profiles` row.
-  - Assign `user` role.
-  - Record signup IP.
-  - Return `{ email }` so client can immediately `signInWithPassword`.
+New table `user_security_answers`:
+- `user_id` (uuid, FK to auth.users, cascade delete)
+- `question_key` (text, e.g. `first_pet`)
+- `answer_hash` (text, bcrypt-style hash of lowercased+trimmed answer)
+- `created_at`, `updated_at`
+- Unique on `(user_id, question_key)`; each user has exactly 2 rows.
 
-Update `src/lib/users.functions.ts`:
+RLS:
+- Users can view/insert/update/delete their own rows (via `auth.uid()`).
+- Admins can manage all.
+- Reset flow itself runs server-side via `supabaseAdmin` (no row exposure to anon).
 
-- `listUsers` now also returns each user's `profile: { username, facility } | null`.
+Plus a small `password_reset_attempts` table keyed by IP+username for rate limiting (5 failed attempts/hour → block 1 hour).
 
-## Frontend
+### 3. Server functions (`src/lib/password-reset.functions.ts`)
 
-### `/signup` route (public)
-- Form: username, password, facility `<Select>` (Pennington, SD / Campbell, KY), math captcha ("What is {a} + {b}?"), hidden honeypot input.
-- On submit: call `signupUser`, then `supabase.auth.signInWithPassword({ email: synthetic, password })`, then `navigate({ to: '/dashboard' })`.
-- Includes link to `/signup` toggle for "already have an account? sign in" → same form in sign-in mode (username → synthetic email lookup, then password sign-in).
+- `getResetQuestions({ username })` → returns the user's 2 `question_key`s (or generic error to avoid username enumeration leaking detail; always return 2 fake keys on miss, but the next step will fail).
+- `resetPassword({ username, answers: [{key, value}, {key, value}], newPassword })` → admin-side: looks up user, verifies both answer hashes, rate-limits, then `supabaseAdmin.auth.admin.updateUserById(id, { password })`. Returns `{ email }` so the client can immediately sign in.
+- `updateSecurityAnswers({ answers: [...] })` (auth-required) → replaces the signed-in user's 2 rows.
+- Signup flow extended: `signupUser` accepts `securityAnswers: [{key,value},{key,value}]` and writes hashes alongside profile creation. Signup is rejected if not exactly 2 distinct keys provided.
 
-### `/dashboard` route (auth-required, user role)
-- Shows account info: username, facility (pretty name), join date.
-- Loaded via server function reading the current user's profile.
+Hashing: use Web Crypto SHA-256 with a per-row random salt (workerd-compatible, no native bcrypt). Salt stored in the hash string as `salt$hex`.
 
-### `SiteHeader`
-- New `isUser` helper from `useAuth` (already has roles).
-- If signed in as plain `user` role: show `Dashboard` link (instead of `Admin`) + `Sign out`.
-- Show `Sign up` link for everyone (visible publicly) pointing to `/signup`.
-- Existing admin `Sign in` link stays gated by IP allowlist as it is today.
+### 4. Frontend
 
-### `/admin/users`
-- Split list into two sections: **Admin Users** (anyone with admin or contributor role) and **Users** (role = `user` or no role). Each section reuses `UserItem`. Users section displays `username` and facility instead of email when available.
+**`/signup`** — add a "Security questions" section after Facility:
+- Show 3 random question dropdowns (from bank) with answer inputs; client must fill at least 2. If all 3 are filled, take the first 2. Validation: answers ≥ 2 chars.
 
-## Tech details / files
+**`/signup` (sign-in mode)** — add a "Forgot password?" link → opens a small inline flow:
+1. Enter username → fetch questions.
+2. Answer both questions + enter new password (min 8) → submit.
+3. On success, auto sign-in and redirect to `/dashboard`.
+
+**`/dashboard`** — add a "Security questions" card:
+- Shows current 2 questions (not answers).
+- "Update questions" button reveals the same 3-random-question selector + answer inputs to replace both rows. Submitting calls `updateSecurityAnswers`.
+
+All new strings added to `src/lib/i18n.tsx` for EN + ES.
+
+### Technical notes
+
+- Question keys are stable identifiers; labels come from i18n (`security.q.first_pet`, etc.) so they translate automatically.
+- Answers normalized before hashing: `value.trim().toLowerCase()`.
+- Rate limit and answer comparison both use constant-time compare.
+- No email is exposed; reset uses synthetic `{username}@users.local` internally.
+- Existing users with no security answers: dashboard prompts them to set 2 the next time they sign in; reset flow returns generic error.
+
+### Files
 
 New:
-- `supabase/migrations/...` via migration tool
-- `src/lib/user-signup.functions.ts`
-- `src/routes/signup.tsx`
-- `src/routes/dashboard.tsx`
+- `src/lib/password-reset.functions.ts`
+- `src/lib/security-questions.ts` (shared question bank + key list)
+- `supabase/migrations/<ts>_security_questions.sql`
 
-Modified:
-- `src/lib/users.functions.ts` (listUsers includes profile)
-- `src/routes/admin.users.tsx` (split sections, show username/facility)
-- `src/components/SiteHeader.tsx` (Dashboard + public Sign up link)
-- `src/hooks/use-auth.ts` (expose `isUser`)
-
-## Anti-spam summary
-1. Honeypot hidden field.
-2. Server-issued HMAC-signed math challenge with 5-minute expiry.
-3. Per-IP rate limit (3 signups/hour) via `user_signup_ips`.
-4. Strict username regex + password length.
+Edited:
+- `src/lib/user-signup.functions.ts` (accept + store answers on signup)
+- `src/routes/signup.tsx` (signup question selector + forgot-password flow)
+- `src/routes/dashboard.tsx` (manage questions card)
+- `src/lib/i18n.tsx` (EN/ES strings for questions + UI labels)

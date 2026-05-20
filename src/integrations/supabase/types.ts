@@ -325,6 +325,27 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string
+          username?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           created_at: string
@@ -387,6 +408,33 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_security_answers: {
+        Row: {
+          answer_hash: string
+          created_at: string
+          id: string
+          question_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answer_hash: string
+          created_at?: string
+          id?: string
+          question_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answer_hash?: string
+          created_at?: string
+          id?: string
+          question_key?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
