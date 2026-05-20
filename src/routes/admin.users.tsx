@@ -126,6 +126,25 @@ function AdminUsersPage() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+  const updateFacilityFn = useServerFn(updateFacility);
+  const deleteFacilityFn = useServerFn(deleteFacility);
+  const updateFacilityMut = useMutation({
+    mutationFn: (input: { id: string; label: string }) => updateFacilityFn({ data: input }),
+    onSuccess: () => {
+      toast.success("Facility updated");
+      setEditingFacilityId(null);
+      qc.invalidateQueries({ queryKey: ["facilities"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const deleteFacilityMut = useMutation({
+    mutationFn: (input: { id: string }) => deleteFacilityFn({ data: input }),
+    onSuccess: () => {
+      toast.success("Facility deleted");
+      qc.invalidateQueries({ queryKey: ["facilities"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
 
   return (
     <div>
