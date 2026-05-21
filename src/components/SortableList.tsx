@@ -3,6 +3,8 @@ import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
+
 
 export function SortableList<T extends { id: string }>({
   items,
