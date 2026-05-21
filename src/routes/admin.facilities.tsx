@@ -167,31 +167,45 @@ function AdminFacilitiesPage() {
                           <span className="text-sm font-medium truncate">{f.label}</span>
                           <code className="text-xs text-muted-foreground font-mono truncate">{f.value}</code>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => { setEditingId(f.id); setEditingLabel(f.label); }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={async () => {
-                              const ok = await confirm({
-                                title: "Delete facility?",
-                                description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
-                                confirmLabel: "Delete",
-                                destructive: true,
-                              });
-                              if (ok) deleteMut.mutate({ id: f.id });
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                        <TooltipProvider delayDuration={150}>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  aria-label="Edit"
+                                  onClick={() => { setEditingId(f.id); setEditingLabel(f.label); }}
+                                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit</TooltipContent>
+                            </Tooltip>
+                            <div className="mx-1 h-6 w-px bg-border" aria-hidden />
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  aria-label="Delete"
+                                  onClick={async () => {
+                                    const ok = await confirm({
+                                      title: "Delete facility?",
+                                      description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
+                                      confirmLabel: "Delete",
+                                      destructive: true,
+                                    });
+                                    if (ok) deleteMut.mutate({ id: f.id });
+                                  }}
+                                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </TooltipProvider>
                       </>
+
                     )}
                   </li>
                 );
