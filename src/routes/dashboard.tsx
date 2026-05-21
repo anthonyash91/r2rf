@@ -12,6 +12,7 @@ import { questionLabel } from "@/lib/security-questions";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
 import { User as UserIcon, Building2, Calendar, Shield } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import type { Category } from "@/lib/categories";
 
 
