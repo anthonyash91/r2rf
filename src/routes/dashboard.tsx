@@ -362,3 +362,126 @@ function DashboardPage() {
     </div>
   );
 }
+
+type CatItem = {
+  id: string;
+  title: string;
+  title_es: string | null;
+  description: string;
+  description_es: string | null;
+  type: string;
+};
+
+function CategoryProgressSection({
+  category,
+  items,
+  readSet,
+  total,
+  read,
+  isAdmin,
+  lang,
+  t,
+}: {
+  category: Category;
+  items: CatItem[];
+  readSet: Set<string>;
+  total: number;
+  read: number;
+  isAdmin: boolean;
+  lang: "en" | "es";
+  t: (key: string) => string;
+}) {
+  const [open, setOpen] = useState(false);
+  const pct = total > 0 ? Math.round((read / total) * 100) : 0;
+  const tagline = pickLang(lang, category.tagline, category.tagline_es);
+
+  return (
+    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 border-b border-border bg-muted/30 text-left hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
+          {category.icon_url ? (
+            <img src={category.icon_url} alt="" className="h-10 w-10 object-cover border border-border bg-muted flex-shrink-0 rounded-md" />
+          ) : (
+            <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
+          )}
+          <div className="min-w-0">
+            <h2 className="font-display text-lg font-semibold truncate">
+              {pickLang(lang, category.name, category.name_es)}
+            </h2>
+            {tagline && (
+              <p className="text-xs text-muted-foreground truncate">{tagline}</p>
+            )}
+          </div>
+        </div>
+        {!isAdmin && (
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="hidden sm:block w-32">
+              <Progress value={pct} className="h-1.5" />
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
+              <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+              <span className="tabular-nums">{read.toLocaleString()}</span>
+              <span className="text-muted-foreground">/ {total.toLocaleString()}</span>
+            </span>
+            <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium tabular-nums">
+              {pct}%
+            </span>
+          </div>
+        )}
+      </button>
+      {open && (
+        items.length === 0 ? (
+          <p className="p-5 text-sm text-muted-foreground">{t("category.noContent")}</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {items.map((it) => {
+              const isRead = readSet.has(it.id);
+              const description = pickLang(lang, it.description, it.description_es);
+              return (
+                <li key={it.id} className="flex items-start gap-3 p-4">
+                  <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
+                    {it.type}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <Link
+                      to="/category/$slug"
+                      params={{ slug: category.slug }}
+                      hash={`item-${it.id}`}
+                      className="block truncate text-sm font-medium text-foreground hover:underline"
+                    >
+                      {pickLang(lang, it.title, it.title_es)}
+                    </Link>
+                    {description && (
+                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{description}</p>
+                    )}
+                  </div>
+                  {!isAdmin && (
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium flex-shrink-0 ${isRead ? "text-[var(--color-accent)]" : "text-muted-foreground"}`}>
+                      {isRead ? (
+                        <>
+                          <Check className="h-3.5 w-3.5" />
+                          {t("category.markedRead")}
+                        </>
+                      ) : (
+                        <>
+                          <Circle className="h-3.5 w-3.5" />
+                          {t("category.markAsRead")}
+                        </>
+                      )}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )
+      )}
+    </section>
+  );
+}
