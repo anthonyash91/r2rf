@@ -558,14 +558,14 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             const isEditingThis = editing !== null && editing !== "new" && editing.id === item.id;
             const isDimmed = editing !== null && !isEditingThis;
             return (
-              <div className={`flex items-center gap-3 p-4 pl-[14px] pr-[22px] transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
+              <div className={`flex items-center gap-3 py-4 pl-[22px] pr-[22px] transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
+                <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(item.type)}`}>{item.type}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${typeBadgeClass(item.type)}`}>{item.type}</span>
+                    <h3 className="font-medium truncate">{item.title}</h3>
                     {!item.published && (
                       <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>
                     )}
-                    <h3 className="font-medium truncate">{item.title}</h3>
                     {(() => {
                       const s = itemTranslationStatus(item);
                       if (s === "complete") return null;
