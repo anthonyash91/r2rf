@@ -107,7 +107,7 @@ function DashboardPage() {
       const [itemsRes, readRes] = await Promise.all([
         supabase
           .from("content_items")
-          .select("id, category_id, title, title_es, description, description_es, type, sort_order")
+          .select("id, category_id, title, title_es, description, description_es, type, sort_order, created_at")
           .eq("published", true)
           .in("category_id", categoryIds)
           .order("sort_order", { ascending: true }),
@@ -119,14 +119,21 @@ function DashboardPage() {
       ]);
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
-      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string };
+      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; created_at: string | null };
       const itemsByCat = new Map<string, CatItem[]>();
       const totals = new Map<string, number>();
+      const recentCats = new Set<string>();
+      const newItemSet = new Set<string>();
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       for (const row of itemsRes.data ?? []) {
         const list = itemsByCat.get(row.category_id as string) ?? [];
         list.push(row as CatItem);
         itemsByCat.set(row.category_id as string, list);
         totals.set(row.category_id as string, (totals.get(row.category_id as string) ?? 0) + 1);
+        if (row.created_at && new Date(row.created_at as string).getTime() >= cutoff) {
+          recentCats.add(row.category_id as string);
+          newItemSet.add(row.id as string);
+        }
       }
       const reads = new Map<string, number>();
       const readSet = new Set<string>();
@@ -134,9 +141,10 @@ function DashboardPage() {
         reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
         readSet.add(row.content_item_id as string);
       }
-      return { totals, reads, itemsByCat, readSet };
+      return { totals, reads, itemsByCat, readSet, recentCats, newItemSet };
     },
   });
+
 
 
   const [editing, setEditing] = useState(false);
