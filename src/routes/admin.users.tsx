@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download } from "lucide-react";
 import {
   listUsers,
   updateUserEmail,
@@ -284,17 +284,61 @@ function AdminUsersPage() {
             <section className="mt-8">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <h2 className="font-display text-xl font-semibold">Users</h2>
-                <Select value={facilityFilter} onValueChange={(v) => { setFacilityFilter(v); setRegularVisible(10); }}>
-                  <SelectTrigger className="w-[220px]">
-                    <SelectValue placeholder="Filter by facility" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All facilities</SelectItem>
-                    {facilities.map((f) => (
-                      <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Select value={facilityFilter} onValueChange={(v) => { setFacilityFilter(v); setRegularVisible(10); }}>
+                    <SelectTrigger className="w-[220px]">
+                      <SelectValue placeholder="Filter by facility" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All facilities</SelectItem>
+                      {facilities.map((f) => (
+                        <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const rows = (facilityFilter === "all"
+                        ? regularUsers
+                        : regularUsers.filter((u) => u.profile?.facility === facilityFilter));
+                      if (!rows.length) { toast.error("No users to export"); return; }
+                      const headers = ["Username","First name","Last name","Email","Facility","Signup IP","Created","Last sign in"];
+                      const esc = (v: string | null | undefined) => {
+                        const s = (v ?? "").toString();
+                        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+                      };
+                      const lines = [headers.join(",")];
+                      for (const u of rows) {
+                        lines.push([
+                          esc(u.profile?.username),
+                          esc(u.profile?.first_name),
+                          esc(u.profile?.last_name),
+                          esc(u.email),
+                          esc(u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""),
+                          esc(u.signup_ip),
+                          esc(u.created_at),
+                          esc(u.last_sign_in_at),
+                        ].join(","));
+                      }
+                      const csv = lines.join("\n");
+                      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      const stamp = new Date().toISOString().slice(0, 10);
+                      const scope = facilityFilter === "all" ? "all" : facilityFilter;
+                      a.href = url;
+                      a.download = `users-${scope}-${stamp}.csv`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+                  >
+                    <Download className="h-4 w-4" /> Export
+                  </button>
+                </div>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 Regular user accounts that signed up from the public form.
