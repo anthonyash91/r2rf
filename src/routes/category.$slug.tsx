@@ -393,7 +393,7 @@ function CategoryPage() {
                             {source && <p className="mt-2 text-xs text-muted-foreground/80">{t("category.source")} · {source}</p>}
                           </div>
                         </Wrapper>
-                        {(user || isAdmin || isNew) && (
+                        {(isAdmin || isNew) && (
                           <div className="absolute top-3 right-3 mt-[7px] mr-[7px] flex items-center gap-1.5 flex-wrap justify-end z-10">
                             {isNew && (
                               <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-accent)] bg-[var(--color-accent)] px-2.5 py-1.5 text-xs font-medium text-background shadow-sm">
@@ -401,32 +401,6 @@ function CategoryPage() {
                                 {t("category.newContent")}
                               </span>
                             )}
-
-
-
-                            {user && !isAdmin && (() => {
-                              const isRead = readSet.has(item.id);
-                              return (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                    toggleRead.mutate({ itemId: item.id, markRead: !isRead });
-                                  }}
-                                  aria-pressed={isRead}
-                                  aria-label={isRead ? t("category.markedRead") : t("category.markAsRead")}
-                                  className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
-                                    isRead
-                                      ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background hover:opacity-90"
-                                      : "border-input bg-background text-foreground hover:bg-muted"
-                                  }`}
-                                >
-                                  {isRead ? <Check className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
-                                  {isRead ? t("category.markedRead") : t("category.markAsRead")}
-                                </button>
-                              );
-                            })()}
                             {isAdmin && (
                               <Link
                                 to="/admin/category/$id"
@@ -442,6 +416,32 @@ function CategoryPage() {
                             )}
                           </div>
                         )}
+                        {user && !isAdmin && (() => {
+                          const isRead = readSet.has(item.id);
+                          return (
+                            <div className="absolute bottom-3 right-3 mb-[7px] mr-[7px] flex items-center gap-1.5 flex-wrap justify-end z-10">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  toggleRead.mutate({ itemId: item.id, markRead: !isRead });
+                                }}
+                                aria-pressed={isRead}
+                                aria-label={isRead ? t("category.markedRead") : t("category.markAsRead")}
+                                className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                                  isRead
+                                    ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background hover:opacity-90"
+                                    : "border-input bg-background text-foreground hover:bg-muted"
+                                }`}
+                              >
+                                {isRead ? <Check className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
+                                {isRead ? t("category.markedRead") : t("category.markAsRead")}
+                              </button>
+                            </div>
+                          );
+                        })()}
+
                       </li>
                     );
                   })}
