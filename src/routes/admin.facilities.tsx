@@ -276,6 +276,43 @@ function AdminFacilitiesPage() {
             <div className="p-6 text-muted-foreground text-sm">No facilities yet.</div>
           )}
         </div>
+        {facilities.length > 10 && (
+          <div className="mt-3 flex items-center justify-between gap-3 flex-wrap text-sm">
+            <span className="text-muted-foreground">
+              Showing {visibleFacilities.length} of {facilities.length}
+            </span>
+            <div className="flex items-center gap-2">
+              {remaining > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount((n) => n + 10)}
+                    className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                  >
+                    Show 10 more
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount(facilities.length)}
+                    className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                  >
+                    Show all
+                  </button>
+                </>
+              )}
+              {visibleFacilities.length > 10 && (
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount(10)}
+                  className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                >
+                  Collapse
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
       </section>
     </div>
   );
