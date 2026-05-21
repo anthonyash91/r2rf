@@ -15,6 +15,11 @@ type CustomHomeCache = { restrictions: Map<string, Set<string>>; expiresAt: numb
 let customHomeCache: CustomHomeCache | null = null;
 let customHomeInflight: Promise<Map<string, Set<string>>> | null = null;
 
+type EnabledCache = { enabled: boolean; expiresAt: number };
+let enabledCache: EnabledCache | null = null;
+let enabledInflight: Promise<boolean> | null = null;
+
+
 async function fetchTable(table: string): Promise<Set<string>> {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
