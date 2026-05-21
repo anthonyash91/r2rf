@@ -376,7 +376,7 @@ function AdminUsersPage() {
                   : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
                 const visible = filtered.slice(0, regularVisible);
                 const remaining = filtered.length - visible.length;
-                const visibleIds = visible.map((u) => u.id);
+                
                 const toggleOne = (id: string) => {
                   setSelectedIds((prev) => {
                     const next = new Set(prev);
