@@ -352,11 +352,12 @@ function CategoryPage() {
                     return (
                       <li key={item.id} id={`item-${item.id}`} className={`relative scroll-mt-24 transition-colors duration-700 ${highlightedId === item.id ? "bg-[var(--color-accent)]/15" : ""}`}>
                         {isNew && (
-                          <span className="hidden sm:inline-flex absolute top-3 right-3 mr-[7px] mt-[7px] z-10 items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-background shadow-sm">
+                          <span className="absolute top-3 right-3 mr-[7px] mt-[7px] z-10 inline-flex items-center gap-1 rounded-md border border-[var(--color-accent)] bg-[var(--color-accent)] px-2.5 py-1.5 text-xs font-medium text-background shadow-sm">
                             <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                             {t("category.newContent")}
                           </span>
                         )}
+
                         <Wrapper
                           {...wrapperProps}
                           className="w-full text-left flex flex-col sm:flex-row sm:items-start gap-4 p-6 hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
