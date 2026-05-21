@@ -223,8 +223,13 @@ function AdminUsersPage() {
 
 
             <section className="mt-8">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h2 className="font-display text-xl font-semibold">Admin Users</h2>
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div>
+                  <h2 className="font-display text-xl font-semibold">Admin Users</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Accounts with admin or contributor access.
+                  </p>
+                </div>
                 <button
                   onClick={() => setShowCreate(true)}
                   disabled={showCreate}
@@ -233,9 +238,7 @@ function AdminUsersPage() {
                   <UserPlus className="h-4 w-4" /> Add admin user
                 </button>
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Accounts with admin or contributor access.
-              </p>
+
               {showCreate && (
                 <form
                   onSubmit={(e) => {
