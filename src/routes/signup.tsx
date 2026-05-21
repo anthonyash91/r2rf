@@ -31,6 +31,8 @@ function SignupPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [facility, setFacility] = useState<string>("");
   const [answer, setAnswer] = useState("");
