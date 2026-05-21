@@ -233,133 +233,134 @@ function AdminFacilitiesPage() {
             <ul className="divide-y divide-border">
               {visibleFacilities.map((f) => {
                 const isEditing = editingId === f.id;
+                const selected = selectedIds.has(f.id);
+                const editable = editMode && !isEditing;
                 return (
-                  <li key={f.value} className="p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    {!isEditing && (
-                      <Checkbox
-                        aria-label={`Select ${f.label}`}
-                        className="shrink-0 self-start sm:self-center"
-                        checked={selectedIds.has(f.id)}
-                        onCheckedChange={() => toggleOne(f.id)}
-                      />
-
-                    )}
-
-                    {isEditing ? (
-                      <>
-                        <input
-                          value={editingLabel}
-                          onChange={(e) => setEditingLabel(e.target.value)}
-                          className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
-                          autoFocus
-                        />
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setEditingId(null)}
-                            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const label = editingLabel.trim();
-                              if (!label) { toast.error("Label required"); return; }
-                              updateMut.mutate({ id: f.id, label });
-                            }}
-                            disabled={updateMut.isPending}
-                            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                          >
-                            Submit
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex-1 min-w-0 space-y-2">
-                          <div className="flex items-center gap-3 min-w-0 flex-wrap">
-                            <span className="text-sm font-medium truncate">{f.label}</span>
-                            <code className="text-xs text-muted-foreground font-mono truncate">{f.value}</code>
+                  <li
+                    key={f.value}
+                    onClick={editable ? () => toggleOne(f.id) : undefined}
+                    className={`p-4 sm:p-5 transition-colors ${
+                      editable
+                        ? `cursor-pointer ${selected ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"}`
+                        : ""
+                    }`}
+                  >
+                    <div className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${editable ? "pointer-events-none" : ""}`}>
+                      {isEditing ? (
+                        <>
+                          <input
+                            value={editingLabel}
+                            onChange={(e) => setEditingLabel(e.target.value)}
+                            className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+                            autoFocus
+                          />
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setEditingId(null)}
+                              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const label = editingLabel.trim();
+                                if (!label) { toast.error("Label required"); return; }
+                                updateMut.mutate({ id: f.id, label });
+                              }}
+                              disabled={updateMut.isPending}
+                              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                            >
+                              Submit
+                            </button>
                           </div>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                            <span className="inline-flex items-center gap-1.5">
-                              <Users className="h-3.5 w-3.5" />
-                              {f.userCount} {f.userCount === 1 ? "user" : "users"} signed up
-                            </span>
-                            {f.customHomePage ? (
-                              <Link
-                                to="/$customHome"
-                                params={{ customHome: f.customHomePage.slug }}
-                                className="inline-flex items-center gap-1.5 hover:text-foreground hover:underline"
-                              >
-                                <Home className="h-3.5 w-3.5" />
-                                Custom home: /{f.customHomePage.slug}
-                              </Link>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 italic">
-                                <Home className="h-3.5 w-3.5" />
-                                No custom home page
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-center gap-3 min-w-0 flex-wrap">
+                              <span className="text-sm font-medium truncate">{f.label}</span>
+                              <code className="text-xs text-muted-foreground font-mono truncate">{f.value}</code>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                              <span className="inline-flex items-center gap-1.5">
+                                <Users className="h-3.5 w-3.5" />
+                                {f.userCount} {f.userCount === 1 ? "user" : "users"} signed up
                               </span>
-                            )}
-                          </div>
-                          {f.customHomePage && (
-                            <div className="flex flex-wrap gap-1.5">
-                              {f.customHomePage.categories.length ? (
-                                f.customHomePage.categories.map((c) => (
-                                  <span
-                                    key={c.id}
-                                    className="inline-flex items-center rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs text-foreground"
-                                  >
-                                    {c.name}
-                                  </span>
-                                ))
+                              {f.customHomePage ? (
+                                <Link
+                                  to="/$customHome"
+                                  params={{ customHome: f.customHomePage.slug }}
+                                  className="inline-flex items-center gap-1.5 hover:text-foreground hover:underline"
+                                >
+                                  <Home className="h-3.5 w-3.5" />
+                                  Custom home: /{f.customHomePage.slug}
+                                </Link>
                               ) : (
-                                <span className="text-xs italic text-muted-foreground">No categories assigned</span>
+                                <span className="inline-flex items-center gap-1.5 italic">
+                                  <Home className="h-3.5 w-3.5" />
+                                  No custom home page
+                                </span>
                               )}
                             </div>
-                          )}
-                        </div>
-                        <TooltipProvider delayDuration={150}>
-                          <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  aria-label="Edit"
-                                  onClick={() => { setEditingId(f.id); setEditingLabel(f.label); }}
-                                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>Edit</TooltipContent>
-                            </Tooltip>
-                            <div className="mx-1 h-6 w-px bg-border" aria-hidden />
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button
-                                  aria-label="Delete"
-                                  onClick={async () => {
-                                    const ok = await confirm({
-                                      title: "Delete facility?",
-                                      description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
-                                      confirmLabel: "Delete",
-                                      destructive: true,
-                                    });
-                                    if (ok) deleteMut.mutate({ id: f.id });
-                                  }}
-                                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent>Delete</TooltipContent>
-                            </Tooltip>
+                            {f.customHomePage && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {f.customHomePage.categories.length ? (
+                                  f.customHomePage.categories.map((c) => (
+                                    <span
+                                      key={c.id}
+                                      className="inline-flex items-center rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs text-foreground"
+                                    >
+                                      {c.name}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs italic text-muted-foreground">No categories assigned</span>
+                                )}
+                              </div>
+                            )}
                           </div>
-                        </TooltipProvider>
-                      </>
-
-                    )}
+                          <TooltipProvider delayDuration={150}>
+                            <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    aria-label="Edit"
+                                    onClick={() => { setEditingId(f.id); setEditingLabel(f.label); }}
+                                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Edit</TooltipContent>
+                              </Tooltip>
+                              <div className="mx-1 h-6 w-px bg-border" aria-hidden />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    aria-label="Delete"
+                                    onClick={async () => {
+                                      const ok = await confirm({
+                                        title: "Delete facility?",
+                                        description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
+                                        confirmLabel: "Delete",
+                                        destructive: true,
+                                      });
+                                      if (ok) deleteMut.mutate({ id: f.id });
+                                    }}
+                                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>Delete</TooltipContent>
+                              </Tooltip>
+                            </div>
+                          </TooltipProvider>
+                        </>
+                      )}
+                    </div>
                   </li>
                 );
               })}
