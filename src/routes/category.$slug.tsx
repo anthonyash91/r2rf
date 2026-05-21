@@ -219,10 +219,25 @@ function CategoryPage() {
                     className="h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 rounded-2xl object-cover border border-border bg-muted flex-shrink-0"
                   />
                 )}
-                <div className="max-w-3xl">
+                <div className="max-w-3xl flex-1">
                   <p className="text-sm font-medium text-[var(--color-accent)]">{pickLang(lang, data.category.tagline, data.category.tagline_es)}</p>
                   <h1 className="mt-2 font-display font-bold tracking-tight text-4xl">{pickLang(lang, data.category.name, data.category.name_es)}</h1>
                   <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{pickLang(lang, data.category.description, data.category.description_es)}</p>
+                  {user && data.items.length > 0 && (() => {
+                    const total = data.items.length;
+                    const read = data.items.filter((it) => readSet.has(it.id)).length;
+                    const pct = Math.round((read / total) * 100);
+                    return (
+                      <div className="mt-6 max-w-md space-y-1.5">
+                        <Progress value={pct} className="h-2" />
+                        <p className="text-xs text-muted-foreground">
+                          {t("dashboard.progressItems")
+                            .replace("{done}", String(read))
+                            .replace("{total}", String(total))}
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
