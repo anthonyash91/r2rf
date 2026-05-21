@@ -1,6 +1,8 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { LayoutGrid, Users, Shield, BarChart3, Home, LayoutTemplate, Award, Building2, MessageSquare, ChevronDown } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +42,16 @@ export function AdminNav() {
   const { isAdmin } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleScroll = (e: React.UIEvent<HTMLUListElement>) => {
+    const el = e.currentTarget;
+    el.classList.add("is-scrolling");
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    scrollTimerRef.current = setTimeout(() => {
+      el.classList.remove("is-scrolling");
+    }, 800);
+  };
+
 
   const visible = links.filter((l) => !l.adminOnly || isAdmin);
   const current = visible.find((l) => isLinkActive(l, pathname)) ?? visible[0];
@@ -78,7 +90,7 @@ export function AdminNav() {
 
       {/* sm+: horizontally scrollable tabs */}
       <div className="hidden sm:block">
-        <ul className="scrollbar-accent flex w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted p-2 text-muted-foreground">
+        <ul onScroll={handleScroll} className="scrollbar-accent flex w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted p-2 text-muted-foreground">
           {visible.map((l) => {
             const active = isLinkActive(l, pathname);
             const Icon = l.icon;
