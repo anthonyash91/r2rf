@@ -403,7 +403,7 @@ function CategoryProgressSection({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 border-b border-border bg-muted/30 text-left hover:bg-muted/50 transition-colors"
+        className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 ${open ? "border-b border-border" : ""} bg-muted/30 text-left hover:bg-muted/50 transition-colors`}
       >
         <div className="flex items-center gap-3 min-w-0">
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
