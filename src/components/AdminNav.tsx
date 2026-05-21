@@ -1,7 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { LayoutGrid, Users, Shield, BarChart3, Home, LayoutTemplate, Award, Building2, MessageSquare, ChevronDown } from "lucide-react";
+import { LayoutGrid, Users, Shield, BarChart3, Home, LayoutTemplate, Award, Building2, MessageSquare, ChevronDown, MoreHorizontal } from "lucide-react";
+
 
 import {
   DropdownMenu,
@@ -42,20 +42,23 @@ export function AdminNav() {
   const { isAdmin } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
-  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handleScroll = (e: React.UIEvent<HTMLUListElement>) => {
-    const el = e.currentTarget;
-    el.classList.add("is-scrolling");
-    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
-    scrollTimerRef.current = setTimeout(() => {
-      el.classList.remove("is-scrolling");
-    }, 800);
-  };
-
 
   const visible = links.filter((l) => !l.adminOnly || isAdmin);
   const current = visible.find((l) => isLinkActive(l, pathname)) ?? visible[0];
   const CurrentIcon = current?.icon ?? LayoutGrid;
+
+  const MAX_VISIBLE = 7;
+  const needsOverflow = visible.length > MAX_VISIBLE;
+  // If an overflow item is active, swap it into the visible set so it stays highlighted
+  let primary = visible.slice(0, MAX_VISIBLE);
+  let overflow = needsOverflow ? visible.slice(MAX_VISIBLE) : [];
+  const activeInOverflow = overflow.find((l) => isLinkActive(l, pathname));
+  if (activeInOverflow) {
+    const displaced = primary[MAX_VISIBLE - 1];
+    primary = [...primary.slice(0, MAX_VISIBLE - 1), activeInOverflow];
+    overflow = overflow.map((l) => (l === activeInOverflow ? displaced : l));
+  }
+  const overflowActive = overflow.some((l) => isLinkActive(l, pathname));
 
   return (
     <nav aria-label="Admin" className="mb-8">
@@ -88,10 +91,10 @@ export function AdminNav() {
         </DropdownMenu>
       </div>
 
-      {/* sm+: horizontally scrollable tabs */}
+      {/* sm+: fixed tabs with More dropdown for overflow */}
       <div className="hidden sm:block">
-        <ul onScroll={handleScroll} className="scrollbar-accent flex h-[52px] w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted p-2 text-muted-foreground">
-          {visible.map((l) => {
+        <ul className="flex w-full items-center gap-1 rounded-lg bg-muted p-2 text-muted-foreground">
+          {primary.map((l) => {
             const active = isLinkActive(l, pathname);
             const Icon = l.icon;
             return (
@@ -111,8 +114,43 @@ export function AdminNav() {
               </li>
             );
           })}
+          {overflow.length > 0 && (
+            <li className="shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className={[
+                    "inline-flex items-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                    overflowActive
+                      ? "bg-background text-foreground"
+                      : "hover:bg-background hover:text-foreground",
+                  ].join(" ")}
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                  More
+                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {overflow.map((l) => {
+                    const Icon = l.icon;
+                    const active = isLinkActive(l, pathname);
+                    return (
+                      <DropdownMenuItem
+                        key={l.to}
+                        onSelect={() => navigate({ to: l.to as any })}
+                        className={active ? "bg-muted" : ""}
+                      >
+                        <Icon className="mr-2 h-4 w-4" />
+                        {l.label}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </li>
+          )}
         </ul>
       </div>
+
     </nav>
   );
 }
