@@ -139,8 +139,8 @@
     scrollbar-color: color-mix(in oklab, var(--color-accent) 55%, transparent) transparent;
   }
   .scrollbar-accent::-webkit-scrollbar {
-    height: 6px;
-    width: 6px;
+    height: 3px;
+    width: 3px;
   }
   .scrollbar-accent::-webkit-scrollbar-track {
     background: transparent;
