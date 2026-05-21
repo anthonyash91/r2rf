@@ -12,6 +12,7 @@ import {
   deleteFacility,
 } from "@/lib/facilities.functions";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/admin/facilities")({
@@ -67,26 +68,27 @@ function AdminFacilitiesPage() {
       <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to admin
       </Link>
-      <div className="mt-6">
-        <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-          <Building2 className="h-7 w-7" /> Facilities
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage facilities available in the signup form's facility dropdown.
-        </p>
+      <div className="mt-6 flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+            <Building2 className="h-7 w-7" /> Facilities
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage facilities available in the signup form's facility dropdown.
+          </p>
+        </div>
+        <button
+          onClick={() => setShowAdd(true)}
+          disabled={showAdd}
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+        >
+          <Plus className="h-4 w-4" /> Add facilities
+        </button>
       </div>
 
       <section className="mt-8">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h2 className="font-display text-xl font-semibold">All facilities</h2>
-          <button
-            onClick={() => setShowAdd(true)}
-            disabled={showAdd}
-            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
-          >
-            <Plus className="h-4 w-4" /> Add facilities
-          </button>
-        </div>
+
+
 
         {showAdd && (
           <form
@@ -165,31 +167,45 @@ function AdminFacilitiesPage() {
                           <span className="text-sm font-medium truncate">{f.label}</span>
                           <code className="text-xs text-muted-foreground font-mono truncate">{f.value}</code>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => { setEditingId(f.id); setEditingLabel(f.label); }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={async () => {
-                              const ok = await confirm({
-                                title: "Delete facility?",
-                                description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
-                                confirmLabel: "Delete",
-                                destructive: true,
-                              });
-                              if (ok) deleteMut.mutate({ id: f.id });
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
+                        <TooltipProvider delayDuration={150}>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  aria-label="Edit"
+                                  onClick={() => { setEditingId(f.id); setEditingLabel(f.label); }}
+                                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Edit</TooltipContent>
+                            </Tooltip>
+                            <div className="mx-1 h-6 w-px bg-border" aria-hidden />
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  aria-label="Delete"
+                                  onClick={async () => {
+                                    const ok = await confirm({
+                                      title: "Delete facility?",
+                                      description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
+                                      confirmLabel: "Delete",
+                                      destructive: true,
+                                    });
+                                    if (ok) deleteMut.mutate({ id: f.id });
+                                  }}
+                                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </TooltipProvider>
                       </>
+
                     )}
                   </li>
                 );
