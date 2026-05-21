@@ -116,17 +116,18 @@ function AdminUsersPage() {
   });
   const deleteManyMut = useMutation({
     mutationFn: (input: { userIds: string[] }) => deleteManyFn({ data: input }),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       const parts: string[] = [];
       parts.push(`Deleted ${res.deleted} ${res.deleted === 1 ? "user" : "users"}`);
       if (res.failed.length) parts.push(`${res.failed.length} failed`);
       if (res.skippedSelf) parts.push("skipped your own account");
       toast.success(parts.join(" • "));
+      await invalidate();
       setSelectedIds(new Set());
-      invalidate();
     },
     onError: (e: any) => toast.error(e.message),
   });
+  const [isDeleting, setIsDeleting] = useState(false);
   const clearSecMut = useMutation({
     mutationFn: (input: { userId: string }) => clearSecFn({ data: input }),
     onSuccess: () => toast.success("Security questions reset. User must set new ones on next sign-in."),
