@@ -409,15 +409,16 @@ function AdminUsersPage() {
                             <>
                               <button
                                 type="button"
+                                disabled={isDeleting}
                                 onClick={() => { setEditMode(false); setSelectedIds(new Set()); }}
-                                className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                                className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
                               >
                                 {selectedIds.size > 0 ? "Cancel" : "Done"}
                               </button>
-                              {selectedIds.size > 0 && (
+                              {(selectedIds.size > 0 || isDeleting) && (
                                 <button
                                   type="button"
-                                  disabled={deleteManyMut.isPending}
+                                  disabled={isDeleting}
                                   onClick={async () => {
                                     const ids = Array.from(selectedIds);
                                     const ok = await confirm({
@@ -427,14 +428,19 @@ function AdminUsersPage() {
                                       destructive: true,
                                     });
                                     if (ok) {
-                                      deleteManyMut.mutate({ userIds: ids });
-                                      setEditMode(false);
+                                      setIsDeleting(true);
+                                      try {
+                                        await deleteManyMut.mutateAsync({ userIds: ids });
+                                      } finally {
+                                        setIsDeleting(false);
+                                        setEditMode(false);
+                                      }
                                     }
                                   }}
                                   className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
                                 >
-                                  {deleteManyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                  {deleteManyMut.isPending ? "Deleting…" : `Delete selected (${selectedIds.size})`}
+                                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                  {isDeleting ? "Deleting…" : `Delete selected (${selectedIds.size})`}
                                 </button>
                               )}
                             </>
