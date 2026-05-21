@@ -406,6 +406,8 @@ type CatItem = {
   description: string;
   description_es: string | null;
   type: string;
+  duration?: string | null;
+
 };
 
 function CategoryProgressSection({
