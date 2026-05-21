@@ -503,7 +503,7 @@ function CategoryProgressSection({
                     {it.type}
                   </span>
 
-                  <div className="flex-1 min-w-0 basis-0 min-[640px]:basis-auto">
+                  <div className="flex-1 min-w-0 basis-0 min-[480px]:basis-auto">
                     <Link
                       to="/category/$slug"
                       params={{ slug: category.slug }}
@@ -517,7 +517,7 @@ function CategoryProgressSection({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-3 flex-wrap w-full sm:w-auto sm:ml-auto pl-9 sm:pl-0">
+                  <div className="flex items-center gap-3 flex-wrap w-full min-[480px]:w-auto min-[480px]:ml-auto pl-9 min-[480px]:pl-0">
                     {newItemSet.has(it.id) && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
                         <span className="h-1 w-1 rounded-full bg-background/80" />
