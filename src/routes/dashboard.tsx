@@ -472,8 +472,9 @@ function CategoryProgressSection({
                       ) : (
                         <>
                           <Circle className="h-3.5 w-3.5" />
-                          {t("category.markAsRead")}
+                          Not read
                         </>
+
                       )}
                     </span>
                   )}
