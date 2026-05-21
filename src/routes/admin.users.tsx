@@ -298,11 +298,11 @@ function AdminUsersPage() {
             </section>
 
             <section className="mt-8">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:flex-wrap">
                 <h2 className="font-display text-xl font-semibold">Users</h2>
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:flex-wrap w-full sm:w-auto">
                   <Select value={facilityFilter} onValueChange={(v) => { setFacilityFilter(v); setRegularVisible(10); }}>
-                    <SelectTrigger className="h-10 w-[220px]">
+                    <SelectTrigger className="h-10 w-full sm:w-[220px]">
                       <SelectValue placeholder="Filter by facility" />
                     </SelectTrigger>
                     <SelectContent>
@@ -350,7 +350,7 @@ function AdminUsersPage() {
                       document.body.removeChild(a);
                       URL.revokeObjectURL(url);
                     }}
-                    className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted w-full sm:w-auto"
                   >
                     <Download className="h-4 w-4" /> Export CSV
                   </button>
