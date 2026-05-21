@@ -279,7 +279,7 @@ function AdminCategoriesPage() {
             items={order}
             onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
             renderItem={(c) => (
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 p-4 pl-[6px]">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 p-4 pl-[20px]">
                 <Checkbox
                   aria-label={`Select ${c.name}`}
                   className="shrink-0 self-start sm:self-center"
