@@ -91,8 +91,10 @@ function SignupPage() {
         await submitSignup({
           data: {
             username: uname,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
             password,
-            facility: facility as "pennington_sd" | "campbell_ky",
+            facility,
             challengeToken: challengeQuery.data.token,
             challengeAnswer: ans,
             honeypot,
