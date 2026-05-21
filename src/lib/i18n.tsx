@@ -72,6 +72,8 @@ const translations: Record<Language, Dict> = {
     "signup.username": "Username",
     "signup.usernamePlaceholder": "e.g. jdoe_92",
     "signup.password": "Password",
+    "signup.confirmPassword": "Confirm password",
+    "signup.passwordMismatch": "Passwords do not match",
     "password.tooShort": "Too short",
     "password.weak": "Weak",
     "password.fair": "Fair",
