@@ -103,29 +103,37 @@ function DashboardPage() {
     queryKey: ["dashboard-progress", userId, categoryIds.join(",")],
     enabled: !!userId && categoryIds.length > 0,
     queryFn: async () => {
-      const [totalsRes, readRes] = await Promise.all([
+      const [itemsRes, readRes] = await Promise.all([
         supabase
           .from("content_items")
-          .select("category_id")
+          .select("id, category_id, title, title_es, description, description_es, sort_order")
           .eq("published", true)
-          .in("category_id", categoryIds),
+          .in("category_id", categoryIds)
+          .order("sort_order", { ascending: true }),
         supabase
           .from("user_content_progress")
-          .select("category_id")
+          .select("content_item_id, category_id")
           .eq("user_id", userId!)
           .in("category_id", categoryIds),
       ]);
-      if (totalsRes.error) throw totalsRes.error;
+      if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
+      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null };
+      const itemsByCat = new Map<string, CatItem[]>();
       const totals = new Map<string, number>();
-      for (const row of totalsRes.data ?? []) {
+      for (const row of itemsRes.data ?? []) {
+        const list = itemsByCat.get(row.category_id as string) ?? [];
+        list.push(row as CatItem);
+        itemsByCat.set(row.category_id as string, list);
         totals.set(row.category_id as string, (totals.get(row.category_id as string) ?? 0) + 1);
       }
       const reads = new Map<string, number>();
+      const readSet = new Set<string>();
       for (const row of readRes.data ?? []) {
         reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
+        readSet.add(row.content_item_id as string);
       }
-      return { totals, reads };
+      return { totals, reads, itemsByCat, readSet };
     },
   });
 
