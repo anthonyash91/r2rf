@@ -93,7 +93,7 @@ export function AdminNav() {
 
       {/* sm+: fixed tabs with More dropdown for overflow */}
       <div className="hidden sm:block">
-        <ul className="flex w-full items-center gap-1 rounded-lg bg-muted p-2 text-muted-foreground">
+        <ul className="flex w-full items-center justify-center gap-1 rounded-lg bg-muted p-2 text-muted-foreground">
           {primary.map((l) => {
             const active = isLinkActive(l, pathname);
             const Icon = l.icon;
