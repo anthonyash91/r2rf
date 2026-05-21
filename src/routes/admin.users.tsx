@@ -284,7 +284,7 @@ function AdminUsersPage() {
             <section className="mt-8">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <h2 className="font-display text-xl font-semibold">Users</h2>
-                <Select value={facilityFilter} onValueChange={setFacilityFilter}>
+                <Select value={facilityFilter} onValueChange={(v) => { setFacilityFilter(v); setRegularVisible(10); }}>
                   <SelectTrigger className="w-[220px]">
                     <SelectValue placeholder="Filter by facility" />
                   </SelectTrigger>
