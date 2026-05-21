@@ -13,7 +13,7 @@ import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-re
 import { questionLabel } from "@/lib/security-questions";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, ChevronDown, BookOpen, CheckCircle2 } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, X, ChevronDown, BookOpen, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { typeBadgeClass } from "@/lib/type-badge";
@@ -511,7 +511,7 @@ function CategoryProgressSection({
                       {it.type}
                     </span>
                     {!isAdmin && (
-                      <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium flex-shrink-0 ${
+                      <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium flex-shrink-0 ml-auto ${
                         isRead
                           ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
                           : "border-input bg-background text-foreground"
@@ -523,7 +523,8 @@ function CategoryProgressSection({
                           </>
                         ) : (
                           <>
-                            <Circle className="h-3.5 w-3.5" />
+                            <X className="h-3.5 w-3.5" />
+
                             {t("category.notRead")}
                           </>
                         )}
