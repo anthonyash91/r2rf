@@ -25,7 +25,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const queryClient = useQueryClient();
   const fetchProfile = useServerFn(getMyProfile);
   const fetchQuestions = useServerFn(getMySecurityQuestions);
