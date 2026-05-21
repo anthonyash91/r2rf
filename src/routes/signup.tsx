@@ -38,6 +38,7 @@ function SignupPage() {
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [facility, setFacility] = useState<string>("");
+  const [facilityOpen, setFacilityOpen] = useState(false);
   const [answer, setAnswer] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
