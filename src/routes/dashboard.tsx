@@ -435,7 +435,7 @@ function CategoryProgressSection({
                 {pickLang(lang, category.name, category.name_es)}
               </h2>
               {hasRecent && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
+                <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
                   <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                   {t("category.newContentAdded")}
                 </span>
@@ -448,7 +448,13 @@ function CategoryProgressSection({
         </div>
 
         {!isAdmin && (
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
+            {hasRecent && (
+              <span className="sm:hidden inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
+                {t("category.newContentAdded")}
+              </span>
+            )}
             <div className="hidden sm:block w-32">
               <Progress value={pct} className="h-1.5" />
             </div>
