@@ -9,7 +9,8 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 
-import { Button } from "@/components/ui/button";
+
+
 
 export const Route = createFileRoute("/admin/ip-allowlist")({
   beforeLoad: requireAdminBeforeLoad,
