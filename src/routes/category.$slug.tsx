@@ -137,6 +137,26 @@ function CategoryPage() {
     if (data?.category.id) trackCategoryView(data.category.id);
   }, [data?.category.id]);
 
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!data?.items?.length) return;
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (!hash.startsWith("#item-")) return;
+    const id = hash.slice(1);
+    const itemId = id.replace(/^item-/, "");
+    // Wait a tick for layout
+    const t = window.setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      setHighlightedId(itemId);
+      window.setTimeout(() => setHighlightedId(null), 2000);
+    }, 100);
+    return () => window.clearTimeout(t);
+  }, [data?.items]);
+
+
   const categoryId = data?.category.id;
   const progressQuery = useQuery({
     queryKey: ["content-progress", user?.id, categoryId],
