@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Create your account — Reentry to Recovery" }] }),
@@ -326,6 +327,7 @@ function SignupPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
+                {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
               </div>
 
               {mode === "sign-up" && (
