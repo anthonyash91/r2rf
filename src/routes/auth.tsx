@@ -44,15 +44,16 @@ function AuthPage() {
         }
         toast.success(t("auth.created"));
         setSignedUp(true);
+        setBusy(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         try { await recordIp(); } catch {}
         navigate({ to: "/admin" });
+        // Keep button disabled while the redirect resolves; do not reset busy.
       }
     } catch (err: any) {
       toast.error(err.message ?? t("auth.failed"));
-    } finally {
       setBusy(false);
     }
   }
