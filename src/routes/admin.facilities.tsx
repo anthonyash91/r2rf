@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Building2, Plus, Pencil, Trash2, Check, X } from "lucide-react";
+import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home } from "lucide-react";
 import {
-  listFacilities,
+  listFacilitiesWithStats,
   addFacilities,
   updateFacility,
   deleteFacility,
