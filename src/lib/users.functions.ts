@@ -40,7 +40,7 @@ export const listUsers = createServerFn({ method: "GET" })
 
     const { data: profileRows } = await supabaseAdmin
       .from("user_profiles")
-      .select("user_id, username, facility")
+      .select("user_id, username, facility, first_name, last_name")
       .in("user_id", idsForQuery);
 
     const rolesByUser = new Map<string, Role[]>();
@@ -53,9 +53,9 @@ export const listUsers = createServerFn({ method: "GET" })
     const ipByUser = new Map<string, string>();
     for (const r of ipRows ?? []) ipByUser.set(r.user_id, r.ip_address);
 
-    const profileByUser = new Map<string, { username: string; facility: string }>();
+    const profileByUser = new Map<string, { username: string; facility: string; first_name: string; last_name: string }>();
     for (const p of profileRows ?? []) {
-      profileByUser.set(p.user_id, { username: p.username, facility: p.facility });
+      profileByUser.set(p.user_id, { username: p.username, facility: p.facility, first_name: (p as any).first_name ?? "", last_name: (p as any).last_name ?? "" });
     }
 
     return {

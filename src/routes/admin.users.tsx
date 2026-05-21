@@ -34,7 +34,7 @@ type UserRow = {
   email_confirmed_at: string | null;
   roles: string[];
   signup_ip: string | null;
-  profile: { username: string; facility: string } | null;
+  profile: { username: string; facility: string; first_name: string; last_name: string } | null;
 };
 
 
@@ -358,6 +358,11 @@ function UserItem({
           {isRegularUser ? (
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-mono text-sm truncate">{user.profile!.username}</span>
+              {(user.profile!.first_name || user.profile!.last_name) && (
+                <span className="text-sm text-muted-foreground truncate">
+                  {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
+                </span>
+              )}
               <span className="inline-flex items-center gap-1 text-xs rounded-full bg-muted px-2 py-0.5 text-foreground border border-border">
                 {facilityLabel || user.profile!.facility}
               </span>
