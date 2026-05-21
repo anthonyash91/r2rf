@@ -399,7 +399,7 @@ function CategoryPage() {
                           </div>
                         </Wrapper>
                         {(user || isAdmin) && (
-                          <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5">
+                          <div className="absolute bottom-3 right-3 mr-[7px] mb-[7px] z-10 flex items-center gap-1.5">
                             {user && !isAdmin && (() => {
                               const isRead = readSet.has(item.id);
                               return (
