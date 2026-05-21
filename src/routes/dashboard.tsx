@@ -107,7 +107,7 @@ function DashboardPage() {
       const [itemsRes, readRes] = await Promise.all([
         supabase
           .from("content_items")
-          .select("id, category_id, title, title_es, description, description_es, sort_order")
+          .select("id, category_id, title, title_es, description, description_es, type, sort_order")
           .eq("published", true)
           .in("category_id", categoryIds)
           .order("sort_order", { ascending: true }),
@@ -119,7 +119,7 @@ function DashboardPage() {
       ]);
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
-      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null };
+      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string };
       const itemsByCat = new Map<string, CatItem[]>();
       const totals = new Map<string, number>();
       for (const row of itemsRes.data ?? []) {
