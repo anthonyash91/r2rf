@@ -181,7 +181,14 @@ function DashboardPage() {
       <SiteHeader />
       <SiteMessageBanner kind="user" />
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
-        <h1 className="font-display text-3xl font-semibold">{t("nav.dashboard")}</h1>
+        {(() => {
+          const firstName = ((data as any)?.profile?.first_name ?? "").trim();
+          return (
+            <h1 className="font-display text-3xl font-semibold">
+              {firstName ? t("dashboard.greeting", { name: firstName }) : t("dashboard.greetingNoName")}
+            </h1>
+          );
+        })()}
         <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
 
         <Tabs defaultValue="categories" className="mt-8">
