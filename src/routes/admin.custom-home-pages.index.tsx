@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useServerFn } from "@tanstack/react-start";
 import { listFacilities } from "@/lib/facilities.functions";
+import { FacilityCombobox } from "@/components/FacilityCombobox";
 
 const RESERVED_SLUGS = new Set([
   "admin",
@@ -257,31 +258,25 @@ function AdminCustomHomePagesList() {
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="block">
               <span className="text-sm font-medium">Facility</span>
-              <Select
+              <FacilityCombobox
                 value={name}
-                onValueChange={(label) => {
+                onChange={(label) => {
                   setName(label);
                   if (!slugTouched) setSlug(slugify(label));
                 }}
-              >
-                <SelectTrigger className="mt-1 h-[38px]">
-                  <SelectValue placeholder="Select a facility" />
-                </SelectTrigger>
-                <SelectContent>
-                  {facilities.length === 0 ? (
-                    <div className="px-4 py-2 text-sm text-muted-foreground">No facilities</div>
-                  ) : (
-                    facilities.map((f) => {
-                      const taken = usedFacilityLabels.has(f.label);
-                      return (
-                        <SelectItem key={f.id} value={f.label} disabled={taken}>
-                          {f.label}{taken ? " (in use)" : ""}
-                        </SelectItem>
-                      );
-                    })
-                  )}
-                </SelectContent>
-              </Select>
+                options={facilities.map((f) => {
+                  const taken = usedFacilityLabels.has(f.label);
+                  return {
+                    value: f.label,
+                    label: f.label,
+                    disabled: taken,
+                    suffix: taken ? "(in use)" : undefined,
+                  };
+                })}
+                placeholder="Select a facility"
+                triggerClassName="mt-1 h-[38px]"
+                emptyMessage={facilities.length === 0 ? "No facilities" : "No facility found."}
+              />
               <p className="mt-1 text-xs text-muted-foreground">This custom home page is for the selected facility.</p>
             </label>
             <label className="block">

@@ -17,6 +17,7 @@ import {
   clearUserSecurityAnswers,
 } from "@/lib/users.functions";
 import { listFacilities } from "@/lib/facilities.functions";
+import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -312,17 +313,17 @@ function AdminUsersPage() {
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:flex-nowrap gap-2 w-full sm:w-auto sm:flex-1 sm:max-w-md">
-                  <Select value={facilityFilter} onValueChange={(v) => { setFacilityFilter(v); setRegularVisible(10); }}>
-                    <SelectTrigger className="h-10 w-full sm:flex-1 sm:min-w-0">
-                      <SelectValue placeholder="Filter by facility" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All facilities</SelectItem>
-                      {facilities.map((f) => (
-                        <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="w-full sm:flex-1 sm:min-w-0">
+                    <FacilityCombobox
+                      value={facilityFilter === "all" ? "" : facilityFilter}
+                      onChange={(v) => { setFacilityFilter(v || "all"); setRegularVisible(10); }}
+                      options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+                      placeholder="Filter by facility"
+                      allowClear
+                      clearLabel="All facilities"
+                      triggerClassName="h-10"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
