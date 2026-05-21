@@ -37,7 +37,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
       supabaseAdmin.from("user_profiles").select("facility"),
       supabaseAdmin.from("custom_home_pages").select("id, name, slug"),
       supabaseAdmin.from("custom_home_page_categories").select("custom_home_page_id, category_id"),
-      supabaseAdmin.from("categories").select("id, name, slug, sort_order").order("sort_order", { ascending: true }),
+      supabaseAdmin.from("categories").select("id, name, slug, sort_order, home_page_mode").eq("home_page_mode", "custom").order("sort_order", { ascending: true }),
     ]);
     if (facRes.error) throw new Error(facRes.error.message);
     if (profRes.error) throw new Error(profRes.error.message);
