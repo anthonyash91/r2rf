@@ -590,7 +590,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                   {item.source && <p className="text-xs text-muted-foreground/80">Source · {item.source}</p>}
                 </div>
                 <TooltipProvider delayDuration={150}>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
