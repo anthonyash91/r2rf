@@ -14,6 +14,7 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
 import { User as UserIcon, Building2, Calendar, Shield } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
 
 
