@@ -87,13 +87,14 @@ function AdminFacilitiesPage() {
   });
   const deleteManyMut = useMutation({
     mutationFn: (input: { ids: string[] }) => deleteFacilitiesFn({ data: input }),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       toast.success(`Deleted ${res.deleted} ${res.deleted === 1 ? "facility" : "facilities"}`);
+      await invalidate();
       setSelectedIds(new Set());
-      invalidate();
     },
     onError: (e: any) => toast.error(e.message),
   });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const toggleOne = (id: string) => {
     setSelectedIds((prev) => {
