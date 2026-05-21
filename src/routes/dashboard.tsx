@@ -307,17 +307,17 @@ function DashboardPage() {
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
                   <h2 className="font-display text-lg font-semibold flex items-center gap-2">
-                    <Shield className="h-4 w-4" /> {t("security.heading")}
+                    <Shield className="h-4 w-4 shrink-0" /> {t("security.heading")}
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">{t("security.intro")}</p>
                 </div>
                 {!isEditing && (
                   <button
                     onClick={() => setEditing(true)}
-                    className="shrink-0 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:border-[var(--color-accent)] transition-colors"
+                    className="w-full sm:w-auto shrink-0 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:border-[var(--color-accent)] transition-colors"
                   >
                     {t("security.update")}
                   </button>
