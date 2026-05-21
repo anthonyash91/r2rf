@@ -350,7 +350,7 @@ function CategoryPage() {
                     const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000;
 
                     return (
-                      <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24">
+                      <li key={item.id} id={`item-${item.id}`} className={`relative scroll-mt-24 rounded-lg transition-shadow duration-500 ${highlightedId === item.id ? "ring-2 ring-[var(--color-accent)] ring-offset-2 ring-offset-background" : ""}`}>
                         {isNew && (
                           <span className="absolute top-3 right-3 mr-[7px] mt-[7px] z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
                             <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
