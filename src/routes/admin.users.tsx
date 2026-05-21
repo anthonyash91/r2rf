@@ -350,7 +350,7 @@ function AdminUsersPage() {
                       document.body.removeChild(a);
                       URL.revokeObjectURL(url);
                     }}
-                    className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted w-full sm:w-auto"
                   >
                     <Download className="h-4 w-4" /> Export CSV
                   </button>
