@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { HomePageView } from "@/components/HomePageView";
+import { SiteMessageBanner } from "@/components/SiteMessageBanner";
 import { setActiveCustomHome } from "@/lib/custom-home-context";
 
 export const Route = createFileRoute("/")({
@@ -45,6 +46,7 @@ function Index() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
+      <SiteMessageBanner kind="home" />
       <HomePageView categories={categories} isLoading={isLoading} />
       <SiteFooter />
     </div>

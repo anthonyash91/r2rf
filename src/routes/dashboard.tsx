@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { SiteMessageBanner } from "@/components/SiteMessageBanner";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyProfile, getMyFacilityCustomHome } from "@/lib/user-signup.functions";
 import { facilityLabel } from "@/lib/user-signup";
@@ -178,6 +179,7 @@ function DashboardPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
+      <SiteMessageBanner kind="user" />
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
         <h1 className="font-display text-3xl font-semibold">{t("nav.dashboard")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>

@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
 import { Route as AdminIpAllowlistRouteImport } from './routes/admin.ip-allowlist'
 import { Route as AdminHomeRouteImport } from './routes/admin.home'
 import { Route as AdminFacilitiesRouteImport } from './routes/admin.facilities'
@@ -78,6 +79,11 @@ const CategorySlugRoute = CategorySlugRouteImport.update({
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMessagesRoute = AdminMessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminIpAllowlistRoute = AdminIpAllowlistRouteImport.update({
@@ -146,6 +152,7 @@ export interface FileRoutesByFullPath {
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
+  '/admin/messages': typeof AdminMessagesRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
+  '/admin/messages': typeof AdminMessagesRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin': typeof AdminIndexRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
+  '/admin/messages': typeof AdminMessagesRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -213,6 +222,7 @@ export interface FileRouteTypes {
     | '/admin/facilities'
     | '/admin/home'
     | '/admin/ip-allowlist'
+    | '/admin/messages'
     | '/admin/users'
     | '/category/$slug'
     | '/admin/'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/admin/facilities'
     | '/admin/home'
     | '/admin/ip-allowlist'
+    | '/admin/messages'
     | '/admin/users'
     | '/category/$slug'
     | '/admin'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/admin/facilities'
     | '/admin/home'
     | '/admin/ip-allowlist'
+    | '/admin/messages'
     | '/admin/users'
     | '/category/$slug'
     | '/admin/'
@@ -346,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/messages': {
+      id: '/admin/messages'
+      path: '/messages'
+      fullPath: '/admin/messages'
+      preLoaderRoute: typeof AdminMessagesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/ip-allowlist': {
@@ -441,6 +460,7 @@ interface AdminRouteChildren {
   AdminFacilitiesRoute: typeof AdminFacilitiesRoute
   AdminHomeRoute: typeof AdminHomeRoute
   AdminIpAllowlistRoute: typeof AdminIpAllowlistRoute
+  AdminMessagesRoute: typeof AdminMessagesRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminCategoryIdRoute: typeof AdminCategoryIdRoute
@@ -453,6 +473,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminFacilitiesRoute: AdminFacilitiesRoute,
   AdminHomeRoute: AdminHomeRoute,
   AdminIpAllowlistRoute: AdminIpAllowlistRoute,
+  AdminMessagesRoute: AdminMessagesRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminCategoryIdRoute: AdminCategoryIdRoute,
