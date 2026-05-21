@@ -62,7 +62,7 @@ export function SecurityQuestionsForm({ onChange, rows = 2 }: Props) {
         return (
           <div key={i} className="space-y-1.5">
             <Select value={questionKeys[i]} onValueChange={(v) => setKey(i, v)}>
-              <SelectTrigger className="w-full text-xs">
+              <SelectTrigger className="w-full px-4 py-2 text-sm">
                 <SelectValue placeholder={t("security.chooseQuestion")} />
               </SelectTrigger>
               <SelectContent>
@@ -78,7 +78,7 @@ export function SecurityQuestionsForm({ onChange, rows = 2 }: Props) {
               value={answers[i]}
               onChange={(e) => setAnswer(i, e.target.value)}
               placeholder={t("security.yourAnswer")}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               maxLength={200}
             />
           </div>

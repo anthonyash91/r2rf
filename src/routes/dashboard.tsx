@@ -348,13 +348,6 @@ function DashboardPage() {
                 <div className="mt-4 space-y-4">
                   <SecurityQuestionsForm onChange={setPending} rows={2} />
                   <div className="flex justify-end gap-2">
-                    <button
-                      onClick={handleSave}
-                      disabled={busy}
-                      className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                    >
-                      {busy ? "…" : t("security.save")}
-                    </button>
                     {!mustSetup && (
                       <button
                         onClick={() => { setEditing(false); setPending([]); }}
@@ -363,6 +356,13 @@ function DashboardPage() {
                         {t("security.cancel")}
                       </button>
                     )}
+                    <button
+                      onClick={handleSave}
+                      disabled={busy}
+                      className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                    >
+                      {busy ? "…" : t("security.save")}
+                    </button>
                   </div>
                 </div>
               )}
