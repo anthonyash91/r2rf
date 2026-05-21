@@ -415,14 +415,7 @@ function CategoryProgressSection({
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
 
   return (
-    <section className="relative rounded-2xl border border-border bg-card overflow-hidden">
-      {hasRecent && (
-        <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
-          <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
-          {t("category.newContentAdded")}
-        </span>
-      )}
-
+    <section className="rounded-2xl border border-border bg-card overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -437,14 +430,23 @@ function CategoryProgressSection({
             <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
           )}
           <div className="min-w-0">
-            <h2 className="font-display text-lg font-semibold truncate">
-              {pickLang(lang, category.name, category.name_es)}
-            </h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-display text-lg font-semibold truncate">
+                {pickLang(lang, category.name, category.name_es)}
+              </h2>
+              {hasRecent && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
+                  <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
+                  {t("category.newContentAdded")}
+                </span>
+              )}
+            </div>
             {tagline && (
               <p className="text-xs text-muted-foreground truncate">{tagline}</p>
             )}
           </div>
         </div>
+
         {!isAdmin && (
           <div className="flex items-center gap-3 flex-shrink-0">
             <div className="hidden sm:block w-32">
