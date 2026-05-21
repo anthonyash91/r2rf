@@ -12,10 +12,10 @@ import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-re
 import { questionLabel } from "@/lib/security-questions";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, Check, Circle } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, ChevronDown, BookOpen, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { typeBadgeClass } from "@/lib/type-badge";
 import type { Category } from "@/lib/categories";
 
 
