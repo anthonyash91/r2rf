@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles, RefreshCw, ExternalLink, LayoutGrid, Loader2 } from "lucide-react";
+import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles, RefreshCw, ExternalLink, LayoutGrid, Loader2, GripVertical } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy } from "@/lib/category-ai.functions";
 
@@ -437,11 +437,14 @@ function AdminCategoriesPage() {
                     <li
                       key={c.id}
                       onClick={() => toggleOne(c.id)}
-                      className={`cursor-pointer transition-colors ${
+                      className={`flex items-stretch cursor-pointer transition-colors ${
                         selected ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"
                       }`}
                     >
-                      <div className="pointer-events-none">{renderCategoryRow(c)}</div>
+                      <div className="flex items-center pl-4 pr-0 text-muted-foreground/50">
+                        <GripVertical className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0 pointer-events-none">{renderCategoryRow(c)}</div>
                     </li>
                   );
                 })}
