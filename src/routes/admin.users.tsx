@@ -410,7 +410,7 @@ function AdminUsersPage() {
                               <button
                                 type="button"
                                 onClick={() => setSelectedIds(new Set())}
-                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-1.5 hover:bg-muted"
+                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
                               >
                                 Clear
                               </button>
