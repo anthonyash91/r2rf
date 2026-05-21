@@ -125,7 +125,13 @@ export const signupUser = createServerFn({ method: "POST" })
 
     const { error: profErr } = await supabaseAdmin
       .from("user_profiles")
-      .insert({ user_id: userId, username: data.username, facility: data.facility });
+      .insert({
+        user_id: userId,
+        username: data.username,
+        facility: data.facility,
+        first_name: data.firstName,
+        last_name: data.lastName,
+      });
     if (profErr) {
       await supabaseAdmin.auth.admin.deleteUser(userId);
       throw new Error(profErr.message);
