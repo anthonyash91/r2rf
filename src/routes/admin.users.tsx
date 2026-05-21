@@ -138,6 +138,9 @@ function AdminUsersPage() {
       <div className="mt-6">
         <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
           <Users className="h-7 w-7 text-[var(--color-accent)]" /> Users
+          {!isLoading && data?.users && (
+            <span className="text-muted-foreground font-normal">({data.users.length})</span>
+          )}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Add users, edit emails, reset passwords, and manage access.
