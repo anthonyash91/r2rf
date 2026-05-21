@@ -42,6 +42,16 @@ export function AdminNav() {
   const { isAdmin } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleScroll = (e: React.UIEvent<HTMLUListElement>) => {
+    const el = e.currentTarget;
+    el.classList.add("is-scrolling");
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    scrollTimerRef.current = setTimeout(() => {
+      el.classList.remove("is-scrolling");
+    }, 800);
+  };
+
 
   const visible = links.filter((l) => !l.adminOnly || isAdmin);
   const current = visible.find((l) => isLinkActive(l, pathname)) ?? visible[0];
