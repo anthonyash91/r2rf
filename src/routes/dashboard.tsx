@@ -11,7 +11,9 @@ import { getMyProfile, getMyFacilityCustomHome } from "@/lib/user-signup.functio
 import { facilityLabel } from "@/lib/user-signup";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
 import { questionLabel } from "@/lib/security-questions";
-import { useI18n, pickLang } from "@/lib/i18n";
+import { useI18n, pickLang, translateDuration } from "@/lib/i18n";
+import { withActionWord } from "@/lib/duration";
+
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
 import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, X, ChevronDown, BookOpen, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
