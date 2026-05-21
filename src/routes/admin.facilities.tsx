@@ -10,7 +10,9 @@ import {
   addFacilities,
   updateFacility,
   deleteFacility,
+  deleteFacilities,
 } from "@/lib/facilities.functions";
+
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
