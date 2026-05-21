@@ -223,12 +223,12 @@ function AdminUsersPage() {
 
 
             <section className="mt-8">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h2 className="font-display text-xl font-semibold">Admin Users</h2>
                 <button
                   onClick={() => setShowCreate(true)}
                   disabled={showCreate}
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary w-full sm:w-auto"
                 >
                   <UserPlus className="h-4 w-4" /> Add admin user
                 </button>
