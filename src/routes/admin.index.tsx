@@ -270,7 +270,7 @@ function AdminCategoriesPage() {
 
       {(() => {
         const renderCategoryRow = (c: Category) => (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 p-4 pl-[6px] pr-[22px]">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 p-4 pl-[22px] pr-[22px]">
             <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
               {c.icon_url ? (
                 <img
