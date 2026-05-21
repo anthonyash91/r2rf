@@ -77,8 +77,8 @@ export function AdminNav() {
       </div>
 
       {/* sm+: horizontally scrollable tabs */}
-      <div className="hidden sm:flex sm:flex-col gap-2.5 scrollbar-accent overflow-x-auto pb-2">
-        <ul className="flex w-max min-w-full items-center gap-1 rounded-lg bg-muted p-2 text-muted-foreground">
+      <div className="hidden sm:block">
+        <ul className="scrollbar-accent flex w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted p-2 text-muted-foreground">
           {visible.map((l) => {
             const active = isLinkActive(l, pathname);
             const Icon = l.icon;
