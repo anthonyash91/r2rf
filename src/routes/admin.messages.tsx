@@ -132,28 +132,21 @@ function MessageEditor({
             saveMut.mutate(value);
           }}
         >
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <input
-              type="checkbox"
-              checked={value.enabled}
-              onChange={(e) => setValue({ ...value, enabled: e.target.checked })}
-              className="h-4 w-4 rounded border-input"
-            />
-            Show this banner
-          </label>
-
           <label className="block">
             <span className="text-sm font-medium">Message</span>
             <textarea
               rows={4}
               value={value.message}
-              onChange={(e) => setValue({ ...value, message: e.target.value })}
+              onChange={(e) => setValue({ ...value, message: e.target.value, enabled: e.target.value.trim().length > 0 })}
               placeholder="Enter the message to display in the banner…"
               className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
+            <p className="mt-1 text-xs text-muted-foreground">
+              The banner will appear as long as there is a saved message. Clear the message to hide it.
+            </p>
           </label>
 
-          {value.message.trim() && value.enabled && (
+          {value.message.trim() && (
             <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Preview</p>
               <div className="rounded-md border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-4 py-3 flex items-start gap-3 text-sm">
