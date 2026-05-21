@@ -337,6 +337,21 @@ function SignupPage() {
 
               {mode === "sign-up" && (
                 <>
+                  <div>
+                    <label className="text-sm font-medium">{t("signup.confirmPassword")}</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={8}
+                      maxLength={72}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                    {confirmPassword.length > 0 && confirmPassword !== password && (
+                      <p className="mt-1 text-xs text-destructive">{t("signup.passwordMismatch")}</p>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-sm font-medium">First name</label>
