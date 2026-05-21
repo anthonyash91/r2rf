@@ -192,9 +192,19 @@ function DashboardPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
 
         <Tabs defaultValue="categories" className="mt-8">
-          <TabsList>
-            <TabsTrigger value="categories">Progress</TabsTrigger>
-            <TabsTrigger value="account">Account Settings</TabsTrigger>
+          <TabsList className="h-auto p-2 gap-1">
+            <TabsTrigger
+              value="categories"
+              className="px-4 py-2 data-[state=active]:shadow-none"
+            >
+              Progress
+            </TabsTrigger>
+            <TabsTrigger
+              value="account"
+              className="px-4 py-2 data-[state=active]:shadow-none"
+            >
+              Account Settings
+            </TabsTrigger>
           </TabsList>
 
 
