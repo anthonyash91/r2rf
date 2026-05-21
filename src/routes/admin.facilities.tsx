@@ -24,7 +24,7 @@ function AdminFacilitiesPage() {
   const qc = useQueryClient();
   const confirm = useConfirm();
 
-  const fetchFacilities = useServerFn(listFacilities);
+  const fetchFacilities = useServerFn(listFacilitiesWithStats);
   const addFacilitiesFn = useServerFn(addFacilities);
   const updateFacilityFn = useServerFn(updateFacility);
   const deleteFacilityFn = useServerFn(deleteFacility);
