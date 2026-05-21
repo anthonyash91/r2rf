@@ -180,7 +180,7 @@ export const getMyProfile = createServerFn({ method: "GET" }).handler(async () =
   if (!userRes?.user) return { profile: null };
   const { data: profile } = await supabaseAdmin
     .from("user_profiles")
-    .select("username, facility, created_at")
+    .select("username, facility, created_at, first_name, last_name")
     .eq("user_id", userRes.user.id)
     .maybeSingle();
   return {
