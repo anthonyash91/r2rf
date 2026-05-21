@@ -228,7 +228,7 @@ function AdminUsersPage() {
             <section className="mt-8">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
-                  <h2 className="font-display text-xl font-semibold">Admin Users</h2>
+                  <h2 className="font-display text-xl font-semibold">Admin Users <span className="text-muted-foreground font-normal">({adminUsers.length})</span></h2>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Accounts with admin or contributor access.
                   </p>
