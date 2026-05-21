@@ -354,7 +354,7 @@ function SignupPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium">{t("signup.facility")}</label>
-                    <Select value={facility} onValueChange={setFacility} required>
+                    <Select value={facility} onValueChange={setFacility}>
                       <SelectTrigger className="mt-1 w-full">
                         <SelectValue />
                       </SelectTrigger>
