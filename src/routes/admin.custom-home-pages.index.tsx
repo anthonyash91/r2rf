@@ -9,6 +9,9 @@ import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useServerFn } from "@tanstack/react-start";
+import { listFacilities } from "@/lib/facilities.functions";
 
 const RESERVED_SLUGS = new Set([
   "admin",
@@ -75,6 +78,17 @@ function AdminCustomHomePagesList() {
       return data as Category[];
     },
   });
+
+  const fetchFacilities = useServerFn(listFacilities);
+  const { data: facilitiesData } = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilities(),
+  });
+  const facilities = facilitiesData?.facilities ?? [];
+  const usedFacilityLabels = useMemo(
+    () => new Set(pages.map((p) => p.name)),
+    [pages],
+  );
 
   const { data: pageCategoryIds = {} } = useQuery({
     queryKey: ["admin", "custom_home_pages", "categories"],
@@ -242,18 +256,33 @@ function AdminCustomHomePagesList() {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="block">
-              <span className="text-sm font-medium">Name</span>
-              <input
-                required
+              <span className="text-sm font-medium">Facility</span>
+              <Select
                 value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  if (!slugTouched) setSlug(slugify(e.target.value));
+                onValueChange={(label) => {
+                  setName(label);
+                  if (!slugTouched) setSlug(slugify(label));
                 }}
-                placeholder="e.g. CPC"
-                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
-              <p className="mt-1 text-xs text-muted-foreground">Internal label, only shown in admin.</p>
+              >
+                <SelectTrigger className="mt-1 h-[38px]">
+                  <SelectValue placeholder="Select a facility" />
+                </SelectTrigger>
+                <SelectContent>
+                  {facilities.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">No facilities</div>
+                  ) : (
+                    facilities.map((f) => {
+                      const taken = usedFacilityLabels.has(f.label);
+                      return (
+                        <SelectItem key={f.id} value={f.label} disabled={taken}>
+                          {f.label}{taken ? " (in use)" : ""}
+                        </SelectItem>
+                      );
+                    })
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-muted-foreground">This custom home page is for the selected facility.</p>
             </label>
             <label className="block">
               <span className="text-sm font-medium">URL slug</span>
