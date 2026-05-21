@@ -687,10 +687,12 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           return (
             <SortableList
               className="divide-y divide-border"
+              dragHandleClassName="pl-5"
               items={order}
               onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
               renderItem={(item) => renderItemRow(item)}
             />
+
           );
         })()}
       </div>
