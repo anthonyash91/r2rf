@@ -17,7 +17,7 @@ const links: NavLink[] = [
   { to: "/admin/facilities", label: "Facilities", icon: Building2, adminOnly: true },
   { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3, adminOnly: true },
-  { to: "/admin/custom-home-pages", label: "Home Pages", icon: Globe, adminOnly: true },
+  { to: "/admin/custom-home-pages", label: "Home Pages", icon: LayoutTemplate, adminOnly: true },
   { to: "/admin/home", label: "Home Header", icon: Home, adminOnly: true },
   { to: "/admin/certificate", label: "Certificate Footer", icon: Award, adminOnly: true },
 ];
