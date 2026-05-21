@@ -17,6 +17,7 @@ import {
   clearUserSecurityAnswers,
 } from "@/lib/users.functions";
 import { listFacilities } from "@/lib/facilities.functions";
+import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
