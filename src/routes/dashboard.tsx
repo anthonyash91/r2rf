@@ -5,13 +5,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { getMyProfile } from "@/lib/user-signup.functions";
+import { getMyProfile, getMyFacilityCustomHome } from "@/lib/user-signup.functions";
 import { facilityLabel } from "@/lib/user-signup";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
 import { questionLabel } from "@/lib/security-questions";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, pickLang } from "@/lib/i18n";
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
 import { User as UserIcon, Building2, Calendar, Shield } from "lucide-react";
+import type { Category } from "@/lib/categories";
+
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Reentry to Recovery" }] }),
@@ -31,6 +33,8 @@ function DashboardPage() {
   const fetchQuestions = useServerFn(getMySecurityQuestions);
   const submitUpdate = useServerFn(updateSecurityAnswers);
 
+  const fetchFacilityHome = useServerFn(getMyFacilityCustomHome);
+
   const { data, isLoading } = useQuery({
     queryKey: ["my-profile"],
     queryFn: () => fetchProfile(),
@@ -39,6 +43,55 @@ function DashboardPage() {
     queryKey: ["my-security-questions"],
     queryFn: () => fetchQuestions(),
   });
+
+  const facilityHomeQuery = useQuery({
+    queryKey: ["my-facility-custom-home"],
+    queryFn: () => fetchFacilityHome(),
+  });
+  const customSlug = facilityHomeQuery.data?.slug ?? null;
+
+  const categoriesQuery = useQuery({
+    queryKey: ["dashboard-categories", customSlug],
+    enabled: !facilityHomeQuery.isLoading,
+    queryFn: async (): Promise<Category[]> => {
+      if (customSlug) {
+        const { data: page, error: pe } = await supabase
+          .from("custom_home_pages")
+          .select("id")
+          .eq("slug", customSlug)
+          .maybeSingle();
+        if (pe) throw pe;
+        if (!page) return [];
+        const { data: links, error: le } = await supabase
+          .from("custom_home_page_categories")
+          .select("category_id, sort_order")
+          .eq("custom_home_page_id", page.id)
+          .order("sort_order", { ascending: true });
+        if (le) throw le;
+        const ids = (links ?? []).map((l) => l.category_id);
+        if (ids.length === 0) return [];
+        const { data: cats, error: ce } = await supabase
+          .from("categories")
+          .select("*")
+          .eq("published", true)
+          .in("id", ids);
+        if (ce) throw ce;
+        const order = new Map(ids.map((id, i) => [id, i]));
+        return ((cats ?? []) as Category[]).sort(
+          (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
+        );
+      }
+      const { data: cats, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("published", true)
+        .eq("home_page_mode", "default")
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (cats ?? []) as Category[];
+    },
+  });
+
 
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState<SecurityAnswerInput[]>([]);
@@ -181,7 +234,49 @@ function DashboardPage() {
           )}
         </div>
 
+        <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-display text-lg font-semibold">{t("home.categories")}</h2>
+          {categoriesQuery.isLoading || facilityHomeQuery.isLoading ? (
+            <p className="mt-3 text-sm text-muted-foreground">{t("home.loading")}</p>
+          ) : (categoriesQuery.data?.length ?? 0) === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">{t("home.empty")}</p>
+          ) : (
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {(categoriesQuery.data ?? []).map((c) => (
+                <li key={c.id}>
+                  <Link
+                    to="/category/$slug"
+                    params={{ slug: c.slug }}
+                    className="group flex items-center gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-[var(--color-accent)]"
+                  >
+                    {c.icon_url ? (
+                      <img
+                        src={c.icon_url}
+                        alt=""
+                        className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover bg-muted"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed border-border bg-muted/40" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground truncate">
+                        {pickLang(lang, c.name, c.name_es)}
+                      </p>
+                      {pickLang(lang, c.tagline, c.tagline_es) && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {pickLang(lang, c.tagline, c.tagline_es)}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
       </main>
+
       <SiteFooter />
     </div>
   );
