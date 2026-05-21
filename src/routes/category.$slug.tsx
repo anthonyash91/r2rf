@@ -11,6 +11,7 @@ import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n"
 import { withActionWord } from "@/lib/duration";
 import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Check, Circle } from "lucide-react";
 import { toast } from "sonner";
+import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
