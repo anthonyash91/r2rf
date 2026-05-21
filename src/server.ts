@@ -72,6 +72,20 @@ export default {
     try {
       const ip = getClientIp(request);
       const pathname = new URL(request.url).pathname;
+
+      // Global kill switch: when disabled, skip all IP-based restrictions.
+      let restrictionsEnabled = true;
+      try {
+        restrictionsEnabled = await isIpRestrictionEnabled();
+      } catch (err) {
+        console.error("[ip-restriction-toggle] check failed:", err);
+      }
+      if (!restrictionsEnabled) {
+        const handler = await getServerEntry();
+        const response = await handler.fetch(request, env, ctx);
+        return await normalizeCatastrophicSsrResponse(response);
+      }
+
       // Allow the self-service passkey endpoint through the site allowlist
       // so blocked visitors can request access with a shared passkey.
       const isPasskeyEndpoint = pathname === "/api/public/site-passkey";
@@ -82,6 +96,7 @@ export default {
       const hasPasskeyCookie = (request.headers.get("cookie") ?? "")
         .split(";")
         .some((c) => c.trim().startsWith("site_passkey_ok="));
+
       // Check the permanent blocklist first — blocked IPs see the permanent
       // message and cannot retry via the passkey endpoint.
       let isBlocked = false;
