@@ -53,7 +53,7 @@ export function TranslatingIndicator({ label }: { label?: string } = {}) {
     <div
       role="status"
       aria-live="polite"
-      className="inline-flex items-center gap-2 rounded-md border border-input bg-muted/40 px-3 py-2 text-sm text-muted-foreground"
+      className="inline-flex items-center gap-2 rounded-md border border-input bg-muted/40 px-4 py-2 text-sm text-muted-foreground"
     >
       <Loader2 className="h-4 w-4 animate-spin" />
       <Languages className="h-4 w-4" />
