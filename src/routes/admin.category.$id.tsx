@@ -444,13 +444,14 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       if (error) throw error;
       return ids.length;
     },
-    onSuccess: (deleted) => {
+    onSuccess: async (deleted) => {
       toast.success(`Deleted ${deleted} ${deleted === 1 ? "item" : "items"}`);
+      await invalidate();
       setSelectedIds(new Set());
-      invalidate();
     },
     onError: (e: any) => toast.error(e.message),
   });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const reorderMut = useMutation({
     mutationFn: async (next: ContentItem[]) => {
