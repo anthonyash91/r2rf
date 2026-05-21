@@ -371,7 +371,7 @@ function CategoryPage() {
                               </span>
                             )}
                           </div>
-                          <div className={`flex-1 min-w-0 ${isNew ? "sm:pr-32" : ""}`}>
+                          <div className={`flex-1 min-w-0 ${(user || isAdmin || isNew) ? "pr-28 sm:pr-32" : ""}`}>
                             <div className="flex items-start gap-2">
                               <h3 className="font-display text-lg font-semibold text-foreground leading-snug">
                                 {title}
@@ -399,13 +399,14 @@ function CategoryPage() {
                           </div>
                         </Wrapper>
                         {(user || isAdmin || isNew) && (
-                          <div className="flex items-center gap-1.5 flex-wrap justify-end px-6 pb-4 -mt-2 sm:mt-0 sm:px-0 sm:pb-0 sm:absolute sm:bottom-3 sm:right-3 sm:mr-[7px] sm:mb-[7px] z-10">
+                          <div className="absolute top-3 right-3 mr-[7px] mt-[7px] flex items-center gap-1.5 flex-wrap justify-end sm:top-auto sm:bottom-3 sm:mt-0 sm:mb-[7px] z-10">
                             {isNew && (
-                              <span className="sm:hidden inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
+                              <span className="sm:hidden inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
                                 <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                                 {t("category.newContent")}
                               </span>
                             )}
+
                             {user && !isAdmin && (() => {
                               const isRead = readSet.has(item.id);
                               return (
