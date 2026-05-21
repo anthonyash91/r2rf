@@ -219,7 +219,7 @@ function AdminCustomHomePagesList() {
 
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold">Custom home pages</h1>
+          <h1 className="font-display text-3xl font-semibold flex items-center gap-2"><LayoutTemplate className="h-7 w-7 text-[var(--color-accent)]" /> Custom home pages</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Create alternate landing pages at custom URLs (e.g. <code>/cpc</code>) that show only the categories you choose.
           </p>
