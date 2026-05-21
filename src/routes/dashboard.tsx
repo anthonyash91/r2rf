@@ -519,7 +519,7 @@ function CategoryProgressSection({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 flex-wrap w-full min-[480px]:w-auto min-[480px]:ml-auto pl-9 min-[480px]:pl-0">
+                  <div className="flex items-center gap-3 flex-wrap w-full justify-end min-[480px]:w-auto min-[480px]:justify-start min-[480px]:ml-auto pl-9 min-[480px]:pl-0">
 
                     {newItemSet.has(it.id) && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
