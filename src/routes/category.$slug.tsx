@@ -380,7 +380,7 @@ function CategoryPage() {
                         </Wrapper>
                         {(user || isAdmin) && (
                           <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5">
-                            {user && (() => {
+                            {user && !isAdmin && (() => {
                               const isRead = readSet.has(item.id);
                               return (
                                 <button
