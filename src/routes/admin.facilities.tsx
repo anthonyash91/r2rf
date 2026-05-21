@@ -83,6 +83,35 @@ function AdminFacilitiesPage() {
     onSuccess: () => { toast.success("Facility deleted"); invalidate(); },
     onError: (e: any) => toast.error(e.message),
   });
+  const deleteManyMut = useMutation({
+    mutationFn: (input: { ids: string[] }) => deleteFacilitiesFn({ data: input }),
+    onSuccess: (res) => {
+      toast.success(`Deleted ${res.deleted} ${res.deleted === 1 ? "facility" : "facilities"}`);
+      setSelectedIds(new Set());
+      invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const visibleIds = visibleFacilities.map((f) => f.id);
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
+  const someVisibleSelected = visibleIds.some((id) => selectedIds.has(id));
+  const toggleAllVisible = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) visibleIds.forEach((id) => next.delete(id));
+      else visibleIds.forEach((id) => next.add(id));
+      return next;
+    });
+  };
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
 
   return (
     <div>
