@@ -11,7 +11,9 @@ import { getMyProfile, getMyFacilityCustomHome } from "@/lib/user-signup.functio
 import { facilityLabel } from "@/lib/user-signup";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
 import { questionLabel } from "@/lib/security-questions";
-import { useI18n, pickLang } from "@/lib/i18n";
+import { useI18n, pickLang, translateDuration } from "@/lib/i18n";
+import { withActionWord } from "@/lib/duration";
+
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
 import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, X, ChevronDown, BookOpen, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -108,7 +110,7 @@ function DashboardPage() {
       const [itemsRes, readRes] = await Promise.all([
         supabase
           .from("content_items")
-          .select("id, category_id, title, title_es, description, description_es, type, sort_order, created_at")
+          .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at")
           .eq("published", true)
           .in("category_id", categoryIds)
           .order("sort_order", { ascending: true }),
@@ -120,7 +122,7 @@ function DashboardPage() {
       ]);
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
-      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; created_at: string | null };
+      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; duration: string | null; created_at: string | null };
       const itemsByCat = new Map<string, CatItem[]>();
       const totals = new Map<string, number>();
       const recentCats = new Set<string>();
@@ -404,6 +406,8 @@ type CatItem = {
   description: string;
   description_es: string | null;
   type: string;
+  duration?: string | null;
+
 };
 
 function CategoryProgressSection({
@@ -510,6 +514,12 @@ function CategoryProgressSection({
                     <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
                       {it.type}
                     </span>
+                    {it.duration && (
+                      <span className="text-xs text-muted-foreground">
+                        {translateDuration(lang, withActionWord(it.duration, it.type))}
+                      </span>
+                    )}
+
                     {!isAdmin && (
                       <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
                         isRead
