@@ -402,7 +402,7 @@ function SignupPage() {
                       </PopoverTrigger>
                       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                         <Command>
-                          <CommandInput placeholder="Search facilities..." />
+                          <CommandInput placeholder="Search facilities..." className="focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" />
                           <CommandList>
                             <CommandEmpty>No facility found.</CommandEmpty>
                             <CommandGroup>
