@@ -135,7 +135,7 @@
 
 @layer utilities {
   .scrollbar-accent {
-    scrollbar-width: none;
+    scrollbar-width: thin;
     scrollbar-color: transparent transparent;
   }
   .scrollbar-accent::-webkit-scrollbar {
@@ -150,7 +150,6 @@
     border-radius: 9999px;
   }
   .scrollbar-accent.is-scrolling {
-    scrollbar-width: thin;
     scrollbar-color: color-mix(in oklab, var(--color-accent) 55%, transparent) transparent;
   }
   .scrollbar-accent.is-scrolling::-webkit-scrollbar-thumb {
