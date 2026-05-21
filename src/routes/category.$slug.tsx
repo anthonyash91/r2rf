@@ -136,6 +136,59 @@ function CategoryPage() {
     if (data?.category.id) trackCategoryView(data.category.id);
   }, [data?.category.id]);
 
+  const categoryId = data?.category.id;
+  const progressQuery = useQuery({
+    queryKey: ["content-progress", user?.id, categoryId],
+    enabled: !!user?.id && !!categoryId,
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from("user_content_progress")
+        .select("content_item_id")
+        .eq("user_id", user!.id)
+        .eq("category_id", categoryId!);
+      if (error) throw error;
+      return new Set((rows ?? []).map((r) => r.content_item_id as string));
+    },
+  });
+  const readSet = progressQuery.data ?? new Set<string>();
+
+  const toggleRead = useMutation({
+    mutationFn: async (vars: { itemId: string; markRead: boolean }) => {
+      if (!user?.id || !categoryId) throw new Error("Not signed in");
+      if (vars.markRead) {
+        const { error } = await supabase
+          .from("user_content_progress")
+          .insert({ user_id: user.id, content_item_id: vars.itemId, category_id: categoryId });
+        if (error && (error as any).code !== "23505") throw error;
+      } else {
+        const { error } = await supabase
+          .from("user_content_progress")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("content_item_id", vars.itemId);
+        if (error) throw error;
+      }
+    },
+    onMutate: async (vars) => {
+      const key = ["content-progress", user?.id, categoryId];
+      await queryClient.cancelQueries({ queryKey: key });
+      const prev = queryClient.getQueryData<Set<string>>(key);
+      const next = new Set(prev ?? []);
+      if (vars.markRead) next.add(vars.itemId);
+      else next.delete(vars.itemId);
+      queryClient.setQueryData(key, next);
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["content-progress", user?.id, categoryId], ctx.prev);
+      toast.error(t("category.markReadError"));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["content-progress", user?.id, categoryId] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-progress", user?.id] });
+    },
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
