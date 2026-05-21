@@ -514,6 +514,12 @@ function CategoryProgressSection({
                     <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
                       {it.type}
                     </span>
+                    {it.duration && (
+                      <span className="text-xs text-muted-foreground">
+                        {translateDuration(lang, withActionWord(it.duration, it.type))}
+                      </span>
+                    )}
+
                     {!isAdmin && (
                       <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
                         isRead
