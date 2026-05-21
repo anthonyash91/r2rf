@@ -176,9 +176,10 @@ function DashboardPage() {
 
         <Tabs defaultValue="categories" className="mt-8">
           <TabsList>
-            <TabsTrigger value="categories">{t("home.categories")}</TabsTrigger>
-            <TabsTrigger value="account">{t("nav.dashboard")}</TabsTrigger>
+            <TabsTrigger value="categories">Progress</TabsTrigger>
+            <TabsTrigger value="account">Account Settings</TabsTrigger>
           </TabsList>
+
 
           <TabsContent value="categories" className="mt-6">
             {categoriesQuery.isLoading || facilityHomeQuery.isLoading ? (
