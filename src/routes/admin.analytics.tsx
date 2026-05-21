@@ -119,24 +119,26 @@ function AdminAnalyticsPage() {
             Category views and content clicks across the site.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2 items-center">
-          {RANGE_OPTIONS.map((opt) => (
-            <button
-              key={opt.key}
-              onClick={() => setRange(opt.key)}
-              className={`rounded-md border px-4 py-2 text-sm transition-colors ${
-                range === opt.key
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "border-input bg-background hover:bg-muted"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="flex flex-col gap-2 w-full lg:w-auto sm:flex-row sm:flex-wrap lg:flex-nowrap">
+          <div className="flex gap-2 flex-1 min-w-0 basis-full sm:basis-auto">
+            {RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setRange(opt.key)}
+                className={`flex-1 lg:flex-initial rounded-md border px-4 py-2 text-sm text-center transition-colors ${
+                  range === opt.key
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-input bg-background hover:bg-muted"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <button
             onClick={() => aggregated && exportCsv(aggregated, range)}
             disabled={!aggregated}
-            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
           >
             <Download className="h-4 w-4" /> Export CSV
           </button>
