@@ -61,6 +61,7 @@ function AdminUsersPage() {
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [regularVisible, setRegularVisible] = useState<number>(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [editMode, setEditMode] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
