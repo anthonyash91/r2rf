@@ -268,184 +268,195 @@ function AdminCategoriesPage() {
         </div>
       )}
 
-      <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
-        {isLoading ? (
-          <div className="p-6 text-muted-foreground">Loading…</div>
-        ) : categories.length === 0 ? (
-          <div className="p-6 text-muted-foreground">No categories yet.</div>
-        ) : (
-          <SortableList
-            className="divide-y divide-border"
-            items={order}
-            onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
-            renderItem={(c) => (
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 p-4 pl-[6px] pr-[22px]">
-                <Checkbox
-                  aria-label={`Select ${c.name}`}
-                  className="shrink-0 self-start sm:self-center"
-                  checked={selectedIds.has(c.id)}
-                  onCheckedChange={() => setSelectedIds((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
-                    return next;
-                  })}
+      {(() => {
+        const renderCategoryRow = (c: Category) => (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 p-4 pl-[6px] pr-[22px]">
+            <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
+              {c.icon_url ? (
+                <img
+                  src={c.icon_url}
+                  alt={`${c.name} icon`}
+                  className="h-12 w-12 rounded-lg object-cover border border-border bg-muted shrink-0"
                 />
-
-                <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                  {c.icon_url ? (
-                    <img
-                      src={c.icon_url}
-                      alt={`${c.name} icon`}
-                      className="h-12 w-12 rounded-lg object-cover border border-border bg-muted shrink-0"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
-                  )}
-                  <div className="@container flex-1 min-w-0">
-                    <div className="flex flex-col-reverse gap-y-1 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
-                      <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
-                      <div className="flex flex-wrap items-center gap-2 @lg:contents">
-                        <span
-                          title="Content items in this category"
-                          className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border tabular-nums"
-                        >
-                          {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
-                        </span>
-                        {c.home_page_mode === "custom" && (
-                          <span
-                            title="Only shown on selected custom home pages"
-                            className="shrink-0 text-xs rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
-                          >
-                            Custom
-                          </span>
-                        )}
-                        {!c.published && (
-                          <span className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border">
-                            Draft
-                          </span>
-                        )}
-                        {(() => {
-                          const s = categoryTranslationStatus(c);
-                          if (s === "complete") return null;
-                          const label = s === "missing" ? "Needs ES" : "Partially translated";
-                          const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
-                          return (
-                            <span
-                              title={title}
-                              className="shrink-0 inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
-                            >
-                              <Languages className="h-3 w-3" /> {label}
-                            </span>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground break-words">/{c.slug} · {c.tagline}</p>
-                    {c.description && (
-                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
-                    )}
+              ) : (
+                <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
+              )}
+              <div className="@container flex-1 min-w-0">
+                <div className="flex flex-col-reverse gap-y-1 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
+                  <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
+                  <div className="flex flex-wrap items-center gap-2 @lg:contents">
+                    <span
+                      title="Content items in this category"
+                      className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border tabular-nums"
+                    >
+                      {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
+                    </span>
                     {c.home_page_mode === "custom" && (
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <span className="text-xs text-muted-foreground">Custom home page:</span>
-                        {(customHomePagesByCategory[c.id] ?? []).length === 0 ? (
-                          <span className="text-xs text-muted-foreground italic">No custom home pages</span>
-                        ) : (
-                          (customHomePagesByCategory[c.id] ?? []).map((p) => (
-                            <Link
-                              key={p.id}
-                              to="/admin/custom-home-pages/$id"
-                              params={{ id: p.id }}
-                              className="text-xs rounded-full bg-[var(--color-accent)]/10 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/20"
-                            >
-                              {p.name}
-                            </Link>
-                          ))
-                        )}
-                      </div>
+                      <span
+                        title="Only shown on selected custom home pages"
+                        className="shrink-0 text-xs rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
+                      >
+                        Custom
+                      </span>
                     )}
+                    {!c.published && (
+                      <span className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border">
+                        Draft
+                      </span>
+                    )}
+                    {(() => {
+                      const s = categoryTranslationStatus(c);
+                      if (s === "complete") return null;
+                      const label = s === "missing" ? "Needs ES" : "Partially translated";
+                      const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
+                      return (
+                        <span
+                          title={title}
+                          className="shrink-0 inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
+                        >
+                          <Languages className="h-3 w-3" /> {label}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
-                <TooltipProvider delayDuration={150}>
-                  <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          aria-label={c.published ? "Unpublish" : "Publish"}
-                          onClick={() => togglePublish.mutate(c)}
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                        >
-                          {c.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>{c.published ? "Unpublish" : "Publish"}</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        {c.published ? (
-                          <Link
-                            to="/category/$slug"
-                            params={{ slug: c.slug }}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="View on site"
-                            className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </Link>
-                        ) : (
-                          <span
-                            aria-label="View on site (unavailable for drafts)"
-                            aria-disabled="true"
-                            className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background opacity-50 cursor-not-allowed"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </span>
-                        )}
-                      </TooltipTrigger>
-                      <TooltipContent>{c.published ? "View on site" : "Unavailable while draft"}</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
+                <p className="text-xs text-muted-foreground break-words">/{c.slug} · {c.tagline}</p>
+                {c.description && (
+                  <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
+                )}
+                {c.home_page_mode === "custom" && (
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">Custom home page:</span>
+                    {(customHomePagesByCategory[c.id] ?? []).length === 0 ? (
+                      <span className="text-xs text-muted-foreground italic">No custom home pages</span>
+                    ) : (
+                      (customHomePagesByCategory[c.id] ?? []).map((p) => (
                         <Link
-                          to="/admin/category/$id"
-                          params={{ id: c.id }}
-                          aria-label="Edit"
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                          key={p.id}
+                          to="/admin/custom-home-pages/$id"
+                          params={{ id: p.id }}
+                          className="text-xs rounded-full bg-[var(--color-accent)]/10 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/20"
                         >
-                          <Pencil className="h-4 w-4" />
+                          {p.name}
                         </Link>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit</TooltipContent>
-                    </Tooltip>
-                    <div className="mx-1 h-6 w-px bg-border" aria-hidden />
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          aria-label="Delete"
-                          onClick={async () => {
-                            const ok = await confirm({
-                              title: `Delete "${c.name}"?`,
-                              description: "This will permanently delete the category and all its content.",
-                              confirmLabel: "Delete",
-                              destructive: true,
-                            });
-                            if (ok) deleteMut.mutate(c.id);
-                          }}
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete</TooltipContent>
-                    </Tooltip>
+                      ))
+                    )}
                   </div>
-                </TooltipProvider>
+                )}
               </div>
-            )}
-          />
+            </div>
+            <TooltipProvider delayDuration={150}>
+              <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      aria-label={c.published ? "Unpublish" : "Publish"}
+                      onClick={() => togglePublish.mutate(c)}
+                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                    >
+                      {c.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>{c.published ? "Unpublish" : "Publish"}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {c.published ? (
+                      <Link
+                        to="/category/$slug"
+                        params={{ slug: c.slug }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="View on site"
+                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <span
+                        aria-label="View on site (unavailable for drafts)"
+                        aria-disabled="true"
+                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background opacity-50 cursor-not-allowed"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </span>
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent>{c.published ? "View on site" : "Unavailable while draft"}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      to="/admin/category/$id"
+                      params={{ id: c.id }}
+                      aria-label="Edit"
+                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent>Edit</TooltipContent>
+                </Tooltip>
+                <div className="mx-1 h-6 w-px bg-border" aria-hidden />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      aria-label="Delete"
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: `Delete "${c.name}"?`,
+                          description: "This will permanently delete the category and all its content.",
+                          confirmLabel: "Delete",
+                          destructive: true,
+                        });
+                        if (ok) deleteMut.mutate(c.id);
+                      }}
+                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>Delete</TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
+          </div>
+        );
 
-        )}
-      </div>
+        return (
+          <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+            {isLoading ? (
+              <div className="p-6 text-muted-foreground">Loading…</div>
+            ) : categories.length === 0 ? (
+              <div className="p-6 text-muted-foreground">No categories yet.</div>
+            ) : editMode ? (
+              <ul className="divide-y divide-border">
+                {order.map((c) => {
+                  const selected = selectedIds.has(c.id);
+                  return (
+                    <li
+                      key={c.id}
+                      onClick={() => toggleOne(c.id)}
+                      className={`cursor-pointer transition-colors ${
+                        selected ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className="pointer-events-none">{renderCategoryRow(c)}</div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <SortableList
+                className="divide-y divide-border"
+                items={order}
+                onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
+                renderItem={(c) => renderCategoryRow(c)}
+              />
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
