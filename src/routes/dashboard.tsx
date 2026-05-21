@@ -93,6 +93,39 @@ function DashboardPage() {
     },
   });
 
+  const categoryIds = (categoriesQuery.data ?? []).map((c) => c.id);
+  const userId = data?.profile?.user_id ?? null;
+
+  const progressQuery = useQuery({
+    queryKey: ["dashboard-progress", userId, categoryIds.join(",")],
+    enabled: !!userId && categoryIds.length > 0,
+    queryFn: async () => {
+      const [totalsRes, readRes] = await Promise.all([
+        supabase
+          .from("content_items")
+          .select("category_id")
+          .eq("published", true)
+          .in("category_id", categoryIds),
+        supabase
+          .from("user_content_progress")
+          .select("category_id")
+          .eq("user_id", userId!)
+          .in("category_id", categoryIds),
+      ]);
+      if (totalsRes.error) throw totalsRes.error;
+      if (readRes.error) throw readRes.error;
+      const totals = new Map<string, number>();
+      for (const row of totalsRes.data ?? []) {
+        totals.set(row.category_id as string, (totals.get(row.category_id as string) ?? 0) + 1);
+      }
+      const reads = new Map<string, number>();
+      for (const row of readRes.data ?? []) {
+        reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
+      }
+      return { totals, reads };
+    },
+  });
+
 
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState<SecurityAnswerInput[]>([]);
