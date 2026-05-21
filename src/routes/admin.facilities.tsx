@@ -45,13 +45,25 @@ function AdminFacilitiesPage() {
   const addMut = useMutation({
     mutationFn: (input: { facilities: { label: string }[] }) => addFacilitiesFn({ data: input }),
     onSuccess: (res) => {
-      toast.success(`Added ${res.inserted} ${res.inserted === 1 ? "facility" : "facilities"}`);
+      const dupes = res.duplicates ?? [];
+      const addedMsg = `Added ${res.inserted} ${res.inserted === 1 ? "facility" : "facilities"}`;
+      if (dupes.length) {
+        const dupMsg = `Skipped ${dupes.length} duplicate${dupes.length === 1 ? "" : "s"}: ${dupes.join(", ")}`;
+        if (res.inserted === 0) {
+          toast.warning(dupMsg);
+        } else {
+          toast.success(`${addedMsg}. ${dupMsg}`);
+        }
+      } else {
+        toast.success(addedMsg);
+      }
       setNewLabels("");
       setShowAdd(false);
       invalidate();
     },
     onError: (e: any) => toast.error(e.message),
   });
+
   const updateMut = useMutation({
     mutationFn: (input: { id: string; label: string }) => updateFacilityFn({ data: input }),
     onSuccess: () => { toast.success("Facility updated"); setEditingId(null); invalidate(); },
