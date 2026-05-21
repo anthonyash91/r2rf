@@ -116,17 +116,18 @@ function AdminUsersPage() {
   });
   const deleteManyMut = useMutation({
     mutationFn: (input: { userIds: string[] }) => deleteManyFn({ data: input }),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
       const parts: string[] = [];
       parts.push(`Deleted ${res.deleted} ${res.deleted === 1 ? "user" : "users"}`);
       if (res.failed.length) parts.push(`${res.failed.length} failed`);
       if (res.skippedSelf) parts.push("skipped your own account");
       toast.success(parts.join(" • "));
+      await invalidate();
       setSelectedIds(new Set());
-      invalidate();
     },
     onError: (e: any) => toast.error(e.message),
   });
+  const [isDeleting, setIsDeleting] = useState(false);
   const clearSecMut = useMutation({
     mutationFn: (input: { userId: string }) => clearSecFn({ data: input }),
     onSuccess: () => toast.success("Security questions reset. User must set new ones on next sign-in."),
@@ -408,15 +409,16 @@ function AdminUsersPage() {
                             <>
                               <button
                                 type="button"
+                                disabled={isDeleting}
                                 onClick={() => { setEditMode(false); setSelectedIds(new Set()); }}
-                                className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                                className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
                               >
                                 {selectedIds.size > 0 ? "Cancel" : "Done"}
                               </button>
-                              {selectedIds.size > 0 && (
+                              {(selectedIds.size > 0 || isDeleting) && (
                                 <button
                                   type="button"
-                                  disabled={deleteManyMut.isPending}
+                                  disabled={isDeleting}
                                   onClick={async () => {
                                     const ids = Array.from(selectedIds);
                                     const ok = await confirm({
@@ -426,14 +428,19 @@ function AdminUsersPage() {
                                       destructive: true,
                                     });
                                     if (ok) {
-                                      deleteManyMut.mutate({ userIds: ids });
-                                      setEditMode(false);
+                                      setIsDeleting(true);
+                                      try {
+                                        await deleteManyMut.mutateAsync({ userIds: ids });
+                                      } finally {
+                                        setIsDeleting(false);
+                                        setEditMode(false);
+                                      }
                                     }
                                   }}
                                   className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
                                 >
-                                  {deleteManyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                  {deleteManyMut.isPending ? "Deleting…" : `Delete selected (${selectedIds.size})`}
+                                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                  {isDeleting ? "Deleting…" : `Delete selected (${selectedIds.size})`}
                                 </button>
                               )}
                             </>
