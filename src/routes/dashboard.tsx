@@ -33,6 +33,8 @@ function DashboardPage() {
   const fetchQuestions = useServerFn(getMySecurityQuestions);
   const submitUpdate = useServerFn(updateSecurityAnswers);
 
+  const fetchFacilityHome = useServerFn(getMyFacilityCustomHome);
+
   const { data, isLoading } = useQuery({
     queryKey: ["my-profile"],
     queryFn: () => fetchProfile(),
@@ -41,6 +43,55 @@ function DashboardPage() {
     queryKey: ["my-security-questions"],
     queryFn: () => fetchQuestions(),
   });
+
+  const facilityHomeQuery = useQuery({
+    queryKey: ["my-facility-custom-home"],
+    queryFn: () => fetchFacilityHome(),
+  });
+  const customSlug = facilityHomeQuery.data?.slug ?? null;
+
+  const categoriesQuery = useQuery({
+    queryKey: ["dashboard-categories", customSlug],
+    enabled: !facilityHomeQuery.isLoading,
+    queryFn: async (): Promise<Category[]> => {
+      if (customSlug) {
+        const { data: page, error: pe } = await supabase
+          .from("custom_home_pages")
+          .select("id")
+          .eq("slug", customSlug)
+          .maybeSingle();
+        if (pe) throw pe;
+        if (!page) return [];
+        const { data: links, error: le } = await supabase
+          .from("custom_home_page_categories")
+          .select("category_id, sort_order")
+          .eq("custom_home_page_id", page.id)
+          .order("sort_order", { ascending: true });
+        if (le) throw le;
+        const ids = (links ?? []).map((l) => l.category_id);
+        if (ids.length === 0) return [];
+        const { data: cats, error: ce } = await supabase
+          .from("categories")
+          .select("*")
+          .eq("published", true)
+          .in("id", ids);
+        if (ce) throw ce;
+        const order = new Map(ids.map((id, i) => [id, i]));
+        return ((cats ?? []) as Category[]).sort(
+          (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
+        );
+      }
+      const { data: cats, error } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("published", true)
+        .eq("home_page_mode", "default")
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (cats ?? []) as Category[];
+    },
+  });
+
 
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState<SecurityAnswerInput[]>([]);
