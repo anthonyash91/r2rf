@@ -446,7 +446,7 @@ function NewCategoryForm({
               setName(e.target.value);
               if (!slugTouched) setSlug(slugify(e.target.value));
             }}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
         </Field>
         <Field label="Slug">
@@ -454,7 +454,7 @@ function NewCategoryForm({
             required
             value={slug}
             onChange={(e) => { setSlug(slugify(e.target.value)); setSlugTouched(true); }}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
         </Field>
       </div>
@@ -463,7 +463,7 @@ function NewCategoryForm({
           type="button"
           onClick={handleAutoGenerate}
           disabled={generating || !name.trim()}
-          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
         >
           <Sparkles className="h-4 w-4" />
           {generating ? "Generating…" : "Auto-generate tagline & description"}
@@ -474,7 +474,7 @@ function NewCategoryForm({
         <input
           value={tagline}
           onChange={(e) => setTagline(e.target.value)}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
         />
       </Field>
       <label className="block">
@@ -483,7 +483,7 @@ function NewCategoryForm({
           rows={3}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
         />
       </label>
 
@@ -511,7 +511,7 @@ function NewCategoryForm({
               <button
                 type="button"
                 onClick={() => setIconUrl(null)}
-                className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted text-muted-foreground"
+                className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted text-muted-foreground"
               >
                 Remove
               </button>
@@ -559,7 +559,7 @@ function NewCategoryForm({
                     "Category metadata for a content library",
                   );
                 }}
-                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
               >
                 <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
                 {addEsBusy ? "Translating…" : "Regenerate"}
@@ -578,14 +578,14 @@ function NewCategoryForm({
             <input
               value={nameEs}
               onChange={(e) => setNameEs(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
           </Field>
           <Field label="Tagline (ES)">
             <input
               value={taglineEs}
               onChange={(e) => setTaglineEs(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
           </Field>
           <label className="block">
@@ -594,7 +594,7 @@ function NewCategoryForm({
               rows={3}
               value={descriptionEs}
               onChange={(e) => setDescriptionEs(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
           </label>
         </div>
@@ -615,7 +615,7 @@ function NewCategoryForm({
                 "Category metadata for a content library",
               );
             }}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
           >
             {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
           </button>

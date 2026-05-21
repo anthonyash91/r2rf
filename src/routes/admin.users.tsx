@@ -228,7 +228,7 @@ function AdminUsersPage() {
                 <button
                   onClick={() => setShowCreate(true)}
                   disabled={showCreate}
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
                 >
                   <UserPlus className="h-4 w-4" /> Add admin user
                 </button>
@@ -251,7 +251,7 @@ function AdminUsersPage() {
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     placeholder="user@example.com"
-                    className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                    className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
                   />
                   <input
                     type="text"
@@ -260,7 +260,7 @@ function AdminUsersPage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Password (min 8 chars)"
-                    className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                    className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
                   />
                   <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "contributor")}>
                     <SelectTrigger className="h-[38px] w-full sm:w-[180px]">
@@ -350,7 +350,7 @@ function AdminUsersPage() {
                       document.body.removeChild(a);
                       URL.revokeObjectURL(url);
                     }}
-                    className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+                    className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                   >
                     <Download className="h-4 w-4" /> Export CSV
                   </button>
@@ -410,7 +410,7 @@ function AdminUsersPage() {
                               <button
                                 type="button"
                                 onClick={() => setSelectedIds(new Set())}
-                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+                                className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                               >
                                 Clear
                               </button>
@@ -427,7 +427,7 @@ function AdminUsersPage() {
                                   });
                                   if (ok) deleteManyMut.mutate({ userIds: ids });
                                 }}
-                                className="inline-flex items-center gap-2 rounded-md bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
+                                className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
                               >
                                 {deleteManyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                                 {deleteManyMut.isPending ? "Deleting…" : `Delete selected (${selectedIds.size})`}
@@ -468,14 +468,14 @@ function AdminUsersPage() {
                               <button
                                 type="button"
                                 onClick={() => setRegularVisible((n) => n + 10)}
-                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+                                className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                               >
                                 Show 10 more
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setRegularVisible(filtered.length)}
-                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+                                className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                               >
                                 Show all
                               </button>
@@ -485,7 +485,7 @@ function AdminUsersPage() {
                             <button
                               type="button"
                               onClick={() => setRegularVisible(10)}
-                              className="inline-flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
+                              className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                             >
                               Collapse
                             </button>
@@ -564,7 +564,7 @@ function UserItem({
                 type="email"
                 value={emailDraft}
                 onChange={(e) => setEmailDraft(e.target.value)}
-                className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm font-mono"
+                className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
               />
               <button
                 title="Save"
@@ -751,7 +751,7 @@ function UserItem({
             value={pw}
             onChange={(e) => setPw(e.target.value)}
             placeholder="New password (min 8 chars)"
-            className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono"
+            className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
           />
           <div className="flex justify-end gap-2">
             <button

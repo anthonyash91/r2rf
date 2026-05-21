@@ -181,7 +181,7 @@ function AdminCustomHomePageEdit() {
               href={`/${data.page.slug}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted shrink-0"
+              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted shrink-0"
             >
               <ExternalLink className="h-4 w-4" /> View
             </a>
@@ -194,7 +194,7 @@ function AdminCustomHomePageEdit() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </label>
             <label className="block">
@@ -205,7 +205,7 @@ function AdminCustomHomePageEdit() {
                   required
                   value={slug}
                   onChange={(e) => setSlug(slugify(e.target.value))}
-                  className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
                 />
               </div>
             </label>
@@ -218,7 +218,7 @@ function AdminCustomHomePageEdit() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this custom home page for? (admin note)"
               rows={3}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
             <p className="mt-1 text-xs text-muted-foreground">Optional, admin-only note.</p>
           </label>
@@ -230,7 +230,7 @@ function AdminCustomHomePageEdit() {
               onChange={(e) => setAllowedIpsText(e.target.value)}
               placeholder="Leave blank for public access. One IPv4 per line, or comma-separated."
               rows={3}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
             />
             <p className="mt-1 text-xs text-muted-foreground">
               If empty, anyone with the link can access this page. If one or more IPs are listed, only those IPs can access it.

@@ -124,7 +124,7 @@ function AdminAnalyticsPage() {
             <button
               key={opt.key}
               onClick={() => setRange(opt.key)}
-              className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
+              className={`rounded-md border px-4 py-2 text-sm transition-colors ${
                 range === opt.key
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border-input bg-background hover:bg-muted"
@@ -136,7 +136,7 @@ function AdminAnalyticsPage() {
           <button
             onClick={() => aggregated && exportCsv(aggregated, range)}
             disabled={!aggregated}
-            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="h-4 w-4" /> Export CSV
           </button>
@@ -267,7 +267,7 @@ function CategorySection({ row }: { row: AggregatedRow }) {
           <ul className="divide-y divide-border">
             {row.items.map(({ item, clicks }) => (
               <li key={item.id} className="flex items-center gap-3 p-4">
-                <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium flex-shrink-0 ${typeBadgeClass(item.type)}`}>
+                <span className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium flex-shrink-0 ${typeBadgeClass(item.type)}`}>
                   {item.type}
                 </span>
                 <div className="flex-1 min-w-0">

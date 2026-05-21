@@ -104,7 +104,7 @@ function AdminHomePage() {
               <input
                 value={hero.eyebrow}
                 onChange={(e) => setHero({ ...hero, eyebrow: e.target.value })}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </Field>
             <div className="grid sm:grid-cols-3 gap-4">
@@ -112,21 +112,21 @@ function AdminHomePage() {
                 <input
                   value={hero.heading_prefix}
                   onChange={(e) => setHero({ ...hero, heading_prefix: e.target.value })}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                 />
               </Field>
               <Field label="Headline — emphasis (italic accent)">
                 <input
                   value={hero.heading_emphasis}
                   onChange={(e) => setHero({ ...hero, heading_emphasis: e.target.value })}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                 />
               </Field>
               <Field label="Headline — suffix">
                 <input
                   value={hero.heading_suffix}
                   onChange={(e) => setHero({ ...hero, heading_suffix: e.target.value })}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                 />
               </Field>
             </div>
@@ -135,7 +135,7 @@ function AdminHomePage() {
                 rows={3}
                 value={hero.subheading}
                 onChange={(e) => setHero({ ...hero, subheading: e.target.value })}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </Field>
 
@@ -188,7 +188,7 @@ function AdminHomePage() {
                           "Home page hero copy",
                         );
                       }}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-60"
+                      className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
                     >
                       <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
                       {addEsBusy ? "Translating…" : "Regenerate"}
@@ -207,7 +207,7 @@ function AdminHomePage() {
                   <input
                     value={hero.eyebrow_es}
                     onChange={(e) => setHero({ ...hero, eyebrow_es: e.target.value })}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                   />
                 </Field>
                 <div className="grid sm:grid-cols-3 gap-4">
@@ -215,21 +215,21 @@ function AdminHomePage() {
                     <input
                       value={hero.heading_prefix_es}
                       onChange={(e) => setHero({ ...hero, heading_prefix_es: e.target.value })}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                     />
                   </Field>
                   <Field label="Headline — emphasis (ES)">
                     <input
                       value={hero.heading_emphasis_es}
                       onChange={(e) => setHero({ ...hero, heading_emphasis_es: e.target.value })}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                     />
                   </Field>
                   <Field label="Headline — suffix (ES)">
                     <input
                       value={hero.heading_suffix_es}
                       onChange={(e) => setHero({ ...hero, heading_suffix_es: e.target.value })}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                     />
                   </Field>
                 </div>
@@ -238,7 +238,7 @@ function AdminHomePage() {
                     rows={3}
                     value={hero.subheading_es}
                     onChange={(e) => setHero({ ...hero, subheading_es: e.target.value })}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                   />
                 </Field>
 
@@ -286,7 +286,7 @@ function AdminHomePage() {
                       "Home page hero copy",
                     );
                   }}
-                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
                 >
                   {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
                 </button>

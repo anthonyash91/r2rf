@@ -88,7 +88,7 @@ function AdminIpAllowlistPage() {
                 value={ip}
                 onChange={(e) => setIp(e.target.value)}
                 placeholder="192.168.1.1"
-                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
               />
             </div>
             <div>
@@ -97,7 +97,7 @@ function AdminIpAllowlistPage() {
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
                 placeholder="Office"
-                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </div>
             <button
@@ -365,7 +365,7 @@ function AllowlistSection({
               value={ip}
               onChange={(e) => setIp(e.target.value)}
               placeholder="192.168.1.1"
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
             />
           </div>
           <div>
@@ -374,7 +374,7 @@ function AllowlistSection({
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="Office"
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
           </div>
           <button
@@ -404,7 +404,7 @@ function AllowlistSection({
             onChange={(e) => setBulk(e.target.value)}
             rows={5}
             placeholder={"192.168.1.1,Office\n10.0.0.42,Home\n203.0.113.7"}
-            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+            className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
           />
           <div className="mt-3 flex justify-end">
             <button
@@ -544,7 +544,7 @@ function AllowlistRow({
               }
             }}
             placeholder="Label (e.g. Office)"
-            className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+            className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
           <div className="flex justify-end gap-2">
             <button

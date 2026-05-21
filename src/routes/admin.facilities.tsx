@@ -80,7 +80,7 @@ function AdminFacilitiesPage() {
         <button
           onClick={() => setShowAdd(true)}
           disabled={showAdd}
-          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
         >
           <Plus className="h-4 w-4" /> Add facilities
         </button>
@@ -106,7 +106,7 @@ function AdminFacilitiesPage() {
               onChange={(e) => setNewLabels(e.target.value)}
               rows={4}
               placeholder={"e.g.\nSpringfield, IL\nAustin, TX"}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
             <div className="flex gap-2 justify-end">
               <button
@@ -142,7 +142,7 @@ function AdminFacilitiesPage() {
                         <input
                           value={editingLabel}
                           onChange={(e) => setEditingLabel(e.target.value)}
-                          className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+                          className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
                           autoFocus
                         />
                         <div className="flex items-center gap-2 shrink-0">

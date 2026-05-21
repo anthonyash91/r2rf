@@ -184,7 +184,7 @@ function CategoryEditor({
             type="button"
             onClick={handleAutoGenerate}
             disabled={generating || !name.trim()}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
           >
             <Sparkles className="h-4 w-4" />
             {generating ? "Generating…" : "Auto-generate tagline & description"}
@@ -198,7 +198,7 @@ function CategoryEditor({
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
         </label>
         <div>
@@ -226,7 +226,7 @@ function CategoryEditor({
                 <button
                   type="button"
                   onClick={() => setIconUrl(null)}
-                  className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted text-muted-foreground"
+                  className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted text-muted-foreground"
                 >
                   Remove
                 </button>
@@ -275,7 +275,7 @@ function CategoryEditor({
                       "Category metadata for a content library",
                     );
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
                 >
                   <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
                   {addEsBusy ? "Translating…" : "Regenerate"}
@@ -298,7 +298,7 @@ function CategoryEditor({
                 rows={3}
                 value={descriptionEs}
                 onChange={(e) => setDescriptionEs(e.target.value)}
-                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </label>
           </div>
@@ -319,7 +319,7 @@ function CategoryEditor({
                   "Category metadata for a content library",
                 );
               }}
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
             >
               {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
             </button>
@@ -785,12 +785,12 @@ function ItemEditor({
                   if (e.key === "Escape") { cancelNewType(); }
                 }}
                 placeholder="New type name"
-                className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
               <button
                 type="button"
                 onClick={commitNewType}
-                className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 Add
               </button>
@@ -822,7 +822,7 @@ function ItemEditor({
           {!addingType && typeOptions.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {typeOptions.map((t) => (
-                <span key={t} className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${typeBadgeClass(t)}`}>
+                <span key={t} className={`inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium ${typeBadgeClass(t)}`}>
                   {t}
                   <button
                     type="button"
@@ -854,7 +854,7 @@ function ItemEditor({
                     setPdfEstimating(false);
                   }
                 }}
-                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
               >
                 <RefreshCw className={`h-3 w-3 ${pdfEstimating ? "animate-spin" : ""}`} />
                 {pdfEstimating ? "Calculating PDF duration…" : "Recalculate PDF duration"}
@@ -891,7 +891,7 @@ function ItemEditor({
               const estimated = await estimateDuration(v, null, type);
               if (estimated) setDuration(estimated);
             }}
-            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
         </label>
         <div className="mt-2">
@@ -909,7 +909,7 @@ function ItemEditor({
           type="button"
           onClick={handleAutoGenerateDesc}
           disabled={generatingDesc || !title.trim()}
-          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
         >
           <Sparkles className="h-4 w-4" />
           {generatingDesc ? "Generating…" : "Auto-generate description"}
@@ -922,7 +922,7 @@ function ItemEditor({
           rows={3}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
         />
       </label>
       <label className="inline-flex items-center gap-2 text-sm">
@@ -951,7 +951,7 @@ function ItemEditor({
                     "Content item metadata in a learning library",
                   );
                 }}
-                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
               >
                 <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
                 {addEsBusy ? "Translating…" : "Regenerate"}
@@ -973,7 +973,7 @@ function ItemEditor({
               rows={3}
               value={descriptionEs}
               onChange={(e) => setDescriptionEs(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
           </label>
           <div>
@@ -1009,7 +1009,7 @@ function ItemEditor({
                 "Content item metadata in a learning library",
               );
             }}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
           >
             {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
           </button>
@@ -1055,7 +1055,7 @@ function LabeledInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         list={listId}
-        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
       />
       {listId && (
         <datalist id={listId}>

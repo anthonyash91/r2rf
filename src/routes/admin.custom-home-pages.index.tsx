@@ -269,7 +269,7 @@ function AdminCustomHomePagesList() {
                 </SelectTrigger>
                 <SelectContent>
                   {facilities.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-muted-foreground">No facilities</div>
+                    <div className="px-4 py-2 text-sm text-muted-foreground">No facilities</div>
                   ) : (
                     facilities.map((f) => {
                       const taken = usedFacilityLabels.has(f.label);
@@ -296,7 +296,7 @@ function AdminCustomHomePagesList() {
                     setSlugTouched(true);
                   }}
                   placeholder="cpc"
-                  className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
                 />
               </div>
               <p className="mt-1 text-xs text-muted-foreground">Visitors will reach this page at the URL above.</p>
@@ -310,7 +310,7 @@ function AdminCustomHomePagesList() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this custom home page for? (admin note)"
               rows={3}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
             <p className="mt-1 text-xs text-muted-foreground">Optional, admin-only note.</p>
           </label>
@@ -322,7 +322,7 @@ function AdminCustomHomePagesList() {
               onChange={(e) => setAllowedIpsText(e.target.value)}
               placeholder="Leave blank for public access. One IPv4 per line, or comma-separated."
               rows={3}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
             />
             <p className="mt-1 text-xs text-muted-foreground">
               If empty, anyone with the link can access this page. If one or more IPs are listed, only those IPs can access it.
