@@ -12,10 +12,10 @@ import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-re
 import { questionLabel } from "@/lib/security-questions";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, Check, Circle } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, ChevronDown, BookOpen, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { typeBadgeClass } from "@/lib/type-badge";
 import type { Category } from "@/lib/categories";
 
 
@@ -107,7 +107,7 @@ function DashboardPage() {
       const [itemsRes, readRes] = await Promise.all([
         supabase
           .from("content_items")
-          .select("id, category_id, title, title_es, description, description_es, sort_order")
+          .select("id, category_id, title, title_es, description, description_es, type, sort_order")
           .eq("published", true)
           .in("category_id", categoryIds)
           .order("sort_order", { ascending: true }),
@@ -119,7 +119,7 @@ function DashboardPage() {
       ]);
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
-      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null };
+      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string };
       const itemsByCat = new Map<string, CatItem[]>();
       const totals = new Map<string, number>();
       for (const row of itemsRes.data ?? []) {
@@ -186,100 +186,65 @@ function DashboardPage() {
             ) : (categoriesQuery.data?.length ?? 0) === 0 ? (
               <p className="text-sm text-muted-foreground">{t("home.empty")}</p>
             ) : (
-              <Accordion
-                type="multiple"
-                className="divide-y divide-border rounded-xl border border-border bg-card overflow-hidden"
-              >
-                {(categoriesQuery.data ?? []).map((c) => {
-                  const total = progressQuery.data?.totals.get(c.id) ?? 0;
-                  const read = progressQuery.data?.reads.get(c.id) ?? 0;
-                  const pct = total > 0 ? Math.round((read / total) * 100) : 0;
-                  const description = pickLang(lang, c.description, c.description_es);
-                  const tagline = pickLang(lang, c.tagline, c.tagline_es);
-                  const items = progressQuery.data?.itemsByCat.get(c.id) ?? [];
-                  const readSet = progressQuery.data?.readSet ?? new Set<string>();
+              <>
+                {!isAdmin && (() => {
+                  let totalAll = 0;
+                  let readAll = 0;
+                  for (const c of categoriesQuery.data ?? []) {
+                    totalAll += progressQuery.data?.totals.get(c.id) ?? 0;
+                    readAll += progressQuery.data?.reads.get(c.id) ?? 0;
+                  }
+                  const pctAll = totalAll > 0 ? Math.round((readAll / totalAll) * 100) : 0;
                   return (
-                    <AccordionItem key={c.id} value={c.id} className="border-b-0">
-                      <AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-muted/40">
-                        <div className="flex items-start gap-4 flex-1 text-left">
-                          {c.icon_url ? (
-                            <img
-                              src={c.icon_url}
-                              alt=""
-                              className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover bg-muted"
-                            />
-                          ) : (
-                            <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed border-border bg-muted/40" />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-display text-lg font-semibold text-foreground truncate">
-                              {pickLang(lang, c.name, c.name_es)}
-                            </h3>
-                            {tagline && (
-                              <p className="text-xs text-muted-foreground truncate font-normal">{tagline}</p>
-                            )}
-                            {description && (
-                              <p className="mt-1 text-sm text-muted-foreground line-clamp-2 font-normal">{description}</p>
-                            )}
-                            {!isAdmin && (
-                              <div className="mt-3 space-y-1">
-                                <Progress value={pct} className="h-1.5" />
-                                <p className="text-[11px] text-muted-foreground font-normal">
-                                  {t("dashboard.progressItems")
-                                    .replace("{done}", String(read))
-                                    .replace("{total}", String(total))}
-                                </p>
-                              </div>
-                            )}
-                          </div>
+                    <div className="grid sm:grid-cols-3 gap-4 mb-8">
+                      <div className="rounded-2xl border border-border bg-card p-5">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <BookOpen className="h-5 w-5" /> {t("dashboard.totalItems") ?? "Total items"}
                         </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-4 pb-4 pt-0">
-                        {items.length === 0 ? (
-                          <p className="text-sm text-muted-foreground pl-16">{t("category.noContent")}</p>
-                        ) : (
-                          <ul className="ml-16 divide-y divide-border rounded-lg border border-border overflow-hidden bg-background">
-                            {items.map((it) => {
-                              const isRead = readSet.has(it.id);
-                              return (
-                                <li key={it.id} className="p-3 flex items-start gap-3">
-                                  {isRead ? (
-                                    <Check className="h-4 w-4 mt-0.5 shrink-0 text-[var(--color-accent)]" />
-                                  ) : (
-                                    <Circle className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground/50" />
-                                  )}
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <Link
-                                        to="/category/$slug"
-                                        params={{ slug: c.slug }}
-                                        hash={`item-${it.id}`}
-                                        className="font-medium text-sm text-foreground hover:underline"
-                                      >
-                                        {pickLang(lang, it.title, it.title_es)}
-                                      </Link>
-                                      <span className={`text-[10px] uppercase tracking-wide font-medium ${isRead ? "text-[var(--color-accent)]" : "text-muted-foreground"}`}>
-                                        {isRead ? t("category.markedRead") : t("category.markAsRead")}
-                                      </span>
-                                    </div>
-                                    {pickLang(lang, it.description, it.description_es) && (
-                                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                                        {pickLang(lang, it.description, it.description_es)}
-                                      </p>
-                                    )}
-                                  </div>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
+                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{totalAll.toLocaleString()}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border bg-card p-5">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CheckCircle2 className="h-5 w-5" /> {t("dashboard.itemsRead") ?? "Items read"}
+                        </div>
+                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{readAll.toLocaleString()}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border bg-card p-5">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Check className="h-5 w-5" /> {t("dashboard.overallProgress") ?? "Overall progress"}
+                        </div>
+                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{pctAll}%</p>
+                        <Progress value={pctAll} className="mt-3 h-1.5" />
+                      </div>
+                    </div>
                   );
-                })}
-              </Accordion>
+                })()}
+
+                <div className="space-y-6">
+                  {(categoriesQuery.data ?? []).map((c) => {
+                    const total = progressQuery.data?.totals.get(c.id) ?? 0;
+                    const read = progressQuery.data?.reads.get(c.id) ?? 0;
+                    const items = progressQuery.data?.itemsByCat.get(c.id) ?? [];
+                    const readSet = progressQuery.data?.readSet ?? new Set<string>();
+                    return (
+                      <CategoryProgressSection
+                        key={c.id}
+                        category={c}
+                        items={items}
+                        readSet={readSet}
+                        total={total}
+                        read={read}
+                        isAdmin={isAdmin}
+                        lang={lang}
+                        t={t}
+                      />
+                    );
+                  })}
+                </div>
+              </>
             )}
           </TabsContent>
+
 
           <TabsContent value="account" className="mt-6 space-y-6">
             <div className="rounded-2xl border border-border bg-card p-6">
@@ -395,5 +360,128 @@ function DashboardPage() {
 
       <SiteFooter />
     </div>
+  );
+}
+
+type CatItem = {
+  id: string;
+  title: string;
+  title_es: string | null;
+  description: string;
+  description_es: string | null;
+  type: string;
+};
+
+function CategoryProgressSection({
+  category,
+  items,
+  readSet,
+  total,
+  read,
+  isAdmin,
+  lang,
+  t,
+}: {
+  category: Category;
+  items: CatItem[];
+  readSet: Set<string>;
+  total: number;
+  read: number;
+  isAdmin: boolean;
+  lang: "en" | "es";
+  t: (key: string) => string;
+}) {
+  const [open, setOpen] = useState(false);
+  const pct = total > 0 ? Math.round((read / total) * 100) : 0;
+  const tagline = pickLang(lang, category.tagline, category.tagline_es);
+
+  return (
+    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 border-b border-border bg-muted/30 text-left hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
+          {category.icon_url ? (
+            <img src={category.icon_url} alt="" className="h-10 w-10 object-cover border border-border bg-muted flex-shrink-0 rounded-md" />
+          ) : (
+            <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
+          )}
+          <div className="min-w-0">
+            <h2 className="font-display text-lg font-semibold truncate">
+              {pickLang(lang, category.name, category.name_es)}
+            </h2>
+            {tagline && (
+              <p className="text-xs text-muted-foreground truncate">{tagline}</p>
+            )}
+          </div>
+        </div>
+        {!isAdmin && (
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="hidden sm:block w-32">
+              <Progress value={pct} className="h-1.5" />
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
+              <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+              <span className="tabular-nums">{read.toLocaleString()}</span>
+              <span className="text-muted-foreground">/ {total.toLocaleString()}</span>
+            </span>
+            <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium tabular-nums">
+              {pct}%
+            </span>
+          </div>
+        )}
+      </button>
+      {open && (
+        items.length === 0 ? (
+          <p className="p-5 text-sm text-muted-foreground">{t("category.noContent")}</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {items.map((it) => {
+              const isRead = readSet.has(it.id);
+              const description = pickLang(lang, it.description, it.description_es);
+              return (
+                <li key={it.id} className="flex items-start gap-3 p-4">
+                  <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
+                    {it.type}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <Link
+                      to="/category/$slug"
+                      params={{ slug: category.slug }}
+                      hash={`item-${it.id}`}
+                      className="block truncate text-sm font-medium text-foreground hover:underline"
+                    >
+                      {pickLang(lang, it.title, it.title_es)}
+                    </Link>
+                    {description && (
+                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{description}</p>
+                    )}
+                  </div>
+                  {!isAdmin && (
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium flex-shrink-0 ${isRead ? "text-[var(--color-accent)]" : "text-muted-foreground"}`}>
+                      {isRead ? (
+                        <>
+                          <Check className="h-3.5 w-3.5" />
+                          {t("category.markedRead")}
+                        </>
+                      ) : (
+                        <>
+                          <Circle className="h-3.5 w-3.5" />
+                          {t("category.markAsRead")}
+                        </>
+                      )}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )
+      )}
+    </section>
   );
 }
