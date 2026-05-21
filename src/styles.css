@@ -116,3 +116,19 @@
     cursor: not-allowed;
   }
 }
+
+@layer base {
+  /* Replace browser default blue focus ring with the app's accent green */
+  input:focus,
+  input:focus-visible,
+  textarea:focus,
+  textarea:focus-visible,
+  select:focus,
+  select:focus-visible,
+  [contenteditable="true"]:focus,
+  [contenteditable="true"]:focus-visible {
+    outline: none;
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 1px var(--color-ring);
+  }
+}
