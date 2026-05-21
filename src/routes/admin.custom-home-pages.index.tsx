@@ -79,6 +79,17 @@ function AdminCustomHomePagesList() {
     },
   });
 
+  const fetchFacilities = useServerFn(listFacilities);
+  const { data: facilitiesData } = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilities(),
+  });
+  const facilities = facilitiesData?.facilities ?? [];
+  const usedFacilityLabels = useMemo(
+    () => new Set(pages.map((p) => p.name)),
+    [pages],
+  );
+
   const { data: pageCategoryIds = {} } = useQuery({
     queryKey: ["admin", "custom_home_pages", "categories"],
     queryFn: async (): Promise<Record<string, Set<string>>> => {
