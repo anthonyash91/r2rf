@@ -14,6 +14,7 @@ import { useI18n, pickLang } from "@/lib/i18n";
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
 import { User as UserIcon, Building2, Calendar, Shield } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
 
 
@@ -164,169 +165,181 @@ function DashboardPage() {
         <h1 className="font-display text-3xl font-semibold">{t("nav.dashboard")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
 
-        <div className="mt-8 rounded-2xl border border-border bg-card p-6">
-          {isLoading ? (
-            <p className="text-muted-foreground">{t("dashboard.loading")}</p>
-          ) : !profile ? (
-            <div>
-              <p className="text-muted-foreground">{t("dashboard.noProfile")}</p>
-              <Link to="/" className="mt-3 inline-block text-sm underline">{t("dashboard.backHome")}</Link>
-            </div>
-          ) : (
-            <dl className="grid gap-5 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <UserIcon className="h-3.5 w-3.5" /> {t("signup.username")}
-                </dt>
-                <dd className="mt-1 font-medium">{profile.username}</dd>
-              </div>
-              {((profile as any).first_name || (profile as any).last_name) && (
-                <div>
-                  <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                    <UserIcon className="h-3.5 w-3.5" /> {t("dashboard.name")}
-                  </dt>
-                  <dd className="mt-1 font-medium">
-                    {`${(profile as any).first_name ?? ""} ${(profile as any).last_name ?? ""}`.trim()}
-                  </dd>
-                </div>
-              )}
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <Building2 className="h-3.5 w-3.5" /> {t("signup.facility")}
-                </dt>
-                <dd className="mt-1 font-medium">{facilityLabel(profile.facility)}</dd>
-              </div>
-              <div>
-                <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5" /> {t("dashboard.joined")}
-                </dt>
-                <dd className="mt-1 font-medium">
-                  {new Date(profile.created_at).toLocaleDateString(lang === "es" ? "es" : "en")}
-                </dd>
-              </div>
-            </dl>
-          )}
-        </div>
+        <Tabs defaultValue="categories" className="mt-8">
+          <TabsList>
+            <TabsTrigger value="categories">{t("home.categories")}</TabsTrigger>
+            <TabsTrigger value="account">{t("nav.dashboard")}</TabsTrigger>
+          </TabsList>
 
-        <div className="mt-6 rounded-2xl border border-border bg-card p-6">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="font-display text-lg font-semibold flex items-center gap-2">
-                <Shield className="h-4 w-4" /> {t("security.heading")}
-              </h2>
-              <p className="mt-1 text-sm text-muted-foreground">{t("security.intro")}</p>
-            </div>
-            {!isEditing && (
-              <button
-                onClick={() => setEditing(true)}
-                className="shrink-0 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:border-[var(--color-accent)] transition-colors"
-              >
-                {t("security.update")}
-              </button>
-            )}
-          </div>
-
-          {mustSetup && (
-            <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
-              {t("security.setupPrompt")}
-            </div>
-          )}
-
-          {!isEditing ? (
-            <div className="mt-4">
-              {currentKeys.length === 0 ? (
-                <p className="text-sm text-muted-foreground">—</p>
+          <TabsContent value="categories" className="mt-6">
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="font-display text-lg font-semibold">{t("home.categories")}</h2>
+              {categoriesQuery.isLoading || facilityHomeQuery.isLoading ? (
+                <p className="mt-3 text-sm text-muted-foreground">{t("home.loading")}</p>
+              ) : (categoriesQuery.data?.length ?? 0) === 0 ? (
+                <p className="mt-3 text-sm text-muted-foreground">{t("home.empty")}</p>
               ) : (
-                <ul className="space-y-2 text-sm">
-                  {currentKeys.map((k) => (
-                    <li key={k} className="text-foreground">
-                      • {questionLabel(t, k)}
+                <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {(categoriesQuery.data ?? []).map((c) => (
+                    <li key={c.id}>
+                      <Link
+                        to="/category/$slug"
+                        params={{ slug: c.slug }}
+                        className="group flex flex-col gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-[var(--color-accent)]"
+                      >
+                        <div className="flex items-center gap-3">
+                          {c.icon_url ? (
+                            <img
+                              src={c.icon_url}
+                              alt=""
+                              className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover bg-muted"
+                            />
+                          ) : (
+                            <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed border-border bg-muted/40" />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-foreground truncate">
+                              {pickLang(lang, c.name, c.name_es)}
+                            </p>
+                            {pickLang(lang, c.tagline, c.tagline_es) && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                {pickLang(lang, c.tagline, c.tagline_es)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {!isAdmin && (() => {
+                          const total = progressQuery.data?.totals.get(c.id) ?? 0;
+                          const read = progressQuery.data?.reads.get(c.id) ?? 0;
+                          const pct = total > 0 ? Math.round((read / total) * 100) : 0;
+                          return (
+                            <div className="space-y-1">
+                              <Progress value={pct} className="h-1.5" />
+                              <p className="text-[11px] text-muted-foreground">
+                                {t("dashboard.progressItems")
+                                  .replace("{done}", String(read))
+                                  .replace("{total}", String(total))}
+                              </p>
+                            </div>
+                          );
+                        })()}
+                      </Link>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
-          ) : (
-            <div className="mt-4 space-y-4">
-              <SecurityQuestionsForm onChange={setPending} rows={2} />
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSave}
-                  disabled={busy}
-                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                >
-                  {busy ? "…" : t("security.save")}
-                </button>
-                {!mustSetup && (
+          </TabsContent>
+
+          <TabsContent value="account" className="mt-6 space-y-6">
+            <div className="rounded-2xl border border-border bg-card p-6">
+              {isLoading ? (
+                <p className="text-muted-foreground">{t("dashboard.loading")}</p>
+              ) : !profile ? (
+                <div>
+                  <p className="text-muted-foreground">{t("dashboard.noProfile")}</p>
+                  <Link to="/" className="mt-3 inline-block text-sm underline">{t("dashboard.backHome")}</Link>
+                </div>
+              ) : (
+                <dl className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                      <UserIcon className="h-3.5 w-3.5" /> {t("signup.username")}
+                    </dt>
+                    <dd className="mt-1 font-medium">{profile.username}</dd>
+                  </div>
+                  {((profile as any).first_name || (profile as any).last_name) && (
+                    <div>
+                      <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                        <UserIcon className="h-3.5 w-3.5" /> {t("dashboard.name")}
+                      </dt>
+                      <dd className="mt-1 font-medium">
+                        {`${(profile as any).first_name ?? ""} ${(profile as any).last_name ?? ""}`.trim()}
+                      </dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                      <Building2 className="h-3.5 w-3.5" /> {t("signup.facility")}
+                    </dt>
+                    <dd className="mt-1 font-medium">{facilityLabel(profile.facility)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5" /> {t("dashboard.joined")}
+                    </dt>
+                    <dd className="mt-1 font-medium">
+                      {new Date(profile.created_at).toLocaleDateString(lang === "es" ? "es" : "en")}
+                    </dd>
+                  </div>
+                </dl>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-lg font-semibold flex items-center gap-2">
+                    <Shield className="h-4 w-4" /> {t("security.heading")}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{t("security.intro")}</p>
+                </div>
+                {!isEditing && (
                   <button
-                    onClick={() => { setEditing(false); setPending([]); }}
-                    className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:border-[var(--color-accent)] transition-colors"
+                    onClick={() => setEditing(true)}
+                    className="shrink-0 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium hover:border-[var(--color-accent)] transition-colors"
                   >
-                    {t("security.cancel")}
+                    {t("security.update")}
                   </button>
                 )}
               </div>
-            </div>
-          )}
-        </div>
 
-        <div className="mt-6 rounded-2xl border border-border bg-card p-6">
-          <h2 className="font-display text-lg font-semibold">{t("home.categories")}</h2>
-          {categoriesQuery.isLoading || facilityHomeQuery.isLoading ? (
-            <p className="mt-3 text-sm text-muted-foreground">{t("home.loading")}</p>
-          ) : (categoriesQuery.data?.length ?? 0) === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">{t("home.empty")}</p>
-          ) : (
-            <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {(categoriesQuery.data ?? []).map((c) => (
-                <li key={c.id}>
-                  <Link
-                    to="/category/$slug"
-                    params={{ slug: c.slug }}
-                    className="group flex flex-col gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-[var(--color-accent)]"
-                  >
-                    <div className="flex items-center gap-3">
-                      {c.icon_url ? (
-                        <img
-                          src={c.icon_url}
-                          alt=""
-                          className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover bg-muted"
-                        />
-                      ) : (
-                        <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed border-border bg-muted/40" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-foreground truncate">
-                          {pickLang(lang, c.name, c.name_es)}
-                        </p>
-                        {pickLang(lang, c.tagline, c.tagline_es) && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {pickLang(lang, c.tagline, c.tagline_es)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {!isAdmin && (() => {
-                      const total = progressQuery.data?.totals.get(c.id) ?? 0;
-                      const read = progressQuery.data?.reads.get(c.id) ?? 0;
-                      const pct = total > 0 ? Math.round((read / total) * 100) : 0;
-                      return (
-                        <div className="space-y-1">
-                          <Progress value={pct} className="h-1.5" />
-                          <p className="text-[11px] text-muted-foreground">
-                            {t("dashboard.progressItems")
-                              .replace("{done}", String(read))
-                              .replace("{total}", String(total))}
-                          </p>
-                        </div>
-                      );
-                    })()}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+              {mustSetup && (
+                <div className="mt-4 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                  {t("security.setupPrompt")}
+                </div>
+              )}
+
+              {!isEditing ? (
+                <div className="mt-4">
+                  {currentKeys.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">—</p>
+                  ) : (
+                    <ul className="space-y-2 text-sm">
+                      {currentKeys.map((k) => (
+                        <li key={k} className="text-foreground">
+                          • {questionLabel(t, k)}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-4 space-y-4">
+                  <SecurityQuestionsForm onChange={setPending} rows={2} />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSave}
+                      disabled={busy}
+                      className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                    >
+                      {busy ? "…" : t("security.save")}
+                    </button>
+                    {!mustSetup && (
+                      <button
+                        onClick={() => { setEditing(false); setPending([]); }}
+                        className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:border-[var(--color-accent)] transition-colors"
+                      >
+                        {t("security.cancel")}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+
 
       </main>
 
