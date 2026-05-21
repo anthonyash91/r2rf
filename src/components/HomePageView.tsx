@@ -6,8 +6,29 @@ import type { Category } from "@/lib/categories";
 import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { Pencil } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 type CategoryStats = { count: number; hasRecent: boolean };
+
+function useUserProgress(userId: string | null, categoryIds: string[]) {
+  return useQuery({
+    queryKey: ["home-user-progress", userId, [...categoryIds].sort().join(",")],
+    enabled: !!userId && categoryIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_content_progress")
+        .select("category_id")
+        .eq("user_id", userId!)
+        .in("category_id", categoryIds);
+      if (error) throw error;
+      const reads: Record<string, number> = {};
+      for (const row of data ?? []) {
+        reads[row.category_id as string] = (reads[row.category_id as string] ?? 0) + 1;
+      }
+      return reads;
+    },
+  });
+}
 
 function useCategoryItemStats(categoryIds: string[]) {
   return useQuery({
@@ -51,9 +72,10 @@ function useColumnCount() {
 
 function MasonryCategories({ categories, lang }: { categories: Category[]; lang: Language }) {
   const cols = useColumnCount();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { t } = useI18n();
   const { data: stats = {} } = useCategoryItemStats(categories.map((c) => c.id));
+  const { data: reads = {} } = useUserProgress(user?.id ?? null, categories.map((c) => c.id));
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
   categories.forEach((c, i) => buckets[i % cols].push({ c, i }));
   return (
@@ -95,6 +117,20 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                   <p className="mt-3 text-xs font-medium uppercase tracking-wide text-[var(--color-gold)]">
                     {count} {t(count === 1 ? "home.item" : "home.items")}
                   </p>
+                  {user && count > 0 && (() => {
+                    const read = reads[c.id] ?? 0;
+                    const pct = Math.round((read / count) * 100);
+                    return (
+                      <div className="mt-4 space-y-1.5">
+                        <Progress value={pct} className="h-1.5" />
+                        <p className="text-[11px] text-muted-foreground">
+                          {t("dashboard.progressItems")
+                            .replace("{done}", String(read))
+                            .replace("{total}", String(count))}
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
               </Link>
               {isAdmin && (
