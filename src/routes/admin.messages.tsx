@@ -117,6 +117,7 @@ function MessageEditor({
     },
     onSuccess: (cleared) => {
       setValue(cleared);
+      setShowEs(false);
       toast.success("Message cleared");
       qc.invalidateQueries({ queryKey });
       qc.invalidateQueries({ queryKey: ["site_settings", settingsKey] });
