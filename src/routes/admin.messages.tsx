@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Save, MessageSquare, Home, User as UserIcon, Megaphone, Languages } from "lucide-react";
+import { ArrowLeft, Save, MessageSquare, Home, User as UserIcon, Megaphone, RefreshCw } from "lucide-react";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 
 export const Route = createFileRoute("/admin/messages")({
@@ -86,6 +86,10 @@ function MessageEditor({
   }, [data]);
 
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
+  const [showEs, setShowEs] = useState(false);
+  useEffect(() => {
+    if (data?.message_es?.trim()) setShowEs(true);
+  }, [data]);
 
   const saveMut = useMutation({
     mutationFn: async (v: SiteMessage) => {
@@ -155,34 +159,69 @@ function MessageEditor({
             </p>
           </label>
 
-          <div className="space-y-2">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <span className="text-sm font-medium">Message (Spanish)</span>
+          {showEs ? (
+            <div className="space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <div>
+                  <span className="text-sm font-medium">Message (Spanish)</span>
+                  <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    disabled={addEsBusy || !value.message.trim()}
+                    onClick={() =>
+                      runAddEs(
+                        { message: value.message },
+                        (t) => setValue((prev) => ({ ...prev, message_es: t.message ?? prev.message_es })),
+                        context,
+                      )
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
+                    {addEsBusy ? "Translating…" : "Regenerate"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEs(false);
+                      setValue((prev) => ({ ...prev, message_es: "" }));
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                  >
+                    Hide
+                  </button>
+                </div>
+              </div>
+              {addEsBusy && <TranslatingIndicator />}
+              <textarea
+                rows={4}
+                value={value.message_es}
+                onChange={(e) => setValue({ ...value, message_es: e.target.value })}
+                placeholder="Spanish translation (shown to Spanish-language visitors)…"
+                className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+              />
+            </div>
+          ) : (
+            <div>
               <button
                 type="button"
                 disabled={addEsBusy || !value.message.trim()}
-                onClick={() =>
+                onClick={() => {
+                  setShowEs(true);
                   runAddEs(
                     { message: value.message },
                     (t) => setValue((prev) => ({ ...prev, message_es: t.message ?? prev.message_es })),
                     context,
-                  )
-                }
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
+                  );
+                }}
+                className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
               >
-                <Languages className="h-4 w-4" />
-                {addEsBusy ? "Translating…" : "Auto-translate to Spanish"}
+                {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
               </button>
             </div>
-            {addEsBusy && <TranslatingIndicator />}
-            <textarea
-              rows={4}
-              value={value.message_es}
-              onChange={(e) => setValue({ ...value, message_es: e.target.value })}
-              placeholder="Spanish translation (shown to Spanish-language visitors)…"
-              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-            />
-          </div>
+          )}
 
           {value.message.trim() && (
             <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 space-y-3">
