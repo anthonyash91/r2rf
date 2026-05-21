@@ -243,7 +243,7 @@ function AdminUsersPage() {
                     if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
                     createMut.mutate({ email: newEmail.trim(), password: newPassword, role: newRole });
                   }}
-                  className="mt-3 rounded-2xl border border-border bg-card p-4 sm:p-5 flex flex-col sm:flex-row gap-2"
+                  className="mt-3 rounded-2xl border border-border bg-card p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_180px_auto_auto] gap-2"
                 >
                   <input
                     type="email"
@@ -251,7 +251,7 @@ function AdminUsersPage() {
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
                     placeholder="user@example.com"
-                    className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+                    className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
                   />
                   <input
                     type="text"
@@ -260,10 +260,10 @@ function AdminUsersPage() {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Password (min 8 chars)"
-                    className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+                    className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
                   />
                   <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "contributor")}>
-                    <SelectTrigger className="h-[38px] w-full sm:w-[180px]">
+                    <SelectTrigger className="h-[38px] w-full sm:col-span-2 lg:col-span-1">
                       <SelectValue placeholder="Role" />
                     </SelectTrigger>
                     <SelectContent>
@@ -274,14 +274,14 @@ function AdminUsersPage() {
                   <button
                     type="button"
                     onClick={() => { setShowCreate(false); setNewEmail(""); setNewPassword(""); setNewRole("admin"); }}
-                    className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={createMut.isPending}
-                    className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                   >
                     {createMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                     {createMut.isPending ? "Creating…" : "Create"}
