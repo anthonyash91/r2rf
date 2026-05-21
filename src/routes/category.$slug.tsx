@@ -51,7 +51,8 @@ export const Route = createFileRoute("/category/$slug")({
 function CategoryPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
+  const queryClient = useQueryClient();
   const activeCustomHome = useActiveCustomHome();
   const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
   const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
