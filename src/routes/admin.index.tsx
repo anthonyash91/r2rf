@@ -437,11 +437,14 @@ function AdminCategoriesPage() {
                     <li
                       key={c.id}
                       onClick={() => toggleOne(c.id)}
-                      className={`cursor-pointer transition-colors ${
+                      className={`flex items-stretch cursor-pointer transition-colors ${
                         selected ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"
                       }`}
                     >
-                      <div className="pointer-events-none">{renderCategoryRow(c)}</div>
+                      <div className="flex items-center pl-4 pr-0 text-muted-foreground/50">
+                        <GripVertical className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0 pointer-events-none">{renderCategoryRow(c)}</div>
                     </li>
                   );
                 })}
