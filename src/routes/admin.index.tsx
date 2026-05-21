@@ -147,6 +147,21 @@ function AdminCategoriesPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const deleteManyMut = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("categories").delete().in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (deleted) => {
+      toast.success(`Deleted ${deleted} ${deleted === 1 ? "category" : "categories"}`);
+      setSelectedIds(new Set());
+      qc.invalidateQueries({ queryKey: ["admin", "categories"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const [order, setOrder] = useState<Category[]>([]);
   useEffect(() => { setOrder(categories); }, [categories]);
 
