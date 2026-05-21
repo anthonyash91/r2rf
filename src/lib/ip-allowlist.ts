@@ -106,7 +106,47 @@ export function invalidateAllowlistCache() {
   authCache = null;
   blockedCache = null;
   customHomeCache = null;
+  enabledCache = null;
 }
+
+async function fetchIpRestrictionEnabled(): Promise<boolean> {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return true;
+  try {
+    const res = await fetch(
+      `${url}/rest/v1/site_settings?select=value&key=eq.ip_restriction_enabled`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+    );
+    if (!res.ok) {
+      console.error("[ip-allowlist] Fetch ip_restriction_enabled failed:", res.status, await res.text());
+      return true;
+    }
+    const rows = (await res.json()) as Array<{ value: { enabled?: boolean } | null }>;
+    if (!rows.length) return true;
+    const v = rows[0]?.value;
+    return v && typeof v.enabled === "boolean" ? v.enabled : true;
+  } catch (err) {
+    console.error("[ip-allowlist] ip_restriction_enabled error:", err);
+    return true;
+  }
+}
+
+export async function isIpRestrictionEnabled(): Promise<boolean> {
+  const now = Date.now();
+  if (enabledCache && enabledCache.expiresAt > now) return enabledCache.enabled;
+  if (enabledInflight) return enabledInflight;
+  enabledInflight = fetchIpRestrictionEnabled()
+    .then((enabled) => {
+      enabledCache = { enabled, expiresAt: Date.now() + CACHE_TTL_MS };
+      return enabled;
+    })
+    .finally(() => {
+      enabledInflight = null;
+    });
+  return enabledInflight;
+}
+
 
 async function fetchCustomHomeRestrictions(): Promise<Map<string, Set<string>>> {
   const url = process.env.SUPABASE_URL;
