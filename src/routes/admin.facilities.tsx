@@ -4,16 +4,16 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Building2, Plus, Pencil, Trash2, Check, X } from "lucide-react";
+import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home } from "lucide-react";
 import {
-  listFacilities,
+  listFacilitiesWithStats,
   addFacilities,
   updateFacility,
   deleteFacility,
 } from "@/lib/facilities.functions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
+
 
 export const Route = createFileRoute("/admin/facilities")({
   beforeLoad: requireAdminBeforeLoad,
@@ -24,7 +24,7 @@ function AdminFacilitiesPage() {
   const qc = useQueryClient();
   const confirm = useConfirm();
 
-  const fetchFacilities = useServerFn(listFacilities);
+  const fetchFacilities = useServerFn(listFacilitiesWithStats);
   const addFacilitiesFn = useServerFn(addFacilities);
   const updateFacilityFn = useServerFn(updateFacility);
   const deleteFacilityFn = useServerFn(deleteFacility);
@@ -135,7 +135,7 @@ function AdminFacilitiesPage() {
               {facilities.map((f) => {
                 const isEditing = editingId === f.id;
                 return (
-                  <li key={f.value} className="p-4 sm:p-5 flex items-center justify-between gap-3">
+                  <li key={f.value} className="p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     {isEditing ? (
                       <>
                         <input
@@ -168,9 +168,48 @@ function AdminFacilitiesPage() {
                       </>
                     ) : (
                       <>
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className="text-sm font-medium truncate">{f.label}</span>
-                          <code className="text-xs text-muted-foreground font-mono truncate">{f.value}</code>
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center gap-3 min-w-0 flex-wrap">
+                            <span className="text-sm font-medium truncate">{f.label}</span>
+                            <code className="text-xs text-muted-foreground font-mono truncate">{f.value}</code>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1.5">
+                              <Users className="h-3.5 w-3.5" />
+                              {f.userCount} {f.userCount === 1 ? "user" : "users"} signed up
+                            </span>
+                            {f.customHomePage ? (
+                              <Link
+                                to="/$customHome"
+                                params={{ customHome: f.customHomePage.slug }}
+                                className="inline-flex items-center gap-1.5 hover:text-foreground hover:underline"
+                              >
+                                <Home className="h-3.5 w-3.5" />
+                                Custom home: /{f.customHomePage.slug}
+                              </Link>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 italic">
+                                <Home className="h-3.5 w-3.5" />
+                                No custom home page
+                              </span>
+                            )}
+                          </div>
+                          {f.customHomePage && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {f.customHomePage.categories.length ? (
+                                f.customHomePage.categories.map((c) => (
+                                  <span
+                                    key={c.id}
+                                    className="inline-flex items-center rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs text-foreground"
+                                  >
+                                    {c.name}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-xs italic text-muted-foreground">No categories assigned</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <TooltipProvider delayDuration={150}>
                           <div className="flex items-center gap-1.5 shrink-0">
