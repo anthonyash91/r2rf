@@ -577,3 +577,69 @@ function AllowlistRow({
     </li>
   );
 }
+
+function IpRestrictionToggle() {
+  const qc = useQueryClient();
+  const queryKey = ["admin", "site_settings", "ip_restriction_enabled"] as const;
+
+  const { data, isLoading } = useQuery({
+    queryKey,
+    queryFn: async (): Promise<boolean> => {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "ip_restriction_enabled")
+        .maybeSingle();
+      if (error) throw error;
+      const v = (data?.value ?? null) as { enabled?: boolean } | null;
+      return v && typeof v.enabled === "boolean" ? v.enabled : true;
+    },
+  });
+
+  const updateMut = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const { error } = await supabase
+        .from("site_settings")
+        .upsert(
+          { key: "ip_restriction_enabled", value: { enabled } },
+          { onConflict: "key" },
+        );
+      if (error) throw error;
+      return enabled;
+    },
+    onSuccess: (enabled) => {
+      toast.success(enabled ? "IP restrictions enabled" : "IP restrictions disabled — site is open to all");
+      qc.invalidateQueries({ queryKey });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const enabled = data ?? true;
+
+  return (
+    <section className="mt-8 rounded-2xl border border-border bg-card p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex items-start gap-3 min-w-0">
+        <Power className={`h-6 w-6 mt-0.5 shrink-0 ${enabled ? "text-[var(--color-accent)]" : "text-muted-foreground"}`} />
+        <div className="min-w-0">
+          <h2 className="font-display text-xl font-semibold">IP restriction</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            When off, anyone can access any part of the site — the allowlists, blocklist, and per-page IP
+            rules below are bypassed. When on, restrictions apply as configured. Changes take effect within ~30 seconds.
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <span className={`text-sm font-medium ${enabled ? "text-foreground" : "text-muted-foreground"}`}>
+          {isLoading ? "Loading…" : enabled ? "On" : "Off"}
+        </span>
+        <Switch
+          checked={enabled}
+          disabled={isLoading || updateMut.isPending}
+          onCheckedChange={(v) => updateMut.mutate(v)}
+          aria-label="Toggle IP restriction"
+        />
+      </div>
+    </section>
+  );
+}
+
