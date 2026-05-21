@@ -4,15 +4,16 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Save, MessageSquare, Home, User as UserIcon, Megaphone } from "lucide-react";
+import { ArrowLeft, Save, MessageSquare, Home, User as UserIcon, Megaphone, Languages } from "lucide-react";
+import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 
 export const Route = createFileRoute("/admin/messages")({
   beforeLoad: requireAdminBeforeLoad,
   component: AdminMessagesPage,
 });
 
-type SiteMessage = { enabled: boolean; message: string };
-const DEFAULTS: SiteMessage = { enabled: false, message: "" };
+type SiteMessage = { enabled: boolean; message: string; message_es: string };
+const DEFAULTS: SiteMessage = { enabled: false, message: "", message_es: "" };
 
 function AdminMessagesPage() {
   return (
@@ -36,12 +37,14 @@ function AdminMessagesPage() {
           title="Home Page Message"
           description="Shown as a banner on the main index page under the navigation."
           icon={<Home className="h-6 w-6 text-[var(--color-accent)]" />}
+          context="Home page banner message"
         />
         <MessageEditor
           settingsKey="user_message"
           title="User Message"
           description="Shown as a banner on the user dashboard page under the navigation."
           icon={<UserIcon className="h-6 w-6 text-[var(--color-accent)]" />}
+          context="User dashboard banner message"
         />
       </div>
     </div>
@@ -53,11 +56,13 @@ function MessageEditor({
   title,
   description,
   icon,
+  context,
 }: {
   settingsKey: string;
   title: string;
   description: string;
   icon: React.ReactNode;
+  context: string;
 }) {
   const qc = useQueryClient();
   const queryKey = ["admin", "site_settings", settingsKey] as const;
@@ -80,6 +85,8 @@ function MessageEditor({
     if (data) setValue(data);
   }, [data]);
 
+  const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
+
   const saveMut = useMutation({
     mutationFn: async (v: SiteMessage) => {
       const { error } = await supabase
@@ -97,7 +104,7 @@ function MessageEditor({
 
   const clearMut = useMutation({
     mutationFn: async () => {
-      const cleared: SiteMessage = { enabled: false, message: "" };
+      const cleared: SiteMessage = { enabled: false, message: "", message_es: "" };
       const { error } = await supabase
         .from("site_settings")
         .upsert({ key: settingsKey, value: cleared }, { onConflict: "key" });
@@ -133,11 +140,13 @@ function MessageEditor({
           }}
         >
           <label className="block">
-            <span className="text-sm font-medium">Message</span>
+            <span className="text-sm font-medium">Message (English)</span>
             <textarea
               rows={4}
               value={value.message}
-              onChange={(e) => setValue({ ...value, message: e.target.value, enabled: e.target.value.trim().length > 0 })}
+              onChange={(e) =>
+                setValue({ ...value, message: e.target.value, enabled: e.target.value.trim().length > 0 })
+              }
               placeholder="Enter the message to display in the banner…"
               className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
@@ -146,13 +155,54 @@ function MessageEditor({
             </p>
           </label>
 
+          <div className="space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-sm font-medium">Message (Spanish)</span>
+              <button
+                type="button"
+                disabled={addEsBusy || !value.message.trim()}
+                onClick={() =>
+                  runAddEs(
+                    { message: value.message },
+                    (t) => setValue((prev) => ({ ...prev, message_es: t.message ?? prev.message_es })),
+                    context,
+                  )
+                }
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
+              >
+                <Languages className="h-4 w-4" />
+                {addEsBusy ? "Translating…" : "Auto-translate to Spanish"}
+              </button>
+            </div>
+            {addEsBusy && <TranslatingIndicator />}
+            <textarea
+              rows={4}
+              value={value.message_es}
+              onChange={(e) => setValue({ ...value, message_es: e.target.value })}
+              placeholder="Spanish translation (shown to Spanish-language visitors)…"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
+          </div>
+
           {value.message.trim() && (
-            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Preview</p>
+            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 space-y-3">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Preview</p>
               <div className="rounded-md border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-4 py-3 flex items-start gap-3 text-sm">
                 <Megaphone className="h-4 w-4 mt-0.5 shrink-0 text-[var(--color-accent)]" />
-                <p className="whitespace-pre-wrap leading-relaxed">{value.message}</p>
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">English</p>
+                  <p className="whitespace-pre-wrap leading-relaxed">{value.message}</p>
+                </div>
               </div>
+              {value.message_es.trim() && (
+                <div className="rounded-md border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-4 py-3 flex items-start gap-3 text-sm">
+                  <Megaphone className="h-4 w-4 mt-0.5 shrink-0 text-[var(--color-accent)]" />
+                  <div className="space-y-1">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Spanish</p>
+                    <p className="whitespace-pre-wrap leading-relaxed">{value.message_es}</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
