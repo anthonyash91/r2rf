@@ -286,7 +286,7 @@ function AdminUsersPage() {
                 <h2 className="font-display text-xl font-semibold">Users</h2>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Select value={facilityFilter} onValueChange={(v) => { setFacilityFilter(v); setRegularVisible(10); }}>
-                    <SelectTrigger className="w-[220px]">
+                    <SelectTrigger className="h-10 w-[220px]">
                       <SelectValue placeholder="Filter by facility" />
                     </SelectTrigger>
                     <SelectContent>
@@ -336,7 +336,7 @@ function AdminUsersPage() {
                     }}
                     className="inline-flex h-10 items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
                   >
-                    <Download className="h-4 w-4" /> Export
+                    <Download className="h-4 w-4" /> Export CSV
                   </button>
                 </div>
               </div>
