@@ -9,12 +9,15 @@ export function SortableList<T extends { id: string }>({
   onReorder,
   renderItem,
   className,
+  dragHandleClassName,
 }: {
   items: T[];
   onReorder: (next: T[]) => void;
   renderItem: (item: T) => ReactNode;
   className?: string;
+  dragHandleClassName?: string;
 }) {
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
