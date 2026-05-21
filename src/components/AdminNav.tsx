@@ -167,9 +167,11 @@ export function AdminNav() {
                 <DropdownMenuTrigger
                   className={[
                     LINK_CLASS_BASE,
+                    "outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 data-[state=open]:bg-background data-[state=open]:text-foreground",
                     overflowActive ? "bg-background text-foreground" : "hover:bg-background hover:text-foreground",
                   ].join(" ")}
                 >
+
                   <MoreHorizontal className="h-3.5 w-3.5" />
                   More
                   <ChevronDown className="h-3.5 w-3.5 opacity-60" />
