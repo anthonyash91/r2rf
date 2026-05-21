@@ -425,7 +425,7 @@ function CategoryPage() {
                         {user && !isAdmin && (() => {
                           const isRead = readSet.has(item.id);
                           return (
-                            <div className="absolute bottom-3 right-3 mb-[7px] mr-[7px] flex items-center gap-1.5 flex-wrap justify-end z-10">
+                            <div className="absolute top-3 right-3 mt-[7px] mr-[7px] sm:top-auto sm:bottom-3 sm:mt-0 sm:mb-[7px] flex items-center gap-1.5 flex-wrap justify-end z-10">
                               <button
                                 type="button"
                                 onClick={(e) => {
