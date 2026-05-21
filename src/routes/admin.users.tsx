@@ -441,11 +441,11 @@ function AdminUsersPage() {
                       {filtered.length ? (
                         <ul className="divide-y divide-border">
                           {visible.map((u) => (
-                            <li key={u.id} className="flex items-start gap-3 pl-4 sm:pl-5">
+                            <li key={u.id} className="flex items-center gap-2 pl-4 sm:pl-5">
                               <input
                                 type="checkbox"
                                 aria-label={`Select ${u.profile?.username ?? u.email}`}
-                                className="mt-6 h-4 w-4 rounded border-input shrink-0"
+                                className="h-4 w-4 rounded border-input shrink-0"
                                 checked={selectedIds.has(u.id)}
                                 onChange={() => toggleOne(u.id)}
                               />
