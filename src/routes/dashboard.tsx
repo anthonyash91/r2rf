@@ -503,7 +503,7 @@ function CategoryProgressSection({
                     {it.type}
                   </span>
 
-                  <div className="flex-1 min-w-0 basis-0 min-[640px]:basis-auto">
+                  <div className="flex-1 min-w-0 basis-0 min-[480px]:basis-auto">
                     <Link
                       to="/category/$slug"
                       params={{ slug: category.slug }}
