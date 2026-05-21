@@ -47,6 +47,8 @@ const translations: Record<Language, Dict> = {
     "category.newContentAdded": "New content",
     "category.markAsRead": "Mark as read",
     "category.markedRead": "Read",
+    "category.notRead": "Not read",
+
     "category.markReadError": "Couldn't update progress.",
 
     "dashboard.progress": "Your progress",
