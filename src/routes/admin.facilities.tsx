@@ -80,7 +80,7 @@ function AdminFacilitiesPage() {
         <button
           onClick={() => setShowAdd(true)}
           disabled={showAdd}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
         >
           <Plus className="h-4 w-4" /> Add facilities
         </button>
