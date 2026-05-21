@@ -33,12 +33,16 @@ function AdminFacilitiesPage() {
   const [newLabels, setNewLabels] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
+  const [visibleCount, setVisibleCount] = useState(10);
 
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
     queryFn: () => fetchFacilities(),
   });
   const facilities = facilitiesQuery.data?.facilities ?? [];
+  const visibleFacilities = facilities.slice(0, visibleCount);
+  const remaining = Math.max(0, facilities.length - visibleFacilities.length);
+
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["facilities"] });
 
