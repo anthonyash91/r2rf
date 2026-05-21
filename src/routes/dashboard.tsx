@@ -91,6 +91,16 @@ function DashboardPage() {
                 </dt>
                 <dd className="mt-1 font-medium">{profile.username}</dd>
               </div>
+              {((profile as any).first_name || (profile as any).last_name) && (
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                    <UserIcon className="h-3.5 w-3.5" /> Name
+                  </dt>
+                  <dd className="mt-1 font-medium">
+                    {`${(profile as any).first_name ?? ""} ${(profile as any).last_name ?? ""}`.trim()}
+                  </dd>
+                </div>
+              )}
               <div>
                 <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                   <Building2 className="h-3.5 w-3.5" /> {t("signup.facility")}
