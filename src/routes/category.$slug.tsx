@@ -350,13 +350,12 @@ function CategoryPage() {
                     const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000;
 
                     return (
-                      <li key={item.id} id={`item-${item.id}`} className={`relative flex flex-col scroll-mt-24 transition-colors duration-700 ${highlightedId === item.id ? "bg-[var(--color-accent)]/15" : ""}`}>
+                      <li key={item.id} id={`item-${item.id}`} className={`relative scroll-mt-24 transition-colors duration-700 ${highlightedId === item.id ? "bg-[var(--color-accent)]/15" : ""}`}>
 
                         <Wrapper
                           {...wrapperProps}
-                          className={`w-full text-left flex flex-col sm:flex-row sm:items-start gap-4 px-6 pb-6 hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer ${(user || isAdmin || isNew) ? "pt-2" : "pt-6"}`}
+                          className="w-full text-left flex flex-col sm:flex-row sm:items-start gap-4 p-6 hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
                         >
-
                           <div className="flex-shrink-0 flex items-center sm:items-start sm:flex-col gap-2 sm:gap-1 sm:w-28">
                             <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass(item.type)}`}>
                               {translateType(lang, item.type)}
@@ -395,8 +394,7 @@ function CategoryPage() {
                           </div>
                         </Wrapper>
                         {(user || isAdmin || isNew) && (
-                          <div className="order-first flex items-center gap-1.5 flex-wrap justify-end px-6 pt-4 z-10">
-
+                          <div className="absolute top-3 right-3 mt-[7px] mr-[7px] flex items-center gap-1.5 flex-wrap justify-end z-10">
                             {isNew && (
                               <span className="inline-flex items-center gap-1 rounded-md border border-[var(--color-accent)] bg-[var(--color-accent)] px-2.5 py-1.5 text-xs font-medium text-background shadow-sm">
                                 <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
