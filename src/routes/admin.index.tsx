@@ -169,7 +169,7 @@ function AdminCategoriesPage() {
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold">Categories</h1>
+          <h1 className="font-display text-3xl font-semibold flex items-center gap-2"><LayoutGrid className="h-7 w-7 text-[var(--color-accent)]" /> Categories</h1>
           <p className="mt-1 text-sm text-muted-foreground">Manage the library structure.</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
