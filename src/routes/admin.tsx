@@ -38,7 +38,7 @@ function AdminLayout() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-10 pr-[26px] pl-[26px]">
+      <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-10">
         {loading || !user ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : !canAccessAdmin ? (
