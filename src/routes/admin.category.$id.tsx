@@ -479,7 +479,70 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         </div>
       )}
 
-      <div className="mt-6 rounded-2xl border border-border bg-card overflow-hidden">
+      {order.length > 0 && (() => {
+        const visibleIds = order.map((it) => it.id);
+        const allVisibleSelected = visibleIds.every((id) => selectedIds.has(id));
+        const someVisibleSelected = visibleIds.some((id) => selectedIds.has(id));
+        const toggleAllVisible = () => {
+          setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (allVisibleSelected) visibleIds.forEach((id) => next.delete(id));
+            else visibleIds.forEach((id) => next.add(id));
+            return next;
+          });
+        };
+        return (
+          <div className="mt-6 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
+            <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-input"
+                checked={allVisibleSelected}
+                ref={(el) => { if (el) el.indeterminate = !allVisibleSelected && someVisibleSelected; }}
+                onChange={toggleAllVisible}
+              />
+              <span>
+                {selectedIds.size > 0
+                  ? `${selectedIds.size} selected`
+                  : `Select all (${order.length})`}
+              </span>
+            </label>
+            <div className="flex items-center gap-2">
+              {selectedIds.size > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds(new Set())}
+                    className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleteManyMut.isPending}
+                    onClick={async () => {
+                      const ids = Array.from(selectedIds);
+                      const ok = await confirm({
+                        title: `Delete ${ids.length} ${ids.length === 1 ? "item" : "items"}?`,
+                        description: `Permanently delete ${ids.length === 1 ? "the selected item" : `${ids.length} selected items`}?`,
+                        confirmLabel: "Delete",
+                        destructive: true,
+                      });
+                      if (ok) deleteManyMut.mutate(ids);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
+                  >
+                    {deleteManyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    {deleteManyMut.isPending ? "Deleting…" : `Delete selected (${selectedIds.size})`}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
         {order.length === 0 ? (
           <p className="p-6 text-muted-foreground">No items yet.</p>
         ) : (
@@ -492,6 +555,17 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
               const isDimmed = editing !== null && !isEditingThis;
               return (
               <div className={`flex items-center gap-3 p-4 transition-opacity pl-[6px] ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
+                <input
+                  type="checkbox"
+                  aria-label={`Select ${item.title}`}
+                  className="h-4 w-4 rounded border-input shrink-0"
+                  checked={selectedIds.has(item.id)}
+                  onChange={() => setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
+                    return next;
+                  })}
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${typeBadgeClass(item.type)}`}>{item.type}</span>
