@@ -108,17 +108,18 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                     {pickLang(lang, c.name, c.name_es)}
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
-                  <div className="mt-3 flex items-center justify-center gap-2">
-                    <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-gold)]">
-                      {count} {t(count === 1 ? "home.item" : "home.items")}
-                    </p>
+                  <div className="mt-3 flex flex-col items-center gap-2">
                     {s.hasRecent && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
                         <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                         {t("category.newContentAdded")}
                       </span>
                     )}
+                    <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-gold)]">
+                      {count} {t(count === 1 ? "home.item" : "home.items")}
+                    </p>
                   </div>
+
 
                   {user && !isAdmin && count > 0 && (() => {
                     const read = reads[c.id] ?? 0;
