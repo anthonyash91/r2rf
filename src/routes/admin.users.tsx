@@ -449,7 +449,7 @@ function AdminUsersPage() {
                       {filtered.length ? (
                         <ul className="divide-y divide-border">
                           {visible.map((u) => (
-                            <li key={u.id} className="flex items-center gap-3 pl-4 sm:pl-5">
+                            <li key={u.id} className="flex items-center gap-0 pl-4 sm:pl-5">
                               <Checkbox
                                 aria-label={`Select ${u.profile?.username ?? u.email}`}
                                 className="shrink-0"
