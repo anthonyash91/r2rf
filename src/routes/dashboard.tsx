@@ -30,7 +30,7 @@ export const Route = createFileRoute("/dashboard")({
 
 function DashboardPage() {
   const { t, lang } = useI18n();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   const fetchProfile = useServerFn(getMyProfile);
   const fetchQuestions = useServerFn(getMySecurityQuestions);
@@ -306,7 +306,7 @@ function DashboardPage() {
                         )}
                       </div>
                     </div>
-                    {(() => {
+                    {!isAdmin && (() => {
                       const total = progressQuery.data?.totals.get(c.id) ?? 0;
                       const read = progressQuery.data?.reads.get(c.id) ?? 0;
                       const pct = total > 0 ? Math.round((read / total) * 100) : 0;
