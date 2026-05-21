@@ -7,7 +7,7 @@ import { getClientIp } from "./ip-allowlist";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
 import { hashAnswer } from "./security-hash.server";
 
-const FACILITIES = ["pennington_sd", "campbell_ky"] as const;
+
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const RATE_LIMIT_MAX = 3;
