@@ -149,7 +149,7 @@ function AdminFacilitiesPage() {
             <div className="p-6 text-muted-foreground text-sm">Loading…</div>
           ) : facilities.length ? (
             <ul className="divide-y divide-border">
-              {facilities.map((f) => {
+              {visibleFacilities.map((f) => {
                 const isEditing = editingId === f.id;
                 return (
                   <li key={f.value} className="p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
