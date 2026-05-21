@@ -415,14 +415,7 @@ function CategoryProgressSection({
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
 
   return (
-    <section className="relative rounded-2xl border border-border bg-card overflow-hidden">
-      {hasRecent && (
-        <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
-          <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
-          {t("category.newContentAdded")}
-        </span>
-      )}
-
+    <section className="rounded-2xl border border-border bg-card overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -437,14 +430,23 @@ function CategoryProgressSection({
             <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
           )}
           <div className="min-w-0">
-            <h2 className="font-display text-lg font-semibold truncate">
-              {pickLang(lang, category.name, category.name_es)}
-            </h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-display text-lg font-semibold truncate">
+                {pickLang(lang, category.name, category.name_es)}
+              </h2>
+              {hasRecent && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
+                  <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
+                  {t("category.newContentAdded")}
+                </span>
+              )}
+            </div>
             {tagline && (
               <p className="text-xs text-muted-foreground truncate">{tagline}</p>
             )}
           </div>
         </div>
+
         {!isAdmin && (
           <div className="flex items-center gap-3 flex-shrink-0">
             <div className="hidden sm:block w-32">
@@ -470,30 +472,33 @@ function CategoryProgressSection({
               const isRead = readSet.has(it.id);
               const description = pickLang(lang, it.description, it.description_es);
               return (
-                <li key={it.id} className="relative flex items-start gap-3 p-4">
-                  {newItemSet.has(it.id) && (
-                    <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-background shadow-sm">
-                      <span className="h-1 w-1 rounded-full bg-background/80" />
-                      {t("category.newContent")}
-                    </span>
-                  )}
+                <li key={it.id} className="flex items-start gap-3 p-4">
                   <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
                     {it.type}
                   </span>
 
                   <div className="flex-1 min-w-0">
-                    <Link
-                      to="/category/$slug"
-                      params={{ slug: category.slug }}
-                      hash={`item-${it.id}`}
-                      className="block truncate text-sm font-medium text-foreground hover:underline"
-                    >
-                      {pickLang(lang, it.title, it.title_es)}
-                    </Link>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Link
+                        to="/category/$slug"
+                        params={{ slug: category.slug }}
+                        hash={`item-${it.id}`}
+                        className="truncate text-sm font-medium text-foreground hover:underline"
+                      >
+                        {pickLang(lang, it.title, it.title_es)}
+                      </Link>
+                      {newItemSet.has(it.id) && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
+                          <span className="h-1 w-1 rounded-full bg-background/80" />
+                          {t("category.newContent")}
+                        </span>
+                      )}
+                    </div>
                     {description && (
                       <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{description}</p>
                     )}
                   </div>
+
                   {!isAdmin && (
                     <span className={`inline-flex items-center gap-1.5 text-xs font-medium flex-shrink-0 ${isRead ? "text-[var(--color-accent)]" : "text-muted-foreground"}`}>
                       {isRead ? (
