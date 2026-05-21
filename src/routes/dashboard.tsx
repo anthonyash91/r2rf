@@ -107,7 +107,7 @@ function DashboardPage() {
       const [itemsRes, readRes] = await Promise.all([
         supabase
           .from("content_items")
-          .select("id, category_id, title, title_es, description, description_es, type, sort_order")
+          .select("id, category_id, title, title_es, description, description_es, type, sort_order, created_at")
           .eq("published", true)
           .in("category_id", categoryIds)
           .order("sort_order", { ascending: true }),
@@ -119,14 +119,21 @@ function DashboardPage() {
       ]);
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
-      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string };
+      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; created_at: string | null };
       const itemsByCat = new Map<string, CatItem[]>();
       const totals = new Map<string, number>();
+      const recentCats = new Set<string>();
+      const newItemSet = new Set<string>();
+      const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       for (const row of itemsRes.data ?? []) {
         const list = itemsByCat.get(row.category_id as string) ?? [];
         list.push(row as CatItem);
         itemsByCat.set(row.category_id as string, list);
         totals.set(row.category_id as string, (totals.get(row.category_id as string) ?? 0) + 1);
+        if (row.created_at && new Date(row.created_at as string).getTime() >= cutoff) {
+          recentCats.add(row.category_id as string);
+          newItemSet.add(row.id as string);
+        }
       }
       const reads = new Map<string, number>();
       const readSet = new Set<string>();
@@ -134,9 +141,10 @@ function DashboardPage() {
         reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
         readSet.add(row.content_item_id as string);
       }
-      return { totals, reads, itemsByCat, readSet };
+      return { totals, reads, itemsByCat, readSet, recentCats, newItemSet };
     },
   });
+
 
 
   const [editing, setEditing] = useState(false);
@@ -228,12 +236,16 @@ function DashboardPage() {
                     const read = progressQuery.data?.reads.get(c.id) ?? 0;
                     const items = progressQuery.data?.itemsByCat.get(c.id) ?? [];
                     const readSet = progressQuery.data?.readSet ?? new Set<string>();
+                    const newItemSet = progressQuery.data?.newItemSet ?? new Set<string>();
+                    const hasRecent = progressQuery.data?.recentCats.has(c.id) ?? false;
                     return (
                       <CategoryProgressSection
                         key={c.id}
                         category={c}
                         items={items}
                         readSet={readSet}
+                        newItemSet={newItemSet}
+                        hasRecent={hasRecent}
                         total={total}
                         read={read}
                         isAdmin={isAdmin}
@@ -241,6 +253,7 @@ function DashboardPage() {
                         t={t}
                       />
                     );
+
                   })}
                 </div>
               </>
@@ -378,6 +391,8 @@ function CategoryProgressSection({
   category,
   items,
   readSet,
+  newItemSet,
+  hasRecent,
   total,
   read,
   isAdmin,
@@ -387,6 +402,8 @@ function CategoryProgressSection({
   category: Category;
   items: CatItem[];
   readSet: Set<string>;
+  newItemSet: Set<string>;
+  hasRecent: boolean;
   total: number;
   read: number;
   isAdmin: boolean;
@@ -398,7 +415,14 @@ function CategoryProgressSection({
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
 
   return (
-    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+    <section className="relative rounded-2xl border border-border bg-card overflow-hidden">
+      {hasRecent && (
+        <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
+          <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
+          {t("category.newContentAdded")}
+        </span>
+      )}
+
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -446,10 +470,17 @@ function CategoryProgressSection({
               const isRead = readSet.has(it.id);
               const description = pickLang(lang, it.description, it.description_es);
               return (
-                <li key={it.id} className="flex items-start gap-3 p-4">
+                <li key={it.id} className="relative flex items-start gap-3 p-4">
+                  {newItemSet.has(it.id) && (
+                    <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-background shadow-sm">
+                      <span className="h-1 w-1 rounded-full bg-background/80" />
+                      {t("category.newContent")}
+                    </span>
+                  )}
                   <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
                     {it.type}
                   </span>
+
                   <div className="flex-1 min-w-0">
                     <Link
                       to="/category/$slug"
