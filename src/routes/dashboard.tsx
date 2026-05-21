@@ -236,12 +236,16 @@ function DashboardPage() {
                     const read = progressQuery.data?.reads.get(c.id) ?? 0;
                     const items = progressQuery.data?.itemsByCat.get(c.id) ?? [];
                     const readSet = progressQuery.data?.readSet ?? new Set<string>();
+                    const newItemSet = progressQuery.data?.newItemSet ?? new Set<string>();
+                    const hasRecent = progressQuery.data?.recentCats.has(c.id) ?? false;
                     return (
                       <CategoryProgressSection
                         key={c.id}
                         category={c}
                         items={items}
                         readSet={readSet}
+                        newItemSet={newItemSet}
+                        hasRecent={hasRecent}
                         total={total}
                         read={read}
                         isAdmin={isAdmin}
@@ -249,6 +253,7 @@ function DashboardPage() {
                         t={t}
                       />
                     );
+
                   })}
                 </div>
               </>
