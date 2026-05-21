@@ -55,6 +55,7 @@ function AdminUsersPage() {
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
+  const [regularVisible, setRegularVisible] = useState<number>(10);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
