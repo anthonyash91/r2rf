@@ -280,17 +280,17 @@ function AdminCategoriesPage() {
             onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
             renderItem={(c) => (
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 pl-[6px]">
-                <input
-                  type="checkbox"
+                <Checkbox
                   aria-label={`Select ${c.name}`}
-                  className="h-4 w-4 rounded border-input shrink-0 self-start sm:self-center"
+                  className="shrink-0 self-start sm:self-center"
                   checked={selectedIds.has(c.id)}
-                  onChange={() => setSelectedIds((prev) => {
+                  onCheckedChange={() => setSelectedIds((prev) => {
                     const next = new Set(prev);
                     if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
                     return next;
                   })}
                 />
+
                 <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
                   {c.icon_url ? (
                     <img
