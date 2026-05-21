@@ -470,10 +470,17 @@ function CategoryProgressSection({
               const isRead = readSet.has(it.id);
               const description = pickLang(lang, it.description, it.description_es);
               return (
-                <li key={it.id} className="flex items-start gap-3 p-4">
+                <li key={it.id} className="relative flex items-start gap-3 p-4">
+                  {newItemSet.has(it.id) && (
+                    <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-background shadow-sm">
+                      <span className="h-1 w-1 rounded-full bg-background/80" />
+                      {t("category.newContent")}
+                    </span>
+                  )}
                   <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
                     {it.type}
                   </span>
+
                   <div className="flex-1 min-w-0">
                     <Link
                       to="/category/$slug"
