@@ -391,6 +391,8 @@ function CategoryProgressSection({
   category,
   items,
   readSet,
+  newItemSet,
+  hasRecent,
   total,
   read,
   isAdmin,
@@ -400,6 +402,8 @@ function CategoryProgressSection({
   category: Category;
   items: CatItem[];
   readSet: Set<string>;
+  newItemSet: Set<string>;
+  hasRecent: boolean;
   total: number;
   read: number;
   isAdmin: boolean;
@@ -411,7 +415,14 @@ function CategoryProgressSection({
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
 
   return (
-    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+    <section className="relative rounded-2xl border border-border bg-card overflow-hidden">
+      {hasRecent && (
+        <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
+          <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
+          {t("category.newContentAdded")}
+        </span>
+      )}
+
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
