@@ -87,12 +87,6 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
             const count = s.count;
             return (
             <div key={c.id} className="relative">
-              {s.hasRecent && (
-                <span className="absolute -top-2 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
-                  <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
-                  {t("category.newContentAdded")}
-                </span>
-              )}
               <Link
                 to="/category/$slug"
                 params={{ slug: c.slug }}
@@ -114,9 +108,18 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                     {pickLang(lang, c.name, c.name_es)}
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
-                  <p className="mt-3 text-xs font-medium uppercase tracking-wide text-[var(--color-gold)]">
-                    {count} {t(count === 1 ? "home.item" : "home.items")}
-                  </p>
+                  <div className="mt-3 flex items-center justify-center gap-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-gold)]">
+                      {count} {t(count === 1 ? "home.item" : "home.items")}
+                    </p>
+                    {s.hasRecent && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
+                        <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
+                        {t("category.newContentAdded")}
+                      </span>
+                    )}
+                  </div>
+
                   {user && !isAdmin && count > 0 && (() => {
                     const read = reads[c.id] ?? 0;
                     const pct = Math.round((read / count) * 100);
