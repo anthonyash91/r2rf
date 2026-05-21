@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { useAuth } from "@/hooks/use-auth";
 import { getMyProfile, getMyFacilityCustomHome } from "@/lib/user-signup.functions";
 import { facilityLabel } from "@/lib/user-signup";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
