@@ -277,6 +277,11 @@ function SignupPage() {
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-4" autoComplete="off">
+              {mode === "sign-up" && (
+                <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
+                  Please sign up using your <strong>correct, real information</strong>. Accurate details ensure you can receive credit in the future for participating in this program.
+                </div>
+              )}
               {/* honeypot */}
               <div className="hidden" aria-hidden>
                 <label>
