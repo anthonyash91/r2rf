@@ -305,9 +305,9 @@ function AdminUsersPage() {
                     Regular user accounts that signed up from the public form.
                   </p>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:flex-wrap w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:flex-nowrap gap-2 w-full sm:w-auto sm:flex-1 sm:max-w-md">
                   <Select value={facilityFilter} onValueChange={(v) => { setFacilityFilter(v); setRegularVisible(10); }}>
-                    <SelectTrigger className="h-10 w-full sm:w-[220px]">
+                    <SelectTrigger className="h-10 w-full sm:flex-1 sm:min-w-0">
                       <SelectValue placeholder="Filter by facility" />
                     </SelectTrigger>
                     <SelectContent>
