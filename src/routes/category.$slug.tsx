@@ -354,8 +354,9 @@ function CategoryPage() {
 
                         <Wrapper
                           {...wrapperProps}
-                          className="w-full text-left flex flex-col sm:flex-row sm:items-start gap-4 p-6 hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
+                          className={`w-full text-left flex flex-col sm:flex-row sm:items-start gap-4 px-6 pb-6 hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer ${(user || isAdmin || isNew) ? "pt-2" : "pt-6"}`}
                         >
+
                           <div className="flex-shrink-0 flex items-center sm:items-start sm:flex-col gap-2 sm:gap-1 sm:w-28">
                             <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass(item.type)}`}>
                               {translateType(lang, item.type)}
