@@ -427,6 +427,21 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     onError: (e: any) => toast.error(e.message),
   });
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const deleteManyMut = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await supabase.from("content_items").delete().in("id", ids);
+      if (error) throw error;
+      return ids.length;
+    },
+    onSuccess: (deleted) => {
+      toast.success(`Deleted ${deleted} ${deleted === 1 ? "item" : "items"}`);
+      setSelectedIds(new Set());
+      invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const reorderMut = useMutation({
     mutationFn: async (next: ContentItem[]) => {
       await Promise.all(
