@@ -401,46 +401,54 @@ function AdminUsersPage() {
                   <>
                     {filtered.length > 0 && (
                       <div className="mt-3 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
-                        <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                          <Checkbox
-                            checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
-                            onCheckedChange={() => toggleAllVisible()}
-                          />
-
-                          <span>
-                            {selectedIds.size > 0
+                        <span className="text-muted-foreground">
+                          {editMode
+                            ? selectedIds.size > 0
                               ? `${selectedIds.size} selected`
-                              : `Select all visible (${visible.length})`}
-                          </span>
-                        </label>
+                              : "Click users to select for deletion"
+                            : `${filtered.length} ${filtered.length === 1 ? "user" : "users"}`}
+                        </span>
                         <div className="flex items-center gap-2">
-                          {selectedIds.size > 0 && (
+                          {!editMode ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditMode(true)}
+                              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                            >
+                              <Pencil className="h-4 w-4" /> Edit
+                            </button>
+                          ) : (
                             <>
                               <button
                                 type="button"
-                                onClick={() => setSelectedIds(new Set())}
+                                onClick={() => { setEditMode(false); setSelectedIds(new Set()); }}
                                 className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                               >
-                                Clear
+                                {selectedIds.size > 0 ? "Cancel" : "Done"}
                               </button>
-                              <button
-                                type="button"
-                                disabled={deleteManyMut.isPending}
-                                onClick={async () => {
-                                  const ids = Array.from(selectedIds);
-                                  const ok = await confirm({
-                                    title: `Delete ${ids.length} ${ids.length === 1 ? "user" : "users"}?`,
-                                    description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "user" : "users"}? This cannot be undone.`,
-                                    confirmLabel: "Delete",
-                                    destructive: true,
-                                  });
-                                  if (ok) deleteManyMut.mutate({ userIds: ids });
-                                }}
-                                className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
-                              >
-                                {deleteManyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                {deleteManyMut.isPending ? "Deleting…" : `Delete selected (${selectedIds.size})`}
-                              </button>
+                              {selectedIds.size > 0 && (
+                                <button
+                                  type="button"
+                                  disabled={deleteManyMut.isPending}
+                                  onClick={async () => {
+                                    const ids = Array.from(selectedIds);
+                                    const ok = await confirm({
+                                      title: `Delete ${ids.length} ${ids.length === 1 ? "user" : "users"}?`,
+                                      description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "user" : "users"}? This cannot be undone.`,
+                                      confirmLabel: "Delete",
+                                      destructive: true,
+                                    });
+                                    if (ok) {
+                                      deleteManyMut.mutate({ userIds: ids });
+                                      setEditMode(false);
+                                    }
+                                  }}
+                                  className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
+                                >
+                                  {deleteManyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                  {deleteManyMut.isPending ? "Deleting…" : `Delete selected (${selectedIds.size})`}
+                                </button>
+                              )}
                             </>
                           )}
                         </div>
@@ -449,18 +457,27 @@ function AdminUsersPage() {
                     <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
                       {filtered.length ? (
                         <ul className="divide-y divide-border">
-                          {visible.map((u) => (
-                            <li key={u.id} className="flex items-center gap-0 pl-[22px]">
-                              <Checkbox
-                                aria-label={`Select ${u.profile?.username ?? u.email}`}
-                                className="shrink-0"
-                                checked={selectedIds.has(u.id)}
-                                onCheckedChange={() => toggleOne(u.id)}
-                              />
-
-                              <div className="flex-1 min-w-0">{renderItem(u)}</div>
-                            </li>
-                          ))}
+                          {visible.map((u) => {
+                            const selected = selectedIds.has(u.id);
+                            if (editMode) {
+                              return (
+                                <li
+                                  key={u.id}
+                                  onClick={() => toggleOne(u.id)}
+                                  className={`cursor-pointer transition-colors ${
+                                    selected
+                                      ? "bg-destructive/10 hover:bg-destructive/15"
+                                      : "hover:bg-muted/50"
+                                  }`}
+                                >
+                                  <div className="pointer-events-none">{renderItem(u)}</div>
+                                </li>
+                              );
+                            }
+                            return (
+                              <li key={u.id}>{renderItem(u)}</li>
+                            );
+                          })}
                         </ul>
                       ) : (
                         <div className="p-6 text-muted-foreground text-sm">No users for this facility.</div>
