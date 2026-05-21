@@ -199,24 +199,25 @@ function DashboardPage() {
                     <div className="grid sm:grid-cols-3 gap-4 mb-8">
                       <div className="rounded-2xl border border-border bg-card p-5">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <BookOpen className="h-5 w-5" /> {t("dashboard.totalItems") ?? "Total items"}
+                          <BookOpen className="h-5 w-5" /> Total Items
                         </div>
                         <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{totalAll.toLocaleString()}</p>
                       </div>
                       <div className="rounded-2xl border border-border bg-card p-5">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <CheckCircle2 className="h-5 w-5" /> {t("dashboard.itemsRead") ?? "Items read"}
+                          <CheckCircle2 className="h-5 w-5" /> Items Read
                         </div>
                         <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{readAll.toLocaleString()}</p>
                       </div>
                       <div className="rounded-2xl border border-border bg-card p-5">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Check className="h-5 w-5" /> {t("dashboard.overallProgress") ?? "Overall progress"}
+                          <Check className="h-5 w-5" /> Overall Progress
                         </div>
                         <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{pctAll}%</p>
                         <Progress value={pctAll} className="mt-3 h-1.5" />
                       </div>
                     </div>
+
                   );
                 })()}
 
