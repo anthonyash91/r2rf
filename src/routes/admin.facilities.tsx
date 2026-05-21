@@ -30,12 +30,15 @@ function AdminFacilitiesPage() {
   const addFacilitiesFn = useServerFn(addFacilities);
   const updateFacilityFn = useServerFn(updateFacility);
   const deleteFacilityFn = useServerFn(deleteFacility);
+  const deleteFacilitiesFn = useServerFn(deleteFacilities);
 
   const [showAdd, setShowAdd] = useState(false);
   const [newLabels, setNewLabels] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
   const [visibleCount, setVisibleCount] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
 
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
