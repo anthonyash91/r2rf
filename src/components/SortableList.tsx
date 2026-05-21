@@ -37,11 +37,12 @@ export function SortableList<T extends { id: string }>({
       <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
         <ul className={className}>
           {items.map((item) => (
-            <SortableRow key={item.id} id={item.id}>
+            <SortableRow key={item.id} id={item.id} handleClassName={dragHandleClassName}>
               {renderItem(item)}
             </SortableRow>
           ))}
         </ul>
+
       </SortableContext>
     </DndContext>
   );
