@@ -13,6 +13,7 @@ import {
   setUserRole,
   createUser,
   deleteUser,
+  deleteUsers,
   clearUserSecurityAnswers,
 } from "@/lib/users.functions";
 import { listFacilities } from "@/lib/facilities.functions";
