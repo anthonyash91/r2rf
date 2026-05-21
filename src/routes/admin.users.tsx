@@ -306,7 +306,7 @@ function AdminUsersPage() {
             <section className="mt-8">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:flex-wrap">
                 <div>
-                  <h2 className="font-display text-xl font-semibold">Users</h2>
+                  <h2 className="font-display text-xl font-semibold">Users <span className="text-muted-foreground font-normal">({regularUsers.length})</span></h2>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Regular user accounts that signed up from the public form.
                   </p>
