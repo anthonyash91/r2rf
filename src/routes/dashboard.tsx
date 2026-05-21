@@ -473,7 +473,7 @@ function CategoryProgressSection({
               const description = pickLang(lang, it.description, it.description_es);
               return (
                 <li key={it.id} className="flex items-start gap-3 p-4">
-                  <span className={`inline-flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
+                  <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
                     {it.type}
                   </span>
 
