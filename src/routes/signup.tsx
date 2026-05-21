@@ -357,22 +357,55 @@ function SignupPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium">{t("signup.facility")}</label>
-                    <Select value={facility} onValueChange={setFacility}>
-                      <SelectTrigger className="mt-1 w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {facilities.map((f) => {
-                          const i18nKey = `facility.${f.value}`;
-                          const translated = t(i18nKey);
-                          return (
-                            <SelectItem key={f.value} value={f.value}>
-                              {translated === i18nKey ? f.label : translated}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={facilityOpen} onOpenChange={setFacilityOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          role="combobox"
+                          aria-expanded={facilityOpen}
+                          className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm font-normal hover:bg-muted/40"
+                        >
+                          <span className={cn(!facility && "text-muted-foreground")}>
+                            {(() => {
+                              const sel = facilities.find((f) => f.value === facility);
+                              if (!sel) return "Search and select your facility";
+                              const k = `facility.${sel.value}`;
+                              const tr = t(k);
+                              return tr === k ? sel.label : tr;
+                            })()}
+                          </span>
+                          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search facilities..." />
+                          <CommandList>
+                            <CommandEmpty>No facility found.</CommandEmpty>
+                            <CommandGroup>
+                              {facilities.map((f) => {
+                                const i18nKey = `facility.${f.value}`;
+                                const translated = t(i18nKey);
+                                const display = translated === i18nKey ? f.label : translated;
+                                return (
+                                  <CommandItem
+                                    key={f.value}
+                                    value={display}
+                                    onSelect={() => {
+                                      setFacility(f.value);
+                                      setFacilityOpen(false);
+                                    }}
+                                  >
+                                    <Check className={cn("mr-2 h-4 w-4", facility === f.value ? "opacity-100" : "opacity-0")} />
+                                    {display}
+                                  </CommandItem>
+                                );
+                              })}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
 
