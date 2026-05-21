@@ -158,6 +158,13 @@ const translations: Record<Language, Dict> = {
     "category.exploreOthers": "Explore otras categorías",
     "category.newContent": "Contenido nuevo",
     "category.newContentAdded": "Nuevo contenido agregado",
+    "category.markAsRead": "Marcar como leído",
+    "category.markedRead": "Leído",
+    "category.markReadError": "No se pudo actualizar el progreso.",
+
+    "dashboard.progress": "Tu progreso",
+    "dashboard.progressItems": "{done}/{total} recursos leídos",
+    "dashboard.progressEmpty": "Comienza una categoría para ver tu progreso.",
 
     "auth.signIn": "Iniciar sesión",
     "auth.createAccount": "Crear cuenta",
