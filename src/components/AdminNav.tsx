@@ -90,7 +90,7 @@ export function AdminNav() {
 
       {/* sm+: horizontally scrollable tabs */}
       <div className="hidden sm:block">
-        <ul onScroll={handleScroll} className="scrollbar-accent flex w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted p-2 text-muted-foreground">
+        <ul onScroll={handleScroll} className="scrollbar-accent flex h-[52px] w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted p-2 text-muted-foreground">
           {visible.map((l) => {
             const active = isLinkActive(l, pathname);
             const Icon = l.icon;
