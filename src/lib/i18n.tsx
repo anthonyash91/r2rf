@@ -173,6 +173,8 @@ const translations: Record<Language, Dict> = {
     "category.newContentAdded": "Contenido nuevo",
     "category.markAsRead": "Marcar como leído",
     "category.markedRead": "Leído",
+    "category.notRead": "No leído",
+
     "category.markReadError": "No se pudo actualizar el progreso.",
 
     "dashboard.progress": "Tu progreso",
