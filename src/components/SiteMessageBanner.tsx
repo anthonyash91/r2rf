@@ -48,10 +48,10 @@ export function SiteMessageBanner({ kind }: { kind: SiteMessageKind }) {
   return (
     <div
       role="status"
-      className="w-full border-b border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-foreground"
+      className="w-full border-t border-b border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-foreground"
     >
-      <div className="mx-auto max-w-6xl px-6 py-3 flex items-start gap-3 text-sm">
-        <Megaphone className="h-4 w-4 mt-0.5 shrink-0 text-[var(--color-accent)]" />
+      <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-center gap-3 text-sm text-center">
+        <Megaphone className="h-4 w-4 shrink-0 text-[var(--color-accent)]" />
         <p className="whitespace-pre-wrap leading-relaxed">{text}</p>
       </div>
     </div>
