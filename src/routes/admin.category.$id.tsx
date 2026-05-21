@@ -553,29 +553,12 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       )}
 
       <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
-        {order.length === 0 ? (
-          <p className="p-6 text-muted-foreground">No items yet.</p>
-        ) : (
-          <SortableList
-            className="divide-y divide-border"
-            items={order}
-            onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
-            renderItem={(item) => {
-              const isEditingThis = editing !== null && editing !== "new" && editing.id === item.id;
-              const isDimmed = editing !== null && !isEditingThis;
-              return (
-              <div className={`flex items-center gap-3 p-4 transition-opacity pl-[6px] ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
-                <Checkbox
-                  aria-label={`Select ${item.title}`}
-                  className="shrink-0"
-                  checked={selectedIds.has(item.id)}
-                  onCheckedChange={() => setSelectedIds((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
-                    return next;
-                  })}
-                />
-
+        {(() => {
+          const renderItemRow = (item: ContentItem) => {
+            const isEditingThis = editing !== null && editing !== "new" && editing.id === item.id;
+            const isDimmed = editing !== null && !isEditingThis;
+            return (
+              <div className={`flex items-center gap-3 p-4 pl-[6px] transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${typeBadgeClass(item.type)}`}>{item.type}</span>
@@ -666,10 +649,44 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                   </div>
                 </TooltipProvider>
               </div>
-              );
-            }}
-          />
-        )}
+            );
+          };
+
+          if (order.length === 0) {
+            return <p className="p-6 text-muted-foreground">No items yet.</p>;
+          }
+          if (editMode) {
+            return (
+              <ul className="divide-y divide-border">
+                {order.map((item) => {
+                  const selected = selectedIds.has(item.id);
+                  return (
+                    <li
+                      key={item.id}
+                      onClick={() => toggleOne(item.id)}
+                      className={`flex items-stretch cursor-pointer transition-colors ${
+                        selected ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <div className="flex items-center pl-4 pr-0 text-muted-foreground/50">
+                        <GripVertical className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0 pointer-events-none">{renderItemRow(item)}</div>
+                    </li>
+                  );
+                })}
+              </ul>
+            );
+          }
+          return (
+            <SortableList
+              className="divide-y divide-border"
+              items={order}
+              onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
+              renderItem={(item) => renderItemRow(item)}
+            />
+          );
+        })()}
       </div>
     </section>
   );
