@@ -49,6 +49,7 @@ function AdminUsersPage() {
   const setRole = useServerFn(setUserRole);
   const createFn = useServerFn(createUser);
   const deleteFn = useServerFn(deleteUser);
+  const deleteManyFn = useServerFn(deleteUsers);
   const clearSecFn = useServerFn(clearUserSecurityAnswers);
 
   const [showCreate, setShowCreate] = useState(false);
@@ -57,6 +58,7 @@ function AdminUsersPage() {
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [regularVisible, setRegularVisible] = useState<number>(10);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
