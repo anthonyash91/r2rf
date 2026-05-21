@@ -99,7 +99,7 @@ function AdminCertificatePage() {
       </Link>
 
       <section className="mt-6 rounded-2xl border border-border bg-card p-6">
-        <h1 className="font-display text-2xl font-semibold">Certificate program section</h1>
+        <h1 className="font-display text-2xl font-semibold flex items-center gap-2"><Award className="h-6 w-6 text-[var(--color-accent)]" /> Certificate program section</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Edit the eyebrow, headline, subheading, and callout shown in the certificate program section on the home page. The headline is split into three parts; the middle part is shown in accent italic.
         </p>
