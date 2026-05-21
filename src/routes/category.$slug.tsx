@@ -366,7 +366,7 @@ function CategoryPage() {
                               </span>
                             )}
                           </div>
-                          <div className={`flex-1 min-w-0 ${(user || isAdmin || isNew) ? "sm:pr-32" : ""}`}>
+                          <div className="flex-1 min-w-0">
                             <div className="flex items-start gap-2">
                               <h3 className="font-display text-lg font-semibold text-foreground leading-snug">
                                 {title}
