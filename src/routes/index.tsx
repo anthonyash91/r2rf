@@ -21,8 +21,11 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   useEffect(() => {
-    setActiveCustomHome(null);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) setActiveCustomHome(null);
+    });
   }, []);
+
 
 
   const { data: categories = [], isLoading } = useQuery({
