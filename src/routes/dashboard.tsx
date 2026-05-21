@@ -170,7 +170,7 @@ function DashboardPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 mx-auto w-full max-w-3xl px-6 py-12">
+      <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
         <h1 className="font-display text-3xl font-semibold">{t("nav.dashboard")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
 
