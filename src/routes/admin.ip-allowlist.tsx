@@ -75,6 +75,10 @@ function AdminIpAllowlistPage() {
         </p>
       </div>
 
+      <IpRestrictionToggle />
+
+
+
       <section className="mt-8 rounded-2xl border border-border bg-card overflow-hidden">
         <div className="p-6 border-b border-border">
           <h2 className="font-display text-xl font-semibold">Add to both allowlists</h2>
