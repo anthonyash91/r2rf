@@ -39,6 +39,7 @@ function AdminFacilitiesPage() {
   const [editingLabel, setEditingLabel] = useState("");
   const [visibleCount, setVisibleCount] = useState(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [editMode, setEditMode] = useState(false);
 
 
   const facilitiesQuery = useQuery({
