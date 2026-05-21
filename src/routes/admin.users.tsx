@@ -468,14 +468,14 @@ function AdminUsersPage() {
                               <button
                                 type="button"
                                 onClick={() => setRegularVisible((n) => n + 10)}
-                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-1.5 hover:bg-muted"
+                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
                               >
                                 Show 10 more
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setRegularVisible(filtered.length)}
-                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-1.5 hover:bg-muted"
+                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
                               >
                                 Show all
                               </button>
@@ -485,7 +485,7 @@ function AdminUsersPage() {
                             <button
                               type="button"
                               onClick={() => setRegularVisible(10)}
-                              className="inline-flex items-center rounded-md border border-input bg-background px-3 py-1.5 hover:bg-muted"
+                              className="inline-flex items-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-muted"
                             >
                               Collapse
                             </button>
