@@ -352,7 +352,7 @@ function CategoryPage() {
                     return (
                       <li key={item.id} id={`item-${item.id}`} className={`relative scroll-mt-24 transition-colors duration-700 ${highlightedId === item.id ? "bg-[var(--color-accent)]/15" : ""}`}>
                         {isNew && (
-                          <span className="hidden sm:inline-flex absolute top-3 right-3 mr-[7px] mt-[7px] z-10 items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
+                          <span className="hidden sm:inline-flex absolute top-3 right-3 mr-[7px] mt-[7px] z-10 items-center gap-1 rounded-full bg-[var(--color-accent)] px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wide text-background shadow-sm">
                             <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                             {t("category.newContent")}
                           </span>
