@@ -85,6 +85,10 @@ function SignupPage() {
     try {
       const uname = username.trim().toLowerCase();
       if (mode === "sign-up") {
+        if (password !== confirmPassword) {
+          toast.error(t("signup.passwordMismatch"));
+          return;
+        }
         if (!challengeQuery.data) {
           toast.error(t("signup.loadingVerification"));
           return;
