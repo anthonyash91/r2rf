@@ -6,8 +6,29 @@ import type { Category } from "@/lib/categories";
 import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { Pencil } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 type CategoryStats = { count: number; hasRecent: boolean };
+
+function useUserProgress(userId: string | null, categoryIds: string[]) {
+  return useQuery({
+    queryKey: ["home-user-progress", userId, [...categoryIds].sort().join(",")],
+    enabled: !!userId && categoryIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_content_progress")
+        .select("category_id")
+        .eq("user_id", userId!)
+        .in("category_id", categoryIds);
+      if (error) throw error;
+      const reads: Record<string, number> = {};
+      for (const row of data ?? []) {
+        reads[row.category_id as string] = (reads[row.category_id as string] ?? 0) + 1;
+      }
+      return reads;
+    },
+  });
+}
 
 function useCategoryItemStats(categoryIds: string[]) {
   return useQuery({
