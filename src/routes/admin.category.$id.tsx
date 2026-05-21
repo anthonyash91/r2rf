@@ -1015,7 +1015,7 @@ function ItemEditor({
         />
       </label>
       <label className="inline-flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+        <Checkbox checked={published} onCheckedChange={(v) => setPublished(Boolean(v))} />
         Published
       </label>
 
