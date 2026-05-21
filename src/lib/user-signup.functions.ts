@@ -190,3 +190,30 @@ export const getMyProfile = createServerFn({ method: "GET" }).handler(async () =
   };
 });
 
+
+export const getMyFacilityCustomHome = createServerFn({ method: "GET" }).handler(async () => {
+  const request = getRequest();
+  const auth = request.headers.get("authorization");
+  if (!auth?.startsWith("Bearer ")) return { slug: null as string | null };
+  const token = auth.slice("Bearer ".length);
+  const { data: userRes } = await supabaseAdmin.auth.getUser(token);
+  if (!userRes?.user) return { slug: null };
+  const { data: profile } = await supabaseAdmin
+    .from("user_profiles")
+    .select("facility")
+    .eq("user_id", userRes.user.id)
+    .maybeSingle();
+  if (!profile?.facility) return { slug: null };
+  const { data: facility } = await supabaseAdmin
+    .from("facilities")
+    .select("label")
+    .eq("value", profile.facility)
+    .maybeSingle();
+  if (!facility?.label) return { slug: null };
+  const { data: page } = await supabaseAdmin
+    .from("custom_home_pages")
+    .select("slug")
+    .eq("name", facility.label)
+    .maybeSingle();
+  return { slug: (page?.slug as string | undefined) ?? null };
+});
