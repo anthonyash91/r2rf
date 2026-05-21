@@ -184,7 +184,7 @@ export function AdminNav() {
                       <DropdownMenuItem
                         key={l.to}
                         onSelect={() => navigate({ to: l.to as any })}
-                        className={active ? "bg-muted" : ""}
+                        className={`cursor-pointer ${active ? "bg-muted" : ""}`}
                       >
                         <Icon className="mr-2 h-4 w-4" />
                         {l.label}
