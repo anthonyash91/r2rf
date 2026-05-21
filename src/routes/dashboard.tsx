@@ -234,7 +234,49 @@ function DashboardPage() {
           )}
         </div>
 
+        <div className="mt-6 rounded-2xl border border-border bg-card p-6">
+          <h2 className="font-display text-lg font-semibold">{t("home.categories")}</h2>
+          {categoriesQuery.isLoading || facilityHomeQuery.isLoading ? (
+            <p className="mt-3 text-sm text-muted-foreground">{t("home.loading")}</p>
+          ) : (categoriesQuery.data?.length ?? 0) === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">{t("home.empty")}</p>
+          ) : (
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {(categoriesQuery.data ?? []).map((c) => (
+                <li key={c.id}>
+                  <Link
+                    to="/category/$slug"
+                    params={{ slug: c.slug }}
+                    className="group flex items-center gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-[var(--color-accent)]"
+                  >
+                    {c.icon_url ? (
+                      <img
+                        src={c.icon_url}
+                        alt=""
+                        className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover bg-muted"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed border-border bg-muted/40" />
+                    )}
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground truncate">
+                        {pickLang(lang, c.name, c.name_es)}
+                      </p>
+                      {pickLang(lang, c.tagline, c.tagline_es) && (
+                        <p className="text-xs text-muted-foreground truncate">
+                          {pickLang(lang, c.tagline, c.tagline_es)}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
       </main>
+
       <SiteFooter />
     </div>
   );
