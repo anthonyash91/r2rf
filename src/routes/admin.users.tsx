@@ -13,6 +13,7 @@ import {
   setUserRole,
   createUser,
   deleteUser,
+  deleteUsers,
   clearUserSecurityAnswers,
 } from "@/lib/users.functions";
 import { listFacilities } from "@/lib/facilities.functions";
@@ -48,6 +49,7 @@ function AdminUsersPage() {
   const setRole = useServerFn(setUserRole);
   const createFn = useServerFn(createUser);
   const deleteFn = useServerFn(deleteUser);
+  const deleteManyFn = useServerFn(deleteUsers);
   const clearSecFn = useServerFn(clearUserSecurityAnswers);
 
   const [showCreate, setShowCreate] = useState(false);
@@ -56,6 +58,7 @@ function AdminUsersPage() {
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [regularVisible, setRegularVisible] = useState<number>(10);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
@@ -106,6 +109,19 @@ function AdminUsersPage() {
   const deleteMut = useMutation({
     mutationFn: (input: { userId: string }) => deleteFn({ data: input }),
     onSuccess: () => { toast.success("User deleted"); invalidate(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const deleteManyMut = useMutation({
+    mutationFn: (input: { userIds: string[] }) => deleteManyFn({ data: input }),
+    onSuccess: (res) => {
+      const parts: string[] = [];
+      parts.push(`Deleted ${res.deleted} ${res.deleted === 1 ? "user" : "users"}`);
+      if (res.failed.length) parts.push(`${res.failed.length} failed`);
+      if (res.skippedSelf) parts.push("skipped your own account");
+      toast.success(parts.join(" • "));
+      setSelectedIds(new Set());
+      invalidate();
+    },
     onError: (e: any) => toast.error(e.message),
   });
   const clearSecMut = useMutation({
@@ -349,11 +365,94 @@ function AdminUsersPage() {
                   : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
                 const visible = filtered.slice(0, regularVisible);
                 const remaining = filtered.length - visible.length;
+                const visibleIds = visible.map((u) => u.id);
+                const allVisibleSelected = visible.length > 0 && visibleIds.every((id) => selectedIds.has(id));
+                const someVisibleSelected = visibleIds.some((id) => selectedIds.has(id));
+                const toggleAllVisible = () => {
+                  setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    if (allVisibleSelected) {
+                      visibleIds.forEach((id) => next.delete(id));
+                    } else {
+                      visibleIds.forEach((id) => next.add(id));
+                    }
+                    return next;
+                  });
+                };
+                const toggleOne = (id: string) => {
+                  setSelectedIds((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(id)) next.delete(id); else next.add(id);
+                    return next;
+                  });
+                };
                 return (
                   <>
+                    {filtered.length > 0 && (
+                      <div className="mt-3 flex items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+                        <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-input"
+                            checked={allVisibleSelected}
+                            ref={(el) => { if (el) el.indeterminate = !allVisibleSelected && someVisibleSelected; }}
+                            onChange={toggleAllVisible}
+                          />
+                          <span>
+                            {selectedIds.size > 0
+                              ? `${selectedIds.size} selected`
+                              : `Select all visible (${visible.length})`}
+                          </span>
+                        </label>
+                        <div className="flex items-center gap-2">
+                          {selectedIds.size > 0 && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedIds(new Set())}
+                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-1.5 hover:bg-muted"
+                              >
+                                Clear
+                              </button>
+                              <button
+                                type="button"
+                                disabled={deleteManyMut.isPending}
+                                onClick={async () => {
+                                  const ids = Array.from(selectedIds);
+                                  const ok = await confirm({
+                                    title: `Delete ${ids.length} ${ids.length === 1 ? "user" : "users"}?`,
+                                    description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "user" : "users"}? This cannot be undone.`,
+                                    confirmLabel: "Delete",
+                                    destructive: true,
+                                  });
+                                  if (ok) deleteManyMut.mutate({ userIds: ids });
+                                }}
+                                className="inline-flex items-center gap-2 rounded-md bg-destructive px-3 py-1.5 text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
+                              >
+                                {deleteManyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                {deleteManyMut.isPending ? "Deleting…" : `Delete selected (${selectedIds.size})`}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
                       {filtered.length ? (
-                        <ul className="divide-y divide-border">{visible.map(renderItem)}</ul>
+                        <ul className="divide-y divide-border">
+                          {visible.map((u) => (
+                            <li key={u.id} className="flex items-start gap-3 pl-4 sm:pl-5">
+                              <input
+                                type="checkbox"
+                                aria-label={`Select ${u.profile?.username ?? u.email}`}
+                                className="mt-6 h-4 w-4 rounded border-input shrink-0"
+                                checked={selectedIds.has(u.id)}
+                                onChange={() => toggleOne(u.id)}
+                              />
+                              <div className="flex-1 min-w-0">{renderItem(u)}</div>
+                            </li>
+                          ))}
+                        </ul>
                       ) : (
                         <div className="p-6 text-muted-foreground text-sm">No users for this facility.</div>
                       )}

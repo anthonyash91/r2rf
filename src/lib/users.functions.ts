@@ -118,6 +118,30 @@ export const deleteUser = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const deleteUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ userIds: z.array(z.string().uuid()).min(1).max(500) }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const targets = data.userIds.filter((id) => id !== context.userId);
+    let deleted = 0;
+    const failed: { userId: string; message: string }[] = [];
+    for (const userId of targets) {
+      try {
+        await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+        await supabaseAdmin.from("user_signup_ips").delete().eq("user_id", userId);
+        const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+        if (error) throw new Error(error.message);
+        deleted++;
+      } catch (e: any) {
+        failed.push({ userId, message: e?.message ?? "unknown error" });
+      }
+    }
+    return { deleted, failed, skippedSelf: data.userIds.length - targets.length };
+  });
+
 export const recordMySignupIp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
