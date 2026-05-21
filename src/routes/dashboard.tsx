@@ -520,7 +520,7 @@ function CategoryProgressSection({
                         ) : (
                           <>
                             <Circle className="h-3.5 w-3.5" />
-                            Not read
+                            {t("category.notRead")}
                           </>
                         )}
                       </span>
