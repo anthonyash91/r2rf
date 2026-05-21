@@ -283,27 +283,44 @@ function DashboardPage() {
                   <Link
                     to="/category/$slug"
                     params={{ slug: c.slug }}
-                    className="group flex items-center gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-[var(--color-accent)]"
+                    className="group flex flex-col gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-[var(--color-accent)]"
                   >
-                    {c.icon_url ? (
-                      <img
-                        src={c.icon_url}
-                        alt=""
-                        className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover bg-muted"
-                      />
-                    ) : (
-                      <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed border-border bg-muted/40" />
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-medium text-foreground truncate">
-                        {pickLang(lang, c.name, c.name_es)}
-                      </p>
-                      {pickLang(lang, c.tagline, c.tagline_es) && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {pickLang(lang, c.tagline, c.tagline_es)}
-                        </p>
+                    <div className="flex items-center gap-3">
+                      {c.icon_url ? (
+                        <img
+                          src={c.icon_url}
+                          alt=""
+                          className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover bg-muted"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed border-border bg-muted/40" />
                       )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-foreground truncate">
+                          {pickLang(lang, c.name, c.name_es)}
+                        </p>
+                        {pickLang(lang, c.tagline, c.tagline_es) && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {pickLang(lang, c.tagline, c.tagline_es)}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    {(() => {
+                      const total = progressQuery.data?.totals.get(c.id) ?? 0;
+                      const read = progressQuery.data?.reads.get(c.id) ?? 0;
+                      const pct = total > 0 ? Math.round((read / total) * 100) : 0;
+                      return (
+                        <div className="space-y-1">
+                          <Progress value={pct} className="h-1.5" />
+                          <p className="text-[11px] text-muted-foreground">
+                            {t("dashboard.progressItems")
+                              .replace("{done}", String(read))
+                              .replace("{total}", String(total))}
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </Link>
                 </li>
               ))}
