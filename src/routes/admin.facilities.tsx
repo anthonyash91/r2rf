@@ -45,7 +45,7 @@ function AdminFacilitiesPage() {
   const addMut = useMutation({
     mutationFn: (input: { facilities: { label: string }[] }) => addFacilitiesFn({ data: input }),
     onSuccess: (res) => {
-      toast.success(`Added ${res.inserted} facility${res.inserted === 1 ? "" : "s"}`);
+      toast.success(`Added ${res.inserted} ${res.inserted === 1 ? "facility" : "facilities"}`);
       setNewLabels("");
       setShowAdd(false);
       invalidate();
