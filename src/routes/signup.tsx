@@ -327,6 +327,7 @@ function SignupPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
+                {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
               </div>
 
               {mode === "sign-up" && (
