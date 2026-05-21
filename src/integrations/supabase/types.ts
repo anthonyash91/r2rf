@@ -398,6 +398,8 @@ export type Database = {
         Row: {
           created_at: string
           facility: string
+          first_name: string
+          last_name: string
           updated_at: string
           user_id: string
           username: string
@@ -405,6 +407,8 @@ export type Database = {
         Insert: {
           created_at?: string
           facility: string
+          first_name?: string
+          last_name?: string
           updated_at?: string
           user_id: string
           username: string
@@ -412,6 +416,8 @@ export type Database = {
         Update: {
           created_at?: string
           facility?: string
+          first_name?: string
+          last_name?: string
           updated_at?: string
           user_id?: string
           username?: string
