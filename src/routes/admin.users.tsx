@@ -55,6 +55,7 @@ function AdminUsersPage() {
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
+  const [regularVisible, setRegularVisible] = useState<number>(10);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
@@ -283,7 +284,7 @@ function AdminUsersPage() {
             <section className="mt-8">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <h2 className="font-display text-xl font-semibold">Users</h2>
-                <Select value={facilityFilter} onValueChange={setFacilityFilter}>
+                <Select value={facilityFilter} onValueChange={(v) => { setFacilityFilter(v); setRegularVisible(10); }}>
                   <SelectTrigger className="w-[220px]">
                     <SelectValue placeholder="Filter by facility" />
                   </SelectTrigger>
@@ -302,14 +303,54 @@ function AdminUsersPage() {
                 const filtered = facilityFilter === "all"
                   ? regularUsers
                   : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
+                const visible = filtered.slice(0, regularVisible);
+                const remaining = filtered.length - visible.length;
                 return (
-                  <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
-                    {filtered.length ? (
-                      <ul className="divide-y divide-border">{filtered.map(renderItem)}</ul>
-                    ) : (
-                      <div className="p-6 text-muted-foreground text-sm">No users for this facility.</div>
+                  <>
+                    <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+                      {filtered.length ? (
+                        <ul className="divide-y divide-border">{visible.map(renderItem)}</ul>
+                      ) : (
+                        <div className="p-6 text-muted-foreground text-sm">No users for this facility.</div>
+                      )}
+                    </div>
+                    {filtered.length > 10 && (
+                      <div className="mt-3 flex items-center justify-between gap-3 flex-wrap text-sm">
+                        <span className="text-muted-foreground">
+                          Showing {visible.length} of {filtered.length}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {remaining > 0 && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setRegularVisible((n) => n + 10)}
+                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-1.5 hover:bg-muted"
+                              >
+                                Show 10 more
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setRegularVisible(filtered.length)}
+                                className="inline-flex items-center rounded-md border border-input bg-background px-3 py-1.5 hover:bg-muted"
+                              >
+                                Show all
+                              </button>
+                            </>
+                          )}
+                          {visible.length > 10 && (
+                            <button
+                              type="button"
+                              onClick={() => setRegularVisible(10)}
+                              className="inline-flex items-center rounded-md border border-input bg-background px-3 py-1.5 hover:bg-muted"
+                            >
+                              Collapse
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     )}
-                  </div>
+                  </>
                 );
               })()}
             </section>
