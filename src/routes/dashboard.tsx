@@ -186,100 +186,65 @@ function DashboardPage() {
             ) : (categoriesQuery.data?.length ?? 0) === 0 ? (
               <p className="text-sm text-muted-foreground">{t("home.empty")}</p>
             ) : (
-              <Accordion
-                type="multiple"
-                className="divide-y divide-border rounded-xl border border-border bg-card overflow-hidden"
-              >
-                {(categoriesQuery.data ?? []).map((c) => {
-                  const total = progressQuery.data?.totals.get(c.id) ?? 0;
-                  const read = progressQuery.data?.reads.get(c.id) ?? 0;
-                  const pct = total > 0 ? Math.round((read / total) * 100) : 0;
-                  const description = pickLang(lang, c.description, c.description_es);
-                  const tagline = pickLang(lang, c.tagline, c.tagline_es);
-                  const items = progressQuery.data?.itemsByCat.get(c.id) ?? [];
-                  const readSet = progressQuery.data?.readSet ?? new Set<string>();
+              <>
+                {!isAdmin && (() => {
+                  let totalAll = 0;
+                  let readAll = 0;
+                  for (const c of categoriesQuery.data ?? []) {
+                    totalAll += progressQuery.data?.totals.get(c.id) ?? 0;
+                    readAll += progressQuery.data?.reads.get(c.id) ?? 0;
+                  }
+                  const pctAll = totalAll > 0 ? Math.round((readAll / totalAll) * 100) : 0;
                   return (
-                    <AccordionItem key={c.id} value={c.id} className="border-b-0">
-                      <AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-muted/40">
-                        <div className="flex items-start gap-4 flex-1 text-left">
-                          {c.icon_url ? (
-                            <img
-                              src={c.icon_url}
-                              alt=""
-                              className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover bg-muted"
-                            />
-                          ) : (
-                            <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed border-border bg-muted/40" />
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-display text-lg font-semibold text-foreground truncate">
-                              {pickLang(lang, c.name, c.name_es)}
-                            </h3>
-                            {tagline && (
-                              <p className="text-xs text-muted-foreground truncate font-normal">{tagline}</p>
-                            )}
-                            {description && (
-                              <p className="mt-1 text-sm text-muted-foreground line-clamp-2 font-normal">{description}</p>
-                            )}
-                            {!isAdmin && (
-                              <div className="mt-3 space-y-1">
-                                <Progress value={pct} className="h-1.5" />
-                                <p className="text-[11px] text-muted-foreground font-normal">
-                                  {t("dashboard.progressItems")
-                                    .replace("{done}", String(read))
-                                    .replace("{total}", String(total))}
-                                </p>
-                              </div>
-                            )}
-                          </div>
+                    <div className="grid sm:grid-cols-3 gap-4 mb-8">
+                      <div className="rounded-2xl border border-border bg-card p-5">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <BookOpen className="h-5 w-5" /> {t("dashboard.totalItems") ?? "Total items"}
                         </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-4 pb-4 pt-0">
-                        {items.length === 0 ? (
-                          <p className="text-sm text-muted-foreground pl-16">{t("category.noContent")}</p>
-                        ) : (
-                          <ul className="ml-16 divide-y divide-border rounded-lg border border-border overflow-hidden bg-background">
-                            {items.map((it) => {
-                              const isRead = readSet.has(it.id);
-                              return (
-                                <li key={it.id} className="p-3 flex items-start gap-3">
-                                  {isRead ? (
-                                    <Check className="h-4 w-4 mt-0.5 shrink-0 text-[var(--color-accent)]" />
-                                  ) : (
-                                    <Circle className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground/50" />
-                                  )}
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <Link
-                                        to="/category/$slug"
-                                        params={{ slug: c.slug }}
-                                        hash={`item-${it.id}`}
-                                        className="font-medium text-sm text-foreground hover:underline"
-                                      >
-                                        {pickLang(lang, it.title, it.title_es)}
-                                      </Link>
-                                      <span className={`text-[10px] uppercase tracking-wide font-medium ${isRead ? "text-[var(--color-accent)]" : "text-muted-foreground"}`}>
-                                        {isRead ? t("category.markedRead") : t("category.markAsRead")}
-                                      </span>
-                                    </div>
-                                    {pickLang(lang, it.description, it.description_es) && (
-                                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                                        {pickLang(lang, it.description, it.description_es)}
-                                      </p>
-                                    )}
-                                  </div>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                      </AccordionContent>
-                    </AccordionItem>
+                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{totalAll.toLocaleString()}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border bg-card p-5">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CheckCircle2 className="h-5 w-5" /> {t("dashboard.itemsRead") ?? "Items read"}
+                        </div>
+                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{readAll.toLocaleString()}</p>
+                      </div>
+                      <div className="rounded-2xl border border-border bg-card p-5">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Check className="h-5 w-5" /> {t("dashboard.overallProgress") ?? "Overall progress"}
+                        </div>
+                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{pctAll}%</p>
+                        <Progress value={pctAll} className="mt-3 h-1.5" />
+                      </div>
+                    </div>
                   );
-                })}
-              </Accordion>
+                })()}
+
+                <div className="space-y-6">
+                  {(categoriesQuery.data ?? []).map((c) => {
+                    const total = progressQuery.data?.totals.get(c.id) ?? 0;
+                    const read = progressQuery.data?.reads.get(c.id) ?? 0;
+                    const items = progressQuery.data?.itemsByCat.get(c.id) ?? [];
+                    const readSet = progressQuery.data?.readSet ?? new Set<string>();
+                    return (
+                      <CategoryProgressSection
+                        key={c.id}
+                        category={c}
+                        items={items}
+                        readSet={readSet}
+                        total={total}
+                        read={read}
+                        isAdmin={isAdmin}
+                        lang={lang}
+                        t={t}
+                      />
+                    );
+                  })}
+                </div>
+              </>
             )}
           </TabsContent>
+
 
           <TabsContent value="account" className="mt-6 space-y-6">
             <div className="rounded-2xl border border-border bg-card p-6">
