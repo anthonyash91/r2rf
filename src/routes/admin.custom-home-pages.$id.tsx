@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Checkbox } from "@/components/ui/checkbox";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -247,14 +248,14 @@ function AdminCustomHomePageEdit() {
               </p>
             </div>
             <label className="inline-flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={allChecked}
-                onChange={(e) => {
-                  if (e.target.checked) setSelected(new Set(categories.map((c) => c.id)));
+                onCheckedChange={(v) => {
+                  if (v) setSelected(new Set(categories.map((c) => c.id)));
                   else setSelected(new Set());
                 }}
               />
+
               Select all
             </label>
           </div>
@@ -270,18 +271,18 @@ function AdminCustomHomePageEdit() {
                 return (
                   <li key={c.id}>
                     <label className="flex items-center gap-4 py-3 px-3 cursor-pointer">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={checked}
-                        onChange={(e) => {
+                        onCheckedChange={(v) => {
                           setSelected((prev) => {
                             const next = new Set(prev);
-                            if (e.target.checked) next.add(c.id);
+                            if (v) next.add(c.id);
                             else next.delete(c.id);
                             return next;
                           });
                         }}
                       />
+
                       {c.icon_url ? (
                         <img
                           src={c.icon_url}

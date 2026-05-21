@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Checkbox } from "@/components/ui/checkbox";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -185,13 +186,11 @@ function AdminFacilitiesPage() {
         {facilities.length > 0 && (
           <div className="mt-3 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
             <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-input"
-                checked={allVisibleSelected}
-                ref={(el) => { if (el) el.indeterminate = !allVisibleSelected && someVisibleSelected; }}
-                onChange={toggleAllVisible}
+              <Checkbox
+                checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
+                onCheckedChange={() => toggleAllVisible()}
               />
+
               <span>
                 {selectedIds.size > 0
                   ? `${selectedIds.size} selected`
@@ -242,13 +241,13 @@ function AdminFacilitiesPage() {
                 return (
                   <li key={f.value} className="p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     {!isEditing && (
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         aria-label={`Select ${f.label}`}
-                        className="h-4 w-4 rounded border-input shrink-0 self-start sm:self-center"
+                        className="shrink-0 self-start sm:self-center"
                         checked={selectedIds.has(f.id)}
-                        onChange={() => toggleOne(f.id)}
+                        onCheckedChange={() => toggleOne(f.id)}
                       />
+
                     )}
 
                     {isEditing ? (

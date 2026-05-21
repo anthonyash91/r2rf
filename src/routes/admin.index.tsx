@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -221,13 +222,11 @@ function AdminCategoriesPage() {
         return (
           <div className="mt-8 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
             <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-input"
-                checked={allVisibleSelected}
-                ref={(el) => { if (el) el.indeterminate = !allVisibleSelected && someVisibleSelected; }}
-                onChange={toggleAllVisible}
+              <Checkbox
+                checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
+                onCheckedChange={() => toggleAllVisible()}
               />
+
               <span>
                 {selectedIds.size > 0
                   ? `${selectedIds.size} selected`
@@ -281,17 +280,17 @@ function AdminCategoriesPage() {
             onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
             renderItem={(c) => (
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 pl-[6px]">
-                <input
-                  type="checkbox"
+                <Checkbox
                   aria-label={`Select ${c.name}`}
-                  className="h-4 w-4 rounded border-input shrink-0 self-start sm:self-center"
+                  className="shrink-0 self-start sm:self-center"
                   checked={selectedIds.has(c.id)}
-                  onChange={() => setSelectedIds((prev) => {
+                  onCheckedChange={() => setSelectedIds((prev) => {
                     const next = new Set(prev);
                     if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
                     return next;
                   })}
                 />
+
                 <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
                   {c.icon_url ? (
                     <img
@@ -622,7 +621,7 @@ function NewCategoryForm({
       </Field>
 
       <label className="inline-flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+        <Checkbox checked={published} onCheckedChange={(v) => setPublished(Boolean(v))} />
         Published (visible to the public)
       </label>
 

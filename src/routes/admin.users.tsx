@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Checkbox } from "@/components/ui/checkbox";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -400,13 +401,11 @@ function AdminUsersPage() {
                     {filtered.length > 0 && (
                       <div className="mt-3 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
                         <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 rounded border-input"
-                            checked={allVisibleSelected}
-                            ref={(el) => { if (el) el.indeterminate = !allVisibleSelected && someVisibleSelected; }}
-                            onChange={toggleAllVisible}
+                          <Checkbox
+                            checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
+                            onCheckedChange={() => toggleAllVisible()}
                           />
+
                           <span>
                             {selectedIds.size > 0
                               ? `${selectedIds.size} selected`
@@ -451,13 +450,13 @@ function AdminUsersPage() {
                         <ul className="divide-y divide-border">
                           {visible.map((u) => (
                             <li key={u.id} className="flex items-center gap-0 pl-4 sm:pl-5">
-                              <input
-                                type="checkbox"
+                              <Checkbox
                                 aria-label={`Select ${u.profile?.username ?? u.email}`}
-                                className="h-4 w-4 rounded border-input shrink-0"
+                                className="shrink-0"
                                 checked={selectedIds.has(u.id)}
-                                onChange={() => toggleOne(u.id)}
+                                onCheckedChange={() => toggleOne(u.id)}
                               />
+
                               <div className="flex-1 min-w-0">{renderItem(u)}</div>
                             </li>
                           ))}
