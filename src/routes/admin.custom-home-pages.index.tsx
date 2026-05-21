@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, Loader2, LayoutTemplate } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -219,7 +219,7 @@ function AdminCustomHomePagesList() {
 
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-semibold">Custom home pages</h1>
+          <h1 className="font-display text-3xl font-semibold flex items-center gap-2"><LayoutTemplate className="h-7 w-7 text-[var(--color-accent)]" /> Custom home pages</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Create alternate landing pages at custom URLs (e.g. <code>/cpc</code>) that show only the categories you choose.
           </p>

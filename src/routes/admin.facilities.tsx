@@ -71,7 +71,7 @@ function AdminFacilitiesPage() {
       <div className="mt-6 flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-            <Building2 className="h-7 w-7" /> Facilities
+            <Building2 className="h-7 w-7 text-[var(--color-accent)]" /> Facilities
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Manage facilities available in the signup form's facility dropdown.

@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { ArrowLeft, Save, ExternalLink } from "lucide-react";
+import { ArrowLeft, Save, ExternalLink, LayoutTemplate } from "lucide-react";
 
 const RESERVED_SLUGS = new Set([
   "admin",
@@ -172,7 +172,7 @@ function AdminCustomHomePageEdit() {
         <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="font-display text-2xl font-semibold">Edit custom home page</h1>
+              <h1 className="font-display text-2xl font-semibold flex items-center gap-2"><LayoutTemplate className="h-6 w-6 text-[var(--color-accent)]" /> Edit custom home page</h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 The header and certificate sections match the default home page. Choose which categories are visible here.
               </p>

@@ -7,7 +7,7 @@ import { typeBadgeClass } from "@/lib/type-badge";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 
@@ -156,7 +156,7 @@ function CategoryEditor({
 
   return (
     <section className="mt-6 rounded-2xl border border-border bg-card p-6">
-      <h1 className="font-display text-2xl font-semibold">Edit category</h1>
+      <h1 className="font-display text-2xl font-semibold flex items-center gap-2"><FolderOpen className="h-6 w-6 text-[var(--color-accent)]" /> Edit category</h1>
       <form
         className="mt-4 space-y-4"
         onSubmit={(e) => {

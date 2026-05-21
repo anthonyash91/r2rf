@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Save, RefreshCw } from "lucide-react";
+import { ArrowLeft, Save, RefreshCw, Home } from "lucide-react";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 
 export const Route = createFileRoute("/admin/home")({
@@ -88,7 +88,7 @@ function AdminHomePage() {
       </Link>
 
       <section className="mt-6 rounded-2xl border border-border bg-card p-6">
-        <h1 className="font-display text-2xl font-semibold">Home page header</h1>
+        <h1 className="font-display text-2xl font-semibold flex items-center gap-2"><Home className="h-6 w-6 text-[var(--color-accent)]" /> Home page header</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Edit the eyebrow, headline, and subheading shown at the top of the home page. The headline is split into three parts; the middle part is shown in accent italic.
         </p>

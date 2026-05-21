@@ -137,7 +137,7 @@ function AdminUsersPage() {
       </Link>
       <div className="mt-6">
         <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-          <Users className="h-7 w-7" /> Users
+          <Users className="h-7 w-7 text-[var(--color-accent)]" /> Users
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Add users, edit emails, reset passwords, and manage access.
