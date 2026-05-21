@@ -7,7 +7,7 @@ import { typeBadgeClass } from "@/lib/type-badge";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 
@@ -331,7 +331,8 @@ function CategoryEditor({
             disabled={busy}
             className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           >
-            <Save className="h-4 w-4" /> Save
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {busy ? "Saving…" : "Save"}
           </button>
         </div>
       </form>
@@ -1027,7 +1028,8 @@ function ItemEditor({
           disabled={busy}
           className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
-          <Save className="h-4 w-4" /> Save
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {busy ? "Saving…" : "Save"}
         </button>
       </div>
     </form>

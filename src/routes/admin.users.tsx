@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle } from "lucide-react";
+import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2 } from "lucide-react";
 import {
   listUsers,
   updateUserEmail,
@@ -266,7 +266,8 @@ function AdminUsersPage() {
                     disabled={createMut.isPending}
                     className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                   >
-                    Create
+                    {createMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {createMut.isPending ? "Creating…" : "Create"}
                   </button>
                 </form>
               )}

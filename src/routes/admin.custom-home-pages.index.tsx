@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, Loader2 } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -450,6 +450,7 @@ function AdminCustomHomePagesList() {
               disabled={createMut.isPending}
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
+              {createMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               {createMut.isPending ? "Creating…" : "Create"}
             </button>
           </div>

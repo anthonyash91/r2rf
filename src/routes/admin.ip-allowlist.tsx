@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Shield, ArrowLeft, LogIn, Pencil, Ban } from "lucide-react";
+import { Plus, Trash2, Shield, ArrowLeft, LogIn, Pencil, Ban, Loader2 } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -105,7 +105,8 @@ function AdminIpAllowlistPage() {
               disabled={addBothMut.isPending}
               className="self-end inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              <Plus className="h-4 w-4" /> Add to both
+              {addBothMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              {addBothMut.isPending ? "Adding…" : "Add to both"}
             </button>
           </div>
         </form>
@@ -381,7 +382,8 @@ function AllowlistSection({
             disabled={addMut.isPending}
             className="self-end inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           >
-            <Plus className="h-4 w-4" /> Add
+            {addMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            {addMut.isPending ? "Adding…" : "Add"}
           </button>
         </div>
       </form>
@@ -410,7 +412,8 @@ function AllowlistSection({
               disabled={bulkMut.isPending || bulk.trim() === ""}
               className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              <Plus className="h-4 w-4" /> Add all
+              {bulkMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              {bulkMut.isPending ? "Adding…" : "Add all"}
             </button>
           </div>
         </form>
