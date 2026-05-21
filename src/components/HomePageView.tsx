@@ -117,7 +117,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                   <p className="mt-3 text-xs font-medium uppercase tracking-wide text-[var(--color-gold)]">
                     {count} {t(count === 1 ? "home.item" : "home.items")}
                   </p>
-                  {user && count > 0 && (() => {
+                  {user && !isAdmin && count > 0 && (() => {
                     const read = reads[c.id] ?? 0;
                     const pct = Math.round((read / count) * 100);
                     return (
