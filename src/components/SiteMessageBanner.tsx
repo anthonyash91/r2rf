@@ -31,7 +31,7 @@ export function SiteMessageBanner({ kind }: { kind: SiteMessageKind }) {
     },
   });
 
-  if (!data || !data.enabled || !data.message.trim()) return null;
+  if (!data || !data.message.trim()) return null;
 
   return (
     <div
