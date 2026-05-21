@@ -350,7 +350,7 @@ function CategoryPage() {
                     const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000;
 
                     return (
-                      <li key={item.id} id={`item-${item.id}`} className={`relative scroll-mt-24 transition-colors duration-700 ${highlightedId === item.id ? "bg-[var(--color-accent)]/15" : ""}`}>
+                      <li key={item.id} id={`item-${item.id}`} className={`relative flex flex-col scroll-mt-24 transition-colors duration-700 ${highlightedId === item.id ? "bg-[var(--color-accent)]/15" : ""}`}>
 
                         <Wrapper
                           {...wrapperProps}
