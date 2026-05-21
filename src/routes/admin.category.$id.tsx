@@ -496,13 +496,11 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         return (
           <div className="mt-6 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
             <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-input"
-                checked={allVisibleSelected}
-                ref={(el) => { if (el) el.indeterminate = !allVisibleSelected && someVisibleSelected; }}
-                onChange={toggleAllVisible}
+              <Checkbox
+                checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
+                onCheckedChange={() => toggleAllVisible()}
               />
+
               <span>
                 {selectedIds.size > 0
                   ? `${selectedIds.size} selected`
