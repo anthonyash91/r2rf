@@ -180,27 +180,27 @@ function DashboardPage() {
           </TabsList>
 
           <TabsContent value="categories" className="mt-6">
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <h2 className="font-display text-lg font-semibold">{t("home.categories")}</h2>
-              {categoriesQuery.isLoading || facilityHomeQuery.isLoading ? (
-                <p className="mt-3 text-sm text-muted-foreground">{t("home.loading")}</p>
-              ) : (categoriesQuery.data?.length ?? 0) === 0 ? (
-                <p className="mt-3 text-sm text-muted-foreground">{t("home.empty")}</p>
-              ) : (
-                <ul className="mt-4 divide-y divide-border rounded-xl border border-border overflow-hidden">
-                  {(categoriesQuery.data ?? []).map((c) => {
-                    const total = progressQuery.data?.totals.get(c.id) ?? 0;
-                    const read = progressQuery.data?.reads.get(c.id) ?? 0;
-                    const pct = total > 0 ? Math.round((read / total) * 100) : 0;
-                    const description = pickLang(lang, c.description, c.description_es);
-                    const tagline = pickLang(lang, c.tagline, c.tagline_es);
-                    return (
-                      <li key={c.id}>
-                        <Link
-                          to="/category/$slug"
-                          params={{ slug: c.slug }}
-                          className="group flex items-start gap-4 bg-background p-4 transition-colors hover:bg-muted/40"
-                        >
+            {categoriesQuery.isLoading || facilityHomeQuery.isLoading ? (
+              <p className="text-sm text-muted-foreground">{t("home.loading")}</p>
+            ) : (categoriesQuery.data?.length ?? 0) === 0 ? (
+              <p className="text-sm text-muted-foreground">{t("home.empty")}</p>
+            ) : (
+              <Accordion
+                type="multiple"
+                className="divide-y divide-border rounded-xl border border-border bg-card overflow-hidden"
+              >
+                {(categoriesQuery.data ?? []).map((c) => {
+                  const total = progressQuery.data?.totals.get(c.id) ?? 0;
+                  const read = progressQuery.data?.reads.get(c.id) ?? 0;
+                  const pct = total > 0 ? Math.round((read / total) * 100) : 0;
+                  const description = pickLang(lang, c.description, c.description_es);
+                  const tagline = pickLang(lang, c.tagline, c.tagline_es);
+                  const items = progressQuery.data?.itemsByCat.get(c.id) ?? [];
+                  const readSet = progressQuery.data?.readSet ?? new Set<string>();
+                  return (
+                    <AccordionItem key={c.id} value={c.id} className="border-b-0">
+                      <AccordionTrigger className="px-4 py-4 hover:no-underline hover:bg-muted/40">
+                        <div className="flex items-start gap-4 flex-1 text-left">
                           {c.icon_url ? (
                             <img
                               src={c.icon_url}
@@ -215,15 +215,15 @@ function DashboardPage() {
                               {pickLang(lang, c.name, c.name_es)}
                             </h3>
                             {tagline && (
-                              <p className="text-xs text-muted-foreground truncate">{tagline}</p>
+                              <p className="text-xs text-muted-foreground truncate font-normal">{tagline}</p>
                             )}
                             {description && (
-                              <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{description}</p>
+                              <p className="mt-1 text-sm text-muted-foreground line-clamp-2 font-normal">{description}</p>
                             )}
                             {!isAdmin && (
                               <div className="mt-3 space-y-1">
                                 <Progress value={pct} className="h-1.5" />
-                                <p className="text-[11px] text-muted-foreground">
+                                <p className="text-[11px] text-muted-foreground font-normal">
                                   {t("dashboard.progressItems")
                                     .replace("{done}", String(read))
                                     .replace("{total}", String(total))}
@@ -231,13 +231,53 @@ function DashboardPage() {
                               </div>
                             )}
                           </div>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4 pt-0">
+                        {items.length === 0 ? (
+                          <p className="text-sm text-muted-foreground pl-16">{t("category.noContent")}</p>
+                        ) : (
+                          <ul className="ml-16 divide-y divide-border rounded-lg border border-border overflow-hidden bg-background">
+                            {items.map((it) => {
+                              const isRead = readSet.has(it.id);
+                              return (
+                                <li key={it.id} className="p-3 flex items-start gap-3">
+                                  {isRead ? (
+                                    <Check className="h-4 w-4 mt-0.5 shrink-0 text-[var(--color-accent)]" />
+                                  ) : (
+                                    <Circle className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground/50" />
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <Link
+                                        to="/category/$slug"
+                                        params={{ slug: c.slug }}
+                                        hash={`item-${it.id}`}
+                                        className="font-medium text-sm text-foreground hover:underline"
+                                      >
+                                        {pickLang(lang, it.title, it.title_es)}
+                                      </Link>
+                                      <span className={`text-[10px] uppercase tracking-wide font-medium ${isRead ? "text-[var(--color-accent)]" : "text-muted-foreground"}`}>
+                                        {isRead ? t("category.markedRead") : t("category.markAsRead")}
+                                      </span>
+                                    </div>
+                                    {pickLang(lang, it.description, it.description_es) && (
+                                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                                        {pickLang(lang, it.description, it.description_es)}
+                                      </p>
+                                    )}
+                                  </div>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            )}
           </TabsContent>
 
           <TabsContent value="account" className="mt-6 space-y-6">
