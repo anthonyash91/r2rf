@@ -537,12 +537,13 @@ function CategoryProgressSection({
                       to="/category/$slug"
                       params={{ slug: category.slug }}
                       hash={`item-${it.id}`}
-                      className="block truncate text-sm font-medium text-foreground hover:underline"
+                      className="block truncate text-lg font-semibold text-foreground hover:underline"
                     >
                       {pickLang(lang, it.title, it.title_es)}
                     </Link>
                     {description && (
-                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{description}</p>
+                      <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{description}</p>
+
                     )}
                   </div>
                 </li>
