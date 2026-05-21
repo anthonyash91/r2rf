@@ -157,7 +157,7 @@ const translations: Record<Language, Dict> = {
     "category.source": "Fuente",
     "category.exploreOthers": "Explore otras categorías",
     "category.newContent": "Nuevo",
-    "category.newContentAdded": "Nuevo",
+    "category.newContentAdded": "Contenido nuevo",
     "category.markAsRead": "Marcar como leído",
     "category.markedRead": "Leído",
     "category.markReadError": "No se pudo actualizar el progreso.",
