@@ -822,7 +822,7 @@ function ItemEditor({
           {!addingType && typeOptions.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {typeOptions.map((t) => (
-                <span key={t} className={`inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium ${typeBadgeClass(t)}`}>
+                <span key={t} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass(t)}`}>
                   {t}
                   <button
                     type="button"
