@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Save, RefreshCw } from "lucide-react";
+import { ArrowLeft, Save, RefreshCw, Award } from "lucide-react";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 
 export const Route = createFileRoute("/admin/certificate")({
