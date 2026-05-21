@@ -450,13 +450,13 @@ function AdminUsersPage() {
                         <ul className="divide-y divide-border">
                           {visible.map((u) => (
                             <li key={u.id} className="flex items-center gap-0 pl-4 sm:pl-5">
-                              <input
-                                type="checkbox"
+                              <Checkbox
                                 aria-label={`Select ${u.profile?.username ?? u.email}`}
-                                className="h-4 w-4 rounded border-input shrink-0"
+                                className="shrink-0"
                                 checked={selectedIds.has(u.id)}
-                                onChange={() => toggleOne(u.id)}
+                                onCheckedChange={() => toggleOne(u.id)}
                               />
+
                               <div className="flex-1 min-w-0">{renderItem(u)}</div>
                             </li>
                           ))}

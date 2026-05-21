@@ -241,13 +241,13 @@ function AdminFacilitiesPage() {
                 return (
                   <li key={f.value} className="p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     {!isEditing && (
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         aria-label={`Select ${f.label}`}
-                        className="h-4 w-4 rounded border-input shrink-0 self-start sm:self-center"
+                        className="shrink-0 self-start sm:self-center"
                         checked={selectedIds.has(f.id)}
-                        onChange={() => toggleOne(f.id)}
+                        onCheckedChange={() => toggleOne(f.id)}
                       />
+
                     )}
 
                     {isEditing ? (
