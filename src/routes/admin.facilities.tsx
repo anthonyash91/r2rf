@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home } from "lucide-react";
+import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home, Loader2 } from "lucide-react";
 import {
   listFacilitiesWithStats,
   addFacilities,
@@ -121,7 +121,8 @@ function AdminFacilitiesPage() {
                 disabled={addMut.isPending}
                 className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
-                Add
+                {addMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                {addMut.isPending ? "Adding…" : "Add"}
               </button>
             </div>
           </form>
