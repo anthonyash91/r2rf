@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
+import { useAuth } from "@/hooks/use-auth";
 import { getMyProfile, getMyFacilityCustomHome } from "@/lib/user-signup.functions";
 import { facilityLabel } from "@/lib/user-signup";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
@@ -12,6 +13,7 @@ import { questionLabel } from "@/lib/security-questions";
 import { useI18n, pickLang } from "@/lib/i18n";
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
 import { User as UserIcon, Building2, Calendar, Shield } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import type { Category } from "@/lib/categories";
 
 
@@ -28,6 +30,7 @@ export const Route = createFileRoute("/dashboard")({
 
 function DashboardPage() {
   const { t, lang } = useI18n();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const fetchProfile = useServerFn(getMyProfile);
   const fetchQuestions = useServerFn(getMySecurityQuestions);
@@ -89,6 +92,39 @@ function DashboardPage() {
         .order("sort_order", { ascending: true });
       if (error) throw error;
       return (cats ?? []) as Category[];
+    },
+  });
+
+  const categoryIds = (categoriesQuery.data ?? []).map((c) => c.id);
+  const userId = user?.id ?? null;
+
+  const progressQuery = useQuery({
+    queryKey: ["dashboard-progress", userId, categoryIds.join(",")],
+    enabled: !!userId && categoryIds.length > 0,
+    queryFn: async () => {
+      const [totalsRes, readRes] = await Promise.all([
+        supabase
+          .from("content_items")
+          .select("category_id")
+          .eq("published", true)
+          .in("category_id", categoryIds),
+        supabase
+          .from("user_content_progress")
+          .select("category_id")
+          .eq("user_id", userId!)
+          .in("category_id", categoryIds),
+      ]);
+      if (totalsRes.error) throw totalsRes.error;
+      if (readRes.error) throw readRes.error;
+      const totals = new Map<string, number>();
+      for (const row of totalsRes.data ?? []) {
+        totals.set(row.category_id as string, (totals.get(row.category_id as string) ?? 0) + 1);
+      }
+      const reads = new Map<string, number>();
+      for (const row of readRes.data ?? []) {
+        reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
+      }
+      return { totals, reads };
     },
   });
 
@@ -247,27 +283,44 @@ function DashboardPage() {
                   <Link
                     to="/category/$slug"
                     params={{ slug: c.slug }}
-                    className="group flex items-center gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-[var(--color-accent)]"
+                    className="group flex flex-col gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-[var(--color-accent)]"
                   >
-                    {c.icon_url ? (
-                      <img
-                        src={c.icon_url}
-                        alt=""
-                        className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover bg-muted"
-                      />
-                    ) : (
-                      <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed border-border bg-muted/40" />
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-medium text-foreground truncate">
-                        {pickLang(lang, c.name, c.name_es)}
-                      </p>
-                      {pickLang(lang, c.tagline, c.tagline_es) && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {pickLang(lang, c.tagline, c.tagline_es)}
-                        </p>
+                    <div className="flex items-center gap-3">
+                      {c.icon_url ? (
+                        <img
+                          src={c.icon_url}
+                          alt=""
+                          className="h-12 w-12 shrink-0 rounded-lg border border-border object-cover bg-muted"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed border-border bg-muted/40" />
                       )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-foreground truncate">
+                          {pickLang(lang, c.name, c.name_es)}
+                        </p>
+                        {pickLang(lang, c.tagline, c.tagline_es) && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {pickLang(lang, c.tagline, c.tagline_es)}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    {(() => {
+                      const total = progressQuery.data?.totals.get(c.id) ?? 0;
+                      const read = progressQuery.data?.reads.get(c.id) ?? 0;
+                      const pct = total > 0 ? Math.round((read / total) * 100) : 0;
+                      return (
+                        <div className="space-y-1">
+                          <Progress value={pct} className="h-1.5" />
+                          <p className="text-[11px] text-muted-foreground">
+                            {t("dashboard.progressItems")
+                              .replace("{done}", String(read))
+                              .replace("{total}", String(total))}
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </Link>
                 </li>
               ))}

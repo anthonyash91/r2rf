@@ -394,6 +394,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_content_progress: {
+        Row: {
+          category_id: string
+          content_item_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          content_item_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          content_item_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           created_at: string

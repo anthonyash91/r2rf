@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, lazy, Suspense } from "react";
 
 const PdfViewer = lazy(() => import("@/components/PdfViewer"));
@@ -9,7 +9,8 @@ import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Check, Circle } from "lucide-react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
@@ -50,7 +51,8 @@ export const Route = createFileRoute("/category/$slug")({
 function CategoryPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
+  const queryClient = useQueryClient();
   const activeCustomHome = useActiveCustomHome();
   const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
   const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
@@ -133,6 +135,59 @@ function CategoryPage() {
   useEffect(() => {
     if (data?.category.id) trackCategoryView(data.category.id);
   }, [data?.category.id]);
+
+  const categoryId = data?.category.id;
+  const progressQuery = useQuery({
+    queryKey: ["content-progress", user?.id, categoryId],
+    enabled: !!user?.id && !!categoryId,
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from("user_content_progress")
+        .select("content_item_id")
+        .eq("user_id", user!.id)
+        .eq("category_id", categoryId!);
+      if (error) throw error;
+      return new Set((rows ?? []).map((r) => r.content_item_id as string));
+    },
+  });
+  const readSet = progressQuery.data ?? new Set<string>();
+
+  const toggleRead = useMutation({
+    mutationFn: async (vars: { itemId: string; markRead: boolean }) => {
+      if (!user?.id || !categoryId) throw new Error("Not signed in");
+      if (vars.markRead) {
+        const { error } = await supabase
+          .from("user_content_progress")
+          .insert({ user_id: user.id, content_item_id: vars.itemId, category_id: categoryId });
+        if (error && (error as any).code !== "23505") throw error;
+      } else {
+        const { error } = await supabase
+          .from("user_content_progress")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("content_item_id", vars.itemId);
+        if (error) throw error;
+      }
+    },
+    onMutate: async (vars) => {
+      const key = ["content-progress", user?.id, categoryId];
+      await queryClient.cancelQueries({ queryKey: key });
+      const prev = queryClient.getQueryData<Set<string>>(key);
+      const next = new Set(prev ?? []);
+      if (vars.markRead) next.add(vars.itemId);
+      else next.delete(vars.itemId);
+      queryClient.setQueryData(key, next);
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(["content-progress", user?.id, categoryId], ctx.prev);
+      toast.error(t("category.markReadError"));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["content-progress", user?.id, categoryId] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-progress", user?.id] });
+    },
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -308,18 +363,45 @@ function CategoryPage() {
                             {source && <p className="mt-2 text-xs text-muted-foreground/80">{t("category.source")} · {source}</p>}
                           </div>
                         </Wrapper>
-                        {isAdmin && (
-                          <Link
-                            to="/admin/category/$id"
-                            params={{ id: data.category.id }}
-                            search={{ edit: item.id }}
-                            title="Edit content"
-                            aria-label="Edit content"
-                            onClick={(e) => e.stopPropagation()}
-                            className="absolute bottom-3 right-3 z-10 inline-flex items-center justify-center rounded-md border border-input bg-background p-2 hover:bg-muted"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Link>
+                        {(user || isAdmin) && (
+                          <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5">
+                            {user && (() => {
+                              const isRead = readSet.has(item.id);
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    toggleRead.mutate({ itemId: item.id, markRead: !isRead });
+                                  }}
+                                  aria-pressed={isRead}
+                                  aria-label={isRead ? t("category.markedRead") : t("category.markAsRead")}
+                                  className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                                    isRead
+                                      ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background hover:opacity-90"
+                                      : "border-input bg-background text-foreground hover:bg-muted"
+                                  }`}
+                                >
+                                  {isRead ? <Check className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
+                                  {isRead ? t("category.markedRead") : t("category.markAsRead")}
+                                </button>
+                              );
+                            })()}
+                            {isAdmin && (
+                              <Link
+                                to="/admin/category/$id"
+                                params={{ id: data.category.id }}
+                                search={{ edit: item.id }}
+                                title="Edit content"
+                                aria-label="Edit content"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center justify-center rounded-md border border-input bg-background p-2 hover:bg-muted"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Link>
+                            )}
+                          </div>
                         )}
                       </li>
                     );
