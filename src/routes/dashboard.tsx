@@ -420,7 +420,7 @@ function CategoryProgressSection({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className={`w-full flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-5 ${open ? "border-b border-border" : ""} bg-muted/30 text-left hover:bg-muted/50 transition-colors`}
+        className={`w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-5 ${open ? "border-b border-border" : ""} bg-muted/30 text-left hover:bg-muted/50 transition-colors`}
       >
         <div className="flex items-center gap-3 min-w-0">
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
@@ -435,7 +435,7 @@ function CategoryProgressSection({
                 {pickLang(lang, category.name, category.name_es)}
               </h2>
               {hasRecent && (
-                <span className="hidden md:inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
+                <span className="hidden lg:inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
                   <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                   {t("category.newContentAdded")}
                 </span>
@@ -450,14 +450,15 @@ function CategoryProgressSection({
         {!isAdmin && (
           <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
             {hasRecent && (
-              <span className="md:hidden inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
+              <span className="lg:hidden inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
                 <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                 {t("category.newContentAdded")}
               </span>
             )}
-            <div className="hidden md:block w-32">
+            <div className="hidden lg:block w-32">
               <Progress value={pct} className="h-1.5" />
             </div>
+
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
               <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
               <span className="tabular-nums">{read.toLocaleString()}</span>
