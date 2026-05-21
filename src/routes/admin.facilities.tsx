@@ -135,7 +135,7 @@ function AdminFacilitiesPage() {
               {facilities.map((f) => {
                 const isEditing = editingId === f.id;
                 return (
-                  <li key={f.value} className="p-4 sm:p-5 flex items-center justify-between gap-3">
+                  <li key={f.value} className="p-4 sm:p-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     {isEditing ? (
                       <>
                         <input
