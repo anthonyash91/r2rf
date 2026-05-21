@@ -499,25 +499,28 @@ function CategoryProgressSection({
               const description = pickLang(lang, it.description, it.description_es);
               return (
                 <li key={it.id} className="flex flex-wrap items-start gap-3 py-4 pl-[22px] pr-[22px]">
-                  <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
-                    {it.type}
-                  </span>
+                  <div className="flex items-start gap-3 w-full min-[480px]:w-auto min-[480px]:flex-1 min-w-0">
+                    <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
+                      {it.type}
+                    </span>
 
-                  <div className="flex-1 min-w-0 basis-0 min-[480px]:basis-auto">
-                    <Link
-                      to="/category/$slug"
-                      params={{ slug: category.slug }}
-                      hash={`item-${it.id}`}
-                      className="block truncate text-sm font-medium text-foreground hover:underline"
-                    >
-                      {pickLang(lang, it.title, it.title_es)}
-                    </Link>
-                    {description && (
-                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{description}</p>
-                    )}
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        to="/category/$slug"
+                        params={{ slug: category.slug }}
+                        hash={`item-${it.id}`}
+                        className="block truncate text-sm font-medium text-foreground hover:underline"
+                      >
+                        {pickLang(lang, it.title, it.title_es)}
+                      </Link>
+                      {description && (
+                        <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{description}</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-3 flex-wrap w-full min-[480px]:w-auto min-[480px]:ml-auto pl-9 min-[480px]:pl-0">
+
                     {newItemSet.has(it.id) && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
                         <span className="h-1 w-1 rounded-full bg-background/80" />
