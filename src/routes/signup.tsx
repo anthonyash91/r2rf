@@ -31,6 +31,8 @@ function SignupPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [facility, setFacility] = useState<string>("");
   const [answer, setAnswer] = useState("");
@@ -89,8 +91,10 @@ function SignupPage() {
         await submitSignup({
           data: {
             username: uname,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
             password,
-            facility: facility as "pennington_sd" | "campbell_ky",
+            facility,
             challengeToken: challengeQuery.data.token,
             challengeAnswer: ans,
             honeypot,
@@ -273,6 +277,11 @@ function SignupPage() {
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-4" autoComplete="off">
+              {mode === "sign-up" && (
+                <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
+                  Please sign up using your <strong>correct, real information</strong>. Accurate details ensure you can receive credit in the future for participating in this program.
+                </div>
+              )}
               {/* honeypot */}
               <div className="hidden" aria-hidden>
                 <label>
@@ -317,6 +326,32 @@ function SignupPage() {
 
               {mode === "sign-up" && (
                 <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-medium">First name</label>
+                      <input
+                        type="text"
+                        required
+                        minLength={1}
+                        maxLength={100}
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Last name</label>
+                      <input
+                        type="text"
+                        required
+                        minLength={1}
+                        maxLength={100}
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
                   <div>
                     <label className="text-sm font-medium">{t("signup.facility")}</label>
                     <Select value={facility} onValueChange={setFacility}>

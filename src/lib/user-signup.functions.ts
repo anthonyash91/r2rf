@@ -7,7 +7,7 @@ import { getClientIp } from "./ip-allowlist";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
 import { hashAnswer } from "./security-hash.server";
 
-const FACILITIES = ["pennington_sd", "campbell_ky"] as const;
+
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const RATE_LIMIT_MAX = 3;
@@ -63,8 +63,10 @@ export const signupUser = createServerFn({ method: "POST" })
     z
       .object({
         username: z.string().trim().toLowerCase().regex(/^[a-z0-9_]{3,32}$/, "Username must be 3–32 chars, letters/numbers/underscore"),
+        firstName: z.string().trim().min(1, "First name is required").max(100),
+        lastName: z.string().trim().min(1, "Last name is required").max(100),
         password: z.string().min(8).max(72),
-        facility: z.enum(FACILITIES),
+        facility: z.string().trim().min(1).max(64),
         challengeToken: z.string().min(1).max(500),
         challengeAnswer: z.coerce.number().int(),
         honeypot: z.string().max(0).optional().default(""),
@@ -123,7 +125,13 @@ export const signupUser = createServerFn({ method: "POST" })
 
     const { error: profErr } = await supabaseAdmin
       .from("user_profiles")
-      .insert({ user_id: userId, username: data.username, facility: data.facility });
+      .insert({
+        user_id: userId,
+        username: data.username,
+        facility: data.facility,
+        first_name: data.firstName,
+        last_name: data.lastName,
+      });
     if (profErr) {
       await supabaseAdmin.auth.admin.deleteUser(userId);
       throw new Error(profErr.message);
