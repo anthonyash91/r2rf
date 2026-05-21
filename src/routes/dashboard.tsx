@@ -179,15 +179,20 @@ function DashboardPage() {
               ) : (categoriesQuery.data?.length ?? 0) === 0 ? (
                 <p className="mt-3 text-sm text-muted-foreground">{t("home.empty")}</p>
               ) : (
-                <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {(categoriesQuery.data ?? []).map((c) => (
-                    <li key={c.id}>
-                      <Link
-                        to="/category/$slug"
-                        params={{ slug: c.slug }}
-                        className="group flex flex-col gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-[var(--color-accent)]"
-                      >
-                        <div className="flex items-center gap-3">
+                <ul className="mt-4 divide-y divide-border rounded-xl border border-border overflow-hidden">
+                  {(categoriesQuery.data ?? []).map((c) => {
+                    const total = progressQuery.data?.totals.get(c.id) ?? 0;
+                    const read = progressQuery.data?.reads.get(c.id) ?? 0;
+                    const pct = total > 0 ? Math.round((read / total) * 100) : 0;
+                    const description = pickLang(lang, c.description, c.description_es);
+                    const tagline = pickLang(lang, c.tagline, c.tagline_es);
+                    return (
+                      <li key={c.id}>
+                        <Link
+                          to="/category/$slug"
+                          params={{ slug: c.slug }}
+                          className="group flex items-start gap-4 bg-background p-4 transition-colors hover:bg-muted/40"
+                        >
                           {c.icon_url ? (
                             <img
                               src={c.icon_url}
@@ -198,34 +203,30 @@ function DashboardPage() {
                             <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed border-border bg-muted/40" />
                           )}
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium text-foreground truncate">
+                            <h3 className="font-display text-lg font-semibold text-foreground truncate">
                               {pickLang(lang, c.name, c.name_es)}
-                            </p>
-                            {pickLang(lang, c.tagline, c.tagline_es) && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                {pickLang(lang, c.tagline, c.tagline_es)}
-                              </p>
+                            </h3>
+                            {tagline && (
+                              <p className="text-xs text-muted-foreground truncate">{tagline}</p>
+                            )}
+                            {description && (
+                              <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{description}</p>
+                            )}
+                            {!isAdmin && (
+                              <div className="mt-3 space-y-1">
+                                <Progress value={pct} className="h-1.5" />
+                                <p className="text-[11px] text-muted-foreground">
+                                  {t("dashboard.progressItems")
+                                    .replace("{done}", String(read))
+                                    .replace("{total}", String(total))}
+                                </p>
+                              </div>
                             )}
                           </div>
-                        </div>
-                        {!isAdmin && (() => {
-                          const total = progressQuery.data?.totals.get(c.id) ?? 0;
-                          const read = progressQuery.data?.reads.get(c.id) ?? 0;
-                          const pct = total > 0 ? Math.round((read / total) * 100) : 0;
-                          return (
-                            <div className="space-y-1">
-                              <Progress value={pct} className="h-1.5" />
-                              <p className="text-[11px] text-muted-foreground">
-                                {t("dashboard.progressItems")
-                                  .replace("{done}", String(read))
-                                  .replace("{total}", String(total))}
-                              </p>
-                            </div>
-                          );
-                        })()}
-                      </Link>
-                    </li>
-                  ))}
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
