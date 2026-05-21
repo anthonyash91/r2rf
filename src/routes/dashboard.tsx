@@ -96,7 +96,7 @@ function DashboardPage() {
   });
 
   const categoryIds = (categoriesQuery.data ?? []).map((c) => c.id);
-  const userId = data?.profile?.user_id ?? null;
+  const userId = user?.id ?? null;
 
   const progressQuery = useQuery({
     queryKey: ["dashboard-progress", userId, categoryIds.join(",")],
