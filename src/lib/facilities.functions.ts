@@ -121,30 +121,37 @@ export const addFacilities = createServerFn({ method: "POST" })
 
     const { data: existing } = await supabaseAdmin
       .from("facilities")
-      .select("value, sort_order");
-    const used = new Set((existing ?? []).map((r) => r.value as string));
+      .select("value, label, sort_order");
+    const usedValues = new Set((existing ?? []).map((r) => r.value as string));
+    const usedLabels = new Set((existing ?? []).map((r) => (r.label as string).trim().toLowerCase()));
     const maxOrder = (existing ?? []).reduce(
       (m, r) => Math.max(m, (r.sort_order as number) ?? 0),
       -1,
     );
 
     const rows: { value: string; label: string; sort_order: number }[] = [];
+    const duplicates: string[] = [];
     let next = maxOrder + 1;
     for (const f of data.facilities) {
-      const base = slugify(f.value || f.label);
+      const label = f.label.trim();
+      const base = slugify(f.value || label);
       if (!base) continue;
-      let value = base;
-      let i = 2;
-      while (used.has(value)) value = `${base}_${i++}`;
-      used.add(value);
-      rows.push({ value, label: f.label.trim(), sort_order: next++ });
+      const labelKey = label.toLowerCase();
+      if (usedValues.has(base) || usedLabels.has(labelKey)) {
+        duplicates.push(label);
+        continue;
+      }
+      usedValues.add(base);
+      usedLabels.add(labelKey);
+      rows.push({ value: base, label, sort_order: next++ });
     }
-    if (!rows.length) return { ok: true, inserted: 0 };
+    if (!rows.length) return { ok: true, inserted: 0, duplicates };
 
     const { error } = await supabaseAdmin.from("facilities").insert(rows);
     if (error) throw new Error(error.message);
-    return { ok: true, inserted: rows.length };
+    return { ok: true, inserted: rows.length, duplicates };
   });
+
 
 export const updateFacility = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
