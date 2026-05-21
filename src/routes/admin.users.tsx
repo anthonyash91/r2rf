@@ -389,7 +389,7 @@ function AdminUsersPage() {
                 return (
                   <>
                     {filtered.length > 0 && (
-                      <div className="mt-3 flex items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+                      <div className="mt-3 flex items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
                         <label className="inline-flex items-center gap-2 cursor-pointer select-none">
                           <input
                             type="checkbox"
@@ -441,11 +441,11 @@ function AdminUsersPage() {
                       {filtered.length ? (
                         <ul className="divide-y divide-border">
                           {visible.map((u) => (
-                            <li key={u.id} className="flex items-start gap-3 pl-4 sm:pl-5">
+                            <li key={u.id} className="flex items-center gap-2 pl-4 sm:pl-5">
                               <input
                                 type="checkbox"
                                 aria-label={`Select ${u.profile?.username ?? u.email}`}
-                                className="mt-6 h-4 w-4 rounded border-input shrink-0"
+                                className="h-4 w-4 rounded border-input shrink-0"
                                 checked={selectedIds.has(u.id)}
                                 onChange={() => toggleOne(u.id)}
                               />
