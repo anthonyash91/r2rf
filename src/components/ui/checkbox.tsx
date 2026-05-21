@@ -18,8 +18,8 @@ const Checkbox = React.forwardRef<
       "disabled:cursor-not-allowed disabled:opacity-50",
       "data-[state=checked]:bg-[var(--color-accent)] data-[state=checked]:border-[var(--color-accent)] data-[state=checked]:text-[var(--color-accent-foreground)]",
       "data-[state=indeterminate]:bg-[var(--color-accent)] data-[state=indeterminate]:border-[var(--color-accent)] data-[state=indeterminate]:text-[var(--color-accent-foreground)]",
-      "data-[state=checked]:shadow-[0_1px_2px_0_color-mix(in_oklab,var(--color-accent)_40%,transparent)]",
       className,
+
     )}
     {...props}
   >
