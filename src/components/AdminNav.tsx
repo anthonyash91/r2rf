@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
-import { LayoutGrid, Users, Shield, BarChart3, Home, LayoutTemplate, Award, Building2 } from "lucide-react";
+import { LayoutGrid, Users, Shield, BarChart3, Home, LayoutTemplate, Award, Building2, MessageSquare } from "lucide-react";
 
 type NavLink = {
   to: string;
