@@ -13,7 +13,7 @@ import {
 } from "@/lib/facilities.functions";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
+
 
 export const Route = createFileRoute("/admin/facilities")({
   beforeLoad: requireAdminBeforeLoad,
