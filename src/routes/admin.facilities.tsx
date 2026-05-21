@@ -175,46 +175,51 @@ function AdminFacilitiesPage() {
 
         {facilities.length > 0 && (
           <div className="mt-3 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
-            <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-              <Checkbox
-                checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
-                onCheckedChange={() => toggleAllVisible()}
-              />
-
-              <span>
-                {selectedIds.size > 0
+            <span className="text-muted-foreground">
+              {editMode
+                ? selectedIds.size > 0
                   ? `${selectedIds.size} selected`
-                  : `Select all visible (${visibleFacilities.length})`}
-              </span>
-            </label>
+                  : "Click facilities to select for deletion"
+                : `${facilities.length} ${facilities.length === 1 ? "facility" : "facilities"}`}
+            </span>
             <div className="flex items-center gap-2">
-              {selectedIds.size > 0 && (
+              {!editMode ? (
+                <button
+                  type="button"
+                  onClick={() => { setEditMode(true); setEditingId(null); }}
+                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                >
+                  <Pencil className="h-4 w-4" /> Edit
+                </button>
+              ) : (
                 <>
                   <button
                     type="button"
-                    onClick={() => setSelectedIds(new Set())}
+                    onClick={() => { setEditMode(false); setSelectedIds(new Set()); }}
                     className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                   >
-                    Clear
+                    {selectedIds.size > 0 ? "Cancel" : "Done"}
                   </button>
-                  <button
-                    type="button"
-                    disabled={deleteManyMut.isPending}
-                    onClick={async () => {
-                      const ids = Array.from(selectedIds);
-                      const ok = await confirm({
-                        title: `Delete ${ids.length} ${ids.length === 1 ? "facility" : "facilities"}?`,
-                        description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "facility" : "facilities"}? Existing users assigned to ${ids.length === 1 ? "it" : "them"} will keep their value but ${ids.length === 1 ? "it" : "they"} will no longer appear in the signup dropdown.`,
-                        confirmLabel: "Delete",
-                        destructive: true,
-                      });
-                      if (ok) deleteManyMut.mutate({ ids });
-                    }}
-                    className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
-                  >
-                    {deleteManyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    {deleteManyMut.isPending ? "Deleting…" : `Delete selected (${selectedIds.size})`}
-                  </button>
+                  {selectedIds.size > 0 && (
+                    <button
+                      type="button"
+                      disabled={deleteManyMut.isPending}
+                      onClick={async () => {
+                        const ids = Array.from(selectedIds);
+                        const ok = await confirm({
+                          title: `Delete ${ids.length} ${ids.length === 1 ? "facility" : "facilities"}?`,
+                          description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "facility" : "facilities"}? Existing users assigned to ${ids.length === 1 ? "it" : "them"} will keep their value but ${ids.length === 1 ? "it" : "they"} will no longer appear in the signup dropdown.`,
+                          confirmLabel: "Delete",
+                          destructive: true,
+                        });
+                        if (ok) { deleteManyMut.mutate({ ids }); setEditMode(false); }
+                      }}
+                      className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
+                    >
+                      {deleteManyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      {deleteManyMut.isPending ? "Deleting…" : `Delete selected (${selectedIds.size})`}
+                    </button>
+                  )}
                 </>
               )}
             </div>
