@@ -46,6 +46,7 @@ function Index() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
+      <SiteMessageBanner kind="home" />
       <HomePageView categories={categories} isLoading={isLoading} />
       <SiteFooter />
     </div>
