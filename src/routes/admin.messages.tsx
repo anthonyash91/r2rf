@@ -86,6 +86,10 @@ function MessageEditor({
   }, [data]);
 
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
+  const [showEs, setShowEs] = useState(false);
+  useEffect(() => {
+    if (data?.message_es?.trim()) setShowEs(true);
+  }, [data]);
 
   const saveMut = useMutation({
     mutationFn: async (v: SiteMessage) => {
