@@ -78,7 +78,7 @@ export function SecurityQuestionsForm({ onChange, rows = 2 }: Props) {
               value={answers[i]}
               onChange={(e) => setAnswer(i, e.target.value)}
               placeholder={t("security.yourAnswer")}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs"
               maxLength={200}
             />
           </div>
