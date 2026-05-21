@@ -555,17 +555,17 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
               const isDimmed = editing !== null && !isEditingThis;
               return (
               <div className={`flex items-center gap-3 p-4 transition-opacity pl-[6px] ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
-                <input
-                  type="checkbox"
+                <Checkbox
                   aria-label={`Select ${item.title}`}
-                  className="h-4 w-4 rounded border-input shrink-0"
+                  className="shrink-0"
                   checked={selectedIds.has(item.id)}
-                  onChange={() => setSelectedIds((prev) => {
+                  onCheckedChange={() => setSelectedIds((prev) => {
                     const next = new Set(prev);
                     if (next.has(item.id)) next.delete(item.id); else next.add(item.id);
                     return next;
                   })}
                 />
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${typeBadgeClass(item.type)}`}>{item.type}</span>
