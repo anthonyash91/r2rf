@@ -58,7 +58,10 @@ export function FacilityCombobox({
       </PopoverTrigger>
       <PopoverContent className={cn("w-[--radix-popover-trigger-width] p-0", className)} align="start">
         <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+          <CommandInput
+            placeholder={searchPlaceholder}
+            className="focus:shadow-none focus-visible:shadow-none focus:outline-none focus-visible:outline-none"
+          />
           <CommandList>
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
