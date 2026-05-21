@@ -498,12 +498,12 @@ function CategoryProgressSection({
               const isRead = readSet.has(it.id);
               const description = pickLang(lang, it.description, it.description_es);
               return (
-                <li key={it.id} className="flex items-start gap-3 py-4 pl-[22px] pr-[22px]">
+                <li key={it.id} className="flex flex-wrap items-start gap-3 py-4 pl-[22px] pr-[22px]">
                   <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
                     {it.type}
                   </span>
 
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 basis-0 min-[640px]:basis-auto">
                     <Link
                       to="/category/$slug"
                       params={{ slug: category.slug }}
@@ -517,29 +517,30 @@ function CategoryProgressSection({
                     )}
                   </div>
 
-                  {newItemSet.has(it.id) && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
-                      <span className="h-1 w-1 rounded-full bg-background/80" />
-                      {t("category.newContent")}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-3 flex-wrap w-full sm:w-auto sm:ml-auto pl-9 sm:pl-0">
+                    {newItemSet.has(it.id) && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
+                        <span className="h-1 w-1 rounded-full bg-background/80" />
+                        {t("category.newContent")}
+                      </span>
+                    )}
 
-                  {!isAdmin && (
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium flex-shrink-0 ${isRead ? "text-[var(--color-accent)]" : "text-muted-foreground"}`}>
-                      {isRead ? (
-                        <>
-                          <Check className="h-3.5 w-3.5" />
-                          {t("category.markedRead")}
-                        </>
-                      ) : (
-                        <>
-                          <Circle className="h-3.5 w-3.5" />
-                          Not read
-                        </>
-
-                      )}
-                    </span>
-                  )}
+                    {!isAdmin && (
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium flex-shrink-0 ${isRead ? "text-[var(--color-accent)]" : "text-muted-foreground"}`}>
+                        {isRead ? (
+                          <>
+                            <Check className="h-3.5 w-3.5" />
+                            {t("category.markedRead")}
+                          </>
+                        ) : (
+                          <>
+                            <Circle className="h-3.5 w-3.5" />
+                            Not read
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </div>
                 </li>
               );
             })}
