@@ -66,7 +66,7 @@ export const signupUser = createServerFn({ method: "POST" })
         firstName: z.string().trim().min(1, "First name is required").max(100),
         lastName: z.string().trim().min(1, "Last name is required").max(100),
         password: z.string().min(8).max(72),
-        facility: z.enum(FACILITIES),
+        facility: z.string().trim().min(1).max(64),
         challengeToken: z.string().min(1).max(500),
         challengeAnswer: z.coerce.number().int(),
         honeypot: z.string().max(0).optional().default(""),
