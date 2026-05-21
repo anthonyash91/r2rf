@@ -163,13 +163,14 @@ function AdminCategoriesPage() {
       if (error) throw error;
       return ids.length;
     },
-    onSuccess: (deleted) => {
+    onSuccess: async (deleted) => {
       toast.success(`Deleted ${deleted} ${deleted === 1 ? "category" : "categories"}`);
+      await qc.invalidateQueries({ queryKey: ["admin", "categories"] });
       setSelectedIds(new Set());
-      qc.invalidateQueries({ queryKey: ["admin", "categories"] });
     },
     onError: (e: any) => toast.error(e.message),
   });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [order, setOrder] = useState<Category[]>([]);
   useEffect(() => { setOrder(categories); }, [categories]);
