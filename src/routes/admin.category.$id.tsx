@@ -430,6 +430,14 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   });
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [editMode, setEditMode] = useState(false);
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
   const deleteManyMut = useMutation({
     mutationFn: async (ids: string[]) => {
       const { error } = await supabase.from("content_items").delete().in("id", ids);
@@ -481,42 +489,34 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         </div>
       )}
 
-      {order.length > 0 && (() => {
-        const visibleIds = order.map((it) => it.id);
-        const allVisibleSelected = visibleIds.every((id) => selectedIds.has(id));
-        const someVisibleSelected = visibleIds.some((id) => selectedIds.has(id));
-        const toggleAllVisible = () => {
-          setSelectedIds((prev) => {
-            const next = new Set(prev);
-            if (allVisibleSelected) visibleIds.forEach((id) => next.delete(id));
-            else visibleIds.forEach((id) => next.add(id));
-            return next;
-          });
-        };
-        return (
-          <div className="mt-6 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
-            <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-              <Checkbox
-                checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
-                onCheckedChange={() => toggleAllVisible()}
-              />
-
-              <span>
-                {selectedIds.size > 0
-                  ? `${selectedIds.size} selected`
-                  : `Select all (${order.length})`}
-              </span>
-            </label>
-            <div className="flex items-center gap-2">
-              {selectedIds.size > 0 && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedIds(new Set())}
-                    className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
-                  >
-                    Clear
-                  </button>
+      {order.length > 0 && (
+        <div className="mt-6 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
+          <span className="text-muted-foreground">
+            {editMode
+              ? selectedIds.size > 0
+                ? `${selectedIds.size} selected`
+                : "Click items to select for deletion"
+              : `${order.length} ${order.length === 1 ? "item" : "items"}`}
+          </span>
+          <div className="flex items-center gap-2">
+            {!editMode ? (
+              <button
+                type="button"
+                onClick={() => { setEditMode(true); setEditing(null); }}
+                className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+              >
+                <Pencil className="h-4 w-4" /> Edit
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => { setEditMode(false); setSelectedIds(new Set()); }}
+                  className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+                >
+                  {selectedIds.size > 0 ? "Cancel" : "Done"}
+                </button>
+                {selectedIds.size > 0 && (
                   <button
                     type="button"
                     disabled={deleteManyMut.isPending}
@@ -528,19 +528,19 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                         confirmLabel: "Delete",
                         destructive: true,
                       });
-                      if (ok) deleteManyMut.mutate(ids);
+                      if (ok) { deleteManyMut.mutate(ids); setEditMode(false); }
                     }}
                     className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
                   >
                     {deleteManyMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     {deleteManyMut.isPending ? "Deleting…" : `Delete selected (${selectedIds.size})`}
                   </button>
-                </>
-              )}
-            </div>
+                )}
+              </>
+            )}
           </div>
-        );
-      })()}
+        </div>
+      )}
 
       <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
         {order.length === 0 ? (
