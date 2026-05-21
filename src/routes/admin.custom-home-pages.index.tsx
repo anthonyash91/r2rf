@@ -336,14 +336,14 @@ function AdminCustomHomePagesList() {
               </div>
               {categories.length > 0 && (
                 <label className="inline-flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={allChecked}
-                    onChange={(e) => {
-                      if (e.target.checked) setSelected(new Set(categories.map((c) => c.id)));
+                    onCheckedChange={(v) => {
+                      if (v) setSelected(new Set(categories.map((c) => c.id)));
                       else setSelected(new Set());
                     }}
                   />
+
                   Select all
                 </label>
               )}

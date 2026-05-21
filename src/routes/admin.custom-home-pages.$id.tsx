@@ -271,18 +271,18 @@ function AdminCustomHomePageEdit() {
                 return (
                   <li key={c.id}>
                     <label className="flex items-center gap-4 py-3 px-3 cursor-pointer">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={checked}
-                        onChange={(e) => {
+                        onCheckedChange={(v) => {
                           setSelected((prev) => {
                             const next = new Set(prev);
-                            if (e.target.checked) next.add(c.id);
+                            if (v) next.add(c.id);
                             else next.delete(c.id);
                             return next;
                           });
                         }}
                       />
+
                       {c.icon_url ? (
                         <img
                           src={c.icon_url}
