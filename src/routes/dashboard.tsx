@@ -195,13 +195,13 @@ function DashboardPage() {
           <TabsList className="h-auto p-2 gap-1">
             <TabsTrigger
               value="categories"
-              className="px-4 py-2 data-[state=active]:shadow-none"
+              className="px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
             >
               Progress
             </TabsTrigger>
             <TabsTrigger
               value="account"
-              className="px-4 py-2 data-[state=active]:shadow-none"
+              className="px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
             >
               Account Settings
             </TabsTrigger>
