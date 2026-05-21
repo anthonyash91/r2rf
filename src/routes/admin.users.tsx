@@ -545,7 +545,7 @@ function UserItem({
   const isRegularUser = !!user.profile;
 
   return (
-    <li className="p-4 sm:p-5">
+    <li className="p-4 sm:p-5 pl-[16px] pr-[22px]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="min-w-0 flex-1">
           {isRegularUser ? (
