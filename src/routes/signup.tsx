@@ -326,9 +326,35 @@ function SignupPage() {
 
               {mode === "sign-up" && (
                 <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-medium">First name</label>
+                      <input
+                        type="text"
+                        required
+                        minLength={1}
+                        maxLength={100}
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Last name</label>
+                      <input
+                        type="text"
+                        required
+                        minLength={1}
+                        maxLength={100}
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      />
+                    </div>
+                  </div>
                   <div>
                     <label className="text-sm font-medium">{t("signup.facility")}</label>
-                    <Select value={facility} onValueChange={setFacility}>
+                    <Select value={facility} onValueChange={setFacility} required>
                       <SelectTrigger className="mt-1 w-full">
                         <SelectValue />
                       </SelectTrigger>
