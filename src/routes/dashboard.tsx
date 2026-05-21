@@ -73,15 +73,15 @@ function DashboardPage() {
       <SiteHeader />
       <main className="flex-1 mx-auto w-full max-w-3xl px-6 py-12">
         <h1 className="font-display text-3xl font-semibold">{t("nav.dashboard")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Your account information.</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
 
         <div className="mt-8 rounded-2xl border border-border bg-card p-6">
           {isLoading ? (
-            <p className="text-muted-foreground">Loading…</p>
+            <p className="text-muted-foreground">{t("dashboard.loading")}</p>
           ) : !profile ? (
             <div>
-              <p className="text-muted-foreground">No profile found for your account.</p>
-              <Link to="/" className="mt-3 inline-block text-sm underline">Back home</Link>
+              <p className="text-muted-foreground">{t("dashboard.noProfile")}</p>
+              <Link to="/" className="mt-3 inline-block text-sm underline">{t("dashboard.backHome")}</Link>
             </div>
           ) : (
             <dl className="grid gap-5 sm:grid-cols-2">
@@ -94,7 +94,7 @@ function DashboardPage() {
               {((profile as any).first_name || (profile as any).last_name) && (
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                    <UserIcon className="h-3.5 w-3.5" /> Name
+                    <UserIcon className="h-3.5 w-3.5" /> {t("dashboard.name")}
                   </dt>
                   <dd className="mt-1 font-medium">
                     {`${(profile as any).first_name ?? ""} ${(profile as any).last_name ?? ""}`.trim()}
@@ -109,10 +109,10 @@ function DashboardPage() {
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5" /> Joined
+                  <Calendar className="h-3.5 w-3.5" /> {t("dashboard.joined")}
                 </dt>
                 <dd className="mt-1 font-medium">
-                  {new Date(profile.created_at).toLocaleDateString()}
+                  {new Date(profile.created_at).toLocaleDateString(lang === "es" ? "es" : "en")}
                 </dd>
               </div>
             </dl>
