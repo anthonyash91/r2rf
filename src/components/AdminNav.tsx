@@ -29,8 +29,8 @@ export function AdminNav() {
   const visible = links.filter((l) => !l.adminOnly || isAdmin);
 
   return (
-    <nav aria-label="Admin" className="mb-8 overflow-x-auto">
-      <ul className="flex w-full items-center justify-center gap-1 rounded-lg bg-muted p-2 text-muted-foreground">
+    <nav aria-label="Admin" className="mb-8">
+      <ul className="flex w-full flex-wrap items-center justify-center gap-1 rounded-lg bg-muted p-2 text-muted-foreground">
         {visible.map((l) => {
           const active =
             (l.exact ? pathname === l.to : pathname === l.to || pathname.startsWith(l.to + "/")) ||
@@ -41,10 +41,10 @@ export function AdminNav() {
               <Link
                 to={l.to as any}
                 className={[
-                  "inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all",
+                  "inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                   active
-                    ? "bg-background text-foreground shadow"
-                    : "hover:bg-background hover:text-foreground hover:shadow",
+                    ? "bg-background text-foreground"
+                    : "hover:bg-background hover:text-foreground",
                 ].join(" ")}
               >
                 <Icon className="h-3.5 w-3.5" />
