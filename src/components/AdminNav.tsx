@@ -30,7 +30,7 @@ export function AdminNav() {
 
   return (
     <nav aria-label="Admin" className="mb-8 overflow-x-auto">
-      <ul className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+      <ul className="flex w-full items-center justify-center gap-1 rounded-lg bg-muted p-2 text-muted-foreground">
         {visible.map((l) => {
           const active =
             (l.exact ? pathname === l.to : pathname === l.to || pathname.startsWith(l.to + "/")) ||
@@ -41,10 +41,10 @@ export function AdminNav() {
               <Link
                 to={l.to as any}
                 className={[
-                  "inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all",
+                  "inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all",
                   active
                     ? "bg-background text-foreground shadow"
-                    : "hover:text-foreground",
+                    : "hover:bg-background hover:text-foreground hover:shadow",
                 ].join(" ")}
               >
                 <Icon className="h-3.5 w-3.5" />
