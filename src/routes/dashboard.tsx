@@ -110,7 +110,7 @@ function DashboardPage() {
       const [itemsRes, readRes] = await Promise.all([
         supabase
           .from("content_items")
-          .select("id, category_id, title, title_es, description, description_es, type, sort_order, created_at")
+          .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at")
           .eq("published", true)
           .in("category_id", categoryIds)
           .order("sort_order", { ascending: true }),
