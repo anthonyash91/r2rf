@@ -377,19 +377,6 @@ function AdminUsersPage() {
                 const visible = filtered.slice(0, regularVisible);
                 const remaining = filtered.length - visible.length;
                 const visibleIds = visible.map((u) => u.id);
-                const allVisibleSelected = visible.length > 0 && visibleIds.every((id) => selectedIds.has(id));
-                const someVisibleSelected = visibleIds.some((id) => selectedIds.has(id));
-                const toggleAllVisible = () => {
-                  setSelectedIds((prev) => {
-                    const next = new Set(prev);
-                    if (allVisibleSelected) {
-                      visibleIds.forEach((id) => next.delete(id));
-                    } else {
-                      visibleIds.forEach((id) => next.add(id));
-                    }
-                    return next;
-                  });
-                };
                 const toggleOne = (id: string) => {
                   setSelectedIds((prev) => {
                     const next = new Set(prev);
