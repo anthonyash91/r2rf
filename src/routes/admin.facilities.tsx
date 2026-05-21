@@ -88,7 +88,11 @@ function AdminFacilitiesPage() {
         <div>
           <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
             <Building2 className="h-7 w-7 text-[var(--color-accent)]" /> Facilities
+            {!facilitiesQuery.isLoading && (
+              <span className="text-muted-foreground font-normal">({facilities.length})</span>
+            )}
           </h1>
+
           <p className="mt-1 text-sm text-muted-foreground">
             Manage facilities available in the signup form's facility dropdown.
           </p>
