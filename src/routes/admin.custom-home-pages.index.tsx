@@ -489,7 +489,7 @@ function AdminCustomHomePagesList() {
                 </>
               );
               return (
-              <li key={p.id} className={`flex items-center gap-4 p-4 pl-[24px]${hasSections ? " pb-[24px]" : ""}`}>
+              <li key={p.id} className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 pl-[24px]${hasSections ? " pb-[24px]" : ""}`}>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-display text-lg font-semibold truncate">{p.name || p.slug}</h3>
                   <p className="text-xs text-muted-foreground truncate">/{p.slug}</p>
