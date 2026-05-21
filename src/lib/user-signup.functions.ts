@@ -63,6 +63,8 @@ export const signupUser = createServerFn({ method: "POST" })
     z
       .object({
         username: z.string().trim().toLowerCase().regex(/^[a-z0-9_]{3,32}$/, "Username must be 3–32 chars, letters/numbers/underscore"),
+        firstName: z.string().trim().min(1, "First name is required").max(100),
+        lastName: z.string().trim().min(1, "Last name is required").max(100),
         password: z.string().min(8).max(72),
         facility: z.enum(FACILITIES),
         challengeToken: z.string().min(1).max(500),
