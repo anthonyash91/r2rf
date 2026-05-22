@@ -116,7 +116,7 @@ function SignupPage() {
         });
         if (error) throw error;
         toast.success(t("signup.welcome"));
-        navigate({ to: "/dashboard" });
+        navigate({ to: "/dashboard", search: { tab: "account" } as any });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: syntheticEmail(uname),
