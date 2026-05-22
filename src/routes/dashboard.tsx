@@ -10,6 +10,7 @@ import { SiteMessageBanner } from "@/components/SiteMessageBanner";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyProfile, getMyFacilityCustomHome } from "@/lib/user-signup.functions";
 import { facilityLabel } from "@/lib/user-signup";
+import { listFacilities } from "@/lib/facilities.functions";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
 import { questionLabel } from "@/lib/security-questions";
 import { useI18n, pickLang, translateDuration } from "@/lib/i18n";
