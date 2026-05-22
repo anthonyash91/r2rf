@@ -244,7 +244,7 @@ function SignupPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-border bg-white p-6">
+            <div className="rounded-lg border border-border bg-[#fffdf8] p-6">
             {resetStep === 1 ? (
               <form onSubmit={handleResetStart} className="space-y-4">
                 <div>
@@ -257,7 +257,7 @@ function SignupPage() {
                     pattern="[A-Za-z0-9_]{3,32}"
                     value={resetUsername}
                     onChange={(e) => setResetUsername(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-input bg-[#fcfaf1] px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
                 <button
@@ -282,7 +282,7 @@ function SignupPage() {
                     maxLength={200}
                     value={resetAnswer1}
                     onChange={(e) => setResetAnswer1(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-input bg-[#fcfaf1] px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
@@ -296,7 +296,7 @@ function SignupPage() {
                     maxLength={200}
                     value={resetAnswer2}
                     onChange={(e) => setResetAnswer2(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-input bg-[#fcfaf1] px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
@@ -308,7 +308,7 @@ function SignupPage() {
                     maxLength={72}
                     value={resetNewPassword}
                     onChange={(e) => setResetNewPassword(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-input bg-[#fcfaf1] px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
                 <button
@@ -348,7 +348,7 @@ function SignupPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-border bg-white p-6">
+            <div className="rounded-lg border border-border bg-[#fffdf8] p-6">
             <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               {mode === "sign-up" && (
                 <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
@@ -370,7 +370,7 @@ function SignupPage() {
                   pattern={mode === "sign-up" ? "[A-Za-z0-9_]{3,32}" : undefined}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-input bg-[#fcfaf1] px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   placeholder={mode === "sign-up" ? t("signup.usernamePlaceholder") : undefined}
                   autoComplete={mode === "sign-up" ? "username" : "username email"}
                 />
@@ -395,7 +395,7 @@ function SignupPage() {
                   maxLength={72}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-input bg-[#fcfaf1] px-3 py-2 text-sm"
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
                 {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
               </div>
@@ -411,7 +411,7 @@ function SignupPage() {
                       maxLength={72}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-input bg-[#fcfaf1] px-3 py-2 text-sm"
+                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     />
                     {confirmPassword.length > 0 && confirmPassword !== password && (
                       <p className="mt-1 text-xs text-destructive">{t("signup.passwordMismatch")}</p>
@@ -427,7 +427,7 @@ function SignupPage() {
                         maxLength={100}
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
-                        className="mt-1 w-full rounded-md border border-input bg-[#fcfaf1] px-3 py-2 text-sm"
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       />
                     </div>
                     <div>
@@ -439,7 +439,7 @@ function SignupPage() {
                         maxLength={100}
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
-                        className="mt-1 w-full rounded-md border border-input bg-[#fcfaf1] px-3 py-2 text-sm"
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       />
                     </div>
                   </div>
@@ -451,7 +451,7 @@ function SignupPage() {
                           type="button"
                           role="combobox"
                           aria-expanded={facilityOpen}
-                          className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-[#fcfaf1] px-3 py-2 text-sm font-normal hover:bg-muted/40"
+                          className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm font-normal hover:bg-muted/40"
                         >
                           <span className={cn(!facility && "text-muted-foreground")}>
                             {(() => {
@@ -511,7 +511,7 @@ function SignupPage() {
                       required
                       value={answer}
                       onChange={(e) => setAnswer(e.target.value)}
-                      className="mt-1 w-full rounded-md border border-input bg-[#fcfaf1] px-3 py-2 text-sm"
+                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     />
                   </div>
                 </>
