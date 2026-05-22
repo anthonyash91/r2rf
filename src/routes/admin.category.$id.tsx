@@ -904,23 +904,27 @@ function ItemEditor({
   };
 
   const deleteType = async (t: string) => {
-    const ok = await confirm({
+    await confirm({
       title: `Delete type "${t}"?`,
       description: `Any items using this type will be changed to "Article".`,
       confirmLabel: "Delete",
       destructive: true,
+      onConfirm: async () => {
+        const { error } = await supabase
+          .from("content_items")
+          .update({ type: "Article" })
+          .eq("type", t);
+        if (error) {
+          toast.error(error.message);
+          throw error;
+        }
+        if (type === t) setType("Article");
+        toast.success(`Deleted type "${t}"`);
+        qc.invalidateQueries({ queryKey: ["content-types"] });
+        qc.invalidateQueries({ queryKey: ["admin", "category"] });
+        qc.invalidateQueries({ queryKey: ["category"] });
+      },
     });
-    if (!ok) return;
-    const { error } = await supabase
-      .from("content_items")
-      .update({ type: "Article" })
-      .eq("type", t);
-    if (error) { toast.error(error.message); return; }
-    if (type === t) setType("Article");
-    toast.success(`Deleted type "${t}"`);
-    qc.invalidateQueries({ queryKey: ["content-types"] });
-    qc.invalidateQueries({ queryKey: ["admin", "category"] });
-    qc.invalidateQueries({ queryKey: ["category"] });
   };
 
   return (
