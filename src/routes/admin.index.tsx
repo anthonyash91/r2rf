@@ -8,6 +8,7 @@ import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles, RefreshCw, ExternalLink, LayoutGrid, Loader2, GripVertical } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
+import { PageHeader } from "@/components/PageHeader";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy } from "@/lib/category-ai.functions";
 
@@ -191,10 +192,12 @@ function AdminCategoriesPage() {
   return (
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-semibold flex items-center gap-2"><LayoutGrid className="h-7 w-7 text-[var(--color-accent)]" /> Categories{!isLoading && (<span className="text-muted-foreground font-normal">({categories.length})</span>)}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Manage the library structure.</p>
-        </div>
+        <PageHeader
+          icon={LayoutGrid}
+          title="Categories"
+          count={!isLoading ? categories.length : undefined}
+          description="Manage the library structure."
+        />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <LoadingButton
             onClick={() => setCreating(true)}

@@ -9,6 +9,7 @@ import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Chec
 import { Badge } from "@/components/Badge";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
+import { PageHeader } from "@/components/PageHeader";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
 import {
@@ -155,17 +156,13 @@ function AdminUsersPage() {
       <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to admin
       </Link>
-      <div className="mt-6">
-        <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-          <Users className="h-7 w-7 text-[var(--color-accent)]" /> Users
-          {!isLoading && data?.users && (
-            <span className="text-muted-foreground font-normal">({data.users.length})</span>
-          )}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Add users, edit emails, reset passwords, and manage access.
-        </p>
-      </div>
+      <PageHeader
+        className="mt-6"
+        icon={Users}
+        title="Users"
+        count={!isLoading && data?.users ? data.users.length : undefined}
+        description="Add users, edit emails, reset passwords, and manage access."
+      />
 
       {(() => {
         if (isLoading) {

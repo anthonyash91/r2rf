@@ -8,6 +8,7 @@ import type { Category, ContentItem } from "@/lib/categories";
 import { Badge } from "@/components/Badge";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
+import { PageHeader } from "@/components/PageHeader";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
@@ -113,14 +114,11 @@ function AdminAnalyticsPage() {
       </Link>
 
       <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-            <BarChart3 className="h-7 w-7 text-[var(--color-accent)]" /> Usage analytics
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Category views and content clicks across the site.
-          </p>
-        </div>
+        <PageHeader
+          icon={BarChart3}
+          title="Usage analytics"
+          description="Category views and content clicks across the site."
+        />
         <div className="flex flex-col gap-2 w-full lg:w-auto sm:flex-row sm:flex-wrap lg:flex-nowrap">
           <div className="flex gap-2 flex-1 min-w-0 basis-full sm:basis-auto">
             {RANGE_OPTIONS.map((opt) => (

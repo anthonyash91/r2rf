@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, LayoutTemplate } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
+import { PageHeader } from "@/components/PageHeader";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
@@ -225,12 +226,15 @@ function AdminCustomHomePagesList() {
       </Link>
 
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-semibold flex items-center gap-2"><LayoutTemplate className="h-7 w-7 text-[var(--color-accent)]" /> Custom home pages</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Create alternate landing pages at custom URLs (e.g. <code>/cpc</code>) that show only the categories you choose.
-          </p>
-        </div>
+        <PageHeader
+          icon={LayoutTemplate}
+          title="Custom home pages"
+          description={
+            <>
+              Create alternate landing pages at custom URLs (e.g. <code>/cpc</code>) that show only the categories you choose.
+            </>
+          }
+        />
         <LoadingButton
           onClick={() => setCreating(true)}
           disabled={creating}
