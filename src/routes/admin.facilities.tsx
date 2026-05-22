@@ -237,20 +237,18 @@ function AdminFacilitiesPage() {
                       disabled={isDeleting}
                       onClick={async () => {
                         const ids = Array.from(selectedIds);
-                        const ok = await confirm({
-                          title: `Delete ${ids.length} ${ids.length === 1 ? "facility" : "facilities"}?`,
-                          description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "facility" : "facilities"}? Existing users assigned to ${ids.length === 1 ? "it" : "them"} will keep their value but ${ids.length === 1 ? "it" : "they"} will no longer appear in the signup dropdown.`,
-                          confirmLabel: "Delete",
-                          destructive: true,
-                        });
-                        if (ok) {
-                          setIsDeleting(true);
-                          try {
-                            await deleteManyMut.mutateAsync({ ids });
-                          } finally {
-                            setIsDeleting(false);
-                            setEditMode(false);
-                          }
+                        setIsDeleting(true);
+                        try {
+                          const ok = await confirm({
+                            title: `Delete ${ids.length} ${ids.length === 1 ? "facility" : "facilities"}?`,
+                            description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "facility" : "facilities"}? Existing users assigned to ${ids.length === 1 ? "it" : "them"} will keep their value but ${ids.length === 1 ? "it" : "they"} will no longer appear in the signup dropdown.`,
+                            confirmLabel: "Delete",
+                            destructive: true,
+                            onConfirm: () => deleteManyMut.mutateAsync({ ids }),
+                          });
+                          if (ok) setEditMode(false);
+                        } finally {
+                          setIsDeleting(false);
                         }
                       }}
                       className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
@@ -378,18 +376,23 @@ function AdminFacilitiesPage() {
                                 <TooltipTrigger asChild>
                                   <button
                                     aria-label="Delete"
+                                    disabled={deleteMut.isPending && deleteMut.variables?.id === f.id}
                                     onClick={async () => {
-                                      const ok = await confirm({
+                                      await confirm({
                                         title: "Delete facility?",
                                         description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
                                         confirmLabel: "Delete",
                                         destructive: true,
+                                        onConfirm: () => deleteMut.mutateAsync({ id: f.id }),
                                       });
-                                      if (ok) deleteMut.mutate({ id: f.id });
                                     }}
-                                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    {deleteMut.isPending && deleteMut.variables?.id === f.id ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="h-4 w-4" />
+                                    )}
                                   </button>
                                 </TooltipTrigger>
                                 <TooltipContent>Delete</TooltipContent>

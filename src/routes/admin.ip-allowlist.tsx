@@ -219,19 +219,25 @@ function BlockedSection() {
                     <TooltipTrigger asChild>
                       <button
                         aria-label="Unblock"
+                        disabled={deleteMut.isPending && deleteMut.variables === r.id}
                         onClick={async () => {
-                          const ok = await confirm({
+                          await confirm({
                             title: `Unblock ${r.ip_address}?`,
                             description:
                               "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
                             confirmLabel: "Unblock",
                             destructive: true,
+                            pendingLabel: "Unblocking",
+                            onConfirm: () => deleteMut.mutateAsync(r.id),
                           });
-                          if (ok) deleteMut.mutate(r.id);
                         }}
-                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {deleteMut.isPending && deleteMut.variables === r.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>Unblock</TooltipContent>
@@ -439,14 +445,16 @@ function AllowlistSection({
                 row={r}
                 table={table}
                 queryKey={queryKey}
+                pendingDelete={deleteMut.isPending && deleteMut.variables === r.id}
                 onDelete={async () => {
-                  const ok = await confirm({
+                  await confirm({
                     title: `Remove ${r.ip_address}?`,
                     description: "This IP will be removed from the allowlist.",
                     confirmLabel: "Remove",
                     destructive: true,
+                    pendingLabel: "Removing",
+                    onConfirm: () => deleteMut.mutateAsync(r.id),
                   });
-                  if (ok) deleteMut.mutate(r.id);
                 }}
               />
             ))}
@@ -462,11 +470,13 @@ function AllowlistRow({
   table,
   queryKey,
   onDelete,
+  pendingDelete = false,
 }: {
   row: IpRow;
   table: "ip_allowlist" | "auth_ip_allowlist";
   queryKey: readonly unknown[];
   onDelete: () => void;
+  pendingDelete?: boolean;
 }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -519,10 +529,11 @@ function AllowlistRow({
               <TooltipTrigger asChild>
                 <button
                   aria-label="Remove"
+                  disabled={pendingDelete}
                   onClick={onDelete}
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  {pendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 </button>
               </TooltipTrigger>
               <TooltipContent>Remove</TooltipContent>
