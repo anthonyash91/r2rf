@@ -613,6 +613,9 @@ function NewCategoryForm({
             )}
           </div>
         </div>
+      </div>
+
+
 
       <Field label="Home Page">
         <Select value={homePageMode} onValueChange={(v) => setHomePageMode(v as "default" | "custom")}>
