@@ -52,6 +52,30 @@ export function AdminNav() {
 
   const visible = links.filter((l) => !l.adminOnly || isAdmin);
 
+  const lastSeen = useLastSeenUsersAt();
+  const countFn = useServerFn(countNewUsers);
+  const newUsersQuery = useQuery({
+    queryKey: ["admin", "new-users-count", lastSeen],
+    queryFn: () => countFn({ data: { since: lastSeen } }),
+    enabled: isAdmin,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+  });
+  const newUsersCount = isAdmin ? newUsersQuery.data?.count ?? 0 : 0;
+
+  const renderLabel = (l: NavLink) => {
+    if (l.to !== "/admin/users" || newUsersCount <= 0) return l.label;
+    return (
+      <>
+        {l.label}
+        <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)] px-1 text-[10px] font-semibold leading-none text-white">
+          {newUsersCount > 99 ? "99+" : newUsersCount}
+        </span>
+      </>
+    );
+  };
+
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLUListElement | null>(null);
   const [visibleCount, setVisibleCount] = useState(visible.length);
