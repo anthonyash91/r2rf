@@ -500,12 +500,12 @@ function CategoryProgressSection({
                 <li key={it.id} className="flex flex-col gap-2 py-4 pl-[22px] pr-[22px]">
                   <div className="flex items-center gap-2 flex-wrap">
                     {newItemSet.has(it.id) && (
-                      <NewBadge>{t("category.newContent")}</NewBadge>
+                      <Badge variant="new">{t("category.newContent")}</Badge>
                     )}
 
-                    <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
+                    <Badge variant="type" type={it.type}>
                       {it.type}
-                    </span>
+                    </Badge>
                     {it.duration && (
                       <span className="text-xs text-muted-foreground">
                         {translateDuration(lang, withActionWord(it.duration, it.type))}
