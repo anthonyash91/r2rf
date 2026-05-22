@@ -308,11 +308,22 @@ function DashboardPage() {
         })()}
         <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
 
-        <Tabs defaultValue={Route.useSearch().tab === "account" ? "account" : "categories"} className="mt-8">
+        <Tabs
+          value={mustSetup ? "account" : undefined}
+          defaultValue={Route.useSearch().tab === "account" ? "account" : "categories"}
+          className="mt-8"
+        >
           <TabsList className="h-auto p-2 gap-1">
             <TabsTrigger
               value="categories"
-              className="px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
+              disabled={mustSetup}
+              onClick={(e) => {
+                if (mustSetup) {
+                  e.preventDefault();
+                  toast.error("Please set up your security questions before leaving this page.");
+                }
+              }}
+              className={`px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
             >
               Progress
             </TabsTrigger>
