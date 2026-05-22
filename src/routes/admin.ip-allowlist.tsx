@@ -445,14 +445,16 @@ function AllowlistSection({
                 row={r}
                 table={table}
                 queryKey={queryKey}
+                pendingDelete={deleteMut.isPending && deleteMut.variables === r.id}
                 onDelete={async () => {
-                  const ok = await confirm({
+                  await confirm({
                     title: `Remove ${r.ip_address}?`,
                     description: "This IP will be removed from the allowlist.",
                     confirmLabel: "Remove",
                     destructive: true,
+                    pendingLabel: "Removing",
+                    onConfirm: () => deleteMut.mutateAsync(r.id),
                   });
-                  if (ok) deleteMut.mutate(r.id);
                 }}
               />
             ))}
