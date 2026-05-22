@@ -586,7 +586,7 @@ function UserItem({
 
   return (
     <li className="p-4 sm:p-5 pr-[22px] pl-[10px]">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-4">
         <div className="min-w-0 flex-1">
           {isRegularUser ? (
             <>
@@ -599,7 +599,7 @@ function UserItem({
                 )}
                 {isNew && <Badge variant="new">New</Badge>}
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-nowrap min-w-0">
                 <span className="font-mono text-sm truncate">{user.profile!.username}</span>
                 {(user.profile!.first_name || user.profile!.last_name) && (
                   <span className="text-sm text-muted-foreground truncate">
@@ -666,7 +666,7 @@ function UserItem({
                   <Badge variant="unverified">Unverified</Badge>
                 )}
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-nowrap min-w-0">
                 <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
                 <span className="font-mono text-sm truncate">{user.email || "(no email)"}</span>
                 <button
