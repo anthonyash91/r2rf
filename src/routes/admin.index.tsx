@@ -193,7 +193,7 @@ function AdminCategoriesPage() {
 
   return (
     <div>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader
           icon={LayoutGrid}
           title="Categories"
@@ -211,6 +211,7 @@ function AdminCategoriesPage() {
         </div>
       </div>
 
+      <section className="mt-8">
       {creating && (
         <NewCategoryForm
           onCancel={() => setCreating(false)}
@@ -450,6 +451,7 @@ function AdminCategoriesPage() {
           </div>
         );
       })()}
+      </section>
     </div>
   );
 }
