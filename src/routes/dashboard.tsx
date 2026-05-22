@@ -656,7 +656,7 @@ function CategoryProgressSection({
                     )}
 
                     <Badge variant="type" type={it.type}>
-                      {it.type}
+                      {translateType(lang, it.type)}
                     </Badge>
                     {it.duration && (
                       <span className="text-xs text-muted-foreground">
