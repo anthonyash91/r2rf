@@ -98,6 +98,33 @@ function SignupPage() {
       });
   }, [user, loading, navigate, mode]);
 
+  // Debounced username availability check (sign-up only)
+  useEffect(() => {
+    if (mode !== "sign-up") {
+      setUsernameStatus("idle");
+      return;
+    }
+    const uname = username.trim().toLowerCase();
+    if (!uname) {
+      setUsernameStatus("idle");
+      return;
+    }
+    if (!/^[A-Za-z0-9_]{3,32}$/.test(uname)) {
+      setUsernameStatus("invalid");
+      return;
+    }
+    setUsernameStatus("checking");
+    const handle = setTimeout(async () => {
+      const { data, error } = await supabase.rpc("username_exists", { _username: uname });
+      if (error) {
+        setUsernameStatus("idle");
+        return;
+      }
+      setUsernameStatus(data ? "taken" : "available");
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [username, mode]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
