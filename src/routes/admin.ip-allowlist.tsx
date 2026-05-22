@@ -219,19 +219,25 @@ function BlockedSection() {
                     <TooltipTrigger asChild>
                       <button
                         aria-label="Unblock"
+                        disabled={deleteMut.isPending && deleteMut.variables === r.id}
                         onClick={async () => {
-                          const ok = await confirm({
+                          await confirm({
                             title: `Unblock ${r.ip_address}?`,
                             description:
                               "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
                             confirmLabel: "Unblock",
                             destructive: true,
+                            pendingLabel: "Unblocking",
+                            onConfirm: () => deleteMut.mutateAsync(r.id),
                           });
-                          if (ok) deleteMut.mutate(r.id);
                         }}
-                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {deleteMut.isPending && deleteMut.variables === r.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>Unblock</TooltipContent>
