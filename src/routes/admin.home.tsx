@@ -88,12 +88,14 @@ function AdminHomePage() {
 
   return (
     <div>
-      <SectionCard className="mt-6">
+      <div className="mt-6">
         <PageHeader
           icon={Home}
           title="Home page header"
           description="Edit the eyebrow, headline, and subheading shown at the top of the home page. The headline is split into three parts; the middle part is shown in accent italic."
         />
+      </div>
+      <SectionCard className="mt-8">
 
         {isLoading ? (
           <p className="mt-6 text-muted-foreground">Loading…</p>
