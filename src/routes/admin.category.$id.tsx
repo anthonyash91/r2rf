@@ -12,9 +12,10 @@ import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, Ref
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { FileUploader } from "@/components/FileUploader";
-import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
+import { useTranslateToSpanish } from "@/components/TranslateButton";
+import { TranslationPanel } from "@/components/TranslationPanel";
 import { SortableList } from "@/components/SortableList";
-import { useConfirm } from "@/components/ConfirmDialog";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
 import { Button } from "@/components/ui/button";
@@ -266,80 +267,35 @@ function CategoryEditor({
         </label>
 
 
-        {showEs ? (
-          <div className="border-t border-border pt-4 space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-display text-lg font-semibold">Spanish translation</h3>
-                <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <LoadingButton
-                  variant="secondary"
-                  disabled={addEsBusy}
-                  pending={addEsBusy}
-                  pendingText="Translating…"
-                  icon={<RefreshCw className="h-3 w-3" />}
-                  onClick={() => {
-                    runAddEs(
-                      { name, tagline, description },
-                      (t) => {
-                        if (t.name) setNameEs(t.name);
-                        if (t.tagline) setTaglineEs(t.tagline);
-                        if (t.description) setDescriptionEs(t.description);
-                      },
-                      "Category metadata for a content library",
-                    );
-                  }}
-                >
-                  Regenerate
-                </LoadingButton>
-                <button
-                  type="button"
-                  onClick={() => setShowEs(false)}
-                  className="text-xs text-muted-foreground hover:text-foreground underline"
-                >
-                  Hide
-                </button>
-              </div>
-            </div>
-            {addEsBusy && <TranslatingIndicator />}
-            <LabeledInput label="Name (ES)" value={nameEs} onChange={setNameEs} />
-            <LabeledInput label="Tagline (ES)" value={taglineEs} onChange={setTaglineEs} />
-            <label className="block">
-              <span className="text-sm font-medium">Description (ES)</span>
-              <textarea
-                rows={3}
-                value={descriptionEs}
-                onChange={(e) => setDescriptionEs(e.target.value)}
-                className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-              />
-            </label>
-          </div>
-        ) : (
-          <div className="border-t border-border pt-4">
-            <LoadingButton
-              variant="secondary"
-              disabled={addEsBusy}
-              pending={addEsBusy}
-              pendingText="Translating…"
-              onClick={() => {
-                setShowEs(true);
-                runAddEs(
-                  { name, tagline, description },
-                  (t) => {
-                    if (t.name) setNameEs(t.name);
-                    if (t.tagline) setTaglineEs(t.tagline);
-                    if (t.description) setDescriptionEs(t.description);
-                  },
-                  "Category metadata for a content library",
-                );
-              }}
-            >
-              + Add Spanish translation
-            </LoadingButton>
-          </div>
-        )}
+        <TranslationPanel
+          open={showEs}
+          onOpenChange={setShowEs}
+          busy={addEsBusy}
+          onTranslate={() => {
+            runAddEs(
+              { name, tagline, description },
+              (t) => {
+                if (t.name) setNameEs(t.name);
+                if (t.tagline) setTaglineEs(t.tagline);
+                if (t.description) setDescriptionEs(t.description);
+              },
+              "Category metadata for a content library",
+            );
+          }}
+        >
+          <LabeledInput label="Name (ES)" value={nameEs} onChange={setNameEs} />
+          <LabeledInput label="Tagline (ES)" value={taglineEs} onChange={setTaglineEs} />
+          <label className="block">
+            <span className="text-sm font-medium">Description (ES)</span>
+            <textarea
+              rows={3}
+              value={descriptionEs}
+              onChange={(e) => setDescriptionEs(e.target.value)}
+              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
+          </label>
+        </TranslationPanel>
+
         <div className="flex justify-end">
           <LoadingButton
             type="submit"
@@ -357,7 +313,7 @@ function CategoryEditor({
 
 function ContentManager({ categoryId, categoryName, categorySlug, items, initialEditId }: { categoryId: string; categoryName: string; categorySlug: string; items: ContentItem[]; initialEditId?: string }) {
   const qc = useQueryClient();
-  const confirm = useConfirm();
+  const confirmDelete = useConfirmDelete();
   const { lang } = useI18n();
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
   const [order, setOrder] = useState<ContentItem[]>([]);
@@ -519,11 +475,9 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           emptyEditHint="Click items to select for deletion"
           onEnterEditMode={() => setEditing(null)}
           onDeleteSelected={async (ids) =>
-            confirm({
+            confirmDelete({
               title: `Delete ${ids.length} ${ids.length === 1 ? "item" : "items"}?`,
               description: `Permanently delete ${ids.length === 1 ? "the selected item" : `${ids.length} selected items`}?`,
-              confirmLabel: "Delete",
-              destructive: true,
               onConfirm: () => deleteManyMut.mutateAsync(ids),
             })
           }
@@ -602,11 +556,9 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                       icon={Trash2}
                       pending={isMutationPendingFor(deleteMut, item.id)}
                       onClick={async () => {
-                        await confirm({
+                        await confirmDelete({
                           title: `Delete "${item.title}"?`,
                           description: "This content will be permanently removed.",
-                          confirmLabel: "Delete",
-                          destructive: true,
                           onConfirm: () => deleteMut.mutateAsync(item.id),
                         });
                       }}
@@ -688,7 +640,7 @@ function ItemEditor({
   busy: boolean;
 }) {
   const qc = useQueryClient();
-  const confirm = useConfirm();
+  const confirmDelete = useConfirmDelete();
   const { data: sourceSuggestions = [] } = useQuery({
     queryKey: ["admin", "content-sources"],
     queryFn: async (): Promise<string[]> => {
@@ -819,11 +771,9 @@ function ItemEditor({
   };
 
   const deleteType = async (t: string) => {
-    await confirm({
+    await confirmDelete({
       title: `Delete type "${t}"?`,
       description: `Any items using this type will be changed to "Article".`,
-      confirmLabel: "Delete",
-      destructive: true,
       onConfirm: async () => {
         const { error } = await supabase
           .from("content_items")
@@ -1032,91 +982,52 @@ function ItemEditor({
         Published
       </label>
 
-      {showEs ? (
-        <div className="border-t border-border pt-4 space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h4 className="font-display text-base font-semibold">Spanish translation</h4>
-              <p className="text-xs text-muted-foreground">Leave blank to fall back to the English version when Spanish is selected.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                disabled={addEsBusy}
-                onClick={() => {
-                  runAddEs(
-                    { title, description },
-                    (t) => {
-                      if (t.title) setTitleEs(t.title);
-                      if (t.description) setDescriptionEs(t.description);
-                    },
-                    "Content item metadata in a learning library",
-                  );
-                }}
-                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
-              >
-                <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
-                {addEsBusy ? "Translating…" : "Regenerate"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowEs(false)}
-                className="text-xs text-muted-foreground hover:text-foreground underline"
-              >
-                Hide
-              </button>
-            </div>
-          </div>
-          {addEsBusy && <TranslatingIndicator />}
-          <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
-          <label className="block">
-            <span className="text-sm font-medium">Description (ES)</span>
-            <textarea
-              rows={3}
-              value={descriptionEs}
-              onChange={(e) => setDescriptionEs(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+      <TranslationPanel
+        open={showEs}
+        onOpenChange={setShowEs}
+        busy={addEsBusy}
+        headingLevel="h4"
+        headingClassName="font-display text-base font-semibold"
+        description="Leave blank to fall back to the English version when Spanish is selected."
+        onTranslate={() => {
+          runAddEs(
+            { title, description },
+            (t) => {
+              if (t.title) setTitleEs(t.title);
+              if (t.description) setDescriptionEs(t.description);
+            },
+            "Content item metadata in a learning library",
+          );
+        }}
+      >
+        <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
+        <label className="block">
+          <span className="text-sm font-medium">Description (ES)</span>
+          <textarea
+            rows={3}
+            value={descriptionEs}
+            onChange={(e) => setDescriptionEs(e.target.value)}
+            className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+          />
+        </label>
+        <div>
+          <LabeledInput
+            label="URL (ES, optional)"
+            value={fileUrlEs ?? ""}
+            onChange={(v) => setFileUrlEs(v.trim() ? v : null)}
+            placeholder="https://…"
+            type="url"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">Shown to visitors viewing the site in Spanish. Falls back to the English link if omitted.</p>
+          <div className="mt-2">
+            <FileUploader
+              label={fileUrlEs ? "Replace Spanish file" : "Upload Spanish file"}
+              onUploaded={(u, name) => { setFileUrlEs(u); setFileNameEs(name ?? null); }}
             />
-          </label>
-          <div>
-            <LabeledInput
-              label="URL (ES, optional)"
-              value={fileUrlEs ?? ""}
-              onChange={(v) => setFileUrlEs(v.trim() ? v : null)}
-              placeholder="https://…"
-              type="url"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">Shown to visitors viewing the site in Spanish. Falls back to the English link if omitted.</p>
-            <div className="mt-2">
-              <FileUploader
-                label={fileUrlEs ? "Replace Spanish file" : "Upload Spanish file"}
-                onUploaded={(u, name) => { setFileUrlEs(u); setFileNameEs(name ?? null); }}
-              />
-            </div>
           </div>
         </div>
-      ) : (
-        <div className="border-t border-border pt-4">
-          <button
-            type="button"
-            disabled={addEsBusy}
-            onClick={() => {
-              setShowEs(true);
-              runAddEs(
-                { title, description },
-                (t) => {
-                  if (t.title) setTitleEs(t.title);
-                  if (t.description) setDescriptionEs(t.description);
-                },
-                "Content item metadata in a learning library",
-              );
-            }}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
-          >
-            {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
-          </button>
-        </div>
-      )}
+      </TranslationPanel>
+
       <div className="flex justify-end gap-2">
         <LoadingButton variant="secondary" onClick={onCancel}>
           Cancel

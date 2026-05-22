@@ -18,7 +18,7 @@ import {
   deleteFacilities,
 } from "@/lib/facilities.functions";
 
-import { useConfirm } from "@/components/ConfirmDialog";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { Badge } from "@/components/Badge";
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/admin/facilities")({
 
 function AdminFacilitiesPage() {
   const qc = useQueryClient();
-  const confirm = useConfirm();
+  const confirmDelete = useConfirmDelete();
 
   const fetchFacilities = useServerFn(listFacilitiesWithStats);
   const addFacilitiesFn = useServerFn(addFacilities);
@@ -189,11 +189,9 @@ function AdminFacilitiesPage() {
             searchPlaceholder="Search facilities…"
             onEnterEditMode={() => setEditingId(null)}
             onDeleteSelected={async (ids) =>
-              confirm({
+              confirmDelete({
                 title: `Delete ${ids.length} ${ids.length === 1 ? "facility" : "facilities"}?`,
                 description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "facility" : "facilities"}? Existing users assigned to ${ids.length === 1 ? "it" : "them"} will keep their value but ${ids.length === 1 ? "it" : "they"} will no longer appear in the signup dropdown.`,
-                confirmLabel: "Delete",
-                destructive: true,
                 onConfirm: () => deleteManyMut.mutateAsync({ ids }),
               })
             }
@@ -308,11 +306,9 @@ function AdminFacilitiesPage() {
                                 icon={Trash2}
                                 pending={isMutationPendingFor(deleteMut, f.id, "id")}
                                 onClick={async () => {
-                                  await confirm({
+                                  await confirmDelete({
                                     title: "Delete facility?",
                                     description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
-                                    confirmLabel: "Delete",
-                                    destructive: true,
                                     onConfirm: () => deleteMut.mutateAsync({ id: f.id }),
                                   });
                                 }}

@@ -28,6 +28,7 @@ import {
 import { listFacilities } from "@/lib/facilities.functions";
 import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ type UserRow = {
 function AdminUsersPage() {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const confirmDelete = useConfirmDelete();
   const list = useServerFn(listUsers);
   const updateEmail = useServerFn(updateUserEmail);
   const setPassword = useServerFn(setUserPassword);
@@ -235,20 +237,17 @@ function AdminUsersPage() {
               });
             }}
             onDelete={async () => {
-              await confirm({
+              await confirmDelete({
                 title: "Delete user?",
                 description: `Permanently delete ${u.profile?.username || u.email}? This cannot be undone.`,
-                confirmLabel: "Delete",
-                destructive: true,
                 onConfirm: () => deleteMut.mutateAsync({ userId: u.id }),
               });
             }}
             onResetSecurity={async () => {
-              await confirm({
+              await confirmDelete({
                 title: "Reset security questions?",
                 description: `Clear ${u.profile?.username || u.email}'s security questions? They'll be required to choose new ones the next time they sign in.`,
                 confirmLabel: "Reset",
-                destructive: true,
                 pendingLabel: "Resetting",
                 onConfirm: () => clearSecMut.mutateAsync({ userId: u.id }),
               });
@@ -455,11 +454,9 @@ function AdminUsersPage() {
                         onSearchChange={(v) => { setSearchQuery(v); setRegularVisible(10); }}
                         searchPlaceholder="Search users…"
                         onDeleteSelected={async (ids) =>
-                          confirm({
+                          confirmDelete({
                             title: `Delete ${ids.length} ${ids.length === 1 ? "user" : "users"}?`,
                             description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "user" : "users"}? This cannot be undone.`,
-                            confirmLabel: "Delete",
-                            destructive: true,
                             onConfirm: () => deleteManyMut.mutateAsync({ userIds: ids }),
                           })
                         }

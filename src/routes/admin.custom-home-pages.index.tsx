@@ -12,7 +12,7 @@ import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
-import { useConfirm } from "@/components/ConfirmDialog";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ export const Route = createFileRoute("/admin/custom-home-pages/")({
 
 function AdminCustomHomePagesList() {
   const qc = useQueryClient();
-  const confirm = useConfirm();
+  const confirmDelete = useConfirmDelete();
   
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -545,11 +545,9 @@ function AdminCustomHomePagesList() {
                       icon={Trash2}
                       pending={isMutationPendingFor(deleteMut, p.id)}
                       onClick={async () => {
-                        await confirm({
+                        await confirmDelete({
                           title: `Delete "${p.name || p.slug}"?`,
                           description: `This permanently deletes the /${p.slug} page. Underlying categories are not affected.`,
-                          confirmLabel: "Delete",
-                          destructive: true,
                           onConfirm: () => deleteMut.mutateAsync(p.id),
                         });
                       }}
