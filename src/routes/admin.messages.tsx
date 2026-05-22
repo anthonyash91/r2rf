@@ -251,21 +251,25 @@ function MessageEditor({
           )}
 
           <div className="flex flex-col sm:flex-row justify-end gap-2">
-            <button
-              type="button"
+            <LoadingButton
+              variant="secondary"
+              className="w-full sm:w-auto"
               onClick={() => clearMut.mutate()}
-              disabled={clearMut.isPending || saveMut.isPending}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
-            >
-              {clearMut.isPending ? "Clearing…" : "Clear message"}
-            </button>
-            <button
-              type="submit"
+              pending={clearMut.isPending}
+              pendingText="Clearing…"
               disabled={saveMut.isPending}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              <Save className="h-4 w-4" /> {saveMut.isPending ? "Saving…" : "Save"}
-            </button>
+              Clear message
+            </LoadingButton>
+            <LoadingButton
+              type="submit"
+              variant="primary"
+              className="w-full sm:w-auto"
+              pending={saveMut.isPending}
+              icon={<Save className="h-4 w-4" />}
+            >
+              Save
+            </LoadingButton>
           </div>
         </form>
       )}
