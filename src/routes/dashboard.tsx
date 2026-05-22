@@ -46,7 +46,7 @@ function CircleProgress({
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="hsl(var(--border))"
+          stroke="#e5e7eb"
           strokeWidth={stroke}
         />
         <circle
