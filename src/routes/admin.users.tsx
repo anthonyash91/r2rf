@@ -48,9 +48,9 @@ type UserRow = {
   last_sign_in_at: string | null;
   email_confirmed_at: string | null;
   roles: string[];
-  signup_ip: string | null;
   profile: { username: string; facility: string; first_name: string; last_name: string } | null;
 };
+
 
 
 function AdminUsersPage() {
