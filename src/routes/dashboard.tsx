@@ -649,12 +649,16 @@ function CategoryProgressSection({
   const sectionRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (isOpen && sectionRef.current) {
-      sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      const el = sectionRef.current;
+      requestAnimationFrame(() => {
+        const top = el.getBoundingClientRect().top + window.scrollY - 96;
+        window.scrollTo({ top, behavior: "smooth" });
+      });
     }
   }, [isOpen]);
 
   return (
-    <section ref={sectionRef} className={`rounded-2xl border border-border bg-[#fffdf8] overflow-hidden transition-opacity duration-200 ${dimmed ? "opacity-40" : "opacity-100"}`}>
+    <section ref={sectionRef} className={`scroll-mt-24 rounded-2xl border border-border bg-[#fffdf8] overflow-hidden transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "ring-2 ring-[var(--color-accent)]/40 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)]" : ""}`}>
       <button
         type="button"
         onClick={onToggle}
