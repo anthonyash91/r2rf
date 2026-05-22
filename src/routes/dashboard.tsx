@@ -426,7 +426,7 @@ function DashboardPage() {
                   );
                 })()}
 
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col [&>section]:rounded-none [&>section:first-child]:rounded-t-2xl [&>section:last-child]:rounded-b-2xl [&>section:not(:first-child)]:-mt-px">
                   {(categoriesQuery.data ?? []).map((c) => {
                     const total = progressQuery.data?.totals.get(c.id) ?? 0;
                     const read = progressQuery.data?.reads.get(c.id) ?? 0;
