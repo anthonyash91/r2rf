@@ -337,30 +337,27 @@ function AdminFacilitiesPage() {
             <div className="flex items-center gap-2">
               {remaining > 0 && (
                 <>
-                  <button
-                    type="button"
+                  <LoadingButton
+                    variant="secondary"
                     onClick={() => setVisibleCount((n) => n + 10)}
-                    className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                   >
                     Show 10 more
-                  </button>
-                  <button
-                    type="button"
+                  </LoadingButton>
+                  <LoadingButton
+                    variant="secondary"
                     onClick={() => setVisibleCount(facilities.length)}
-                    className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                   >
                     Show all
-                  </button>
+                  </LoadingButton>
                 </>
               )}
               {visibleFacilities.length > 10 && (
-                <button
-                  type="button"
+                <LoadingButton
+                  variant="secondary"
                   onClick={() => setVisibleCount(10)}
-                  className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                 >
                   Collapse
-                </button>
+                </LoadingButton>
               )}
             </div>
           </div>
