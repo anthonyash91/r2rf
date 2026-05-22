@@ -23,7 +23,7 @@ const Checkbox = React.forwardRef<
     )}
     {...props}
   >
-    <CheckboxPrimitive.Indicator className="grid place-content-center text-current">
+    <CheckboxPrimitive.Indicator forceMount className="grid place-content-center text-current data-[state=unchecked]:invisible">
       {props.checked === "indeterminate" ? (
         <Minus className="h-3 w-3 stroke-[3]" />
       ) : (
