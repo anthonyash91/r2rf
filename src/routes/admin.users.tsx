@@ -71,6 +71,7 @@ function AdminUsersPage() {
   // highlighted for the duration of this visit. On unmount (or now), bump
   // lastSeen so the AdminNav badge clears and these won't highlight next time.
   const newUsersSinceRef = useRef<string>(getLastSeenUsersAt());
+  const isNewUser = (u: UserRow) => u.created_at > newUsersSinceRef.current;
   useEffect(() => {
     setLastSeenUsersAt(new Date().toISOString());
   }, []);
