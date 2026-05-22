@@ -617,7 +617,7 @@ function IpRestrictionToggle() {
   const enabled = data ?? true;
 
   return (
-    <section className={`mt-8 rounded-2xl border bg-card p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-colors ${enabled ? "border-[var(--color-accent)]" : "border-border"}`}>
+    <section className={`mt-8 rounded-2xl border bg-card p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-all ${enabled ? "border-[var(--color-accent)] shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--color-accent)_45%,transparent)]" : "border-border"}`}>
       <div className="flex items-start gap-3 min-w-0">
         <Power className={`h-6 w-6 mt-0.5 shrink-0 ${enabled ? "text-[var(--color-accent)]" : "text-muted-foreground"}`} />
         <div className="min-w-0">
