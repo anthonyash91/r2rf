@@ -947,7 +947,7 @@ function ItemEditor({
           {!addingType && typeOptions.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {typeOptions.map((t) => (
-                <span key={t} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass(t)}`}>
+                <Badge key={t} variant="type" type={t} className="gap-1">
                   {t}
                   <button
                     type="button"
@@ -957,7 +957,7 @@ function ItemEditor({
                   >
                     <X className="h-3 w-3" />
                   </button>
-                </span>
+                </Badge>
               ))}
             </div>
           )}
