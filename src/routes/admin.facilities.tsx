@@ -124,7 +124,7 @@ function AdminFacilitiesPage() {
           <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
             <Building2 className="h-7 w-7 text-[var(--color-accent)]" /> Facilities
             {!facilitiesQuery.isLoading && (
-              <span className="text-muted-foreground font-normal">({facilities.length})</span>
+              <span className="text-muted-foreground font-normal">({facilities.length}{q ? ` of ${allFacilities.length}` : ""})</span>
             )}
           </h1>
 
