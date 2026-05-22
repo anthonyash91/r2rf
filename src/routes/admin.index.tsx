@@ -272,44 +272,24 @@ function AdminCategoriesPage() {
                 <div className="flex flex-col-reverse gap-y-1 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
                   <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
                   {(() => {
-                    const badges: React.ReactNode[] = [];
-                    badges.push(
-                      <Badge key="count" variant="count" title="Content items in this category" className="tabular-nums">
-                        {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
-                      </Badge>
-                    );
-                    if (c.home_page_mode === "custom") {
-                      badges.push(
-                        <Badge key="custom" variant="custom" title="Only shown on selected custom home pages">Custom</Badge>
-                      );
-                    }
-                    if (!c.published) {
-                      badges.push(<Badge key="draft" variant="draft">Draft</Badge>);
-                    }
                     const s = categoryTranslationStatus(c);
-                    if (s !== "complete") {
-                      const label = s === "missing" ? "Needs ES" : "Partially translated";
-                      const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
-                      badges.push(
-                        <Badge key="translation" variant="translation" title={title} className="gap-1">
-                          <Languages className="h-3 w-3" /> {label}
-                        </Badge>
-                      );
-                    }
-                    const joined = badges.length > 1;
+                    const trLabel = s === "missing" ? "Needs ES" : "Partially translated";
+                    const trTitle = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
                     return (
-                      <div className={`flex flex-wrap items-center ${joined ? "gap-0" : "gap-2"}`}>
-                        {badges.map((b: any, i) => {
-                          if (!joined) return b;
-                          const isFirst = i === 0;
-                          const isLast = i === badges.length - 1;
-                          const extra = cn(
-                            !isFirst && "rounded-l-none -ml-px",
-                            !isLast && "rounded-r-none",
-                          );
-                          return React.cloneElement(b, { className: cn(b.props.className, extra) });
-                        })}
-                      </div>
+                      <BadgeGroup>
+                        <Badge variant="count" title="Content items in this category" className="tabular-nums">
+                          {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
+                        </Badge>
+                        {c.home_page_mode === "custom" && (
+                          <Badge variant="custom" title="Only shown on selected custom home pages">Custom</Badge>
+                        )}
+                        {!c.published && <Badge variant="draft">Draft</Badge>}
+                        {s !== "complete" && (
+                          <Badge variant="translation" title={trTitle} className="gap-1">
+                            <Languages className="h-3 w-3" /> {trLabel}
+                          </Badge>
+                        )}
+                      </BadgeGroup>
                     );
                   })()}
                 </div>
