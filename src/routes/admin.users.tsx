@@ -397,13 +397,13 @@ function AdminUsersPage() {
                   ? regularUsers
                   : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
                 const filtered = q
-                  ? facilityScoped.filter((u) => {
-                      const facLabel = u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : "";
-                      return [u.email, u.profile?.username, u.profile?.first_name, u.profile?.last_name, facLabel]
+                  ? facilityScoped.filter((u) =>
+                      [u.profile?.username, u.profile?.first_name, u.profile?.last_name]
                         .filter(Boolean)
-                        .some((v) => String(v).toLowerCase().includes(q));
-                    })
+                        .some((v) => String(v).toLowerCase().includes(q)),
+                    )
                   : facilityScoped;
+
                 const visible = filtered.slice(0, regularVisible);
                 const remaining = filtered.length - visible.length;
 
