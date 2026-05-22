@@ -385,14 +385,15 @@ function AllowlistSection({
               className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
           </div>
-          <button
+          <LoadingButton
             type="submit"
-            disabled={addMut.isPending}
-            className="self-end inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            pending={addMut.isPending}
+            pendingText="Adding…"
+            icon={<Plus className="h-4 w-4" />}
+            className="self-end"
           >
-            {addMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            {addMut.isPending ? "Adding…" : "Add"}
-          </button>
+            Add
+          </LoadingButton>
         </div>
       </form>
 
