@@ -200,7 +200,7 @@ function SignupPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 mx-auto w-full max-w-md px-6 py-16">
+      <main className="flex-1 mx-auto w-full max-w-xl px-6 py-16">
         {mode === "reset" ? (
           <>
             <div className="mb-8">
