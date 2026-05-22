@@ -786,108 +786,66 @@ function UserItem({
         <TooltipProvider delayDuration={150}>
           <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
             {!isRegularUser && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={onSendReset}
-                    disabled={pendingReset}
-                    aria-label="Send password reset email"
-                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
-                  >
-                    {pendingReset ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>{pendingReset ? "Saving…" : "Send reset email"}</TooltipContent>
-              </Tooltip>
+              <IconButton
+                aria-label="Send password reset email"
+                tooltip="Send reset email"
+                icon={Send}
+                pending={pendingReset}
+                onClick={onSendReset}
+              />
             )}
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setPwOpen((v) => !v)}
-                  disabled={pendingPassword}
-                  aria-label="Set password"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
-                >
-                  {pendingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{pendingPassword ? "Saving…" : "Set password"}</TooltipContent>
-            </Tooltip>
+            <IconButton
+              aria-label="Set password"
+              tooltip="Set password"
+              icon={KeyRound}
+              pending={pendingPassword}
+              onClick={() => setPwOpen((v) => !v)}
+            />
 
             {isRegularUser && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={onResetSecurity}
-                    disabled={pendingClearSec}
-                    aria-label="Reset security questions"
-                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
-                  >
-                    {pendingClearSec ? <Loader2 className="h-4 w-4 animate-spin" /> : <HelpCircle className="h-4 w-4" />}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>{pendingClearSec ? "Saving…" : "Reset security questions"}</TooltipContent>
-              </Tooltip>
+              <IconButton
+                aria-label="Reset security questions"
+                tooltip="Reset security questions"
+                icon={HelpCircle}
+                pending={pendingClearSec}
+                onClick={onResetSecurity}
+              />
             )}
 
             {!isRegularUser && (
               <>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => {
-                        onToggleAdmin(!isAdmin);
-                      }}
-                      disabled={pendingRole}
-                      aria-label={isAdmin ? "Revoke admin" : "Make admin"}
-                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border disabled:opacity-60 ${
-                        isAdmin
-                          ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                          : "border-input bg-background hover:bg-muted"
-                      }`}
-                    >
-                      {pendingRole ? <Loader2 className="h-4 w-4 animate-spin" /> : isAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{pendingRole ? "Saving…" : isAdmin ? "Revoke admin" : "Make admin"}</TooltipContent>
-                </Tooltip>
+                <IconButton
+                  aria-label={isAdmin ? "Revoke admin" : "Make admin"}
+                  tooltip={isAdmin ? "Revoke admin" : "Make admin"}
+                  variant={isAdmin ? "destructive" : "default"}
+                  icon={isAdmin ? ShieldOff : Shield}
+                  pending={pendingRole}
+                  onClick={() => onToggleAdmin(!isAdmin)}
+                />
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => onToggleContributor(!isContributor)}
-                      disabled={pendingRole}
-                      aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
-                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border disabled:opacity-60 ${
-                        isContributor
-                          ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                          : "border-input bg-background hover:bg-muted"
-                      }`}
-                    >
-                      {pendingRole ? <Loader2 className="h-4 w-4 animate-spin" /> : isContributor ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>{pendingRole ? "Saving…" : isContributor ? "Revoke contributor" : "Make contributor"}</TooltipContent>
-                </Tooltip>
+                <IconButton
+                  aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
+                  tooltip={isContributor ? "Revoke contributor" : "Make contributor"}
+                  variant={isContributor ? "destructive" : "default"}
+                  icon={isContributor ? ShieldOff : Shield}
+                  pending={pendingRole}
+                  onClick={() => onToggleContributor(!isContributor)}
+                />
               </>
             )}
 
             <div className="mx-1 h-6 w-px bg-border" aria-hidden />
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={onDelete}
-                  disabled={pendingDelete}
-                  aria-label="Delete user"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
-                >
-                  {pendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>{pendingDelete ? "Saving…" : "Delete user"}</TooltipContent>
-            </Tooltip>
+            <IconButton
+              aria-label="Delete user"
+              tooltip="Delete user"
+              pendingTooltip="Deleting…"
+              variant="destructive"
+              icon={Trash2}
+              pending={pendingDelete}
+              onClick={onDelete}
+            />
           </div>
         </TooltipProvider>
       </div>
