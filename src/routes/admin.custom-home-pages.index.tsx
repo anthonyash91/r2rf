@@ -387,10 +387,9 @@ function AdminCustomHomePagesList() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium truncate">{c.name}</span>
                             {!c.published && (
-                              <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
-                                Draft
-                              </span>
+                              <Badge variant="draft">Draft</Badge>
                             )}
+
                           </div>
                           <p className="text-xs text-muted-foreground truncate">/{c.slug}</p>
                         </div>
