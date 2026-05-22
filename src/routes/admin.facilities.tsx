@@ -49,7 +49,13 @@ function AdminFacilitiesPage() {
     queryKey: ["facilities"],
     queryFn: () => fetchFacilities(),
   });
-  const facilities = facilitiesQuery.data?.facilities ?? [];
+  const allFacilities = facilitiesQuery.data?.facilities ?? [];
+  const q = searchQuery.trim().toLowerCase();
+  const facilities = q
+    ? allFacilities.filter((f) =>
+        [f.label, f.value].filter(Boolean).some((v) => String(v).toLowerCase().includes(q)),
+      )
+    : allFacilities;
   const visibleFacilities = facilities.slice(0, visibleCount);
   const remaining = Math.max(0, facilities.length - visibleFacilities.length);
 
