@@ -46,7 +46,7 @@ function CircleProgress({
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="hsl(var(--border))"
+          stroke="#e5e7eb"
           strokeWidth={stroke}
         />
         <circle
@@ -611,6 +611,7 @@ function CategoryProgressSection({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        style={open ? { backgroundColor: "#f7f5ec" } : undefined}
         className={`w-full flex items-center gap-4 p-4 sm:p-5 ${open ? "border-b border-border" : ""} text-left hover:bg-muted/40 transition-colors`}
       >
         {!isAdmin ? (
@@ -648,7 +649,7 @@ function CategoryProgressSection({
               const isRead = readSet.has(it.id);
               const description = pickLang(lang, it.description, it.description_es);
               return (
-                <li key={it.id} className="flex flex-col gap-2 py-4 pl-[22px] pr-[22px]">
+                <li key={it.id} className="flex flex-col gap-2 p-6">
                   <div className="flex items-center gap-2 flex-wrap">
                     {newItemSet.has(it.id) && !isRead && (
                       <Badge variant="new">{t("category.newContent")}</Badge>
