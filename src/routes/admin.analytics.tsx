@@ -112,7 +112,7 @@ function AdminAnalyticsPage() {
       <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
         <PageHeader
           icon={BarChart3}
-          title="Usage analytics"
+          title="Usage Analytics"
           description="Category views and content clicks across the site."
         />
         <div className="flex flex-col gap-2 w-full lg:w-auto sm:flex-row sm:flex-wrap lg:flex-nowrap">
