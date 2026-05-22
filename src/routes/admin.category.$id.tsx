@@ -10,7 +10,7 @@ import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
 import { Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { generateCategoryCopy, generateCategoryIcon, generateContentDescription } from "@/lib/category-ai.functions";
+import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { FileUploader } from "@/components/FileUploader";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
