@@ -302,38 +302,74 @@ function DashboardPage() {
                 {!isAdmin && (() => {
                   let totalAll = 0;
                   let readAll = 0;
+                  let activeCats = 0;
+                  let badgeCats = 0;
                   for (const c of categoriesQuery.data ?? []) {
-                    totalAll += progressQuery.data?.totals.get(c.id) ?? 0;
-                    readAll += progressQuery.data?.reads.get(c.id) ?? 0;
+                    const t2 = progressQuery.data?.totals.get(c.id) ?? 0;
+                    const r2 = progressQuery.data?.reads.get(c.id) ?? 0;
+                    totalAll += t2;
+                    readAll += r2;
+                    if (r2 > 0) activeCats += 1;
+                    if (t2 > 0 && r2 >= t2) badgeCats += 1;
                   }
                   const pctAll = totalAll > 0 ? Math.round((readAll / totalAll) * 100) : 0;
+                  const minutes = progressQuery.data?.minutesSpent ?? 0;
+                  const hours = Math.floor(minutes / 60);
+                  // Day streak: count consecutive days ending today or yesterday
+                  const readDays = progressQuery.data?.readDays ?? new Set<string>();
+                  let streak = 0;
+                  if (readDays.size > 0) {
+                    const today = new Date();
+                    const key = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+                    let cursor = new Date(today);
+                    if (!readDays.has(key(cursor))) cursor.setDate(cursor.getDate() - 1);
+                    while (readDays.has(key(cursor))) {
+                      streak += 1;
+                      cursor.setDate(cursor.getDate() - 1);
+                    }
+                  }
+                  const stats: Array<{ icon: typeof BookOpen; label: string; value: string }> = [
+                    { icon: CheckCircle2, label: "Completed", value: readAll.toLocaleString() },
+                    { icon: Layers, label: "Categories", value: activeCats.toLocaleString() },
+                    { icon: Clock, label: "Hours Spent", value: hours.toLocaleString() },
+                    { icon: Flame, label: "Day Streak", value: streak.toLocaleString() },
+                    { icon: Award, label: "Badges", value: badgeCats.toLocaleString() },
+                  ];
                   return (
-                    <div className="grid sm:grid-cols-3 gap-4 mb-8">
-                      <div className="rounded-2xl border border-border bg-card p-5">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <BookOpen className="h-5 w-5" /> Total Items
+                    <>
+                      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6 flex items-center gap-6">
+                        <CircleProgress value={pctAll} size={96} stroke={8} />
+                        <div className="min-w-0">
+                          <h2 className="font-display text-xl sm:text-2xl font-semibold">Overall Progress</h2>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            You&rsquo;ve completed {readAll.toLocaleString()} of {totalAll.toLocaleString()} available items. Keep going!
+                          </p>
                         </div>
-                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{totalAll.toLocaleString()}</p>
                       </div>
-                      <div className="rounded-2xl border border-border bg-card p-5">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <CheckCircle2 className="h-5 w-5" /> Items Read
-                        </div>
-                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{readAll.toLocaleString()}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border bg-card p-5">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Check className="h-5 w-5" /> Overall Progress
-                        </div>
-                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{pctAll}%</p>
-                        <Progress value={pctAll} className="mt-3 h-1.5" />
-                      </div>
-                    </div>
 
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+                        {stats.map((s) => {
+                          const Icon = s.icon;
+                          return (
+                            <div key={s.label} className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-[var(--color-accent)] flex-shrink-0">
+                                <Icon className="h-5 w-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-display text-2xl font-semibold leading-none tabular-nums">{s.value}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <h2 className="font-display text-lg font-semibold mb-3">Category Progress</h2>
+                    </>
                   );
                 })()}
 
-                <div className="space-y-6">
+                <div className="grid sm:grid-cols-2 gap-4">
                   {(categoriesQuery.data ?? []).map((c) => {
                     const total = progressQuery.data?.totals.get(c.id) ?? 0;
                     const read = progressQuery.data?.reads.get(c.id) ?? 0;
