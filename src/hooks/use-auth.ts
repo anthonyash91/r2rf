@@ -37,6 +37,7 @@ export function useAuth() {
       if (s?.user) {
         setTimeout(() => loadRoles(s.user.id), 0);
         setTimeout(() => syncFacilityCustomHome(), 0);
+        setTimeout(() => logDailyLogin(s.user.id), 0);
       } else {
         setRoles([]);
         setActiveCustomHome(null);
@@ -49,6 +50,7 @@ export function useAuth() {
       if (s?.user) {
         loadRoles(s.user.id);
         syncFacilityCustomHome();
+        logDailyLogin(s.user.id);
       }
     });
 
