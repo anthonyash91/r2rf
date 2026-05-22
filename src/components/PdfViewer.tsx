@@ -69,8 +69,8 @@ export default function PdfViewer({ url }: { url: string }) {
           key={url}
           className="mx-auto w-fit max-w-none"
           onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-          loading={<div className="p-8 text-sm text-muted-foreground">Loading PDF…</div>}
-          error={<div className="p-8 text-sm text-destructive">Failed to load PDF.</div>}
+          loading={<PdfLoading />}
+          error={<PdfError />}
         >
           {pageWidth > 0 && (
             <Page
