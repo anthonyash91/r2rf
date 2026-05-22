@@ -109,14 +109,15 @@ function AdminIpAllowlistPage() {
                 className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </div>
-            <button
+            <LoadingButton
               type="submit"
-              disabled={addBothMut.isPending}
-              className="self-end inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              pending={addBothMut.isPending}
+              pendingText="Adding…"
+              icon={<Plus className="h-4 w-4" />}
+              className="self-end"
             >
-              {addBothMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              {addBothMut.isPending ? "Adding…" : "Add to both"}
-            </button>
+              Add to both
+            </LoadingButton>
           </div>
         </form>
       </section>
