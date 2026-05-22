@@ -1,12 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { isAuthIpAllowed } from "@/lib/auth-ip.functions";
 import { useActiveCustomHome } from "@/lib/custom-home-context";
 import { useSecurityLock } from "@/lib/security-lock";
 import { Languages, Menu, X } from "lucide-react";
@@ -21,17 +18,9 @@ export function SiteHeader() {
     await supabase.auth.signOut();
     navigate({ to: "/" });
   };
-  const checkAuthIp = useServerFn(isAuthIpAllowed);
-  const { data: authIp } = useQuery({
-    queryKey: ["auth-ip-allowed"],
-    queryFn: () => checkAuthIp(),
-    staleTime: 60_000,
-  });
-  // Show admin auth link to visitors whose IP is allowed (admin sign-in is IP-gated).
-  const showAuthLink = authIp?.allowed === true;
   const isAdminUser = isAdmin || isContributor;
   const signOutLabel = isAdminUser ? t("nav.adminSignOut") : t("nav.signOut");
-  const signInLabel = t("nav.adminSignIn");
+  const signInLabel = t("nav.signIn");
 
   const toggleLang = () => setLang(lang === "en" ? "es" : "en");
 
@@ -98,16 +87,9 @@ export function SiteHeader() {
               {signOutLabel}
             </button>
           ) : (
-            <>
-              <Link to="/signup" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
-                {t("nav.signUp")}
-              </Link>
-              {showAuthLink && (
-                <Link to="/auth" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
-                  {signInLabel}
-                </Link>
-              )}
-            </>
+            <Link to="/signup" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
+              {signInLabel}
+            </Link>
           )}
           <button
             onClick={(e) => {

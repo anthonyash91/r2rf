@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Shield, LogIn, Pencil, Ban, Power } from "lucide-react";
+import { Plus, Trash2, Shield, Pencil, Ban, Power } from "lucide-react";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
@@ -14,9 +14,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { PageHeader } from "@/components/PageHeader";
 import { Switch } from "@/components/ui/switch";
-
-
-
 
 export const Route = createFileRoute("/admin/ip-allowlist")({
   beforeLoad: requireAdminBeforeLoad,
@@ -33,115 +30,19 @@ type IpRow = {
 const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 
 function AdminIpAllowlistPage() {
-  const qc = useQueryClient();
-  const confirmDelete = useConfirmDelete();
-  const [ip, setIp] = useState("");
-  const [label, setLabel] = useState("");
-
-  const addBothMut = useMutation({
-    mutationFn: async (input: { ip_address: string; label: string }) => {
-      const [a, b] = await Promise.all([
-        supabase.from("ip_allowlist").insert(input),
-        supabase.from("auth_ip_allowlist").insert(input),
-      ]);
-      if (a.error) throw a.error;
-      if (b.error) throw b.error;
-    },
-    onSuccess: () => {
-      toast.success("IP added to both allowlists");
-      setIp("");
-      setLabel("");
-      qc.invalidateQueries({ queryKey: ["admin", "ip_allowlist"] });
-      qc.invalidateQueries({ queryKey: ["admin", "auth_ip_allowlist"] });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  function handleAddBoth(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = ip.trim();
-    if (!IP_REGEX.test(trimmed)) {
-      toast.error("Enter a valid IPv4 address");
-      return;
-    }
-    addBothMut.mutate({ ip_address: trimmed, label: label.trim() });
-  }
-
   return (
     <div>
       <PageHeader
         className="mt-6"
         icon={Shield}
-        title="IP Allowlists"
-        description="Control which IP addresses can reach the site and the login page. Changes take effect within ~30 seconds."
+        title="IP Allowlist"
+        description="Control which IP addresses can reach the site. Changes take effect within ~30 seconds."
       />
 
       <IpRestrictionToggle />
 
-
-
-      <SectionCard padded={false} className="mt-8 overflow-hidden">
-        <div className="p-6 border-b border-border">
-          <h2 className="font-display text-xl font-semibold">Add to both allowlists</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Adds the IP to the site allowlist and the login / sign-up allowlist in one step.
-          </p>
-        </div>
-        <form onSubmit={handleAddBoth} className="p-6">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto]">
-            <div>
-              <label className="text-sm font-medium">IPv4 address</label>
-              <input
-                required
-                value={ip}
-                onChange={(e) => setIp(e.target.value)}
-                placeholder="192.168.1.1"
-                className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Label (optional)</label>
-              <input
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                placeholder="Office"
-                className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-              />
-            </div>
-            <LoadingButton
-              type="submit"
-              pending={addBothMut.isPending}
-              pendingText="Adding…"
-              icon={<Plus className="h-4 w-4" />}
-              className="self-end"
-            >
-              Add to both
-            </LoadingButton>
-          </div>
-        </form>
-      </SectionCard>
-
       <div className="mt-8">
-        <AllowlistSection
-          table="ip_allowlist"
-          queryKey={["admin", "ip_allowlist"]}
-          icon={<Shield className="h-5 w-5" />}
-          title="Site Allowlist"
-          description="Only requests from these IPs can reach any page on the site."
-          emptyMessage="No IPs allowed — the site is currently inaccessible to everyone."
-          allowBulk
-        />
-      </div>
-
-      <div className="mt-8">
-        <AllowlistSection
-          table="auth_ip_allowlist"
-          queryKey={["admin", "auth_ip_allowlist"]}
-          icon={<LogIn className="h-5 w-5" />}
-          title="Login / Sign-Up Allowlist"
-          description="Only requests from these IPs can load the /auth page. Applied in addition to the site allowlist."
-          emptyMessage="No IPs allowed — the login page is currently inaccessible to everyone."
-        />
+        <AllowlistSection />
       </div>
 
       <div className="mt-8">
@@ -245,25 +146,10 @@ function BlockedSection() {
   );
 }
 
-function AllowlistSection({
-  table,
-  queryKey,
-  icon,
-  title,
-  description,
-  emptyMessage,
-  allowBulk = false,
-}: {
-  table: "ip_allowlist" | "auth_ip_allowlist";
-  queryKey: readonly unknown[];
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  emptyMessage: string;
-  allowBulk?: boolean;
-}) {
+function AllowlistSection() {
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
+  const queryKey = ["admin", "ip_allowlist"] as const;
   const [ip, setIp] = useState("");
   const [label, setLabel] = useState("");
   const [bulk, setBulk] = useState("");
@@ -293,7 +179,7 @@ function AllowlistSection({
         return true;
       });
       if (unique.length === 0) throw new Error("Enter at least one IP address");
-      const { error } = await supabase.from(table).insert(unique);
+      const { error } = await supabase.from("ip_allowlist").insert(unique);
       if (error) throw error;
       return unique.length;
     },
@@ -309,7 +195,7 @@ function AllowlistSection({
     queryKey,
     queryFn: async (): Promise<IpRow[]> => {
       const { data, error } = await supabase
-        .from(table)
+        .from("ip_allowlist")
         .select("*")
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -319,7 +205,7 @@ function AllowlistSection({
 
   const addMut = useMutation({
     mutationFn: async (input: { ip_address: string; label: string }) => {
-      const { error } = await supabase.from(table).insert(input);
+      const { error } = await supabase.from("ip_allowlist").insert(input);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -333,7 +219,7 @@ function AllowlistSection({
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from(table).delete().eq("id", id);
+      const { error } = await supabase.from("ip_allowlist").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -357,9 +243,11 @@ function AllowlistSection({
     <SectionCard padded={false} className="overflow-hidden">
       <div className="p-6 border-b border-border">
         <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-          {icon} {title}
+          <Shield className="h-5 w-5" /> Site Allowlist
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Only requests from these IPs can reach any page on the site.
+        </p>
       </div>
 
       <form onSubmit={handleAdd} className="p-6 border-b border-border">
@@ -395,50 +283,47 @@ function AllowlistSection({
         </div>
       </form>
 
-      {allowBulk && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            bulkMut.mutate(bulk);
-          }}
-          className="p-6 border-b border-border"
-        >
-          <label className="text-sm font-medium">
-            Bulk add (one per line — <span className="font-mono">IP,label</span>; label is optional)
-          </label>
-          <textarea
-            value={bulk}
-            onChange={(e) => setBulk(e.target.value)}
-            rows={5}
-            placeholder={"192.168.1.1,Office\n10.0.0.42,Home\n203.0.113.7"}
-            className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-          />
-          <div className="mt-3 flex justify-end">
-            <LoadingButton
-              type="submit"
-              pending={bulkMut.isPending}
-              pendingText="Adding…"
-              disabled={bulk.trim() === ""}
-              icon={<Plus className="h-4 w-4" />}
-            >
-              Add all
-            </LoadingButton>
-          </div>
-        </form>
-      )}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          bulkMut.mutate(bulk);
+        }}
+        className="p-6 border-b border-border"
+      >
+        <label className="text-sm font-medium">
+          Bulk add (one per line — <span className="font-mono">IP,label</span>; label is optional)
+        </label>
+        <textarea
+          value={bulk}
+          onChange={(e) => setBulk(e.target.value)}
+          rows={5}
+          placeholder={"192.168.1.1,Office\n10.0.0.42,Home\n203.0.113.7"}
+          className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+        />
+        <div className="mt-3 flex justify-end">
+          <LoadingButton
+            type="submit"
+            pending={bulkMut.isPending}
+            pendingText="Adding…"
+            disabled={bulk.trim() === ""}
+            icon={<Plus className="h-4 w-4" />}
+          >
+            Add all
+          </LoadingButton>
+        </div>
+      </form>
 
       <div>
         {isLoading ? (
           <EmptyState>Loading…</EmptyState>
         ) : rows.length === 0 ? (
-          <EmptyState>{emptyMessage}</EmptyState>
+          <EmptyState>No IPs allowed — the site is currently inaccessible to everyone.</EmptyState>
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((r) => (
               <AllowlistRow
                 key={r.id}
                 row={r}
-                table={table}
                 queryKey={queryKey}
                 pendingDelete={isMutationPendingFor(deleteMut, r.id)}
                 onDelete={async () => {
@@ -461,13 +346,11 @@ function AllowlistSection({
 
 function AllowlistRow({
   row,
-  table,
   queryKey,
   onDelete,
   pendingDelete = false,
 }: {
   row: IpRow;
-  table: "ip_allowlist" | "auth_ip_allowlist";
   queryKey: readonly unknown[];
   onDelete: () => void;
   pendingDelete?: boolean;
@@ -479,7 +362,7 @@ function AllowlistRow({
   const updateMut = useMutation({
     mutationFn: async (newLabel: string) => {
       const { error } = await supabase
-        .from(table)
+        .from("ip_allowlist")
         .update({ label: newLabel })
         .eq("id", row.id);
       if (error) throw error;
@@ -617,7 +500,7 @@ function IpRestrictionToggle() {
         <div className="min-w-0">
           <h2 className="font-display text-xl font-semibold">IP restriction</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            When off, anyone can access any part of the site — the allowlists, blocklist, and per-page IP
+            When off, anyone can access any part of the site — the allowlist, blocklist, and per-page IP
             rules below are bypassed. When on, restrictions apply as configured. Changes take effect within ~30 seconds.
           </p>
         </div>
@@ -636,4 +519,3 @@ function IpRestrictionToggle() {
     </section>
   );
 }
-

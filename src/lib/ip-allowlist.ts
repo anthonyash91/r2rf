@@ -6,8 +6,6 @@ type Cache = { ips: Set<string>; expiresAt: number };
 
 let siteCache: Cache | null = null;
 let siteInflight: Promise<Set<string>> | null = null;
-let authCache: Cache | null = null;
-let authInflight: Promise<Set<string>> | null = null;
 let blockedCache: Cache | null = null;
 let blockedInflight: Promise<Set<string>> | null = null;
 
@@ -55,20 +53,7 @@ export async function getAllowedIps(): Promise<Set<string>> {
   return siteInflight;
 }
 
-export async function getAuthAllowedIps(): Promise<Set<string>> {
-  const now = Date.now();
-  if (authCache && authCache.expiresAt > now) return authCache.ips;
-  if (authInflight) return authInflight;
-  authInflight = fetchTable("auth_ip_allowlist")
-    .then((ips) => {
-      authCache = { ips, expiresAt: Date.now() + CACHE_TTL_MS };
-      return ips;
-    })
-    .finally(() => {
-      authInflight = null;
-    });
-  return authInflight;
-}
+
 
 export async function getBlockedIps(): Promise<Set<string>> {
   const now = Date.now();
@@ -103,7 +88,7 @@ async function fetchBlockedIps(): Promise<Set<string>> {
 
 export function invalidateAllowlistCache() {
   siteCache = null;
-  authCache = null;
+  
   blockedCache = null;
   customHomeCache = null;
   enabledCache = null;

@@ -2,7 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { getAllowedIps, getAuthAllowedIps, getBlockedIps, getClientIp, getCustomHomeRestrictions, isIpRestrictionEnabled, renderBlockedPage } from "./lib/ip-allowlist";
+import { getAllowedIps, getBlockedIps, getClientIp, getCustomHomeRestrictions, isIpRestrictionEnabled, renderBlockedPage } from "./lib/ip-allowlist";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -127,22 +127,8 @@ export default {
         });
       }
 
-      // Additional gate for the login/sign-up page.
-      if (pathname === "/auth" || pathname.startsWith("/auth/")) {
-        let authAllowed = false;
-        try {
-          const authList = await getAuthAllowedIps();
-          authAllowed = !!ip && authList.has(ip);
-        } catch (err) {
-          console.error("[auth-ip-allowlist] check failed:", err);
-        }
-        if (!authAllowed) {
-          return new Response(renderBlockedPage(ip, "auth"), {
-            status: 403,
-            headers: { "content-type": "text/html; charset=utf-8" },
-          });
-        }
-      }
+
+
 
       // Per-custom-home-page IP restriction. The slug is the first path segment
       // (TanStack catch-all route `/$customHome`). Only enforce if the slug
