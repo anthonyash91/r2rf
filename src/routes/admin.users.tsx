@@ -652,9 +652,7 @@ function UserItem({
                 <Badge variant="user">User</Badge>
               )}
               {isNew && (
-                <Badge variant="default" className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]">
-                  New
-                </Badge>
+                <Badge variant="new">New</Badge>
               )}
 
             </div>
