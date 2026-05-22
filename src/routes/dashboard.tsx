@@ -703,13 +703,14 @@ function CategoryProgressSection({
               return (
                 <li key={it.id} className="flex flex-col gap-[10px] bg-[#fffdf8] p-6">
                   <div className="flex items-center gap-2 flex-wrap">
-                    {newItemSet.has(it.id) && !isRead && (
-                      <Badge variant="new">{t("category.newContent")}</Badge>
-                    )}
-
-                    <Badge variant="type" type={it.type}>
-                      {translateType(lang, it.type)}
-                    </Badge>
+                    <BadgeGroup>
+                      {newItemSet.has(it.id) && !isRead && (
+                        <Badge variant="new">{t("category.newContent")}</Badge>
+                      )}
+                      <Badge variant="type" type={it.type}>
+                        {translateType(lang, it.type)}
+                      </Badge>
+                    </BadgeGroup>
                     {it.duration && (
                       <span className="text-xs text-muted-foreground">
                         {translateDuration(lang, withActionWord(it.duration, it.type))}
