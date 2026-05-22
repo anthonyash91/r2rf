@@ -30,6 +30,8 @@ import { useTranslateToSpanish, TranslatingIndicator } from "@/components/Transl
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/Badge";
+
 
 export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
@@ -295,24 +297,20 @@ function AdminCategoriesPage() {
                 <div className="flex flex-col-reverse gap-y-1 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
                   <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
                   <div className="flex flex-wrap items-center gap-2 @lg:contents">
-                    <span
+                    <Badge
+                      variant="count"
                       title="Content items in this category"
-                      className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border tabular-nums"
+                      className="tabular-nums"
                     >
                       {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
-                    </span>
+                    </Badge>
                     {c.home_page_mode === "custom" && (
-                      <span
-                        title="Only shown on selected custom home pages"
-                        className="shrink-0 text-xs rounded-full bg-[var(--color-accent)]/15 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
-                      >
+                      <Badge variant="custom" title="Only shown on selected custom home pages">
                         Custom
-                      </span>
+                      </Badge>
                     )}
                     {!c.published && (
-                      <span className="shrink-0 text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border">
-                        Draft
-                      </span>
+                      <Badge variant="draft">Draft</Badge>
                     )}
                     {(() => {
                       const s = categoryTranslationStatus(c);
@@ -320,12 +318,9 @@ function AdminCategoriesPage() {
                       const label = s === "missing" ? "Needs ES" : "Partially translated";
                       const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
                       return (
-                        <span
-                          title={title}
-                          className="shrink-0 inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
-                        >
+                        <Badge variant="translation" title={title} className="gap-1">
                           <Languages className="h-3 w-3" /> {label}
-                        </span>
+                        </Badge>
                       );
                     })()}
                   </div>
@@ -345,14 +340,15 @@ function AdminCategoriesPage() {
                           key={p.id}
                           to="/admin/custom-home-pages/$id"
                           params={{ id: p.id }}
-                          className="text-xs rounded-full bg-[var(--color-accent)]/10 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30 hover:bg-[var(--color-accent)]/20"
+                          className="rounded-full hover:opacity-80 transition-opacity"
                         >
-                          {p.name}
+                          <Badge variant="custom">{p.name}</Badge>
                         </Link>
                       ))
                     )}
                   </div>
                 )}
+
               </div>
             </div>
             <TooltipProvider delayDuration={150}>
