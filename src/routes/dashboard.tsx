@@ -471,7 +471,7 @@ function CategoryProgressSection({
         {!isAdmin && (
           <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
             {hasRecent && (
-              <NewBadge className="lg:hidden">{t("category.newContentAdded")}</NewBadge>
+              <Badge variant="new" className="lg:hidden">{t("category.newContentAdded")}</Badge>
             )}
             <div className="hidden lg:block w-32">
               <Progress value={pct} className="h-1.5" />
