@@ -101,19 +101,10 @@ function AdminFacilitiesPage() {
     onSuccess: async (res) => {
       toast.success(`Deleted ${res.deleted} ${res.deleted === 1 ? "facility" : "facilities"}`);
       await invalidate();
-      setSelectedIds(new Set());
+      bulk.clear();
     },
     onError: (e: any) => toast.error(e.message),
   });
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const toggleOne = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
 
 
   return (
