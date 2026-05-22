@@ -102,16 +102,15 @@ function AdminCertificatePage() {
         <PageHeader
           icon={Award}
           title="Certificate program section"
-          description="Edit the eyebrow, headline, subheading, and callout shown in the certificate program section on the home page. The headline is split into three parts; the middle part is shown in accent italic."
+          description="Edit the eyebrow, headline, subheading, and callout shown in the certificate program section on the home page."
         />
       </div>
       <SectionCard className="mt-8">
-
         {isLoading ? (
-          <p className="mt-6 text-muted-foreground">Loading…</p>
+          <p className="text-muted-foreground">Loading…</p>
         ) : (
           <form
-            className="mt-6 space-y-4"
+            className="space-y-4"
             onSubmit={(e) => { e.preventDefault(); saveMut.mutate(hero); }}
           >
             <LabeledField label="Eyebrow (small pill above headline)">
