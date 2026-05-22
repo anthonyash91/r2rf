@@ -29,7 +29,8 @@ import { FileUploader } from "@/components/FileUploader";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { SortableList } from "@/components/SortableList";
 import { useConfirm } from "@/components/ConfirmDialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -619,83 +620,50 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                 </div>
                 <TooltipProvider delayDuration={150}>
                   <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          aria-label={item.published ? "Unpublish" : "Publish"}
-                          disabled={togglePublish.isPending && (togglePublish.variables as any)?.id === item.id}
-                          onClick={() => togglePublish.mutate(item)}
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
-                        >
-                          {togglePublish.isPending && (togglePublish.variables as any)?.id === item.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : item.published ? (
-                            <Eye className="h-4 w-4" />
-                          ) : (
-                            <EyeOff className="h-4 w-4" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {togglePublish.isPending && (togglePublish.variables as any)?.id === item.id
-                          ? "Saving…"
-                          : item.published ? "Unpublish" : "Publish"}
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link
-                          to="/category/$slug"
-                          params={{ slug: categorySlug }}
-                          hash={`item-${item.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label="View on site"
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent>View on site</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          onClick={() => setEditing(item)}
-                          aria-label="Edit"
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit</TooltipContent>
-                    </Tooltip>
+                    <IconButton
+                      aria-label={item.published ? "Unpublish" : "Publish"}
+                      tooltip={item.published ? "Unpublish" : "Publish"}
+                      icon={item.published ? Eye : EyeOff}
+                      pending={togglePublish.isPending && (togglePublish.variables as any)?.id === item.id}
+                      onClick={() => togglePublish.mutate(item)}
+                    />
+                    <TooltipWrap tooltip="View on site">
+                      <Link
+                        to="/category/$slug"
+                        params={{ slug: categorySlug }}
+                        hash={`item-${item.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="View on site"
+                        className={iconButtonClassName()}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </TooltipWrap>
+                    <IconButton
+                      aria-label="Edit"
+                      tooltip="Edit"
+                      icon={Pencil}
+                      onClick={() => setEditing(item)}
+                    />
                     <div className="mx-1 h-6 w-px bg-border" aria-hidden />
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          aria-label="Delete"
-                          disabled={deleteMut.isPending && deleteMut.variables === item.id}
-                          onClick={async () => {
-                            await confirm({
-                              title: `Delete "${item.title}"?`,
-                              description: "This content will be permanently removed.",
-                              confirmLabel: "Delete",
-                              destructive: true,
-                              onConfirm: () => deleteMut.mutateAsync(item.id),
-                            });
-                          }}
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
-                        >
-                          {deleteMut.isPending && deleteMut.variables === item.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete</TooltipContent>
-                    </Tooltip>
+                    <IconButton
+                      aria-label="Delete"
+                      tooltip="Delete"
+                      pendingTooltip="Deleting…"
+                      variant="destructive"
+                      icon={Trash2}
+                      pending={deleteMut.isPending && deleteMut.variables === item.id}
+                      onClick={async () => {
+                        await confirm({
+                          title: `Delete "${item.title}"?`,
+                          description: "This content will be permanently removed.",
+                          confirmLabel: "Delete",
+                          destructive: true,
+                          onConfirm: () => deleteMut.mutateAsync(item.id),
+                        });
+                      }}
+                    />
                   </div>
                 </TooltipProvider>
               </div>
