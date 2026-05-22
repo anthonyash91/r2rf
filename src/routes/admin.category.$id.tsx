@@ -270,6 +270,14 @@ function CategoryEditor({
               )}
             </div>
           </div>
+          <textarea
+            value={iconPrompt}
+            onChange={(e) => setIconPrompt(e.target.value)}
+            placeholder="Optional: extra instructions for the AI (e.g. 'a leaf next to an open book')"
+            rows={2}
+            maxLength={1000}
+            className="mt-3 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+          />
         </div>
         <label className="block">
           <span className="text-sm font-medium">Home Page</span>
