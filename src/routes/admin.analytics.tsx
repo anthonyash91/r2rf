@@ -243,10 +243,16 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
-function CategorySection({ row, isOpen, onToggle }: { row: AggregatedRow; isOpen: boolean; onToggle: () => void }) {
+function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow; isOpen: boolean; dimmed?: boolean; onToggle: () => void }) {
   const open = isOpen;
+  const sectionRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (isOpen && sectionRef.current) {
+      sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isOpen]);
   return (
-    <SectionCard padded={false} className="overflow-hidden bg-[#fffdf8]">
+    <SectionCard ref={sectionRef as any} padded={false} className={`overflow-hidden bg-[#fffdf8] transition-opacity duration-200 ${dimmed ? "opacity-40" : "opacity-100"}`}>
       <button
         type="button"
         onClick={onToggle}
