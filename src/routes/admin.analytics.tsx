@@ -7,6 +7,7 @@ import { ArrowLeft, BarChart3, ChevronDown, Download, Eye, MousePointerClick } f
 import type { Category, ContentItem } from "@/lib/categories";
 import { Badge } from "@/components/Badge";
 import { LoadingButton } from "@/components/LoadingButton";
+import { SectionCard } from "@/components/SectionCard";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
@@ -174,13 +175,13 @@ function AdminAnalyticsPage() {
 
 function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5">
+    <SectionCard as="div" padded={false} className="p-5">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         {icon}
         {label}
       </div>
       <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{value.toLocaleString()}</p>
-    </div>
+    </SectionCard>
   );
 }
 
@@ -238,7 +239,7 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
 function CategorySection({ row }: { row: AggregatedRow }) {
   const [open, setOpen] = useState(false);
   return (
-    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+    <SectionCard padded={false} className="overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -290,6 +291,6 @@ function CategorySection({ row }: { row: AggregatedRow }) {
           </ul>
         )
       )}
-    </section>
+    </SectionCard>
   );
 }

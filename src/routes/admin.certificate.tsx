@@ -8,6 +8,7 @@ import { ArrowLeft, Save, RefreshCw, Award } from "lucide-react";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { LabeledField } from "@/components/FormField";
 import { LoadingButton } from "@/components/LoadingButton";
+import { SectionCard } from "@/components/SectionCard";
 
 export const Route = createFileRoute("/admin/certificate")({
   beforeLoad: requireAdminBeforeLoad,
@@ -100,7 +101,7 @@ function AdminCertificatePage() {
         <ArrowLeft className="h-4 w-4" /> Back to admin
       </Link>
 
-      <section className="mt-6 rounded-2xl border border-border bg-card p-6">
+      <SectionCard className="mt-6">
         <h1 className="font-display text-2xl font-semibold flex items-center gap-2"><Award className="h-6 w-6 text-[var(--color-accent)]" /> Certificate program section</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Edit the eyebrow, headline, subheading, and callout shown in the certificate program section on the home page. The headline is split into three parts; the middle part is shown in accent italic.
@@ -349,7 +350,7 @@ function AdminCertificatePage() {
             </div>
           </form>
         )}
-      </section>
+      </SectionCard>
     </div>
   );
 }

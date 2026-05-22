@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download } from "lucide-react";
 import { Badge } from "@/components/Badge";
 import { LoadingButton } from "@/components/LoadingButton";
+import { SectionCard } from "@/components/SectionCard";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
 import {
@@ -169,16 +170,16 @@ function AdminUsersPage() {
       {(() => {
         if (isLoading) {
           return (
-            <div className="mt-6 rounded-2xl border border-border bg-card p-6 text-muted-foreground">
+            <SectionCard as="div" className="mt-6 text-muted-foreground">
               Loading…
-            </div>
+            </SectionCard>
           );
         }
         if (!data?.users.length) {
           return (
-            <div className="mt-6 rounded-2xl border border-border bg-card p-6 text-muted-foreground">
+            <SectionCard as="div" className="mt-6 text-muted-foreground">
               No users yet.
-            </div>
+            </SectionCard>
           );
         }
         const adminUsers = data.users.filter(
@@ -329,13 +330,13 @@ function AdminUsersPage() {
                   </LoadingButton>
                 </form>
               )}
-              <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+              <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
                 {adminUsers.length ? (
                   <ul className="divide-y divide-border">{adminUsers.map(renderItem)}</ul>
                 ) : (
                   <div className="p-6 text-muted-foreground text-sm">No admin users.</div>
                 )}
-              </div>
+              </SectionCard>
             </section>
 
             <section className="mt-8">

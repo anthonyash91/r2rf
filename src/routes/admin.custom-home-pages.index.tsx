@@ -8,6 +8,7 @@ import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, LayoutTemplate } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
+import { SectionCard } from "@/components/SectionCard";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
@@ -455,7 +456,7 @@ function AdminCustomHomePagesList() {
         </form>
       )}
 
-      <div className="mt-8 rounded-2xl border border-border bg-card overflow-hidden">
+      <SectionCard as="div" padded={false} className="mt-8 overflow-hidden">
         {isLoading ? (
           <div className="p-6 text-muted-foreground">Loading…</div>
         ) : pages.length === 0 ? (
@@ -554,7 +555,7 @@ function AdminCustomHomePagesList() {
             })}
           </ul>
         )}
-      </div>
+      </SectionCard>
     </div>
   );
 }

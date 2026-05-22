@@ -10,6 +10,7 @@ import { ArrowLeft, Save, ExternalLink, LayoutTemplate } from "lucide-react";
 import { Badge } from "@/components/Badge";
 import { LabeledInput, LabeledTextarea } from "@/components/FormField";
 import { LoadingButton, actionButtonClassName } from "@/components/LoadingButton";
+import { SectionCard } from "@/components/SectionCard";
 
 
 const RESERVED_SLUGS = new Set([
@@ -174,7 +175,7 @@ function AdminCustomHomePageEdit() {
         onSubmit={(e) => { e.preventDefault(); saveMut.mutate(); }}
         className="mt-6 space-y-6"
       >
-        <section className="rounded-2xl border border-border bg-card p-6 space-y-4">
+        <SectionCard className="space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="font-display text-2xl font-semibold flex items-center gap-2"><LayoutTemplate className="h-6 w-6 text-[var(--color-accent)]" /> Edit custom home page</h1>
@@ -229,9 +230,9 @@ function AdminCustomHomePageEdit() {
             inputClassName="font-mono"
             description="If empty, anyone with the link can access this page. If one or more IPs are listed, only those IPs can access it."
           />
-        </section>
+        </SectionCard>
 
-        <section className="rounded-2xl border border-border bg-card p-6">
+        <SectionCard>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="font-display text-lg font-semibold">Categories shown on this page</h2>
@@ -330,7 +331,7 @@ function AdminCustomHomePageEdit() {
           <p className="text-xs text-muted-foreground my-[8px] mt-[8px]">
             Only published categories appear publicly on the custom home page, even if drafts are selected here.
           </p>
-        </section>
+        </SectionCard>
 
         <div className="flex justify-end">
           <LoadingButton
