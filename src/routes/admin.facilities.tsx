@@ -360,44 +360,30 @@ function AdminFacilitiesPage() {
                           </div>
                           <TooltipProvider delayDuration={150}>
                             <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    aria-label="Edit"
-                                    onClick={() => { setEditingId(f.id); setEditingLabel(f.label); }}
-                                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                                  >
-                                    <Pencil className="h-4 w-4" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Edit</TooltipContent>
-                              </Tooltip>
+                              <IconButton
+                                aria-label="Edit"
+                                tooltip="Edit"
+                                icon={Pencil}
+                                onClick={() => { setEditingId(f.id); setEditingLabel(f.label); }}
+                              />
                               <div className="mx-1 h-6 w-px bg-border" aria-hidden />
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    aria-label="Delete"
-                                    disabled={deleteMut.isPending && deleteMut.variables?.id === f.id}
-                                    onClick={async () => {
-                                      await confirm({
-                                        title: "Delete facility?",
-                                        description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
-                                        confirmLabel: "Delete",
-                                        destructive: true,
-                                        onConfirm: () => deleteMut.mutateAsync({ id: f.id }),
-                                      });
-                                    }}
-                                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
-                                  >
-                                    {deleteMut.isPending && deleteMut.variables?.id === f.id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="h-4 w-4" />
-                                    )}
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent>Delete</TooltipContent>
-                              </Tooltip>
+                              <IconButton
+                                aria-label="Delete"
+                                tooltip="Delete"
+                                pendingTooltip="Deleting…"
+                                variant="destructive"
+                                icon={Trash2}
+                                pending={deleteMut.isPending && deleteMut.variables?.id === f.id}
+                                onClick={async () => {
+                                  await confirm({
+                                    title: "Delete facility?",
+                                    description: `Delete "${f.label}"? Existing users assigned to this facility will keep the value but it will no longer appear in the signup dropdown.`,
+                                    confirmLabel: "Delete",
+                                    destructive: true,
+                                    onConfirm: () => deleteMut.mutateAsync({ id: f.id }),
+                                  });
+                                }}
+                              />
                             </div>
                           </TooltipProvider>
                         </>
