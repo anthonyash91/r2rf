@@ -602,16 +602,6 @@ function NewCategoryForm({
               mimeTypes={["image/*"]}
               onUploaded={(u) => setIconUrl(u)}
             />
-            <LoadingButton
-              variant="secondary"
-              onClick={handleGenerateIcon}
-              disabled={generatingIcon || !name.trim()}
-              pending={generatingIcon}
-              pendingText="Generating…"
-              icon={<Sparkles className="h-4 w-4" />}
-            >
-              {iconUrl ? "Regenerate with AI" : "Generate with AI"}
-            </LoadingButton>
             {iconUrl && (
               <LoadingButton
                 variant="secondary"
@@ -623,15 +613,6 @@ function NewCategoryForm({
             )}
           </div>
         </div>
-        <textarea
-          value={iconPrompt}
-          onChange={(e) => setIconPrompt(e.target.value)}
-          placeholder="Optional: extra instructions for the AI (e.g. 'a leaf next to an open book')"
-          rows={2}
-          maxLength={1000}
-          className="mt-3 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-        />
-      </div>
 
       <Field label="Home Page">
         <Select value={homePageMode} onValueChange={(v) => setHomePageMode(v as "default" | "custom")}>
