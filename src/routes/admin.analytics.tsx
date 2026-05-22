@@ -152,15 +152,8 @@ function AdminAnalyticsPage() {
             <SummaryCard icon={<MousePointerClick className="h-5 w-5" />} label={aggregated.totalClicks === 1 ? "Content click" : "Content clicks"} value={aggregated.totalClicks} />
           </div>
 
-          <div className="mt-8 space-y-6">
-            {aggregated.rows.length === 0 ? (
-              <p className="text-muted-foreground">No categories yet.</p>
-            ) : (
-              aggregated.rows.map((row) => (
-                <CategorySection key={row.category.id} row={row} />
-              ))
-            )}
-          </div>
+          <CategoryList rows={aggregated.rows} />
+
         </>
       )}
     </div>
@@ -220,6 +213,25 @@ function exportCsv(
   URL.revokeObjectURL(url);
 }
 
+function CategoryList({ rows }: { rows: AggregatedRow[] }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  if (rows.length === 0) {
+    return <p className="mt-8 text-muted-foreground">No categories yet.</p>;
+  }
+  return (
+    <div className="mt-8 flex flex-col [&>section]:rounded-none [&>section:first-child]:rounded-t-2xl [&>section:last-child]:rounded-b-2xl [&>section:not(:first-child)]:-mt-px">
+      {rows.map((row) => (
+        <CategorySection
+          key={row.category.id}
+          row={row}
+          isOpen={openId === row.category.id}
+          onToggle={() => setOpenId((cur) => (cur === row.category.id ? null : row.category.id))}
+        />
+      ))}
+    </div>
+  );
+}
+
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
@@ -230,13 +242,13 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
-function CategorySection({ row }: { row: AggregatedRow }) {
-  const [open, setOpen] = useState(false);
+function CategorySection({ row, isOpen, onToggle }: { row: AggregatedRow; isOpen: boolean; onToggle: () => void }) {
+  const open = isOpen;
   return (
     <SectionCard padded={false} className="overflow-hidden">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         aria-expanded={open}
         className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-white"} text-left hover:bg-muted/50 transition-colors`}
       >
