@@ -392,12 +392,21 @@ function AdminUsersPage() {
                 </div>
               </div>
               {(() => {
-                const filtered = facilityFilter === "all"
+                const q = searchQuery.trim().toLowerCase();
+                const facilityScoped = facilityFilter === "all"
                   ? regularUsers
                   : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
+                const filtered = q
+                  ? facilityScoped.filter((u) => {
+                      const facLabel = u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : "";
+                      return [u.email, u.profile?.username, u.profile?.first_name, u.profile?.last_name, facLabel]
+                        .filter(Boolean)
+                        .some((v) => String(v).toLowerCase().includes(q));
+                    })
+                  : facilityScoped;
                 const visible = filtered.slice(0, regularVisible);
                 const remaining = filtered.length - visible.length;
-                
+
                 const toggleOne = (id: string) => {
                   setSelectedIds((prev) => {
                     const next = new Set(prev);
@@ -416,7 +425,27 @@ function AdminUsersPage() {
                               : "Click users to select for deletion"
                             : `${filtered.length} ${filtered.length === 1 ? "user" : "users"}`}
                         </span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                            <input
+                              type="text"
+                              value={searchQuery}
+                              onChange={(e) => { setSearchQuery(e.target.value); setRegularVisible(10); }}
+                              placeholder="Search users…"
+                              className="rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm w-full sm:w-56"
+                            />
+                            {searchQuery && (
+                              <button
+                                type="button"
+                                onClick={() => setSearchQuery("")}
+                                aria-label="Clear search"
+                                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
                           {!editMode ? (
                             <button
                               type="button"
