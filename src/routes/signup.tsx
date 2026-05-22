@@ -494,6 +494,7 @@ function SignupPage() {
                 {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
               </button>
             </form>
+            </div>
 
             <div className="mt-4 flex flex-col gap-2">
               <button
