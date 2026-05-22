@@ -7,6 +7,7 @@ type BadgeVariant =
   | "type"
   | "draft"
   | "custom"
+  | "category"
   | "translation"
   | "admin"
   | "contributor"
