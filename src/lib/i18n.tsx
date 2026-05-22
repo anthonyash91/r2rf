@@ -61,6 +61,14 @@ const translations: Record<Language, Dict> = {
     "category.markAsRead": "Mark as read",
     "category.markedRead": "Read",
     "category.notRead": "Not read",
+    "category.markedWatched": "Watched",
+    "category.notWatched": "Not watched",
+    "category.markedListened": "Listened",
+    "category.notListened": "Not listened to",
+    "category.markedClicked": "Clicked",
+    "category.notClicked": "Not clicked",
+    "category.markedViewed": "Viewed",
+    "category.notViewed": "Not viewed",
 
     "category.markReadError": "Couldn't update progress.",
 
@@ -204,6 +212,14 @@ const translations: Record<Language, Dict> = {
     "category.markAsRead": "Marcar como leído",
     "category.markedRead": "Leído",
     "category.notRead": "No leído",
+    "category.markedWatched": "Visto",
+    "category.notWatched": "No visto",
+    "category.markedListened": "Escuchado",
+    "category.notListened": "No escuchado",
+    "category.markedClicked": "Clicado",
+    "category.notClicked": "No clicado",
+    "category.markedViewed": "Visto",
+    "category.notViewed": "No visto",
 
     "category.markReadError": "No se pudo actualizar el progreso.",
 
