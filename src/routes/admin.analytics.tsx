@@ -225,6 +225,7 @@ function CategoryList({ rows }: { rows: AggregatedRow[] }) {
           key={row.category.id}
           row={row}
           isOpen={openId === row.category.id}
+          dimmed={openId !== null && openId !== row.category.id}
           onToggle={() => setOpenId((cur) => (cur === row.category.id ? null : row.category.id))}
         />
       ))}
