@@ -543,7 +543,7 @@ function SignupPage() {
             </form>
             </div>
 
-            <div className="mt-4 flex flex-col gap-2">
+            <div className="mt-2 flex flex-col gap-2">
               <button
                 onClick={() => {
                   setMode(mode === "sign-up" ? "sign-in" : "sign-up");
