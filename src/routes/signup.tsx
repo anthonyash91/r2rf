@@ -328,19 +328,23 @@ function SignupPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium">{t("signup.username")}</label>
+                <label className="text-sm font-medium">
+                  {mode === "sign-up" ? t("signup.username") : "Username or email"}
+                </label>
                 <input
                   type="text"
                   required
                   minLength={3}
-                  maxLength={32}
-                  pattern="[A-Za-z0-9_]{3,32}"
+                  maxLength={mode === "sign-up" ? 32 : 254}
+                  pattern={mode === "sign-up" ? "[A-Za-z0-9_]{3,32}" : undefined}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder={t("signup.usernamePlaceholder")}
+                  placeholder={mode === "sign-up" ? t("signup.usernamePlaceholder") : undefined}
+                  autoComplete={mode === "sign-up" ? "username" : "username email"}
                 />
               </div>
+
 
               <div>
                 <label className="text-sm font-medium">{t("signup.password")}</label>
