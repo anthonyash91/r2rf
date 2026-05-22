@@ -298,7 +298,7 @@ function AdminCategoriesPage() {
                     }
                     const joined = badges.length > 1;
                     return (
-                      <div className={`flex flex-wrap items-center ${joined ? "gap-0" : "gap-2"} @lg:contents`}>
+                      <div className={`flex flex-wrap items-center ${joined ? "gap-0" : "gap-2"}`}>
                         {badges.map((b: any, i) => {
                           if (!joined) return b;
                           const isFirst = i === 0;
