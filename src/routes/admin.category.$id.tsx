@@ -170,7 +170,7 @@ function CategoryEditor({
   }
 
   return (
-    <SectionCard className="mt-6">
+    <SectionCard className="mt-8">
       <form
         className="space-y-4"
         onSubmit={(e) => {
