@@ -470,11 +470,13 @@ function AllowlistRow({
   table,
   queryKey,
   onDelete,
+  pendingDelete = false,
 }: {
   row: IpRow;
   table: "ip_allowlist" | "auth_ip_allowlist";
   queryKey: readonly unknown[];
   onDelete: () => void;
+  pendingDelete?: boolean;
 }) {
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
