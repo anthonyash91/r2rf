@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
+import { NewBadge } from "@/components/NewBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
@@ -458,10 +459,7 @@ function CategoryProgressSection({
                 {pickLang(lang, category.name, category.name_es)}
               </h2>
               {hasRecent && (
-                <span className="hidden lg:inline-flex items-center gap-1 rounded-full border border-[oklch(0.35_0.05_165)] bg-[var(--color-accent)] px-2 py-0.5 text-[10px] font-semibold tracking-wide text-background shadow-sm flex-shrink-0">
-                  <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
-                  {t("category.newContentAdded")}
-                </span>
+                <NewBadge className="hidden lg:inline-flex">{t("category.newContentAdded")}</NewBadge>
               )}
             </div>
             {tagline && (
@@ -473,10 +471,7 @@ function CategoryProgressSection({
         {!isAdmin && (
           <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
             {hasRecent && (
-              <span className="lg:hidden inline-flex items-center gap-1 rounded-full border border-[oklch(0.35_0.05_165)] bg-[var(--color-accent)] px-3 py-1 text-[10px] font-semibold tracking-wide text-background shadow-sm flex-shrink-0">
-                <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
-                {t("category.newContentAdded")}
-              </span>
+              <NewBadge className="lg:hidden">{t("category.newContentAdded")}</NewBadge>
             )}
             <div className="hidden lg:block w-32">
               <Progress value={pct} className="h-1.5" />
@@ -505,10 +500,7 @@ function CategoryProgressSection({
                 <li key={it.id} className="flex flex-col gap-2 py-4 pl-[22px] pr-[22px]">
                   <div className="flex items-center gap-2 flex-wrap">
                     {newItemSet.has(it.id) && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-xs font-medium text-background shadow-sm flex-shrink-0">
-                        <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
-                        {t("category.newContent")}
-                      </span>
+                      <NewBadge>{t("category.newContent")}</NewBadge>
                     )}
 
                     <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
