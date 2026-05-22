@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Save, RefreshCw, Home } from "lucide-react";
-import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
+import { ArrowLeft, Save, Home } from "lucide-react";
+import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { LabeledField } from "@/components/FormField";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
+import { TranslationPanel } from "@/components/TranslationPanel";
 
 export const Route = createFileRoute("/admin/home")({
   beforeLoad: requireAdminBeforeLoad,
