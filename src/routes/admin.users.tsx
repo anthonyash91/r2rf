@@ -269,13 +269,14 @@ function AdminUsersPage() {
                     Accounts with admin or contributor access.
                   </p>
                 </div>
-                <button
+                <LoadingButton
                   onClick={() => setShowCreate(true)}
                   disabled={showCreate}
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary w-full sm:w-auto"
+                  icon={<UserPlus className="h-4 w-4" />}
+                  className="w-full sm:w-auto"
                 >
-                  <UserPlus className="h-4 w-4" /> Add admin user
-                </button>
+                  Add admin user
+                </LoadingButton>
               </div>
 
               {showCreate && (
