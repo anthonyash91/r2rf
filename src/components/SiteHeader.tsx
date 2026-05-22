@@ -159,8 +159,16 @@ export function SiteHeader() {
             )}
             {user ? (
               <button
-                onClick={() => { setOpen(false); handleSignOut(); }}
-                className="py-2 text-left hover:text-foreground transition-colors"
+                onClick={(e) => {
+                  if (locked) {
+                    handleLockedNav(e);
+                    return;
+                  }
+                  setOpen(false);
+                  handleSignOut();
+                }}
+                aria-disabled={locked}
+                className={`py-2 text-left hover:text-foreground transition-colors ${lockedLinkClass}`}
               >
                 {signOutLabel}
               </button>
