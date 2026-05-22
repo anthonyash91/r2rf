@@ -113,7 +113,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                       {count} {t(count === 1 ? "home.item" : "home.items")}
                     </p>
                     {s.hasRecent && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.35_0.05_165)] bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.35_0.05_165)] bg-[var(--color-accent)] px-2.5 py-1 text-[10px] font-semibold tracking-wide text-background shadow-sm">
                         <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                         {t("category.newContentAdded")}
                       </span>
