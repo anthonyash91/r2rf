@@ -181,7 +181,7 @@ function AdminCustomHomePageEdit() {
             <PageHeader
               size="md"
               icon={LayoutTemplate}
-              title="Edit custom home page"
+              title="Edit Custom Home Page"
               description="The header and certificate sections match the default home page. Choose which categories are visible here."
             />
             <a

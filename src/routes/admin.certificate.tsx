@@ -101,7 +101,7 @@ function AdminCertificatePage() {
       <div className="mt-6">
         <PageHeader
           icon={Award}
-          title="Certificate program section"
+          title="Certificate Program Section"
           description="Edit the eyebrow, headline, subheading, and callout shown in the certificate program section on the home page."
         />
       </div>

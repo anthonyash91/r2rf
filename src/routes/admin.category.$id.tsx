@@ -181,7 +181,7 @@ function CategoryEditor({
 
   return (
     <SectionCard className="mt-6">
-      <PageHeader size="md" icon={FolderOpen} title="Edit category" />
+      <PageHeader size="md" icon={FolderOpen} title="Edit Category" />
       <form
         className="mt-4 space-y-4"
         onSubmit={(e) => {
