@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
+import { LabeledInput } from "@/components/FormField";
 
 export const Route = createFileRoute("/admin/category/$id")({
   validateSearch: (search: Record<string, unknown>) => ({
