@@ -9,7 +9,7 @@ import { Pencil } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
 
-type CategoryStats = { count: number; hasRecent: boolean };
+type CategoryStats = { count: number; recentItemIds: Set<string> };
 
 function useUserProgress(userId: string | null, categoryIds: string[]) {
   return useQuery({
@@ -18,15 +18,17 @@ function useUserProgress(userId: string | null, categoryIds: string[]) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_content_progress")
-        .select("category_id")
+        .select("category_id, content_item_id")
         .eq("user_id", userId!)
         .in("category_id", categoryIds);
       if (error) throw error;
       const reads: Record<string, number> = {};
+      const readSet = new Set<string>();
       for (const row of data ?? []) {
         reads[row.category_id as string] = (reads[row.category_id as string] ?? 0) + 1;
+        readSet.add(row.content_item_id as string);
       }
-      return reads;
+      return { reads, readSet };
     },
   });
 }
@@ -38,16 +40,16 @@ function useCategoryItemStats(categoryIds: string[]) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("content_items")
-        .select("category_id, created_at")
+        .select("id, category_id, created_at")
         .eq("published", true)
         .in("category_id", categoryIds);
       if (error) throw error;
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const stats: Record<string, CategoryStats> = {};
-      (data ?? []).forEach((row: { category_id: string; created_at: string }) => {
-        const s = stats[row.category_id] ?? { count: 0, hasRecent: false };
+      (data ?? []).forEach((row: { id: string; category_id: string; created_at: string }) => {
+        const s = stats[row.category_id] ?? { count: 0, recentItemIds: new Set<string>() };
         s.count += 1;
-        if (new Date(row.created_at).getTime() >= cutoff) s.hasRecent = true;
+        if (new Date(row.created_at).getTime() >= cutoff) s.recentItemIds.add(row.id);
         stats[row.category_id] = s;
       });
       return stats;
@@ -76,7 +78,9 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
   const { isAdmin, user } = useAuth();
   const { t } = useI18n();
   const { data: stats = {} } = useCategoryItemStats(categories.map((c) => c.id));
-  const { data: reads = {} } = useUserProgress(user?.id ?? null, categories.map((c) => c.id));
+  const { data: progress } = useUserProgress(user?.id ?? null, categories.map((c) => c.id));
+  const reads = progress?.reads ?? {};
+  const readSet = progress?.readSet ?? new Set<string>();
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
   categories.forEach((c, i) => buckets[i % cols].push({ c, i }));
   return (
@@ -84,8 +88,9 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
       {buckets.map((bucket, ci) => (
         <div key={ci} className="flex-1 flex flex-col gap-9 min-w-0">
           {bucket.map(({ c }) => {
-            const s = stats[c.id] ?? { count: 0, hasRecent: false };
+            const s = stats[c.id] ?? { count: 0, recentItemIds: new Set<string>() };
             const count = s.count;
+            const hasRecent = Array.from(s.recentItemIds).some((id) => !readSet.has(id));
             return (
             <div key={c.id} className="relative">
               <Link
@@ -113,7 +118,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                     <Badge variant="count">
                       {count} {t(count === 1 ? "home.item" : "home.items")}
                     </Badge>
-                    {s.hasRecent && (
+                    {hasRecent && (
                       <Badge variant="new">{t("category.newContentAdded")}</Badge>
                     )}
                   </div>

@@ -272,7 +272,7 @@ function DashboardPage() {
                     const items = progressQuery.data?.itemsByCat.get(c.id) ?? [];
                     const readSet = progressQuery.data?.readSet ?? new Set<string>();
                     const newItemSet = progressQuery.data?.newItemSet ?? new Set<string>();
-                    const hasRecent = progressQuery.data?.recentCats.has(c.id) ?? false;
+                    const hasRecent = items.some((it) => newItemSet.has(it.id) && !readSet.has(it.id));
                     return (
                       <CategoryProgressSection
                         key={c.id}
@@ -513,7 +513,7 @@ function CategoryProgressSection({
               return (
                 <li key={it.id} className="flex flex-col gap-2 py-4 pl-[22px] pr-[22px]">
                   <div className="flex items-center gap-2 flex-wrap">
-                    {newItemSet.has(it.id) && (
+                    {newItemSet.has(it.id) && !isRead && (
                       <Badge variant="new">{t("category.newContent")}</Badge>
                     )}
 
