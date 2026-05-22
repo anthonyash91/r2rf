@@ -39,6 +39,7 @@ import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconB
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/Badge";
+import { BadgeGroup } from "@/components/BadgeGroup";
 
 
 export const Route = createFileRoute("/admin/")({
