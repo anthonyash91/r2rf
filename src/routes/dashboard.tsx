@@ -18,7 +18,7 @@ import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n"
 import { withActionWord } from "@/lib/duration";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, X, ChevronDown, BookOpen, CheckCircle2, Loader2, Layers, Clock, Flame } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, X, ChevronDown, BookOpen, CheckCircle2, Loader2, Layers, Clock, Flame, Trophy } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
@@ -356,12 +356,14 @@ function DashboardPage() {
                   let totalAll = 0;
                   let readAll = 0;
                   let activeCats = 0;
+                  let completedCats = 0;
                   for (const c of categoriesQuery.data ?? []) {
                     const t2 = progressQuery.data?.totals.get(c.id) ?? 0;
                     const r2 = progressQuery.data?.reads.get(c.id) ?? 0;
                     totalAll += t2;
                     readAll += r2;
                     if (r2 > 0) activeCats += 1;
+                    if (t2 > 0 && r2 >= t2) completedCats += 1;
                   }
                   const pctAll = totalAll > 0 ? Math.round((readAll / totalAll) * 100) : 0;
                   const minutes = progressQuery.data?.minutesSpent ?? 0;
@@ -386,6 +388,7 @@ function DashboardPage() {
                   const stats: Array<{ icon: typeof BookOpen; label: string; value: string }> = [
                     { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: readAll.toLocaleString() },
                     { icon: Layers, label: t("dashboard.statCategories"), value: activeCats.toLocaleString() },
+                    { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: completedCats.toLocaleString() },
                     { icon: Clock, label: t("dashboard.statHours"), value: hours.toLocaleString() },
                     { icon: Flame, label: t("dashboard.statStreak"), value: streak.toLocaleString() },
                   ];
@@ -401,7 +404,7 @@ function DashboardPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
                         {stats.map((s) => {
                           const Icon = s.icon;
                           return (
