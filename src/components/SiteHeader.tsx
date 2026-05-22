@@ -110,9 +110,13 @@ export function SiteHeader() {
             </>
           )}
           <button
-            onClick={toggleLang}
+            onClick={(e) => {
+              if (locked) { handleLockedNav(e); return; }
+              toggleLang();
+            }}
+            aria-disabled={locked}
             aria-label="Toggle language"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
+            className={`inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors ${lockedLinkClass}`}
           >
             <Languages className="h-3.5 w-3.5" />
             {t("nav.language")}
@@ -122,9 +126,13 @@ export function SiteHeader() {
         {/* Mobile controls */}
         <div className="flex md:hidden items-center gap-2">
           <button
-            onClick={toggleLang}
+            onClick={(e) => {
+              if (locked) { handleLockedNav(e); return; }
+              toggleLang();
+            }}
+            aria-disabled={locked}
             aria-label="Toggle language"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
+            className={`inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors ${lockedLinkClass}`}
           >
             <Languages className="h-3.5 w-3.5" />
             <span className="uppercase">{lang}</span>
