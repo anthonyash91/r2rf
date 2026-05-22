@@ -697,12 +697,8 @@ function UserItem({
           <p className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-x-2">
             <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
             {user.last_sign_in_at && <span>· Last sign-in {new Date(user.last_sign_in_at).toLocaleDateString()}</span>}
-            {user.signup_ip && (
-              <span className="inline-flex items-center gap-1">
-                · <Globe className="h-3 w-3" /> Signup IP: <code className="font-mono">{user.signup_ip}</code>
-              </span>
-            )}
           </p>
+
         </div>
 
 
