@@ -710,11 +710,15 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                         selected ? "bg-destructive/10 hover:bg-destructive/15" : isInteractive ? "hover:bg-muted/50" : ""
                       }`}
                     >
-                      {editMode && (
-                        <div className="flex items-center pl-4 pr-0 text-muted-foreground/50">
+                      {(editMode || q) && (
+                        <div
+                          className={`flex items-center pl-5 pr-0 ${editMode ? "text-muted-foreground/50" : "text-muted-foreground/30 cursor-not-allowed"}`}
+                          aria-disabled={!editMode}
+                        >
                           <GripVertical className="h-4 w-4" />
                         </div>
                       )}
+
                       <div className={`flex-1 min-w-0 ${editMode ? "pointer-events-none" : ""}`}>{renderItemRow(item)}</div>
                     </li>
                   );
