@@ -617,24 +617,21 @@ function UserItem({
                 <Pencil className="h-3.5 w-3.5" />
               </button>
               {isAdmin && (
-                <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-primary/10 px-2 py-0.5 text-primary border border-primary/30">
+                <Badge variant="admin" className="ml-1 gap-1">
                   <Shield className="h-3 w-3" /> Admin
-                </span>
+                </Badge>
               )}
               {isContributor && (
-                <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-sky-500/10 px-2 py-0.5 text-sky-600 border border-sky-500/30">
+                <Badge variant="contributor" className="ml-1 gap-1">
                   <Shield className="h-3 w-3" /> Contributor
-                </span>
+                </Badge>
               )}
               {user.email_confirmed_at ? (
-                <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-600 border border-emerald-500/30">
-                  Verified
-                </span>
+                <Badge variant="verified" className="ml-1">Verified</Badge>
               ) : (
-                <span className="ml-1 inline-flex items-center gap-1 text-xs rounded-full bg-amber-500/10 px-2 py-0.5 text-amber-600 border border-amber-500/30">
-                  Unverified
-                </span>
+                <Badge variant="unverified" className="ml-1">Unverified</Badge>
               )}
+
             </div>
           )}
           <p className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-x-2">
