@@ -153,15 +153,7 @@ function AdminCategoriesPage() {
     onError: (e: any) => toast.error(e.message),
   });
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [editMode, setEditMode] = useState(false);
-  const toggleOne = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
+  const bulk = useBulkSelect();
   const deleteManyMut = useMutation({
     mutationFn: async (ids: string[]) => {
       const { error } = await supabase.from("categories").delete().in("id", ids);
@@ -171,11 +163,10 @@ function AdminCategoriesPage() {
     onSuccess: async (deleted) => {
       toast.success(`Deleted ${deleted} ${deleted === 1 ? "category" : "categories"}`);
       await qc.invalidateQueries({ queryKey: ["admin", "categories"] });
-      setSelectedIds(new Set());
+      bulk.clear();
     },
     onError: (e: any) => toast.error(e.message),
   });
-  const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [order, setOrder] = useState<Category[]>([]);
