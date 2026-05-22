@@ -473,19 +473,17 @@ function AdminCustomHomePagesList() {
               const Chips = ({ items, excluded = false }: { items: Category[]; excluded?: boolean }) => (
                 <>
                   {items.map((c) => (
-                    <span
+                    <Badge
                       key={c.id}
-                      className={
-                        excluded
-                          ? "text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground border border-border [text-decoration:line-through_dotted]"
-                          : "text-xs rounded-full bg-[var(--color-accent)]/10 px-2 py-0.5 text-[var(--color-accent)] border border-[var(--color-accent)]/30"
-                      }
+                      variant={excluded ? "draft" : "custom"}
+                      className={excluded ? "[text-decoration:line-through_dotted]" : ""}
                     >
                       {c.name}
-                    </span>
+                    </Badge>
                   ))}
                 </>
               );
+
               return (
               <li key={p.id} className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 pl-[24px]${hasSections ? " pb-[24px]" : ""}`}>
                 <div className="flex-1 min-w-0">
