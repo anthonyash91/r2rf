@@ -605,6 +605,7 @@ function CategoryAccordion({
             lang={lang}
             t={t}
             isOpen={openId === c.id}
+            dimmed={openId !== null && openId !== c.id}
             onToggle={() => setOpenId((cur) => (cur === c.id ? null : c.id))}
           />
         );
