@@ -105,7 +105,11 @@ export const Route = createFileRoute("/api/public/site-passkey")({
         }
 
         const hash = await sha256Hex(parsed.passkey.trim());
-        const expectedHash = (process.env.SITE_PASSKEY_HASH ?? LEGACY_SITE_PASSKEY_HASH).trim().toLowerCase();
+        const expectedHash = process.env.SITE_PASSKEY_HASH?.trim().toLowerCase();
+        if (!expectedHash) {
+          console.error("[site-passkey] SITE_PASSKEY_HASH env var is not configured");
+          return Response.json({ error: "Server misconfigured" }, { status: 500 });
+        }
         const ok = timingSafeEqualHex(hash, expectedHash);
 
         if (!ok) {
