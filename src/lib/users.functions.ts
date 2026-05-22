@@ -72,6 +72,19 @@ export const listUsers = createServerFn({ method: "GET" })
     };
   });
 
+export const countNewUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ since: z.string().min(1) }).parse(input))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { count, error } = await supabaseAdmin
+      .from("user_profiles")
+      .select("user_id", { count: "exact", head: true })
+      .gt("created_at", data.since);
+    if (error) throw new Error(error.message);
+    return { count: count ?? 0 };
+  });
+
 export const createUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
