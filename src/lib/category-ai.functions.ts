@@ -17,23 +17,24 @@ export const generateCategoryIcon = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
 
-    const prompt = `Design a single minimalist, friendly icon for a content library category.
+    const prompt = `Design a single flat vector icon for a content library category, in the exact style described below.
 
 Category name: "${data.name}"
 ${data.tagline ? `Tagline: "${data.tagline}"` : ""}
 ${data.description ? `Description: "${data.description}"` : ""}
-${data.extraPrompt ? `Additional instructions from the user (follow these closely, but never break the strict visual rules below): "${data.extraPrompt}"` : ""}
+${data.extraPrompt ? `Additional instructions from the user (follow these, but never break the strict visual rules below): "${data.extraPrompt}"` : ""}
 
-STRICT visual rules:
-- PERFECTLY SQUARE 1:1 composition (equal width and height).
-- Background MUST be filled edge-to-edge with the exact color #fff9e1 (warm cream). No other background color is acceptable.
-- STRICT color palette — use ONLY these five hex colors, no others: #aeb25d (sage), #986313 (brown), #587932 (olive green), #fff9e1 (cream background), #d5a43e (goldenrod). Do not introduce any color outside this list.
-- One simple, centered subject that clearly evokes the category. Keep it MINIMALIST — not too busy. Prefer 1 main shape, optionally with 1 small supporting element. Avoid clutter, avoid many small details.
-- Use THICK, BOLD, CLEAN outline strokes with FLAT/BUTT line caps and SHARP corners (NO rounded caps, NO rounded corners). Stroke width roughly 8–12% of the icon height — defined, crisp, confident lines.
-- Lines and shapes must NEVER collide, overlap, or touch each other. Maintain clear visible spacing between every stroke and shape so the icon stays easy to read and interpret at a glance.
-- Flat fills only — no gradients, no shading, no highlights, no shadows, no textures, no noise, no 3D.
-- Generous padding around the icon (around 15–20% of the canvas on every side).
-- No text, no letters, no numbers, no watermark, no border, no frame, no photorealism, no glow.
+STRICT visual rules — match this style exactly:
+- PERFECTLY SQUARE 1:1 composition.
+- Background MUST be filled edge-to-edge with the EXACT color #fff9e1 (warm cream). No other background color.
+- Use ONLY these five hex colors in the entire image, no others: #aeb25d (light sage green), #986313 (warm brown), #587932 (deep olive green), #fff9e1 (cream — also used as interior negative space), #d5a43e (goldenrod / mustard yellow).
+- Flat vector illustration: solid color fills with thick, confident outlines. NO gradients, NO shading, NO highlights, NO shadows, NO textures, NO 3D, NO photorealism, NO glow.
+- Outlines are bold and clean, drawn in #986313 (warm brown) or #587932 (deep olive green). Stroke width roughly 6–10% of the icon height. Slightly rounded corners are acceptable where natural, but lines stay defined and crisp.
+- Large flat color-blocked shapes filled with the sage, olive, brown, and goldenrod palette colors, with the cream (#fff9e1) showing through as interior negative space (e.g. the pages of an open book, the windows of a house, a face on a figure).
+- One clear central subject — a single main shape, optionally with one small supporting element. Friendly, simple, easy to read at a glance. Not busy, not cluttered.
+- Shapes and lines maintain clear visible separation; nothing collides chaotically.
+- Generous padding around the subject (about 12–18% of the canvas on every side).
+- No text, no letters, no numbers, no watermark, no border, no frame.
 
 Output: just the finished square icon image. Nothing else.`;
 
