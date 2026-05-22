@@ -1,7 +1,8 @@
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { setSecurityLock } from "@/lib/security-lock";
 import { toast } from "sonner";
 import { Badge } from "@/components/Badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -240,6 +241,12 @@ function DashboardPage() {
   const currentKeys = questionsQuery.data?.keys ?? [];
   const mustSetup = !questionsQuery.isLoading && currentKeys.length < 2;
   const isEditing = editing || mustSetup;
+
+  useEffect(() => {
+    setSecurityLock(mustSetup);
+    return () => setSecurityLock(false);
+  }, [mustSetup]);
+
 
   async function handleSave() {
     if (pending.length < 2) {

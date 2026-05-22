@@ -2,11 +2,13 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { isAuthIpAllowed } from "@/lib/auth-ip.functions";
 import { useActiveCustomHome } from "@/lib/custom-home-context";
+import { useSecurityLock } from "@/lib/security-lock";
 import { Languages, Menu, X } from "lucide-react";
 
 export function SiteHeader() {
@@ -33,6 +35,21 @@ export function SiteHeader() {
 
   const toggleLang = () => setLang(lang === "en" ? "es" : "en");
 
+  const locked = useSecurityLock();
+  const lockedLinkClass = locked ? "opacity-40 cursor-not-allowed" : "";
+  const handleLockedNav = (e: React.MouseEvent) => {
+    if (!locked) return;
+    e.preventDefault();
+    e.stopPropagation();
+    toast.error("Please set up your security questions before leaving this page.");
+  };
+  // Wrap all nav Links so they intercept clicks while locked. We render the Link
+  // with pointer-events disabled via class, plus a sibling overlay-free onClick
+  // capture via parent span so the toast still fires when users try to click.
+  const lockProps = locked
+    ? { onClickCapture: handleLockedNav, "aria-disabled": true as const, tabIndex: -1 }
+    : {};
+
   const homeLinkProps = activeCustomHome
     ? ({ to: "/$customHome", params: { customHome: activeCustomHome } } as const)
     : ({ to: "/" } as const);
@@ -40,7 +57,7 @@ export function SiteHeader() {
   return (
     <header className="border-b border-border/60 bg-background/80 backdrop-blur sticky top-0 z-50">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
-        <Link {...homeLinkProps} className="flex items-center gap-2 group min-w-0">
+        <Link {...homeLinkProps} {...lockProps} className={`flex items-center gap-2 group min-w-0 ${lockedLinkClass}`}>
           <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-display font-bold">
             R
           </span>
@@ -52,11 +69,11 @@ export function SiteHeader() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-muted-foreground">
-          <Link {...homeLinkProps} className="hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
+          <Link {...homeLinkProps} {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`} activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
             {t("nav.categories")}
           </Link>
           {canAccessAdmin && (
-            <Link to="/admin" className="hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
+            <Link to="/admin" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`} activeProps={{ className: "text-foreground" }}>
               Admin
             </Link>
           )}
@@ -71,11 +88,11 @@ export function SiteHeader() {
             </button>
           ) : (
             <>
-              <Link to="/signup" className="hover:text-foreground transition-colors">
+              <Link to="/signup" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
                 {t("nav.signUp")}
               </Link>
               {showAuthLink && (
-                <Link to="/auth" className="hover:text-foreground transition-colors">
+                <Link to="/auth" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
                   {signInLabel}
                 </Link>
               )}
@@ -116,11 +133,11 @@ export function SiteHeader() {
       {open && (
         <nav className="md:hidden border-t border-border/60 bg-background">
           <div className="mx-auto max-w-6xl px-4 py-3 flex flex-col gap-1 text-sm font-medium text-muted-foreground">
-            <Link {...homeLinkProps} onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
+            <Link {...homeLinkProps} {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`} activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
               {t("nav.categories")}
             </Link>
             {canAccessAdmin && (
-              <Link to="/admin" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
+              <Link to="/admin" {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`} activeProps={{ className: "text-foreground" }}>
                 Admin
               </Link>
             )}
@@ -138,11 +155,11 @@ export function SiteHeader() {
               </button>
             ) : (
               <>
-                <Link to="/signup" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
+                <Link to="/signup" {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`}>
                   {t("nav.signUp")}
                 </Link>
                 {showAuthLink && (
-                  <Link to="/auth" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors">
+                  <Link to="/auth" {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`}>
                     {signInLabel}
                   </Link>
                 )}
