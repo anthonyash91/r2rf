@@ -526,23 +526,32 @@ function AdminUsersPage() {
                             const newHighlight = isNew
                               ? "bg-[var(--color-accent)]/10 border-l-2 border-l-[var(--color-accent)]"
                               : "";
+                            const newBadge = isNew ? (
+                              <span className="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                                <Sparkles className="h-3 w-3" /> New
+                              </span>
+                            ) : null;
                             if (editMode) {
                               return (
                                 <li
                                   key={u.id}
                                   onClick={() => toggleOne(u.id)}
-                                  className={`cursor-pointer transition-colors ${
+                                  className={`relative cursor-pointer transition-colors ${
                                     selected
                                       ? "bg-destructive/10 hover:bg-destructive/15"
                                       : `${newHighlight} hover:bg-muted/50`
                                   }`}
                                 >
-                                  <div className="pointer-events-none">{renderItem(u, isNew)}</div>
+                                  {newBadge}
+                                  <div className="pointer-events-none">{renderItem(u)}</div>
                                 </li>
                               );
                             }
                             return (
-                              <li key={u.id} className={newHighlight}>{renderItem(u, isNew)}</li>
+                              <li key={u.id} className={`relative ${newHighlight}`}>
+                                {newBadge}
+                                {renderItem(u)}
+                              </li>
                             );
                           })}
                         </ul>
