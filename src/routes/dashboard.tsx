@@ -688,7 +688,7 @@ function CategoryProgressSection({
               const isRead = readSet.has(it.id);
               const description = pickLang(lang, it.description, it.description_es);
               return (
-                <li key={it.id} className="flex flex-col gap-[10px] p-6">
+                <li key={it.id} className="flex flex-col gap-[10px] bg-[#fffdf8] p-6">
                   <div className="flex items-center gap-2 flex-wrap">
                     {newItemSet.has(it.id) && !isRead && (
                       <Badge variant="new">{t("category.newContent")}</Badge>
