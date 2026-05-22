@@ -539,18 +539,23 @@ function AdminCustomHomePagesList() {
                       <TooltipTrigger asChild>
                         <button
                           aria-label="Delete"
+                          disabled={deleteMut.isPending && deleteMut.variables === p.id}
                           onClick={async () => {
-                            const ok = await confirm({
+                            await confirm({
                               title: `Delete "${p.name || p.slug}"?`,
                               description: `This permanently deletes the /${p.slug} page. Underlying categories are not affected.`,
                               confirmLabel: "Delete",
                               destructive: true,
+                              onConfirm: () => deleteMut.mutateAsync(p.id),
                             });
-                            if (ok) deleteMut.mutate(p.id);
                           }}
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {deleteMut.isPending && deleteMut.variables === p.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>Delete</TooltipContent>
