@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const getBytescaleConfig = createServerFn({ method: "GET" }).handler(async () => {
   const apiKey = process.env.BYTESCALE_PUBLIC_API_KEY;
@@ -16,6 +17,7 @@ function getAccountId(key: string): string {
 }
 
 export const deleteBytescaleFileIfExists = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(
     z.object({
       filePath: z.string().min(1).max(1024).regex(/^\/[A-Za-z0-9._\-/ ]+$/),

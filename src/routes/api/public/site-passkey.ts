@@ -2,9 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { getClientIp, invalidateAllowlistCache } from "@/lib/ip-allowlist";
 
-// SHA-256 hash of the site passkey. The plaintext is delivered to the
-// admin out-of-band — only this hash is stored in the codebase.
-const SITE_PASSKEY_HASH =
+// SHA-256 hash of the site passkey. Read from server env so the hash is not
+// kept in source. Falls back to a legacy hard-coded hash only if the env var
+// is not configured, so the app keeps working during rollout — set
+// SITE_PASSKEY_HASH (and rotate the passkey) to fully remove the fallback.
+const LEGACY_SITE_PASSKEY_HASH =
   "6c9e159dc6e0cd154e100e11f55b73edb90ab57bef07c73f2865f6fa0ac46ff9";
 
 const MAX_ATTEMPTS = 5;
@@ -107,7 +109,8 @@ export const Route = createFileRoute("/api/public/site-passkey")({
         }
 
         const hash = await sha256Hex(parsed.passkey.trim());
-        const ok = timingSafeEqualHex(hash, SITE_PASSKEY_HASH);
+        const expectedHash = (process.env.SITE_PASSKEY_HASH ?? LEGACY_SITE_PASSKEY_HASH).trim().toLowerCase();
+        const ok = timingSafeEqualHex(hash, expectedHash);
 
         if (!ok) {
           const nextCount = (existing?.failed_count ?? 0) + 1;
