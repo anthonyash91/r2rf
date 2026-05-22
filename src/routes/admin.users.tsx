@@ -405,13 +405,24 @@ function AdminUsersPage() {
                 const facilityScoped = facilityFilter === "all"
                   ? regularUsers
                   : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
-                const filtered = q
+                const filteredBase = q
                   ? facilityScoped.filter((u) =>
                       [u.profile?.username, u.profile?.first_name, u.profile?.last_name]
                         .filter(Boolean)
                         .some((v) => String(v).toLowerCase().includes(q)),
                     )
                   : facilityScoped;
+
+                // Sort: newly signed-up users (since this visit started) first,
+                // newest first; everyone else preserves the existing order.
+                const sinceIso = newUsersSinceRef.current;
+                const isNewUser = (u: UserRow) => u.created_at > sinceIso;
+                const newOnes = filteredBase
+                  .filter(isNewUser)
+                  .slice()
+                  .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+                const rest = filteredBase.filter((u) => !isNewUser(u));
+                const filtered = [...newOnes, ...rest];
 
                 const visible = filtered.slice(0, regularVisible);
                 const remaining = filtered.length - visible.length;
