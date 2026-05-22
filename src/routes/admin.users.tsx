@@ -586,7 +586,7 @@ function UserItem({
 
   return (
     <li className="p-4 sm:p-5 pr-[22px] pl-[10px]">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-4">
         <div className="min-w-0 flex-1">
           {isRegularUser ? (
             <>
