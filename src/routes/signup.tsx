@@ -463,9 +463,10 @@ function SignupPage() {
               <button
                 type="submit"
                 disabled={busy || (mode === "sign-up" && !challengeQuery.data)}
-                className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
-                {busy ? "…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
               </button>
             </form>
 
