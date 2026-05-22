@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Shield, ArrowLeft, LogIn, Pencil, Ban, Power } from "lucide-react";
+import { Plus, Trash2, Shield, LogIn, Pencil, Ban, Power } from "lucide-react";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
@@ -69,9 +69,6 @@ function AdminIpAllowlistPage() {
 
   return (
     <div>
-      <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Back to admin
-      </Link>
       <PageHeader
         className="mt-6"
         icon={Shield}

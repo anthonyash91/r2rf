@@ -1,9 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, BarChart3, ChevronDown, Download, Eye, MousePointerClick } from "lucide-react";
+import { BarChart3, ChevronDown, Download, Eye, MousePointerClick } from "lucide-react";
 import type { Category, ContentItem } from "@/lib/categories";
 import { Badge } from "@/components/Badge";
 import { LoadingButton } from "@/components/LoadingButton";
@@ -109,10 +109,6 @@ function AdminAnalyticsPage() {
 
   return (
     <div>
-      <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Back to admin
-      </Link>
-
       <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
         <PageHeader
           icon={BarChart3}
