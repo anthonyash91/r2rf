@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Save, RefreshCw, Award, Loader2 } from "lucide-react";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
+import { LabeledField } from "@/components/FormField";
 
 export const Route = createFileRoute("/admin/certificate")({
   beforeLoad: requireAdminBeforeLoad,
