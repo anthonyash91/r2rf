@@ -216,33 +216,25 @@ function BlockedSection() {
                   </p>
                 </div>
                 <TooltipProvider delayDuration={150}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        aria-label="Unblock"
-                        disabled={deleteMut.isPending && deleteMut.variables === r.id}
-                        onClick={async () => {
-                          await confirm({
-                            title: `Unblock ${r.ip_address}?`,
-                            description:
-                              "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
-                            confirmLabel: "Unblock",
-                            destructive: true,
-                            pendingLabel: "Unblocking",
-                            onConfirm: () => deleteMut.mutateAsync(r.id),
-                          });
-                        }}
-                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
-                      >
-                        {deleteMut.isPending && deleteMut.variables === r.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>Unblock</TooltipContent>
-                  </Tooltip>
+                  <IconButton
+                    aria-label="Unblock"
+                    tooltip="Unblock"
+                    pendingTooltip="Unblocking…"
+                    variant="destructive"
+                    icon={Trash2}
+                    pending={deleteMut.isPending && deleteMut.variables === r.id}
+                    onClick={async () => {
+                      await confirm({
+                        title: `Unblock ${r.ip_address}?`,
+                        description:
+                          "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
+                        confirmLabel: "Unblock",
+                        destructive: true,
+                        pendingLabel: "Unblocking",
+                        onConfirm: () => deleteMut.mutateAsync(r.id),
+                      });
+                    }}
+                  />
                 </TooltipProvider>
               </li>
             ))}
