@@ -28,6 +28,8 @@ import { FileUploader } from "@/components/FileUploader";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useBulkSelect } from "@/hooks/use-bulk-select";
+import { BulkActionBar } from "@/components/BulkActionBar";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
