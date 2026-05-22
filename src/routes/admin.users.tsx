@@ -417,8 +417,6 @@ function AdminUsersPage() {
 
                 // Sort: newly signed-up users (since this visit started) first,
                 // newest first; everyone else preserves the existing order.
-                const sinceIso = newUsersSinceRef.current;
-                const isNewUser = (u: UserRow) => u.created_at > sinceIso;
                 const newOnes = filteredBase
                   .filter(isNewUser)
                   .slice()
