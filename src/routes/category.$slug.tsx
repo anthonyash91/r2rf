@@ -354,7 +354,7 @@ function CategoryPage() {
 
                         <Wrapper
                           {...wrapperProps}
-                          className="w-full text-left flex flex-col gap-4 p-6 hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
+                          className="w-full text-left flex flex-col gap-4 p-6 pr-[29px] hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
                         >
                           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap">
                             {isNew && (
