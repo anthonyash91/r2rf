@@ -387,7 +387,7 @@ function DashboardPage() {
                   }
                   const stats: Array<{ icon: typeof BookOpen; label: string; value: string }> = [
                     { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: readAll.toLocaleString() },
-                    { icon: Layers, label: t("dashboard.statCategories"), value: activeCats.toLocaleString() },
+                    
                     { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: completedCats.toLocaleString() },
                     { icon: Clock, label: t("dashboard.statHours"), value: hours.toLocaleString() },
                     { icon: Flame, label: t("dashboard.statStreak"), value: streak.toLocaleString() },
@@ -404,7 +404,7 @@ function DashboardPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
                         {stats.map((s) => {
                           const Icon = s.icon;
                           return (
