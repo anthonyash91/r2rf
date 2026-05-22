@@ -16,6 +16,8 @@ import {
 
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/Badge";
+
 
 
 export const Route = createFileRoute("/admin/facilities")({
