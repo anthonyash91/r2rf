@@ -651,6 +651,11 @@ function UserItem({
               {user.roles.includes("user") && (
                 <Badge variant="user">User</Badge>
               )}
+              {isNew && (
+                <Badge className="bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent)]">
+                  New
+                </Badge>
+              )}
 
             </div>
           ) : editingEmail ? (
