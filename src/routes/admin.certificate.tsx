@@ -303,9 +303,10 @@ function AdminCertificatePage() {
               </div>
             ) : (
               <div className="border-t border-border pt-6">
-                <button
-                  type="button"
-                  disabled={addEsBusy}
+                <LoadingButton
+                  variant="secondary"
+                  pending={addEsBusy}
+                  pendingText="Translating…"
                   onClick={() => {
                     setShowEs(true);
                     runAddEs(
@@ -330,22 +331,21 @@ function AdminCertificatePage() {
                       "Certificate program section copy on the home page",
                     );
                   }}
-                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
                 >
-                  {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
-                </button>
+                  + Add Spanish translation
+                </LoadingButton>
               </div>
             )}
 
             <div className="flex justify-end">
-              <button
+              <LoadingButton
                 type="submit"
-                disabled={saveMut.isPending}
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                variant="primary"
+                pending={saveMut.isPending}
+                icon={<Save className="h-4 w-4" />}
               >
-                {saveMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {saveMut.isPending ? "Saving…" : "Save"}
-              </button>
+                Save
+              </LoadingButton>
             </div>
           </form>
         )}
