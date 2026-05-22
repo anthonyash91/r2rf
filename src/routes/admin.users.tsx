@@ -602,6 +602,7 @@ function AdminUsersPage() {
 
 function UserItem({
   user,
+  isNew = false,
   facilityLabel,
   onChangeEmail,
   onSetPassword,
@@ -612,6 +613,7 @@ function UserItem({
   onResetSecurity,
 }: {
   user: UserRow;
+  isNew?: boolean;
   facilityLabel: string;
   onChangeEmail: (email: string) => void;
   onSetPassword: (password: string) => void;
