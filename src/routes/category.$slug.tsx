@@ -224,6 +224,7 @@ function CategoryPage() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["content-progress", user?.id, categoryId] });
+      queryClient.invalidateQueries({ queryKey: ["content-seen", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-progress", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["home-user-progress", user?.id] });
     },
