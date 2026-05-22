@@ -333,13 +333,14 @@ function AdminCustomHomePageEdit() {
         </section>
 
         <div className="flex justify-end">
-          <button
+          <LoadingButton
             type="submit"
-            disabled={saveMut.isPending}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            pending={saveMut.isPending}
+            pendingText="Saving…"
+            icon={<Save className="h-4 w-4" />}
           >
-            <Save className="h-4 w-4" /> {saveMut.isPending ? "Saving…" : "Save"}
-          </button>
+            Save
+          </LoadingButton>
         </div>
       </form>
     </div>
