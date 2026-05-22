@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, BarChart3, ChevronDown, Download, Eye, MousePointerClick } from "lucide-react";
 import type { Category, ContentItem } from "@/lib/categories";
 import { typeBadgeClass } from "@/lib/type-badge";
+import { Badge } from "@/components/Badge";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
