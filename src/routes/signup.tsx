@@ -566,9 +566,6 @@ function SignupPage() {
           </>
         )}
 
-        <p className="mt-8 text-xs text-muted-foreground">
-          <Link to="/" className="underline">{t("signup.backToSite")}</Link>
-        </p>
       </main>
       <SiteFooter />
     </div>
