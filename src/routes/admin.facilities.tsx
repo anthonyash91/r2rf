@@ -125,7 +125,6 @@ function AdminFacilitiesPage() {
           }
           description="Manage facilities available in the signup form's facility dropdown."
         />
-        </div>
         <LoadingButton
           onClick={() => setShowAdd(true)}
           disabled={showAdd}
