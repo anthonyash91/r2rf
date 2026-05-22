@@ -9,7 +9,7 @@ import { Pencil } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
 
-type CategoryStats = { count: number; hasRecent: boolean };
+type CategoryStats = { count: number; recentItemIds: Set<string> };
 
 function useUserProgress(userId: string | null, categoryIds: string[]) {
   return useQuery({
@@ -18,15 +18,17 @@ function useUserProgress(userId: string | null, categoryIds: string[]) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_content_progress")
-        .select("category_id")
+        .select("category_id, content_item_id")
         .eq("user_id", userId!)
         .in("category_id", categoryIds);
       if (error) throw error;
       const reads: Record<string, number> = {};
+      const readSet = new Set<string>();
       for (const row of data ?? []) {
         reads[row.category_id as string] = (reads[row.category_id as string] ?? 0) + 1;
+        readSet.add(row.content_item_id as string);
       }
-      return reads;
+      return { reads, readSet };
     },
   });
 }
@@ -38,16 +40,16 @@ function useCategoryItemStats(categoryIds: string[]) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("content_items")
-        .select("category_id, created_at")
+        .select("id, category_id, created_at")
         .eq("published", true)
         .in("category_id", categoryIds);
       if (error) throw error;
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const stats: Record<string, CategoryStats> = {};
-      (data ?? []).forEach((row: { category_id: string; created_at: string }) => {
-        const s = stats[row.category_id] ?? { count: 0, hasRecent: false };
+      (data ?? []).forEach((row: { id: string; category_id: string; created_at: string }) => {
+        const s = stats[row.category_id] ?? { count: 0, recentItemIds: new Set<string>() };
         s.count += 1;
-        if (new Date(row.created_at).getTime() >= cutoff) s.hasRecent = true;
+        if (new Date(row.created_at).getTime() >= cutoff) s.recentItemIds.add(row.id);
         stats[row.category_id] = s;
       });
       return stats;
