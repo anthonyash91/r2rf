@@ -1,5 +1,6 @@
-import { Loader2, Pencil, Search, Trash2, X } from "lucide-react";
+import { Pencil, Search, Trash2, X } from "lucide-react";
 import type { UseBulkSelectReturn } from "@/hooks/use-bulk-select";
+import { LoadingButton } from "@/components/LoadingButton";
 
 interface BulkActionBarProps {
   bulk: UseBulkSelectReturn;
