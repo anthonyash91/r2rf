@@ -567,7 +567,8 @@ type CatItem = {
   description_es: string | null;
   type: string;
   duration?: string | null;
-
+  url?: string | null;
+  file_url?: string | null;
 };
 
 function CategoryAccordion({
