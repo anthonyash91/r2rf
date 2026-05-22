@@ -7,7 +7,13 @@ type BadgeVariant =
   | "type"
   | "draft"
   | "custom"
-  | "translation";
+  | "translation"
+  | "admin"
+  | "contributor"
+  | "verified"
+  | "unverified"
+  | "user"
+  | "facility";
 
 type BadgeProps = {
   variant: BadgeVariant;
@@ -33,7 +39,20 @@ const VARIANT_CLASSES: Record<Exclude<BadgeVariant, "type">, string> = {
   // Gold (themed) — translation status (Needs ES / Partially translated)
   translation:
     "border-[var(--color-gold)]/30 bg-[var(--color-gold)]/15 text-[var(--color-gold)]",
+  // Admin role
+  admin: "border-primary/30 bg-primary/10 text-primary",
+  // Contributor role
+  contributor: "border-sky-500/30 bg-sky-500/10 text-sky-600",
+  // Verified email
+  verified: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600",
+  // Unverified email
+  unverified: "border-amber-500/30 bg-amber-500/10 text-amber-600",
+  // Regular user role
+  user: "border-border bg-secondary text-secondary-foreground",
+  // Facility name
+  facility: "border-border bg-muted text-foreground",
 };
+
 
 export function Badge({ variant, type, children, className, title }: BadgeProps) {
   const variantClass =
