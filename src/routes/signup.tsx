@@ -355,8 +355,8 @@ function SignupPage() {
                   Please sign up using your <strong>correct, real information</strong>. Accurate details ensure you can receive credit in the future for participating in this program.
                 </div>
               )}
-              {/* honeypot */}
-              <div className="hidden" aria-hidden>
+              {/* honeypot — absolutely positioned so it doesn't affect space-y spacing */}
+              <div className="absolute -left-[9999px] top-auto h-px w-px overflow-hidden" aria-hidden>
                 <label>
                   {t("signup.honeypot")}
                   <input
@@ -368,6 +368,8 @@ function SignupPage() {
                   />
                 </label>
               </div>
+
+
 
               <div>
                 <label className="text-sm font-medium">
