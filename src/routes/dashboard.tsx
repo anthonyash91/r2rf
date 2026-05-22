@@ -426,32 +426,14 @@ function DashboardPage() {
                   );
                 })()}
 
-                <div className="flex flex-col [&>section]:rounded-none [&>section:first-child]:rounded-t-2xl [&>section:last-child]:rounded-b-2xl [&>section:not(:first-child)]:-mt-px">
-                  {(categoriesQuery.data ?? []).map((c) => {
-                    const total = progressQuery.data?.totals.get(c.id) ?? 0;
-                    const read = progressQuery.data?.reads.get(c.id) ?? 0;
-                    const items = progressQuery.data?.itemsByCat.get(c.id) ?? [];
-                    const readSet = progressQuery.data?.readSet ?? new Set<string>();
-                    const newItemSet = progressQuery.data?.newItemSet ?? new Set<string>();
-                    const hasRecent = items.some((it) => newItemSet.has(it.id) && !readSet.has(it.id));
-                    return (
-                      <CategoryProgressSection
-                        key={c.id}
-                        category={c}
-                        items={items}
-                        readSet={readSet}
-                        newItemSet={newItemSet}
-                        hasRecent={hasRecent}
-                        total={total}
-                        read={read}
-                        isAdmin={isAdmin}
-                        lang={lang}
-                        t={t}
-                      />
-                    );
+                <CategoryAccordion
+                  categories={categoriesQuery.data ?? []}
+                  progress={progressQuery.data}
+                  isAdmin={isAdmin}
+                  lang={lang}
+                  t={t}
+                />
 
-                  })}
-                </div>
               </>
             )}
           </TabsContent>
