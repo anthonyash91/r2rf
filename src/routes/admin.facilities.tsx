@@ -320,7 +320,7 @@ function AdminFacilitiesPage() {
                               <div className="flex flex-wrap gap-1.5">
                                 {f.customHomePage.categories.length ? (
                                   f.customHomePage.categories.map((c) => (
-                                    <Badge key={c.id} variant="custom">
+                                    <Badge key={c.id} variant="category">
                                       {c.name}
                                     </Badge>
                                   ))
