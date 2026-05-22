@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Save, MessageSquare, Home, User as UserIcon, Megaphone, RefreshCw } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
+import { SectionCard } from "@/components/SectionCard";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 
 export const Route = createFileRoute("/admin/messages")({
@@ -127,7 +128,7 @@ function MessageEditor({
   });
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-6">
+    <SectionCard>
       <div className="flex flex-col gap-1">
         <h2 className="font-display text-2xl font-semibold flex items-center gap-2">
           {icon} {title}
@@ -273,6 +274,6 @@ function MessageEditor({
           </div>
         </form>
       )}
-    </section>
+    </SectionCard>
   );
 }

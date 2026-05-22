@@ -9,6 +9,7 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { LoadingButton } from "@/components/LoadingButton";
+import { SectionCard } from "@/components/SectionCard";
 import { Switch } from "@/components/ui/switch";
 
 
@@ -81,7 +82,7 @@ function AdminIpAllowlistPage() {
 
 
 
-      <section className="mt-8 rounded-2xl border border-border bg-card overflow-hidden">
+      <SectionCard padded={false} className="mt-8 overflow-hidden">
         <div className="p-6 border-b border-border">
           <h2 className="font-display text-xl font-semibold">Add to both allowlists</h2>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -120,7 +121,7 @@ function AdminIpAllowlistPage() {
             </LoadingButton>
           </div>
         </form>
-      </section>
+      </SectionCard>
 
       <div className="mt-8">
         <AllowlistSection
@@ -356,7 +357,7 @@ function AllowlistSection({
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+    <SectionCard padded={false} className="overflow-hidden">
       <div className="p-6 border-b border-border">
         <h2 className="font-display text-xl font-semibold flex items-center gap-2">
           {icon} {title}
@@ -458,7 +459,7 @@ function AllowlistSection({
           </ul>
         )}
       </div>
-    </section>
+    </SectionCard>
   );
 }
 

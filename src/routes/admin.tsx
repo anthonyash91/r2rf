@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { setActiveCustomHome } from "@/lib/custom-home-context";
 import { AdminNav } from "@/components/AdminNav";
+import { SectionCard } from "@/components/SectionCard";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Reentry to Recovery" }] }),
@@ -42,7 +43,7 @@ function AdminLayout() {
         {loading || !user ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : !canAccessAdmin ? (
-          <div className="rounded-2xl border border-border bg-card p-8">
+          <SectionCard as="div" padded={false} className="p-8">
             <h1 className="font-display text-2xl font-semibold">Admin access required</h1>
             <p className="mt-2 text-muted-foreground">
               You're signed in as <span className="font-medium text-foreground">{user.email}</span>,
@@ -51,7 +52,7 @@ function AdminLayout() {
             <Link to="/" className="mt-6 inline-block text-sm text-[var(--color-accent)] underline">
               Back to site
             </Link>
-          </div>
+          </SectionCard>
         ) : (
           <>
             <AdminNav />
