@@ -487,7 +487,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             const isDimmed = editing !== null && !isEditingThis;
             return (
               <div className={`flex flex-col sm:flex-row sm:items-center gap-3 p-6 pl-3 pb-5 transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
-                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                <div className="flex-1 min-w-0 flex flex-col gap-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="type" type={item.type}>{item.type}</Badge>
                     {!item.published && (
@@ -511,9 +511,11 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                       </span>
                     )}
                   </div>
-                  <h3 className="mt-5 font-display text-lg font-semibold text-foreground leading-snug truncate">{item.title}</h3>
-                  {item.description && <p className="-mt-1.5 text-sm text-muted-foreground leading-relaxed">{item.description}</p>}
-                  {item.source && <p className="mt-[17px] text-xs text-muted-foreground/80">Source · {item.source}</p>}
+                  <div className="min-w-0">
+                    <h3 className="font-display text-lg font-semibold text-foreground leading-snug truncate">{item.title}</h3>
+                    {item.description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{item.description}</p>}
+                    {item.source && <p className="mt-2 text-xs text-muted-foreground/80">Source · {item.source}</p>}
+                  </div>
                 </div>
                 <TooltipProvider delayDuration={150}>
                   <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
