@@ -431,6 +431,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editMode, setEditMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const toggleOne = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
