@@ -988,91 +988,52 @@ function ItemEditor({
         Published
       </label>
 
-      {showEs ? (
-        <div className="border-t border-border pt-4 space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h4 className="font-display text-base font-semibold">Spanish translation</h4>
-              <p className="text-xs text-muted-foreground">Leave blank to fall back to the English version when Spanish is selected.</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                disabled={addEsBusy}
-                onClick={() => {
-                  runAddEs(
-                    { title, description },
-                    (t) => {
-                      if (t.title) setTitleEs(t.title);
-                      if (t.description) setDescriptionEs(t.description);
-                    },
-                    "Content item metadata in a learning library",
-                  );
-                }}
-                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
-              >
-                <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
-                {addEsBusy ? "Translating…" : "Regenerate"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowEs(false)}
-                className="text-xs text-muted-foreground hover:text-foreground underline"
-              >
-                Hide
-              </button>
-            </div>
-          </div>
-          {addEsBusy && <TranslatingIndicator />}
-          <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
-          <label className="block">
-            <span className="text-sm font-medium">Description (ES)</span>
-            <textarea
-              rows={3}
-              value={descriptionEs}
-              onChange={(e) => setDescriptionEs(e.target.value)}
-              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+      <TranslationPanel
+        open={showEs}
+        onOpenChange={setShowEs}
+        busy={addEsBusy}
+        headingLevel="h4"
+        headingClassName="font-display text-base font-semibold"
+        description="Leave blank to fall back to the English version when Spanish is selected."
+        onTranslate={() => {
+          runAddEs(
+            { title, description },
+            (t) => {
+              if (t.title) setTitleEs(t.title);
+              if (t.description) setDescriptionEs(t.description);
+            },
+            "Content item metadata in a learning library",
+          );
+        }}
+      >
+        <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
+        <label className="block">
+          <span className="text-sm font-medium">Description (ES)</span>
+          <textarea
+            rows={3}
+            value={descriptionEs}
+            onChange={(e) => setDescriptionEs(e.target.value)}
+            className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+          />
+        </label>
+        <div>
+          <LabeledInput
+            label="URL (ES, optional)"
+            value={fileUrlEs ?? ""}
+            onChange={(v) => setFileUrlEs(v.trim() ? v : null)}
+            placeholder="https://…"
+            type="url"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">Shown to visitors viewing the site in Spanish. Falls back to the English link if omitted.</p>
+          <div className="mt-2">
+            <FileUploader
+              label={fileUrlEs ? "Replace Spanish file" : "Upload Spanish file"}
+              onUploaded={(u, name) => { setFileUrlEs(u); setFileNameEs(name ?? null); }}
             />
-          </label>
-          <div>
-            <LabeledInput
-              label="URL (ES, optional)"
-              value={fileUrlEs ?? ""}
-              onChange={(v) => setFileUrlEs(v.trim() ? v : null)}
-              placeholder="https://…"
-              type="url"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">Shown to visitors viewing the site in Spanish. Falls back to the English link if omitted.</p>
-            <div className="mt-2">
-              <FileUploader
-                label={fileUrlEs ? "Replace Spanish file" : "Upload Spanish file"}
-                onUploaded={(u, name) => { setFileUrlEs(u); setFileNameEs(name ?? null); }}
-              />
-            </div>
           </div>
         </div>
-      ) : (
-        <div className="border-t border-border pt-4">
-          <button
-            type="button"
-            disabled={addEsBusy}
-            onClick={() => {
-              setShowEs(true);
-              runAddEs(
-                { title, description },
-                (t) => {
-                  if (t.title) setTitleEs(t.title);
-                  if (t.description) setDescriptionEs(t.description);
-                },
-                "Content item metadata in a learning library",
-              );
-            }}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
-          >
-            {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
-          </button>
-        </div>
-      )}
+      </TranslationPanel>
+
       <div className="flex justify-end gap-2">
         <LoadingButton variant="secondary" onClick={onCancel}>
           Cancel
