@@ -91,7 +91,7 @@ function AdminHomePage() {
       <div className="mt-6">
         <PageHeader
           icon={Home}
-          title="Home page header"
+          title="Home Page Header"
           description="Edit the eyebrow, headline, and subheading shown at the top of the home page. The headline is split into three parts; the middle part is shown in accent italic."
         />
       </div>
