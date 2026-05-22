@@ -600,13 +600,13 @@ function NewCategoryForm({
               onUploaded={(u) => setIconUrl(u)}
             />
             {iconUrl && (
-              <button
-                type="button"
+              <LoadingButton
+                variant="secondary"
                 onClick={() => setIconUrl(null)}
-                className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted text-muted-foreground"
+                className="text-muted-foreground"
               >
                 Remove
-              </button>
+              </LoadingButton>
             )}
           </div>
         </div>
