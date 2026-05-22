@@ -701,16 +701,17 @@ function UserItem({
                 className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
               />
               <button
-                title="Save"
+                title={pendingEmail ? "Saving…" : "Save"}
+                disabled={pendingEmail}
                 onClick={() => {
                   const next = emailDraft.trim();
                   if (!next || next === user.email) { setEditingEmail(false); return; }
                   onChangeEmail(next);
                   setEditingEmail(false);
                 }}
-                className="p-1.5 rounded-md hover:bg-muted text-foreground"
+                className="p-1.5 rounded-md hover:bg-muted text-foreground disabled:opacity-60"
               >
-                <Check className="h-4 w-4" />
+                {pendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               </button>
               <button
                 title="Cancel"
