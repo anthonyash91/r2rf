@@ -529,10 +529,11 @@ function AllowlistRow({
               <TooltipTrigger asChild>
                 <button
                   aria-label="Remove"
+                  disabled={pendingDelete}
                   onClick={onDelete}
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  {pendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 </button>
               </TooltipTrigger>
               <TooltipContent>Remove</TooltipContent>
