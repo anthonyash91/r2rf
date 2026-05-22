@@ -355,19 +355,6 @@ function SignupPage() {
                   Please sign up using your <strong>correct, real information</strong>. Accurate details ensure you can receive credit in the future for participating in this program.
                 </div>
               )}
-              {/* honeypot — absolutely positioned so it doesn't affect space-y spacing */}
-              <div className="absolute -left-[9999px] top-auto h-px w-px overflow-hidden" aria-hidden>
-                <label>
-                  {t("signup.honeypot")}
-                  <input
-                    type="text"
-                    tabIndex={-1}
-                    autoComplete="off"
-                    value={honeypot}
-                    onChange={(e) => setHoneypot(e.target.value)}
-                  />
-                </label>
-              </div>
 
 
 
