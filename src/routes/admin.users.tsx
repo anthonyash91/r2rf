@@ -378,7 +378,7 @@ function AdminUsersPage() {
                         ? regularUsers
                         : regularUsers.filter((u) => u.profile?.facility === facilityFilter));
                       if (!rows.length) { toast.error("No users to export"); return; }
-                      const headers = ["Username","First name","Last name","Email","Facility","Signup IP","Created","Last sign in"];
+                      const headers = ["Username","First name","Last name","Email","Facility","Created","Last sign in"];
                       const esc = (v: string | null | undefined) => {
                         const s = (v ?? "").toString();
                         return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -391,11 +391,11 @@ function AdminUsersPage() {
                           esc(u.profile?.last_name),
                           esc(u.email),
                           esc(u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""),
-                          esc(u.signup_ip),
                           esc(u.created_at),
                           esc(u.last_sign_in_at),
                         ].join(","));
                       }
+
                       const csv = lines.join("\n");
                       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
                       const url = URL.createObjectURL(blob);
