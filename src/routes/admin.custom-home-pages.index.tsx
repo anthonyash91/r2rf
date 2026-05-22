@@ -230,13 +230,14 @@ function AdminCustomHomePagesList() {
             Create alternate landing pages at custom URLs (e.g. <code>/cpc</code>) that show only the categories you choose.
           </p>
         </div>
-        <button
+        <LoadingButton
           onClick={() => setCreating(true)}
           disabled={creating}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 whitespace-nowrap shrink-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+          icon={<Plus className="h-4 w-4 shrink-0" />}
+          className="whitespace-nowrap shrink-0"
         >
-          <Plus className="h-4 w-4 shrink-0" /> New custom home page
-        </button>
+          New custom home page
+        </LoadingButton>
       </div>
 
       {creating && (
