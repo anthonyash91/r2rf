@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart3, ChevronDown, Download, Eye, MousePointerClick } from "lucide-react";
@@ -225,6 +225,7 @@ function CategoryList({ rows }: { rows: AggregatedRow[] }) {
           key={row.category.id}
           row={row}
           isOpen={openId === row.category.id}
+          dimmed={openId !== null && openId !== row.category.id}
           onToggle={() => setOpenId((cur) => (cur === row.category.id ? null : row.category.id))}
         />
       ))}
@@ -242,10 +243,16 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
-function CategorySection({ row, isOpen, onToggle }: { row: AggregatedRow; isOpen: boolean; onToggle: () => void }) {
+function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow; isOpen: boolean; dimmed?: boolean; onToggle: () => void }) {
   const open = isOpen;
+  const sectionRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (isOpen && sectionRef.current) {
+      sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isOpen]);
   return (
-    <SectionCard padded={false} className="overflow-hidden bg-[#fffdf8]">
+    <SectionCard ref={sectionRef as any} padded={false} className={`overflow-hidden bg-[#fffdf8] transition-opacity duration-200 ${dimmed ? "opacity-40" : "opacity-100"}`}>
       <button
         type="button"
         onClick={onToggle}

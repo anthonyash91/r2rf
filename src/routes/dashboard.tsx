@@ -1,7 +1,7 @@
 import { createFileRoute, redirect, Link, useBlocker } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { setSecurityLock } from "@/lib/security-lock";
 import { toast } from "sonner";
 import { Badge } from "@/components/Badge";
@@ -605,6 +605,7 @@ function CategoryAccordion({
             lang={lang}
             t={t}
             isOpen={openId === c.id}
+            dimmed={openId !== null && openId !== c.id}
             onToggle={() => setOpenId((cur) => (cur === c.id ? null : c.id))}
           />
         );
@@ -625,6 +626,7 @@ function CategoryProgressSection({
   lang,
   t,
   isOpen,
+  dimmed,
   onToggle,
 }: {
   category: Category;
@@ -638,14 +640,21 @@ function CategoryProgressSection({
   lang: "en" | "es";
   t: (key: string, vars?: Record<string, string | number>) => string;
   isOpen: boolean;
+  dimmed?: boolean;
   onToggle: () => void;
 }) {
   const open = isOpen;
   const pct = total > 0 ? Math.round((read / total) * 100) : 0;
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (isOpen && sectionRef.current) {
+      sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isOpen]);
 
   return (
-    <section className="rounded-2xl border border-border bg-[#fffdf8] overflow-hidden">
+    <section ref={sectionRef} className={`rounded-2xl border border-border bg-[#fffdf8] overflow-hidden transition-opacity duration-200 ${dimmed ? "opacity-40" : "opacity-100"}`}>
       <button
         type="button"
         onClick={onToggle}
