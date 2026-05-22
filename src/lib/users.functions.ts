@@ -1,9 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getClientIp } from "./ip-allowlist";
+
 
 type Role = "admin" | "contributor" | "user";
 
@@ -33,11 +32,6 @@ export const listUsers = createServerFn({ method: "GET" })
       .select("user_id, role")
       .in("user_id", idsForQuery);
 
-    const { data: ipRows } = await supabaseAdmin
-      .from("user_signup_ips")
-      .select("user_id, ip_address")
-      .in("user_id", idsForQuery);
-
     const { data: profileRows } = await supabaseAdmin
       .from("user_profiles")
       .select("user_id, username, facility, first_name, last_name")
@@ -49,9 +43,6 @@ export const listUsers = createServerFn({ method: "GET" })
       arr.push(r.role as Role);
       rolesByUser.set(r.user_id, arr);
     }
-
-    const ipByUser = new Map<string, string>();
-    for (const r of ipRows ?? []) ipByUser.set(r.user_id, r.ip_address);
 
     const profileByUser = new Map<string, { username: string; facility: string; first_name: string; last_name: string }>();
     for (const p of profileRows ?? []) {
@@ -66,7 +57,7 @@ export const listUsers = createServerFn({ method: "GET" })
         last_sign_in_at: u.last_sign_in_at ?? null,
         email_confirmed_at: (u as any).email_confirmed_at ?? null,
         roles: rolesByUser.get(u.id) ?? [],
-        signup_ip: ipByUser.get(u.id) ?? null,
+
         profile: profileByUser.get(u.id) ?? null,
       })),
     };
@@ -125,7 +116,7 @@ export const deleteUser = createServerFn({ method: "POST" })
       throw new Error("You cannot delete your own account.");
     }
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
-    await supabaseAdmin.from("user_signup_ips").delete().eq("user_id", data.userId);
+
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -144,7 +135,6 @@ export const deleteUsers = createServerFn({ method: "POST" })
     for (const userId of targets) {
       try {
         await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
-        await supabaseAdmin.from("user_signup_ips").delete().eq("user_id", userId);
         const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
         if (error) throw new Error(error.message);
         deleted++;
@@ -155,19 +145,7 @@ export const deleteUsers = createServerFn({ method: "POST" })
     return { deleted, failed, skippedSelf: data.userIds.length - targets.length };
   });
 
-export const recordMySignupIp = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const ip = getClientIp(getRequest());
-    if (!ip) return { ok: false, reason: "no-ip" as const };
-    await supabaseAdmin
-      .from("user_signup_ips")
-      .upsert(
-        { user_id: context.userId, ip_address: ip },
-        { onConflict: "user_id", ignoreDuplicates: true },
-      );
-    return { ok: true };
-  });
+
 
 
 

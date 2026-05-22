@@ -3,15 +3,13 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { createHmac, timingSafeEqual, randomInt } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getClientIp } from "./ip-allowlist";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
 import { hashAnswer } from "./security-hash.server";
 
 
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
-const RATE_LIMIT_MAX = 3;
 const USER_EMAIL_DOMAIN = "users.local";
+
 
 function syntheticEmailLocal(username: string): string {
   return `${username.toLowerCase()}@${USER_EMAIL_DOMAIN}`;
@@ -91,21 +89,6 @@ export const signupUser = createServerFn({ method: "POST" })
       throw new Error("Captcha failed. Please try again.");
     }
 
-    const ip = getClientIp(getRequest());
-
-    // Rate limit by IP using user_signup_ips
-    if (ip) {
-      const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
-      const { count } = await supabaseAdmin
-        .from("user_signup_ips")
-        .select("user_id", { count: "exact", head: true })
-        .eq("ip_address", ip)
-        .gte("created_at", since);
-      if ((count ?? 0) >= RATE_LIMIT_MAX) {
-        throw new Error("Too many signups from your network. Please try again later.");
-      }
-    }
-
     // Username availability
     const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
     if (exists) throw new Error("That username is already taken.");
@@ -161,14 +144,9 @@ export const signupUser = createServerFn({ method: "POST" })
       }
     }
 
-    if (ip) {
-      await supabaseAdmin
-        .from("user_signup_ips")
-        .upsert({ user_id: userId, ip_address: ip }, { onConflict: "user_id", ignoreDuplicates: true });
-    }
-
     return { ok: true as const, email };
   });
+
 
 export const getMyProfile = createServerFn({ method: "GET" }).handler(async () => {
   // Read auth from header manually since this is public-callable

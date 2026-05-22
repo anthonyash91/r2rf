@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download } from "lucide-react";
+import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, HelpCircle, Loader2, Download } from "lucide-react";
 import { Badge } from "@/components/Badge";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
@@ -48,9 +48,9 @@ type UserRow = {
   last_sign_in_at: string | null;
   email_confirmed_at: string | null;
   roles: string[];
-  signup_ip: string | null;
   profile: { username: string; facility: string; first_name: string; last_name: string } | null;
 };
+
 
 
 function AdminUsersPage() {
@@ -378,7 +378,7 @@ function AdminUsersPage() {
                         ? regularUsers
                         : regularUsers.filter((u) => u.profile?.facility === facilityFilter));
                       if (!rows.length) { toast.error("No users to export"); return; }
-                      const headers = ["Username","First name","Last name","Email","Facility","Signup IP","Created","Last sign in"];
+                      const headers = ["Username","First name","Last name","Email","Facility","Created","Last sign in"];
                       const esc = (v: string | null | undefined) => {
                         const s = (v ?? "").toString();
                         return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -391,11 +391,11 @@ function AdminUsersPage() {
                           esc(u.profile?.last_name),
                           esc(u.email),
                           esc(u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""),
-                          esc(u.signup_ip),
                           esc(u.created_at),
                           esc(u.last_sign_in_at),
                         ].join(","));
                       }
+
                       const csv = lines.join("\n");
                       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
                       const url = URL.createObjectURL(blob);
@@ -697,12 +697,8 @@ function UserItem({
           <p className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-x-2">
             <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
             {user.last_sign_in_at && <span>· Last sign-in {new Date(user.last_sign_in_at).toLocaleDateString()}</span>}
-            {user.signup_ip && (
-              <span className="inline-flex items-center gap-1">
-                · <Globe className="h-3 w-3" /> Signup IP: <code className="font-mono">{user.signup_ip}</code>
-              </span>
-            )}
           </p>
+
         </div>
 
 
@@ -728,14 +724,24 @@ function UserItem({
             />
 
             {isRegularUser && (
-              <IconButton
-                aria-label="Reset security questions"
-                tooltip="Reset security questions"
-                icon={HelpCircle}
-                pending={pendingClearSec}
-                onClick={onResetSecurity}
-              />
+              <>
+                <IconButton
+                  aria-label="Reset security questions"
+                  tooltip="Reset security questions"
+                  icon={HelpCircle}
+                  pending={pendingClearSec}
+                  onClick={onResetSecurity}
+                />
+                <IconButton
+                  aria-label="Promote to admin"
+                  tooltip="Promote to admin"
+                  icon={Shield}
+                  pending={pendingRole}
+                  onClick={() => onToggleAdmin(true)}
+                />
+              </>
             )}
+
 
             {!isRegularUser && (
               <>
