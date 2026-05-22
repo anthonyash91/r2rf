@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download } from "lucide-react";
+import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download, Search } from "lucide-react";
 import { Badge } from "@/components/Badge";
 
 import {
@@ -64,6 +64,7 @@ function AdminUsersPage() {
   const [regularVisible, setRegularVisible] = useState<number>(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [editMode, setEditMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
@@ -313,11 +314,21 @@ function AdminUsersPage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:flex-wrap">
                 <div>
                   {(() => {
-                    const filteredCount = facilityFilter === "all"
-                      ? regularUsers.length
-                      : regularUsers.filter((u) => u.profile?.facility === facilityFilter).length;
+                    const q = searchQuery.trim().toLowerCase();
+                    const facilityScoped = facilityFilter === "all"
+                      ? regularUsers
+                      : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
+                    const filteredCount = q
+                      ? facilityScoped.filter((u) => {
+                          const facLabel = u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : "";
+                          return [u.email, u.profile?.username, u.profile?.first_name, u.profile?.last_name, facLabel]
+                            .filter(Boolean)
+                            .some((v) => String(v).toLowerCase().includes(q));
+                        }).length
+                      : facilityScoped.length;
+                    const isFiltered = facilityFilter !== "all" || q.length > 0;
                     return (
-                      <h2 className="font-display text-xl font-semibold">Users <span className="text-muted-foreground font-normal">({filteredCount}{facilityFilter !== "all" ? ` of ${regularUsers.length}` : ""})</span></h2>
+                      <h2 className="font-display text-xl font-semibold">Users <span className="text-muted-foreground font-normal">({filteredCount}{isFiltered ? ` of ${regularUsers.length}` : ""})</span></h2>
                     );
                   })()}
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -381,12 +392,21 @@ function AdminUsersPage() {
                 </div>
               </div>
               {(() => {
-                const filtered = facilityFilter === "all"
+                const q = searchQuery.trim().toLowerCase();
+                const facilityScoped = facilityFilter === "all"
                   ? regularUsers
                   : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
+                const filtered = q
+                  ? facilityScoped.filter((u) => {
+                      const facLabel = u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : "";
+                      return [u.email, u.profile?.username, u.profile?.first_name, u.profile?.last_name, facLabel]
+                        .filter(Boolean)
+                        .some((v) => String(v).toLowerCase().includes(q));
+                    })
+                  : facilityScoped;
                 const visible = filtered.slice(0, regularVisible);
                 const remaining = filtered.length - visible.length;
-                
+
                 const toggleOne = (id: string) => {
                   setSelectedIds((prev) => {
                     const next = new Set(prev);
@@ -405,7 +425,27 @@ function AdminUsersPage() {
                               : "Click users to select for deletion"
                             : `${filtered.length} ${filtered.length === 1 ? "user" : "users"}`}
                         </span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                            <input
+                              type="text"
+                              value={searchQuery}
+                              onChange={(e) => { setSearchQuery(e.target.value); setRegularVisible(10); }}
+                              placeholder="Search users…"
+                              className="rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm w-full sm:w-56"
+                            />
+                            {searchQuery && (
+                              <button
+                                type="button"
+                                onClick={() => setSearchQuery("")}
+                                aria-label="Clear search"
+                                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
                           {!editMode ? (
                             <button
                               type="button"
@@ -483,7 +523,7 @@ function AdminUsersPage() {
                           })}
                         </ul>
                       ) : (
-                        <div className="p-6 text-muted-foreground text-sm">No users for this facility.</div>
+                        <div className="p-6 text-muted-foreground text-sm">{q ? "No users match your search." : "No users for this facility."}</div>
                       )}
                     </div>
                     {filtered.length > 10 && (

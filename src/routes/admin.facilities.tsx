@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home, Loader2 } from "lucide-react";
+import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home, Loader2, Search, X } from "lucide-react";
 import {
   listFacilitiesWithStats,
   addFacilities,
@@ -42,13 +42,20 @@ function AdminFacilitiesPage() {
   const [visibleCount, setVisibleCount] = useState(10);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editMode, setEditMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
 
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
     queryFn: () => fetchFacilities(),
   });
-  const facilities = facilitiesQuery.data?.facilities ?? [];
+  const allFacilities = facilitiesQuery.data?.facilities ?? [];
+  const q = searchQuery.trim().toLowerCase();
+  const facilities = q
+    ? allFacilities.filter((f) =>
+        [f.label, f.value].filter(Boolean).some((v) => String(v).toLowerCase().includes(q)),
+      )
+    : allFacilities;
   const visibleFacilities = facilities.slice(0, visibleCount);
   const remaining = Math.max(0, facilities.length - visibleFacilities.length);
 
@@ -117,7 +124,7 @@ function AdminFacilitiesPage() {
           <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
             <Building2 className="h-7 w-7 text-[var(--color-accent)]" /> Facilities
             {!facilitiesQuery.isLoading && (
-              <span className="text-muted-foreground font-normal">({facilities.length})</span>
+              <span className="text-muted-foreground font-normal">({facilities.length}{q ? ` of ${allFacilities.length}` : ""})</span>
             )}
           </h1>
 
@@ -176,16 +183,36 @@ function AdminFacilitiesPage() {
           </form>
         )}
 
-        {facilities.length > 0 && (
+        {allFacilities.length > 0 && (
           <div className="mt-3 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-t-md border border-b-0 border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
             <span className="text-muted-foreground">
               {editMode
                 ? selectedIds.size > 0
                   ? `${selectedIds.size} selected`
                   : "Click facilities to select for deletion"
-                : `${facilities.length} ${facilities.length === 1 ? "facility" : "facilities"}`}
+                : `${facilities.length}${q ? ` of ${allFacilities.length}` : ""} ${facilities.length === 1 ? "facility" : "facilities"}`}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setVisibleCount(10); }}
+                  placeholder="Search facilities…"
+                  className="rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm w-full sm:w-56"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
               {!editMode ? (
                 <button
                   type="button"
@@ -238,7 +265,7 @@ function AdminFacilitiesPage() {
           </div>
         )}
 
-        <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${facilities.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
+        <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${allFacilities.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
           {facilitiesQuery.isLoading ? (
             <div className="p-6 text-muted-foreground text-sm">Loading…</div>
           ) : facilities.length ? (
@@ -376,7 +403,7 @@ function AdminFacilitiesPage() {
               })}
             </ul>
           ) : (
-            <div className="p-6 text-muted-foreground text-sm">No facilities yet.</div>
+            <div className="p-6 text-muted-foreground text-sm">{q ? "No facilities match your search." : "No facilities yet."}</div>
           )}
         </div>
         {facilities.length > 10 && (

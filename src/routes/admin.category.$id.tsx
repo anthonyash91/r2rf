@@ -8,7 +8,7 @@ import { Badge } from "@/components/Badge";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical, Search } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 
@@ -431,6 +431,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editMode, setEditMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const toggleOne = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -490,6 +491,17 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         </div>
       )}
 
+      {(() => {
+        const q = searchQuery.trim().toLowerCase();
+        const filteredOrder = q
+          ? order.filter((i) =>
+              [i.title, i.description, i.source, i.type]
+                .filter(Boolean)
+                .some((v) => String(v).toLowerCase().includes(q)),
+            )
+          : order;
+        return (
+          <>
       {order.length > 0 && (
         <div className="mt-6 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-t-md border border-b-0 border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
           <span className="text-muted-foreground">
@@ -497,9 +509,29 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
               ? selectedIds.size > 0
                 ? `${selectedIds.size} selected`
                 : "Click items to select for deletion"
-              : `${order.length} ${order.length === 1 ? "item" : "items"}`}
+              : `${filteredOrder.length}${q ? ` of ${order.length}` : ""} ${(q ? filteredOrder.length : order.length) === 1 ? "item" : "items"}`}
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search content…"
+                className="rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm w-full sm:w-56"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="Clear search"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
             {!editMode ? (
               <button
                 type="button"
@@ -659,23 +691,31 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           if (order.length === 0) {
             return <p className="p-6 text-muted-foreground">No items yet.</p>;
           }
-          if (editMode) {
+          if (filteredOrder.length === 0) {
+            return <p className="p-6 text-muted-foreground">No items match your search.</p>;
+          }
+          if (editMode || q) {
             return (
               <ul className="divide-y divide-border">
-                {order.map((item) => {
+                {filteredOrder.map((item) => {
                   const selected = selectedIds.has(item.id);
+                  const isInteractive = editMode;
                   return (
                     <li
                       key={item.id}
-                      onClick={() => toggleOne(item.id)}
-                      className={`flex items-stretch cursor-pointer transition-colors ${
-                        selected ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"
+                      onClick={isInteractive ? () => toggleOne(item.id) : undefined}
+                      className={`flex items-stretch transition-colors ${
+                        isInteractive ? "cursor-pointer " : ""
+                      }${
+                        selected ? "bg-destructive/10 hover:bg-destructive/15" : isInteractive ? "hover:bg-muted/50" : ""
                       }`}
                     >
-                      <div className="flex items-center pl-4 pr-0 text-muted-foreground/50">
-                        <GripVertical className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0 pointer-events-none">{renderItemRow(item)}</div>
+                      {editMode && (
+                        <div className="flex items-center pl-4 pr-0 text-muted-foreground/50">
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+                      )}
+                      <div className={`flex-1 min-w-0 ${editMode ? "pointer-events-none" : ""}`}>{renderItemRow(item)}</div>
                     </li>
                   );
                 })}
@@ -694,6 +734,9 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           );
         })()}
       </div>
+          </>
+        );
+      })()}
     </section>
   );
 }
