@@ -315,25 +315,25 @@ function DashboardPage() {
               })()}
               <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
             </div>
-            <TabsList className="h-auto p-2 gap-1 self-start sm:self-center">
+            <TabsList className="h-auto p-2 gap-1 self-start sm:self-center bg-muted/40">
               <TabsTrigger
                 value="categories"
                 disabled={mustSetup}
                 onClick={(e) => {
                   if (mustSetup) {
                     e.preventDefault();
-                    toast.error("Please set up your security questions before leaving this page.");
+                    toast.error(t("dashboard.lockedNav"));
                   }
                 }}
                 className={`px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
               >
-                Progress
+                {t("dashboard.tabProgress")}
               </TabsTrigger>
               <TabsTrigger
                 value="account"
                 className="px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
               >
-                Account Settings
+                {t("dashboard.tabAccount")}
               </TabsTrigger>
             </TabsList>
           </div>
