@@ -266,7 +266,7 @@ function DashboardPage() {
 
   useBlocker({
     shouldBlockFn: () => {
-      toast.error("Please set up your security questions before leaving this page.");
+      toast.error(t("dashboard.lockedNav"));
       return true;
     },
     enableBeforeUnload: mustSetup,
