@@ -552,7 +552,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         </div>
       )}
 
-      <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+      <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${order.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
         {(() => {
           const renderItemRow = (item: ContentItem) => {
             const isEditingThis = editing !== null && editing !== "new" && editing.id === item.id;
