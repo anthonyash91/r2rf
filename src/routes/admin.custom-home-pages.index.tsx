@@ -11,6 +11,7 @@ import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
@@ -542,7 +543,7 @@ function AdminCustomHomePagesList() {
                       pendingTooltip="Deleting…"
                       variant="destructive"
                       icon={Trash2}
-                      pending={deleteMut.isPending && deleteMut.variables === p.id}
+                      pending={isMutationPendingFor(deleteMut, p.id)}
                       onClick={async () => {
                         await confirm({
                           title: `Delete "${p.name || p.slug}"?`,

@@ -10,6 +10,7 @@ import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles, RefreshCw, Exte
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy } from "@/lib/category-ai.functions";
 
@@ -381,7 +382,7 @@ function AdminCategoriesPage() {
                   pendingTooltip="Deleting…"
                   variant="destructive"
                   icon={Trash2}
-                  pending={deleteMut.isPending && deleteMut.variables === c.id}
+                  pending={isMutationPendingFor(deleteMut, c.id)}
                   onClick={async () => {
                     await confirm({
                       title: `Delete "${c.name}"?`,

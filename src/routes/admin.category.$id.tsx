@@ -25,6 +25,7 @@ import { LabeledInput } from "@/components/FormField";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { EmptyState } from "@/components/EmptyState";
+import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { PageHeader } from "@/components/PageHeader";
 
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
@@ -599,7 +600,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                       pendingTooltip="Deleting…"
                       variant="destructive"
                       icon={Trash2}
-                      pending={deleteMut.isPending && deleteMut.variables === item.id}
+                      pending={isMutationPendingFor(deleteMut, item.id)}
                       onClick={async () => {
                         await confirm({
                           title: `Delete "${item.title}"?`,

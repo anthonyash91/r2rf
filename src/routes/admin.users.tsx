@@ -11,6 +11,7 @@ import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { rowPending } from "@/hooks/use-row-pending";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
 import {
@@ -187,12 +188,12 @@ function AdminUsersPage() {
           (u) => !u.roles.includes("admin") && !u.roles.includes("contributor"),
         );
 
-        const isPendingEmail = (id: string) => emailMut.isPending && emailMut.variables?.userId === id;
-        const isPendingPw = (id: string) => pwMut.isPending && pwMut.variables?.userId === id;
-        const isPendingResetEmail = (email: string) => resetMut.isPending && resetMut.variables?.email === email;
-        const isPendingRole = (id: string) => roleMut.isPending && roleMut.variables?.userId === id;
-        const isPendingDelete = (id: string) => deleteMut.isPending && deleteMut.variables?.userId === id;
-        const isPendingClearSec = (id: string) => clearSecMut.isPending && clearSecMut.variables?.userId === id;
+        const isPendingEmail = rowPending<string>(emailMut, "userId");
+        const isPendingPw = rowPending<string>(pwMut, "userId");
+        const isPendingResetEmail = rowPending<string>(resetMut, "email");
+        const isPendingRole = rowPending<string>(roleMut, "userId");
+        const isPendingDelete = rowPending<string>(deleteMut, "userId");
+        const isPendingClearSec = rowPending<string>(clearSecMut, "userId");
 
         const renderItem = (u: UserRow) => (
           <UserItem

@@ -9,6 +9,7 @@ import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home } from "lucide-
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import {
   listFacilitiesWithStats,
   addFacilities,
@@ -305,7 +306,7 @@ function AdminFacilitiesPage() {
                                 pendingTooltip="Deleting…"
                                 variant="destructive"
                                 icon={Trash2}
-                                pending={deleteMut.isPending && deleteMut.variables?.id === f.id}
+                                pending={isMutationPendingFor(deleteMut, f.id, "id")}
                                 onClick={async () => {
                                   await confirm({
                                     title: "Delete facility?",
