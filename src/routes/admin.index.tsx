@@ -693,9 +693,11 @@ function NewCategoryForm({
         </div>
       ) : (
         <div className="border-t border-border pt-4">
-          <button
-            type="button"
+          <LoadingButton
+            variant="secondary"
             disabled={addEsBusy}
+            pending={addEsBusy}
+            pendingText="Translating…"
             onClick={() => {
               setShowEs(true);
               runAddEs(
@@ -708,10 +710,9 @@ function NewCategoryForm({
                 "Category metadata for a content library",
               );
             }}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
           >
-            {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
-          </button>
+            + Add Spanish translation
+          </LoadingButton>
         </div>
       )}
 
