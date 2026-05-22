@@ -4,11 +4,31 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url,
 ).toString();
+
+function PdfLoading() {
+  const { t } = useI18n();
+  const [stillLoading, setStillLoading] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setStillLoading(true), 5000);
+    return () => clearTimeout(id);
+  }, []);
+  return (
+    <div className="p-8 text-sm text-muted-foreground">
+      {stillLoading ? t("pdf.stillLoading") : t("pdf.loading")}
+    </div>
+  );
+}
+
+function PdfError() {
+  const { t } = useI18n();
+  return <div className="p-8 text-sm text-destructive">{t("pdf.failed")}</div>;
+}
 
 export default function PdfViewer({ url }: { url: string }) {
   const [numPages, setNumPages] = useState<number>(0);
@@ -54,8 +74,8 @@ export default function PdfViewer({ url }: { url: string }) {
           key={url}
           className="mx-auto w-fit max-w-none"
           onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-          loading={<div className="p-8 text-sm text-muted-foreground">Loading PDF…</div>}
-          error={<div className="p-8 text-sm text-destructive">Failed to load PDF.</div>}
+          loading={<PdfLoading />}
+          error={<PdfError />}
         >
           {pageWidth > 0 && (
             <Page
