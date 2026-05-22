@@ -196,13 +196,13 @@ function AdminCategoriesPage() {
           <p className="mt-1 text-sm text-muted-foreground">Manage the library structure.</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <button
+          <LoadingButton
             onClick={() => setCreating(true)}
             disabled={creating}
-            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+            icon={<Plus className="h-4 w-4" />}
           >
-            <Plus className="h-4 w-4" /> New category
-          </button>
+            New category
+          </LoadingButton>
         </div>
       </div>
 
