@@ -653,21 +653,23 @@ function UserItem({
           ) : (
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
-                {isAdmin && (
-                  <Badge variant="admin" className="gap-1">
-                    <Shield className="h-3 w-3" /> Admin
-                  </Badge>
-                )}
-                {isContributor && (
-                  <Badge variant="contributor" className="gap-1">
-                    <Shield className="h-3 w-3" /> Contributor
-                  </Badge>
-                )}
-                {user.email_confirmed_at ? (
-                  <Badge variant="verified">Verified</Badge>
-                ) : (
-                  <Badge variant="unverified">Unverified</Badge>
-                )}
+                <BadgeGroup>
+                  {isAdmin && (
+                    <Badge variant="admin" className="gap-1">
+                      <Shield className="h-3 w-3" /> Admin
+                    </Badge>
+                  )}
+                  {isContributor && (
+                    <Badge variant="contributor" className="gap-1">
+                      <Shield className="h-3 w-3" /> Contributor
+                    </Badge>
+                  )}
+                  {user.email_confirmed_at ? (
+                    <Badge variant="verified">Verified</Badge>
+                  ) : (
+                    <Badge variant="unverified">Unverified</Badge>
+                  )}
+                </BadgeGroup>
               </div>
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
                 <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -679,21 +681,23 @@ function UserItem({
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
-                {isAdmin && (
-                  <Badge variant="admin" className="ml-1 gap-1 hidden sm:inline-flex">
-                    <Shield className="h-3 w-3" /> Admin
-                  </Badge>
-                )}
-                {isContributor && (
-                  <Badge variant="contributor" className="ml-1 gap-1 hidden sm:inline-flex">
-                    <Shield className="h-3 w-3" /> Contributor
-                  </Badge>
-                )}
-                {user.email_confirmed_at ? (
-                  <Badge variant="verified" className="ml-1 hidden sm:inline-flex">Verified</Badge>
-                ) : (
-                  <Badge variant="unverified" className="ml-1 hidden sm:inline-flex">Unverified</Badge>
-                )}
+                <BadgeGroup className="ml-1 hidden sm:inline-flex">
+                  {isAdmin && (
+                    <Badge variant="admin" className="gap-1">
+                      <Shield className="h-3 w-3" /> Admin
+                    </Badge>
+                  )}
+                  {isContributor && (
+                    <Badge variant="contributor" className="gap-1">
+                      <Shield className="h-3 w-3" /> Contributor
+                    </Badge>
+                  )}
+                  {user.email_confirmed_at ? (
+                    <Badge variant="verified">Verified</Badge>
+                  ) : (
+                    <Badge variant="unverified">Unverified</Badge>
+                  )}
+                </BadgeGroup>
               </div>
             </>
           )}
