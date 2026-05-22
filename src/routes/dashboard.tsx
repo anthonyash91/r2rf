@@ -17,10 +17,69 @@ import { useI18n, pickLang, translateDuration } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, X, ChevronDown, BookOpen, CheckCircle2, Loader2 } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, X, ChevronDown, BookOpen, CheckCircle2, Loader2, Layers, Clock, Flame, Award } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
+
+function CircleProgress({
+  value,
+  size = 56,
+  stroke = 5,
+  className = "",
+}: {
+  value: number;
+  size?: number;
+  stroke?: number;
+  className?: string;
+}) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(100, value));
+  const offset = c - (pct / 100) * c;
+  return (
+    <div className={`relative flex-shrink-0 ${className}`} style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="hsl(var(--border))"
+          strokeWidth={stroke}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="var(--color-accent)"
+          strokeWidth={stroke}
+          strokeDasharray={c}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-[stroke-dashoffset] duration-500"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold tabular-nums">
+        {pct}%
+      </div>
+    </div>
+  );
+}
+
+function parseMinutes(d?: string | null): number {
+  if (!d) return 0;
+  let total = 0;
+  const re = /(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)?/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(d)) !== null) {
+    const n = parseFloat(m[1]);
+    const u = (m[2] ?? "min").toLowerCase();
+    total += u.startsWith("h") ? n * 60 : n;
+  }
+  return total;
+}
 
 
 export const Route = createFileRoute("/dashboard")({
@@ -130,7 +189,7 @@ function DashboardPage() {
           .order("sort_order", { ascending: true }),
         supabase
           .from("user_content_progress")
-          .select("content_item_id, category_id")
+          .select("content_item_id, category_id, created_at")
           .eq("user_id", userId!)
           .in("category_id", categoryIds),
       ]);
@@ -141,12 +200,14 @@ function DashboardPage() {
       const totals = new Map<string, number>();
       const recentCats = new Set<string>();
       const newItemSet = new Set<string>();
+      const itemDuration = new Map<string, string | null>();
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       for (const row of itemsRes.data ?? []) {
         const list = itemsByCat.get(row.category_id as string) ?? [];
         list.push(row as CatItem);
         itemsByCat.set(row.category_id as string, list);
         totals.set(row.category_id as string, (totals.get(row.category_id as string) ?? 0) + 1);
+        itemDuration.set(row.id as string, (row as any).duration ?? null);
         if (row.created_at && new Date(row.created_at as string).getTime() >= cutoff) {
           recentCats.add(row.category_id as string);
           newItemSet.add(row.id as string);
@@ -154,11 +215,18 @@ function DashboardPage() {
       }
       const reads = new Map<string, number>();
       const readSet = new Set<string>();
+      const readDays = new Set<string>();
+      let minutesSpent = 0;
       for (const row of readRes.data ?? []) {
         reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
         readSet.add(row.content_item_id as string);
+        minutesSpent += parseMinutes(itemDuration.get(row.content_item_id as string));
+        if ((row as any).created_at) {
+          const d = new Date((row as any).created_at as string);
+          readDays.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+        }
       }
-      return { totals, reads, itemsByCat, readSet, recentCats, newItemSet };
+      return { totals, reads, itemsByCat, readSet, recentCats, newItemSet, minutesSpent, readDays };
     },
   });
 
@@ -234,38 +302,74 @@ function DashboardPage() {
                 {!isAdmin && (() => {
                   let totalAll = 0;
                   let readAll = 0;
+                  let activeCats = 0;
+                  let badgeCats = 0;
                   for (const c of categoriesQuery.data ?? []) {
-                    totalAll += progressQuery.data?.totals.get(c.id) ?? 0;
-                    readAll += progressQuery.data?.reads.get(c.id) ?? 0;
+                    const t2 = progressQuery.data?.totals.get(c.id) ?? 0;
+                    const r2 = progressQuery.data?.reads.get(c.id) ?? 0;
+                    totalAll += t2;
+                    readAll += r2;
+                    if (r2 > 0) activeCats += 1;
+                    if (t2 > 0 && r2 >= t2) badgeCats += 1;
                   }
                   const pctAll = totalAll > 0 ? Math.round((readAll / totalAll) * 100) : 0;
+                  const minutes = progressQuery.data?.minutesSpent ?? 0;
+                  const hours = Math.floor(minutes / 60);
+                  // Day streak: count consecutive days ending today or yesterday
+                  const readDays = progressQuery.data?.readDays ?? new Set<string>();
+                  let streak = 0;
+                  if (readDays.size > 0) {
+                    const today = new Date();
+                    const key = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+                    let cursor = new Date(today);
+                    if (!readDays.has(key(cursor))) cursor.setDate(cursor.getDate() - 1);
+                    while (readDays.has(key(cursor))) {
+                      streak += 1;
+                      cursor.setDate(cursor.getDate() - 1);
+                    }
+                  }
+                  const stats: Array<{ icon: typeof BookOpen; label: string; value: string }> = [
+                    { icon: CheckCircle2, label: "Completed", value: readAll.toLocaleString() },
+                    { icon: Layers, label: "Categories", value: activeCats.toLocaleString() },
+                    { icon: Clock, label: "Hours Spent", value: hours.toLocaleString() },
+                    { icon: Flame, label: "Day Streak", value: streak.toLocaleString() },
+                    { icon: Award, label: "Badges", value: badgeCats.toLocaleString() },
+                  ];
                   return (
-                    <div className="grid sm:grid-cols-3 gap-4 mb-8">
-                      <div className="rounded-2xl border border-border bg-card p-5">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <BookOpen className="h-5 w-5" /> Total Items
+                    <>
+                      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6 flex items-center gap-6">
+                        <CircleProgress value={pctAll} size={96} stroke={8} />
+                        <div className="min-w-0">
+                          <h2 className="font-display text-xl sm:text-2xl font-semibold">Overall Progress</h2>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            You&rsquo;ve completed {readAll.toLocaleString()} of {totalAll.toLocaleString()} available items. Keep going!
+                          </p>
                         </div>
-                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{totalAll.toLocaleString()}</p>
                       </div>
-                      <div className="rounded-2xl border border-border bg-card p-5">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <CheckCircle2 className="h-5 w-5" /> Items Read
-                        </div>
-                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{readAll.toLocaleString()}</p>
-                      </div>
-                      <div className="rounded-2xl border border-border bg-card p-5">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Check className="h-5 w-5" /> Overall Progress
-                        </div>
-                        <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{pctAll}%</p>
-                        <Progress value={pctAll} className="mt-3 h-1.5" />
-                      </div>
-                    </div>
 
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+                        {stats.map((s) => {
+                          const Icon = s.icon;
+                          return (
+                            <div key={s.label} className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-[var(--color-accent)] flex-shrink-0">
+                                <Icon className="h-5 w-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-display text-2xl font-semibold leading-none tabular-nums">{s.value}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">{s.label}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <h2 className="font-display text-lg font-semibold mb-3">Category Progress</h2>
+                    </>
                   );
                 })()}
 
-                <div className="space-y-6">
+                <div className="grid sm:grid-cols-2 gap-4">
                   {(categoriesQuery.data ?? []).map((c) => {
                     const total = progressQuery.data?.totals.get(c.id) ?? 0;
                     const read = progressQuery.data?.reads.get(c.id) ?? 0;
@@ -458,49 +562,33 @@ function CategoryProgressSection({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className={`w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-5 ${open ? "border-b border-border" : ""} bg-muted/30 text-left hover:bg-muted/50 transition-colors`}
+        className={`w-full flex items-center gap-4 p-4 sm:p-5 ${open ? "border-b border-border" : ""} text-left hover:bg-muted/40 transition-colors`}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
-          {category.icon_url ? (
-            <img src={category.icon_url} alt="" className="h-10 w-10 object-cover border border-border bg-muted flex-shrink-0 rounded-md" />
-          ) : (
-            <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
-          )}
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="font-display text-lg font-semibold truncate">
-                {pickLang(lang, category.name, category.name_es)}
-              </h2>
-              {hasRecent && (
-                <Badge variant="new" className="hidden lg:inline-flex">{t("category.newContentAdded")}</Badge>
-              )}
-            </div>
-            {tagline && (
-              <p className="text-xs text-muted-foreground truncate">{tagline}</p>
-            )}
-          </div>
-        </div>
-
-        {!isAdmin && (
-          <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
-            {hasRecent && (
-              <Badge variant="new" className="lg:hidden">{t("category.newContentAdded")}</Badge>
-            )}
-            <div className="hidden lg:block w-32">
-              <Progress value={pct} className="h-1.5" />
-            </div>
-
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
-              <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
-              <span className="tabular-nums">{read.toLocaleString()}</span>
-              <span className="text-muted-foreground">/ {total.toLocaleString()}</span>
-            </span>
-            <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium tabular-nums">
-              {pct}%
-            </span>
-          </div>
+        {!isAdmin ? (
+          <CircleProgress value={pct} size={52} stroke={5} />
+        ) : category.icon_url ? (
+          <img src={category.icon_url} alt="" className="h-12 w-12 object-cover border border-border bg-muted flex-shrink-0 rounded-md" />
+        ) : (
+          <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
         )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-display text-base sm:text-lg font-semibold truncate">
+              {pickLang(lang, category.name, category.name_es)}
+            </h2>
+            {hasRecent && (
+              <Badge variant="new">{t("category.newContentAdded")}</Badge>
+            )}
+          </div>
+          {!isAdmin ? (
+            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+              {read.toLocaleString()} of {total.toLocaleString()} completed
+            </p>
+          ) : tagline ? (
+            <p className="mt-0.5 text-xs text-muted-foreground truncate">{tagline}</p>
+          ) : null}
+        </div>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
       </button>
       {open && (
         items.length === 0 ? (
