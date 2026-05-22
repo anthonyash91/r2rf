@@ -358,10 +358,7 @@ function CategoryPage() {
                         >
                           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap">
                             {isNew && (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.35_0.05_165)] bg-[var(--color-accent)] px-2 py-0.5 text-xs font-medium text-background shadow-sm">
-                                <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
-                                {t("category.newContent")}
-                              </span>
+                              <NewBadge>{t("category.newContent")}</NewBadge>
                             )}
                             <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass(item.type)}`}>
                               {translateType(lang, item.type)}
