@@ -459,7 +459,7 @@ function CategoryProgressSection({
                 {pickLang(lang, category.name, category.name_es)}
               </h2>
               {hasRecent && (
-                <NewBadge className="hidden lg:inline-flex">{t("category.newContentAdded")}</NewBadge>
+                <Badge variant="new" className="hidden lg:inline-flex">{t("category.newContentAdded")}</Badge>
               )}
             </div>
             {tagline && (
