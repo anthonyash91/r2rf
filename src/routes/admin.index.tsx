@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -270,34 +271,47 @@ function AdminCategoriesPage() {
               <div className="@container flex-1 min-w-0">
                 <div className="flex flex-col-reverse gap-y-1 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
                   <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
-                  <div className="flex flex-wrap items-center gap-2 @lg:contents">
-                    <Badge
-                      variant="count"
-                      title="Content items in this category"
-                      className="tabular-nums"
-                    >
-                      {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
-                    </Badge>
-                    {c.home_page_mode === "custom" && (
-                      <Badge variant="custom" title="Only shown on selected custom home pages">
-                        Custom
+                  {(() => {
+                    const badges: React.ReactNode[] = [];
+                    badges.push(
+                      <Badge key="count" variant="count" title="Content items in this category" className="tabular-nums">
+                        {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
                       </Badge>
-                    )}
-                    {!c.published && (
-                      <Badge variant="draft">Draft</Badge>
-                    )}
-                    {(() => {
-                      const s = categoryTranslationStatus(c);
-                      if (s === "complete") return null;
+                    );
+                    if (c.home_page_mode === "custom") {
+                      badges.push(
+                        <Badge key="custom" variant="custom" title="Only shown on selected custom home pages">Custom</Badge>
+                      );
+                    }
+                    if (!c.published) {
+                      badges.push(<Badge key="draft" variant="draft">Draft</Badge>);
+                    }
+                    const s = categoryTranslationStatus(c);
+                    if (s !== "complete") {
                       const label = s === "missing" ? "Needs ES" : "Partially translated";
                       const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
-                      return (
-                        <Badge variant="translation" title={title} className="gap-1">
+                      badges.push(
+                        <Badge key="translation" variant="translation" title={title} className="gap-1">
                           <Languages className="h-3 w-3" /> {label}
                         </Badge>
                       );
-                    })()}
-                  </div>
+                    }
+                    const joined = badges.length > 1;
+                    return (
+                      <div className={`flex flex-wrap items-center ${joined ? "gap-0" : "gap-2"} @lg:contents`}>
+                        {badges.map((b: any, i) => {
+                          if (!joined) return b;
+                          const isFirst = i === 0;
+                          const isLast = i === badges.length - 1;
+                          const extra = cn(
+                            !isFirst && "rounded-l-none -ml-px",
+                            !isLast && "rounded-r-none",
+                          );
+                          return React.cloneElement(b, { className: cn(b.props.className, extra) });
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <p className="text-xs text-muted-foreground break-words">/{c.slug} · {c.tagline}</p>
                 {c.description && (
