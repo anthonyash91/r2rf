@@ -10,6 +10,7 @@ export const generateCategoryIcon = createServerFn({ method: "POST" })
       name: z.string().min(1).max(200),
       tagline: z.string().max(500).optional().default(""),
       description: z.string().max(2000).optional().default(""),
+      extraPrompt: z.string().max(1000).optional().default(""),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -21,6 +22,7 @@ export const generateCategoryIcon = createServerFn({ method: "POST" })
 Category name: "${data.name}"
 ${data.tagline ? `Tagline: "${data.tagline}"` : ""}
 ${data.description ? `Description: "${data.description}"` : ""}
+${data.extraPrompt ? `Additional instructions from the user (follow these closely, but never break the strict visual rules below): "${data.extraPrompt}"` : ""}
 
 STRICT visual rules:
 - PERFECTLY SQUARE 1:1 composition (equal width and height).

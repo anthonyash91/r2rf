@@ -493,13 +493,14 @@ function NewCategoryForm({
   const generateIcon = useServerFn(generateCategoryIcon);
   const [generating, setGenerating] = useState(false);
   const [generatingIcon, setGeneratingIcon] = useState(false);
+  const [iconPrompt, setIconPrompt] = useState("");
 
   async function handleGenerateIcon() {
     const trimmed = name.trim();
     if (!trimmed) { toast.error("Enter a name first"); return; }
     setGeneratingIcon(true);
     try {
-      const { url } = await generateIcon({ data: { name: trimmed, tagline: tagline.trim(), description: description.trim() } });
+      const { url } = await generateIcon({ data: { name: trimmed, tagline: tagline.trim(), description: description.trim(), extraPrompt: iconPrompt.trim() } });
       setIconUrl(url);
       toast.success("Generated icon");
     } catch (e: any) {
@@ -640,6 +641,14 @@ function NewCategoryForm({
             )}
           </div>
         </div>
+        <textarea
+          value={iconPrompt}
+          onChange={(e) => setIconPrompt(e.target.value)}
+          placeholder="Optional: extra instructions for the AI (e.g. 'a leaf next to an open book')"
+          rows={2}
+          maxLength={1000}
+          className="mt-3 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+        />
       </div>
 
       <Field label="Home Page">
