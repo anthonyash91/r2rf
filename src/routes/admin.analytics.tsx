@@ -213,6 +213,25 @@ function exportCsv(
   URL.revokeObjectURL(url);
 }
 
+function CategoryList({ rows }: { rows: AggregatedRow[] }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  if (rows.length === 0) {
+    return <p className="mt-8 text-muted-foreground">No categories yet.</p>;
+  }
+  return (
+    <div className="mt-8 flex flex-col [&>section]:rounded-none [&>section:first-child]:rounded-t-2xl [&>section:last-child]:rounded-b-2xl [&>section:not(:first-child)]:-mt-px">
+      {rows.map((row) => (
+        <CategorySection
+          key={row.category.id}
+          row={row}
+          isOpen={openId === row.category.id}
+          onToggle={() => setOpenId((cur) => (cur === row.category.id ? null : row.category.id))}
+        />
+      ))}
+    </div>
+  );
+}
+
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
@@ -223,8 +242,9 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
-function CategorySection({ row }: { row: AggregatedRow }) {
-  const [open, setOpen] = useState(false);
+function CategorySection({ row, isOpen, onToggle }: { row: AggregatedRow; isOpen: boolean; onToggle: () => void }) {
+  const open = isOpen;
+  const setOpen = (_: any) => onToggle();
   return (
     <SectionCard padded={false} className="overflow-hidden">
       <button
