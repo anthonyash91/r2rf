@@ -189,7 +189,7 @@ function DashboardPage() {
           .order("sort_order", { ascending: true }),
         supabase
           .from("user_content_progress")
-          .select("content_item_id, category_id")
+          .select("content_item_id, category_id, created_at")
           .eq("user_id", userId!)
           .in("category_id", categoryIds),
       ]);
@@ -200,12 +200,14 @@ function DashboardPage() {
       const totals = new Map<string, number>();
       const recentCats = new Set<string>();
       const newItemSet = new Set<string>();
+      const itemDuration = new Map<string, string | null>();
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       for (const row of itemsRes.data ?? []) {
         const list = itemsByCat.get(row.category_id as string) ?? [];
         list.push(row as CatItem);
         itemsByCat.set(row.category_id as string, list);
         totals.set(row.category_id as string, (totals.get(row.category_id as string) ?? 0) + 1);
+        itemDuration.set(row.id as string, (row as any).duration ?? null);
         if (row.created_at && new Date(row.created_at as string).getTime() >= cutoff) {
           recentCats.add(row.category_id as string);
           newItemSet.add(row.id as string);
@@ -213,11 +215,18 @@ function DashboardPage() {
       }
       const reads = new Map<string, number>();
       const readSet = new Set<string>();
+      const readDays = new Set<string>();
+      let minutesSpent = 0;
       for (const row of readRes.data ?? []) {
         reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
         readSet.add(row.content_item_id as string);
+        minutesSpent += parseMinutes(itemDuration.get(row.content_item_id as string));
+        if ((row as any).created_at) {
+          const d = new Date((row as any).created_at as string);
+          readDays.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+        }
       }
-      return { totals, reads, itemsByCat, readSet, recentCats, newItemSet };
+      return { totals, reads, itemsByCat, readSet, recentCats, newItemSet, minutesSpent, readDays };
     },
   });
 
