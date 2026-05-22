@@ -10,6 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
+import { PageHeader } from "@/components/PageHeader";
 import { Switch } from "@/components/ui/switch";
 
 
@@ -69,14 +70,12 @@ function AdminIpAllowlistPage() {
       <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to admin
       </Link>
-      <div className="mt-6">
-        <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-          <Shield className="h-7 w-7 text-[var(--color-accent)]" /> IP Allowlists
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Control which IP addresses can reach the site and the login page. Changes take effect within ~30 seconds.
-        </p>
-      </div>
+      <PageHeader
+        className="mt-6"
+        icon={Shield}
+        title="IP Allowlists"
+        description="Control which IP addresses can reach the site and the login page. Changes take effect within ~30 seconds."
+      />
 
       <IpRestrictionToggle />
 

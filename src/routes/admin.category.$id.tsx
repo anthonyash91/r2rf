@@ -24,6 +24,7 @@ import { BulkActionBar } from "@/components/BulkActionBar";
 import { LabeledInput } from "@/components/FormField";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
+import { PageHeader } from "@/components/PageHeader";
 
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
@@ -164,7 +165,7 @@ function CategoryEditor({
 
   return (
     <SectionCard className="mt-6">
-      <h1 className="font-display text-2xl font-semibold flex items-center gap-2"><FolderOpen className="h-6 w-6 text-[var(--color-accent)]" /> Edit category</h1>
+      <PageHeader size="md" icon={FolderOpen} title="Edit category" />
       <form
         className="mt-4 space-y-4"
         onSubmit={(e) => {

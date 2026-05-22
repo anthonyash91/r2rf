@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Save, MessageSquare, Home, User as UserIcon, Megaphone, RefreshCw } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
+import { PageHeader } from "@/components/PageHeader";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 
 export const Route = createFileRoute("/admin/messages")({
@@ -24,14 +25,12 @@ function AdminMessagesPage() {
         <ArrowLeft className="h-4 w-4" /> Back to admin
       </Link>
 
-      <div className="mt-6">
-        <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-          <MessageSquare className="h-7 w-7 text-[var(--color-accent)]" /> Messages
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Show a banner under the navigation on the home page or user dashboard.
-        </p>
-      </div>
+      <PageHeader
+        className="mt-6"
+        icon={MessageSquare}
+        title="Messages"
+        description="Show a banner under the navigation on the home page or user dashboard."
+      />
 
       <div className="mt-8 space-y-6">
         <MessageEditor

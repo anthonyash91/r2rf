@@ -11,6 +11,7 @@ import { Badge } from "@/components/Badge";
 import { LabeledInput, LabeledTextarea } from "@/components/FormField";
 import { LoadingButton, actionButtonClassName } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
+import { PageHeader } from "@/components/PageHeader";
 
 
 const RESERVED_SLUGS = new Set([
@@ -177,12 +178,12 @@ function AdminCustomHomePageEdit() {
       >
         <SectionCard className="space-y-4">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="font-display text-2xl font-semibold flex items-center gap-2"><LayoutTemplate className="h-6 w-6 text-[var(--color-accent)]" /> Edit custom home page</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                The header and certificate sections match the default home page. Choose which categories are visible here.
-              </p>
-            </div>
+            <PageHeader
+              size="md"
+              icon={LayoutTemplate}
+              title="Edit custom home page"
+              description="The header and certificate sections match the default home page. Choose which categories are visible here."
+            />
             <a
               href={`/${data.page.slug}`}
               target="_blank"

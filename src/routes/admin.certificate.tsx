@@ -9,6 +9,7 @@ import { useTranslateToSpanish, TranslatingIndicator } from "@/components/Transl
 import { LabeledField } from "@/components/FormField";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
+import { PageHeader } from "@/components/PageHeader";
 
 export const Route = createFileRoute("/admin/certificate")({
   beforeLoad: requireAdminBeforeLoad,
@@ -102,10 +103,12 @@ function AdminCertificatePage() {
       </Link>
 
       <SectionCard className="mt-6">
-        <h1 className="font-display text-2xl font-semibold flex items-center gap-2"><Award className="h-6 w-6 text-[var(--color-accent)]" /> Certificate program section</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Edit the eyebrow, headline, subheading, and callout shown in the certificate program section on the home page. The headline is split into three parts; the middle part is shown in accent italic.
-        </p>
+        <PageHeader
+          size="md"
+          icon={Award}
+          title="Certificate program section"
+          description="Edit the eyebrow, headline, subheading, and callout shown in the certificate program section on the home page. The headline is split into three parts; the middle part is shown in accent italic."
+        />
 
         {isLoading ? (
           <p className="mt-6 text-muted-foreground">Loading…</p>
