@@ -457,7 +457,7 @@ function AdminUsersPage() {
                         </div>
                       </div>
                     )}
-                    <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+                    <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${filtered.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
                       {filtered.length ? (
                         <ul className="divide-y divide-border">
                           {visible.map((u) => {
