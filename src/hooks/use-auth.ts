@@ -31,6 +31,29 @@ export function useAuth() {
       });
   }
 
+  function logDailyLogin(userId: string) {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, "0");
+    const d = String(today.getDate()).padStart(2, "0");
+    const login_date = `${y}-${m}-${d}`;
+    const key = `login-logged:${userId}:${login_date}`;
+    try {
+      if (typeof window !== "undefined" && window.sessionStorage.getItem(key)) return;
+    } catch {
+      /* ignore */
+    }
+    supabase
+      .from("user_logins")
+      .upsert({ user_id: userId, login_date }, { onConflict: "user_id,login_date" })
+      .then(() => {
+        try {
+          if (typeof window !== "undefined") window.sessionStorage.setItem(key, "1");
+        } catch {
+          /* ignore */
+        }
+      });
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
