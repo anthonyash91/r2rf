@@ -1,6 +1,84 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+export const generateCategoryIcon = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      name: z.string().min(1).max(200),
+      tagline: z.string().max(500).optional().default(""),
+      description: z.string().max(2000).optional().default(""),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+
+    const prompt = `Design a single minimalist icon for a content library category.
+
+Category name: "${data.name}"
+${data.tagline ? `Tagline: "${data.tagline}"` : ""}
+${data.description ? `Description: "${data.description}"` : ""}
+
+STRICT visual rules:
+- Square 1:1 composition.
+- Solid, flat background filled edge-to-edge with ONE muted, desaturated color. Pick a soft, low-chroma color that thematically fits the category — e.g. dusty sage, muted teal, soft terracotta, warm sand, dusty plum, slate blue, mossy olive, dusty rose, or warm taupe. The background must be pastel/muted (NOT vivid or saturated, NOT neon).
+- A single, simple, modern line-and-shape icon CENTERED on the background, drawn in PURE WHITE (#FFFFFF).
+- Icon style: flat, geometric, minimal — similar to Lucide / Feather / Heroicons. Clean strokes, rounded line caps, no gradients, no shadows, no text, no letters, no numbers, no watermark, no border, no frame.
+- The icon should clearly evoke the meaning of the category at a glance.
+- Generous padding around the icon (around 18-22% of the canvas on every side).
+- No 3D, no photorealism, no skeuomorphism, no glow, no drop shadow, no inner shadow, no texture, no noise.
+
+Output: just the finished icon image. Nothing else.`;
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image",
+        messages: [{ role: "user", content: prompt }],
+        modalities: ["image", "text"],
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      if (res.status === 429) throw new Error("Rate limit reached. Try again in a moment.");
+      if (res.status === 402) throw new Error("AI credits exhausted. Add credits in Workspace settings.");
+      throw new Error(`AI gateway error: ${res.status} ${text}`);
+    }
+
+    const json = await res.json();
+    const dataUrl: string | undefined =
+      json?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (!dataUrl || !dataUrl.startsWith("data:")) {
+      throw new Error("Model did not return an image");
+    }
+
+    const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+    if (!match) throw new Error("Invalid image data URL");
+    const mime = match[1];
+    const ext = mime.split("/")[1]?.split("+")[0] ?? "png";
+    const bytes = Uint8Array.from(atob(match[2]), (c) => c.charCodeAt(0));
+
+    const userId = context.userId ?? "anon";
+    const path = `ai/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("category-icons")
+      .upload(path, bytes, { contentType: mime, upsert: false });
+    if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+
+    const { data: pub } = supabaseAdmin.storage.from("category-icons").getPublicUrl(path);
+    return { url: pub.publicUrl };
+  });
+
+
 
 export const generateCategoryCopy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

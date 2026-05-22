@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { useServerFn } from "@tanstack/react-start";
-import { generateCategoryCopy } from "@/lib/category-ai.functions";
+import { generateCategoryCopy, generateCategoryIcon } from "@/lib/category-ai.functions";
 
 function categoryTranslationStatus(c: Category): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
@@ -490,7 +490,24 @@ function NewCategoryForm({
   const [showEs, setShowEs] = useState(false);
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
   const generate = useServerFn(generateCategoryCopy);
+  const generateIcon = useServerFn(generateCategoryIcon);
   const [generating, setGenerating] = useState(false);
+  const [generatingIcon, setGeneratingIcon] = useState(false);
+
+  async function handleGenerateIcon() {
+    const trimmed = name.trim();
+    if (!trimmed) { toast.error("Enter a name first"); return; }
+    setGeneratingIcon(true);
+    try {
+      const { url } = await generateIcon({ data: { name: trimmed, tagline: tagline.trim(), description: description.trim() } });
+      setIconUrl(url);
+      toast.success("Generated icon");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to generate icon");
+    } finally {
+      setGeneratingIcon(false);
+    }
+  }
 
   async function handleAutoGenerate() {
     const trimmed = name.trim();
@@ -602,6 +619,16 @@ function NewCategoryForm({
               mimeTypes={["image/*"]}
               onUploaded={(u) => setIconUrl(u)}
             />
+            <LoadingButton
+              variant="secondary"
+              onClick={handleGenerateIcon}
+              disabled={generatingIcon || !name.trim()}
+              pending={generatingIcon}
+              pendingText="Generating…"
+              icon={<Sparkles className="h-4 w-4" />}
+            >
+              {iconUrl ? "Regenerate with AI" : "Generate with AI"}
+            </LoadingButton>
             {iconUrl && (
               <LoadingButton
                 variant="secondary"
