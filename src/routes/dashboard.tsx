@@ -327,7 +327,7 @@ function DashboardPage() {
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                       <Building2 className="h-3.5 w-3.5" /> {t("signup.facility")}
                     </dt>
-                    <dd className="mt-1 font-medium">{facilityLabel(profile.facility)}</dd>
+                    <dd className="mt-1 font-medium">{facilityNameMap.get(profile.facility) ?? facilityLabel(profile.facility)}</dd>
                   </div>
                   <div>
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
