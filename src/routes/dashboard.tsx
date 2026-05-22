@@ -264,6 +264,15 @@ function DashboardPage() {
     return () => setSecurityLock(false);
   }, [mustSetup]);
 
+  useBlocker({
+    shouldBlockFn: () => {
+      toast.error("Please set up your security questions before leaving this page.");
+      return true;
+    },
+    enableBeforeUnload: mustSetup,
+    disabled: !mustSetup,
+  });
+
 
   async function handleSave() {
     if (pending.length < 2) {
