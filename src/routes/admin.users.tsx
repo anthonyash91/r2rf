@@ -800,19 +800,15 @@ function UserItem({
             className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
           />
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+            <LoadingButton
+              variant="secondary"
               onClick={() => { setPw(""); setPwOpen(false); }}
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
+            </LoadingButton>
+            <LoadingButton type="submit">
               Update
-            </button>
+            </LoadingButton>
 
           </div>
         </form>
