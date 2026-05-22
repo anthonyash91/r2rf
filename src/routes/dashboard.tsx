@@ -10,6 +10,7 @@ import { SiteMessageBanner } from "@/components/SiteMessageBanner";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyProfile, getMyFacilityCustomHome } from "@/lib/user-signup.functions";
 import { facilityLabel } from "@/lib/user-signup";
+import { listFacilities } from "@/lib/facilities.functions";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
 import { questionLabel } from "@/lib/security-questions";
 import { useI18n, pickLang, translateDuration } from "@/lib/i18n";
@@ -60,6 +61,16 @@ function DashboardPage() {
     queryFn: () => fetchFacilityHome(),
   });
   const customSlug = facilityHomeQuery.data?.slug ?? null;
+
+  const fetchFacilities = useServerFn(listFacilities);
+  const facilitiesQuery = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilities(),
+  });
+  const facilityNameMap = new Map(
+    (facilitiesQuery.data?.facilities ?? []).map((f) => [f.value, f.label]),
+  );
+
 
   const categoriesQuery = useQuery({
     queryKey: ["dashboard-categories", customSlug],
@@ -316,7 +327,7 @@ function DashboardPage() {
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                       <Building2 className="h-3.5 w-3.5" /> {t("signup.facility")}
                     </dt>
-                    <dd className="mt-1 font-medium">{facilityLabel(profile.facility)}</dd>
+                    <dd className="mt-1 font-medium">{facilityNameMap.get(profile.facility) ?? facilityLabel(profile.facility)}</dd>
                   </div>
                   <div>
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
