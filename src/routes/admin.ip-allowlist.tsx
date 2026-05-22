@@ -552,24 +552,22 @@ function AllowlistRow({
             className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+            <LoadingButton
+              variant="secondary"
               onClick={() => {
                 setDraft(row.label ?? "");
                 setEditing(false);
               }}
             >
               Cancel
-            </button>
-            <button
+            </LoadingButton>
+            <LoadingButton
               type="submit"
-              disabled={updateMut.isPending}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              pending={updateMut.isPending}
+              pendingText="Saving…"
             >
-              {updateMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {updateMut.isPending ? "Saving…" : "Update"}
-            </button>
+              Update
+            </LoadingButton>
           </div>
         </form>
       )}
