@@ -14,7 +14,7 @@ import { facilityLabel } from "@/lib/user-signup";
 import { listFacilities } from "@/lib/facilities.functions";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
 import { questionLabel } from "@/lib/security-questions";
-import { useI18n, pickLang, translateDuration } from "@/lib/i18n";
+import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
