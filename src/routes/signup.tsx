@@ -244,7 +244,7 @@ function SignupPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-border bg-white p-6">
+            <div className="rounded-lg border border-border bg-white p-6 pb-4">
             {resetStep === 1 ? (
               <form onSubmit={handleResetStart} className="space-y-4">
                 <div>
@@ -348,7 +348,7 @@ function SignupPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-border bg-white p-6">
+            <div className="rounded-lg border border-border bg-white p-6 pb-4">
             <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               {mode === "sign-up" && (
                 <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
