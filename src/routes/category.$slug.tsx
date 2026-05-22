@@ -359,11 +359,11 @@ function CategoryPage() {
                         >
                           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap">
                             {isNew && (
-                              <NewBadge>{t("category.newContent")}</NewBadge>
+                              <Badge variant="new">{t("category.newContent")}</Badge>
                             )}
-                            <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass(item.type)}`}>
+                            <Badge variant="type" type={item.type}>
                               {translateType(lang, item.type)}
-                            </span>
+                            </Badge>
                             {item.duration && (
                               <span className="text-xs text-muted-foreground">
                                 {translateDuration(lang, withActionWord(item.duration, item.type))}
