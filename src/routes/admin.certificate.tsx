@@ -98,13 +98,14 @@ function AdminCertificatePage() {
 
   return (
     <div>
-      <SectionCard className="mt-6">
+      <div className="mt-6">
         <PageHeader
-          size="md"
           icon={Award}
           title="Certificate program section"
           description="Edit the eyebrow, headline, subheading, and callout shown in the certificate program section on the home page. The headline is split into three parts; the middle part is shown in accent italic."
         />
+      </div>
+      <SectionCard className="mt-8">
 
         {isLoading ? (
           <p className="mt-6 text-muted-foreground">Loading…</p>
