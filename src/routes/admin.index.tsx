@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { useServerFn } from "@tanstack/react-start";
-import { generateCategoryCopy, generateCategoryIcon } from "@/lib/category-ai.functions";
+import { generateCategoryCopy } from "@/lib/category-ai.functions";
 
 function categoryTranslationStatus(c: Category): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
