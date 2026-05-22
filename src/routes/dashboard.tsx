@@ -174,6 +174,23 @@ function DashboardPage() {
     },
   });
 
+  const loginsQuery = useQuery({
+    queryKey: ["my-login-days", userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<Set<string>> => {
+      const since = new Date();
+      since.setDate(since.getDate() - 365);
+      const sinceStr = since.toISOString().slice(0, 10);
+      const { data, error } = await supabase
+        .from("user_logins")
+        .select("login_date")
+        .eq("user_id", userId!)
+        .gte("login_date", sinceStr);
+      if (error) throw error;
+      return new Set((data ?? []).map((r: any) => r.login_date as string));
+    },
+  });
+
   const categoryIds = (categoriesQuery.data ?? []).map((c) => c.id);
   const userId = user?.id ?? null;
 
