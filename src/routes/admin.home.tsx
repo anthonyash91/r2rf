@@ -96,12 +96,11 @@ function AdminHomePage() {
         />
       </div>
       <SectionCard className="mt-8">
-
         {isLoading ? (
-          <p className="mt-6 text-muted-foreground">Loading…</p>
+          <p className="text-muted-foreground">Loading…</p>
         ) : (
           <form
-            className="mt-6 space-y-4"
+            className="space-y-4"
             onSubmit={(e) => { e.preventDefault(); saveMut.mutate(hero); }}
           >
             <LabeledField label="Eyebrow (small pill above headline)">
