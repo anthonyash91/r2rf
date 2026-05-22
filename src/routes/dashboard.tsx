@@ -658,7 +658,7 @@ function CategoryProgressSection({
   }, [isOpen]);
 
   return (
-    <section ref={sectionRef} className={`scroll-mt-24 rounded-2xl border border-border bg-[#fffdf8] overflow-hidden transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "shadow-[0_0_0_3px_var(--color-accent)/30,0_8px_24px_-8px_var(--color-accent)/40] ring-2 ring-[var(--color-accent)]/40" : ""}`}>
+    <section ref={sectionRef} className={`scroll-mt-24 rounded-2xl border border-border bg-[#fffdf8] overflow-hidden transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "ring-2 ring-[var(--color-accent)]/40 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.15)]" : ""}`}>
       <button
         type="button"
         onClick={onToggle}
