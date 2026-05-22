@@ -13,6 +13,7 @@ import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
+import { BadgeGroup } from "@/components/BadgeGroup";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
@@ -379,14 +380,14 @@ function CategoryPage() {
                           className="w-full text-left flex flex-col gap-4 p-6 pr-[29px] pb-[20px] hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
                         >
                           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap">
-                            <div className={`flex items-center ${isNew ? "gap-0" : ""}`}>
+                            <BadgeGroup>
                               {isNew && (
-                                <Badge variant="new" className="rounded-r-none -mr-px">{t("category.newContent")}</Badge>
+                                <Badge variant="new">{t("category.newContent")}</Badge>
                               )}
-                              <Badge variant="type" type={item.type} className={isNew ? "rounded-l-none" : undefined}>
+                              <Badge variant="type" type={item.type}>
                                 {translateType(lang, item.type)}
                               </Badge>
-                            </div>
+                            </BadgeGroup>
                             {item.duration && (
                               <span className="text-xs text-muted-foreground">
                                 {translateDuration(lang, withActionWord(item.duration, item.type))}

@@ -7,6 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, HelpCircle, Loader2, Download } from "lucide-react";
 import { Badge } from "@/components/Badge";
+import { BadgeGroup } from "@/components/BadgeGroup";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
@@ -591,13 +592,15 @@ function UserItem({
           {isRegularUser ? (
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
-                <Badge variant="facility">
-                  {facilityLabel || user.profile!.facility}
-                </Badge>
-                {user.roles.includes("user") && (
-                  <Badge variant="user">User</Badge>
-                )}
-                {isNew && <Badge variant="new">New</Badge>}
+                <BadgeGroup>
+                  <Badge variant="facility">
+                    {facilityLabel || user.profile!.facility}
+                  </Badge>
+                  {user.roles.includes("user") && (
+                    <Badge variant="user">User</Badge>
+                  )}
+                  {isNew && <Badge variant="new">New</Badge>}
+                </BadgeGroup>
               </div>
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
                 <span className="font-mono text-sm truncate">{user.profile!.username}</span>
@@ -606,15 +609,15 @@ function UserItem({
                     {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
                   </span>
                 )}
-                <Badge variant="facility" className="hidden sm:inline-flex">
-                  {facilityLabel || user.profile!.facility}
-                </Badge>
-                {user.roles.includes("user") && (
-                  <Badge variant="user" className="hidden sm:inline-flex">User</Badge>
-                )}
-                {isNew && (
-                  <Badge variant="new" className="hidden sm:inline-flex">New</Badge>
-                )}
+                <BadgeGroup className="hidden sm:inline-flex">
+                  <Badge variant="facility">
+                    {facilityLabel || user.profile!.facility}
+                  </Badge>
+                  {user.roles.includes("user") && (
+                    <Badge variant="user">User</Badge>
+                  )}
+                  {isNew && <Badge variant="new">New</Badge>}
+                </BadgeGroup>
               </div>
             </>
           ) : editingEmail ? (
@@ -650,21 +653,23 @@ function UserItem({
           ) : (
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
-                {isAdmin && (
-                  <Badge variant="admin" className="gap-1">
-                    <Shield className="h-3 w-3" /> Admin
-                  </Badge>
-                )}
-                {isContributor && (
-                  <Badge variant="contributor" className="gap-1">
-                    <Shield className="h-3 w-3" /> Contributor
-                  </Badge>
-                )}
-                {user.email_confirmed_at ? (
-                  <Badge variant="verified">Verified</Badge>
-                ) : (
-                  <Badge variant="unverified">Unverified</Badge>
-                )}
+                <BadgeGroup>
+                  {isAdmin && (
+                    <Badge variant="admin" className="gap-1">
+                      <Shield className="h-3 w-3" /> Admin
+                    </Badge>
+                  )}
+                  {isContributor && (
+                    <Badge variant="contributor" className="gap-1">
+                      <Shield className="h-3 w-3" /> Contributor
+                    </Badge>
+                  )}
+                  {user.email_confirmed_at ? (
+                    <Badge variant="verified">Verified</Badge>
+                  ) : (
+                    <Badge variant="unverified">Unverified</Badge>
+                  )}
+                </BadgeGroup>
               </div>
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
                 <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -676,21 +681,23 @@ function UserItem({
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
-                {isAdmin && (
-                  <Badge variant="admin" className="ml-1 gap-1 hidden sm:inline-flex">
-                    <Shield className="h-3 w-3" /> Admin
-                  </Badge>
-                )}
-                {isContributor && (
-                  <Badge variant="contributor" className="ml-1 gap-1 hidden sm:inline-flex">
-                    <Shield className="h-3 w-3" /> Contributor
-                  </Badge>
-                )}
-                {user.email_confirmed_at ? (
-                  <Badge variant="verified" className="ml-1 hidden sm:inline-flex">Verified</Badge>
-                ) : (
-                  <Badge variant="unverified" className="ml-1 hidden sm:inline-flex">Unverified</Badge>
-                )}
+                <BadgeGroup className="ml-1 hidden sm:inline-flex">
+                  {isAdmin && (
+                    <Badge variant="admin" className="gap-1">
+                      <Shield className="h-3 w-3" /> Admin
+                    </Badge>
+                  )}
+                  {isContributor && (
+                    <Badge variant="contributor" className="gap-1">
+                      <Shield className="h-3 w-3" /> Contributor
+                    </Badge>
+                  )}
+                  {user.email_confirmed_at ? (
+                    <Badge variant="verified">Verified</Badge>
+                  ) : (
+                    <Badge variant="unverified">Unverified</Badge>
+                  )}
+                </BadgeGroup>
               </div>
             </>
           )}
