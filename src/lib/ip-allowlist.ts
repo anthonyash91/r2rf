@@ -53,20 +53,7 @@ export async function getAllowedIps(): Promise<Set<string>> {
   return siteInflight;
 }
 
-export async function getAuthAllowedIps(): Promise<Set<string>> {
-  const now = Date.now();
-  if (authCache && authCache.expiresAt > now) return authCache.ips;
-  if (authInflight) return authInflight;
-  authInflight = fetchTable("auth_ip_allowlist")
-    .then((ips) => {
-      authCache = { ips, expiresAt: Date.now() + CACHE_TTL_MS };
-      return ips;
-    })
-    .finally(() => {
-      authInflight = null;
-    });
-  return authInflight;
-}
+
 
 export async function getBlockedIps(): Promise<Set<string>> {
   const now = Date.now();
