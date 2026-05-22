@@ -458,7 +458,7 @@ function CategoryProgressSection({
                 {pickLang(lang, category.name, category.name_es)}
               </h2>
               {hasRecent && (
-                <span className="hidden lg:inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
+                <span className="hidden lg:inline-flex items-center gap-1 rounded-full border border-[oklch(0.35_0.05_165)] bg-[var(--color-accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
                   <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                   {t("category.newContentAdded")}
                 </span>
@@ -473,7 +473,7 @@ function CategoryProgressSection({
         {!isAdmin && (
           <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
             {hasRecent && (
-              <span className="lg:hidden inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
+              <span className="lg:hidden inline-flex items-center gap-1 rounded-full border border-[oklch(0.35_0.05_165)] bg-[var(--color-accent)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-background shadow-sm flex-shrink-0">
                 <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                 {t("category.newContentAdded")}
               </span>
