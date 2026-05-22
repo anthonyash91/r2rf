@@ -4,11 +4,26 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
   import.meta.url,
 ).toString();
+
+function PdfLoading() {
+  const { t } = useI18n();
+  const [stillLoading, setStillLoading] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setStillLoading(true), 5000);
+    return () => clearTimeout(id);
+  }, []);
+  return (
+    <div className="p-8 text-sm text-muted-foreground">
+      {stillLoading ? t("pdf.stillLoading") : t("pdf.loading")}
+    </div>
+  );
+}
 
 export default function PdfViewer({ url }: { url: string }) {
   const [numPages, setNumPages] = useState<number>(0);
