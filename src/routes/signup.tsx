@@ -76,21 +76,31 @@ function SignupPage() {
   });
 
   useEffect(() => {
-    if (!loading && user) {
-      if (mode === "sign-up") {
-        navigate({ to: "/dashboard", search: { tab: "account" } as any });
-      } else {
-        navigate({ to: "/dashboard" });
-      }
-    }
+    if (loading || !user) return;
+    // Role-based redirect after auth state is known
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        const roles = (data ?? []).map((r: any) => r.role as string);
+        const goesAdmin = roles.includes("admin") || roles.includes("contributor");
+        if (goesAdmin) {
+          navigate({ to: "/admin" });
+        } else if (mode === "sign-up") {
+          navigate({ to: "/dashboard", search: { tab: "account" } as any });
+        } else {
+          navigate({ to: "/dashboard" });
+        }
+      });
   }, [user, loading, navigate, mode]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
-      const uname = username.trim().toLowerCase();
       if (mode === "sign-up") {
+        const uname = username.trim().toLowerCase();
         if (password !== confirmPassword) {
           toast.error(t("signup.passwordMismatch"));
           return;
@@ -122,14 +132,16 @@ function SignupPage() {
         });
         if (error) throw error;
         toast.success(t("signup.welcome"));
-        navigate({ to: "/dashboard", search: { tab: "account" } as any });
+        // redirect handled by useEffect once role loads
       } else {
+        const id = username.trim();
+        const email = id.includes("@") ? id.toLowerCase() : syntheticEmail(id.toLowerCase());
         const { error } = await supabase.auth.signInWithPassword({
-          email: syntheticEmail(uname),
+          email,
           password,
         });
         if (error) throw new Error(t("signup.invalidLogin"));
-        navigate({ to: "/dashboard" });
+        // redirect handled by useEffect once role loads
       }
     } catch (err: any) {
       toast.error(err.message ?? t("signup.genericError"));
@@ -139,6 +151,7 @@ function SignupPage() {
       setBusy(false);
     }
   }
+
 
   async function handleResetStart(e: React.FormEvent) {
     e.preventDefault();
@@ -315,19 +328,23 @@ function SignupPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium">{t("signup.username")}</label>
+                <label className="text-sm font-medium">
+                  {mode === "sign-up" ? t("signup.username") : "Username or email"}
+                </label>
                 <input
                   type="text"
                   required
                   minLength={3}
-                  maxLength={32}
-                  pattern="[A-Za-z0-9_]{3,32}"
+                  maxLength={mode === "sign-up" ? 32 : 254}
+                  pattern={mode === "sign-up" ? "[A-Za-z0-9_]{3,32}" : undefined}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder={t("signup.usernamePlaceholder")}
+                  placeholder={mode === "sign-up" ? t("signup.usernamePlaceholder") : undefined}
+                  autoComplete={mode === "sign-up" ? "username" : "username email"}
                 />
               </div>
+
 
               <div>
                 <label className="text-sm font-medium">{t("signup.password")}</label>

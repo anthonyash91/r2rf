@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export async function requireAdminBeforeLoad({ location }: { location: { href: string } }) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) {
-    throw redirect({ to: "/auth", search: { redirect: location.href } });
+    throw redirect({ to: "/signup", search: { redirect: location.href } });
   }
   const { data } = await supabase
     .from("user_roles")

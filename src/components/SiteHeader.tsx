@@ -163,17 +163,11 @@ export function SiteHeader() {
                 {signOutLabel}
               </button>
             ) : (
-              <>
-                <Link to="/signup" {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`}>
-                  {t("nav.signUp")}
-                </Link>
-                {showAuthLink && (
-                  <Link to="/auth" {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`}>
-                    {signInLabel}
-                  </Link>
-                )}
-              </>
+              <Link to="/signup" {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`}>
+                {signInLabel}
+              </Link>
             )}
+
           </div>
         </nav>
       )}

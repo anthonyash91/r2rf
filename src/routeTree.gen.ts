@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SpanishRouteImport } from './routes/spanish'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CustomHomeRouteImport } from './routes/$customHome'
 import { Route as IndexRouteImport } from './routes/index'
@@ -44,11 +43,6 @@ const SignupRoute = SignupRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -142,7 +136,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
-  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
@@ -164,7 +157,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$customHome': typeof CustomHomeRoute
-  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
@@ -187,7 +179,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
-  '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
@@ -212,7 +203,6 @@ export interface FileRouteTypes {
     | '/'
     | '/$customHome'
     | '/admin'
-    | '/auth'
     | '/dashboard'
     | '/signup'
     | '/spanish'
@@ -234,7 +224,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$customHome'
-    | '/auth'
     | '/dashboard'
     | '/signup'
     | '/spanish'
@@ -256,7 +245,6 @@ export interface FileRouteTypes {
     | '/'
     | '/$customHome'
     | '/admin'
-    | '/auth'
     | '/dashboard'
     | '/signup'
     | '/spanish'
@@ -280,7 +268,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CustomHomeRoute: typeof CustomHomeRoute
   AdminRoute: typeof AdminRouteWithChildren
-  AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   SignupRoute: typeof SignupRoute
   SpanishRoute: typeof SpanishRoute
@@ -309,13 +296,6 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -485,7 +465,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CustomHomeRoute: CustomHomeRoute,
   AdminRoute: AdminRouteWithChildren,
-  AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   SignupRoute: SignupRoute,
   SpanishRoute: SpanishRoute,
@@ -495,3 +474,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
