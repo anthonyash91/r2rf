@@ -2,11 +2,13 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { isAuthIpAllowed } from "@/lib/auth-ip.functions";
 import { useActiveCustomHome } from "@/lib/custom-home-context";
+import { useSecurityLock } from "@/lib/security-lock";
 import { Languages, Menu, X } from "lucide-react";
 
 export function SiteHeader() {
