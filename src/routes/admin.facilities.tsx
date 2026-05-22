@@ -16,6 +16,8 @@ import {
 
 import { useConfirm } from "@/components/ConfirmDialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/Badge";
+
 
 
 export const Route = createFileRoute("/admin/facilities")({
@@ -318,13 +320,11 @@ function AdminFacilitiesPage() {
                               <div className="flex flex-wrap gap-1.5">
                                 {f.customHomePage.categories.length ? (
                                   f.customHomePage.categories.map((c) => (
-                                    <span
-                                      key={c.id}
-                                      className="inline-flex items-center rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs text-foreground"
-                                    >
+                                    <Badge key={c.id} variant="custom">
                                       {c.name}
-                                    </span>
+                                    </Badge>
                                   ))
+
                                 ) : (
                                   <span className="text-xs italic text-muted-foreground">No categories assigned</span>
                                 )}

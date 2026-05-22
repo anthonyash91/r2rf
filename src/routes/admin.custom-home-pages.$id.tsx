@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { ArrowLeft, Save, ExternalLink, LayoutTemplate } from "lucide-react";
+import { Badge } from "@/components/Badge";
+
 
 const RESERVED_SLUGS = new Set([
   "admin",
@@ -296,10 +298,9 @@ function AdminCustomHomePageEdit() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium truncate">{c.name}</span>
                           {!c.published && (
-                            <span className="text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
-                              Draft
-                            </span>
+                            <Badge variant="draft">Draft</Badge>
                           )}
+
                         </div>
                         <p className="text-xs text-muted-foreground truncate">/{c.slug}</p>
                       </div>

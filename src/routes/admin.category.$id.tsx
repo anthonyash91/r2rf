@@ -563,7 +563,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="type" type={item.type}>{item.type}</Badge>
                     {!item.published && (
-                      <span className="inline-flex items-center text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>
+                      <Badge variant="draft">Draft</Badge>
                     )}
                     {(() => {
                       const s = itemTranslationStatus(item);
@@ -571,14 +571,12 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                       const label = s === "missing" ? "Needs ES" : "Partially translated";
                       const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
                       return (
-                        <span
-                          title={title}
-                          className="inline-flex items-center gap-1 text-xs rounded-full bg-[var(--color-gold)]/15 px-2 py-0.5 text-[var(--color-gold)] border border-[var(--color-gold)]/30"
-                        >
+                        <Badge variant="translation" title={title} className="gap-1">
                           <Languages className="h-3 w-3" /> {label}
-                        </span>
+                        </Badge>
                       );
                     })()}
+
                     {item.duration && (
                       <span className="text-xs text-muted-foreground">
                         {translateDuration(lang, withActionWord(item.duration, item.type))}
