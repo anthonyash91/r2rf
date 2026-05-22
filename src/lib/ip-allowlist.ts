@@ -88,7 +88,7 @@ async function fetchBlockedIps(): Promise<Set<string>> {
 
 export function invalidateAllowlistCache() {
   siteCache = null;
-  authCache = null;
+  
   blockedCache = null;
   customHomeCache = null;
   enabledCache = null;
