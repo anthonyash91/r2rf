@@ -17,6 +17,7 @@ import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-re
 import { questionLabel } from "@/lib/security-questions";
 import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
+import { readStatusLabels } from "@/lib/read-status";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
 import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, X, ChevronDown, BookOpen, CheckCircle2, Loader2, Layers, Clock, Flame, Trophy } from "lucide-react";
@@ -202,7 +203,7 @@ function DashboardPage() {
       const [itemsRes, readRes, seenRes] = await Promise.all([
         supabase
           .from("content_items")
-          .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at")
+          .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at, url, file_url")
           .eq("published", true)
           .in("category_id", categoryIds)
           .order("sort_order", { ascending: true }),
@@ -219,7 +220,7 @@ function DashboardPage() {
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
       const seenSet = new Set<string>((seenRes.data ?? []).map((r: any) => r.content_item_id as string));
-      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; duration: string | null; created_at: string | null };
+      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; duration: string | null; created_at: string | null; url: string | null; file_url: string | null };
       const itemsByCat = new Map<string, CatItem[]>();
       const totals = new Map<string, number>();
       const recentCats = new Set<string>();
@@ -566,7 +567,8 @@ type CatItem = {
   description_es: string | null;
   type: string;
   duration?: string | null;
-
+  url?: string | null;
+  file_url?: string | null;
 };
 
 function CategoryAccordion({
@@ -718,26 +720,28 @@ function CategoryProgressSection({
                       </span>
                     )}
 
-                    {!isAdmin && (
-                      <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
-                        isRead
-                          ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
-                          : "border-input bg-background text-foreground"
-                      }`}>
-                        {isRead ? (
-                          <>
-                            <Check className="h-3.5 w-3.5" />
-                            {t("category.markedRead")}
-                          </>
-                        ) : (
-                          <>
-                            <X className="h-3.5 w-3.5" />
-
-                            {t("category.notRead")}
-                          </>
-                        )}
-                      </span>
-                    )}
+                    {!isAdmin && (() => {
+                      const labels = readStatusLabels(t, it);
+                      return (
+                        <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
+                          isRead
+                            ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
+                            : "border-input bg-background text-foreground"
+                        }`}>
+                          {isRead ? (
+                            <>
+                              <Check className="h-3.5 w-3.5" />
+                              {labels.read}
+                            </>
+                          ) : (
+                            <>
+                              <X className="h-3.5 w-3.5" />
+                              {labels.unread}
+                            </>
+                          )}
+                        </span>
+                      );
+                    })()}
 
                   </div>
 
