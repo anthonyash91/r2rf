@@ -350,7 +350,7 @@ function CategoryPage() {
                               ? ImageIcon
                               : null;
 
-                    const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000;
+                    const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 && !readSet.has(item.id);
 
                     return (
                       <li key={item.id} id={`item-${item.id}`} className={`relative scroll-mt-24 transition-colors duration-700 ${highlightedId === item.id ? "bg-[var(--color-accent)]/15" : ""}`}>
