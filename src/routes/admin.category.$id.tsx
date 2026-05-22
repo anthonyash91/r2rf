@@ -495,22 +495,22 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
               <div className={`flex flex-col sm:flex-row sm:items-center gap-3 p-6 pl-3 pb-5 transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
                 <div className="flex-1 min-w-0 flex flex-col gap-4">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="type" type={item.type}>{item.type}</Badge>
-                    {!item.published && (
-                      <Badge variant="draft">Draft</Badge>
-                    )}
                     {(() => {
                       const s = itemTranslationStatus(item);
-                      if (s === "complete") return null;
-                      const label = s === "missing" ? "Needs ES" : "Partially translated";
-                      const title = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
+                      const trLabel = s === "missing" ? "Needs ES" : "Partially translated";
+                      const trTitle = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
                       return (
-                        <Badge variant="translation" title={title} className="gap-1">
-                          <Languages className="h-3 w-3" /> {label}
-                        </Badge>
+                        <BadgeGroup>
+                          <Badge variant="type" type={item.type}>{item.type}</Badge>
+                          {!item.published && <Badge variant="draft">Draft</Badge>}
+                          {s !== "complete" && (
+                            <Badge variant="translation" title={trTitle} className="gap-1">
+                              <Languages className="h-3 w-3" /> {trLabel}
+                            </Badge>
+                          )}
+                        </BadgeGroup>
                       );
                     })()}
-
                     {item.duration && (
                       <span className="text-xs text-muted-foreground">
                         {translateDuration(lang, withActionWord(item.duration, item.type))}
