@@ -256,7 +256,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
     }
   }, [isOpen]);
   return (
-    <SectionCard ref={sectionRef as any} padded={false} className={`scroll-mt-24 overflow-hidden bg-[#fffdf8] transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "!border-[var(--color-accent)]" : ""}`}>
+    <SectionCard ref={sectionRef as any} padded={false} className={`scroll-mt-24 overflow-hidden bg-[#fffdf8] transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "!border-2 !border-[var(--color-accent)]" : ""}`}>
       <button
         type="button"
         onClick={onToggle}
