@@ -645,7 +645,7 @@ function CategoryProgressSection({
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
 
   return (
-    <section className="rounded-2xl border border-border bg-[#fffdf8] overflow-hidden">
+    <section className="rounded-2xl border border-border bg-white overflow-hidden">
       <button
         type="button"
         onClick={onToggle}
@@ -688,7 +688,7 @@ function CategoryProgressSection({
               const isRead = readSet.has(it.id);
               const description = pickLang(lang, it.description, it.description_es);
               return (
-                <li key={it.id} className="flex flex-col gap-[10px] p-6">
+                <li key={it.id} className="flex flex-col gap-[10px] bg-[#fffdf8] p-6">
                   <div className="flex items-center gap-2 flex-wrap">
                     {newItemSet.has(it.id) && !isRead && (
                       <Badge variant="new">{t("category.newContent")}</Badge>
