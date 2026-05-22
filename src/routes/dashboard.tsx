@@ -327,27 +327,29 @@ function DashboardPage() {
                   let totalAll = 0;
                   let readAll = 0;
                   let activeCats = 0;
-                  let badgeCats = 0;
                   for (const c of categoriesQuery.data ?? []) {
                     const t2 = progressQuery.data?.totals.get(c.id) ?? 0;
                     const r2 = progressQuery.data?.reads.get(c.id) ?? 0;
                     totalAll += t2;
                     readAll += r2;
                     if (r2 > 0) activeCats += 1;
-                    if (t2 > 0 && r2 >= t2) badgeCats += 1;
                   }
                   const pctAll = totalAll > 0 ? Math.round((readAll / totalAll) * 100) : 0;
                   const minutes = progressQuery.data?.minutesSpent ?? 0;
                   const hours = Math.floor(minutes / 60);
-                  // Day streak: count consecutive days ending today or yesterday
-                  const readDays = progressQuery.data?.readDays ?? new Set<string>();
+                  // Day streak: count consecutive days the user has logged in, ending today or yesterday
+                  const loginDays = loginsQuery.data ?? new Set<string>();
                   let streak = 0;
-                  if (readDays.size > 0) {
-                    const today = new Date();
-                    const key = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-                    let cursor = new Date(today);
-                    if (!readDays.has(key(cursor))) cursor.setDate(cursor.getDate() - 1);
-                    while (readDays.has(key(cursor))) {
+                  if (loginDays.size > 0) {
+                    const fmt = (d: Date) => {
+                      const y = d.getFullYear();
+                      const m = String(d.getMonth() + 1).padStart(2, "0");
+                      const dd = String(d.getDate()).padStart(2, "0");
+                      return `${y}-${m}-${dd}`;
+                    };
+                    let cursor = new Date();
+                    if (!loginDays.has(fmt(cursor))) cursor.setDate(cursor.getDate() - 1);
+                    while (loginDays.has(fmt(cursor))) {
                       streak += 1;
                       cursor.setDate(cursor.getDate() - 1);
                     }
@@ -357,7 +359,6 @@ function DashboardPage() {
                     { icon: Layers, label: "Categories", value: activeCats.toLocaleString() },
                     { icon: Clock, label: "Hours Spent", value: hours.toLocaleString() },
                     { icon: Flame, label: "Day Streak", value: streak.toLocaleString() },
-                    { icon: Award, label: "Badges", value: badgeCats.toLocaleString() },
                   ];
                   return (
                     <>
@@ -371,7 +372,7 @@ function DashboardPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
                         {stats.map((s) => {
                           const Icon = s.icon;
                           return (
@@ -393,7 +394,7 @@ function DashboardPage() {
                   );
                 })()}
 
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-4">
                   {(categoriesQuery.data ?? []).map((c) => {
                     const total = progressQuery.data?.totals.get(c.id) ?? 0;
                     const read = progressQuery.data?.reads.get(c.id) ?? 0;
