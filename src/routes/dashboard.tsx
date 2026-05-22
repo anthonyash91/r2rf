@@ -645,7 +645,7 @@ function CategoryProgressSection({
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
 
   return (
-    <section className="rounded-2xl border border-border bg-card overflow-hidden">
+    <section className="rounded-2xl border border-border bg-[#fffdf8] overflow-hidden">
       <button
         type="button"
         onClick={onToggle}
