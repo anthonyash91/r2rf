@@ -568,14 +568,13 @@ function UserItem({
                   {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
                 </span>
               )}
-              <span className="inline-flex items-center gap-1 text-xs rounded-full bg-muted px-2 py-0.5 text-foreground border border-border">
+              <Badge variant="facility">
                 {facilityLabel || user.profile!.facility}
-              </span>
+              </Badge>
               {user.roles.includes("user") && (
-                <span className="inline-flex items-center gap-1 text-xs rounded-full bg-secondary px-2 py-0.5 text-secondary-foreground border border-border">
-                  User
-                </span>
+                <Badge variant="user">User</Badge>
               )}
+
             </div>
           ) : editingEmail ? (
             <div className="flex items-center gap-2">
