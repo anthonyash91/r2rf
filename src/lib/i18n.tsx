@@ -31,8 +31,8 @@ const translations: Record<Language, Dict> = {
     "home.collections": "{count} collections",
     "home.collection": "{count} collection",
     "home.empty": "No categories yet.",
-    "home.item": "item",
-    "home.items": "items",
+    "home.item": "Item",
+    "home.items": "Items",
 
     "category.allCategories": "All categories",
     "category.notFound": "Category not found",
