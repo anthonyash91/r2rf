@@ -7,6 +7,7 @@ import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { Pencil } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { NewBadge } from "@/components/NewBadge";
 
 type CategoryStats = { count: number; hasRecent: boolean };
 
