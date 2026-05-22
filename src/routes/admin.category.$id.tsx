@@ -92,6 +92,13 @@ function AdminCategoryPage() {
         <p className="mt-6 text-muted-foreground">Loading…</p>
       ) : (
         <>
+          <div className="mt-6">
+            <PageHeader
+              icon={FolderOpen}
+              title="Edit Category"
+              description="Update the category name, copy, icon, and visibility settings."
+            />
+          </div>
           <CategoryEditor category={data.category} onSave={(v) => saveCategory.mutate(v)} busy={saveCategory.isPending} />
           <ContentManager categoryId={id} categoryName={data.category.name} categorySlug={data.category.slug} items={data.items} initialEditId={edit} />
         </>
@@ -163,10 +170,9 @@ function CategoryEditor({
   }
 
   return (
-    <SectionCard className="mt-6">
-      <PageHeader size="md" icon={FolderOpen} title="Edit Category" />
+    <SectionCard className="mt-4">
       <form
-        className="mt-4 space-y-4"
+        className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
           onSave({
