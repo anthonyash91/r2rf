@@ -876,13 +876,14 @@ function UserItem({
               <TooltipTrigger asChild>
                 <button
                   onClick={onDelete}
+                  disabled={pendingDelete}
                   aria-label="Delete user"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  {pendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Delete user</TooltipContent>
+              <TooltipContent>{pendingDelete ? "Saving…" : "Delete user"}</TooltipContent>
             </Tooltip>
           </div>
         </TooltipProvider>
