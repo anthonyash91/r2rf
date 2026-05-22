@@ -523,7 +523,7 @@ function AdminUsersPage() {
                           })}
                         </ul>
                       ) : (
-                        <div className="p-6 text-muted-foreground text-sm">No users for this facility.</div>
+                        <div className="p-6 text-muted-foreground text-sm">{q ? "No users match your search." : "No users for this facility."}</div>
                       )}
                     </div>
                     {filtered.length > 10 && (
