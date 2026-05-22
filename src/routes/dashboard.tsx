@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { setSecurityLock } from "@/lib/security-lock";
 import { toast } from "sonner";
 import { Badge } from "@/components/Badge";
+import { BadgeGroup } from "@/components/BadgeGroup";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
