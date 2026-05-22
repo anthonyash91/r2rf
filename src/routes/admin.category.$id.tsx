@@ -430,7 +430,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
 
   return (
     <section className="mt-8">
-      <div className="flex items-end justify-between">
+      <div className="mb-4 flex items-end justify-between">
         <h2 className="font-display text-2xl font-semibold">Content <span className="text-muted-foreground font-normal">({order.length})</span></h2>
         <button
           onClick={() => setEditing("new")}
