@@ -248,6 +248,16 @@ function CategoryEditor({
                 existingFileUrl={iconUrl}
                 onUploaded={(u) => setIconUrl(u)}
               />
+              <LoadingButton
+                variant="secondary"
+                onClick={handleGenerateIcon}
+                disabled={generatingIcon || !name.trim()}
+                pending={generatingIcon}
+                pendingText="Generating…"
+                icon={<Sparkles className="h-4 w-4" />}
+              >
+                {iconUrl ? "Regenerate with AI" : "Generate with AI"}
+              </LoadingButton>
               {iconUrl && (
                 <LoadingButton
                   variant="secondary"
