@@ -592,13 +592,15 @@ function UserItem({
           {isRegularUser ? (
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
-                <Badge variant="facility">
-                  {facilityLabel || user.profile!.facility}
-                </Badge>
-                {user.roles.includes("user") && (
-                  <Badge variant="user">User</Badge>
-                )}
-                {isNew && <Badge variant="new">New</Badge>}
+                <BadgeGroup>
+                  <Badge variant="facility">
+                    {facilityLabel || user.profile!.facility}
+                  </Badge>
+                  {user.roles.includes("user") && (
+                    <Badge variant="user">User</Badge>
+                  )}
+                  {isNew && <Badge variant="new">New</Badge>}
+                </BadgeGroup>
               </div>
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
                 <span className="font-mono text-sm truncate">{user.profile!.username}</span>
@@ -607,15 +609,15 @@ function UserItem({
                     {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
                   </span>
                 )}
-                <Badge variant="facility" className="hidden sm:inline-flex">
-                  {facilityLabel || user.profile!.facility}
-                </Badge>
-                {user.roles.includes("user") && (
-                  <Badge variant="user" className="hidden sm:inline-flex">User</Badge>
-                )}
-                {isNew && (
-                  <Badge variant="new" className="hidden sm:inline-flex">New</Badge>
-                )}
+                <BadgeGroup className="hidden sm:inline-flex">
+                  <Badge variant="facility">
+                    {facilityLabel || user.profile!.facility}
+                  </Badge>
+                  {user.roles.includes("user") && (
+                    <Badge variant="user">User</Badge>
+                  )}
+                  {isNew && <Badge variant="new">New</Badge>}
+                </BadgeGroup>
               </div>
             </>
           ) : editingEmail ? (
