@@ -186,18 +186,6 @@ function AdminUsersPage() {
           (u) => !u.roles.includes("admin") && !u.roles.includes("contributor"),
         );
 
-        const isMutatingUser = (userId: string) => {
-          const matchesUser = (m: { variables?: any; isPending: boolean }) =>
-            m.isPending && (m.variables?.userId === userId || m.variables?.email === userId);
-          return (
-            (emailMut.isPending && emailMut.variables?.userId === userId) ||
-            (pwMut.isPending && pwMut.variables?.userId === userId) ||
-            (roleMut.isPending && roleMut.variables?.userId === userId) ||
-            (deleteMut.isPending && deleteMut.variables?.userId === userId) ||
-            (clearSecMut.isPending && clearSecMut.variables?.userId === userId) ||
-            matchesUser({ isPending: false })
-          );
-        };
         const isPendingEmail = (id: string) => emailMut.isPending && emailMut.variables?.userId === id;
         const isPendingPw = (id: string) => pwMut.isPending && pwMut.variables?.userId === id;
         const isPendingResetEmail = (email: string) => resetMut.isPending && resetMut.variables?.email === email;
