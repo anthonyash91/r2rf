@@ -385,6 +385,15 @@ function SignupPage() {
                   placeholder={mode === "sign-up" ? t("signup.usernamePlaceholder") : undefined}
                   autoComplete={mode === "sign-up" ? "username" : "username email"}
                 />
+                {mode === "sign-up" && usernameStatus === "checking" && (
+                  <p className="mt-1 text-xs text-muted-foreground">{t("signup.usernameChecking")}</p>
+                )}
+                {mode === "sign-up" && usernameStatus === "available" && (
+                  <p className="mt-1 text-xs text-[var(--color-accent)]">{t("signup.usernameAvailable")}</p>
+                )}
+                {mode === "sign-up" && usernameStatus === "taken" && (
+                  <p className="mt-1 text-xs text-destructive">{t("signup.usernameTaken")}</p>
+                )}
               </div>
 
 
