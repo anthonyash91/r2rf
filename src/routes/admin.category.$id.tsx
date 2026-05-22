@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
+import { LabeledInput } from "@/components/FormField";
 
 export const Route = createFileRoute("/admin/category/$id")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -1128,35 +1129,6 @@ function ItemEditor({
   );
 }
 
-function LabeledInput({
-  label, value, onChange, type = "text", placeholder, required, suggestions,
-}: {
-  label: string; value: string; onChange: (v: string) => void;
-  type?: string; placeholder?: string; required?: boolean; suggestions?: string[];
-}) {
-  const listId = suggestions && suggestions.length > 0
-    ? `dl-${label.replace(/\s+/g, "-").toLowerCase()}`
-    : undefined;
-  return (
-    <label className="block">
-      <span className="text-sm font-medium">{label}</span>
-      <input
-        type={type}
-        required={required}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        list={listId}
-        className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-      />
-      {listId && (
-        <datalist id={listId}>
-          {suggestions!.map((s) => <option key={s} value={s} />)}
-        </datalist>
-      )}
-    </label>
-  );
-}
 
 function extOf(url: string, name: string | null): string {
   const src = (name ?? url).toLowerCase().split("?")[0].split("#")[0];

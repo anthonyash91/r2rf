@@ -8,6 +8,7 @@ import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { ArrowLeft, Save, ExternalLink, LayoutTemplate } from "lucide-react";
 import { Badge } from "@/components/Badge";
+import { LabeledInput, LabeledTextarea } from "@/components/FormField";
 
 
 const RESERVED_SLUGS = new Set([
@@ -191,15 +192,12 @@ function AdminCustomHomePageEdit() {
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <label className="block">
-              <span className="text-sm font-medium">Name</span>
-              <input
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-              />
-            </label>
+            <LabeledInput
+              label="Name"
+              required
+              value={name}
+              onChange={setName}
+            />
             <label className="block">
               <span className="text-sm font-medium">URL slug</span>
               <div className="mt-1 flex items-center gap-2">
@@ -214,31 +212,22 @@ function AdminCustomHomePageEdit() {
             </label>
           </div>
 
-          <label className="block">
-            <span className="text-sm font-medium">Description</span>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What is this custom home page for? (admin note)"
-              rows={3}
-              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">Optional, admin-only note.</p>
-          </label>
+          <LabeledTextarea
+            label="Description"
+            value={description}
+            onChange={setDescription}
+            placeholder="What is this custom home page for? (admin note)"
+            description="Optional, admin-only note."
+          />
 
-          <label className="block">
-            <span className="text-sm font-medium">Whitelist IPs</span>
-            <textarea
-              value={allowedIpsText}
-              onChange={(e) => setAllowedIpsText(e.target.value)}
-              placeholder="Leave blank for public access. One IPv4 per line, or comma-separated."
-              rows={3}
-              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">
-              If empty, anyone with the link can access this page. If one or more IPs are listed, only those IPs can access it.
-            </p>
-          </label>
+          <LabeledTextarea
+            label="Whitelist IPs"
+            value={allowedIpsText}
+            onChange={setAllowedIpsText}
+            placeholder="Leave blank for public access. One IPv4 per line, or comma-separated."
+            inputClassName="font-mono"
+            description="If empty, anyone with the link can access this page. If one or more IPs are listed, only those IPs can access it."
+          />
         </section>
 
         <section className="rounded-2xl border border-border bg-card p-6">

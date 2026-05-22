@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Save, RefreshCw, Home, Loader2 } from "lucide-react";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
+import { LabeledField } from "@/components/FormField";
 
 export const Route = createFileRoute("/admin/home")({
   beforeLoad: requireAdminBeforeLoad,
@@ -100,44 +101,44 @@ function AdminHomePage() {
             className="mt-6 space-y-4"
             onSubmit={(e) => { e.preventDefault(); saveMut.mutate(hero); }}
           >
-            <Field label="Eyebrow (small pill above headline)">
+            <LabeledField label="Eyebrow (small pill above headline)">
               <input
                 value={hero.eyebrow}
                 onChange={(e) => setHero({ ...hero, eyebrow: e.target.value })}
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
-            </Field>
+            </LabeledField>
             <div className="grid sm:grid-cols-3 gap-4">
-              <Field label="Headline — prefix">
+              <LabeledField label="Headline — prefix">
                 <input
                   value={hero.heading_prefix}
                   onChange={(e) => setHero({ ...hero, heading_prefix: e.target.value })}
                   className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                 />
-              </Field>
-              <Field label="Headline — emphasis (italic accent)">
+              </LabeledField>
+              <LabeledField label="Headline — emphasis (italic accent)">
                 <input
                   value={hero.heading_emphasis}
                   onChange={(e) => setHero({ ...hero, heading_emphasis: e.target.value })}
                   className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                 />
-              </Field>
-              <Field label="Headline — suffix">
+              </LabeledField>
+              <LabeledField label="Headline — suffix">
                 <input
                   value={hero.heading_suffix}
                   onChange={(e) => setHero({ ...hero, heading_suffix: e.target.value })}
                   className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                 />
-              </Field>
+              </LabeledField>
             </div>
-            <Field label="Subheading">
+            <LabeledField label="Subheading">
               <textarea
                 rows={3}
                 value={hero.subheading}
                 onChange={(e) => setHero({ ...hero, subheading: e.target.value })}
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
-            </Field>
+            </LabeledField>
 
             <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5 mb-[30px]">
               <div className="flex items-center justify-between mb-3">
@@ -203,44 +204,44 @@ function AdminHomePage() {
                   </div>
                 </div>
                 {addEsBusy && <TranslatingIndicator />}
-                <Field label="Eyebrow (ES)">
+                <LabeledField label="Eyebrow (ES)">
                   <input
                     value={hero.eyebrow_es}
                     onChange={(e) => setHero({ ...hero, eyebrow_es: e.target.value })}
                     className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                   />
-                </Field>
+                </LabeledField>
                 <div className="grid sm:grid-cols-3 gap-4">
-                  <Field label="Headline — prefix (ES)">
+                  <LabeledField label="Headline — prefix (ES)">
                     <input
                       value={hero.heading_prefix_es}
                       onChange={(e) => setHero({ ...hero, heading_prefix_es: e.target.value })}
                       className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                     />
-                  </Field>
-                  <Field label="Headline — emphasis (ES)">
+                  </LabeledField>
+                  <LabeledField label="Headline — emphasis (ES)">
                     <input
                       value={hero.heading_emphasis_es}
                       onChange={(e) => setHero({ ...hero, heading_emphasis_es: e.target.value })}
                       className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                     />
-                  </Field>
-                  <Field label="Headline — suffix (ES)">
+                  </LabeledField>
+                  <LabeledField label="Headline — suffix (ES)">
                     <input
                       value={hero.heading_suffix_es}
                       onChange={(e) => setHero({ ...hero, heading_suffix_es: e.target.value })}
                       className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                     />
-                  </Field>
+                  </LabeledField>
                 </div>
-                <Field label="Subheading (ES)">
+                <LabeledField label="Subheading (ES)">
                   <textarea
                     rows={3}
                     value={hero.subheading_es}
                     onChange={(e) => setHero({ ...hero, subheading_es: e.target.value })}
                     className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
                   />
-                </Field>
+                </LabeledField>
 
                 <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5 mb-[30px]">
                   <div className="flex items-center justify-between mb-3">
@@ -310,11 +311,3 @@ function AdminHomePage() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="text-sm font-medium">{label}</span>
-      <div className="mt-1">{children}</div>
-    </label>
-  );
-}
