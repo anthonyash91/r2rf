@@ -10,6 +10,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
+import { EmptyState } from "@/components/EmptyState";
+import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { PageHeader } from "@/components/PageHeader";
 import { Switch } from "@/components/ui/switch";
 
@@ -203,9 +205,9 @@ function BlockedSection() {
       </div>
       <div>
         {isLoading ? (
-          <div className="p-6 text-muted-foreground">Loading…</div>
+          <EmptyState>Loading…</EmptyState>
         ) : rows.length === 0 ? (
-          <div className="p-6 text-muted-foreground">No blocked IPs.</div>
+          <EmptyState>No blocked IPs.</EmptyState>
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((r) => (
@@ -224,7 +226,7 @@ function BlockedSection() {
                     pendingTooltip="Unblocking…"
                     variant="destructive"
                     icon={Trash2}
-                    pending={deleteMut.isPending && deleteMut.variables === r.id}
+                    pending={isMutationPendingFor(deleteMut, r.id)}
                     onClick={async () => {
                       await confirm({
                         title: `Unblock ${r.ip_address}?`,
@@ -431,9 +433,9 @@ function AllowlistSection({
 
       <div>
         {isLoading ? (
-          <div className="p-6 text-muted-foreground">Loading…</div>
+          <EmptyState>Loading…</EmptyState>
         ) : rows.length === 0 ? (
-          <div className="p-6 text-muted-foreground">{emptyMessage}</div>
+          <EmptyState>{emptyMessage}</EmptyState>
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((r) => (
@@ -442,7 +444,7 @@ function AllowlistSection({
                 row={r}
                 table={table}
                 queryKey={queryKey}
-                pendingDelete={deleteMut.isPending && deleteMut.variables === r.id}
+                pendingDelete={isMutationPendingFor(deleteMut, r.id)}
                 onDelete={async () => {
                   await confirm({
                     title: `Remove ${r.ip_address}?`,

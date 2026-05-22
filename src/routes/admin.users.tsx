@@ -10,6 +10,8 @@ import { Badge } from "@/components/Badge";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
+import { rowPending } from "@/hooks/use-row-pending";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
 import {
@@ -186,12 +188,12 @@ function AdminUsersPage() {
           (u) => !u.roles.includes("admin") && !u.roles.includes("contributor"),
         );
 
-        const isPendingEmail = (id: string) => emailMut.isPending && emailMut.variables?.userId === id;
-        const isPendingPw = (id: string) => pwMut.isPending && pwMut.variables?.userId === id;
-        const isPendingResetEmail = (email: string) => resetMut.isPending && resetMut.variables?.email === email;
-        const isPendingRole = (id: string) => roleMut.isPending && roleMut.variables?.userId === id;
-        const isPendingDelete = (id: string) => deleteMut.isPending && deleteMut.variables?.userId === id;
-        const isPendingClearSec = (id: string) => clearSecMut.isPending && clearSecMut.variables?.userId === id;
+        const isPendingEmail = rowPending<string>(emailMut, "userId");
+        const isPendingPw = rowPending<string>(pwMut, "userId");
+        const isPendingResetEmail = rowPending<string>(resetMut, "email");
+        const isPendingRole = rowPending<string>(roleMut, "userId");
+        const isPendingDelete = rowPending<string>(deleteMut, "userId");
+        const isPendingClearSec = rowPending<string>(clearSecMut, "userId");
 
         const renderItem = (u: UserRow) => (
           <UserItem
@@ -331,7 +333,7 @@ function AdminUsersPage() {
                 {adminUsers.length ? (
                   <ul className="divide-y divide-border">{adminUsers.map(renderItem)}</ul>
                 ) : (
-                  <div className="p-6 text-muted-foreground text-sm">No admin users.</div>
+                  <EmptyState size="sm">No admin users.</EmptyState>
                 )}
               </SectionCard>
             </section>
@@ -495,7 +497,7 @@ function AdminUsersPage() {
                           })}
                         </ul>
                       ) : (
-                        <div className="p-6 text-muted-foreground text-sm">{q ? "No users match your search." : "No users for this facility."}</div>
+                        <EmptyState size="sm">{q ? "No users match your search." : "No users for this facility."}</EmptyState>
                       )}
                     </div>
                     {filtered.length > 10 && (

@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
+import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import {
   listFacilitiesWithStats,
   addFacilities,
@@ -200,7 +202,7 @@ function AdminFacilitiesPage() {
 
         <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${allFacilities.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
           {facilitiesQuery.isLoading ? (
-            <div className="p-6 text-muted-foreground text-sm">Loading…</div>
+            <EmptyState size="sm">Loading…</EmptyState>
           ) : facilities.length ? (
             <ul className="divide-y divide-border">
               {visibleFacilities.map((f) => {
@@ -304,7 +306,7 @@ function AdminFacilitiesPage() {
                                 pendingTooltip="Deleting…"
                                 variant="destructive"
                                 icon={Trash2}
-                                pending={deleteMut.isPending && deleteMut.variables?.id === f.id}
+                                pending={isMutationPendingFor(deleteMut, f.id, "id")}
                                 onClick={async () => {
                                   await confirm({
                                     title: "Delete facility?",
@@ -325,7 +327,7 @@ function AdminFacilitiesPage() {
               })}
             </ul>
           ) : (
-            <div className="p-6 text-muted-foreground text-sm">{q ? "No facilities match your search." : "No facilities yet."}</div>
+            <EmptyState size="sm">{q ? "No facilities match your search." : "No facilities yet."}</EmptyState>
           )}
         </div>
         {facilities.length > 10 && (
