@@ -66,8 +66,7 @@ function AdminUsersPage() {
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [regularVisible, setRegularVisible] = useState<number>(10);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
-  const [editMode, setEditMode] = useState(false);
+  const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
   // Snapshot the "last seen" timestamp at mount so newly-signed-up users stay
