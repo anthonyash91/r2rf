@@ -220,7 +220,7 @@ function DashboardPage() {
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
       const seenSet = new Set<string>((seenRes.data ?? []).map((r: any) => r.content_item_id as string));
-      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; duration: string | null; created_at: string | null };
+      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; duration: string | null; created_at: string | null; url: string | null; file_url: string | null };
       const itemsByCat = new Map<string, CatItem[]>();
       const totals = new Map<string, number>();
       const recentCats = new Set<string>();
