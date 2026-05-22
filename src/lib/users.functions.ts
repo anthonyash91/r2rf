@@ -116,7 +116,7 @@ export const deleteUser = createServerFn({ method: "POST" })
       throw new Error("You cannot delete your own account.");
     }
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
-    await supabaseAdmin.from("user_signup_ips").delete().eq("user_id", data.userId);
+
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
     return { ok: true };
