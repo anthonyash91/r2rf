@@ -530,7 +530,7 @@ function SignupPage() {
 
               <button
                 type="submit"
-                disabled={busy || (mode === "sign-up" && !challengeQuery.data)}
+                disabled={busy || (mode === "sign-up" && (!challengeQuery.data || usernameStatus === "taken" || usernameStatus === "checking"))}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />}
