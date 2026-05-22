@@ -493,13 +493,14 @@ function NewCategoryForm({
   const generateIcon = useServerFn(generateCategoryIcon);
   const [generating, setGenerating] = useState(false);
   const [generatingIcon, setGeneratingIcon] = useState(false);
+  const [iconPrompt, setIconPrompt] = useState("");
 
   async function handleGenerateIcon() {
     const trimmed = name.trim();
     if (!trimmed) { toast.error("Enter a name first"); return; }
     setGeneratingIcon(true);
     try {
-      const { url } = await generateIcon({ data: { name: trimmed, tagline: tagline.trim(), description: description.trim() } });
+      const { url } = await generateIcon({ data: { name: trimmed, tagline: tagline.trim(), description: description.trim(), extraPrompt: iconPrompt.trim() } });
       setIconUrl(url);
       toast.success("Generated icon");
     } catch (e: any) {
