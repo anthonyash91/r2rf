@@ -44,6 +44,9 @@ function SignupPage() {
   const [answer, setAnswer] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState<
+    "idle" | "checking" | "available" | "taken" | "invalid"
+  >("idle");
   
 
   // Reset flow
