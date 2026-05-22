@@ -35,6 +35,21 @@ export function SiteHeader() {
 
   const toggleLang = () => setLang(lang === "en" ? "es" : "en");
 
+  const locked = useSecurityLock();
+  const lockedLinkClass = locked ? "opacity-40 pointer-events-none cursor-not-allowed" : "";
+  const handleLockedNav = (e: React.MouseEvent) => {
+    if (!locked) return;
+    e.preventDefault();
+    e.stopPropagation();
+    toast.error("Please set up your security questions before leaving this page.");
+  };
+  // Wrap all nav Links so they intercept clicks while locked. We render the Link
+  // with pointer-events disabled via class, plus a sibling overlay-free onClick
+  // capture via parent span so the toast still fires when users try to click.
+  const lockProps = locked
+    ? { onClickCapture: handleLockedNav, "aria-disabled": true as const, tabIndex: -1 }
+    : {};
+
   const homeLinkProps = activeCustomHome
     ? ({ to: "/$customHome", params: { customHome: activeCustomHome } } as const)
     : ({ to: "/" } as const);
