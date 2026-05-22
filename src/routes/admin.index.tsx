@@ -29,7 +29,6 @@ function categoryTranslationStatus(c: Category): "complete" | "partial" | "missi
 }
 import { SortableList } from "@/components/SortableList";
 import { FileUploader } from "@/components/FileUploader";
-import { useConfirm } from "@/components/ConfirmDialog";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -48,7 +47,6 @@ export const Route = createFileRoute("/admin/")({
 function AdminCategoriesPage() {
   const qc = useQueryClient();
   useAuth();
-  const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
   const [creating, setCreating] = useState(false);
 

@@ -12,7 +12,6 @@ import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
-import { useConfirm } from "@/components/ConfirmDialog";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
@@ -50,7 +49,6 @@ export const Route = createFileRoute("/admin/custom-home-pages/")({
 
 function AdminCustomHomePagesList() {
   const qc = useQueryClient();
-  const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
   
   const [creating, setCreating] = useState(false);

@@ -15,7 +15,6 @@ import { FileUploader } from "@/components/FileUploader";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
 import { SortableList } from "@/components/SortableList";
-import { useConfirm } from "@/components/ConfirmDialog";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
@@ -314,7 +313,6 @@ function CategoryEditor({
 
 function ContentManager({ categoryId, categoryName, categorySlug, items, initialEditId }: { categoryId: string; categoryName: string; categorySlug: string; items: ContentItem[]; initialEditId?: string }) {
   const qc = useQueryClient();
-  const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
   const { lang } = useI18n();
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
@@ -642,7 +640,6 @@ function ItemEditor({
   busy: boolean;
 }) {
   const qc = useQueryClient();
-  const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
   const { data: sourceSuggestions = [] } = useQuery({
     queryKey: ["admin", "content-sources"],

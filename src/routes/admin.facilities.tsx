@@ -18,7 +18,6 @@ import {
   deleteFacilities,
 } from "@/lib/facilities.functions";
 
-import { useConfirm } from "@/components/ConfirmDialog";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
@@ -35,7 +34,6 @@ export const Route = createFileRoute("/admin/facilities")({
 
 function AdminFacilitiesPage() {
   const qc = useQueryClient();
-  const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
 
   const fetchFacilities = useServerFn(listFacilitiesWithStats);
