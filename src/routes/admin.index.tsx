@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles, RefreshCw, ExternalLink, LayoutGrid, Loader2, GripVertical } from "lucide-react";
+import { LoadingButton } from "@/components/LoadingButton";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy } from "@/lib/category-ai.functions";
 
