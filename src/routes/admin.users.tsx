@@ -209,44 +209,47 @@ function AdminUsersPage() {
             onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
             onSendReset={() => resetMut.mutate({ email: u.email })}
             onToggleAdmin={async (enabled) => {
-              const ok = await confirm({
+              await confirm({
                 title: enabled ? "Make admin?" : "Revoke admin?",
                 description: enabled
                   ? `Grant admin role to ${u.email}? This will replace any existing role.`
                   : `Remove admin role from ${u.email}?`,
                 confirmLabel: enabled ? "Make admin" : "Revoke",
                 destructive: !enabled,
+                pendingLabel: "Saving",
+                onConfirm: () => roleMut.mutateAsync({ userId: u.id, role: "admin", enabled }),
               });
-              if (ok) roleMut.mutate({ userId: u.id, role: "admin", enabled });
             }}
             onToggleContributor={async (enabled) => {
-              const ok = await confirm({
+              await confirm({
                 title: enabled ? "Make contributor?" : "Revoke contributor?",
                 description: enabled
                   ? `Grant contributor role to ${u.email}? This will replace any existing role.`
                   : `Remove contributor role from ${u.email}?`,
                 confirmLabel: enabled ? "Make contributor" : "Revoke",
                 destructive: !enabled,
+                pendingLabel: "Saving",
+                onConfirm: () => roleMut.mutateAsync({ userId: u.id, role: "contributor", enabled }),
               });
-              if (ok) roleMut.mutate({ userId: u.id, role: "contributor", enabled });
             }}
             onDelete={async () => {
-              const ok = await confirm({
+              await confirm({
                 title: "Delete user?",
                 description: `Permanently delete ${u.profile?.username || u.email}? This cannot be undone.`,
                 confirmLabel: "Delete",
                 destructive: true,
+                onConfirm: () => deleteMut.mutateAsync({ userId: u.id }),
               });
-              if (ok) deleteMut.mutate({ userId: u.id });
             }}
             onResetSecurity={async () => {
-              const ok = await confirm({
+              await confirm({
                 title: "Reset security questions?",
                 description: `Clear ${u.profile?.username || u.email}'s security questions? They'll be required to choose new ones the next time they sign in.`,
                 confirmLabel: "Reset",
                 destructive: true,
+                pendingLabel: "Resetting",
+                onConfirm: () => clearSecMut.mutateAsync({ userId: u.id }),
               });
-              if (ok) clearSecMut.mutate({ userId: u.id });
             }}
           />
         );
