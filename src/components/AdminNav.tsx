@@ -184,7 +184,7 @@ export function AdminNav() {
                   ].join(" ")}
                 >
                   <Icon className="h-3.5 w-3.5" />
-                  {l.label}
+                  {renderLabel(l)}
                 </Link>
               </li>
             );
