@@ -244,7 +244,6 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
 
 function CategorySection({ row, isOpen, onToggle }: { row: AggregatedRow; isOpen: boolean; onToggle: () => void }) {
   const open = isOpen;
-  const setOpen = (_: any) => onToggle();
   return (
     <SectionCard padded={false} className="overflow-hidden">
       <button
