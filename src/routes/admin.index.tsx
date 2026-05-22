@@ -173,6 +173,7 @@ function AdminCategoriesPage() {
     onError: (e: any) => toast.error(e.message),
   });
   const [isDeleting, setIsDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [order, setOrder] = useState<Category[]>([]);
   useEffect(() => { setOrder(categories); }, [categories]);
