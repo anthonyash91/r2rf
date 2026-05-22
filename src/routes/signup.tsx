@@ -76,8 +76,14 @@ function SignupPage() {
   });
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/dashboard" });
-  }, [user, loading, navigate]);
+    if (!loading && user) {
+      if (mode === "sign-up") {
+        navigate({ to: "/dashboard", search: { tab: "account" } as any });
+      } else {
+        navigate({ to: "/dashboard" });
+      }
+    }
+  }, [user, loading, navigate, mode]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
