@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download, Search } from "lucide-react";
+import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download, Search, Sparkles } from "lucide-react";
 import { Badge } from "@/components/Badge";
+import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
 import {
   listUsers,
