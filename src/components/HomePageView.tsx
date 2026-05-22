@@ -109,8 +109,8 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                     {pickLang(lang, c.name, c.name_es)}
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
-                  <div className="mt-3 flex flex-col items-center gap-2">
-                    <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-gold)]">
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                    <p className="text-xs font-medium tracking-wide text-[var(--color-gold)]">
                       {count} {t(count === 1 ? "home.item" : "home.items")}
                     </p>
                     {s.hasRecent && (
