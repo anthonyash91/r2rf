@@ -568,6 +568,51 @@ type CatItem = {
 
 };
 
+function CategoryAccordion({
+  categories,
+  progress,
+  isAdmin,
+  lang,
+  t,
+}: {
+  categories: Category[];
+  progress: any;
+  isAdmin: boolean;
+  lang: "en" | "es";
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  return (
+    <div className="flex flex-col [&>section]:rounded-none [&>section:first-child]:rounded-t-2xl [&>section:last-child]:rounded-b-2xl [&>section:not(:first-child)]:-mt-px">
+      {categories.map((c) => {
+        const total = progress?.totals.get(c.id) ?? 0;
+        const read = progress?.reads.get(c.id) ?? 0;
+        const items = progress?.itemsByCat.get(c.id) ?? [];
+        const readSet = progress?.readSet ?? new Set<string>();
+        const newItemSet = progress?.newItemSet ?? new Set<string>();
+        const hasRecent = items.some((it: CatItem) => newItemSet.has(it.id) && !readSet.has(it.id));
+        return (
+          <CategoryProgressSection
+            key={c.id}
+            category={c}
+            items={items}
+            readSet={readSet}
+            newItemSet={newItemSet}
+            hasRecent={hasRecent}
+            total={total}
+            read={read}
+            isAdmin={isAdmin}
+            lang={lang}
+            t={t}
+            isOpen={openId === c.id}
+            onToggle={() => setOpenId((cur) => (cur === c.id ? null : c.id))}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 function CategoryProgressSection({
   category,
   items,
@@ -579,6 +624,8 @@ function CategoryProgressSection({
   isAdmin,
   lang,
   t,
+  isOpen,
+  onToggle,
 }: {
   category: Category;
   items: CatItem[];
@@ -590,8 +637,10 @@ function CategoryProgressSection({
   isAdmin: boolean;
   lang: "en" | "es";
   t: (key: string, vars?: Record<string, string | number>) => string;
+  isOpen: boolean;
+  onToggle: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const open = isOpen;
   const pct = total > 0 ? Math.round((read / total) * 100) : 0;
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
 
@@ -599,7 +648,7 @@ function CategoryProgressSection({
     <section className="rounded-2xl border border-border bg-card overflow-hidden">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         aria-expanded={open}
         style={open ? { backgroundColor: "#f7f5ec" } : undefined}
         className={`w-full flex items-center gap-4 p-6 ${open ? "border-b border-border" : ""} text-left hover:bg-muted/40 transition-colors`}
