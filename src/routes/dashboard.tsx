@@ -175,8 +175,8 @@ function DashboardPage() {
   });
 
   const loginsQuery = useQuery({
-    queryKey: ["my-login-days", userId],
-    enabled: !!userId,
+    queryKey: ["my-login-days", user?.id ?? null],
+    enabled: !!user?.id,
     queryFn: async (): Promise<Set<string>> => {
       const since = new Date();
       since.setDate(since.getDate() - 365);
@@ -184,7 +184,7 @@ function DashboardPage() {
       const { data, error } = await supabase
         .from("user_logins")
         .select("login_date")
-        .eq("user_id", userId!)
+        .eq("user_id", user!.id)
         .gte("login_date", sinceStr);
       if (error) throw error;
       return new Set((data ?? []).map((r: any) => r.login_date as string));
