@@ -452,18 +452,23 @@ function AdminCategoriesPage() {
                   <TooltipTrigger asChild>
                     <button
                       aria-label="Delete"
+                      disabled={deleteMut.isPending && deleteMut.variables === c.id}
                       onClick={async () => {
-                        const ok = await confirm({
+                        await confirm({
                           title: `Delete "${c.name}"?`,
                           description: "This will permanently delete the category and all its content.",
                           confirmLabel: "Delete",
                           destructive: true,
+                          onConfirm: () => deleteMut.mutateAsync(c.id),
                         });
-                        if (ok) deleteMut.mutate(c.id);
                       }}
-                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {deleteMut.isPending && deleteMut.variables === c.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </button>
                   </TooltipTrigger>
                   <TooltipContent>Delete</TooltipContent>
