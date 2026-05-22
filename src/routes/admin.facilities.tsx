@@ -403,7 +403,7 @@ function AdminFacilitiesPage() {
               })}
             </ul>
           ) : (
-            <div className="p-6 text-muted-foreground text-sm">No facilities yet.</div>
+            <div className="p-6 text-muted-foreground text-sm">{q ? "No facilities match your search." : "No facilities yet."}</div>
           )}
         </div>
         {facilities.length > 10 && (
