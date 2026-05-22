@@ -224,7 +224,7 @@ const translations: Record<Language, Dict> = {
     "category.markReadError": "No se pudo actualizar el progreso.",
 
     "dashboard.progress": "Tu progreso",
-    "dashboard.progressItems": "{done}/{total} recursos leídos",
+    "dashboard.progressItems": "{done}/{total} elementos completados",
     "dashboard.progressEmpty": "Comienza una categoría para ver tu progreso.",
 
     "auth.signIn": "Iniciar sesión",
