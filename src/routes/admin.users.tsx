@@ -186,12 +186,37 @@ function AdminUsersPage() {
           (u) => !u.roles.includes("admin") && !u.roles.includes("contributor"),
         );
 
+        const isMutatingUser = (userId: string) => {
+          const matchesUser = (m: { variables?: any; isPending: boolean }) =>
+            m.isPending && (m.variables?.userId === userId || m.variables?.email === userId);
+          return (
+            (emailMut.isPending && emailMut.variables?.userId === userId) ||
+            (pwMut.isPending && pwMut.variables?.userId === userId) ||
+            (roleMut.isPending && roleMut.variables?.userId === userId) ||
+            (deleteMut.isPending && deleteMut.variables?.userId === userId) ||
+            (clearSecMut.isPending && clearSecMut.variables?.userId === userId) ||
+            matchesUser({ isPending: false })
+          );
+        };
+        const isPendingEmail = (id: string) => emailMut.isPending && emailMut.variables?.userId === id;
+        const isPendingPw = (id: string) => pwMut.isPending && pwMut.variables?.userId === id;
+        const isPendingResetEmail = (email: string) => resetMut.isPending && resetMut.variables?.email === email;
+        const isPendingRole = (id: string) => roleMut.isPending && roleMut.variables?.userId === id;
+        const isPendingDelete = (id: string) => deleteMut.isPending && deleteMut.variables?.userId === id;
+        const isPendingClearSec = (id: string) => clearSecMut.isPending && clearSecMut.variables?.userId === id;
+
         const renderItem = (u: UserRow) => (
           <UserItem
             key={u.id}
             user={u}
             isNew={isNewUser(u)}
             facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""}
+            pendingEmail={isPendingEmail(u.id)}
+            pendingPassword={isPendingPw(u.id)}
+            pendingReset={isPendingResetEmail(u.email)}
+            pendingRole={isPendingRole(u.id)}
+            pendingDelete={isPendingDelete(u.id)}
+            pendingClearSec={isPendingClearSec(u.id)}
             onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
             onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
             onSendReset={() => resetMut.mutate({ email: u.email })}
