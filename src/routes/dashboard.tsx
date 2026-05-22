@@ -320,7 +320,7 @@ function DashboardPage() {
               })()}
               <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
             </div>
-            <TabsList className="h-auto p-2 gap-1 self-start sm:self-center bg-muted/40">
+            <TabsList className="h-auto p-2 gap-1 w-full sm:w-auto self-stretch sm:self-center bg-muted/40">
               <TabsTrigger
                 value="categories"
                 disabled={mustSetup}
@@ -330,13 +330,13 @@ function DashboardPage() {
                     toast.error(t("dashboard.lockedNav"));
                   }
                 }}
-                className={`px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
+                className={`flex-1 sm:flex-none justify-center px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
               >
                 {t("dashboard.tabProgress")}
               </TabsTrigger>
               <TabsTrigger
                 value="account"
-                className="px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
+                className="flex-1 sm:flex-none justify-center px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
               >
                 {t("dashboard.tabAccount")}
               </TabsTrigger>
