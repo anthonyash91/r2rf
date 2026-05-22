@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { ArrowLeft, Save, ExternalLink, LayoutTemplate } from "lucide-react";
+import { Badge } from "@/components/Badge";
+
 
 const RESERVED_SLUGS = new Set([
   "admin",
