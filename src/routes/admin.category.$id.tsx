@@ -491,7 +491,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       )}
 
       {order.length > 0 && (
-        <div className="mt-6 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-md border border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
+        <div className="mt-6 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-t-md border border-b-0 border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
           <span className="text-muted-foreground">
             {editMode
               ? selectedIds.size > 0
@@ -552,7 +552,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         </div>
       )}
 
-      <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+      <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${order.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
         {(() => {
           const renderItemRow = (item: ContentItem) => {
             const isEditingThis = editing !== null && editing !== "new" && editing.id === item.id;
