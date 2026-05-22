@@ -613,32 +613,32 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           if (filteredOrder.length === 0) {
             return <p className="p-6 text-muted-foreground">No items match your search.</p>;
           }
-          if (editMode || q) {
+          if (bulk.editMode || q) {
             return (
               <ul className="divide-y divide-border">
                 {filteredOrder.map((item) => {
-                  const selected = selectedIds.has(item.id);
-                  const isInteractive = editMode;
+                  const selected = bulk.has(item.id);
+                  const isInteractive = bulk.editMode;
                   return (
                     <li
                       key={item.id}
-                      onClick={isInteractive ? () => toggleOne(item.id) : undefined}
+                      onClick={isInteractive ? () => bulk.toggle(item.id) : undefined}
                       className={`flex items-stretch transition-colors ${
                         isInteractive ? "cursor-pointer " : ""
                       }${
                         selected ? "bg-destructive/10 hover:bg-destructive/15" : isInteractive ? "hover:bg-muted/50" : ""
                       }`}
                     >
-                      {(editMode || q) && (
+                      {(bulk.editMode || q) && (
                         <div
-                          className={`flex items-center pl-5 pr-0 ${editMode ? "text-muted-foreground/50" : "text-muted-foreground/30 cursor-not-allowed"}`}
-                          aria-disabled={!editMode}
+                          className={`flex items-center pl-5 pr-0 ${bulk.editMode ? "text-muted-foreground/50" : "text-muted-foreground/30 cursor-not-allowed"}`}
+                          aria-disabled={!bulk.editMode}
                         >
                           <GripVertical className="h-4 w-4" />
                         </div>
                       )}
 
-                      <div className={`flex-1 min-w-0 ${editMode ? "pointer-events-none" : ""}`}>{renderItemRow(item)}</div>
+                      <div className={`flex-1 min-w-0 ${bulk.editMode ? "pointer-events-none" : ""}`}>{renderItemRow(item)}</div>
                     </li>
                   );
                 })}
