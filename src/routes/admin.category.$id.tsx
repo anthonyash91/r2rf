@@ -267,80 +267,35 @@ function CategoryEditor({
         </label>
 
 
-        {showEs ? (
-          <div className="border-t border-border pt-4 space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="font-display text-lg font-semibold">Spanish translation</h3>
-                <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <LoadingButton
-                  variant="secondary"
-                  disabled={addEsBusy}
-                  pending={addEsBusy}
-                  pendingText="Translating…"
-                  icon={<RefreshCw className="h-3 w-3" />}
-                  onClick={() => {
-                    runAddEs(
-                      { name, tagline, description },
-                      (t) => {
-                        if (t.name) setNameEs(t.name);
-                        if (t.tagline) setTaglineEs(t.tagline);
-                        if (t.description) setDescriptionEs(t.description);
-                      },
-                      "Category metadata for a content library",
-                    );
-                  }}
-                >
-                  Regenerate
-                </LoadingButton>
-                <button
-                  type="button"
-                  onClick={() => setShowEs(false)}
-                  className="text-xs text-muted-foreground hover:text-foreground underline"
-                >
-                  Hide
-                </button>
-              </div>
-            </div>
-            {addEsBusy && <TranslatingIndicator />}
-            <LabeledInput label="Name (ES)" value={nameEs} onChange={setNameEs} />
-            <LabeledInput label="Tagline (ES)" value={taglineEs} onChange={setTaglineEs} />
-            <label className="block">
-              <span className="text-sm font-medium">Description (ES)</span>
-              <textarea
-                rows={3}
-                value={descriptionEs}
-                onChange={(e) => setDescriptionEs(e.target.value)}
-                className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-              />
-            </label>
-          </div>
-        ) : (
-          <div className="border-t border-border pt-4">
-            <LoadingButton
-              variant="secondary"
-              disabled={addEsBusy}
-              pending={addEsBusy}
-              pendingText="Translating…"
-              onClick={() => {
-                setShowEs(true);
-                runAddEs(
-                  { name, tagline, description },
-                  (t) => {
-                    if (t.name) setNameEs(t.name);
-                    if (t.tagline) setTaglineEs(t.tagline);
-                    if (t.description) setDescriptionEs(t.description);
-                  },
-                  "Category metadata for a content library",
-                );
-              }}
-            >
-              + Add Spanish translation
-            </LoadingButton>
-          </div>
-        )}
+        <TranslationPanel
+          open={showEs}
+          onOpenChange={setShowEs}
+          busy={addEsBusy}
+          onTranslate={() => {
+            runAddEs(
+              { name, tagline, description },
+              (t) => {
+                if (t.name) setNameEs(t.name);
+                if (t.tagline) setTaglineEs(t.tagline);
+                if (t.description) setDescriptionEs(t.description);
+              },
+              "Category metadata for a content library",
+            );
+          }}
+        >
+          <LabeledInput label="Name (ES)" value={nameEs} onChange={setNameEs} />
+          <LabeledInput label="Tagline (ES)" value={taglineEs} onChange={setTaglineEs} />
+          <label className="block">
+            <span className="text-sm font-medium">Description (ES)</span>
+            <textarea
+              rows={3}
+              value={descriptionEs}
+              onChange={(e) => setDescriptionEs(e.target.value)}
+              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
+          </label>
+        </TranslationPanel>
+
         <div className="flex justify-end">
           <LoadingButton
             type="submit"
