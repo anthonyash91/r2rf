@@ -109,7 +109,8 @@ export const Route = createFileRoute("/api/public/site-passkey")({
         }
 
         const hash = await sha256Hex(parsed.passkey.trim());
-        const ok = timingSafeEqualHex(hash, SITE_PASSKEY_HASH);
+        const expectedHash = (process.env.SITE_PASSKEY_HASH ?? LEGACY_SITE_PASSKEY_HASH).trim().toLowerCase();
+        const ok = timingSafeEqualHex(hash, expectedHash);
 
         if (!ok) {
           const nextCount = (existing?.failed_count ?? 0) + 1;
