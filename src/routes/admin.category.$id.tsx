@@ -170,10 +170,9 @@ function CategoryEditor({
   }
 
   return (
-    <SectionCard className="mt-6">
-      <PageHeader size="md" icon={FolderOpen} title="Edit Category" />
+    <SectionCard className="mt-4">
       <form
-        className="mt-4 space-y-4"
+        className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
           onSave({
