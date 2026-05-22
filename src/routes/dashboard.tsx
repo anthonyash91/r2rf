@@ -62,6 +62,16 @@ function DashboardPage() {
   });
   const customSlug = facilityHomeQuery.data?.slug ?? null;
 
+  const fetchFacilities = useServerFn(listFacilities);
+  const facilitiesQuery = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilities(),
+  });
+  const facilityNameMap = new Map(
+    (facilitiesQuery.data?.facilities ?? []).map((f) => [f.value, f.label]),
+  );
+
+
   const categoriesQuery = useQuery({
     queryKey: ["dashboard-categories", customSlug],
     enabled: !facilityHomeQuery.isLoading,
