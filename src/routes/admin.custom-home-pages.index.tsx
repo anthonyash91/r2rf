@@ -10,6 +10,7 @@ import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, LayoutTemplate } from "l
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
@@ -462,9 +463,9 @@ function AdminCustomHomePagesList() {
 
       <SectionCard as="div" padded={false} className="mt-8 overflow-hidden">
         {isLoading ? (
-          <div className="p-6 text-muted-foreground">Loading…</div>
+          <EmptyState>Loading…</EmptyState>
         ) : pages.length === 0 ? (
-          <div className="p-6 text-muted-foreground">No custom home pages yet.</div>
+          <EmptyState>No custom home pages yet.</EmptyState>
         ) : (
           <ul className="divide-y divide-border">
             {pages.map((p) => {

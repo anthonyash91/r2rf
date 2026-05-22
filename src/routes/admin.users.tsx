@@ -10,6 +10,7 @@ import { Badge } from "@/components/Badge";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
 import {
@@ -331,7 +332,7 @@ function AdminUsersPage() {
                 {adminUsers.length ? (
                   <ul className="divide-y divide-border">{adminUsers.map(renderItem)}</ul>
                 ) : (
-                  <div className="p-6 text-muted-foreground text-sm">No admin users.</div>
+                  <EmptyState size="sm">No admin users.</EmptyState>
                 )}
               </SectionCard>
             </section>
@@ -495,7 +496,7 @@ function AdminUsersPage() {
                           })}
                         </ul>
                       ) : (
-                        <div className="p-6 text-muted-foreground text-sm">{q ? "No users match your search." : "No users for this facility."}</div>
+                        <EmptyState size="sm">{q ? "No users match your search." : "No users for this facility."}</EmptyState>
                       )}
                     </div>
                     {filtered.length > 10 && (

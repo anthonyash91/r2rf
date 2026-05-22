@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles, RefreshCw, ExternalLink, LayoutGrid, Loader2, GripVertical } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy } from "@/lib/category-ai.functions";
 
@@ -407,11 +408,11 @@ function AdminCategoriesPage() {
         return (
           <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${categories.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
             {isLoading ? (
-              <div className="p-6 text-muted-foreground">Loading…</div>
+              <EmptyState>Loading…</EmptyState>
             ) : categories.length === 0 ? (
-              <div className="p-6 text-muted-foreground">No categories yet.</div>
+              <EmptyState>No categories yet.</EmptyState>
             ) : filteredOrder.length === 0 ? (
-              <div className="p-6 text-muted-foreground">No categories match your search.</div>
+              <EmptyState>No categories match your search.</EmptyState>
             ) : bulk.editMode || q ? (
               <ul className="divide-y divide-border">
                 {filteredOrder.map((c) => {

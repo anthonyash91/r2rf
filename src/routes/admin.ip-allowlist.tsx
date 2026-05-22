@@ -10,6 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
+import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { Switch } from "@/components/ui/switch";
 
@@ -203,9 +204,9 @@ function BlockedSection() {
       </div>
       <div>
         {isLoading ? (
-          <div className="p-6 text-muted-foreground">Loading…</div>
+          <EmptyState>Loading…</EmptyState>
         ) : rows.length === 0 ? (
-          <div className="p-6 text-muted-foreground">No blocked IPs.</div>
+          <EmptyState>No blocked IPs.</EmptyState>
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((r) => (
@@ -431,9 +432,9 @@ function AllowlistSection({
 
       <div>
         {isLoading ? (
-          <div className="p-6 text-muted-foreground">Loading…</div>
+          <EmptyState>Loading…</EmptyState>
         ) : rows.length === 0 ? (
-          <div className="p-6 text-muted-foreground">{emptyMessage}</div>
+          <EmptyState>{emptyMessage}</EmptyState>
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((r) => (
