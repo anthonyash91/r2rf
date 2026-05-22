@@ -203,13 +203,16 @@ function SignupPage() {
       <main className="flex-1 mx-auto w-full max-w-md px-6 py-16">
         {mode === "reset" ? (
           <>
-            <h1 className="font-display text-3xl font-semibold">{t("security.resetTitle")}</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {resetStep === 1 ? t("security.resetStep1") : t("security.resetStep2")}
-            </p>
+            <div className="mb-8">
+              <h1 className="font-display text-3xl font-semibold">{t("security.resetTitle")}</h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {resetStep === 1 ? t("security.resetStep1") : t("security.resetStep2")}
+              </p>
+            </div>
 
+            <div className="rounded-lg border border-border bg-white p-6">
             {resetStep === 1 ? (
-              <form onSubmit={handleResetStart} className="mt-8 space-y-4">
+              <form onSubmit={handleResetStart} className="space-y-4">
                 <div>
                   <label className="text-sm font-medium">{t("signup.username")}</label>
                   <input
@@ -233,7 +236,7 @@ function SignupPage() {
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleResetSubmit} className="mt-8 space-y-4">
+              <form onSubmit={handleResetSubmit} className="space-y-4">
                 <div>
                   <label className="text-sm font-medium">
                     {questionLabel(t, resetQuestionKeys[0] ?? "")}
@@ -285,6 +288,8 @@ function SignupPage() {
               </form>
             )}
 
+            </div>
+
             <button
               onClick={() => {
                 setMode("sign-in");
@@ -300,14 +305,17 @@ function SignupPage() {
           </>
         ) : (
           <>
-            <h1 className="font-display text-3xl font-semibold">
-              {mode === "sign-up" ? t("signup.title") : t("signup.signInTitle")}
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {mode === "sign-up" ? t("signup.subtitleSignUp") : t("signup.subtitleSignIn")}
-            </p>
+            <div className="mb-8">
+              <h1 className="font-display text-3xl font-semibold">
+                {mode === "sign-up" ? t("signup.title") : t("signup.signInTitle")}
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {mode === "sign-up" ? t("signup.subtitleSignUp") : t("signup.subtitleSignIn")}
+              </p>
+            </div>
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-4" autoComplete="off">
+            <div className="rounded-lg border border-border bg-white p-6">
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               {mode === "sign-up" && (
                 <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
                   Please sign up using your <strong>correct, real information</strong>. Accurate details ensure you can receive credit in the future for participating in this program.
