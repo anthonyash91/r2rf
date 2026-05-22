@@ -379,19 +379,19 @@ function DashboardPage() {
                     }
                   }
                   const stats: Array<{ icon: typeof BookOpen; label: string; value: string }> = [
-                    { icon: CheckCircle2, label: "Completed", value: readAll.toLocaleString() },
-                    { icon: Layers, label: "Categories", value: activeCats.toLocaleString() },
-                    { icon: Clock, label: "Hours Spent", value: hours.toLocaleString() },
-                    { icon: Flame, label: "Day Streak", value: streak.toLocaleString() },
+                    { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: readAll.toLocaleString() },
+                    { icon: Layers, label: t("dashboard.statCategories"), value: activeCats.toLocaleString() },
+                    { icon: Clock, label: t("dashboard.statHours"), value: hours.toLocaleString() },
+                    { icon: Flame, label: t("dashboard.statStreak"), value: streak.toLocaleString() },
                   ];
                   return (
                     <>
                       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6 flex items-center gap-6">
                         <CircleProgress value={pctAll} size={96} stroke={8} />
                         <div className="min-w-0">
-                          <h2 className="font-display text-xl sm:text-2xl font-semibold">Overall Progress</h2>
+                          <h2 className="font-display text-xl sm:text-2xl font-semibold">{t("dashboard.overallProgress")}</h2>
                           <p className="mt-1 text-sm text-muted-foreground">
-                            You&rsquo;ve completed {readAll.toLocaleString()} of {totalAll.toLocaleString()} available items. Keep going!
+                            {t("dashboard.overallSummary", { done: readAll.toLocaleString(), total: totalAll.toLocaleString() } as any)}
                           </p>
                         </div>
                       </div>
@@ -413,7 +413,7 @@ function DashboardPage() {
                         })}
                       </div>
 
-                      <h2 className="font-display text-lg font-semibold mb-3">Category Progress</h2>
+                      <h2 className="font-display text-lg font-semibold mb-3">{t("dashboard.categoryProgress")}</h2>
                     </>
                   );
                 })()}
