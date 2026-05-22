@@ -155,7 +155,7 @@ export function AdminNav() {
               <li key={l.to} data-measure-item className="shrink-0">
                 <span className={LINK_CLASS_BASE}>
                   <Icon className="h-3.5 w-3.5" />
-                  {l.label}
+                  {renderLabel(l)}
                 </span>
               </li>
             );
