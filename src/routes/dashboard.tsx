@@ -242,6 +242,12 @@ function DashboardPage() {
   const mustSetup = !questionsQuery.isLoading && currentKeys.length < 2;
   const isEditing = editing || mustSetup;
 
+  useEffect(() => {
+    setSecurityLock(mustSetup);
+    return () => setSecurityLock(false);
+  }, [mustSetup]);
+
+
   async function handleSave() {
     if (pending.length < 2) {
       toast.error(t("security.needTwo"));
