@@ -83,7 +83,18 @@ export function SiteHeader() {
             </Link>
           )}
           {user ? (
-            <button onClick={handleSignOut} className="hover:text-foreground transition-colors">
+            <button
+              onClick={(e) => {
+                if (locked) {
+                  e.preventDefault();
+                  toast.error("Please set up your security questions before leaving this page.");
+                  return;
+                }
+                handleSignOut();
+              }}
+              aria-disabled={locked}
+              className={`hover:text-foreground transition-colors ${lockedLinkClass}`}
+            >
               {signOutLabel}
             </button>
           ) : (
