@@ -517,14 +517,16 @@ function SignupPage() {
                 </>
               )}
 
-              <button
-                type="submit"
-                disabled={busy || (mode === "sign-up" && (!challengeQuery.data || usernameStatus === "taken" || usernameStatus === "checking"))}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-              >
-                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
-              </button>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={busy || (mode === "sign-up" && (!challengeQuery.data || usernameStatus === "taken" || usernameStatus === "checking"))}
+                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                >
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
+                </button>
+              </div>
               {/* honeypot — placed last so it doesn't affect space-y top spacing */}
               <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden>
                 <label>
