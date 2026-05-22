@@ -836,34 +836,36 @@ function UserItem({
                       onClick={() => {
                         onToggleAdmin(!isAdmin);
                       }}
+                      disabled={pendingRole}
                       aria-label={isAdmin ? "Revoke admin" : "Make admin"}
-                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border disabled:opacity-60 ${
                         isAdmin
                           ? "border-destructive/30 text-destructive hover:bg-destructive/10"
                           : "border-input bg-background hover:bg-muted"
                       }`}
                     >
-                      {isAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                      {pendingRole ? <Loader2 className="h-4 w-4 animate-spin" /> : isAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>{isAdmin ? "Revoke admin" : "Make admin"}</TooltipContent>
+                  <TooltipContent>{pendingRole ? "Saving…" : isAdmin ? "Revoke admin" : "Make admin"}</TooltipContent>
                 </Tooltip>
 
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => onToggleContributor(!isContributor)}
+                      disabled={pendingRole}
                       aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
-                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border disabled:opacity-60 ${
                         isContributor
                           ? "border-destructive/30 text-destructive hover:bg-destructive/10"
                           : "border-input bg-background hover:bg-muted"
                       }`}
                     >
-                      {isContributor ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                      {pendingRole ? <Loader2 className="h-4 w-4 animate-spin" /> : isContributor ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>{isContributor ? "Revoke contributor" : "Make contributor"}</TooltipContent>
+                  <TooltipContent>{pendingRole ? "Saving…" : isContributor ? "Revoke contributor" : "Make contributor"}</TooltipContent>
                 </Tooltip>
               </>
             )}
