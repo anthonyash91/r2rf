@@ -131,6 +131,10 @@ function SignupPage() {
     try {
       if (mode === "sign-up") {
         const uname = username.trim().toLowerCase();
+        if (usernameStatus === "taken") {
+          toast.error(t("signup.usernameTaken"));
+          return;
+        }
         if (password !== confirmPassword) {
           toast.error(t("signup.passwordMismatch"));
           return;
