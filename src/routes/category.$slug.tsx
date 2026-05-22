@@ -403,7 +403,7 @@ function CategoryPage() {
                         {(isAdmin || isNew) && (
                           <div className="absolute top-3 right-3 mt-[7px] mr-[7px] flex items-center gap-1.5 flex-wrap justify-end z-10">
                             {isAdmin && isNew && (
-                              <span className="hidden items-center gap-1 rounded-full border border-[var(--color-accent)] bg-[var(--color-accent)] px-2 py-0.5 text-xs font-medium text-background shadow-sm">
+                              <span className="hidden items-center gap-1 rounded-full border border-[oklch(0.35_0.05_165)] bg-[var(--color-accent)] px-2 py-0.5 text-xs font-medium text-background shadow-sm">
                                 <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
                                 {t("category.newContent")}
                               </span>
