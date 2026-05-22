@@ -418,6 +418,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_content_seen: {
+        Row: {
+          content_item_id: string
+          seen_at: string
+          user_id: string
+        }
+        Insert: {
+          content_item_id: string
+          seen_at?: string
+          user_id: string
+        }
+        Update: {
+          content_item_id?: string
+          seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_logins: {
         Row: {
           created_at: string

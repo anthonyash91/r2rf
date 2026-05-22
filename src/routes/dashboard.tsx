@@ -198,7 +198,7 @@ function DashboardPage() {
     queryKey: ["dashboard-progress", userId, categoryIds.join(",")],
     enabled: !!userId && categoryIds.length > 0,
     queryFn: async () => {
-      const [itemsRes, readRes] = await Promise.all([
+      const [itemsRes, readRes, seenRes] = await Promise.all([
         supabase
           .from("content_items")
           .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at")
@@ -210,9 +210,14 @@ function DashboardPage() {
           .select("content_item_id, category_id, created_at")
           .eq("user_id", userId!)
           .in("category_id", categoryIds),
+        supabase
+          .from("user_content_seen")
+          .select("content_item_id")
+          .eq("user_id", userId!),
       ]);
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
+      const seenSet = new Set<string>((seenRes.data ?? []).map((r: any) => r.content_item_id as string));
       type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; duration: string | null; created_at: string | null };
       const itemsByCat = new Map<string, CatItem[]>();
       const totals = new Map<string, number>();
@@ -226,7 +231,7 @@ function DashboardPage() {
         itemsByCat.set(row.category_id as string, list);
         totals.set(row.category_id as string, (totals.get(row.category_id as string) ?? 0) + 1);
         itemDuration.set(row.id as string, (row as any).duration ?? null);
-        if (row.created_at && new Date(row.created_at as string).getTime() >= cutoff) {
+        if (row.created_at && new Date(row.created_at as string).getTime() >= cutoff && !seenSet.has(row.id as string)) {
           recentCats.add(row.category_id as string);
           newItemSet.add(row.id as string);
         }

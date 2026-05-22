@@ -173,6 +173,20 @@ function CategoryPage() {
   });
   const readSet = progressQuery.data ?? new Set<string>();
 
+  const seenQuery = useQuery({
+    queryKey: ["content-seen", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data: rows, error } = await supabase
+        .from("user_content_seen")
+        .select("content_item_id")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return new Set((rows ?? []).map((r) => r.content_item_id as string));
+    },
+  });
+  const seenSet = seenQuery.data ?? new Set<string>();
+
   const toggleRead = useMutation({
     mutationFn: async (vars: { itemId: string; markRead: boolean }) => {
       if (!user?.id || !categoryId) throw new Error("Not signed in");
@@ -181,6 +195,10 @@ function CategoryPage() {
           .from("user_content_progress")
           .insert({ user_id: user.id, content_item_id: vars.itemId, category_id: categoryId });
         if (error && (error as any).code !== "23505") throw error;
+        // Record a persistent "seen" entry so the New badge never reappears
+        await supabase
+          .from("user_content_seen")
+          .insert({ user_id: user.id, content_item_id: vars.itemId });
       } else {
         const { error } = await supabase
           .from("user_content_progress")
@@ -206,6 +224,7 @@ function CategoryPage() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["content-progress", user?.id, categoryId] });
+      queryClient.invalidateQueries({ queryKey: ["content-seen", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-progress", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["home-user-progress", user?.id] });
     },
@@ -350,7 +369,7 @@ function CategoryPage() {
                               ? ImageIcon
                               : null;
 
-                    const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 && !readSet.has(item.id);
+                    const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 && !readSet.has(item.id) && !seenSet.has(item.id);
 
                     return (
                       <li key={item.id} id={`item-${item.id}`} className={`relative scroll-mt-24 transition-colors duration-700 ${highlightedId === item.id ? "bg-[var(--color-accent)]/15" : ""}`}>
