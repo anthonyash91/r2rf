@@ -76,21 +76,31 @@ function SignupPage() {
   });
 
   useEffect(() => {
-    if (!loading && user) {
-      if (mode === "sign-up") {
-        navigate({ to: "/dashboard", search: { tab: "account" } as any });
-      } else {
-        navigate({ to: "/dashboard" });
-      }
-    }
+    if (loading || !user) return;
+    // Role-based redirect after auth state is known
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        const roles = (data ?? []).map((r: any) => r.role as string);
+        const goesAdmin = roles.includes("admin") || roles.includes("contributor");
+        if (goesAdmin) {
+          navigate({ to: "/admin" });
+        } else if (mode === "sign-up") {
+          navigate({ to: "/dashboard", search: { tab: "account" } as any });
+        } else {
+          navigate({ to: "/dashboard" });
+        }
+      });
   }, [user, loading, navigate, mode]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
-      const uname = username.trim().toLowerCase();
       if (mode === "sign-up") {
+        const uname = username.trim().toLowerCase();
         if (password !== confirmPassword) {
           toast.error(t("signup.passwordMismatch"));
           return;
@@ -122,14 +132,16 @@ function SignupPage() {
         });
         if (error) throw error;
         toast.success(t("signup.welcome"));
-        navigate({ to: "/dashboard", search: { tab: "account" } as any });
+        // redirect handled by useEffect once role loads
       } else {
+        const id = username.trim();
+        const email = id.includes("@") ? id.toLowerCase() : syntheticEmail(id.toLowerCase());
         const { error } = await supabase.auth.signInWithPassword({
-          email: syntheticEmail(uname),
+          email,
           password,
         });
         if (error) throw new Error(t("signup.invalidLogin"));
-        navigate({ to: "/dashboard" });
+        // redirect handled by useEffect once role loads
       }
     } catch (err: any) {
       toast.error(err.message ?? t("signup.genericError"));
@@ -139,6 +151,7 @@ function SignupPage() {
       setBusy(false);
     }
   }
+
 
   async function handleResetStart(e: React.FormEvent) {
     e.preventDefault();
