@@ -30,6 +30,8 @@ import { useTranslateToSpanish, TranslatingIndicator } from "@/components/Transl
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/Badge";
+
 
 export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
