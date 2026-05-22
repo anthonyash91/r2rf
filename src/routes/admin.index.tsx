@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles, RefreshCw, ExternalLink, LayoutGrid, Loader2, GripVertical } from "lucide-react";
+import { LoadingButton } from "@/components/LoadingButton";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy } from "@/lib/category-ai.functions";
 
@@ -195,13 +196,13 @@ function AdminCategoriesPage() {
           <p className="mt-1 text-sm text-muted-foreground">Manage the library structure.</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <button
+          <LoadingButton
             onClick={() => setCreating(true)}
             disabled={creating}
-            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+            icon={<Plus className="h-4 w-4" />}
           >
-            <Plus className="h-4 w-4" /> New category
-          </button>
+            New category
+          </LoadingButton>
         </div>
       </div>
 
@@ -549,15 +550,16 @@ function NewCategoryForm({
         </Field>
       </div>
       <div>
-        <button
-          type="button"
+        <LoadingButton
+          variant="secondary"
           onClick={handleAutoGenerate}
           disabled={generating || !name.trim()}
-          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
+          pending={generating}
+          pendingText="Generating…"
+          icon={<Sparkles className="h-4 w-4" />}
         >
-          <Sparkles className="h-4 w-4" />
-          {generating ? "Generating…" : "Auto-generate tagline & description"}
-        </button>
+          Auto-generate tagline & description
+        </LoadingButton>
         <p className="mt-1 text-xs text-muted-foreground">Uses the Name to draft copy. You can edit the result.</p>
       </div>
       <Field label="Tagline">
@@ -598,13 +600,13 @@ function NewCategoryForm({
               onUploaded={(u) => setIconUrl(u)}
             />
             {iconUrl && (
-              <button
-                type="button"
+              <LoadingButton
+                variant="secondary"
                 onClick={() => setIconUrl(null)}
-                className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted text-muted-foreground"
+                className="text-muted-foreground"
               >
                 Remove
-              </button>
+              </LoadingButton>
             )}
           </div>
         </div>
@@ -635,9 +637,12 @@ function NewCategoryForm({
               <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                type="button"
+              <LoadingButton
+                variant="secondary"
                 disabled={addEsBusy}
+                pending={addEsBusy}
+                pendingText="Translating…"
+                icon={<RefreshCw className="h-3 w-3" />}
                 onClick={() => {
                   runAddEs(
                     { name, tagline, description },
@@ -649,11 +654,9 @@ function NewCategoryForm({
                     "Category metadata for a content library",
                   );
                 }}
-                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
               >
-                <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
-                {addEsBusy ? "Translating…" : "Regenerate"}
-              </button>
+                Regenerate
+              </LoadingButton>
               <button
                 type="button"
                 onClick={() => setShowEs(false)}
@@ -690,9 +693,11 @@ function NewCategoryForm({
         </div>
       ) : (
         <div className="border-t border-border pt-4">
-          <button
-            type="button"
+          <LoadingButton
+            variant="secondary"
             disabled={addEsBusy}
+            pending={addEsBusy}
+            pendingText="Translating…"
             onClick={() => {
               setShowEs(true);
               runAddEs(
@@ -705,28 +710,26 @@ function NewCategoryForm({
                 "Category metadata for a content library",
               );
             }}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
           >
-            {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
-          </button>
+            + Add Spanish translation
+          </LoadingButton>
         </div>
       )}
 
       <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+        <LoadingButton
+          variant="secondary"
           onClick={onCancel}
         >
           Cancel
-        </button>
-        <button
+        </LoadingButton>
+        <LoadingButton
           type="submit"
-          disabled={busy}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          pending={busy}
+          pendingText="Creating…"
         >
-          {busy ? "Creating…" : "Create"}
-        </button>
+          Create
+        </LoadingButton>
       </div>
     </form>
   );

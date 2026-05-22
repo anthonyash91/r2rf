@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { UploadButton } from "@bytescale/upload-widget-react";
 import { getBytescaleConfig, deleteBytescaleFileIfExists } from "@/lib/bytescale.functions";
 import { Upload } from "lucide-react";
+import { actionButtonClassName } from "@/components/LoadingButton";
 
 type Props = {
   onUploaded: (fileUrl: string, fileName: string | null) => void;
@@ -91,7 +92,7 @@ export function FileUploader({ onUploaded, label = "Upload file to fill URL", mi
         <button
           type="button"
           onClick={onClick}
-          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+          className={actionButtonClassName("secondary")}
         >
           <Upload className="h-4 w-4" /> {label}
         </button>

@@ -1,5 +1,6 @@
-import { Loader2, Pencil, Search, Trash2, X } from "lucide-react";
+import { Pencil, Search, Trash2, X } from "lucide-react";
 import type { UseBulkSelectReturn } from "@/hooks/use-bulk-select";
+import { LoadingButton } from "@/components/LoadingButton";
 
 interface BulkActionBarProps {
   bulk: UseBulkSelectReturn;
@@ -86,36 +87,35 @@ export function BulkActionBar({
           </div>
         )}
         {!editMode ? (
-          <button
-            type="button"
+          <LoadingButton
+            variant="secondary"
             onClick={() => {
               onEnterEditMode?.();
               enterEditMode();
             }}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+            icon={<Pencil className="h-4 w-4" />}
           >
-            <Pencil className="h-4 w-4" /> Edit
-          </button>
+            Edit
+          </LoadingButton>
         ) : (
           <>
-            <button
-              type="button"
+            <LoadingButton
+              variant="secondary"
               disabled={isDeleting}
               onClick={exitEditMode}
-              className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
             >
               {selectedCount > 0 ? "Cancel" : "Done"}
-            </button>
+            </LoadingButton>
             {(selectedCount > 0 || isDeleting) && (
-              <button
-                type="button"
-                disabled={isDeleting}
+              <LoadingButton
+                variant="destructive"
+                pending={isDeleting}
+                pendingText="Deleting…"
                 onClick={() => runBulkDelete(onDeleteSelected)}
-                className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
+                icon={<Trash2 className="h-4 w-4" />}
               >
-                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                {isDeleting ? "Deleting…" : `Delete selected (${selectedCount})`}
-              </button>
+                Delete selected ({selectedCount})
+              </LoadingButton>
             )}
           </>
         )}

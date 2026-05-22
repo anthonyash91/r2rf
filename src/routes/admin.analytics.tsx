@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, BarChart3, ChevronDown, Download, Eye, MousePointerClick } from "lucide-react";
 import type { Category, ContentItem } from "@/lib/categories";
 import { Badge } from "@/components/Badge";
+import { LoadingButton } from "@/components/LoadingButton";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
@@ -135,13 +136,15 @@ function AdminAnalyticsPage() {
               </button>
             ))}
           </div>
-          <button
+          <LoadingButton
+            variant="secondary"
             onClick={() => aggregated && exportCsv(aggregated, range)}
             disabled={!aggregated}
-            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm transition-colors hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
+            icon={<Download className="h-4 w-4" />}
+            className="w-full sm:w-auto"
           >
-            <Download className="h-4 w-4" /> Export CSV
-          </button>
+            Export CSV
+          </LoadingButton>
         </div>
       </div>
 

@@ -5,7 +5,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home, Loader2 } from "lucide-react";
+import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home } from "lucide-react";
+import { LoadingButton } from "@/components/LoadingButton";
 import {
   listFacilitiesWithStats,
   addFacilities,
@@ -125,13 +126,14 @@ function AdminFacilitiesPage() {
             Manage facilities available in the signup form's facility dropdown.
           </p>
         </div>
-        <button
+        <LoadingButton
           onClick={() => setShowAdd(true)}
           disabled={showAdd}
-          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+          icon={<Plus className="h-4 w-4" />}
+          className="w-full sm:w-auto"
         >
-          <Plus className="h-4 w-4" /> Add facilities
-        </button>
+          Add facilities
+        </LoadingButton>
       </div>
 
       <section className="mt-8">
@@ -157,21 +159,19 @@ function AdminFacilitiesPage() {
               className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
             <div className="flex gap-2 justify-end">
-              <button
-                type="button"
+              <LoadingButton
+                variant="secondary"
                 onClick={() => { setShowAdd(false); setNewLabels(""); }}
-                className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
               >
                 Cancel
-              </button>
-              <button
+              </LoadingButton>
+              <LoadingButton
                 type="submit"
-                disabled={addMut.isPending}
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                pending={addMut.isPending}
+                pendingText="Adding…"
               >
-                {addMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                {addMut.isPending ? "Adding…" : "Add"}
-              </button>
+                Add
+              </LoadingButton>
             </div>
           </form>
         )}
@@ -228,26 +228,23 @@ function AdminFacilitiesPage() {
                             autoFocus
                           />
                           <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              type="button"
+                            <LoadingButton
+                              variant="secondary"
                               onClick={() => setEditingId(null)}
-                              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                             >
                               Cancel
-                            </button>
-                            <button
-                              type="button"
+                            </LoadingButton>
+                            <LoadingButton
                               onClick={() => {
                                 const label = editingLabel.trim();
                                 if (!label) { toast.error("Label required"); return; }
                                 updateMut.mutate({ id: f.id, label });
                               }}
-                              disabled={updateMut.isPending}
-                              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                              pending={updateMut.isPending}
+                              pendingText="Saving…"
                             >
-                              {updateMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                              {updateMut.isPending ? "Saving…" : "Save"}
-                            </button>
+                              Save
+                            </LoadingButton>
                           </div>
                         </>
                       ) : (
@@ -340,30 +337,27 @@ function AdminFacilitiesPage() {
             <div className="flex items-center gap-2">
               {remaining > 0 && (
                 <>
-                  <button
-                    type="button"
+                  <LoadingButton
+                    variant="secondary"
                     onClick={() => setVisibleCount((n) => n + 10)}
-                    className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                   >
                     Show 10 more
-                  </button>
-                  <button
-                    type="button"
+                  </LoadingButton>
+                  <LoadingButton
+                    variant="secondary"
                     onClick={() => setVisibleCount(facilities.length)}
-                    className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                   >
                     Show all
-                  </button>
+                  </LoadingButton>
                 </>
               )}
               {visibleFacilities.length > 10 && (
-                <button
-                  type="button"
+                <LoadingButton
+                  variant="secondary"
                   onClick={() => setVisibleCount(10)}
-                  className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                 >
                   Collapse
-                </button>
+                </LoadingButton>
               )}
             </div>
           </div>

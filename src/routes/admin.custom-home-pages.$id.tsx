@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Save, ExternalLink, LayoutTemplate } from "lucide-react";
 import { Badge } from "@/components/Badge";
 import { LabeledInput, LabeledTextarea } from "@/components/FormField";
+import { LoadingButton, actionButtonClassName } from "@/components/LoadingButton";
 
 
 const RESERVED_SLUGS = new Set([
@@ -185,7 +186,7 @@ function AdminCustomHomePageEdit() {
               href={`/${data.page.slug}`}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted shrink-0"
+              className={actionButtonClassName("secondary", "shrink-0")}
             >
               <ExternalLink className="h-4 w-4" /> View
             </a>
@@ -332,13 +333,14 @@ function AdminCustomHomePageEdit() {
         </section>
 
         <div className="flex justify-end">
-          <button
+          <LoadingButton
             type="submit"
-            disabled={saveMut.isPending}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            pending={saveMut.isPending}
+            pendingText="Saving…"
+            icon={<Save className="h-4 w-4" />}
           >
-            <Save className="h-4 w-4" /> {saveMut.isPending ? "Saving…" : "Save"}
-          </button>
+            Save
+          </LoadingButton>
         </div>
       </form>
     </div>

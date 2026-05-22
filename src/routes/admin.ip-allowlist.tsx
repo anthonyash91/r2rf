@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Shield, ArrowLeft, LogIn, Pencil, Ban, Loader2, Power } from "lucide-react";
+import { Plus, Trash2, Shield, ArrowLeft, LogIn, Pencil, Ban, Power } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
+import { LoadingButton } from "@/components/LoadingButton";
 import { Switch } from "@/components/ui/switch";
 
 
@@ -108,14 +109,15 @@ function AdminIpAllowlistPage() {
                 className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </div>
-            <button
+            <LoadingButton
               type="submit"
-              disabled={addBothMut.isPending}
-              className="self-end inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              pending={addBothMut.isPending}
+              pendingText="Adding…"
+              icon={<Plus className="h-4 w-4" />}
+              className="self-end"
             >
-              {addBothMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              {addBothMut.isPending ? "Adding…" : "Add to both"}
-            </button>
+              Add to both
+            </LoadingButton>
           </div>
         </form>
       </section>
@@ -383,14 +385,15 @@ function AllowlistSection({
               className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
           </div>
-          <button
+          <LoadingButton
             type="submit"
-            disabled={addMut.isPending}
-            className="self-end inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            pending={addMut.isPending}
+            pendingText="Adding…"
+            icon={<Plus className="h-4 w-4" />}
+            className="self-end"
           >
-            {addMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            {addMut.isPending ? "Adding…" : "Add"}
-          </button>
+            Add
+          </LoadingButton>
         </div>
       </form>
 
@@ -413,14 +416,15 @@ function AllowlistSection({
             className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
           />
           <div className="mt-3 flex justify-end">
-            <button
+            <LoadingButton
               type="submit"
-              disabled={bulkMut.isPending || bulk.trim() === ""}
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              pending={bulkMut.isPending}
+              pendingText="Adding…"
+              disabled={bulk.trim() === ""}
+              icon={<Plus className="h-4 w-4" />}
             >
-              {bulkMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              {bulkMut.isPending ? "Adding…" : "Add all"}
-            </button>
+              Add all
+            </LoadingButton>
           </div>
         </form>
       )}
@@ -548,24 +552,22 @@ function AllowlistRow({
             className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+            <LoadingButton
+              variant="secondary"
               onClick={() => {
                 setDraft(row.label ?? "");
                 setEditing(false);
               }}
             >
               Cancel
-            </button>
-            <button
+            </LoadingButton>
+            <LoadingButton
               type="submit"
-              disabled={updateMut.isPending}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              pending={updateMut.isPending}
+              pendingText="Saving…"
             >
-              {updateMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {updateMut.isPending ? "Saving…" : "Update"}
-            </button>
+              Update
+            </LoadingButton>
           </div>
         </form>
       )}

@@ -7,6 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download } from "lucide-react";
 import { Badge } from "@/components/Badge";
+import { LoadingButton } from "@/components/LoadingButton";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
 import {
@@ -268,13 +269,14 @@ function AdminUsersPage() {
                     Accounts with admin or contributor access.
                   </p>
                 </div>
-                <button
+                <LoadingButton
                   onClick={() => setShowCreate(true)}
                   disabled={showCreate}
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary w-full sm:w-auto"
+                  icon={<UserPlus className="h-4 w-4" />}
+                  className="w-full sm:w-auto"
                 >
-                  <UserPlus className="h-4 w-4" /> Add admin user
-                </button>
+                  Add admin user
+                </LoadingButton>
               </div>
 
               {showCreate && (
@@ -312,21 +314,19 @@ function AdminUsersPage() {
                       <SelectItem value="contributor">Contributor</SelectItem>
                     </SelectContent>
                   </Select>
-                  <button
-                    type="button"
+                  <LoadingButton
+                    variant="secondary"
                     onClick={() => { setShowCreate(false); setNewEmail(""); setNewPassword(""); setNewRole("admin"); }}
-                    className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </LoadingButton>
+                  <LoadingButton
                     type="submit"
-                    disabled={createMut.isPending}
-                    className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                    pending={createMut.isPending}
+                    pendingText="Creating…"
                   >
-                    {createMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {createMut.isPending ? "Creating…" : "Create"}
-                  </button>
+                    Create
+                  </LoadingButton>
                 </form>
               )}
               <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
@@ -508,30 +508,27 @@ function AdminUsersPage() {
                         <div className="flex items-center gap-2">
                           {remaining > 0 && (
                             <>
-                              <button
-                                type="button"
+                              <LoadingButton
+                                variant="secondary"
                                 onClick={() => setRegularVisible((n) => n + 10)}
-                                className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                               >
                                 Show 10 more
-                              </button>
-                              <button
-                                type="button"
+                              </LoadingButton>
+                              <LoadingButton
+                                variant="secondary"
                                 onClick={() => setRegularVisible(filtered.length)}
-                                className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                               >
                                 Show all
-                              </button>
+                              </LoadingButton>
                             </>
                           )}
                           {visible.length > 10 && (
-                            <button
-                              type="button"
+                            <LoadingButton
+                              variant="secondary"
                               onClick={() => setRegularVisible(10)}
-                              className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
                             >
                               Collapse
-                            </button>
+                            </LoadingButton>
                           )}
                         </div>
                       </div>
@@ -803,19 +800,15 @@ function UserItem({
             className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
           />
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+            <LoadingButton
+              variant="secondary"
               onClick={() => { setPw(""); setPwOpen(false); }}
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
+            </LoadingButton>
+            <LoadingButton type="submit">
               Update
-            </button>
+            </LoadingButton>
 
           </div>
         </form>

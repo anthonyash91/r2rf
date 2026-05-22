@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { LabeledInput } from "@/components/FormField";
+import { LoadingButton } from "@/components/LoadingButton";
 
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
@@ -186,15 +187,16 @@ function CategoryEditor({
           <LabeledInput label="Slug" value={slug} onChange={(v) => setSlug(slugify(v))} />
         </div>
         <div>
-          <button
-            type="button"
+          <LoadingButton
+            variant="secondary"
             onClick={handleAutoGenerate}
             disabled={generating || !name.trim()}
-            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
+            pending={generating}
+            pendingText="Generating…"
+            icon={<Sparkles className="h-4 w-4" />}
           >
-            <Sparkles className="h-4 w-4" />
-            {generating ? "Generating…" : "Auto-generate tagline & description"}
-          </button>
+            Auto-generate tagline & description
+          </LoadingButton>
           <p className="mt-1 text-xs text-muted-foreground">Uses the Name to draft copy. You can edit the result.</p>
         </div>
         <LabeledInput label="Tagline" value={tagline} onChange={setTagline} />
@@ -229,13 +231,13 @@ function CategoryEditor({
                 onUploaded={(u) => setIconUrl(u)}
               />
               {iconUrl && (
-                <button
-                  type="button"
+                <LoadingButton
+                  variant="secondary"
                   onClick={() => setIconUrl(null)}
-                  className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted text-muted-foreground"
+                  className="text-muted-foreground"
                 >
                   Remove
-                </button>
+                </LoadingButton>
               )}
             </div>
           </div>
@@ -268,9 +270,12 @@ function CategoryEditor({
                 <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
               </div>
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
+                <LoadingButton
+                  variant="secondary"
                   disabled={addEsBusy}
+                  pending={addEsBusy}
+                  pendingText="Translating…"
+                  icon={<RefreshCw className="h-3 w-3" />}
                   onClick={() => {
                     runAddEs(
                       { name, tagline, description },
@@ -282,11 +287,9 @@ function CategoryEditor({
                       "Category metadata for a content library",
                     );
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
                 >
-                  <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
-                  {addEsBusy ? "Translating…" : "Regenerate"}
-                </button>
+                  Regenerate
+                </LoadingButton>
                 <button
                   type="button"
                   onClick={() => setShowEs(false)}
@@ -311,9 +314,11 @@ function CategoryEditor({
           </div>
         ) : (
           <div className="border-t border-border pt-4">
-            <button
-              type="button"
+            <LoadingButton
+              variant="secondary"
               disabled={addEsBusy}
+              pending={addEsBusy}
+              pendingText="Translating…"
               onClick={() => {
                 setShowEs(true);
                 runAddEs(
@@ -326,21 +331,20 @@ function CategoryEditor({
                   "Category metadata for a content library",
                 );
               }}
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
             >
-              {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
-            </button>
+              + Add Spanish translation
+            </LoadingButton>
           </div>
         )}
         <div className="flex justify-end">
-          <button
+          <LoadingButton
             type="submit"
-            disabled={busy}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            pending={busy}
+            pendingText="Saving…"
+            icon={<Save className="h-4 w-4" />}
           >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            {busy ? "Saving…" : "Save"}
-          </button>
+            Save
+          </LoadingButton>
         </div>
       </form>
     </section>
@@ -1110,21 +1114,17 @@ function ItemEditor({
         </div>
       )}
       <div className="flex justify-end gap-2">
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
-          onClick={onCancel}
-        >
+        <LoadingButton variant="secondary" onClick={onCancel}>
           Cancel
-        </button>
-        <button
+        </LoadingButton>
+        <LoadingButton
           type="submit"
-          disabled={busy}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          pending={busy}
+          pendingText="Saving…"
+          icon={<Save className="h-4 w-4" />}
         >
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {busy ? "Saving…" : "Save"}
-        </button>
+          Save
+        </LoadingButton>
       </div>
     </form>
   );

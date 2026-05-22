@@ -6,7 +6,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, Loader2, LayoutTemplate } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, LayoutTemplate } from "lucide-react";
+import { LoadingButton } from "@/components/LoadingButton";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
@@ -229,13 +230,14 @@ function AdminCustomHomePagesList() {
             Create alternate landing pages at custom URLs (e.g. <code>/cpc</code>) that show only the categories you choose.
           </p>
         </div>
-        <button
+        <LoadingButton
           onClick={() => setCreating(true)}
           disabled={creating}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 whitespace-nowrap shrink-0 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+          icon={<Plus className="h-4 w-4 shrink-0" />}
+          className="whitespace-nowrap shrink-0"
         >
-          <Plus className="h-4 w-4 shrink-0" /> New custom home page
-        </button>
+          New custom home page
+        </LoadingButton>
       </div>
 
       {creating && (
@@ -433,24 +435,22 @@ function AdminCustomHomePagesList() {
           </div>
 
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+            <LoadingButton
+              variant="secondary"
               onClick={() => {
                 setCreating(false);
                 resetForm();
               }}
             >
               Cancel
-            </button>
-            <button
+            </LoadingButton>
+            <LoadingButton
               type="submit"
-              disabled={createMut.isPending}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              pending={createMut.isPending}
+              pendingText="Creating…"
             >
-              {createMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {createMut.isPending ? "Creating…" : "Create"}
-            </button>
+              Create
+            </LoadingButton>
           </div>
         </form>
       )}
