@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, BarChart3, ChevronDown, Download, Eye, MousePointerClick } from "lucide-react";
 import type { Category, ContentItem } from "@/lib/categories";
-import { typeBadgeClass } from "@/lib/type-badge";
+import { Badge } from "@/components/Badge";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
@@ -269,9 +269,9 @@ function CategorySection({ row }: { row: AggregatedRow }) {
           <ul className="divide-y divide-border">
             {row.items.map(({ item, clicks }) => (
               <li key={item.id} className="flex items-center gap-3 py-4 pl-[22px] pr-[22px]">
-                <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(item.type)}`}>
+                <Badge variant="type" type={item.type}>
                   {item.type}
-                </span>
+                </Badge>
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-sm">{item.title}</p>
                   {item.created_at && (

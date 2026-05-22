@@ -12,7 +12,7 @@ import { withActionWord } from "@/lib/duration";
 import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Check, Circle } from "lucide-react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
-import { NewBadge } from "@/components/NewBadge";
+import { Badge } from "@/components/Badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
@@ -44,7 +44,6 @@ function detectMedia(url: string | null | undefined): MediaKind | null {
   return null;
 }
 
-import { typeBadgeClass } from "@/lib/type-badge";
 
 export const Route = createFileRoute("/category/$slug")({
   component: CategoryPage,
@@ -359,11 +358,11 @@ function CategoryPage() {
                         >
                           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap">
                             {isNew && (
-                              <NewBadge>{t("category.newContent")}</NewBadge>
+                              <Badge variant="new">{t("category.newContent")}</Badge>
                             )}
-                            <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass(item.type)}`}>
+                            <Badge variant="type" type={item.type}>
                               {translateType(lang, item.type)}
-                            </span>
+                            </Badge>
                             {item.duration && (
                               <span className="text-xs text-muted-foreground">
                                 {translateDuration(lang, withActionWord(item.duration, item.type))}
@@ -401,7 +400,7 @@ function CategoryPage() {
                         {(isAdmin || isNew) && (
                           <div className="absolute top-3 right-3 mt-[7px] mr-[7px] flex items-center gap-1.5 flex-wrap justify-end z-10">
                             {isAdmin && isNew && (
-                              <NewBadge className="hidden">{t("category.newContent")}</NewBadge>
+                              <Badge variant="new" className="hidden">{t("category.newContent")}</Badge>
                             )}
 
                             {isAdmin && (

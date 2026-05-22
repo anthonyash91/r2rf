@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
-import { typeBadgeClass } from "@/lib/type-badge";
+import { Badge } from "@/components/Badge";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
@@ -561,7 +561,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
               <div className={`flex flex-col sm:flex-row sm:items-center gap-3 p-6 pl-3 pb-5 transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
                 <div className="flex-1 min-w-0 flex flex-col gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass(item.type)}`}>{item.type}</span>
+                    <Badge variant="type" type={item.type}>{item.type}</Badge>
                     {!item.published && (
                       <span className="inline-flex items-center text-xs rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>
                     )}
@@ -946,7 +946,7 @@ function ItemEditor({
           {!addingType && typeOptions.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {typeOptions.map((t) => (
-                <span key={t} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${typeBadgeClass(t)}`}>
+                <Badge key={t} variant="type" type={t} className="gap-1">
                   {t}
                   <button
                     type="button"
@@ -956,7 +956,7 @@ function ItemEditor({
                   >
                     <X className="h-3 w-3" />
                   </button>
-                </span>
+                </Badge>
               ))}
             </div>
           )}

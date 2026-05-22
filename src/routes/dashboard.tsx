@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { NewBadge } from "@/components/NewBadge";
+import { Badge } from "@/components/Badge";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
@@ -19,7 +19,6 @@ import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/Se
 import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, X, ChevronDown, BookOpen, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { typeBadgeClass } from "@/lib/type-badge";
 import type { Category } from "@/lib/categories";
 
 
@@ -459,7 +458,7 @@ function CategoryProgressSection({
                 {pickLang(lang, category.name, category.name_es)}
               </h2>
               {hasRecent && (
-                <NewBadge className="hidden lg:inline-flex">{t("category.newContentAdded")}</NewBadge>
+                <Badge variant="new" className="hidden lg:inline-flex">{t("category.newContentAdded")}</Badge>
               )}
             </div>
             {tagline && (
@@ -471,7 +470,7 @@ function CategoryProgressSection({
         {!isAdmin && (
           <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
             {hasRecent && (
-              <NewBadge className="lg:hidden">{t("category.newContentAdded")}</NewBadge>
+              <Badge variant="new" className="lg:hidden">{t("category.newContentAdded")}</Badge>
             )}
             <div className="hidden lg:block w-32">
               <Progress value={pct} className="h-1.5" />
@@ -500,12 +499,12 @@ function CategoryProgressSection({
                 <li key={it.id} className="flex flex-col gap-2 py-4 pl-[22px] pr-[22px]">
                   <div className="flex items-center gap-2 flex-wrap">
                     {newItemSet.has(it.id) && (
-                      <NewBadge>{t("category.newContent")}</NewBadge>
+                      <Badge variant="new">{t("category.newContent")}</Badge>
                     )}
 
-                    <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
+                    <Badge variant="type" type={it.type}>
                       {it.type}
-                    </span>
+                    </Badge>
                     {it.duration && (
                       <span className="text-xs text-muted-foreground">
                         {translateDuration(lang, withActionWord(it.duration, it.type))}

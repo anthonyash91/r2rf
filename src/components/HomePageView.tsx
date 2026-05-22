@@ -7,8 +7,7 @@ import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
 import { Pencil } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { NewBadge } from "@/components/NewBadge";
-import { ItemCountBadge } from "@/components/ItemCountBadge";
+import { Badge } from "@/components/Badge";
 
 type CategoryStats = { count: number; hasRecent: boolean };
 
@@ -111,11 +110,11 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                    <ItemCountBadge>
+                    <Badge variant="count">
                       {count} {t(count === 1 ? "home.item" : "home.items")}
-                    </ItemCountBadge>
+                    </Badge>
                     {s.hasRecent && (
-                      <NewBadge>{t("category.newContentAdded")}</NewBadge>
+                      <Badge variant="new">{t("category.newContentAdded")}</Badge>
                     )}
                   </div>
 
