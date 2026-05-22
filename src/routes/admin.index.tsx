@@ -451,6 +451,7 @@ function AdminCategoriesPage() {
           </div>
         );
       })()}
+      </section>
     </div>
   );
 }
