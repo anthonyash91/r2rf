@@ -464,28 +464,43 @@ function AdminCategoriesPage() {
           </div>
         );
 
+        const q = searchQuery.trim().toLowerCase();
+        const filteredOrder = q
+          ? order.filter((c) =>
+              [c.name, c.slug, c.tagline, c.description]
+                .filter(Boolean)
+                .some((v) => String(v).toLowerCase().includes(q)),
+            )
+          : order;
         return (
           <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${categories.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
             {isLoading ? (
               <div className="p-6 text-muted-foreground">Loading…</div>
             ) : categories.length === 0 ? (
               <div className="p-6 text-muted-foreground">No categories yet.</div>
-            ) : editMode ? (
+            ) : filteredOrder.length === 0 ? (
+              <div className="p-6 text-muted-foreground">No categories match your search.</div>
+            ) : editMode || q ? (
               <ul className="divide-y divide-border">
-                {order.map((c) => {
+                {filteredOrder.map((c) => {
                   const selected = selectedIds.has(c.id);
+                  const isInteractive = editMode;
                   return (
                     <li
                       key={c.id}
-                      onClick={() => toggleOne(c.id)}
-                      className={`flex items-stretch cursor-pointer transition-colors ${
-                        selected ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"
+                      onClick={isInteractive ? () => toggleOne(c.id) : undefined}
+                      className={`flex items-stretch transition-colors ${
+                        isInteractive ? "cursor-pointer " : ""
+                      }${
+                        selected ? "bg-destructive/10 hover:bg-destructive/15" : isInteractive ? "hover:bg-muted/50" : ""
                       }`}
                     >
-                      <div className="flex items-center pl-4 pr-0 text-muted-foreground/50">
-                        <GripVertical className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0 pointer-events-none">{renderCategoryRow(c)}</div>
+                      {editMode && (
+                        <div className="flex items-center pl-4 pr-0 text-muted-foreground/50">
+                          <GripVertical className="h-4 w-4" />
+                        </div>
+                      )}
+                      <div className={`flex-1 min-w-0 ${editMode ? "pointer-events-none" : ""}`}>{renderCategoryRow(c)}</div>
                     </li>
                   );
                 })}
