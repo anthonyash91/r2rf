@@ -53,6 +53,8 @@ export function useAuth() {
           /* ignore */
         }
       });
+  }
+
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
