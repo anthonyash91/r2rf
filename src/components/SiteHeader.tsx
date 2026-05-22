@@ -36,7 +36,7 @@ export function SiteHeader() {
   const toggleLang = () => setLang(lang === "en" ? "es" : "en");
 
   const locked = useSecurityLock();
-  const lockedLinkClass = locked ? "opacity-40 pointer-events-none cursor-not-allowed" : "";
+  const lockedLinkClass = locked ? "opacity-40 cursor-not-allowed" : "";
   const handleLockedNav = (e: React.MouseEvent) => {
     if (!locked) return;
     e.preventDefault();
