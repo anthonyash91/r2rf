@@ -638,24 +638,34 @@ function UserItem({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="min-w-0 flex-1">
           {isRegularUser ? (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-sm truncate">{user.profile!.username}</span>
-              {(user.profile!.first_name || user.profile!.last_name) && (
-                <span className="text-sm text-muted-foreground truncate">
-                  {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
-                </span>
-              )}
-              <Badge variant="facility">
-                {facilityLabel || user.profile!.facility}
-              </Badge>
-              {user.roles.includes("user") && (
-                <Badge variant="user">User</Badge>
-              )}
-              {isNew && (
-                <Badge variant="new">New</Badge>
-              )}
-
-            </div>
+            <>
+              <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
+                <Badge variant="facility">
+                  {facilityLabel || user.profile!.facility}
+                </Badge>
+                {user.roles.includes("user") && (
+                  <Badge variant="user">User</Badge>
+                )}
+                {isNew && <Badge variant="new">New</Badge>}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-sm truncate">{user.profile!.username}</span>
+                {(user.profile!.first_name || user.profile!.last_name) && (
+                  <span className="text-sm text-muted-foreground truncate">
+                    {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
+                  </span>
+                )}
+                <Badge variant="facility" className="hidden sm:inline-flex">
+                  {facilityLabel || user.profile!.facility}
+                </Badge>
+                {user.roles.includes("user") && (
+                  <Badge variant="user" className="hidden sm:inline-flex">User</Badge>
+                )}
+                {isNew && (
+                  <Badge variant="new" className="hidden sm:inline-flex">New</Badge>
+                )}
+              </div>
+            </>
           ) : editingEmail ? (
             <div className="flex items-center gap-2">
               <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -686,33 +696,51 @@ function UserItem({
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="font-mono text-sm truncate">{user.email || "(no email)"}</span>
-              <button
-                title="Edit email"
-                onClick={() => setEditingEmail(true)}
-                className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </button>
-              {isAdmin && (
-                <Badge variant="admin" className="ml-1 gap-1">
-                  <Shield className="h-3 w-3" /> Admin
-                </Badge>
-              )}
-              {isContributor && (
-                <Badge variant="contributor" className="ml-1 gap-1">
-                  <Shield className="h-3 w-3" /> Contributor
-                </Badge>
-              )}
-              {user.email_confirmed_at ? (
-                <Badge variant="verified" className="ml-1">Verified</Badge>
-              ) : (
-                <Badge variant="unverified" className="ml-1">Unverified</Badge>
-              )}
-
-            </div>
+            <>
+              <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
+                {isAdmin && (
+                  <Badge variant="admin" className="gap-1">
+                    <Shield className="h-3 w-3" /> Admin
+                  </Badge>
+                )}
+                {isContributor && (
+                  <Badge variant="contributor" className="gap-1">
+                    <Shield className="h-3 w-3" /> Contributor
+                  </Badge>
+                )}
+                {user.email_confirmed_at ? (
+                  <Badge variant="verified">Verified</Badge>
+                ) : (
+                  <Badge variant="unverified">Unverified</Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                <span className="font-mono text-sm truncate">{user.email || "(no email)"}</span>
+                <button
+                  title="Edit email"
+                  onClick={() => setEditingEmail(true)}
+                  className="p-1 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                {isAdmin && (
+                  <Badge variant="admin" className="ml-1 gap-1 hidden sm:inline-flex">
+                    <Shield className="h-3 w-3" /> Admin
+                  </Badge>
+                )}
+                {isContributor && (
+                  <Badge variant="contributor" className="ml-1 gap-1 hidden sm:inline-flex">
+                    <Shield className="h-3 w-3" /> Contributor
+                  </Badge>
+                )}
+                {user.email_confirmed_at ? (
+                  <Badge variant="verified" className="ml-1 hidden sm:inline-flex">Verified</Badge>
+                ) : (
+                  <Badge variant="unverified" className="ml-1 hidden sm:inline-flex">Unverified</Badge>
+                )}
+              </div>
+            </>
           )}
           <p className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-x-2">
             <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
