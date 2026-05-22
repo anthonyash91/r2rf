@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Save, RefreshCw, Home, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, RefreshCw, Home } from "lucide-react";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { LabeledField } from "@/components/FormField";
+import { LoadingButton } from "@/components/LoadingButton";
 
 export const Route = createFileRoute("/admin/home")({
   beforeLoad: requireAdminBeforeLoad,
@@ -165,9 +166,12 @@ function AdminHomePage() {
                     <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      disabled={addEsBusy}
+                    <LoadingButton
+                      variant="secondary"
+                      pending={addEsBusy}
+                      pendingText="Translating…"
+                      icon={<RefreshCw className="h-3 w-3" />}
+                      className="gap-1.5"
                       onClick={() => {
                         runAddEs(
                           {
@@ -189,11 +193,9 @@ function AdminHomePage() {
                           "Home page hero copy",
                         );
                       }}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
                     >
-                      <RefreshCw className={`h-3 w-3 ${addEsBusy ? "animate-spin" : ""}`} />
-                      {addEsBusy ? "Translating…" : "Regenerate"}
-                    </button>
+                      Regenerate
+                    </LoadingButton>
                     <button
                       type="button"
                       onClick={() => setShowEs(false)}
@@ -262,9 +264,10 @@ function AdminHomePage() {
               </div>
             ) : (
               <div className="border-t border-border pt-6">
-                <button
-                  type="button"
-                  disabled={addEsBusy}
+                <LoadingButton
+                  variant="secondary"
+                  pending={addEsBusy}
+                  pendingText="Translating…"
                   onClick={() => {
                     setShowEs(true);
                     runAddEs(
@@ -287,22 +290,21 @@ function AdminHomePage() {
                       "Home page hero copy",
                     );
                   }}
-                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
                 >
-                  {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
-                </button>
+                  + Add Spanish translation
+                </LoadingButton>
               </div>
             )}
 
             <div className="flex justify-end">
-              <button
+              <LoadingButton
                 type="submit"
-                disabled={saveMut.isPending}
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                variant="primary"
+                pending={saveMut.isPending}
+                icon={<Save className="h-4 w-4" />}
               >
-                {saveMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {saveMut.isPending ? "Saving…" : "Save"}
-              </button>
+                Save
+              </LoadingButton>
             </div>
           </form>
         )}

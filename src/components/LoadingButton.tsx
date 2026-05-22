@@ -2,9 +2,12 @@ import * as React from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "destructive" | "ghost";
+export type ActionButtonVariant = "primary" | "secondary" | "destructive" | "ghost";
 
-const VARIANT_CLASSES: Record<Variant, string> = {
+const BASE_CLASSES =
+  "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed";
+
+const VARIANT_CLASSES: Record<ActionButtonVariant, string> = {
   primary:
     "bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60",
   secondary:
@@ -15,6 +18,18 @@ const VARIANT_CLASSES: Record<Variant, string> = {
     "text-foreground hover:bg-muted disabled:opacity-60",
 };
 
+/**
+ * Returns the shared button class string for the given variant.
+ * Use on <Link>, <a>, or other non-button elements that need to match
+ * the LoadingButton style.
+ */
+export function actionButtonClassName(
+  variant: ActionButtonVariant = "primary",
+  extra?: string,
+) {
+  return cn(BASE_CLASSES, VARIANT_CLASSES[variant], extra);
+}
+
 export interface LoadingButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Whether the action is in flight. Shows spinner + pendingText and disables the button. */
@@ -23,12 +38,13 @@ export interface LoadingButtonProps
   pendingText?: string;
   /** Optional icon shown to the left of children when NOT pending. */
   icon?: React.ReactNode;
-  variant?: Variant;
+  variant?: ActionButtonVariant;
 }
 
 /**
- * Button that automatically shows a spinner + "Saving…" while an async action
- * is in flight. Pass `pending` (typically `mutation.isPending`) to activate it.
+ * Standard action button. When `pending` is true, swaps the content for a
+ * spinner + `pendingText` and disables itself. Use for all primary/secondary/
+ * destructive/ghost rectangular buttons in the app.
  */
 export const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonProps>(
   function LoadingButton(
@@ -50,11 +66,7 @@ export const LoadingButton = React.forwardRef<HTMLButtonElement, LoadingButtonPr
         ref={ref}
         type={type}
         disabled={disabled || pending}
-        className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed",
-          VARIANT_CLASSES[variant],
-          className,
-        )}
+        className={actionButtonClassName(variant, className)}
         {...props}
       >
         {pending ? (
