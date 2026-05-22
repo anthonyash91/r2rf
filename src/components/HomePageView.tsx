@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Pencil } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
+import { BadgeGroup } from "@/components/BadgeGroup";
 
 type CategoryStats = { count: number; recentItemIds: Set<string> };
 
