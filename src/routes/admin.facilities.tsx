@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home, Loader2, Search, X } from "lucide-react";
+import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home, Loader2 } from "lucide-react";
 import {
   listFacilitiesWithStats,
   addFacilities,
@@ -18,6 +18,8 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { Badge } from "@/components/Badge";
+import { useBulkSelect } from "@/hooks/use-bulk-select";
+import { BulkActionBar } from "@/components/BulkActionBar";
 
 
 
@@ -41,8 +43,7 @@ function AdminFacilitiesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
   const [visibleCount, setVisibleCount] = useState(10);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [editMode, setEditMode] = useState(false);
+  const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
 
@@ -100,19 +101,10 @@ function AdminFacilitiesPage() {
     onSuccess: async (res) => {
       toast.success(`Deleted ${res.deleted} ${res.deleted === 1 ? "facility" : "facilities"}`);
       await invalidate();
-      setSelectedIds(new Set());
+      bulk.clear();
     },
     onError: (e: any) => toast.error(e.message),
   });
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const toggleOne = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
 
 
   return (
@@ -185,83 +177,26 @@ function AdminFacilitiesPage() {
         )}
 
         {allFacilities.length > 0 && (
-          <div className="mt-3 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-t-md border border-b-0 border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
-            <span className="text-muted-foreground">
-              {editMode
-                ? selectedIds.size > 0
-                  ? `${selectedIds.size} selected`
-                  : "Click facilities to select for deletion"
-                : `${facilities.length}${q ? ` of ${allFacilities.length}` : ""} ${facilities.length === 1 ? "facility" : "facilities"}`}
-            </span>
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => { setSearchQuery(e.target.value); setVisibleCount(10); }}
-                  placeholder="Search facilities…"
-                  className="rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm w-full sm:w-56"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    aria-label="Clear search"
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-              {!editMode ? (
-                <button
-                  type="button"
-                  onClick={() => { setEditMode(true); setEditingId(null); }}
-                  className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
-                >
-                  <Pencil className="h-4 w-4" /> Edit
-                </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    disabled={isDeleting}
-                    onClick={() => { setEditMode(false); setSelectedIds(new Set()); }}
-                    className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
-                  >
-                    {selectedIds.size > 0 ? "Cancel" : "Done"}
-                  </button>
-                  {(selectedIds.size > 0 || isDeleting) && (
-                    <button
-                      type="button"
-                      disabled={isDeleting}
-                      onClick={async () => {
-                        const ids = Array.from(selectedIds);
-                        setIsDeleting(true);
-                        try {
-                          const ok = await confirm({
-                            title: `Delete ${ids.length} ${ids.length === 1 ? "facility" : "facilities"}?`,
-                            description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "facility" : "facilities"}? Existing users assigned to ${ids.length === 1 ? "it" : "them"} will keep their value but ${ids.length === 1 ? "it" : "they"} will no longer appear in the signup dropdown.`,
-                            confirmLabel: "Delete",
-                            destructive: true,
-                            onConfirm: () => deleteManyMut.mutateAsync({ ids }),
-                          });
-                          if (ok) setEditMode(false);
-                        } finally {
-                          setIsDeleting(false);
-                        }
-                      }}
-                      className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
-                    >
-                      {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                      {isDeleting ? "Deleting…" : `Delete selected (${selectedIds.size})`}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+          <BulkActionBar
+            bulk={bulk}
+            filteredCount={facilities.length}
+            totalCount={allFacilities.length}
+            isFiltered={Boolean(q)}
+            noun={{ singular: "facility", plural: "facilities" }}
+            searchQuery={searchQuery}
+            onSearchChange={(v) => { setSearchQuery(v); setVisibleCount(10); }}
+            searchPlaceholder="Search facilities…"
+            onEnterEditMode={() => setEditingId(null)}
+            onDeleteSelected={async (ids) =>
+              confirm({
+                title: `Delete ${ids.length} ${ids.length === 1 ? "facility" : "facilities"}?`,
+                description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "facility" : "facilities"}? Existing users assigned to ${ids.length === 1 ? "it" : "them"} will keep their value but ${ids.length === 1 ? "it" : "they"} will no longer appear in the signup dropdown.`,
+                confirmLabel: "Delete",
+                destructive: true,
+                onConfirm: () => deleteManyMut.mutateAsync({ ids }),
+              })
+            }
+          />
         )}
 
         <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${allFacilities.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
@@ -271,12 +206,12 @@ function AdminFacilitiesPage() {
             <ul className="divide-y divide-border">
               {visibleFacilities.map((f) => {
                 const isEditing = editingId === f.id;
-                const selected = selectedIds.has(f.id);
-                const editable = editMode && !isEditing;
+                const selected = bulk.has(f.id);
+                const editable = bulk.editMode && !isEditing;
                 return (
                   <li
                     key={f.value}
-                    onClick={editable ? () => toggleOne(f.id) : undefined}
+                    onClick={editable ? () => bulk.toggle(f.id) : undefined}
                     className={`p-4 sm:p-5 transition-colors ${
                       editable
                         ? `cursor-pointer ${selected ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"}`

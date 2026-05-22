@@ -8,7 +8,7 @@ import { Badge } from "@/components/Badge";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical, Search } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 
@@ -33,6 +33,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useBulkSelect } from "@/hooks/use-bulk-select";
+import { BulkActionBar } from "@/components/BulkActionBar";
 
 export const Route = createFileRoute("/admin/category/$id")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -430,16 +432,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     onError: (e: any) => toast.error(e.message),
   });
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [editMode, setEditMode] = useState(false);
+  const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
-  const toggleOne = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
   const deleteManyMut = useMutation({
     mutationFn: async (ids: string[]) => {
       const { error } = await supabase.from("content_items").delete().in("id", ids);
@@ -449,11 +443,10 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     onSuccess: async (deleted) => {
       toast.success(`Deleted ${deleted} ${deleted === 1 ? "item" : "items"}`);
       await invalidate();
-      setSelectedIds(new Set());
+      bulk.clear();
     },
     onError: (e: any) => toast.error(e.message),
   });
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const reorderMut = useMutation({
     mutationFn: async (next: ContentItem[]) => {
@@ -504,83 +497,27 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         return (
           <>
       {order.length > 0 && (
-        <div className="mt-6 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-t-md border border-b-0 border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
-          <span className="text-muted-foreground">
-            {editMode
-              ? selectedIds.size > 0
-                ? `${selectedIds.size} selected`
-                : "Click items to select for deletion"
-              : `${filteredOrder.length}${q ? ` of ${order.length}` : ""} ${(q ? filteredOrder.length : order.length) === 1 ? "item" : "items"}`}
-          </span>
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search content…"
-                className="rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm w-full sm:w-56"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  aria-label="Clear search"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-            {!editMode ? (
-              <button
-                type="button"
-                onClick={() => { setEditMode(true); setEditing(null); }}
-                className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
-              >
-                <Pencil className="h-4 w-4" /> Edit
-              </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  disabled={isDeleting}
-                  onClick={() => { setEditMode(false); setSelectedIds(new Set()); }}
-                  className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
-                >
-                  {selectedIds.size > 0 ? "Cancel" : "Done"}
-                </button>
-                {(selectedIds.size > 0 || isDeleting) && (
-                  <button
-                    type="button"
-                    disabled={isDeleting}
-                    onClick={async () => {
-                      const ids = Array.from(selectedIds);
-                      setIsDeleting(true);
-                      try {
-                        const ok = await confirm({
-                          title: `Delete ${ids.length} ${ids.length === 1 ? "item" : "items"}?`,
-                          description: `Permanently delete ${ids.length === 1 ? "the selected item" : `${ids.length} selected items`}?`,
-                          confirmLabel: "Delete",
-                          destructive: true,
-                          onConfirm: () => deleteManyMut.mutateAsync(ids),
-                        });
-                        if (ok) setEditMode(false);
-                      } finally {
-                        setIsDeleting(false);
-                      }
-                    }}
-                    className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
-                  >
-                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    {isDeleting ? "Deleting…" : `Delete selected (${selectedIds.size})`}
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
+        <BulkActionBar
+          bulk={bulk}
+          filteredCount={filteredOrder.length}
+          totalCount={order.length}
+          isFiltered={Boolean(q)}
+          noun={{ singular: "item", plural: "items" }}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search content…"
+          emptyEditHint="Click items to select for deletion"
+          onEnterEditMode={() => setEditing(null)}
+          onDeleteSelected={async (ids) =>
+            confirm({
+              title: `Delete ${ids.length} ${ids.length === 1 ? "item" : "items"}?`,
+              description: `Permanently delete ${ids.length === 1 ? "the selected item" : `${ids.length} selected items`}?`,
+              confirmLabel: "Delete",
+              destructive: true,
+              onConfirm: () => deleteManyMut.mutateAsync(ids),
+            })
+          }
+        />
       )}
 
       <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${order.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
@@ -676,32 +613,32 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           if (filteredOrder.length === 0) {
             return <p className="p-6 text-muted-foreground">No items match your search.</p>;
           }
-          if (editMode || q) {
+          if (bulk.editMode || q) {
             return (
               <ul className="divide-y divide-border">
                 {filteredOrder.map((item) => {
-                  const selected = selectedIds.has(item.id);
-                  const isInteractive = editMode;
+                  const selected = bulk.has(item.id);
+                  const isInteractive = bulk.editMode;
                   return (
                     <li
                       key={item.id}
-                      onClick={isInteractive ? () => toggleOne(item.id) : undefined}
+                      onClick={isInteractive ? () => bulk.toggle(item.id) : undefined}
                       className={`flex items-stretch transition-colors ${
                         isInteractive ? "cursor-pointer " : ""
                       }${
                         selected ? "bg-destructive/10 hover:bg-destructive/15" : isInteractive ? "hover:bg-muted/50" : ""
                       }`}
                     >
-                      {(editMode || q) && (
+                      {(bulk.editMode || q) && (
                         <div
-                          className={`flex items-center pl-5 pr-0 ${editMode ? "text-muted-foreground/50" : "text-muted-foreground/30 cursor-not-allowed"}`}
-                          aria-disabled={!editMode}
+                          className={`flex items-center pl-5 pr-0 ${bulk.editMode ? "text-muted-foreground/50" : "text-muted-foreground/30 cursor-not-allowed"}`}
+                          aria-disabled={!bulk.editMode}
                         >
                           <GripVertical className="h-4 w-4" />
                         </div>
                       )}
 
-                      <div className={`flex-1 min-w-0 ${editMode ? "pointer-events-none" : ""}`}>{renderItemRow(item)}</div>
+                      <div className={`flex-1 min-w-0 ${bulk.editMode ? "pointer-events-none" : ""}`}>{renderItemRow(item)}</div>
                     </li>
                   );
                 })}

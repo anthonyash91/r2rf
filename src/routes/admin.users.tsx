@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download, Search } from "lucide-react";
+import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download } from "lucide-react";
 import { Badge } from "@/components/Badge";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
@@ -27,6 +27,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useBulkSelect } from "@/hooks/use-bulk-select";
+import { BulkActionBar } from "@/components/BulkActionBar";
 
 export const Route = createFileRoute("/admin/users")({
   beforeLoad: requireAdminBeforeLoad,
@@ -64,8 +66,7 @@ function AdminUsersPage() {
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [regularVisible, setRegularVisible] = useState<number>(10);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
-  const [editMode, setEditMode] = useState(false);
+  const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
   // Snapshot the "last seen" timestamp at mount so newly-signed-up users stay
@@ -137,11 +138,10 @@ function AdminUsersPage() {
       if (res.skippedSelf) parts.push("skipped your own account");
       toast.success(parts.join(" • "));
       await invalidate();
-      setSelectedIds(new Set());
+      bulk.clear();
     },
     onError: (e: any) => toast.error(e.message),
   });
-  const [isDeleting, setIsDeleting] = useState(false);
   const clearSecMut = useMutation({
     mutationFn: (input: { userId: string }) => clearSecFn({ data: input }),
     onSuccess: () => toast.success("Security questions reset. User must set new ones on next sign-in."),
@@ -444,108 +444,41 @@ function AdminUsersPage() {
                 const visible = filtered.slice(0, regularVisible);
                 const remaining = filtered.length - visible.length;
 
-                const toggleOne = (id: string) => {
-                  setSelectedIds((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(id)) next.delete(id); else next.add(id);
-                    return next;
-                  });
-                };
                 return (
                   <>
                     {filtered.length > 0 && (
-                      <div className="mt-3 flex min-h-[56px] items-center justify-between gap-3 flex-wrap rounded-t-md border border-b-0 border-border bg-muted/40 px-4 sm:px-5 py-2 text-sm">
-                        <span className="text-muted-foreground">
-                          {editMode
-                            ? selectedIds.size > 0
-                              ? `${selectedIds.size} selected`
-                              : "Click users to select for deletion"
-                            : `${filtered.length} ${filtered.length === 1 ? "user" : "users"}`}
-                        </span>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className="relative">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                            <input
-                              type="text"
-                              value={searchQuery}
-                              onChange={(e) => { setSearchQuery(e.target.value); setRegularVisible(10); }}
-                              placeholder="Search users…"
-                              className="rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm w-full sm:w-56"
-                            />
-                            {searchQuery && (
-                              <button
-                                type="button"
-                                onClick={() => setSearchQuery("")}
-                                aria-label="Clear search"
-                                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 inline-flex items-center justify-center rounded hover:bg-muted text-muted-foreground"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </button>
-                            )}
-                          </div>
-                          {!editMode ? (
-                            <button
-                              type="button"
-                              onClick={() => setEditMode(true)}
-                              className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
-                            >
-                              <Pencil className="h-4 w-4" /> Edit
-                            </button>
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                disabled={isDeleting}
-                                onClick={() => { setEditMode(false); setSelectedIds(new Set()); }}
-                                className="inline-flex items-center rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
-                              >
-                                {selectedIds.size > 0 ? "Cancel" : "Done"}
-                              </button>
-                              {(selectedIds.size > 0 || isDeleting) && (
-                                <button
-                                  type="button"
-                                  disabled={isDeleting}
-                                  onClick={async () => {
-                                    const ids = Array.from(selectedIds);
-                                    setIsDeleting(true);
-                                    try {
-                                      const ok = await confirm({
-                                        title: `Delete ${ids.length} ${ids.length === 1 ? "user" : "users"}?`,
-                                        description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "user" : "users"}? This cannot be undone.`,
-                                        confirmLabel: "Delete",
-                                        destructive: true,
-                                        onConfirm: () => deleteManyMut.mutateAsync({ userIds: ids }),
-                                      });
-                                      if (ok) setEditMode(false);
-                                    } finally {
-                                      setIsDeleting(false);
-                                    }
-                                  }}
-                                  className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
-                                >
-                                  {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                  {isDeleting ? "Deleting…" : `Delete selected (${selectedIds.size})`}
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
+                      <BulkActionBar
+                        bulk={bulk}
+                        filteredCount={filtered.length}
+                        noun={{ singular: "user", plural: "users" }}
+                        searchQuery={searchQuery}
+                        onSearchChange={(v) => { setSearchQuery(v); setRegularVisible(10); }}
+                        searchPlaceholder="Search users…"
+                        onDeleteSelected={async (ids) =>
+                          confirm({
+                            title: `Delete ${ids.length} ${ids.length === 1 ? "user" : "users"}?`,
+                            description: `Permanently delete ${ids.length} selected ${ids.length === 1 ? "user" : "users"}? This cannot be undone.`,
+                            confirmLabel: "Delete",
+                            destructive: true,
+                            onConfirm: () => deleteManyMut.mutateAsync({ userIds: ids }),
+                          })
+                        }
+                      />
                     )}
                     <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${filtered.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
                       {filtered.length ? (
                         <ul className="divide-y divide-border">
                           {visible.map((u) => {
-                            const selected = selectedIds.has(u.id);
+                            const selected = bulk.has(u.id);
                             const isNew = isNewUser(u);
                             const newHighlight = isNew
                               ? "bg-[var(--color-accent)]/10"
                               : "";
-                            if (editMode) {
+                            if (bulk.editMode) {
                               return (
                                 <li
                                   key={u.id}
-                                  onClick={() => toggleOne(u.id)}
+                                  onClick={() => bulk.toggle(u.id)}
                                   className={`relative cursor-pointer transition-colors ${
                                     selected
                                       ? "bg-destructive/10 hover:bg-destructive/15"
