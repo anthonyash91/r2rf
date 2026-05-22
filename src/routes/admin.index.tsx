@@ -430,7 +430,7 @@ function AdminCategoriesPage() {
         );
 
         return (
-          <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+          <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${categories.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
             {isLoading ? (
               <div className="p-6 text-muted-foreground">Loading…</div>
             ) : categories.length === 0 ? (
