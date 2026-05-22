@@ -10,7 +10,7 @@ import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
 import { Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { generateCategoryCopy, generateCategoryIcon, generateContentDescription } from "@/lib/category-ai.functions";
+import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { FileUploader } from "@/components/FileUploader";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
@@ -141,25 +141,7 @@ function CategoryEditor({
   }, [category]);
 
   const generate = useServerFn(generateCategoryCopy);
-  const generateIcon = useServerFn(generateCategoryIcon);
   const [generating, setGenerating] = useState(false);
-  const [generatingIcon, setGeneratingIcon] = useState(false);
-  const [iconPrompt, setIconPrompt] = useState("");
-
-  async function handleGenerateIcon() {
-    const trimmed = name.trim();
-    if (!trimmed) { toast.error("Enter a name first"); return; }
-    setGeneratingIcon(true);
-    try {
-      const { url } = await generateIcon({ data: { name: trimmed, tagline: tagline.trim(), description: description.trim(), extraPrompt: iconPrompt.trim() } });
-      setIconUrl(url);
-      toast.success("Generated icon");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to generate icon");
-    } finally {
-      setGeneratingIcon(false);
-    }
-  }
 
   async function handleAutoGenerate() {
     const trimmed = name.trim();
@@ -249,16 +231,6 @@ function CategoryEditor({
                 existingFileUrl={iconUrl}
                 onUploaded={(u) => setIconUrl(u)}
               />
-              <LoadingButton
-                variant="secondary"
-                onClick={handleGenerateIcon}
-                disabled={generatingIcon || !name.trim()}
-                pending={generatingIcon}
-                pendingText="Generating…"
-                icon={<Sparkles className="h-4 w-4" />}
-              >
-                {iconUrl ? "Regenerate with AI" : "Generate with AI"}
-              </LoadingButton>
               {iconUrl && (
                 <LoadingButton
                   variant="secondary"
@@ -270,14 +242,6 @@ function CategoryEditor({
               )}
             </div>
           </div>
-          <textarea
-            value={iconPrompt}
-            onChange={(e) => setIconPrompt(e.target.value)}
-            placeholder="Optional: extra instructions for the AI (e.g. 'a leaf next to an open book')"
-            rows={2}
-            maxLength={1000}
-            className="mt-3 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-          />
         </div>
         <label className="block">
           <span className="text-sm font-medium">Home Page</span>
