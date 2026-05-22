@@ -298,42 +298,46 @@ function DashboardPage() {
       <SiteHeader />
       <SiteMessageBanner kind="user" />
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
-        {(() => {
-          const firstName = ((data as any)?.profile?.first_name ?? "").trim();
-          return (
-            <h1 className="font-display text-3xl font-semibold">
-              {firstName ? t("dashboard.greeting", { name: firstName }) : t("dashboard.greetingNoName")}
-            </h1>
-          );
-        })()}
-        <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
-
         <Tabs
           value={mustSetup ? "account" : undefined}
           defaultValue={Route.useSearch().tab === "account" ? "account" : "categories"}
-          className="mt-8"
+          className="mt-0"
         >
-          <TabsList className="h-auto p-2 gap-1">
-            <TabsTrigger
-              value="categories"
-              disabled={mustSetup}
-              onClick={(e) => {
-                if (mustSetup) {
-                  e.preventDefault();
-                  toast.error("Please set up your security questions before leaving this page.");
-                }
-              }}
-              className={`px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
-            >
-              Progress
-            </TabsTrigger>
-            <TabsTrigger
-              value="account"
-              className="px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
-            >
-              Account Settings
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              {(() => {
+                const firstName = ((data as any)?.profile?.first_name ?? "").trim();
+                return (
+                  <h1 className="font-display text-3xl font-semibold">
+                    {firstName ? t("dashboard.greeting", { name: firstName }) : t("dashboard.greetingNoName")}
+                  </h1>
+                );
+              })()}
+              <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
+            </div>
+            <TabsList className="h-auto p-2 gap-1 self-start sm:self-center">
+              <TabsTrigger
+                value="categories"
+                disabled={mustSetup}
+                onClick={(e) => {
+                  if (mustSetup) {
+                    e.preventDefault();
+                    toast.error("Please set up your security questions before leaving this page.");
+                  }
+                }}
+                className={`px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
+              >
+                Progress
+              </TabsTrigger>
+              <TabsTrigger
+                value="account"
+                className="px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
+              >
+                Account Settings
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
 
 
           <TabsContent value="categories" className="mt-6">
