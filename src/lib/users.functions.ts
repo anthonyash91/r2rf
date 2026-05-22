@@ -32,11 +32,6 @@ export const listUsers = createServerFn({ method: "GET" })
       .select("user_id, role")
       .in("user_id", idsForQuery);
 
-    const { data: ipRows } = await supabaseAdmin
-      .from("user_signup_ips")
-      .select("user_id, ip_address")
-      .in("user_id", idsForQuery);
-
     const { data: profileRows } = await supabaseAdmin
       .from("user_profiles")
       .select("user_id, username, facility, first_name, last_name")
@@ -48,9 +43,6 @@ export const listUsers = createServerFn({ method: "GET" })
       arr.push(r.role as Role);
       rolesByUser.set(r.user_id, arr);
     }
-
-    const ipByUser = new Map<string, string>();
-    for (const r of ipRows ?? []) ipByUser.set(r.user_id, r.ip_address);
 
     const profileByUser = new Map<string, { username: string; facility: string; first_name: string; last_name: string }>();
     for (const p of profileRows ?? []) {
@@ -65,7 +57,7 @@ export const listUsers = createServerFn({ method: "GET" })
         last_sign_in_at: u.last_sign_in_at ?? null,
         email_confirmed_at: (u as any).email_confirmed_at ?? null,
         roles: rolesByUser.get(u.id) ?? [],
-        signup_ip: ipByUser.get(u.id) ?? null,
+
         profile: profileByUser.get(u.id) ?? null,
       })),
     };
