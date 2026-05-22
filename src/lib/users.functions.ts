@@ -135,7 +135,6 @@ export const deleteUsers = createServerFn({ method: "POST" })
     for (const userId of targets) {
       try {
         await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
-        await supabaseAdmin.from("user_signup_ips").delete().eq("user_id", userId);
         const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
         if (error) throw new Error(error.message);
         deleted++;
@@ -146,19 +145,7 @@ export const deleteUsers = createServerFn({ method: "POST" })
     return { deleted, failed, skippedSelf: data.userIds.length - targets.length };
   });
 
-export const recordMySignupIp = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const ip = getClientIp(getRequest());
-    if (!ip) return { ok: false, reason: "no-ip" as const };
-    await supabaseAdmin
-      .from("user_signup_ips")
-      .upsert(
-        { user_id: context.userId, ip_address: ip },
-        { onConflict: "user_id", ignoreDuplicates: true },
-      );
-    return { ok: true };
-  });
+
 
 
 
