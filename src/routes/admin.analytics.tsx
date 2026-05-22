@@ -249,7 +249,7 @@ function CategorySection({ row, isOpen, onToggle }: { row: AggregatedRow; isOpen
     <SectionCard padded={false} className="overflow-hidden">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
         aria-expanded={open}
         className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-white"} text-left hover:bg-muted/50 transition-colors`}
       >
