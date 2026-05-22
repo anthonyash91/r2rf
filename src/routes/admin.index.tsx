@@ -550,15 +550,16 @@ function NewCategoryForm({
         </Field>
       </div>
       <div>
-        <button
-          type="button"
+        <LoadingButton
+          variant="secondary"
           onClick={handleAutoGenerate}
           disabled={generating || !name.trim()}
-          className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
+          pending={generating}
+          pendingText="Generating…"
+          icon={<Sparkles className="h-4 w-4" />}
         >
-          <Sparkles className="h-4 w-4" />
-          {generating ? "Generating…" : "Auto-generate tagline & description"}
-        </button>
+          Auto-generate tagline & description
+        </LoadingButton>
         <p className="mt-1 text-xs text-muted-foreground">Uses the Name to draft copy. You can edit the result.</p>
       </div>
       <Field label="Tagline">
