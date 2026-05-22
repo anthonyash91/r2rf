@@ -14,7 +14,7 @@ import { facilityLabel } from "@/lib/user-signup";
 import { listFacilities } from "@/lib/facilities.functions";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
 import { questionLabel } from "@/lib/security-questions";
-import { useI18n, pickLang, translateDuration } from "@/lib/i18n";
+import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
@@ -266,7 +266,7 @@ function DashboardPage() {
 
   useBlocker({
     shouldBlockFn: () => {
-      toast.error("Please set up your security questions before leaving this page.");
+      toast.error(t("dashboard.lockedNav"));
       return true;
     },
     enableBeforeUnload: mustSetup,
@@ -315,25 +315,25 @@ function DashboardPage() {
               })()}
               <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
             </div>
-            <TabsList className="h-auto p-2 gap-1 self-start sm:self-center">
+            <TabsList className="h-auto p-2 gap-1 self-start sm:self-center bg-muted/40">
               <TabsTrigger
                 value="categories"
                 disabled={mustSetup}
                 onClick={(e) => {
                   if (mustSetup) {
                     e.preventDefault();
-                    toast.error("Please set up your security questions before leaving this page.");
+                    toast.error(t("dashboard.lockedNav"));
                   }
                 }}
                 className={`px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
               >
-                Progress
+                {t("dashboard.tabProgress")}
               </TabsTrigger>
               <TabsTrigger
                 value="account"
                 className="px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
               >
-                Account Settings
+                {t("dashboard.tabAccount")}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -379,19 +379,19 @@ function DashboardPage() {
                     }
                   }
                   const stats: Array<{ icon: typeof BookOpen; label: string; value: string }> = [
-                    { icon: CheckCircle2, label: "Completed", value: readAll.toLocaleString() },
-                    { icon: Layers, label: "Categories", value: activeCats.toLocaleString() },
-                    { icon: Clock, label: "Hours Spent", value: hours.toLocaleString() },
-                    { icon: Flame, label: "Day Streak", value: streak.toLocaleString() },
+                    { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: readAll.toLocaleString() },
+                    { icon: Layers, label: t("dashboard.statCategories"), value: activeCats.toLocaleString() },
+                    { icon: Clock, label: t("dashboard.statHours"), value: hours.toLocaleString() },
+                    { icon: Flame, label: t("dashboard.statStreak"), value: streak.toLocaleString() },
                   ];
                   return (
                     <>
                       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6 flex items-center gap-6">
                         <CircleProgress value={pctAll} size={96} stroke={8} />
                         <div className="min-w-0">
-                          <h2 className="font-display text-xl sm:text-2xl font-semibold">Overall Progress</h2>
+                          <h2 className="font-display text-xl sm:text-2xl font-semibold">{t("dashboard.overallProgress")}</h2>
                           <p className="mt-1 text-sm text-muted-foreground">
-                            You&rsquo;ve completed {readAll.toLocaleString()} of {totalAll.toLocaleString()} available items. Keep going!
+                            {t("dashboard.overallSummary", { done: readAll.toLocaleString(), total: totalAll.toLocaleString() } as any)}
                           </p>
                         </div>
                       </div>
@@ -413,7 +413,7 @@ function DashboardPage() {
                         })}
                       </div>
 
-                      <h2 className="font-display text-lg font-semibold mb-3">Category Progress</h2>
+                      <h2 className="font-display text-lg font-semibold mb-3">{t("dashboard.categoryProgress")}</h2>
                     </>
                   );
                 })()}
@@ -550,7 +550,7 @@ function DashboardPage() {
                       className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                     >
                       {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                      {busy ? "Saving…" : t("security.save")}
+                      {busy ? t("dashboard.saving") : t("security.save")}
                     </button>
                   </div>
                 </div>
@@ -599,7 +599,7 @@ function CategoryProgressSection({
   read: number;
   isAdmin: boolean;
   lang: "en" | "es";
-  t: (key: string) => string;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const [open, setOpen] = useState(false);
   const pct = total > 0 ? Math.round((read / total) * 100) : 0;
@@ -612,7 +612,7 @@ function CategoryProgressSection({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         style={open ? { backgroundColor: "#f7f5ec" } : undefined}
-        className={`w-full flex items-center gap-4 p-4 sm:p-5 ${open ? "border-b border-border" : ""} text-left hover:bg-muted/40 transition-colors`}
+        className={`w-full flex items-center gap-4 p-6 ${open ? "border-b border-border" : ""} text-left hover:bg-muted/40 transition-colors`}
       >
         {!isAdmin ? (
           <CircleProgress value={pct} size={52} stroke={5} />
@@ -632,7 +632,7 @@ function CategoryProgressSection({
           </div>
           {!isAdmin ? (
             <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-              {read.toLocaleString()} of {total.toLocaleString()} completed
+              {t("dashboard.itemsCompleted", { done: read.toLocaleString(), total: total.toLocaleString() } as any)}
             </p>
           ) : tagline ? (
             <p className="mt-0.5 text-xs text-muted-foreground truncate">{tagline}</p>
@@ -656,7 +656,7 @@ function CategoryProgressSection({
                     )}
 
                     <Badge variant="type" type={it.type}>
-                      {it.type}
+                      {translateType(lang, it.type)}
                     </Badge>
                     {it.duration && (
                       <span className="text-xs text-muted-foreground">
