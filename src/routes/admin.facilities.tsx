@@ -15,7 +15,8 @@ import {
 } from "@/lib/facilities.functions";
 
 import { useConfirm } from "@/components/ConfirmDialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { IconButton } from "@/components/IconButton";
 import { Badge } from "@/components/Badge";
 
 
