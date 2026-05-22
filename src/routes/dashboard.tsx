@@ -630,7 +630,7 @@ function CategoryProgressSection({
           <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-col-reverse items-start gap-2 sm:flex-row sm:items-center sm:flex-wrap">
             <h2 className="font-display text-base sm:text-lg font-semibold truncate">
               {pickLang(lang, category.name, category.name_es)}
             </h2>
