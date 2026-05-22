@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { UploadButton } from "@bytescale/upload-widget-react";
 import { getBytescaleConfig, deleteBytescaleFileIfExists } from "@/lib/bytescale.functions";
 import { Upload } from "lucide-react";
+import { actionButtonClassName } from "@/components/LoadingButton";
 
 type Props = {
   onUploaded: (fileUrl: string, fileName: string | null) => void;
