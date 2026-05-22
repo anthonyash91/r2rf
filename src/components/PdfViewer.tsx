@@ -25,6 +25,11 @@ function PdfLoading() {
   );
 }
 
+function PdfError() {
+  const { t } = useI18n();
+  return <div className="p-8 text-sm text-destructive">{t("pdf.failed")}</div>;
+}
+
 export default function PdfViewer({ url }: { url: string }) {
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState(1);
