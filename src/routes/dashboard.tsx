@@ -198,7 +198,7 @@ function DashboardPage() {
     queryKey: ["dashboard-progress", userId, categoryIds.join(",")],
     enabled: !!userId && categoryIds.length > 0,
     queryFn: async () => {
-      const [itemsRes, readRes] = await Promise.all([
+      const [itemsRes, readRes, seenRes] = await Promise.all([
         supabase
           .from("content_items")
           .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at")
@@ -210,6 +210,10 @@ function DashboardPage() {
           .select("content_item_id, category_id, created_at")
           .eq("user_id", userId!)
           .in("category_id", categoryIds),
+        supabase
+          .from("user_content_seen")
+          .select("content_item_id")
+          .eq("user_id", userId!),
       ]);
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
