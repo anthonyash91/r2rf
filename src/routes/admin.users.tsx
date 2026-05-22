@@ -312,7 +312,14 @@ function AdminUsersPage() {
             <section className="mt-8">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:flex-wrap">
                 <div>
-                  <h2 className="font-display text-xl font-semibold">Users <span className="text-muted-foreground font-normal">({regularUsers.length})</span></h2>
+                  {(() => {
+                    const filteredCount = facilityFilter === "all"
+                      ? regularUsers.length
+                      : regularUsers.filter((u) => u.profile?.facility === facilityFilter).length;
+                    return (
+                      <h2 className="font-display text-xl font-semibold">Users <span className="text-muted-foreground font-normal">({filteredCount}{facilityFilter !== "all" ? ` of ${regularUsers.length}` : ""})</span></h2>
+                    );
+                  })()}
                   <p className="mt-1 text-xs text-muted-foreground">
                     Regular user accounts that signed up from the public form.
                   </p>
