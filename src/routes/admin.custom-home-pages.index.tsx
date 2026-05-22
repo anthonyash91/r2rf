@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useServerFn } from "@tanstack/react-start";
 import { listFacilities } from "@/lib/facilities.functions";
 import { FacilityCombobox } from "@/components/FacilityCombobox";
+import { Badge } from "@/components/Badge";
+
 
 const RESERVED_SLUGS = new Set([
   "admin",
