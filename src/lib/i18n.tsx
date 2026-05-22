@@ -227,6 +227,10 @@ const translations: Record<Language, Dict> = {
 
     "category.markReadError": "No se pudo actualizar el progreso.",
 
+    "pdf.loading": "Cargando PDF…",
+    "pdf.stillLoading": "Aún cargando, por favor sea paciente…",
+    "pdf.failed": "No se pudo cargar el PDF.",
+
     "dashboard.progress": "Tu progreso",
     "dashboard.progressItems": "{done}/{total} elementos completados",
     "dashboard.progressEmpty": "Comienza una categoría para ver tu progreso.",
