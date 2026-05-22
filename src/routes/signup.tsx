@@ -329,7 +329,7 @@ function SignupPage() {
 
               <div>
                 <label className="text-sm font-medium">
-                  {mode === "sign-up" ? t("signup.username") : "Username or email"}
+                  {mode === "sign-up" ? t("signup.username") : t("signup.usernameOrEmail")}
                 </label>
                 <input
                   type="text"
