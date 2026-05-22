@@ -387,7 +387,7 @@ function DashboardPage() {
                   }
                   const stats: Array<{ icon: typeof BookOpen; label: string; value: string }> = [
                     { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: readAll.toLocaleString() },
-                    { icon: Layers, label: t("dashboard.statCategories"), value: activeCats.toLocaleString() },
+                    
                     { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: completedCats.toLocaleString() },
                     { icon: Clock, label: t("dashboard.statHours"), value: hours.toLocaleString() },
                     { icon: Flame, label: t("dashboard.statStreak"), value: streak.toLocaleString() },
