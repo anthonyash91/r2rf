@@ -12,7 +12,8 @@ import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, Ref
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { FileUploader } from "@/components/FileUploader";
-import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
+import { useTranslateToSpanish } from "@/components/TranslateButton";
+import { TranslationPanel } from "@/components/TranslationPanel";
 import { SortableList } from "@/components/SortableList";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
