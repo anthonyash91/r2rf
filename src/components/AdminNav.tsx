@@ -215,7 +215,7 @@ export function AdminNav() {
                         className={`cursor-pointer ${active ? "bg-muted" : ""}`}
                       >
                         <Icon className="mr-2 h-4 w-4" />
-                        {l.label}
+                        {renderLabel(l)}
                       </DropdownMenuItem>
                     );
                   })}
