@@ -87,16 +87,9 @@ export function SiteHeader() {
               {signOutLabel}
             </button>
           ) : (
-            <>
-              <Link to="/signup" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
-                {t("nav.signUp")}
-              </Link>
-              {showAuthLink && (
-                <Link to="/auth" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
-                  {signInLabel}
-                </Link>
-              )}
-            </>
+            <Link to="/signup" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
+              {signInLabel}
+            </Link>
           )}
           <button
             onClick={(e) => {
