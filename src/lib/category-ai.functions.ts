@@ -16,7 +16,7 @@ export const generateCategoryIcon = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
 
-    const prompt = `Design a single minimalist icon for a content library category.
+    const prompt = `Design a single chunky, friendly icon for a content library category.
 
 Category name: "${data.name}"
 ${data.tagline ? `Tagline: "${data.tagline}"` : ""}
@@ -24,12 +24,13 @@ ${data.description ? `Description: "${data.description}"` : ""}
 
 STRICT visual rules:
 - Square 1:1 composition.
-- Solid, flat background filled edge-to-edge with ONE muted, desaturated color. Pick a soft, low-chroma color that thematically fits the category — e.g. dusty sage, muted teal, soft terracotta, warm sand, dusty plum, slate blue, mossy olive, dusty rose, or warm taupe. The background must be pastel/muted (NOT vivid or saturated, NOT neon).
-- A single, simple, modern line-and-shape icon CENTERED on the background, drawn in PURE WHITE (#FFFFFF).
-- Icon style: flat, geometric, minimal — similar to Lucide / Feather / Heroicons. Clean strokes, rounded line caps, no gradients, no shadows, no text, no letters, no numbers, no watermark, no border, no frame.
-- The icon should clearly evoke the meaning of the category at a glance.
-- Generous padding around the icon (around 18-22% of the canvas on every side).
-- No 3D, no photorealism, no skeuomorphism, no glow, no drop shadow, no inner shadow, no texture, no noise.
+- Solid, flat background filled edge-to-edge with ONE warm, soft cream/ivory color (e.g. #f5ecd6, warm buttermilk, pale sand). Background must be warm and muted (NOT vivid, NOT neon, NOT cool gray, NOT white).
+- One simple, friendly subject CENTERED on the background that clearly evokes the category. May combine 1-2 related shapes/objects.
+- Use THICK, BOLD outline strokes with rounded line caps and rounded corners. Stroke width should be roughly 8–12% of the icon height — chunky and confident, never thin or wiry. Think bold sticker/illustration style.
+- Color palette is STRICTLY two colors used together: a warm goldenrod/mustard brown (around #b8862f) and a muted sage/olive green (around #7a8b4a). Use BOTH colors in every icon — outlines and fills mixed between the two. Never monochrome.
+- Flat fills only inside the bold outlines — no gradients, no shading, no highlights, no shadows, no textures, no noise, no 3D.
+- Generous padding around the icon (around 15–20% of the canvas on every side).
+- No text, no letters, no numbers, no watermark, no border, no frame, no photorealism, no glow.
 
 Output: just the finished icon image. Nothing else.`;
 
