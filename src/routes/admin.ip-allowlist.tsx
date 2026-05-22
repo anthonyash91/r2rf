@@ -416,14 +416,15 @@ function AllowlistSection({
             className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
           />
           <div className="mt-3 flex justify-end">
-            <button
+            <LoadingButton
               type="submit"
-              disabled={bulkMut.isPending || bulk.trim() === ""}
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              pending={bulkMut.isPending}
+              pendingText="Adding…"
+              disabled={bulk.trim() === ""}
+              icon={<Plus className="h-4 w-4" />}
             >
-              {bulkMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              {bulkMut.isPending ? "Adding…" : "Add all"}
-            </button>
+              Add all
+            </LoadingButton>
           </div>
         </form>
       )}
