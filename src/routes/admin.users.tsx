@@ -617,6 +617,12 @@ function UserItem({
   user,
   isNew = false,
   facilityLabel,
+  pendingEmail = false,
+  pendingPassword = false,
+  pendingReset = false,
+  pendingRole = false,
+  pendingDelete = false,
+  pendingClearSec = false,
   onChangeEmail,
   onSetPassword,
   onSendReset,
@@ -628,6 +634,12 @@ function UserItem({
   user: UserRow;
   isNew?: boolean;
   facilityLabel: string;
+  pendingEmail?: boolean;
+  pendingPassword?: boolean;
+  pendingReset?: boolean;
+  pendingRole?: boolean;
+  pendingDelete?: boolean;
+  pendingClearSec?: boolean;
   onChangeEmail: (email: string) => void;
   onSetPassword: (password: string) => void;
   onSendReset: () => void;
