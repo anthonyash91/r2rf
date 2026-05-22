@@ -67,6 +67,14 @@ function AdminUsersPage() {
   const [editMode, setEditMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Snapshot the "last seen" timestamp at mount so newly-signed-up users stay
+  // highlighted for the duration of this visit. On unmount (or now), bump
+  // lastSeen so the AdminNav badge clears and these won't highlight next time.
+  const newUsersSinceRef = useRef<string>(getLastSeenUsersAt());
+  useEffect(() => {
+    setLastSeenUsersAt(new Date().toISOString());
+  }, []);
+
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "users"],
     queryFn: () => list(),
