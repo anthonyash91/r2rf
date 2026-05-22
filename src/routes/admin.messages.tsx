@@ -209,9 +209,11 @@ function MessageEditor({
             </div>
           ) : (
             <div>
-              <button
-                type="button"
-                disabled={addEsBusy || !value.message.trim()}
+              <LoadingButton
+                variant="secondary"
+                pending={addEsBusy}
+                pendingText="Translating…"
+                disabled={!value.message.trim()}
                 onClick={() => {
                   setShowEs(true);
                   runAddEs(
@@ -220,10 +222,9 @@ function MessageEditor({
                     context,
                   );
                 }}
-                className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
               >
-                {addEsBusy ? "Translating…" : "+ Add Spanish translation"}
-              </button>
+                + Add Spanish translation
+              </LoadingButton>
             </div>
           )}
 
