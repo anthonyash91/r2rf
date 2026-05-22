@@ -126,13 +126,14 @@ function AdminFacilitiesPage() {
             Manage facilities available in the signup form's facility dropdown.
           </p>
         </div>
-        <button
+        <LoadingButton
           onClick={() => setShowAdd(true)}
           disabled={showAdd}
-          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+          icon={<Plus className="h-4 w-4" />}
+          className="w-full sm:w-auto"
         >
-          <Plus className="h-4 w-4" /> Add facilities
-        </button>
+          Add facilities
+        </LoadingButton>
       </div>
 
       <section className="mt-8">
