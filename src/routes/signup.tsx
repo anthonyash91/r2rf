@@ -18,7 +18,7 @@ import { questionLabel } from "@/lib/security-questions";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 
