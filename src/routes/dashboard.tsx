@@ -599,7 +599,7 @@ function CategoryProgressSection({
   read: number;
   isAdmin: boolean;
   lang: "en" | "es";
-  t: (key: string) => string;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const [open, setOpen] = useState(false);
   const pct = total > 0 ? Math.round((read / total) * 100) : 0;
