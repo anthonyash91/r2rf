@@ -16,23 +16,23 @@ export const generateCategoryIcon = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
 
-    const prompt = `Design a single chunky, friendly icon for a content library category.
+    const prompt = `Design a single minimalist, friendly icon for a content library category.
 
 Category name: "${data.name}"
 ${data.tagline ? `Tagline: "${data.tagline}"` : ""}
 ${data.description ? `Description: "${data.description}"` : ""}
 
 STRICT visual rules:
-- Square 1:1 composition.
-- Solid, flat background filled edge-to-edge with ONE warm, soft cream/ivory color (e.g. #f5ecd6, warm buttermilk, pale sand). Background must be warm and muted (NOT vivid, NOT neon, NOT cool gray, NOT white).
-- One simple, friendly subject CENTERED on the background that clearly evokes the category. May combine 1-2 related shapes/objects.
-- Use THICK, BOLD outline strokes with rounded line caps and rounded corners. Stroke width should be roughly 8–12% of the icon height — chunky and confident, never thin or wiry. Think bold sticker/illustration style.
-- Color palette is STRICTLY two colors used together: a warm goldenrod/mustard brown (around #b8862f) and a muted sage/olive green (around #7a8b4a). Use BOTH colors in every icon — outlines and fills mixed between the two. Never monochrome.
-- Flat fills only inside the bold outlines — no gradients, no shading, no highlights, no shadows, no textures, no noise, no 3D.
+- PERFECTLY SQUARE 1:1 composition (equal width and height).
+- Background MUST be filled edge-to-edge with the exact color #fff9e1 (warm cream). No other background color is acceptable.
+- STRICT color palette — use ONLY these five hex colors, no others: #aeb25d (sage), #986313 (brown), #587932 (olive green), #fff9e1 (cream background), #d5a43e (goldenrod). Do not introduce any color outside this list.
+- One simple, centered subject that clearly evokes the category. Keep it MINIMALIST — not too busy. Prefer 1 main shape, optionally with 1 small supporting element. Avoid clutter, avoid many small details.
+- Use THICK, BOLD outline strokes with rounded line caps and rounded corners. Stroke width roughly 8–12% of the icon height — chunky, confident, sticker-style.
+- Flat fills only — no gradients, no shading, no highlights, no shadows, no textures, no noise, no 3D.
 - Generous padding around the icon (around 15–20% of the canvas on every side).
 - No text, no letters, no numbers, no watermark, no border, no frame, no photorealism, no glow.
 
-Output: just the finished icon image. Nothing else.`;
+Output: just the finished square icon image. Nothing else.`;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
