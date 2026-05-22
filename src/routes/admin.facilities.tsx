@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home, Loader2, Search, X } from "lucide-react";
+import { ArrowLeft, Building2, Plus, Pencil, Trash2, Users, Home, Loader2 } from "lucide-react";
 import {
   listFacilitiesWithStats,
   addFacilities,
@@ -18,6 +18,8 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { Badge } from "@/components/Badge";
+import { useBulkSelect } from "@/hooks/use-bulk-select";
+import { BulkActionBar } from "@/components/BulkActionBar";
 
 
 
