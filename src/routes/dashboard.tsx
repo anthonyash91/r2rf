@@ -24,6 +24,9 @@ import type { Category } from "@/lib/categories";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Reentry to Recovery" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: search.tab === "account" ? "account" : undefined,
+  }),
   beforeLoad: async ({ location }) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
