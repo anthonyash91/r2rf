@@ -226,7 +226,7 @@ function AdminCustomHomePagesList() {
       <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader
           icon={LayoutTemplate}
-          title="Custom home pages"
+          title="Custom Home Pages"
           description={
             <>
               Create alternate landing pages at custom URLs (e.g. <code>/cpc</code>) that show only the categories you choose.
