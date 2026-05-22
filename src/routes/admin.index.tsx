@@ -342,7 +342,7 @@ function AdminCategoriesPage() {
                           params={{ id: p.id }}
                           className="rounded-full hover:opacity-80 transition-opacity"
                         >
-                          <Badge variant="custom">{p.name}</Badge>
+                          <Badge variant="facility">{p.name}</Badge>
                         </Link>
                       ))
                     )}
