@@ -626,6 +626,7 @@ function CategoryProgressSection({
   lang,
   t,
   isOpen,
+  dimmed,
   onToggle,
 }: {
   category: Category;
@@ -639,14 +640,21 @@ function CategoryProgressSection({
   lang: "en" | "es";
   t: (key: string, vars?: Record<string, string | number>) => string;
   isOpen: boolean;
+  dimmed?: boolean;
   onToggle: () => void;
 }) {
   const open = isOpen;
   const pct = total > 0 ? Math.round((read / total) * 100) : 0;
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (isOpen && sectionRef.current) {
+      sectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [isOpen]);
 
   return (
-    <section className="rounded-2xl border border-border bg-[#fffdf8] overflow-hidden">
+    <section ref={sectionRef} className={`rounded-2xl border border-border bg-[#fffdf8] overflow-hidden transition-opacity duration-200 ${dimmed ? "opacity-40" : "opacity-100"}`}>
       <button
         type="button"
         onClick={onToggle}
