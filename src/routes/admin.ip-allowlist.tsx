@@ -138,7 +138,7 @@ function AdminIpAllowlistPage() {
           table="auth_ip_allowlist"
           queryKey={["admin", "auth_ip_allowlist"]}
           icon={<LogIn className="h-5 w-5" />}
-          title="Login / sign-up allowlist"
+          title="Login / Sign-Up Allowlist"
           description="Only requests from these IPs can load the /auth page. Applied in addition to the site allowlist."
           emptyMessage="No IPs allowed — the login page is currently inaccessible to everyone."
         />
