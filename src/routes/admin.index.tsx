@@ -30,6 +30,7 @@ function categoryTranslationStatus(c: Category): "complete" | "partial" | "missi
 import { SortableList } from "@/components/SortableList";
 import { FileUploader } from "@/components/FileUploader";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
@@ -48,6 +49,7 @@ function AdminCategoriesPage() {
   const qc = useQueryClient();
   useAuth();
   const confirm = useConfirm();
+  const confirmDelete = useConfirmDelete();
   const [creating, setCreating] = useState(false);
 
   const { data: categories = [], isLoading } = useQuery({
@@ -241,11 +243,9 @@ function AdminCategoriesPage() {
           onSearchChange={setSearchQuery}
           searchPlaceholder="Search categories…"
           onDeleteSelected={async (ids) =>
-            confirm({
+            confirmDelete({
               title: `Delete ${ids.length} ${ids.length === 1 ? "category" : "categories"}?`,
               description: `This will permanently delete ${ids.length === 1 ? "the selected category" : `${ids.length} selected categories`} and all their content.`,
-              confirmLabel: "Delete",
-              destructive: true,
               onConfirm: () => deleteManyMut.mutateAsync(ids),
             })
           }
@@ -384,11 +384,9 @@ function AdminCategoriesPage() {
                   icon={Trash2}
                   pending={isMutationPendingFor(deleteMut, c.id)}
                   onClick={async () => {
-                    await confirm({
+                    await confirmDelete({
                       title: `Delete "${c.name}"?`,
                       description: "This will permanently delete the category and all its content.",
-                      confirmLabel: "Delete",
-                      destructive: true,
                       onConfirm: () => deleteMut.mutateAsync(c.id),
                     });
                   }}

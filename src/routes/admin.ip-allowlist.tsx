@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Trash2, Shield, ArrowLeft, LogIn, Pencil, Ban, Power } from "lucide-react";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { LoadingButton } from "@/components/LoadingButton";
@@ -35,6 +36,7 @@ const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]
 function AdminIpAllowlistPage() {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const confirmDelete = useConfirmDelete();
   const [ip, setIp] = useState("");
   const [label, setLabel] = useState("");
 
@@ -165,6 +167,7 @@ type BlockedRow = {
 function BlockedSection() {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const confirmDelete = useConfirmDelete();
   const queryKey = ["admin", "ip_passkey_attempts", "blocked"] as const;
 
   const { data: rows = [], isLoading } = useQuery({
@@ -228,12 +231,11 @@ function BlockedSection() {
                     icon={Trash2}
                     pending={isMutationPendingFor(deleteMut, r.id)}
                     onClick={async () => {
-                      await confirm({
+                      await confirmDelete({
                         title: `Unblock ${r.ip_address}?`,
                         description:
                           "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
                         confirmLabel: "Unblock",
-                        destructive: true,
                         pendingLabel: "Unblocking",
                         onConfirm: () => deleteMut.mutateAsync(r.id),
                       });
@@ -268,6 +270,7 @@ function AllowlistSection({
 }) {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const confirmDelete = useConfirmDelete();
   const [ip, setIp] = useState("");
   const [label, setLabel] = useState("");
   const [bulk, setBulk] = useState("");
@@ -446,11 +449,10 @@ function AllowlistSection({
                 queryKey={queryKey}
                 pendingDelete={isMutationPendingFor(deleteMut, r.id)}
                 onDelete={async () => {
-                  await confirm({
+                  await confirmDelete({
                     title: `Remove ${r.ip_address}?`,
                     description: "This IP will be removed from the allowlist.",
                     confirmLabel: "Remove",
-                    destructive: true,
                     pendingLabel: "Removing",
                     onConfirm: () => deleteMut.mutateAsync(r.id),
                   });

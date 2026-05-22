@@ -16,6 +16,7 @@ import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
 import { SortableList } from "@/components/SortableList";
 import { useConfirm } from "@/components/ConfirmDialog";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
 import { Button } from "@/components/ui/button";
@@ -314,6 +315,7 @@ function CategoryEditor({
 function ContentManager({ categoryId, categoryName, categorySlug, items, initialEditId }: { categoryId: string; categoryName: string; categorySlug: string; items: ContentItem[]; initialEditId?: string }) {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const confirmDelete = useConfirmDelete();
   const { lang } = useI18n();
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
   const [order, setOrder] = useState<ContentItem[]>([]);
@@ -475,11 +477,9 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           emptyEditHint="Click items to select for deletion"
           onEnterEditMode={() => setEditing(null)}
           onDeleteSelected={async (ids) =>
-            confirm({
+            confirmDelete({
               title: `Delete ${ids.length} ${ids.length === 1 ? "item" : "items"}?`,
               description: `Permanently delete ${ids.length === 1 ? "the selected item" : `${ids.length} selected items`}?`,
-              confirmLabel: "Delete",
-              destructive: true,
               onConfirm: () => deleteManyMut.mutateAsync(ids),
             })
           }
@@ -558,11 +558,9 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                       icon={Trash2}
                       pending={isMutationPendingFor(deleteMut, item.id)}
                       onClick={async () => {
-                        await confirm({
+                        await confirmDelete({
                           title: `Delete "${item.title}"?`,
                           description: "This content will be permanently removed.",
-                          confirmLabel: "Delete",
-                          destructive: true,
                           onConfirm: () => deleteMut.mutateAsync(item.id),
                         });
                       }}
@@ -645,6 +643,7 @@ function ItemEditor({
 }) {
   const qc = useQueryClient();
   const confirm = useConfirm();
+  const confirmDelete = useConfirmDelete();
   const { data: sourceSuggestions = [] } = useQuery({
     queryKey: ["admin", "content-sources"],
     queryFn: async (): Promise<string[]> => {
@@ -775,11 +774,9 @@ function ItemEditor({
   };
 
   const deleteType = async (t: string) => {
-    await confirm({
+    await confirmDelete({
       title: `Delete type "${t}"?`,
       description: `Any items using this type will be changed to "Article".`,
-      confirmLabel: "Delete",
-      destructive: true,
       onConfirm: async () => {
         const { error } = await supabase
           .from("content_items")
