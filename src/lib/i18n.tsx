@@ -44,7 +44,7 @@ const translations: Record<Language, Dict> = {
     "category.source": "Source",
     "category.exploreOthers": "Explore other categories",
     "category.newContent": "New",
-    "category.newContentAdded": "New content",
+    "category.newContentAdded": "New Content",
     "category.markAsRead": "Mark as read",
     "category.markedRead": "Read",
     "category.notRead": "Not read",
