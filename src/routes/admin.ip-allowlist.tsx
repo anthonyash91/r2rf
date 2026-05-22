@@ -126,7 +126,7 @@ function AdminIpAllowlistPage() {
           table="ip_allowlist"
           queryKey={["admin", "ip_allowlist"]}
           icon={<Shield className="h-5 w-5" />}
-          title="Site allowlist"
+          title="Site Allowlist"
           description="Only requests from these IPs can reach any page on the site."
           emptyMessage="No IPs allowed — the site is currently inaccessible to everyone."
           allowBulk
