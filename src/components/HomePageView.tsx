@@ -111,9 +111,9 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                    <p className="text-xs font-medium tracking-wide text-[var(--color-gold)]">
+                    <ItemCountBadge>
                       {count} {t(count === 1 ? "home.item" : "home.items")}
-                    </p>
+                    </ItemCountBadge>
                     {s.hasRecent && (
                       <NewBadge>{t("category.newContentAdded")}</NewBadge>
                     )}
