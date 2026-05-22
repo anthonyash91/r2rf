@@ -1,7 +1,11 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { LayoutGrid, Users, Shield, BarChart3, Home, LayoutTemplate, Award, Building2, MessageSquare, ChevronDown, MoreHorizontal } from "lucide-react";
+import { countNewUsers } from "@/lib/users.functions";
+import { useLastSeenUsersAt } from "@/lib/new-users-tracker";
 
 import {
   DropdownMenu,
@@ -47,6 +51,30 @@ export function AdminNav() {
   const navigate = useNavigate();
 
   const visible = links.filter((l) => !l.adminOnly || isAdmin);
+
+  const lastSeen = useLastSeenUsersAt();
+  const countFn = useServerFn(countNewUsers);
+  const newUsersQuery = useQuery({
+    queryKey: ["admin", "new-users-count", lastSeen],
+    queryFn: () => countFn({ data: { since: lastSeen } }),
+    enabled: isAdmin,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+  });
+  const newUsersCount = isAdmin ? newUsersQuery.data?.count ?? 0 : 0;
+
+  const renderLabel = (l: NavLink) => {
+    if (l.to !== "/admin/users" || newUsersCount <= 0) return l.label;
+    return (
+      <>
+        {l.label}
+        <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)] px-1 text-[10px] font-semibold leading-none text-white">
+          {newUsersCount > 99 ? "99+" : newUsersCount}
+        </span>
+      </>
+    );
+  };
+
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLUListElement | null>(null);
@@ -127,7 +155,7 @@ export function AdminNav() {
               <li key={l.to} data-measure-item className="shrink-0">
                 <span className={LINK_CLASS_BASE}>
                   <Icon className="h-3.5 w-3.5" />
-                  {l.label}
+                  {renderLabel(l)}
                 </span>
               </li>
             );
@@ -156,7 +184,7 @@ export function AdminNav() {
                   ].join(" ")}
                 >
                   <Icon className="h-3.5 w-3.5" />
-                  {l.label}
+                  {renderLabel(l)}
                 </Link>
               </li>
             );
@@ -187,7 +215,7 @@ export function AdminNav() {
                         className={`cursor-pointer ${active ? "bg-muted" : ""}`}
                       >
                         <Icon className="mr-2 h-4 w-4" />
-                        {l.label}
+                        {renderLabel(l)}
                       </DropdownMenuItem>
                     );
                   })}
