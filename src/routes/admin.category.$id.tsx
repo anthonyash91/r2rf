@@ -432,16 +432,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     onError: (e: any) => toast.error(e.message),
   });
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [editMode, setEditMode] = useState(false);
+  const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
-  const toggleOne = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
   const deleteManyMut = useMutation({
     mutationFn: async (ids: string[]) => {
       const { error } = await supabase.from("content_items").delete().in("id", ids);
@@ -451,11 +443,10 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     onSuccess: async (deleted) => {
       toast.success(`Deleted ${deleted} ${deleted === 1 ? "item" : "items"}`);
       await invalidate();
-      setSelectedIds(new Set());
+      bulk.clear();
     },
     onError: (e: any) => toast.error(e.message),
   });
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const reorderMut = useMutation({
     mutationFn: async (next: ContentItem[]) => {
