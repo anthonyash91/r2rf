@@ -612,7 +612,7 @@ function CategoryProgressSection({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         style={open ? { backgroundColor: "#f7f5ec" } : undefined}
-        className={`w-full flex items-center gap-4 p-4 sm:p-5 ${open ? "border-b border-border" : ""} text-left hover:bg-muted/40 transition-colors`}
+        className={`w-full flex items-center gap-4 p-6 ${open ? "border-b border-border" : ""} text-left hover:bg-muted/40 transition-colors`}
       >
         {!isAdmin ? (
           <CircleProgress value={pct} size={52} stroke={5} />
