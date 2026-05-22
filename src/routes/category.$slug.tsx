@@ -401,7 +401,7 @@ function CategoryPage() {
                         {(isAdmin || isNew) && (
                           <div className="absolute top-3 right-3 mt-[7px] mr-[7px] flex items-center gap-1.5 flex-wrap justify-end z-10">
                             {isAdmin && isNew && (
-                              <NewBadge className="hidden">{t("category.newContent")}</NewBadge>
+                              <Badge variant="new" className="hidden">{t("category.newContent")}</Badge>
                             )}
 
                             {isAdmin && (
