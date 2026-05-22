@@ -5,7 +5,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Trash2, Shield, ArrowLeft, LogIn, Pencil, Ban, Power } from "lucide-react";
-import { useConfirm } from "@/components/ConfirmDialog";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
@@ -35,7 +34,6 @@ const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]
 
 function AdminIpAllowlistPage() {
   const qc = useQueryClient();
-  const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
   const [ip, setIp] = useState("");
   const [label, setLabel] = useState("");
@@ -166,7 +164,6 @@ type BlockedRow = {
 
 function BlockedSection() {
   const qc = useQueryClient();
-  const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
   const queryKey = ["admin", "ip_passkey_attempts", "blocked"] as const;
 
@@ -269,7 +266,6 @@ function AllowlistSection({
   allowBulk?: boolean;
 }) {
   const qc = useQueryClient();
-  const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
   const [ip, setIp] = useState("");
   const [label, setLabel] = useState("");
