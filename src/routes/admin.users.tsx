@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download, Search, Sparkles } from "lucide-react";
+import { ArrowLeft, Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, Globe, HelpCircle, Loader2, Download, Search } from "lucide-react";
 import { Badge } from "@/components/Badge";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
@@ -71,6 +71,7 @@ function AdminUsersPage() {
   // highlighted for the duration of this visit. On unmount (or now), bump
   // lastSeen so the AdminNav badge clears and these won't highlight next time.
   const newUsersSinceRef = useRef<string>(getLastSeenUsersAt());
+  const isNewUser = (u: UserRow) => u.created_at > newUsersSinceRef.current;
   useEffect(() => {
     setLastSeenUsersAt(new Date().toISOString());
   }, []);
@@ -189,6 +190,7 @@ function AdminUsersPage() {
           <UserItem
             key={u.id}
             user={u}
+            isNew={isNewUser(u)}
             facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""}
             onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
             onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
@@ -415,8 +417,6 @@ function AdminUsersPage() {
 
                 // Sort: newly signed-up users (since this visit started) first,
                 // newest first; everyone else preserves the existing order.
-                const sinceIso = newUsersSinceRef.current;
-                const isNewUser = (u: UserRow) => u.created_at > sinceIso;
                 const newOnes = filteredBase
                   .filter(isNewUser)
                   .slice()
@@ -524,13 +524,8 @@ function AdminUsersPage() {
                             const selected = selectedIds.has(u.id);
                             const isNew = isNewUser(u);
                             const newHighlight = isNew
-                              ? "bg-[var(--color-accent)]/10 border-l-2 border-l-[var(--color-accent)]"
+                              ? "bg-[var(--color-accent)]/10"
                               : "";
-                            const newBadge = isNew ? (
-                              <span className="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                                <Sparkles className="h-3 w-3" /> New
-                              </span>
-                            ) : null;
                             if (editMode) {
                               return (
                                 <li
@@ -542,14 +537,12 @@ function AdminUsersPage() {
                                       : `${newHighlight} hover:bg-muted/50`
                                   }`}
                                 >
-                                  {newBadge}
                                   <div className="pointer-events-none">{renderItem(u)}</div>
                                 </li>
                               );
                             }
                             return (
                               <li key={u.id} className={`relative ${newHighlight}`}>
-                                {newBadge}
                                 {renderItem(u)}
                               </li>
                             );
@@ -609,6 +602,7 @@ function AdminUsersPage() {
 
 function UserItem({
   user,
+  isNew = false,
   facilityLabel,
   onChangeEmail,
   onSetPassword,
@@ -619,6 +613,7 @@ function UserItem({
   onResetSecurity,
 }: {
   user: UserRow;
+  isNew?: boolean;
   facilityLabel: string;
   onChangeEmail: (email: string) => void;
   onSetPassword: (password: string) => void;
@@ -655,6 +650,9 @@ function UserItem({
               </Badge>
               {user.roles.includes("user") && (
                 <Badge variant="user">User</Badge>
+              )}
+              {isNew && (
+                <Badge variant="new">New</Badge>
               )}
 
             </div>
