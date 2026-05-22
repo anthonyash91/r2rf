@@ -18,17 +18,9 @@ export function SiteHeader() {
     await supabase.auth.signOut();
     navigate({ to: "/" });
   };
-  const checkAuthIp = useServerFn(isAuthIpAllowed);
-  const { data: authIp } = useQuery({
-    queryKey: ["auth-ip-allowed"],
-    queryFn: () => checkAuthIp(),
-    staleTime: 60_000,
-  });
-  // Show admin auth link to visitors whose IP is allowed (admin sign-in is IP-gated).
-  const showAuthLink = authIp?.allowed === true;
   const isAdminUser = isAdmin || isContributor;
   const signOutLabel = isAdminUser ? t("nav.adminSignOut") : t("nav.signOut");
-  const signInLabel = t("nav.adminSignIn");
+  const signInLabel = t("nav.signIn");
 
   const toggleLang = () => setLang(lang === "en" ? "es" : "en");
 
