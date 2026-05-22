@@ -392,13 +392,24 @@ function AdminCategoriesPage() {
                   <TooltipTrigger asChild>
                     <button
                       aria-label={c.published ? "Unpublish" : "Publish"}
+                      disabled={togglePublish.isPending && (togglePublish.variables as any)?.id === c.id}
                       onClick={() => togglePublish.mutate(c)}
-                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
                     >
-                      {c.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      {togglePublish.isPending && (togglePublish.variables as any)?.id === c.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : c.published ? (
+                        <Eye className="h-4 w-4" />
+                      ) : (
+                        <EyeOff className="h-4 w-4" />
+                      )}
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>{c.published ? "Unpublish" : "Publish"}</TooltipContent>
+                  <TooltipContent>
+                    {togglePublish.isPending && (togglePublish.variables as any)?.id === c.id
+                      ? "Saving…"
+                      : c.published ? "Unpublish" : "Publish"}
+                  </TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>

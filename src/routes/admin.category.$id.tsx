@@ -625,13 +625,24 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                       <TooltipTrigger asChild>
                         <button
                           aria-label={item.published ? "Unpublish" : "Publish"}
+                          disabled={togglePublish.isPending && (togglePublish.variables as any)?.id === item.id}
                           onClick={() => togglePublish.mutate(item)}
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
                         >
-                          {item.published ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          {togglePublish.isPending && (togglePublish.variables as any)?.id === item.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : item.published ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )}
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent>{item.published ? "Unpublish" : "Publish"}</TooltipContent>
+                      <TooltipContent>
+                        {togglePublish.isPending && (togglePublish.variables as any)?.id === item.id
+                          ? "Saving…"
+                          : item.published ? "Unpublish" : "Publish"}
+                      </TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>

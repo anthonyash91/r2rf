@@ -18,7 +18,7 @@ import { questionLabel } from "@/lib/security-questions";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 
@@ -213,9 +213,10 @@ function SignupPage() {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                 >
-                  {busy ? "…" : t("security.continue")}
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {busy ? "Saving…" : t("security.continue")}
                 </button>
               </form>
             ) : (
@@ -263,9 +264,10 @@ function SignupPage() {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                 >
-                  {busy ? "…" : t("security.resetSubmit")}
+                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {busy ? "Saving…" : t("security.resetSubmit")}
                 </button>
               </form>
             )}
@@ -461,9 +463,10 @@ function SignupPage() {
               <button
                 type="submit"
                 disabled={busy || (mode === "sign-up" && !challengeQuery.data)}
-                className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
-                {busy ? "…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
               </button>
             </form>
 

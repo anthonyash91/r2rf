@@ -186,12 +186,25 @@ function AdminUsersPage() {
           (u) => !u.roles.includes("admin") && !u.roles.includes("contributor"),
         );
 
+        const isPendingEmail = (id: string) => emailMut.isPending && emailMut.variables?.userId === id;
+        const isPendingPw = (id: string) => pwMut.isPending && pwMut.variables?.userId === id;
+        const isPendingResetEmail = (email: string) => resetMut.isPending && resetMut.variables?.email === email;
+        const isPendingRole = (id: string) => roleMut.isPending && roleMut.variables?.userId === id;
+        const isPendingDelete = (id: string) => deleteMut.isPending && deleteMut.variables?.userId === id;
+        const isPendingClearSec = (id: string) => clearSecMut.isPending && clearSecMut.variables?.userId === id;
+
         const renderItem = (u: UserRow) => (
           <UserItem
             key={u.id}
             user={u}
             isNew={isNewUser(u)}
             facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""}
+            pendingEmail={isPendingEmail(u.id)}
+            pendingPassword={isPendingPw(u.id)}
+            pendingReset={isPendingResetEmail(u.email)}
+            pendingRole={isPendingRole(u.id)}
+            pendingDelete={isPendingDelete(u.id)}
+            pendingClearSec={isPendingClearSec(u.id)}
             onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
             onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
             onSendReset={() => resetMut.mutate({ email: u.email })}
@@ -604,6 +617,12 @@ function UserItem({
   user,
   isNew = false,
   facilityLabel,
+  pendingEmail = false,
+  pendingPassword = false,
+  pendingReset = false,
+  pendingRole = false,
+  pendingDelete = false,
+  pendingClearSec = false,
   onChangeEmail,
   onSetPassword,
   onSendReset,
@@ -615,6 +634,12 @@ function UserItem({
   user: UserRow;
   isNew?: boolean;
   facilityLabel: string;
+  pendingEmail?: boolean;
+  pendingPassword?: boolean;
+  pendingReset?: boolean;
+  pendingRole?: boolean;
+  pendingDelete?: boolean;
+  pendingClearSec?: boolean;
   onChangeEmail: (email: string) => void;
   onSetPassword: (password: string) => void;
   onSendReset: () => void;
@@ -676,16 +701,17 @@ function UserItem({
                 className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
               />
               <button
-                title="Save"
+                title={pendingEmail ? "Saving…" : "Save"}
+                disabled={pendingEmail}
                 onClick={() => {
                   const next = emailDraft.trim();
                   if (!next || next === user.email) { setEditingEmail(false); return; }
                   onChangeEmail(next);
                   setEditingEmail(false);
                 }}
-                className="p-1.5 rounded-md hover:bg-muted text-foreground"
+                className="p-1.5 rounded-md hover:bg-muted text-foreground disabled:opacity-60"
               >
-                <Check className="h-4 w-4" />
+                {pendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               </button>
               <button
                 title="Cancel"
@@ -762,13 +788,14 @@ function UserItem({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onSendReset}
+                    disabled={pendingReset}
                     aria-label="Send password reset email"
-                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
                   >
-                    <Send className="h-4 w-4" />
+                    {pendingReset ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Send reset email</TooltipContent>
+                <TooltipContent>{pendingReset ? "Saving…" : "Send reset email"}</TooltipContent>
               </Tooltip>
             )}
 
@@ -776,13 +803,14 @@ function UserItem({
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setPwOpen((v) => !v)}
+                  disabled={pendingPassword}
                   aria-label="Set password"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
                 >
-                  <KeyRound className="h-4 w-4" />
+                  {pendingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Set password</TooltipContent>
+              <TooltipContent>{pendingPassword ? "Saving…" : "Set password"}</TooltipContent>
             </Tooltip>
 
             {isRegularUser && (
@@ -790,13 +818,14 @@ function UserItem({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onResetSecurity}
+                    disabled={pendingClearSec}
                     aria-label="Reset security questions"
-                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
                   >
-                    <HelpCircle className="h-4 w-4" />
+                    {pendingClearSec ? <Loader2 className="h-4 w-4 animate-spin" /> : <HelpCircle className="h-4 w-4" />}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Reset security questions</TooltipContent>
+                <TooltipContent>{pendingClearSec ? "Saving…" : "Reset security questions"}</TooltipContent>
               </Tooltip>
             )}
 
@@ -808,34 +837,36 @@ function UserItem({
                       onClick={() => {
                         onToggleAdmin(!isAdmin);
                       }}
+                      disabled={pendingRole}
                       aria-label={isAdmin ? "Revoke admin" : "Make admin"}
-                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border disabled:opacity-60 ${
                         isAdmin
                           ? "border-destructive/30 text-destructive hover:bg-destructive/10"
                           : "border-input bg-background hover:bg-muted"
                       }`}
                     >
-                      {isAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                      {pendingRole ? <Loader2 className="h-4 w-4 animate-spin" /> : isAdmin ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>{isAdmin ? "Revoke admin" : "Make admin"}</TooltipContent>
+                  <TooltipContent>{pendingRole ? "Saving…" : isAdmin ? "Revoke admin" : "Make admin"}</TooltipContent>
                 </Tooltip>
 
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
                       onClick={() => onToggleContributor(!isContributor)}
+                      disabled={pendingRole}
                       aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
-                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border ${
+                      className={`inline-flex items-center justify-center h-9 w-9 rounded-xl border disabled:opacity-60 ${
                         isContributor
                           ? "border-destructive/30 text-destructive hover:bg-destructive/10"
                           : "border-input bg-background hover:bg-muted"
                       }`}
                     >
-                      {isContributor ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                      {pendingRole ? <Loader2 className="h-4 w-4 animate-spin" /> : isContributor ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>{isContributor ? "Revoke contributor" : "Make contributor"}</TooltipContent>
+                  <TooltipContent>{pendingRole ? "Saving…" : isContributor ? "Revoke contributor" : "Make contributor"}</TooltipContent>
                 </Tooltip>
               </>
             )}
@@ -846,13 +877,14 @@ function UserItem({
               <TooltipTrigger asChild>
                 <button
                   onClick={onDelete}
+                  disabled={pendingDelete}
                   aria-label="Delete user"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  {pendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Delete user</TooltipContent>
+              <TooltipContent>{pendingDelete ? "Saving…" : "Delete user"}</TooltipContent>
             </Tooltip>
           </div>
         </TooltipProvider>
