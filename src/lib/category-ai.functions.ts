@@ -27,7 +27,8 @@ STRICT visual rules:
 - Background MUST be filled edge-to-edge with the exact color #fff9e1 (warm cream). No other background color is acceptable.
 - STRICT color palette — use ONLY these five hex colors, no others: #aeb25d (sage), #986313 (brown), #587932 (olive green), #fff9e1 (cream background), #d5a43e (goldenrod). Do not introduce any color outside this list.
 - One simple, centered subject that clearly evokes the category. Keep it MINIMALIST — not too busy. Prefer 1 main shape, optionally with 1 small supporting element. Avoid clutter, avoid many small details.
-- Use THICK, BOLD outline strokes with rounded line caps and rounded corners. Stroke width roughly 8–12% of the icon height — chunky, confident, sticker-style.
+- Use THICK, BOLD, CLEAN outline strokes with FLAT/BUTT line caps and SHARP corners (NO rounded caps, NO rounded corners). Stroke width roughly 8–12% of the icon height — defined, crisp, confident lines.
+- Lines and shapes must NEVER collide, overlap, or touch each other. Maintain clear visible spacing between every stroke and shape so the icon stays easy to read and interpret at a glance.
 - Flat fills only — no gradients, no shading, no highlights, no shadows, no textures, no noise, no 3D.
 - Generous padding around the icon (around 15–20% of the canvas on every side).
 - No text, no letters, no numbers, no watermark, no border, no frame, no photorealism, no glow.
