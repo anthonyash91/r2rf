@@ -11,6 +11,17 @@ import { toast } from "sonner";
 import { ArrowLeft, Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
+import { FileUploader } from "@/components/FileUploader";
+import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
+import { SortableList } from "@/components/SortableList";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useBulkSelect } from "@/hooks/use-bulk-select";
+import { BulkActionBar } from "@/components/BulkActionBar";
+import { LabeledInput } from "@/components/FormField";
 
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
@@ -25,17 +36,7 @@ function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "mis
   if (translated < required.length) return "partial";
   return "complete";
 }
-import { FileUploader } from "@/components/FileUploader";
-import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
-import { SortableList } from "@/components/SortableList";
-import { useConfirm } from "@/components/ConfirmDialog";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useBulkSelect } from "@/hooks/use-bulk-select";
-import { BulkActionBar } from "@/components/BulkActionBar";
-import { LabeledInput } from "@/components/FormField";
+
 
 export const Route = createFileRoute("/admin/category/$id")({
   validateSearch: (search: Record<string, unknown>) => ({
