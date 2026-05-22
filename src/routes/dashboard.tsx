@@ -562,49 +562,33 @@ function CategoryProgressSection({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className={`w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 p-5 ${open ? "border-b border-border" : ""} bg-muted/30 text-left hover:bg-muted/50 transition-colors`}
+        className={`w-full flex items-center gap-4 p-4 sm:p-5 ${open ? "border-b border-border" : ""} text-left hover:bg-muted/40 transition-colors`}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
-          {category.icon_url ? (
-            <img src={category.icon_url} alt="" className="h-10 w-10 object-cover border border-border bg-muted flex-shrink-0 rounded-md" />
-          ) : (
-            <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
-          )}
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="font-display text-lg font-semibold truncate">
-                {pickLang(lang, category.name, category.name_es)}
-              </h2>
-              {hasRecent && (
-                <Badge variant="new" className="hidden lg:inline-flex">{t("category.newContentAdded")}</Badge>
-              )}
-            </div>
-            {tagline && (
-              <p className="text-xs text-muted-foreground truncate">{tagline}</p>
-            )}
-          </div>
-        </div>
-
-        {!isAdmin && (
-          <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
-            {hasRecent && (
-              <Badge variant="new" className="lg:hidden">{t("category.newContentAdded")}</Badge>
-            )}
-            <div className="hidden lg:block w-32">
-              <Progress value={pct} className="h-1.5" />
-            </div>
-
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
-              <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
-              <span className="tabular-nums">{read.toLocaleString()}</span>
-              <span className="text-muted-foreground">/ {total.toLocaleString()}</span>
-            </span>
-            <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-medium tabular-nums">
-              {pct}%
-            </span>
-          </div>
+        {!isAdmin ? (
+          <CircleProgress value={pct} size={52} stroke={5} />
+        ) : category.icon_url ? (
+          <img src={category.icon_url} alt="" className="h-12 w-12 object-cover border border-border bg-muted flex-shrink-0 rounded-md" />
+        ) : (
+          <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
         )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-display text-base sm:text-lg font-semibold truncate">
+              {pickLang(lang, category.name, category.name_es)}
+            </h2>
+            {hasRecent && (
+              <Badge variant="new">{t("category.newContentAdded")}</Badge>
+            )}
+          </div>
+          {!isAdmin ? (
+            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+              {read.toLocaleString()} of {total.toLocaleString()} completed
+            </p>
+          ) : tagline ? (
+            <p className="mt-0.5 text-xs text-muted-foreground truncate">{tagline}</p>
+          ) : null}
+        </div>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
       </button>
       {open && (
         items.length === 0 ? (
