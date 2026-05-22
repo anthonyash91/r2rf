@@ -355,19 +355,8 @@ function SignupPage() {
                   Please sign up using your <strong>correct, real information</strong>. Accurate details ensure you can receive credit in the future for participating in this program.
                 </div>
               )}
-              {/* honeypot */}
-              <div className="hidden" aria-hidden>
-                <label>
-                  {t("signup.honeypot")}
-                  <input
-                    type="text"
-                    tabIndex={-1}
-                    autoComplete="off"
-                    value={honeypot}
-                    onChange={(e) => setHoneypot(e.target.value)}
-                  />
-                </label>
-              </div>
+
+
 
               <div>
                 <label className="text-sm font-medium">
@@ -536,6 +525,19 @@ function SignupPage() {
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />}
                 {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
               </button>
+              {/* honeypot — placed last so it doesn't affect space-y top spacing */}
+              <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden>
+                <label>
+                  {t("signup.honeypot")}
+                  <input
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                  />
+                </label>
+              </div>
             </form>
             </div>
 
