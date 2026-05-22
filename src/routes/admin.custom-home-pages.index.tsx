@@ -508,59 +508,45 @@ function AdminCustomHomePagesList() {
                 </div>
                 <TooltipProvider delayDuration={150}>
                   <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <a
-                          href={`/${p.slug}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label="Open"
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </TooltipTrigger>
-                      <TooltipContent>Open</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Link
-                          to="/admin/custom-home-pages/$id"
-                          params={{ id: p.id }}
-                          aria-label="Edit"
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Link>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit</TooltipContent>
-                    </Tooltip>
+                    <TooltipWrap tooltip="Open">
+                      <a
+                        href={`/${p.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label="Open"
+                        className={iconButtonClassName()}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </TooltipWrap>
+                    <TooltipWrap tooltip="Edit">
+                      <Link
+                        to="/admin/custom-home-pages/$id"
+                        params={{ id: p.id }}
+                        aria-label="Edit"
+                        className={iconButtonClassName()}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                    </TooltipWrap>
                     <div className="mx-1 h-6 w-px bg-border" aria-hidden />
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          aria-label="Delete"
-                          disabled={deleteMut.isPending && deleteMut.variables === p.id}
-                          onClick={async () => {
-                            await confirm({
-                              title: `Delete "${p.name || p.slug}"?`,
-                              description: `This permanently deletes the /${p.slug} page. Underlying categories are not affected.`,
-                              confirmLabel: "Delete",
-                              destructive: true,
-                              onConfirm: () => deleteMut.mutateAsync(p.id),
-                            });
-                          }}
-                          className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
-                        >
-                          {deleteMut.isPending && deleteMut.variables === p.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete</TooltipContent>
-                    </Tooltip>
+                    <IconButton
+                      aria-label="Delete"
+                      tooltip="Delete"
+                      pendingTooltip="Deleting…"
+                      variant="destructive"
+                      icon={Trash2}
+                      pending={deleteMut.isPending && deleteMut.variables === p.id}
+                      onClick={async () => {
+                        await confirm({
+                          title: `Delete "${p.name || p.slug}"?`,
+                          description: `This permanently deletes the /${p.slug} page. Underlying categories are not affected.`,
+                          confirmLabel: "Delete",
+                          destructive: true,
+                          onConfirm: () => deleteMut.mutateAsync(p.id),
+                        });
+                      }}
+                    />
                   </div>
                 </TooltipProvider>
               </li>
