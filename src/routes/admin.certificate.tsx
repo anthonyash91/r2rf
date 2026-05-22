@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Save, RefreshCw, Award } from "lucide-react";
+import { Save, RefreshCw, Award } from "lucide-react";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { LabeledField } from "@/components/FormField";
 import { LoadingButton } from "@/components/LoadingButton";
@@ -98,10 +98,6 @@ function AdminCertificatePage() {
 
   return (
     <div>
-      <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Back to admin
-      </Link>
-
       <SectionCard className="mt-6">
         <PageHeader
           size="md"
