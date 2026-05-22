@@ -502,35 +502,25 @@ function AllowlistRow({
         </div>
         <TooltipProvider delayDuration={150}>
           <div className="flex items-center gap-1.5 shrink-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  aria-label="Edit label"
-                  onClick={() => {
-                    setDraft(row.label ?? "");
-                    setEditing((v) => !v);
-                  }}
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Edit label</TooltipContent>
-            </Tooltip>
+            <IconButton
+              aria-label="Edit label"
+              tooltip="Edit label"
+              icon={Pencil}
+              onClick={() => {
+                setDraft(row.label ?? "");
+                setEditing((v) => !v);
+              }}
+            />
             <div className="mx-1 h-6 w-px bg-border" aria-hidden />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  aria-label="Remove"
-                  disabled={pendingDelete}
-                  onClick={onDelete}
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
-                >
-                  {pendingDelete ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>Remove</TooltipContent>
-            </Tooltip>
+            <IconButton
+              aria-label="Remove"
+              tooltip="Remove"
+              pendingTooltip="Removing…"
+              variant="destructive"
+              icon={Trash2}
+              pending={pendingDelete}
+              onClick={onDelete}
+            />
           </div>
         </TooltipProvider>
       </div>
