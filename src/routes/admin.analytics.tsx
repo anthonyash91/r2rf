@@ -238,7 +238,7 @@ function CategorySection({ row }: { row: AggregatedRow }) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 ${open ? "border-b border-border" : ""} bg-muted/30 text-left hover:bg-muted/50 transition-colors`}
+        className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-white"} text-left hover:bg-muted/50 transition-colors`}
       >
         <div className="flex items-center gap-3 min-w-0">
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
@@ -271,7 +271,7 @@ function CategorySection({ row }: { row: AggregatedRow }) {
                   {item.type}
                 </Badge>
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm">{item.title}</p>
+                  <p className="truncate text-sm font-bold">{item.title}</p>
                   {item.created_at && (
                     <p className="text-xs text-muted-foreground">Added {fmtDate(item.created_at)}</p>
                   )}
