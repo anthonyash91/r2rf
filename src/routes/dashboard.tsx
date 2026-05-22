@@ -196,7 +196,7 @@ function DashboardPage() {
         })()}
         <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
 
-        <Tabs defaultValue="categories" className="mt-8">
+        <Tabs defaultValue={Route.useSearch().tab === "account" ? "account" : "categories"} className="mt-8">
           <TabsList className="h-auto p-2 gap-1">
             <TabsTrigger
               value="categories"
