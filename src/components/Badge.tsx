@@ -50,8 +50,8 @@ const VARIANT_CLASSES: Record<Exclude<BadgeVariant, "type">, string> = {
   verified: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600",
   // Unverified email
   unverified: "border-amber-500/30 bg-amber-500/10 text-amber-600",
-  // Regular user role
-  user: "border-border bg-secondary text-secondary-foreground",
+  // Regular user role — indigo
+  user: "border-indigo-500/30 bg-indigo-500/10 text-indigo-600",
   // Facility name — violet
   facility: "border-violet-500/30 bg-violet-500/10 text-violet-600",
 };
