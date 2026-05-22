@@ -78,7 +78,9 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
   const { isAdmin, user } = useAuth();
   const { t } = useI18n();
   const { data: stats = {} } = useCategoryItemStats(categories.map((c) => c.id));
-  const { data: reads = {} } = useUserProgress(user?.id ?? null, categories.map((c) => c.id));
+  const { data: progress } = useUserProgress(user?.id ?? null, categories.map((c) => c.id));
+  const reads = progress?.reads ?? {};
+  const readSet = progress?.readSet ?? new Set<string>();
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
   categories.forEach((c, i) => buckets[i % cols].push({ c, i }));
   return (
@@ -86,8 +88,9 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
       {buckets.map((bucket, ci) => (
         <div key={ci} className="flex-1 flex flex-col gap-9 min-w-0">
           {bucket.map(({ c }) => {
-            const s = stats[c.id] ?? { count: 0, hasRecent: false };
+            const s = stats[c.id] ?? { count: 0, recentItemIds: new Set<string>() };
             const count = s.count;
+            const hasRecent = Array.from(s.recentItemIds).some((id) => !readSet.has(id));
             return (
             <div key={c.id} className="relative">
               <Link
@@ -115,7 +118,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                     <Badge variant="count">
                       {count} {t(count === 1 ? "home.item" : "home.items")}
                     </Badge>
-                    {s.hasRecent && (
+                    {hasRecent && (
                       <Badge variant="new">{t("category.newContentAdded")}</Badge>
                     )}
                   </div>
