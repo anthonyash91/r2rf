@@ -37,23 +37,23 @@ const VARIANT_CLASSES: Record<Exclude<BadgeVariant, "type">, string> = {
   // Accent green — Custom / custom home page name
   custom:
     "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/15 text-[var(--color-accent)]",
-  // Rose — Custom category chips
-  category: "border-rose-500/30 bg-rose-500/10 text-rose-600",
+  // Rose — Custom category chips (muted)
+  category: "border-[oklch(0.85_0.04_15)] bg-[oklch(0.95_0.02_15)] text-[oklch(0.42_0.07_15)]",
   // Gold (themed) — translation status (Needs ES / Partially translated)
   translation:
     "border-[var(--color-gold)]/30 bg-[var(--color-gold)]/15 text-[var(--color-gold)]",
-  // Admin role
-  admin: "border-primary/30 bg-primary/10 text-primary",
-  // Contributor role
-  contributor: "border-sky-500/30 bg-sky-500/10 text-sky-600",
-  // Verified email
-  verified: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600",
-  // Unverified email
-  unverified: "border-amber-500/30 bg-amber-500/10 text-amber-600",
-  // Regular user role — indigo
-  user: "border-indigo-500/30 bg-indigo-500/10 text-indigo-600",
-  // Facility name — violet
-  facility: "border-violet-500/30 bg-violet-500/10 text-violet-600",
+  // Admin role (muted primary)
+  admin: "border-primary/25 bg-primary/8 text-primary/90",
+  // Contributor role — sky (muted)
+  contributor: "border-[oklch(0.85_0.04_230)] bg-[oklch(0.95_0.02_230)] text-[oklch(0.42_0.07_230)]",
+  // Verified email — emerald (muted)
+  verified: "border-[oklch(0.85_0.04_160)] bg-[oklch(0.95_0.02_160)] text-[oklch(0.4_0.07_160)]",
+  // Unverified email — amber (muted)
+  unverified: "border-[oklch(0.85_0.05_75)] bg-[oklch(0.95_0.03_75)] text-[oklch(0.45_0.07_75)]",
+  // Regular user role — indigo (muted)
+  user: "border-[oklch(0.85_0.04_265)] bg-[oklch(0.95_0.02_265)] text-[oklch(0.42_0.07_265)]",
+  // Facility name — violet (muted)
+  facility: "border-[oklch(0.85_0.04_290)] bg-[oklch(0.95_0.02_290)] text-[oklch(0.42_0.07_290)]",
 };
 
 
