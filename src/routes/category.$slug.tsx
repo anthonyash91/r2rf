@@ -44,7 +44,6 @@ function detectMedia(url: string | null | undefined): MediaKind | null {
   return null;
 }
 
-import { typeBadgeClass } from "@/lib/type-badge";
 
 export const Route = createFileRoute("/category/$slug")({
   component: CategoryPage,
