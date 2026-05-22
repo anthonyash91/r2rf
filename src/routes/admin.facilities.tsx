@@ -238,7 +238,7 @@ function AdminFacilitiesPage() {
           </div>
         )}
 
-        <div className="mt-3 rounded-2xl border border-border bg-card overflow-hidden">
+        <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${facilities.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
           {facilitiesQuery.isLoading ? (
             <div className="p-6 text-muted-foreground text-sm">Loading…</div>
           ) : facilities.length ? (
