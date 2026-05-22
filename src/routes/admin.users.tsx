@@ -314,11 +314,21 @@ function AdminUsersPage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:flex-wrap">
                 <div>
                   {(() => {
-                    const filteredCount = facilityFilter === "all"
-                      ? regularUsers.length
-                      : regularUsers.filter((u) => u.profile?.facility === facilityFilter).length;
+                    const q = searchQuery.trim().toLowerCase();
+                    const facilityScoped = facilityFilter === "all"
+                      ? regularUsers
+                      : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
+                    const filteredCount = q
+                      ? facilityScoped.filter((u) => {
+                          const facLabel = u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : "";
+                          return [u.email, u.profile?.username, u.profile?.first_name, u.profile?.last_name, facLabel]
+                            .filter(Boolean)
+                            .some((v) => String(v).toLowerCase().includes(q));
+                        }).length
+                      : facilityScoped.length;
+                    const isFiltered = facilityFilter !== "all" || q.length > 0;
                     return (
-                      <h2 className="font-display text-xl font-semibold">Users <span className="text-muted-foreground font-normal">({filteredCount}{facilityFilter !== "all" ? ` of ${regularUsers.length}` : ""})</span></h2>
+                      <h2 className="font-display text-xl font-semibold">Users <span className="text-muted-foreground font-normal">({filteredCount}{isFiltered ? ` of ${regularUsers.length}` : ""})</span></h2>
                     );
                   })()}
                   <p className="mt-1 text-xs text-muted-foreground">
