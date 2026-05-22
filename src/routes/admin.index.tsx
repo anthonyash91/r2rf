@@ -387,93 +387,71 @@ function AdminCategoriesPage() {
             </div>
             <TooltipProvider delayDuration={150}>
               <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      aria-label={c.published ? "Unpublish" : "Publish"}
-                      disabled={togglePublish.isPending && (togglePublish.variables as any)?.id === c.id}
-                      onClick={() => togglePublish.mutate(c)}
-                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
-                    >
-                      {togglePublish.isPending && (togglePublish.variables as any)?.id === c.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : c.published ? (
-                        <Eye className="h-4 w-4" />
-                      ) : (
-                        <EyeOff className="h-4 w-4" />
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {togglePublish.isPending && (togglePublish.variables as any)?.id === c.id
-                      ? "Saving…"
-                      : c.published ? "Unpublish" : "Publish"}
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    {c.published ? (
-                      <Link
-                        to="/category/$slug"
-                        params={{ slug: c.slug }}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="View on site"
-                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Link>
-                    ) : (
-                      <span
-                        aria-label="View on site (unavailable for drafts)"
-                        aria-disabled="true"
-                        className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background opacity-50 cursor-not-allowed"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </span>
-                    )}
-                  </TooltipTrigger>
-                  <TooltipContent>{c.published ? "View on site" : "Unavailable while draft"}</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+                <IconButton
+                  aria-label={c.published ? "Unpublish" : "Publish"}
+                  tooltip={c.published ? "Unpublish" : "Publish"}
+                  icon={
+                    togglePublish.isPending && (togglePublish.variables as any)?.id === c.id
+                      ? Eye // ignored, spinner shown
+                      : c.published
+                      ? Eye
+                      : EyeOff
+                  }
+                  pending={togglePublish.isPending && (togglePublish.variables as any)?.id === c.id}
+                  onClick={() => togglePublish.mutate(c)}
+                />
+                {c.published ? (
+                  <TooltipWrap tooltip="View on site">
                     <Link
-                      to="/admin/category/$id"
-                      params={{ id: c.id }}
-                      aria-label="Edit"
-                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                      to="/category/$slug"
+                      params={{ slug: c.slug }}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="View on site"
+                      className={iconButtonClassName()}
                     >
-                      <Pencil className="h-4 w-4" />
+                      <ExternalLink className="h-4 w-4" />
                     </Link>
-                  </TooltipTrigger>
-                  <TooltipContent>Edit</TooltipContent>
-                </Tooltip>
-                <div className="mx-1 h-6 w-px bg-border" aria-hidden />
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      aria-label="Delete"
-                      disabled={deleteMut.isPending && deleteMut.variables === c.id}
-                      onClick={async () => {
-                        await confirm({
-                          title: `Delete "${c.name}"?`,
-                          description: "This will permanently delete the category and all its content.",
-                          confirmLabel: "Delete",
-                          destructive: true,
-                          onConfirm: () => deleteMut.mutateAsync(c.id),
-                        });
-                      }}
-                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                  </TooltipWrap>
+                ) : (
+                  <TooltipWrap tooltip="Unavailable while draft">
+                    <span
+                      aria-label="View on site (unavailable for drafts)"
+                      aria-disabled="true"
+                      className={iconButtonClassName("default", "opacity-50 cursor-not-allowed")}
                     >
-                      {deleteMut.isPending && deleteMut.variables === c.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>Delete</TooltipContent>
-                </Tooltip>
+                      <ExternalLink className="h-4 w-4" />
+                    </span>
+                  </TooltipWrap>
+                )}
+                <TooltipWrap tooltip="Edit">
+                  <Link
+                    to="/admin/category/$id"
+                    params={{ id: c.id }}
+                    aria-label="Edit"
+                    className={iconButtonClassName()}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                </TooltipWrap>
+                <div className="mx-1 h-6 w-px bg-border" aria-hidden />
+                <IconButton
+                  aria-label="Delete"
+                  tooltip="Delete"
+                  pendingTooltip="Deleting…"
+                  variant="destructive"
+                  icon={Trash2}
+                  pending={deleteMut.isPending && deleteMut.variables === c.id}
+                  onClick={async () => {
+                    await confirm({
+                      title: `Delete "${c.name}"?`,
+                      description: "This will permanently delete the category and all its content.",
+                      confirmLabel: "Delete",
+                      destructive: true,
+                      onConfirm: () => deleteMut.mutateAsync(c.id),
+                    });
+                  }}
+                />
               </div>
             </TooltipProvider>
           </div>
