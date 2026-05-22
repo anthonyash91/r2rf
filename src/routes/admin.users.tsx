@@ -787,13 +787,14 @@ function UserItem({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onSendReset}
+                    disabled={pendingReset}
                     aria-label="Send password reset email"
-                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
                   >
-                    <Send className="h-4 w-4" />
+                    {pendingReset ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Send reset email</TooltipContent>
+                <TooltipContent>{pendingReset ? "Saving…" : "Send reset email"}</TooltipContent>
               </Tooltip>
             )}
 
@@ -801,13 +802,14 @@ function UserItem({
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setPwOpen((v) => !v)}
+                  disabled={pendingPassword}
                   aria-label="Set password"
-                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                  className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
                 >
-                  <KeyRound className="h-4 w-4" />
+                  {pendingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                 </button>
               </TooltipTrigger>
-              <TooltipContent>Set password</TooltipContent>
+              <TooltipContent>{pendingPassword ? "Saving…" : "Set password"}</TooltipContent>
             </Tooltip>
 
             {isRegularUser && (
@@ -815,13 +817,14 @@ function UserItem({
                 <TooltipTrigger asChild>
                   <button
                     onClick={onResetSecurity}
+                    disabled={pendingClearSec}
                     aria-label="Reset security questions"
-                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted"
+                    className="inline-flex items-center justify-center h-9 w-9 rounded-xl border border-input bg-background hover:bg-muted disabled:opacity-60"
                   >
-                    <HelpCircle className="h-4 w-4" />
+                    {pendingClearSec ? <Loader2 className="h-4 w-4 animate-spin" /> : <HelpCircle className="h-4 w-4" />}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>Reset security questions</TooltipContent>
+                <TooltipContent>{pendingClearSec ? "Saving…" : "Reset security questions"}</TooltipContent>
               </Tooltip>
             )}
 
