@@ -44,6 +44,9 @@ function SignupPage() {
   const [answer, setAnswer] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState<
+    "idle" | "checking" | "available" | "taken" | "invalid"
+  >("idle");
   
 
   // Reset flow
@@ -95,12 +98,43 @@ function SignupPage() {
       });
   }, [user, loading, navigate, mode]);
 
+  // Debounced username availability check (sign-up only)
+  useEffect(() => {
+    if (mode !== "sign-up") {
+      setUsernameStatus("idle");
+      return;
+    }
+    const uname = username.trim().toLowerCase();
+    if (!uname) {
+      setUsernameStatus("idle");
+      return;
+    }
+    if (!/^[A-Za-z0-9_]{3,32}$/.test(uname)) {
+      setUsernameStatus("invalid");
+      return;
+    }
+    setUsernameStatus("checking");
+    const handle = setTimeout(async () => {
+      const { data, error } = await supabase.rpc("username_exists", { _username: uname });
+      if (error) {
+        setUsernameStatus("idle");
+        return;
+      }
+      setUsernameStatus(data ? "taken" : "available");
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [username, mode]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
       if (mode === "sign-up") {
         const uname = username.trim().toLowerCase();
+        if (usernameStatus === "taken") {
+          toast.error(t("signup.usernameTaken"));
+          return;
+        }
         if (password !== confirmPassword) {
           toast.error(t("signup.passwordMismatch"));
           return;
@@ -351,6 +385,15 @@ function SignupPage() {
                   placeholder={mode === "sign-up" ? t("signup.usernamePlaceholder") : undefined}
                   autoComplete={mode === "sign-up" ? "username" : "username email"}
                 />
+                {mode === "sign-up" && usernameStatus === "checking" && (
+                  <p className="mt-1 text-xs text-muted-foreground">{t("signup.usernameChecking")}</p>
+                )}
+                {mode === "sign-up" && usernameStatus === "available" && (
+                  <p className="mt-1 text-xs text-[var(--color-accent)]">{t("signup.usernameAvailable")}</p>
+                )}
+                {mode === "sign-up" && usernameStatus === "taken" && (
+                  <p className="mt-1 text-xs text-destructive">{t("signup.usernameTaken")}</p>
+                )}
               </div>
 
 
@@ -487,7 +530,7 @@ function SignupPage() {
 
               <button
                 type="submit"
-                disabled={busy || (mode === "sign-up" && !challengeQuery.data)}
+                disabled={busy || (mode === "sign-up" && (!challengeQuery.data || usernameStatus === "taken" || usernameStatus === "checking"))}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
                 {busy && <Loader2 className="h-4 w-4 animate-spin" />}
