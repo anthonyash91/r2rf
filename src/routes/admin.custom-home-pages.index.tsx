@@ -475,7 +475,7 @@ function AdminCustomHomePagesList() {
                   {items.map((c) => (
                     <Badge
                       key={c.id}
-                      variant={excluded ? "draft" : "custom"}
+                      variant={excluded ? "draft" : "category"}
                       className={excluded ? "[text-decoration:line-through_dotted]" : ""}
                     >
                       {c.name}

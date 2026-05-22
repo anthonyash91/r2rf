@@ -7,6 +7,7 @@ type BadgeVariant =
   | "type"
   | "draft"
   | "custom"
+  | "category"
   | "translation"
   | "admin"
   | "contributor"
@@ -36,6 +37,8 @@ const VARIANT_CLASSES: Record<Exclude<BadgeVariant, "type">, string> = {
   // Accent green — Custom / custom home page name
   custom:
     "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/15 text-[var(--color-accent)]",
+  // Rose — Custom category chips
+  category: "border-rose-500/30 bg-rose-500/10 text-rose-600",
   // Gold (themed) — translation status (Needs ES / Partially translated)
   translation:
     "border-[var(--color-gold)]/30 bg-[var(--color-gold)]/15 text-[var(--color-gold)]",
@@ -49,8 +52,8 @@ const VARIANT_CLASSES: Record<Exclude<BadgeVariant, "type">, string> = {
   unverified: "border-amber-500/30 bg-amber-500/10 text-amber-600",
   // Regular user role
   user: "border-border bg-secondary text-secondary-foreground",
-  // Facility name
-  facility: "border-border bg-muted text-foreground",
+  // Facility name — violet
+  facility: "border-violet-500/30 bg-violet-500/10 text-violet-600",
 };
 
 
