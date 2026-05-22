@@ -632,7 +632,7 @@ function CategoryProgressSection({
           </div>
           {!isAdmin ? (
             <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-              {read.toLocaleString()} of {total.toLocaleString()} completed
+              {t("dashboard.itemsCompleted", { done: read.toLocaleString(), total: total.toLocaleString() } as any)}
             </p>
           ) : tagline ? (
             <p className="mt-0.5 text-xs text-muted-foreground truncate">{tagline}</p>
