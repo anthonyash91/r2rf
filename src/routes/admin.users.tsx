@@ -522,6 +522,10 @@ function AdminUsersPage() {
                         <ul className="divide-y divide-border">
                           {visible.map((u) => {
                             const selected = selectedIds.has(u.id);
+                            const isNew = isNewUser(u);
+                            const newHighlight = isNew
+                              ? "bg-[var(--color-accent)]/10 border-l-2 border-l-[var(--color-accent)]"
+                              : "";
                             if (editMode) {
                               return (
                                 <li
@@ -530,15 +534,15 @@ function AdminUsersPage() {
                                   className={`cursor-pointer transition-colors ${
                                     selected
                                       ? "bg-destructive/10 hover:bg-destructive/15"
-                                      : "hover:bg-muted/50"
+                                      : `${newHighlight} hover:bg-muted/50`
                                   }`}
                                 >
-                                  <div className="pointer-events-none">{renderItem(u)}</div>
+                                  <div className="pointer-events-none">{renderItem(u, isNew)}</div>
                                 </li>
                               );
                             }
                             return (
-                              <li key={u.id}>{renderItem(u)}</li>
+                              <li key={u.id} className={newHighlight}>{renderItem(u, isNew)}</li>
                             );
                           })}
                         </ul>
