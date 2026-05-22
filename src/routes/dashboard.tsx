@@ -499,10 +499,7 @@ function CategoryProgressSection({
                 <li key={it.id} className="flex flex-col gap-2 py-4 pl-[22px] pr-[22px]">
                   <div className="flex items-center gap-2 flex-wrap">
                     {newItemSet.has(it.id) && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-accent)] px-2 py-0.5 text-xs font-medium text-background shadow-sm flex-shrink-0">
-                        <span className="h-1.5 w-1.5 rounded-full bg-background/80" />
-                        {t("category.newContent")}
-                      </span>
+                      <NewBadge>{t("category.newContent")}</NewBadge>
                     )}
 
                     <span className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${typeBadgeClass(it.type)}`}>
