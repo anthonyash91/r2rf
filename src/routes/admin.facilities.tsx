@@ -206,12 +206,12 @@ function AdminFacilitiesPage() {
             <ul className="divide-y divide-border">
               {visibleFacilities.map((f) => {
                 const isEditing = editingId === f.id;
-                const selected = selectedIds.has(f.id);
-                const editable = editMode && !isEditing;
+                const selected = bulk.has(f.id);
+                const editable = bulk.editMode && !isEditing;
                 return (
                   <li
                     key={f.value}
-                    onClick={editable ? () => toggleOne(f.id) : undefined}
+                    onClick={editable ? () => bulk.toggle(f.id) : undefined}
                     className={`p-4 sm:p-5 transition-colors ${
                       editable
                         ? `cursor-pointer ${selected ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"}`
