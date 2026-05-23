@@ -731,23 +731,15 @@ function UserItem({
             />
 
             {isRegularUser && (
-              <>
-                <IconButton
-                  aria-label="Reset security questions"
-                  tooltip="Reset security questions"
-                  icon={HelpCircle}
-                  pending={pendingClearSec}
-                  onClick={onResetSecurity}
-                />
-                <IconButton
-                  aria-label="Promote to admin"
-                  tooltip="Promote to admin"
-                  icon={Shield}
-                  pending={pendingRole}
-                  onClick={() => onToggleAdmin(true)}
-                />
-              </>
+              <IconButton
+                aria-label="Reset security questions"
+                tooltip="Reset security questions"
+                icon={HelpCircle}
+                pending={pendingClearSec}
+                onClick={onResetSecurity}
+              />
             )}
+
 
 
             {!isRegularUser && (
