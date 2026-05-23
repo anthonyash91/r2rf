@@ -258,7 +258,7 @@ function AdminCategoriesPage() {
 
       {(() => {
         const renderCategoryRow = (c: Category) => (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 pt-[18px] pr-6 pb-6 pl-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 pt-[17px] pr-5 pb-[19px] pl-4">
             <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
               {c.icon_url ? (
                 <img
@@ -321,7 +321,7 @@ function AdminCategoriesPage() {
               </div>
             </div>
             <TooltipProvider delayDuration={150}>
-              <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end mr-[2px]">
+              <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
                 <IconButton
                   aria-label={c.published ? "Unpublish" : "Publish"}
                   tooltip={c.published ? "Unpublish" : "Publish"}
