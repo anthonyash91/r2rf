@@ -527,8 +527,8 @@ function SignupPage() {
                   {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
                 </button>
               </div>
-              {/* honeypot — placed last so it doesn't affect space-y top spacing */}
-              <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden>
+              {/* honeypot — anchored to top so it never adds layout space at the bottom */}
+              <div className="!mt-0 absolute top-0 -left-[9999px] h-px w-px overflow-hidden" aria-hidden>
                 <label>
                   {t("signup.honeypot")}
                   <input
