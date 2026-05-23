@@ -258,8 +258,8 @@ function AdminCategoriesPage() {
 
       {(() => {
         const renderCategoryRow = (c: Category) => (
-          <div className="@container/row flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 pt-[17px] pr-6 pb-[19px] pl-3">
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1 mt-[7px] @[36rem]/row:mt-0">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 pt-[17px] pr-6 pb-[19px] pl-3">
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
               {c.icon_url ? (
                 <img
                   src={c.icon_url}
@@ -270,7 +270,7 @@ function AdminCategoriesPage() {
                 <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
               )}
               <div className="@container flex-1 min-w-0">
-                <div className="flex flex-col-reverse gap-y-1 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
+                <div className="flex flex-col-reverse gap-y-1 pt-[7px] @lg:pt-0 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
                   <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
                   {(() => {
                     const s = categoryTranslationStatus(c);
