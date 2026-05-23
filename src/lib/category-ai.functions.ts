@@ -163,7 +163,8 @@ export const generateContentDescription = createServerFn({ method: "POST" })
       categoryName: z.string().max(200).optional(),
     }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context: ctx }) => {
+    await assertAdminOrContributor(ctx.supabase, ctx.userId);
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
 
@@ -171,6 +172,7 @@ export const generateContentDescription = createServerFn({ method: "POST" })
       data.categoryName ? `Category: "${data.categoryName}".` : "",
       data.type ? `Content type: ${data.type}.` : "",
     ].filter(Boolean).join(" ");
+
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
