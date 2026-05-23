@@ -423,7 +423,7 @@ function AdminCategoriesPage() {
                     >
                       {(bulk.editMode || q) && (
                         <div
-                          className={`flex items-center pl-4 pr-0 ${bulk.editMode ? "text-muted-foreground/50" : "text-muted-foreground/30 cursor-not-allowed"}`}
+                          className={`flex items-center pl-5 pr-0 ${bulk.editMode ? "text-muted-foreground/50" : "text-muted-foreground/30 cursor-not-allowed"}`}
                           aria-disabled={!bulk.editMode}
                         >
                           <GripVertical className="h-4 w-4" />
