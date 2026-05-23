@@ -184,7 +184,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                   })()}
                 </div>
                 <div className="mt-5 text-left">
-                  <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
+                  <h3 className="font-display text-base sm:text-lg font-semibold text-foreground leading-tight">
                     {pickLang(lang, c.name, c.name_es)}
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
