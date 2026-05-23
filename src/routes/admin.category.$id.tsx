@@ -242,13 +242,13 @@ function CategoryEditor({
         </label>
         <div>
           <span className="text-sm font-medium">Icon</span>
-          <div className="mt-2 flex items-center gap-4">
+          <div className="mt-2 flex items-stretch gap-4">
             {(() => {
               const Icon = resolveCategoryIcon(iconName);
               const color = iconColor || "var(--color-accent)";
               return (
                 <div
-                  className="flex h-16 w-16 items-center justify-center rounded-lg border"
+                  className="flex aspect-square self-stretch items-center justify-center rounded-lg border"
                   style={{
                     backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
                     borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
@@ -258,6 +258,7 @@ function CategoryEditor({
                 </div>
               );
             })()}
+
             <div className="flex flex-col gap-1">
               <LoadingButton
                 variant="secondary"
