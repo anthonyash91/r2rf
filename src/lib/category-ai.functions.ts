@@ -3,6 +3,20 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+async function assertAdminOrContributor(supabase: any, userId: string) {
+  const [adminRes, contribRes] = await Promise.all([
+    supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
+    supabase.rpc("has_role", { _user_id: userId, _role: "contributor" }),
+  ]);
+  if (adminRes.error && contribRes.error) {
+    throw new Error("Forbidden: role check failed");
+  }
+  if (!adminRes.data && !contribRes.data) {
+    throw new Error("Forbidden: admin or contributor access required");
+  }
+}
+
+
 export const generateCategoryIcon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
