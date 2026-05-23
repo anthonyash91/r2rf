@@ -654,16 +654,8 @@ function UserItem({
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
                 <BadgeGroup>
-                  {isAdmin && (
-                    <Badge variant="admin" className="gap-1">
-                      <Shield className="h-3 w-3" /> Admin
-                    </Badge>
-                  )}
-                  {isContributor && (
-                    <Badge variant="contributor" className="gap-1">
-                      <Shield className="h-3 w-3" /> Contributor
-                    </Badge>
-                  )}
+                  {isAdmin && <Badge variant="admin">Admin</Badge>}
+                  {isContributor && <Badge variant="contributor">Contributor</Badge>}
                   {user.email_confirmed_at ? (
                     <Badge variant="verified">Verified</Badge>
                   ) : (
@@ -682,16 +674,8 @@ function UserItem({
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <BadgeGroup className="ml-1 hidden sm:inline-flex">
-                  {isAdmin && (
-                    <Badge variant="admin" className="gap-1">
-                      <Shield className="h-3 w-3" /> Admin
-                    </Badge>
-                  )}
-                  {isContributor && (
-                    <Badge variant="contributor" className="gap-1">
-                      <Shield className="h-3 w-3" /> Contributor
-                    </Badge>
-                  )}
+                  {isAdmin && <Badge variant="admin">Admin</Badge>}
+                  {isContributor && <Badge variant="contributor">Contributor</Badge>}
                   {user.email_confirmed_at ? (
                     <Badge variant="verified">Verified</Badge>
                   ) : (

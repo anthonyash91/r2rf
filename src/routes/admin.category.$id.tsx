@@ -9,7 +9,7 @@ import { BadgeGroup } from "@/components/BadgeGroup";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { generateUniqueCategoryIcon, resolveCategoryIcon } from "@/lib/category-icons";
@@ -546,8 +546,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                           <Badge variant="type" type={item.type}>{item.type}</Badge>
                           {!item.published && <Badge variant="draft">Draft</Badge>}
                           {s !== "complete" && (
-                            <Badge variant="translation" title={trTitle} className="gap-1">
-                              <Languages className="h-3 w-3" /> {trLabel}
+                            <Badge variant="translation" title={trTitle}>
+                              {trLabel}
                             </Badge>
                           )}
                         </BadgeGroup>

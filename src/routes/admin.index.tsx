@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Eye, EyeOff, Languages, Sparkles, RefreshCw, ExternalLink, LayoutGrid, Loader2, GripVertical } from "lucide-react";
+import { Pencil, Plus, Trash2, Eye, EyeOff, Sparkles, RefreshCw, ExternalLink, LayoutGrid, Loader2, GripVertical } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -309,8 +309,8 @@ function AdminCategoriesPage() {
                         )}
                         {!c.published && <Badge variant="draft">Draft</Badge>}
                         {s !== "complete" && (
-                          <Badge variant="translation" title={trTitle} className="gap-1">
-                            <Languages className="h-3 w-3" /> {trLabel}
+                          <Badge variant="translation" title={trTitle}>
+                            {trLabel}
                           </Badge>
                         )}
                       </BadgeGroup>
