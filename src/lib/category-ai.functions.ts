@@ -28,8 +28,10 @@ export const generateCategoryIcon = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    await assertAdminOrContributor(context.supabase, context.userId);
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+
 
     const prompt = `Design a single flat vector icon for a content library category, in the exact style described below.
 
