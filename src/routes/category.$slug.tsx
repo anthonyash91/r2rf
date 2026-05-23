@@ -10,6 +10,7 @@ import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
 import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Check, Circle } from "lucide-react";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
@@ -253,13 +254,13 @@ function CategoryPage() {
           <section className="border-b border-border/60 bg-background">
             <div className="mx-auto max-w-5xl px-6 py-20">
               <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
-                {data.category.icon_url && (
-                  <img
-                    src={data.category.icon_url}
-                    alt=""
-                    className="h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 rounded-2xl object-cover border border-border bg-muted flex-shrink-0"
-                  />
-                )}
+                <CategoryIcon
+                  name={data.category.icon_name}
+                  color={data.category.icon_color}
+                  size="lg"
+                  className="h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 rounded-2xl"
+                />
+                {/** sizing overrides via className above */}
                 <div className="max-w-3xl flex-1">
                   <p className="text-sm font-medium text-[var(--color-accent)]">{pickLang(lang, data.category.tagline, data.category.tagline_es)}</p>
                   <h1 className="mt-2 font-display font-bold tracking-tight text-4xl">{pickLang(lang, data.category.name, data.category.name_es)}</h1>
@@ -506,15 +507,11 @@ function CategoryPage() {
                                   params={{ slug: other.slug }}
                                   className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
                                 >
-                                  {other.icon_url ? (
-                                    <img
-                                      src={other.icon_url}
-                                      alt=""
-                                      className="h-14 w-14 rounded-xl object-cover border border-border bg-muted flex-shrink-0"
-                                    />
-                                  ) : (
-                                    <div className="h-14 w-14 rounded-xl border border-dashed border-border bg-muted/40 flex-shrink-0" />
-                                  )}
+                                  <CategoryIcon
+                                    name={other.icon_name}
+                                    color={other.icon_color}
+                                    className="h-14 w-14 rounded-xl"
+                                  />
                                   <div className="min-w-0 flex-1">
                                     <h3 className="font-display text-base font-semibold text-foreground leading-tight truncate">
                                       {pickLang(lang, other.name, other.name_es)}

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart3, ChevronDown, Download, Eye, MousePointerClick } from "lucide-react";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import type { Category, ContentItem } from "@/lib/categories";
 import { Badge } from "@/components/Badge";
 import { LoadingButton } from "@/components/LoadingButton";
@@ -265,11 +266,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
       >
         <div className="flex items-center gap-3 min-w-0">
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
-          {row.category.icon_url ? (
-            <img src={row.category.icon_url} alt="" className="h-10 w-10 object-cover border border-border bg-muted flex-shrink-0 rounded-md" />
-          ) : (
-            <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
-          )}
+          <CategoryIcon name={row.category.icon_name} color={row.category.icon_color} size="sm" />
           <div className="min-w-0">
             <h2 className="font-display text-lg font-semibold truncate">{row.category.name}</h2>
             <p className="text-xs text-muted-foreground truncate">

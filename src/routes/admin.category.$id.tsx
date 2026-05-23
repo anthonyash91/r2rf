@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, Eye, EyeOff, Save, X, Languages, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
+import { generateUniqueCategoryIcon, resolveCategoryIcon } from "@/lib/category-icons";
 import { FileUploader } from "@/components/FileUploader";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
@@ -121,7 +122,8 @@ function CategoryEditor({
   const [slug, setSlug] = useState(category.slug);
   const [tagline, setTagline] = useState(category.tagline);
   const [description, setDescription] = useState(category.description);
-  const [iconUrl, setIconUrl] = useState<string | null>(category.icon_url);
+  const [iconName, setIconName] = useState<string | null>(category.icon_name);
+  const [iconColor, setIconColor] = useState<string | null>(category.icon_color);
   const [published, setPublished] = useState(category.published);
   const [homePageMode, setHomePageMode] = useState<"default" | "custom">(
     category.home_page_mode ?? "default",
@@ -139,7 +141,8 @@ function CategoryEditor({
     setSlug(category.slug);
     setTagline(category.tagline);
     setDescription(category.description);
-    setIconUrl(category.icon_url);
+    setIconName(category.icon_name);
+    setIconColor(category.icon_color);
     setPublished(category.published);
     setHomePageMode(category.home_page_mode ?? "default");
     setNameEs(category.name_es ?? "");
@@ -170,6 +173,24 @@ function CategoryEditor({
     }
   }
 
+  async function handleRegenerateIcon() {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, icon_name, icon_color");
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const others = (data ?? []).filter((r) => r.id !== category.id);
+    const next = generateUniqueCategoryIcon({
+      usedNames: others.map((c) => c.icon_name),
+      usedColors: others.map((c) => c.icon_color),
+    });
+    setIconName(next.icon_name);
+    setIconColor(next.icon_color);
+    toast.success("New icon generated. Save to apply.");
+  }
+
   return (
     <SectionCard className="mt-8">
       <form
@@ -181,7 +202,8 @@ function CategoryEditor({
             slug: slugify(slug),
             tagline,
             description,
-            icon_url: iconUrl,
+            icon_name: iconName,
+            icon_color: iconColor,
             published,
             home_page_mode: homePageMode,
             name_es: nameEs.trim() || null,
@@ -220,33 +242,30 @@ function CategoryEditor({
         <div>
           <span className="text-sm font-medium">Icon</span>
           <div className="mt-2 flex items-center gap-4">
-            {iconUrl ? (
-              <img
-                src={iconUrl}
-                alt="Category icon"
-                className="h-16 w-16 rounded-lg object-cover border border-border bg-muted"
-              />
-            ) : (
-              <div className="h-16 w-16 rounded-lg border border-dashed border-border bg-muted/40 grid place-items-center text-xs text-muted-foreground">
-                No icon
-              </div>
-            )}
-            <div className="flex flex-wrap gap-2">
-              <FileUploader
-                label={iconUrl ? "Replace icon" : "Upload icon"}
-                mimeTypes={["image/*"]}
-                existingFileUrl={iconUrl}
-                onUploaded={(u) => setIconUrl(u)}
-              />
-              {iconUrl && (
-                <LoadingButton
-                  variant="secondary"
-                  onClick={() => setIconUrl(null)}
-                  className="text-muted-foreground"
+            {(() => {
+              const Icon = resolveCategoryIcon(iconName);
+              const color = iconColor || "var(--color-accent)";
+              return (
+                <div
+                  className="flex h-16 w-16 items-center justify-center rounded-lg border"
+                  style={{
+                    backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
+                    borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
+                  }}
                 >
-                  Remove
-                </LoadingButton>
-              )}
+                  <Icon className="h-7 w-7" style={{ color }} strokeWidth={1.75} />
+                </div>
+              );
+            })()}
+            <div className="flex flex-col gap-1">
+              <LoadingButton
+                variant="secondary"
+                onClick={handleRegenerateIcon}
+                icon={<RefreshCw className="h-4 w-4" />}
+              >
+                Regenerate icon
+              </LoadingButton>
+              <p className="text-xs text-muted-foreground">A unique icon and color, distinct from every other category.</p>
             </div>
           </div>
         </div>

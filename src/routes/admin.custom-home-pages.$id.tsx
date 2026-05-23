@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { ArrowLeft, Save, ExternalLink, LayoutTemplate } from "lucide-react";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { Badge } from "@/components/Badge";
 import { LabeledInput, LabeledTextarea } from "@/components/FormField";
 import { LoadingButton, actionButtonClassName } from "@/components/LoadingButton";
@@ -277,15 +278,7 @@ function AdminCustomHomePageEdit() {
                         }}
                       />
 
-                      {c.icon_url ? (
-                        <img
-                          src={c.icon_url}
-                          alt=""
-                          className="h-10 w-10 object-cover border border-border bg-muted shrink-0 rounded-md"
-                        />
-                      ) : (
-                        <div className="h-10 w-10 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
-                      )}
+                      <CategoryIcon name={c.icon_name} color={c.icon_color} size="sm" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium truncate">{c.name}</span>

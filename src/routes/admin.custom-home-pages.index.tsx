@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, ExternalLink, LayoutTemplate } from "lucide-react";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
@@ -380,15 +381,7 @@ function AdminCustomHomePagesList() {
                           }}
                         />
 
-                        {c.icon_url ? (
-                          <img
-                            src={c.icon_url}
-                            alt=""
-                            className="h-8 w-8 rounded-lg object-cover border border-border bg-muted shrink-0"
-                          />
-                        ) : (
-                          <div className="h-8 w-8 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
-                        )}
+                        <CategoryIcon name={c.icon_name} color={c.icon_color} className="h-8 w-8" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium truncate">{c.name}</span>

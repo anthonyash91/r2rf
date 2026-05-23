@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy } from "@/lib/category-ai.functions";
+import { generateUniqueCategoryIcon, resolveCategoryIcon } from "@/lib/category-icons";
 
 function categoryTranslationStatus(c: Category): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
@@ -29,7 +30,7 @@ function categoryTranslationStatus(c: Category): "complete" | "partial" | "missi
   return "complete";
 }
 import { SortableList } from "@/components/SortableList";
-import { FileUploader } from "@/components/FileUploader";
+
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -103,19 +104,24 @@ function AdminCategoriesPage() {
       slug: string;
       tagline: string;
       description: string;
-      icon_url: string | null;
       published: boolean;
       home_page_mode: "default" | "custom";
       name_es: string | null;
       tagline_es: string | null;
       description_es: string | null;
     }) => {
+      const generated = generateUniqueCategoryIcon({
+        usedNames: categories.map((c) => c.icon_name),
+        usedColors: categories.map((c) => c.icon_color),
+      });
       const { error } = await supabase.from("categories").insert({
         name: input.name,
         slug: input.slug,
         tagline: input.tagline,
         description: input.description,
-        icon_url: input.icon_url,
+        icon_url: null,
+        icon_name: generated.icon_name,
+        icon_color: generated.icon_color,
         published: input.published,
         home_page_mode: input.home_page_mode,
         name_es: input.name_es,
@@ -260,15 +266,21 @@ function AdminCategoriesPage() {
         const renderCategoryRow = (c: Category) => (
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 pt-[17px] pr-6 pb-[24px] sm:pb-[19px] pl-3">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-              {c.icon_url ? (
-                <img
-                  src={c.icon_url}
-                  alt={`${c.name} icon`}
-                  className="h-12 w-12 rounded-lg object-cover border border-border bg-muted shrink-0"
-                />
-              ) : (
-                <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
-              )}
+              {(() => {
+                const Icon = resolveCategoryIcon(c.icon_name);
+                const color = c.icon_color || "var(--color-accent)";
+                return (
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-lg border shrink-0"
+                    style={{
+                      backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
+                      borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
+                    }}
+                  >
+                    <Icon className="h-5 w-5" style={{ color }} strokeWidth={1.75} />
+                  </div>
+                );
+              })()}
               <div className="@container flex-1 min-w-0">
                 <div className="flex flex-col-reverse gap-y-1 pt-[7px] @lg:pt-0 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
                   <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
@@ -462,7 +474,6 @@ function NewCategoryForm({
     slug: string;
     tagline: string;
     description: string;
-    icon_url: string | null;
     published: boolean;
     home_page_mode: "default" | "custom";
     name_es: string | null;
@@ -476,7 +487,6 @@ function NewCategoryForm({
   const [tagline, setTagline] = useState("");
   const [description, setDescription] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const [iconUrl, setIconUrl] = useState<string | null>(null);
   const [published, setPublished] = useState(true);
   const [homePageMode, setHomePageMode] = useState<"default" | "custom">("default");
   const [nameEs, setNameEs] = useState("");
@@ -515,7 +525,6 @@ function NewCategoryForm({
           slug: slug.trim() || slugify(name),
           tagline: tagline.trim(),
           description: description.trim(),
-          icon_url: iconUrl,
           published,
           home_page_mode: homePageMode,
           name_es: nameEs.trim() || null,
@@ -577,38 +586,8 @@ function NewCategoryForm({
         />
       </label>
 
-      <div>
-        <span className="text-sm font-medium">Icon</span>
-        <div className="mt-2 flex items-center gap-4">
-          {iconUrl ? (
-            <img
-              src={iconUrl}
-              alt="Category icon"
-              className="h-16 w-16 rounded-lg object-cover border border-border bg-muted"
-            />
-          ) : (
-            <div className="h-16 w-16 rounded-lg border border-dashed border-border bg-muted/40 grid place-items-center text-xs text-muted-foreground">
-              No icon
-            </div>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <FileUploader
-              label={iconUrl ? "Replace icon" : "Upload icon"}
-              mimeTypes={["image/*"]}
-              onUploaded={(u) => setIconUrl(u)}
-            />
-            {iconUrl && (
-              <LoadingButton
-                variant="secondary"
-                onClick={() => setIconUrl(null)}
-                className="text-muted-foreground"
-              >
-                Remove
-              </LoadingButton>
-            )}
-          </div>
-        </div>
-      </div>
+      <p className="text-xs text-muted-foreground">A unique icon and color are generated automatically when this category is created.</p>
+
 
 
 
