@@ -678,10 +678,8 @@ function CategoryProgressSection({
       >
         {!isAdmin ? (
           <CircleProgress value={pct} size={52} stroke={5} />
-        ) : category.icon_url ? (
-          <img src={category.icon_url} alt="" className="h-12 w-12 object-cover border border-border bg-muted flex-shrink-0 rounded-md" />
         ) : (
-          <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 flex-shrink-0" />
+          <CategoryIcon name={category.icon_name} color={category.icon_color} size="md" />
         )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-col-reverse items-start gap-2 sm:flex-row sm:items-center sm:flex-wrap">
