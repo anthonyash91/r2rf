@@ -291,29 +291,33 @@ function AdminIconsBadgesPage() {
   );
 }
 
+const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
+  new: Sparkles,
+  count: Layers,
+  draft: FileEdit,
+  custom: Star,
+  category: Tag,
+  translation: Languages,
+  admin: Shield,
+  contributor: PenLine,
+  verified: BadgeCheck,
+  unverified: AlertCircle,
+  user: User,
+  facility: Building2,
+};
+
 function BadgePreview({ variant, draft }: { variant: BadgeVariantKey; draft: BadgeStyles }) {
   const idx = draft.variants[variant] ?? 0;
   const ps = paletteStyle(idx);
+  const Icon = VARIANT_ICONS[variant];
   return (
     <span
       className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-xs font-medium"
       style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
     >
-      <BadgeVariantIcon variant={variant} />
+      <Icon className="h-3 w-3" strokeWidth={2} />
       {VARIANT_LABELS[variant]}
     </span>
-  );
-}
-
-function BadgeVariantIcon({ variant }: { variant: BadgeVariantKey }) {
-  return <BadgeIconImpl variant={variant} />;
-}
-
-function BadgeIconImpl({ variant }: { variant: BadgeVariantKey }) {
-  return (
-    <Badge variant={variant} className="!p-0 !border-0 !bg-transparent" hideIcon={false}>
-      <span className="sr-only">{variant}</span>
-    </Badge>
   );
 }
 
