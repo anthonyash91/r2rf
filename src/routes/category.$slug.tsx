@@ -259,8 +259,8 @@ function CategoryPage() {
                   color={data.category.icon_color}
                   size="lg"
                   className="h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 rounded-2xl"
+                  iconClassName="h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20"
                 />
-                {/** sizing overrides via className above */}
                 <div className="max-w-3xl flex-1">
                   <p className="text-sm font-medium text-[var(--color-accent)]">{pickLang(lang, data.category.tagline, data.category.tagline_es)}</p>
                   <h1 className="mt-2 font-display font-bold tracking-tight text-4xl">{pickLang(lang, data.category.name, data.category.name_es)}</h1>
