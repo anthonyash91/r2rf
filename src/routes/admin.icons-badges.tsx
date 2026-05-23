@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Palette,
@@ -18,6 +18,7 @@ import {
   AlertCircle,
   User,
   Building2,
+  Shuffle,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -75,6 +76,38 @@ const TYPE_LABELS: Record<KnownTypeKey, string> = {
   link: "Link",
 };
 
+const REGEN_BTN_CLASS = "px-4 py-2 text-sm shrink-0 shadow-none";
+const REGEN_ALL_BTN_CLASS = "px-4 py-2 text-sm w-full sm:w-auto shadow-none";
+
+type CategoryRow = {
+  id: string;
+  name: string;
+  icon_name: string | null;
+  icon_color: string | null;
+};
+
+function paletteIndexOfColor(color: string | null | undefined): number {
+  if (!color) return -1;
+  return PALETTES.findIndex((p) => p.oklch === color);
+}
+
+function nextUnusedIndex(cur: number, used: Set<number>): number {
+  const n = PALETTES.length;
+  for (let step = 1; step <= n; step++) {
+    const candidate = (((cur + step) % n) + n) % n;
+    if (!used.has(candidate)) return candidate;
+  }
+  return (((cur + 1) % n) + n) % n;
+}
+
+/** Distribute palette indices across N items without repeats (until palette is exhausted). */
+function distributeUnique(count: number, startOffset = 0): number[] {
+  const n = PALETTES.length;
+  const out: number[] = [];
+  for (let i = 0; i < count; i++) out.push((startOffset + i) % n);
+  return out;
+}
+
 function AdminIconsBadgesPage() {
   const qc = useQueryClient();
 
@@ -83,70 +116,156 @@ function AdminIconsBadgesPage() {
     queryFn: fetchBadgeStyles,
   });
 
+  const { data: categories } = useQuery({
+    queryKey: ["admin", "icons-badges", "categories"],
+    queryFn: async (): Promise<CategoryRow[]> => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name, icon_name, icon_color")
+        .order("sort_order");
+      if (error) throw error;
+      return (data ?? []) as CategoryRow[];
+    },
+  });
+
   const [draft, setDraft] = useState<BadgeStyles>(saved ?? DEFAULT_BADGE_STYLES);
+  const [catDraft, setCatDraft] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     if (saved) setDraft(saved);
   }, [saved]);
 
-  const dirty = JSON.stringify(draft) !== JSON.stringify(saved ?? DEFAULT_BADGE_STYLES);
+  useEffect(() => {
+    if (categories) {
+      const map: Record<string, string | null> = {};
+      for (const c of categories) map[c.id] = c.icon_color ?? null;
+      setCatDraft(map);
+    }
+  }, [categories]);
+
+  const originalCatMap = useMemo(() => {
+    const m: Record<string, string | null> = {};
+    for (const c of categories ?? []) m[c.id] = c.icon_color ?? null;
+    return m;
+  }, [categories]);
+
+  const dirtyStyles = JSON.stringify(draft) !== JSON.stringify(saved ?? DEFAULT_BADGE_STYLES);
+  const dirtyCats = useMemo(() => {
+    const ids = Object.keys(catDraft);
+    return ids.some((id) => (catDraft[id] ?? null) !== (originalCatMap[id] ?? null));
+  }, [catDraft, originalCatMap]);
+  const dirty = dirtyStyles || dirtyCats;
 
   const saveMutation = useMutation({
-    mutationFn: async (next: BadgeStyles) => {
-      const { error } = await supabase
-        .from("site_settings")
-        .upsert(
-          {
-            key: BADGE_STYLES_KEY,
-            value: next as unknown as never,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "key" },
+    mutationFn: async () => {
+      if (dirtyStyles) {
+        const { error } = await supabase
+          .from("site_settings")
+          .upsert(
+            {
+              key: BADGE_STYLES_KEY,
+              value: draft as unknown as never,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "key" },
+          );
+        if (error) throw error;
+      }
+      if (dirtyCats) {
+        const updates = Object.entries(catDraft).filter(
+          ([id, val]) => (val ?? null) !== (originalCatMap[id] ?? null),
         );
-      if (error) throw error;
-      return next;
+        for (const [id, val] of updates) {
+          const { error } = await supabase
+            .from("categories")
+            .update({ icon_color: val })
+            .eq("id", id);
+          if (error) throw error;
+        }
+      }
     },
-    onSuccess: (next) => {
-      qc.setQueryData(badgeStylesQueryKey, next);
+    onSuccess: () => {
+      qc.setQueryData(badgeStylesQueryKey, draft);
+      qc.invalidateQueries({ queryKey: ["admin", "icons-badges", "categories"] });
+      qc.invalidateQueries({ queryKey: ["categories"] });
       toast.success("Saved color combinations");
     },
     onError: (err: Error) => toast.error(err.message ?? "Failed to save"),
   });
 
-  function nextUnusedIndex(cur: number, used: Set<number>): number {
-    const n = PALETTES.length;
-    // Try to find a non-used index after current
-    for (let step = 1; step <= n; step++) {
-      const candidate = (cur + step) % n;
-      if (!used.has(candidate)) return candidate;
-    }
-    // All in use — fall back to plain cycle
-    return (cur + 1) % n;
-  }
+  // -------- Variant cycling --------
   function cycleVariant(key: BadgeVariantKey) {
     setDraft((d) => {
       const cur = d.variants[key] ?? 0;
       const used = new Set<number>(
-        BADGE_VARIANTS.filter((k) => k !== key).map((k) => d.variants[k] ?? DEFAULT_BADGE_STYLES.variants[k] ?? 0),
+        BADGE_VARIANTS.filter((k) => k !== key).map(
+          (k) => d.variants[k] ?? DEFAULT_BADGE_STYLES.variants[k] ?? 0,
+        ),
       );
       return { ...d, variants: { ...d.variants, [key]: nextUnusedIndex(cur, used) } };
     });
   }
+  function regenerateAllVariants() {
+    setDraft((d) => {
+      const indices = distributeUnique(BADGE_VARIANTS.length, Math.floor(Math.random() * PALETTES.length));
+      const variants: Partial<Record<BadgeVariantKey, number>> = {};
+      BADGE_VARIANTS.forEach((k, i) => (variants[k] = indices[i]));
+      return { ...d, variants };
+    });
+  }
+
+  // -------- Type cycling --------
   function cycleType(key: KnownTypeKey) {
     setDraft((d) => {
       const cur = d.types[key] ?? 0;
       const used = new Set<number>(
-        KNOWN_TYPES.filter((k) => k !== key).map((k) => d.types[k] ?? DEFAULT_BADGE_STYLES.types[k] ?? 0),
+        KNOWN_TYPES.filter((k) => k !== key).map(
+          (k) => d.types[k] ?? DEFAULT_BADGE_STYLES.types[k] ?? 0,
+        ),
       );
       return { ...d, types: { ...d.types, [key]: nextUnusedIndex(cur, used) } };
     });
   }
+  function regenerateAllTypes() {
+    setDraft((d) => {
+      const indices = distributeUnique(KNOWN_TYPES.length, Math.floor(Math.random() * PALETTES.length));
+      const types: Partial<Record<KnownTypeKey, number>> = {};
+      KNOWN_TYPES.forEach((k, i) => (types[k] = indices[i]));
+      return { ...d, types };
+    });
+  }
+
+  // -------- Category default + per-category --------
   function cycleCategoryDefault() {
     setDraft((d) => ({ ...d, categoryDefault: nextUnusedIndex(d.categoryDefault, new Set<number>()) }));
   }
 
+  function cycleCategory(id: string) {
+    setCatDraft((d) => {
+      const cur = paletteIndexOfColor(d[id]);
+      const used = new Set<number>();
+      for (const [k, v] of Object.entries(d)) {
+        if (k === id) continue;
+        const idx = paletteIndexOfColor(v);
+        if (idx >= 0) used.add(idx);
+      }
+      const next = nextUnusedIndex(cur >= 0 ? cur : 0, used);
+      return { ...d, [id]: PALETTES[next].oklch };
+    });
+  }
+  function regenerateAllCategories() {
+    setCatDraft((d) => {
+      const ids = Object.keys(d);
+      const indices = distributeUnique(ids.length, Math.floor(Math.random() * PALETTES.length));
+      const next: Record<string, string | null> = {};
+      ids.forEach((id, i) => (next[id] = PALETTES[indices[i]].oklch));
+      return next;
+    });
+  }
+
   function reset() {
     setDraft(DEFAULT_BADGE_STYLES);
+    setCatDraft({ ...originalCatMap });
   }
 
   return (
@@ -167,7 +286,7 @@ function AdminIconsBadgesPage() {
             Reset to Defaults
           </Button>
           <LoadingButton
-            onClick={() => saveMutation.mutate(draft)}
+            onClick={() => saveMutation.mutate()}
             disabled={!dirty}
             pending={saveMutation.isPending}
             className="px-4 py-2 text-sm w-full sm:w-auto"
@@ -179,10 +298,18 @@ function AdminIconsBadgesPage() {
       </div>
 
       <SectionCard>
-        <h2 className="font-display text-lg font-semibold">Badge Variants</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Each variant uses a single curated color combination. Click Regenerate to cycle through the palette.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <h2 className="font-display text-lg font-semibold">Badge Variants</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Each variant uses a single curated color combination. Click Regenerate to cycle through the palette.
+            </p>
+          </div>
+          <Button variant="outline" onClick={regenerateAllVariants} className={REGEN_ALL_BTN_CLASS}>
+            <Shuffle className="h-4 w-4" />
+            Regenerate All
+          </Button>
+        </div>
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {BADGE_VARIANTS.map((v) => {
             const idx = draft.variants[v] ?? 0;
@@ -199,11 +326,7 @@ function AdminIconsBadgesPage() {
                     <div className="text-xs text-muted-foreground truncate">{palette.label}</div>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => cycleVariant(v)}
-                  className="px-4 py-2 text-sm shrink-0"
-                >
+                <Button variant="outline" onClick={() => cycleVariant(v)} className={REGEN_BTN_CLASS}>
                   <RefreshCw className="h-4 w-4" />
                   Regenerate
                 </Button>
@@ -214,10 +337,18 @@ function AdminIconsBadgesPage() {
       </SectionCard>
 
       <SectionCard>
-        <h2 className="font-display text-lg font-semibold">Content Type Badges</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Colors used by content type badges (article, video, podcast, etc.).
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <h2 className="font-display text-lg font-semibold">Content Type Badges</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Colors used by content type badges (article, video, podcast, etc.).
+            </p>
+          </div>
+          <Button variant="outline" onClick={regenerateAllTypes} className={REGEN_ALL_BTN_CLASS}>
+            <Shuffle className="h-4 w-4" />
+            Regenerate All
+          </Button>
+        </div>
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {KNOWN_TYPES.map((t) => {
             const idx = draft.types[t] ?? 0;
@@ -241,11 +372,7 @@ function AdminIconsBadgesPage() {
                     <div className="text-xs text-muted-foreground truncate">{palette.label}</div>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => cycleType(t)}
-                  className="px-4 py-2 text-sm shrink-0"
-                >
+                <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
                   <RefreshCw className="h-4 w-4" />
                   Regenerate
                 </Button>
@@ -256,11 +383,25 @@ function AdminIconsBadgesPage() {
       </SectionCard>
 
       <SectionCard>
-        <h2 className="font-display text-lg font-semibold">Category Icon Default</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Fallback color used for any category that doesn't have its own icon color set. Per-category colors are still
-          edited on each category.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <h2 className="font-display text-lg font-semibold">Category Icons</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Default fallback color and per-category icon colors. Regenerate cycles each through the palette without
+              repeating.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={regenerateAllCategories}
+            disabled={!categories || categories.length === 0}
+            className={REGEN_ALL_BTN_CLASS}
+          >
+            <Shuffle className="h-4 w-4" />
+            Regenerate All
+          </Button>
+        </div>
+
         <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3">
           <div className="flex items-center gap-3 min-w-0">
             <CategoryIconPreview draft={draft} />
@@ -271,15 +412,39 @@ function AdminIconsBadgesPage() {
               </div>
             </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={cycleCategoryDefault}
-            className="px-4 py-2 text-sm shrink-0"
-          >
+          <Button variant="outline" onClick={cycleCategoryDefault} className={REGEN_BTN_CLASS}>
             <RefreshCw className="h-4 w-4" />
             Regenerate
           </Button>
         </div>
+
+        {categories && categories.length > 0 && (
+          <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {categories.map((c) => {
+              const color = catDraft[c.id] ?? c.icon_color ?? null;
+              const idx = paletteIndexOfColor(color);
+              const label = idx >= 0 ? PALETTES[idx].label : "Custom";
+              return (
+                <li
+                  key={c.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <CategoryIcon name={c.icon_name} color={color} size="sm" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{c.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">{label}</div>
+                    </div>
+                  </div>
+                  <Button variant="outline" onClick={() => cycleCategory(c.id)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-4 w-4" />
+                    Regenerate
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </SectionCard>
 
       <SectionCard>
