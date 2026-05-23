@@ -100,6 +100,22 @@ function nextUnusedIndex(cur: number, used: Set<number>): number {
   return (((cur + 1) % n) + n) % n;
 }
 
+/** Pick `count` palette indices, preferring those not in `excluded`, starting from offset. */
+function pickAvoiding(count: number, excluded: Set<number>, startOffset: number): number[] {
+  const n = PALETTES.length;
+  const available: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const idx = (startOffset + i) % n;
+    if (!excluded.has(idx)) available.push(idx);
+  }
+  const out: number[] = [];
+  for (let i = 0; i < count; i++) {
+    if (i < available.length) out.push(available[i]);
+    else out.push((startOffset + i) % n);
+  }
+  return out;
+}
+
 /** Distribute palette indices across N items without repeats (until palette is exhausted). */
 function distributeUnique(count: number, startOffset = 0): number[] {
   const n = PALETTES.length;
@@ -193,21 +209,60 @@ function AdminIconsBadgesPage() {
     onError: (err: Error) => toast.error(err.message ?? "Failed to save"),
   });
 
+  // -------- Global usage tracking --------
+  /** All palette indices currently in use across variants, types, default, and categories. */
+  function collectGlobalIndices(
+    d: BadgeStyles,
+    cd: Record<string, string | null>,
+    skip?: { kind: "variant" | "type" | "default" | "category"; key?: string },
+  ): number[] {
+    const out: number[] = [];
+    for (const k of BADGE_VARIANTS) {
+      if (skip?.kind === "variant" && skip.key === k) continue;
+      out.push(d.variants[k] ?? DEFAULT_BADGE_STYLES.variants[k] ?? 0);
+    }
+    for (const k of KNOWN_TYPES) {
+      if (skip?.kind === "type" && skip.key === k) continue;
+      out.push(d.types[k] ?? DEFAULT_BADGE_STYLES.types[k] ?? 0);
+    }
+    if (!(skip?.kind === "default")) out.push(d.categoryDefault);
+    for (const [id, v] of Object.entries(cd)) {
+      if (skip?.kind === "category" && skip.key === id) continue;
+      const idx = paletteIndexOfColor(v);
+      if (idx >= 0) out.push(idx);
+    }
+    return out;
+  }
+
+  const usageCount = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const idx of collectGlobalIndices(draft, catDraft)) {
+      m.set(idx, (m.get(idx) ?? 0) + 1);
+    }
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, catDraft]);
+
+  const isDup = (idx: number) => (usageCount.get(idx) ?? 0) > 1;
+
   // -------- Variant cycling --------
   function cycleVariant(key: BadgeVariantKey) {
     setDraft((d) => {
       const cur = d.variants[key] ?? 0;
-      const used = new Set<number>(
-        BADGE_VARIANTS.filter((k) => k !== key).map(
-          (k) => d.variants[k] ?? DEFAULT_BADGE_STYLES.variants[k] ?? 0,
-        ),
-      );
+      const used = new Set<number>(collectGlobalIndices(d, catDraft, { kind: "variant", key }));
       return { ...d, variants: { ...d.variants, [key]: nextUnusedIndex(cur, used) } };
     });
   }
   function regenerateAllVariants() {
     setDraft((d) => {
-      const indices = distributeUnique(BADGE_VARIANTS.length, Math.floor(Math.random() * PALETTES.length));
+      const excluded = new Set<number>(collectGlobalIndices(d, catDraft));
+      // remove this section's own indices from excluded (we're replacing them)
+      for (const k of BADGE_VARIANTS) excluded.delete(d.variants[k] ?? 0);
+      const indices = pickAvoiding(
+        BADGE_VARIANTS.length,
+        excluded,
+        Math.floor(Math.random() * PALETTES.length),
+      );
       const variants: Partial<Record<BadgeVariantKey, number>> = {};
       BADGE_VARIANTS.forEach((k, i) => (variants[k] = indices[i]));
       return { ...d, variants };
@@ -218,17 +273,19 @@ function AdminIconsBadgesPage() {
   function cycleType(key: KnownTypeKey) {
     setDraft((d) => {
       const cur = d.types[key] ?? 0;
-      const used = new Set<number>(
-        KNOWN_TYPES.filter((k) => k !== key).map(
-          (k) => d.types[k] ?? DEFAULT_BADGE_STYLES.types[k] ?? 0,
-        ),
-      );
+      const used = new Set<number>(collectGlobalIndices(d, catDraft, { kind: "type", key }));
       return { ...d, types: { ...d.types, [key]: nextUnusedIndex(cur, used) } };
     });
   }
   function regenerateAllTypes() {
     setDraft((d) => {
-      const indices = distributeUnique(KNOWN_TYPES.length, Math.floor(Math.random() * PALETTES.length));
+      const excluded = new Set<number>(collectGlobalIndices(d, catDraft));
+      for (const k of KNOWN_TYPES) excluded.delete(d.types[k] ?? 0);
+      const indices = pickAvoiding(
+        KNOWN_TYPES.length,
+        excluded,
+        Math.floor(Math.random() * PALETTES.length),
+      );
       const types: Partial<Record<KnownTypeKey, number>> = {};
       KNOWN_TYPES.forEach((k, i) => (types[k] = indices[i]));
       return { ...d, types };
@@ -237,18 +294,16 @@ function AdminIconsBadgesPage() {
 
   // -------- Category default + per-category --------
   function cycleCategoryDefault() {
-    setDraft((d) => ({ ...d, categoryDefault: nextUnusedIndex(d.categoryDefault, new Set<number>()) }));
+    setDraft((d) => {
+      const used = new Set<number>(collectGlobalIndices(d, catDraft, { kind: "default" }));
+      return { ...d, categoryDefault: nextUnusedIndex(d.categoryDefault, used) };
+    });
   }
 
   function cycleCategory(id: string) {
     setCatDraft((d) => {
       const cur = paletteIndexOfColor(d[id]);
-      const used = new Set<number>();
-      for (const [k, v] of Object.entries(d)) {
-        if (k === id) continue;
-        const idx = paletteIndexOfColor(v);
-        if (idx >= 0) used.add(idx);
-      }
+      const used = new Set<number>(collectGlobalIndices(draft, d, { kind: "category", key: id }));
       const next = nextUnusedIndex(cur >= 0 ? cur : 0, used);
       return { ...d, [id]: PALETTES[next].oklch };
     });
@@ -256,7 +311,16 @@ function AdminIconsBadgesPage() {
   function regenerateAllCategories() {
     setCatDraft((d) => {
       const ids = Object.keys(d);
-      const indices = distributeUnique(ids.length, Math.floor(Math.random() * PALETTES.length));
+      const excluded = new Set<number>(collectGlobalIndices(draft, d));
+      for (const id of ids) {
+        const idx = paletteIndexOfColor(d[id]);
+        if (idx >= 0) excluded.delete(idx);
+      }
+      const indices = pickAvoiding(
+        ids.length,
+        excluded,
+        Math.floor(Math.random() * PALETTES.length),
+      );
       const next: Record<string, string | null> = {};
       ids.forEach((id, i) => (next[id] = PALETTES[indices[i]].oklch));
       return next;
@@ -267,6 +331,7 @@ function AdminIconsBadgesPage() {
     setDraft(DEFAULT_BADGE_STYLES);
     setCatDraft({ ...originalCatMap });
   }
+
 
   return (
     <div className="space-y-6">
@@ -314,16 +379,20 @@ function AdminIconsBadgesPage() {
           {BADGE_VARIANTS.map((v) => {
             const idx = draft.variants[v] ?? 0;
             const palette = PALETTES[idx];
+            const dup = isDup(idx);
             return (
               <li
                 key={v}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3"
+                className={`flex items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <BadgePreview variant={v} draft={draft} />
                   <div className="min-w-0">
                     <div className="text-sm font-medium truncate">{VARIANT_LABELS[v]}</div>
-                    <div className="text-xs text-muted-foreground truncate">{palette.label}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {palette.label}
+                      {dup && <span className="ml-1 text-amber-500">• duplicate</span>}
+                    </div>
                   </div>
                 </div>
                 <Button variant="outline" onClick={() => cycleVariant(v)} className={REGEN_BTN_CLASS}>
@@ -334,6 +403,7 @@ function AdminIconsBadgesPage() {
             );
           })}
         </ul>
+
       </SectionCard>
 
       <SectionCard>
@@ -355,10 +425,11 @@ function AdminIconsBadgesPage() {
             const palette = PALETTES[idx];
             const Icon = iconForType(t);
             const ps = paletteStyle(idx);
+            const dup = isDup(idx);
             return (
               <li
                 key={t}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3"
+                className={`flex items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span
@@ -369,7 +440,10 @@ function AdminIconsBadgesPage() {
                     {TYPE_LABELS[t]}
                   </span>
                   <div className="min-w-0">
-                    <div className="text-xs text-muted-foreground truncate">{palette.label}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {palette.label}
+                      {dup && <span className="ml-1 text-amber-500">• duplicate</span>}
+                    </div>
                   </div>
                 </div>
                 <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
@@ -380,6 +454,7 @@ function AdminIconsBadgesPage() {
             );
           })}
         </ul>
+
       </SectionCard>
 
       <SectionCard>
@@ -402,21 +477,29 @@ function AdminIconsBadgesPage() {
           </Button>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <CategoryIconPreview draft={draft} />
-            <div className="min-w-0">
-              <div className="text-sm font-medium">Default Category Color</div>
-              <div className="text-xs text-muted-foreground truncate">
-                {PALETTES[draft.categoryDefault].label}
+        {(() => {
+          const defDup = isDup(draft.categoryDefault);
+          return (
+            <div
+              className={`mt-4 flex items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${defDup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <CategoryIconPreview draft={draft} />
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">Default Category Color</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {PALETTES[draft.categoryDefault].label}
+                    {defDup && <span className="ml-1 text-amber-500">• duplicate</span>}
+                  </div>
+                </div>
               </div>
+              <Button variant="outline" onClick={cycleCategoryDefault} className={REGEN_BTN_CLASS}>
+                <RefreshCw className="h-4 w-4" />
+                Regenerate
+              </Button>
             </div>
-          </div>
-          <Button variant="outline" onClick={cycleCategoryDefault} className={REGEN_BTN_CLASS}>
-            <RefreshCw className="h-4 w-4" />
-            Regenerate
-          </Button>
-        </div>
+          );
+        })()}
 
         {categories && categories.length > 0 && (
           <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -424,16 +507,20 @@ function AdminIconsBadgesPage() {
               const color = catDraft[c.id] ?? c.icon_color ?? null;
               const idx = paletteIndexOfColor(color);
               const label = idx >= 0 ? PALETTES[idx].label : "Custom";
+              const dup = idx >= 0 && isDup(idx);
               return (
                 <li
                   key={c.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3"
+                  className={`flex items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <CategoryIcon name={c.icon_name} color={color} size="sm" />
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{c.name}</div>
-                      <div className="text-xs text-muted-foreground truncate">{label}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {label}
+                        {dup && <span className="ml-1 text-amber-500">• duplicate</span>}
+                      </div>
                     </div>
                   </div>
                   <Button variant="outline" onClick={() => cycleCategory(c.id)} className={REGEN_BTN_CLASS}>
@@ -445,6 +532,7 @@ function AdminIconsBadgesPage() {
             })}
           </ul>
         )}
+
       </SectionCard>
 
       <SectionCard>
