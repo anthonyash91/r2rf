@@ -465,7 +465,7 @@ function CategoryPage() {
                             <div className="absolute top-3 right-3 mt-[7px] mr-[7px] flex items-center gap-1.5 flex-wrap justify-end z-10 pointer-events-none">
                               <span
                                 aria-label={label}
-                                className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium ${
+                                className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-1.5 text-xs font-medium ${
                                   isRead
                                     ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
                                     : "border-input bg-background text-foreground"

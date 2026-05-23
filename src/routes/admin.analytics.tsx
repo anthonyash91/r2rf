@@ -235,7 +235,7 @@ function CategoryList({ rows }: { rows: AggregatedRow[] }) {
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
+    <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-border bg-background px-3 py-1 text-xs font-medium">
       {icon}
       <span className="tabular-nums">{value.toLocaleString()}</span>
       <span className="text-muted-foreground">{label}</span>
