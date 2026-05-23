@@ -100,6 +100,22 @@ function nextUnusedIndex(cur: number, used: Set<number>): number {
   return (((cur + 1) % n) + n) % n;
 }
 
+/** Pick `count` palette indices, preferring those not in `excluded`, starting from offset. */
+function pickAvoiding(count: number, excluded: Set<number>, startOffset: number): number[] {
+  const n = PALETTES.length;
+  const available: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const idx = (startOffset + i) % n;
+    if (!excluded.has(idx)) available.push(idx);
+  }
+  const out: number[] = [];
+  for (let i = 0; i < count; i++) {
+    if (i < available.length) out.push(available[i]);
+    else out.push((startOffset + i) % n);
+  }
+  return out;
+}
+
 /** Distribute palette indices across N items without repeats (until palette is exhausted). */
 function distributeUnique(count: number, startOffset = 0): number[] {
   const n = PALETTES.length;
