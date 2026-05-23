@@ -653,20 +653,29 @@ function NewCategoryForm({
               </div>
             );
           })()}
-          <div className="flex flex-col gap-1">
-            <LoadingButton
-              variant="secondary"
-              onClick={handleGenerateIcon}
-              disabled={!name.trim()}
-              icon={<RefreshCw className="h-4 w-4" />}
-            >
-              {iconName ? "Regenerate icon" : "Generate icon"}
-            </LoadingButton>
-            <p className="text-xs text-muted-foreground">
-              {iconName
-                ? "Don't like it? Click to try another. Leave blank to auto-generate on create."
-                : "Generate a preview now, or one will be picked automatically when you create the category."}
-            </p>
+          <div className="flex flex-col gap-2 flex-1 min-w-0">
+            <input
+              type="text"
+              value={iconKeywords}
+              onChange={(e) => setIconKeywords(e.target.value)}
+              placeholder="Optional keywords (e.g. coffee, gym, books)"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <LoadingButton
+                variant="secondary"
+                onClick={handleGenerateIcon}
+                disabled={!name.trim()}
+                icon={<RefreshCw className="h-4 w-4" />}
+              >
+                {iconName ? "Regenerate icon" : "Generate icon"}
+              </LoadingButton>
+              <p className="text-xs text-muted-foreground">
+                {iconName
+                  ? "Don't like it? Click to try another. Leave blank to auto-generate on create."
+                  : "Generate a preview now."}
+              </p>
+            </div>
           </div>
         </div>
       </div>
