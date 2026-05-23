@@ -148,7 +148,7 @@ function AdminAnalyticsPage() {
         <p className="mt-8 text-muted-foreground">Loading…</p>
       ) : (
         <>
-          <div className="mt-6 grid sm:grid-cols-2 gap-4">
+          <div className="mt-8 grid sm:grid-cols-2 gap-4">
             <SummaryCard icon={<Eye className="h-5 w-5" />} label={aggregated.totalViews === 1 ? "Category view" : "Category views"} value={aggregated.totalViews} />
             <SummaryCard icon={<MousePointerClick className="h-5 w-5" />} label={aggregated.totalClicks === 1 ? "Content click" : "Content clicks"} value={aggregated.totalClicks} />
           </div>
