@@ -292,13 +292,8 @@ function AdminIconsBadgesPage() {
     });
   }
 
-  // -------- Category default + per-category --------
-  function cycleCategoryDefault() {
-    setDraft((d) => {
-      const used = new Set<number>(collectGlobalIndices(d, catDraft, { kind: "default" }));
-      return { ...d, categoryDefault: nextUnusedIndex(d.categoryDefault, used) };
-    });
-  }
+  // -------- Per-category --------
+
 
   function cycleCategory(id: string) {
     setCatDraft((d) => {
