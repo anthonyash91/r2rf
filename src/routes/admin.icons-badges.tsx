@@ -19,6 +19,7 @@ import {
   User,
   Building2,
   Shuffle,
+  Check,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
