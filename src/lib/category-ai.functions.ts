@@ -223,9 +223,11 @@ export const translateToSpanish = createServerFn({ method: "POST" })
       context: z.string().max(500).optional(),
     }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertAdminOrContributor(context.supabase, context.userId);
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+
 
     const entries = Object.entries(data.fields).filter(([, v]) => v && v.trim());
     if (entries.length === 0) return { fields: {} as Record<string, string> };
