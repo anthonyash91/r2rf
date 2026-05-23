@@ -388,10 +388,16 @@ function DashboardPage() {
                     }
                   }
                   const totalCats = (categoriesQuery.data ?? []).length;
-                  const stats: Array<{ icon: typeof BookOpen; label: string; value: string }> = [
-                    { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: `${readAll.toLocaleString()}/${totalAll.toLocaleString()}` },
-                    
-                    { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: `${completedCats.toLocaleString()}/${totalCats.toLocaleString()}` },
+                  const fraction = (done: number, total: number) => (
+                    <span className="inline-flex items-baseline gap-1.5">
+                      <span>{done.toLocaleString()}</span>
+                      <span className="font-serif italic text-base font-normal text-[var(--color-accent)] lowercase tracking-wide">of</span>
+                      <span>{total.toLocaleString()}</span>
+                    </span>
+                  );
+                  const stats: Array<{ icon: typeof BookOpen; label: string; value: React.ReactNode }> = [
+                    { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: fraction(readAll, totalAll) },
+                    { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: fraction(completedCats, totalCats) },
                     { icon: Clock, label: t("dashboard.statHours"), value: hours.toLocaleString() },
                     { icon: Flame, label: t("dashboard.statStreak"), value: streak.toLocaleString() },
                   ];
