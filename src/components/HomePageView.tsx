@@ -33,27 +33,47 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  "reentry-to-recovery": RefreshCw,
-  "mind-rehab": Brain,
-  "resources-partners": Handshake,
-  "narcotics-anonymous": CircleDot,
-  "alcoholics-anonymous": Wine,
-  "personal-finance": Wallet,
-  recovery: Sparkles,
-  "health-and-wellness": Heart,
-  ged: GraduationCap,
-  parenting: Users,
-  "devotional-books": BookOpen,
-  books: Library,
-  "galleries-devotion": ImageIcon,
-  "workforce-integration": Briefcase,
-  education: School,
-  "cover-letter-resume": FileText,
-  "english-study-sheets": BookA,
-  "math-study-sheets": Calculator,
-  "legal-information": Scale,
-  "learning-center": Lightbulb,
+const CATEGORY_ICONS: Record<string, { icon: LucideIcon; color: string }> = {
+  // Emerald (primary brand)
+  "reentry-to-recovery": { icon: RefreshCw, color: "oklch(0.45 0.09 165)" },
+  // Indigo
+  "mind-rehab": { icon: Brain, color: "oklch(0.45 0.10 280)" },
+  // Teal
+  "resources-partners": { icon: Handshake, color: "oklch(0.48 0.08 210)" },
+  // Slate
+  "narcotics-anonymous": { icon: CircleDot, color: "oklch(0.45 0.04 250)" },
+  // Plum
+  "alcoholics-anonymous": { icon: Wine, color: "oklch(0.45 0.10 330)" },
+  // Gold
+  "personal-finance": { icon: Wallet, color: "oklch(0.52 0.10 85)" },
+  // Moss
+  recovery: { icon: Sparkles, color: "oklch(0.48 0.09 145)" },
+  // Rose
+  "health-and-wellness": { icon: Heart, color: "oklch(0.50 0.11 15)" },
+  // Amber
+  ged: { icon: GraduationCap, color: "oklch(0.50 0.10 70)" },
+  // Terracotta
+  parenting: { icon: Users, color: "oklch(0.50 0.10 40)" },
+  // Olive
+  "devotional-books": { icon: BookOpen, color: "oklch(0.48 0.08 110)" },
+  // Burgundy
+  books: { icon: Library, color: "oklch(0.42 0.10 20)" },
+  // Violet
+  "galleries-devotion": { icon: ImageIcon, color: "oklch(0.48 0.10 305)" },
+  // Deep teal
+  "workforce-integration": { icon: Briefcase, color: "oklch(0.42 0.07 200)" },
+  // Forest
+  education: { icon: School, color: "oklch(0.40 0.08 155)" },
+  // Cyan
+  "cover-letter-resume": { icon: FileText, color: "oklch(0.46 0.08 195)" },
+  // Sage
+  "english-study-sheets": { icon: BookA, color: "oklch(0.48 0.06 140)" },
+  // Steel blue
+  "math-study-sheets": { icon: Calculator, color: "oklch(0.45 0.07 240)" },
+  // Stone
+  "legal-information": { icon: Scale, color: "oklch(0.45 0.04 70)" },
+  // Mustard
+  "learning-center": { icon: Lightbulb, color: "oklch(0.55 0.11 90)" },
 };
 
 type CategoryStats = { count: number; recentItemIds: Set<string> };
@@ -147,10 +167,17 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
               >
                 <div className="flex">
                   {(() => {
-                    const Icon = CATEGORY_ICONS[c.slug] ?? Sparkles;
+                    const entry = CATEGORY_ICONS[c.slug] ?? { icon: Sparkles, color: "var(--color-accent)" };
+                    const Icon = entry.icon;
                     return (
-                      <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/20">
-                        <Icon className="h-8 w-8 sm:h-10 sm:w-10 text-[var(--color-accent)]" strokeWidth={1.5} />
+                      <div
+                        className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full border"
+                        style={{
+                          backgroundColor: `color-mix(in oklab, ${entry.color} 12%, transparent)`,
+                          borderColor: `color-mix(in oklab, ${entry.color} 25%, transparent)`,
+                        }}
+                      >
+                        <Icon className="h-7 w-7 sm:h-9 sm:w-9" style={{ color: entry.color }} strokeWidth={1.5} />
                       </div>
                     );
                   })()}
