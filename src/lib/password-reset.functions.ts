@@ -12,6 +12,8 @@ import { hashAnswer, verifyAnswer } from "./security-hash.server";
 const USER_EMAIL_DOMAIN = "users.local";
 const RESET_WINDOW_MS = 60 * 60 * 1000;
 const RESET_MAX_PER_IP = 8;
+const QUESTION_PROBE_MAX_PER_IP = 30;
+
 
 function syntheticEmailLocal(username: string): string {
   return `${username.toLowerCase()}@${USER_EMAIL_DOMAIN}`;
