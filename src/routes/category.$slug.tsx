@@ -506,15 +506,11 @@ function CategoryPage() {
                                   params={{ slug: other.slug }}
                                   className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
                                 >
-                                  {other.icon_url ? (
-                                    <img
-                                      src={other.icon_url}
-                                      alt=""
-                                      className="h-14 w-14 rounded-xl object-cover border border-border bg-muted flex-shrink-0"
-                                    />
-                                  ) : (
-                                    <div className="h-14 w-14 rounded-xl border border-dashed border-border bg-muted/40 flex-shrink-0" />
-                                  )}
+                                  <CategoryIcon
+                                    name={other.icon_name}
+                                    color={other.icon_color}
+                                    className="h-14 w-14 rounded-xl"
+                                  />
                                   <div className="min-w-0 flex-1">
                                     <h3 className="font-display text-base font-semibold text-foreground leading-tight truncate">
                                       {pickLang(lang, other.name, other.name_es)}
