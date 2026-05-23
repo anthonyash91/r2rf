@@ -565,6 +565,8 @@ function NewCategoryForm({
           name_es: nameEs.trim() || null,
           tagline_es: taglineEs.trim() || null,
           description_es: descriptionEs.trim() || null,
+          icon_name: iconName,
+          icon_color: iconColor,
         });
       }}
       className="mt-6 mb-8 rounded-2xl border border-border bg-card p-6 space-y-4"
