@@ -5,7 +5,30 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
-import { Pencil } from "lucide-react";
+import {
+  Pencil,
+  RefreshCw,
+  Brain,
+  Handshake,
+  CircleDot,
+  Wine,
+  Wallet,
+  Sparkles,
+  Heart,
+  GraduationCap,
+  Users,
+  BookOpen,
+  Library,
+  Image as ImageIcon,
+  Briefcase,
+  School,
+  FileText,
+  BookA,
+  Calculator,
+  Scale,
+  Lightbulb,
+  type LucideIcon,
+} from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
