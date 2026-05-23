@@ -413,7 +413,7 @@ function DashboardPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-8">
                         {stats.map((s) => {
                           const Icon = s.icon;
                           return (
@@ -421,9 +421,9 @@ function DashboardPage() {
                               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-[var(--color-accent)] flex-shrink-0">
                                 <Icon className="h-5 w-5" />
                               </div>
-                              <div className="min-w-0 flex flex-row items-center gap-2 sm:flex-col sm:items-start sm:gap-0">
+                              <div className="min-w-0 flex flex-col items-start">
                                 <p className="font-display text-2xl font-semibold leading-none tabular-nums">{s.value}</p>
-                                <p className="text-xs text-muted-foreground sm:mt-1">{s.label}</p>
+                                <p className="text-xs text-muted-foreground mt-1 whitespace-nowrap">{s.label}</p>
                               </div>
                             </div>
                           );
