@@ -6,6 +6,7 @@ type Props = {
   color: string | null | undefined;
   size?: "sm" | "md" | "lg";
   className?: string;
+  iconClassName?: string;
 };
 
 const SIZES = {
@@ -14,7 +15,7 @@ const SIZES = {
   lg: { box: "h-16 w-16", icon: "h-7 w-7", radius: "rounded-lg" },
 };
 
-export function CategoryIcon({ name, color, size = "md", className }: Props) {
+export function CategoryIcon({ name, color, size = "md", className, iconClassName }: Props) {
   const Icon = resolveCategoryIcon(name);
   const c = color || "var(--color-accent)";
   const s = SIZES[size];
@@ -26,7 +27,7 @@ export function CategoryIcon({ name, color, size = "md", className }: Props) {
         borderColor: `color-mix(in oklab, ${c} 25%, transparent)`,
       }}
     >
-      <Icon className={s.icon} style={{ color: c }} strokeWidth={1.75} />
+      <Icon className={cn(s.icon, iconClassName)} style={{ color: c }} strokeWidth={1.75} />
     </div>
   );
 }
