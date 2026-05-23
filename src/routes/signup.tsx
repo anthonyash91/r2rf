@@ -18,7 +18,7 @@ import { questionLabel } from "@/lib/security-questions";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, KeyRound, Loader2, LogIn, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 
@@ -244,7 +244,10 @@ function SignupPage() {
         {mode === "reset" ? (
           <>
             <div className="mb-8">
-              <h1 className="font-display text-3xl font-semibold">{t("security.resetTitle")}</h1>
+              <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+                <KeyRound className="h-7 w-7 text-[var(--color-accent)]" />
+                {t("security.resetTitle")}
+              </h1>
               <p className="mt-2 text-sm text-muted-foreground">
                 {resetStep === 1 ? t("security.resetStep1") : t("security.resetStep2")}
               </p>
@@ -367,7 +370,12 @@ function SignupPage() {
         ) : (
           <>
             <div className="mb-8">
-              <h1 className="font-display text-3xl font-semibold">
+              <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+                {mode === "sign-up" ? (
+                  <UserPlus className="h-7 w-7 text-[var(--color-accent)]" />
+                ) : (
+                  <LogIn className="h-7 w-7 text-[var(--color-accent)]" />
+                )}
                 {mode === "sign-up" ? t("signup.title") : t("signup.signInTitle")}
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
