@@ -145,22 +145,22 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                 params={{ slug: c.slug }}
                 className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 pb-6 sm:pb-8 transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
               >
-                <div className="flex justify-center">
+                <div className="flex">
                   {(() => {
                     const Icon = CATEGORY_ICONS[c.slug] ?? Sparkles;
                     return (
-                      <div className="flex h-36 w-36 sm:h-40 sm:w-40 lg:h-44 lg:w-44 items-center justify-center rounded-full border bg-[oklch(0.95_0.02_165)] border-[oklch(0.85_0.03_165)]">
-                        <Icon className="h-16 w-16 sm:h-18 sm:w-18 lg:h-20 lg:w-20 text-[var(--color-accent)]" strokeWidth={1.5} />
+                      <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/20">
+                        <Icon className="h-8 w-8 sm:h-10 sm:w-10 text-[var(--color-accent)]" strokeWidth={1.5} />
                       </div>
                     );
                   })()}
                 </div>
-                <div className="mt-5 text-center">
+                <div className="mt-5 text-left">
                   <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
                     {pickLang(lang, c.name, c.name_es)}
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
-                  <div className="mt-3 flex justify-center">
+                  <div className="mt-3 flex justify-start">
                     <BadgeGroup>
                       <Badge variant="count">
                         {count} {t(count === 1 ? "home.item" : "home.items")}
