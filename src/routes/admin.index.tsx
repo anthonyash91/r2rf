@@ -321,7 +321,7 @@ function AdminCategoriesPage() {
               </div>
             </div>
             <TooltipProvider delayDuration={150}>
-              <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end mr-[2px]">
+              <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
                 <IconButton
                   aria-label={c.published ? "Unpublish" : "Publish"}
                   tooltip={c.published ? "Unpublish" : "Publish"}
