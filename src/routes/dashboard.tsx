@@ -387,10 +387,11 @@ function DashboardPage() {
                       cursor.setDate(cursor.getDate() - 1);
                     }
                   }
+                  const totalCats = (categoriesQuery.data ?? []).length;
                   const stats: Array<{ icon: typeof BookOpen; label: string; value: string }> = [
-                    { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: readAll.toLocaleString() },
+                    { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: `${readAll.toLocaleString()}/${totalAll.toLocaleString()}` },
                     
-                    { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: completedCats.toLocaleString() },
+                    { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: `${completedCats.toLocaleString()}/${totalCats.toLocaleString()}` },
                     { icon: Clock, label: t("dashboard.statHours"), value: hours.toLocaleString() },
                     { icon: Flame, label: t("dashboard.statStreak"), value: streak.toLocaleString() },
                   ];
