@@ -109,20 +109,28 @@ function AdminCategoriesPage() {
       name_es: string | null;
       tagline_es: string | null;
       description_es: string | null;
+      icon_name: string | null;
+      icon_color: string | null;
     }) => {
-      const generated = generateUniqueCategoryIcon({
-        usedNames: categories.map((c) => c.icon_name),
-        usedColors: categories.map((c) => c.icon_color),
-        title: input.name,
-      });
+      let iconName = input.icon_name;
+      let iconColor = input.icon_color;
+      if (!iconName || !iconColor) {
+        const generated = generateUniqueCategoryIcon({
+          usedNames: categories.map((c) => c.icon_name),
+          usedColors: categories.map((c) => c.icon_color),
+          title: input.name,
+        });
+        iconName = generated.icon_name;
+        iconColor = generated.icon_color;
+      }
       const { error } = await supabase.from("categories").insert({
         name: input.name,
         slug: input.slug,
         tagline: input.tagline,
         description: input.description,
         icon_url: null,
-        icon_name: generated.icon_name,
-        icon_color: generated.icon_color,
+        icon_name: iconName,
+        icon_color: iconColor,
         published: input.published,
         home_page_mode: input.home_page_mode,
         name_es: input.name_es,
@@ -226,6 +234,8 @@ function AdminCategoriesPage() {
           onCancel={() => setCreating(false)}
           onSubmit={(values) => createMut.mutate(values)}
           busy={createMut.isPending}
+          usedIconNames={categories.map((c) => c.icon_name)}
+          usedIconColors={categories.map((c) => c.icon_color)}
         />
       )}
 
@@ -468,6 +478,8 @@ function NewCategoryForm({
   onCancel,
   onSubmit,
   busy,
+  usedIconNames,
+  usedIconColors,
 }: {
   onCancel: () => void;
   onSubmit: (v: {
@@ -480,8 +492,12 @@ function NewCategoryForm({
     name_es: string | null;
     tagline_es: string | null;
     description_es: string | null;
+    icon_name: string | null;
+    icon_color: string | null;
   }) => void;
   busy: boolean;
+  usedIconNames: (string | null)[];
+  usedIconColors: (string | null)[];
 }) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -494,9 +510,27 @@ function NewCategoryForm({
   const [taglineEs, setTaglineEs] = useState("");
   const [descriptionEs, setDescriptionEs] = useState("");
   const [showEs, setShowEs] = useState(false);
+  const [iconName, setIconName] = useState<string | null>(null);
+  const [iconColor, setIconColor] = useState<string | null>(null);
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
   const generate = useServerFn(generateCategoryCopy);
   const [generating, setGenerating] = useState(false);
+
+  function handleGenerateIcon() {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast.error("Enter a name first");
+      return;
+    }
+    const next = generateUniqueCategoryIcon({
+      usedNames: usedIconNames,
+      usedColors: usedIconColors,
+      title: trimmed,
+    });
+    setIconName(next.icon_name);
+    setIconColor(next.icon_color);
+  }
+
 
   async function handleAutoGenerate() {
     const trimmed = name.trim();
@@ -531,6 +565,8 @@ function NewCategoryForm({
           name_es: nameEs.trim() || null,
           tagline_es: taglineEs.trim() || null,
           description_es: descriptionEs.trim() || null,
+          icon_name: iconName,
+          icon_color: iconColor,
         });
       }}
       className="mt-6 mb-8 rounded-2xl border border-border bg-card p-6 space-y-4"
@@ -587,7 +623,51 @@ function NewCategoryForm({
         />
       </label>
 
-      <p className="text-xs text-muted-foreground">A unique icon and color are generated automatically when this category is created.</p>
+      <div>
+        <span className="text-sm font-medium">Icon</span>
+        <div className="mt-2 flex items-center gap-4">
+          {(() => {
+            const Icon = resolveCategoryIcon(iconName);
+            const color = iconColor || "var(--color-accent)";
+            const hasIcon = !!iconName;
+            return (
+              <div
+                className="flex h-16 w-16 items-center justify-center rounded-lg border"
+                style={{
+                  backgroundColor: hasIcon
+                    ? `color-mix(in oklab, ${color} 12%, transparent)`
+                    : "transparent",
+                  borderColor: hasIcon
+                    ? `color-mix(in oklab, ${color} 25%, transparent)`
+                    : "var(--border)",
+                  borderStyle: hasIcon ? "solid" : "dashed",
+                }}
+              >
+                {hasIcon ? (
+                  <Icon className="h-7 w-7" style={{ color }} strokeWidth={1.75} />
+                ) : (
+                  <span className="text-[10px] text-muted-foreground text-center px-1">No icon yet</span>
+                )}
+              </div>
+            );
+          })()}
+          <div className="flex flex-col gap-1">
+            <LoadingButton
+              variant="secondary"
+              onClick={handleGenerateIcon}
+              disabled={!name.trim()}
+              icon={<RefreshCw className="h-4 w-4" />}
+            >
+              {iconName ? "Regenerate icon" : "Generate icon"}
+            </LoadingButton>
+            <p className="text-xs text-muted-foreground">
+              {iconName
+                ? "Don't like it? Click to try another. Leave blank to auto-generate on create."
+                : "Generate a preview now, or one will be picked automatically when you create the category."}
+            </p>
+          </div>
+        </div>
+      </div>
 
 
 
