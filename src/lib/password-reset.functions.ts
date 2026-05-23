@@ -2,14 +2,18 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { createHash } from "crypto";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getClientIp } from "./ip-allowlist";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
 import { hashAnswer, verifyAnswer } from "./security-hash.server";
 
+
 const USER_EMAIL_DOMAIN = "users.local";
 const RESET_WINDOW_MS = 60 * 60 * 1000;
 const RESET_MAX_PER_IP = 8;
+const QUESTION_PROBE_MAX_PER_IP = 30;
+
 
 function syntheticEmailLocal(username: string): string {
   return `${username.toLowerCase()}@${USER_EMAIL_DOMAIN}`;
@@ -58,7 +62,21 @@ export const getResetQuestions = createServerFn({ method: "POST" })
     z.object({ username: z.string().trim().toLowerCase().regex(/^[a-z0-9_]{3,32}$/) }).parse(input),
   )
   .handler(async ({ data }) => {
+    // Rate-limit username probing per IP using the existing attempts table.
+    const ip = getClientIp(getRequest());
+    if (ip) {
+      const since = new Date(Date.now() - RESET_WINDOW_MS).toISOString();
+      const { count } = await supabaseAdmin
+        .from("password_reset_attempts")
+        .select("id", { count: "exact", head: true })
+        .eq("ip_address", ip)
+        .gte("created_at", since);
+      if ((count ?? 0) >= QUESTION_PROBE_MAX_PER_IP) {
+        throw new Error("Too many requests. Please try again later.");
+      }
+    }
     const userId = await findUserIdByUsername(data.username);
+
     if (!userId) {
       // stable fake pair derived from username
       const hash = createHash("sha256").update(data.username).digest();
@@ -123,32 +141,22 @@ export const resetPassword = createServerFn({ method: "POST" })
     return { ok: true as const, email: syntheticEmailLocal(data.username) };
   });
 
-export const getMySecurityQuestions = createServerFn({ method: "GET" }).handler(async () => {
-  const request = getRequest();
-  const auth = request.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return { keys: [] as string[] };
-  const token = auth.slice("Bearer ".length);
-  const { data: userRes } = await supabaseAdmin.auth.getUser(token);
-  if (!userRes?.user) return { keys: [] as string[] };
-  const { data: rows } = await supabaseAdmin
-    .from("user_security_answers")
-    .select("question_key")
-    .eq("user_id", userRes.user.id)
-    .order("created_at", { ascending: true });
-  return { keys: (rows ?? []).map((r) => r.question_key) };
-});
+export const getMySecurityQuestions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: rows } = await supabaseAdmin
+      .from("user_security_answers")
+      .select("question_key")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: true });
+    return { keys: (rows ?? []).map((r) => r.question_key) };
+  });
 
 export const updateSecurityAnswers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ answers: answersSchema }).parse(input))
-  .handler(async ({ data }) => {
-    const request = getRequest();
-    const auth = request.headers.get("authorization");
-    if (!auth?.startsWith("Bearer ")) throw new Error("Not signed in.");
-    const token = auth.slice("Bearer ".length);
-    const { data: userRes } = await supabaseAdmin.auth.getUser(token);
-    if (!userRes?.user) throw new Error("Not signed in.");
-    const userId = userRes.user.id;
-
+  .handler(async ({ data, context }) => {
+    const userId = context.userId;
     await supabaseAdmin.from("user_security_answers").delete().eq("user_id", userId);
     const rows = data.answers.map((a) => ({
       user_id: userId,
@@ -159,3 +167,4 @@ export const updateSecurityAnswers = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+

@@ -3,6 +3,20 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+async function assertAdminOrContributor(supabase: any, userId: string) {
+  const [adminRes, contribRes] = await Promise.all([
+    supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
+    supabase.rpc("has_role", { _user_id: userId, _role: "contributor" }),
+  ]);
+  if (adminRes.error && contribRes.error) {
+    throw new Error("Forbidden: role check failed");
+  }
+  if (!adminRes.data && !contribRes.data) {
+    throw new Error("Forbidden: admin or contributor access required");
+  }
+}
+
+
 export const generateCategoryIcon = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -14,8 +28,10 @@ export const generateCategoryIcon = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    await assertAdminOrContributor(context.supabase, context.userId);
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+
 
     const prompt = `Design a single flat vector icon for a content library category, in the exact style described below.
 
@@ -90,9 +106,11 @@ export const generateCategoryCopy = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({ name: z.string().min(1).max(200) }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertAdminOrContributor(context.supabase, context.userId);
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -145,7 +163,8 @@ export const generateContentDescription = createServerFn({ method: "POST" })
       categoryName: z.string().max(200).optional(),
     }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context: ctx }) => {
+    await assertAdminOrContributor(ctx.supabase, ctx.userId);
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
 
@@ -153,6 +172,7 @@ export const generateContentDescription = createServerFn({ method: "POST" })
       data.categoryName ? `Category: "${data.categoryName}".` : "",
       data.type ? `Content type: ${data.type}.` : "",
     ].filter(Boolean).join(" ");
+
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -203,9 +223,11 @@ export const translateToSpanish = createServerFn({ method: "POST" })
       context: z.string().max(500).optional(),
     }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertAdminOrContributor(context.supabase, context.userId);
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+
 
     const entries = Object.entries(data.fields).filter(([, v]) => v && v.trim());
     if (entries.length === 0) return { fields: {} as Record<string, string> };
