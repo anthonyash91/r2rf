@@ -125,11 +125,12 @@ function useCategoryItemStats(categoryIds: string[]) {
 }
 
 function useColumnCount() {
-  const [cols, setCols] = useState(3);
+  const [cols, setCols] = useState(4);
   useEffect(() => {
     const compute = () => {
       const w = window.innerWidth;
-      if (w >= 1024) setCols(3);
+      if (w >= 1280) setCols(4);
+      else if (w >= 1024) setCols(3);
       else if (w >= 640) setCols(2);
       else setCols(1);
     };
@@ -183,7 +184,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                   })()}
                 </div>
                 <div className="mt-5 text-left">
-                  <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
+                  <h3 className="font-display text-base sm:text-lg font-semibold text-foreground leading-tight">
                     {pickLang(lang, c.name, c.name_es)}
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
@@ -350,7 +351,7 @@ export function HomePageView({
       </section>
 
       <main className="flex-1">
-        <section className="mx-auto max-w-6xl px-6 py-20" id="categories">
+        <section className="mx-auto max-w-7xl px-6 py-20" id="categories">
           <div className="flex items-end justify-between mb-8">
             <h2 className="font-display text-2xl font-semibold">{t("home.categories")}</h2>
             <span className="text-sm text-muted-foreground">
