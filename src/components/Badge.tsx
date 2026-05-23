@@ -27,33 +27,37 @@ type BadgeProps = {
 
 const BASE = "inline-flex items-center rounded-[4px] border px-2 py-0.5 text-xs font-medium flex-shrink-0";
 
+// All variants follow the same pattern as CategoryIcon: a single base color
+// rendered as a 15%-tinted background, 30%-tinted border, and the full color
+// for text. This keeps badges quiet and visually consistent with the
+// category icon palette.
 const VARIANT_CLASSES: Record<Exclude<BadgeVariant, "type">, string> = {
-  // Emerald — used for "New" / "New Content"
-  new: "border-[oklch(0.85_0.03_165)] bg-[oklch(0.95_0.02_165)] text-[oklch(0.35_0.05_165)]",
-  // Gold — used for item counts
-  count: "border-[oklch(0.85_0.05_85)] bg-[oklch(0.95_0.03_85)] text-[oklch(0.42_0.05_85)]",
+  // Emerald — "New" / "New Content"
+  new: "border-[oklch(0.48_0.09_165)]/30 bg-[oklch(0.48_0.09_165)]/15 text-[oklch(0.48_0.09_165)]",
+  // Gold — item counts
+  count: "border-[oklch(0.52_0.10_85)]/30 bg-[oklch(0.52_0.10_85)]/15 text-[oklch(0.52_0.10_85)]",
   // Muted — Draft
   draft: "border-border bg-muted text-muted-foreground",
   // Accent green — Custom / custom home page name
   custom:
     "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/15 text-[var(--color-accent)]",
-  // Rose — Custom category chips (muted)
-  category: "border-[oklch(0.85_0.04_15)] bg-[oklch(0.95_0.02_15)] text-[oklch(0.42_0.07_15)]",
-  // Gold (themed) — translation status (Needs ES / Partially translated)
+  // Rose — Custom category chips
+  category: "border-[oklch(0.50_0.11_15)]/30 bg-[oklch(0.50_0.11_15)]/15 text-[oklch(0.50_0.11_15)]",
+  // Gold (themed) — translation status
   translation:
     "border-[var(--color-gold)]/30 bg-[var(--color-gold)]/15 text-[var(--color-gold)]",
-  // Admin role (muted primary)
-  admin: "border-primary/25 bg-primary/8 text-primary/90",
-  // Contributor role — sky (muted)
-  contributor: "border-[oklch(0.85_0.04_230)] bg-[oklch(0.95_0.02_230)] text-[oklch(0.42_0.07_230)]",
-  // Verified email — emerald (muted)
-  verified: "border-[oklch(0.85_0.04_160)] bg-[oklch(0.95_0.02_160)] text-[oklch(0.4_0.07_160)]",
-  // Unverified email — amber (muted)
-  unverified: "border-[oklch(0.85_0.05_75)] bg-[oklch(0.95_0.03_75)] text-[oklch(0.45_0.07_75)]",
-  // Regular user role — indigo (muted)
-  user: "border-[oklch(0.85_0.04_265)] bg-[oklch(0.95_0.02_265)] text-[oklch(0.42_0.07_265)]",
-  // Facility name — violet (muted)
-  facility: "border-[oklch(0.85_0.04_290)] bg-[oklch(0.95_0.02_290)] text-[oklch(0.42_0.07_290)]",
+  // Admin role — primary
+  admin: "border-primary/25 bg-primary/10 text-primary/90",
+  // Contributor — sky
+  contributor: "border-[oklch(0.46_0.10_220)]/30 bg-[oklch(0.46_0.10_220)]/15 text-[oklch(0.46_0.10_220)]",
+  // Verified email — emerald
+  verified: "border-[oklch(0.48_0.09_145)]/30 bg-[oklch(0.48_0.09_145)]/15 text-[oklch(0.48_0.09_145)]",
+  // Unverified email — amber
+  unverified: "border-[oklch(0.50_0.10_70)]/30 bg-[oklch(0.50_0.10_70)]/15 text-[oklch(0.50_0.10_70)]",
+  // Regular user — indigo
+  user: "border-[oklch(0.44_0.11_260)]/30 bg-[oklch(0.44_0.11_260)]/15 text-[oklch(0.44_0.11_260)]",
+  // Facility — violet
+  facility: "border-[oklch(0.46_0.12_295)]/30 bg-[oklch(0.46_0.12_295)]/15 text-[oklch(0.46_0.12_295)]",
 };
 
 

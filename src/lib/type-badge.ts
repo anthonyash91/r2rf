@@ -4,38 +4,40 @@
 // SEPARATE pool of palettes so they never collide with the colors
 // already reserved for known types.
 
+// Each palette uses a single base color with 15% tinted bg, 30% tinted
+// border, and the full color for text — same pattern as CategoryIcon.
 const PALETTES = [
   // 0 emerald
-  "bg-[oklch(0.95_0.02_165)] text-[oklch(0.35_0.05_165)] border-[oklch(0.85_0.03_165)]",
+  "bg-[oklch(0.48_0.09_165)]/15 text-[oklch(0.48_0.09_165)] border-[oklch(0.48_0.09_165)]/30",
   // 1 gold
-  "bg-[oklch(0.95_0.03_85)] text-[oklch(0.42_0.05_85)] border-[oklch(0.85_0.05_85)]",
+  "bg-[oklch(0.52_0.10_85)]/15 text-[oklch(0.52_0.10_85)] border-[oklch(0.52_0.10_85)]/30",
   // 2 teal
-  "bg-[oklch(0.95_0.02_210)] text-[oklch(0.40_0.05_215)] border-[oklch(0.83_0.03_210)]",
+  "bg-[oklch(0.46_0.08_210)]/15 text-[oklch(0.46_0.08_210)] border-[oklch(0.46_0.08_210)]/30",
   // 3 terracotta
-  "bg-[oklch(0.95_0.02_45)] text-[oklch(0.45_0.06_40)] border-[oklch(0.85_0.04_45)]",
+  "bg-[oklch(0.50_0.10_40)]/15 text-[oklch(0.50_0.10_40)] border-[oklch(0.50_0.10_40)]/30",
   // 4 plum
-  "bg-[oklch(0.95_0.02_330)] text-[oklch(0.42_0.05_330)] border-[oklch(0.85_0.03_330)]",
+  "bg-[oklch(0.48_0.10_330)]/15 text-[oklch(0.48_0.10_330)] border-[oklch(0.48_0.10_330)]/30",
   // 5 moss
-  "bg-[oklch(0.95_0.02_140)] text-[oklch(0.38_0.05_145)] border-[oklch(0.83_0.03_140)]",
+  "bg-[oklch(0.46_0.08_140)]/15 text-[oklch(0.46_0.08_140)] border-[oklch(0.46_0.08_140)]/30",
   // 6 indigo
-  "bg-[oklch(0.95_0.02_280)] text-[oklch(0.40_0.06_280)] border-[oklch(0.85_0.03_280)]",
+  "bg-[oklch(0.44_0.10_280)]/15 text-[oklch(0.44_0.10_280)] border-[oklch(0.44_0.10_280)]/30",
   // 7 rose
-  "bg-[oklch(0.95_0.02_15)] text-[oklch(0.45_0.06_15)] border-[oklch(0.85_0.04_15)]",
+  "bg-[oklch(0.50_0.11_15)]/15 text-[oklch(0.50_0.11_15)] border-[oklch(0.50_0.11_15)]/30",
   // 8 slate
-  "bg-[oklch(0.95_0.01_250)] text-[oklch(0.40_0.03_250)] border-[oklch(0.84_0.02_250)]",
+  "bg-[oklch(0.45_0.04_250)]/15 text-[oklch(0.45_0.04_250)] border-[oklch(0.45_0.04_250)]/30",
   // --- fallback-only palettes (never assigned to a known type) ---
   // 9 amber
-  "bg-[oklch(0.95_0.03_70)] text-[oklch(0.43_0.06_70)] border-[oklch(0.85_0.05_70)]",
+  "bg-[oklch(0.50_0.10_70)]/15 text-[oklch(0.50_0.10_70)] border-[oklch(0.50_0.10_70)]/30",
   // 10 cyan
-  "bg-[oklch(0.95_0.02_195)] text-[oklch(0.40_0.05_195)] border-[oklch(0.83_0.03_195)]",
+  "bg-[oklch(0.46_0.08_195)]/15 text-[oklch(0.46_0.08_195)] border-[oklch(0.46_0.08_195)]/30",
   // 11 violet
-  "bg-[oklch(0.95_0.02_305)] text-[oklch(0.42_0.06_305)] border-[oklch(0.85_0.04_305)]",
+  "bg-[oklch(0.46_0.12_295)]/15 text-[oklch(0.46_0.12_295)] border-[oklch(0.46_0.12_295)]/30",
   // 12 olive
-  "bg-[oklch(0.95_0.02_110)] text-[oklch(0.40_0.05_110)] border-[oklch(0.83_0.03_110)]",
+  "bg-[oklch(0.48_0.08_110)]/15 text-[oklch(0.48_0.08_110)] border-[oklch(0.48_0.08_110)]/30",
   // 13 fuchsia
-  "bg-[oklch(0.95_0.02_350)] text-[oklch(0.43_0.06_350)] border-[oklch(0.85_0.04_350)]",
+  "bg-[oklch(0.50_0.10_350)]/15 text-[oklch(0.50_0.10_350)] border-[oklch(0.50_0.10_350)]/30",
   // 14 stone
-  "bg-[oklch(0.94_0.01_70)] text-[oklch(0.40_0.02_70)] border-[oklch(0.83_0.02_70)]",
+  "bg-[oklch(0.45_0.04_70)]/15 text-[oklch(0.45_0.04_70)] border-[oklch(0.45_0.04_70)]/30",
 ];
 
 // Explicit assignments for common/known types so each gets a unique color
