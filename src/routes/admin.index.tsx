@@ -266,15 +266,21 @@ function AdminCategoriesPage() {
         const renderCategoryRow = (c: Category) => (
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 pt-[17px] pr-6 pb-[24px] sm:pb-[19px] pl-3">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-              {c.icon_url ? (
-                <img
-                  src={c.icon_url}
-                  alt={`${c.name} icon`}
-                  className="h-12 w-12 rounded-lg object-cover border border-border bg-muted shrink-0"
-                />
-              ) : (
-                <div className="h-12 w-12 rounded-lg border border-dashed border-border bg-muted/40 shrink-0" />
-              )}
+              {(() => {
+                const Icon = resolveCategoryIcon(c.icon_name);
+                const color = c.icon_color || "var(--color-accent)";
+                return (
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-lg border shrink-0"
+                    style={{
+                      backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
+                      borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
+                    }}
+                  >
+                    <Icon className="h-5 w-5" style={{ color }} strokeWidth={1.75} />
+                  </div>
+                );
+              })()}
               <div className="@container flex-1 min-w-0">
                 <div className="flex flex-col-reverse gap-y-1 pt-[7px] @lg:pt-0 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
                   <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
