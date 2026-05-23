@@ -329,8 +329,8 @@ function AdminIconsBadgesPage() {
 
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div>
+      <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <PageHeader
           icon={Palette}
           title="Icons & Badges"
@@ -357,7 +357,7 @@ function AdminIconsBadgesPage() {
         </div>
       </div>
 
-      <SectionCard>
+      <SectionCard className="mt-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <h2 className="font-display text-lg font-semibold">Badge Variants</h2>
@@ -401,7 +401,7 @@ function AdminIconsBadgesPage() {
 
       </SectionCard>
 
-      <SectionCard>
+      <SectionCard className="mt-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <h2 className="font-display text-lg font-semibold">Content Type Badges</h2>
@@ -452,7 +452,7 @@ function AdminIconsBadgesPage() {
 
       </SectionCard>
 
-      <SectionCard>
+      <SectionCard className="mt-8">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <h2 className="font-display text-lg font-semibold">Category Icons</h2>
@@ -508,7 +508,7 @@ function AdminIconsBadgesPage() {
 
       </SectionCard>
 
-      <SectionCard>
+      <SectionCard className="mt-8">
         <h2 className="font-display text-lg font-semibold">Palette</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           The {PALETTES.length} curated color combinations. Regenerate cycles through these.
