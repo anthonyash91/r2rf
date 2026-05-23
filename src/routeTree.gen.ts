@@ -20,6 +20,7 @@ import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
 import { Route as AdminIpAllowlistRouteImport } from './routes/admin.ip-allowlist'
+import { Route as AdminIconsBadgesRouteImport } from './routes/admin.icons-badges'
 import { Route as AdminHomeRouteImport } from './routes/admin.home'
 import { Route as AdminFacilitiesRouteImport } from './routes/admin.facilities'
 import { Route as AdminCustomHomePagesRouteImport } from './routes/admin.custom-home-pages'
@@ -85,6 +86,11 @@ const AdminIpAllowlistRoute = AdminIpAllowlistRouteImport.update({
   path: '/ip-allowlist',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminIconsBadgesRoute = AdminIconsBadgesRouteImport.update({
+  id: '/icons-badges',
+  path: '/icons-badges',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminHomeRoute = AdminHomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
+  '/admin/icons-badges': typeof AdminIconsBadgesRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/users': typeof AdminUsersRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
+  '/admin/icons-badges': typeof AdminIconsBadgesRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/users': typeof AdminUsersRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
+  '/admin/icons-badges': typeof AdminIconsBadgesRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/users': typeof AdminUsersRoute
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/admin/custom-home-pages'
     | '/admin/facilities'
     | '/admin/home'
+    | '/admin/icons-badges'
     | '/admin/ip-allowlist'
     | '/admin/messages'
     | '/admin/users'
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/admin/certificate'
     | '/admin/facilities'
     | '/admin/home'
+    | '/admin/icons-badges'
     | '/admin/ip-allowlist'
     | '/admin/messages'
     | '/admin/users'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/admin/custom-home-pages'
     | '/admin/facilities'
     | '/admin/home'
+    | '/admin/icons-badges'
     | '/admin/ip-allowlist'
     | '/admin/messages'
     | '/admin/users'
@@ -354,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIpAllowlistRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/icons-badges': {
+      id: '/admin/icons-badges'
+      path: '/icons-badges'
+      fullPath: '/admin/icons-badges'
+      preLoaderRoute: typeof AdminIconsBadgesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/home': {
       id: '/admin/home'
       path: '/home'
@@ -439,6 +458,7 @@ interface AdminRouteChildren {
   AdminCustomHomePagesRoute: typeof AdminCustomHomePagesRouteWithChildren
   AdminFacilitiesRoute: typeof AdminFacilitiesRoute
   AdminHomeRoute: typeof AdminHomeRoute
+  AdminIconsBadgesRoute: typeof AdminIconsBadgesRoute
   AdminIpAllowlistRoute: typeof AdminIpAllowlistRoute
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminUsersRoute: typeof AdminUsersRoute
@@ -452,6 +472,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminCustomHomePagesRoute: AdminCustomHomePagesRouteWithChildren,
   AdminFacilitiesRoute: AdminFacilitiesRoute,
   AdminHomeRoute: AdminHomeRoute,
+  AdminIconsBadgesRoute: AdminIconsBadgesRoute,
   AdminIpAllowlistRoute: AdminIpAllowlistRoute,
   AdminMessagesRoute: AdminMessagesRoute,
   AdminUsersRoute: AdminUsersRoute,
