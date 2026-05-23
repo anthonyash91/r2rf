@@ -627,16 +627,14 @@ function NewCategoryForm({
 
       <div>
         <span className="text-sm font-medium">Icon</span>
-        <div className="mt-2 flex items-stretch gap-4">
+        <div className="mt-2 flex items-start gap-4">
           {(() => {
             const Icon = resolveCategoryIcon(iconName);
             const color = iconColor || "var(--color-accent)";
             const hasIcon = !!iconName;
             return (
-              <div className="self-stretch aspect-square shrink-0">
-                <div
-                  className="flex h-full w-full items-center justify-center rounded-lg border"
-
+              <div
+                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border"
                 style={{
                   backgroundColor: hasIcon
                     ? `color-mix(in oklab, ${color} 12%, transparent)`
@@ -652,7 +650,6 @@ function NewCategoryForm({
                 ) : (
                   <span className="text-[10px] text-muted-foreground text-center px-1">No icon yet</span>
                 )}
-                </div>
               </div>
             );
           })()}
