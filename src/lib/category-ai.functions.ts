@@ -106,9 +106,11 @@ export const generateCategoryCopy = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({ name: z.string().min(1).max(200) }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertAdminOrContributor(context.supabase, context.userId);
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
