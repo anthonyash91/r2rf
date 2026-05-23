@@ -62,7 +62,21 @@ export const getResetQuestions = createServerFn({ method: "POST" })
     z.object({ username: z.string().trim().toLowerCase().regex(/^[a-z0-9_]{3,32}$/) }).parse(input),
   )
   .handler(async ({ data }) => {
+    // Rate-limit username probing per IP using the existing attempts table.
+    const ip = getClientIp(getRequest());
+    if (ip) {
+      const since = new Date(Date.now() - RESET_WINDOW_MS).toISOString();
+      const { count } = await supabaseAdmin
+        .from("password_reset_attempts")
+        .select("id", { count: "exact", head: true })
+        .eq("ip_address", ip)
+        .gte("created_at", since);
+      if ((count ?? 0) >= QUESTION_PROBE_MAX_PER_IP) {
+        throw new Error("Too many requests. Please try again later.");
+      }
+    }
     const userId = await findUserIdByUsername(data.username);
+
     if (!userId) {
       // stable fake pair derived from username
       const hash = createHash("sha256").update(data.username).digest();
