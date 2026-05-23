@@ -566,8 +566,3 @@ function BadgePreview({ variant, draft }: { variant: BadgeVariantKey; draft: Bad
     </span>
   );
 }
-
-function CategoryIconPreview({ draft }: { draft: BadgeStyles }) {
-  const palette = PALETTES[draft.categoryDefault];
-  return <CategoryIcon name="default" color={palette.oklch} size="md" />;
-}
