@@ -59,6 +59,8 @@ export type Database = {
           description: string
           description_es: string | null
           home_page_mode: string
+          icon_color: string | null
+          icon_name: string | null
           icon_url: string | null
           id: string
           name: string
@@ -75,6 +77,8 @@ export type Database = {
           description?: string
           description_es?: string | null
           home_page_mode?: string
+          icon_color?: string | null
+          icon_name?: string | null
           icon_url?: string | null
           id?: string
           name: string
@@ -91,6 +95,8 @@ export type Database = {
           description?: string
           description_es?: string | null
           home_page_mode?: string
+          icon_color?: string | null
+          icon_name?: string | null
           icon_url?: string | null
           id?: string
           name?: string
