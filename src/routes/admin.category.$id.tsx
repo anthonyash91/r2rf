@@ -242,33 +242,30 @@ function CategoryEditor({
         <div>
           <span className="text-sm font-medium">Icon</span>
           <div className="mt-2 flex items-center gap-4">
-            {iconUrl ? (
-              <img
-                src={iconUrl}
-                alt="Category icon"
-                className="h-16 w-16 rounded-lg object-cover border border-border bg-muted"
-              />
-            ) : (
-              <div className="h-16 w-16 rounded-lg border border-dashed border-border bg-muted/40 grid place-items-center text-xs text-muted-foreground">
-                No icon
-              </div>
-            )}
-            <div className="flex flex-wrap gap-2">
-              <FileUploader
-                label={iconUrl ? "Replace icon" : "Upload icon"}
-                mimeTypes={["image/*"]}
-                existingFileUrl={iconUrl}
-                onUploaded={(u) => setIconUrl(u)}
-              />
-              {iconUrl && (
-                <LoadingButton
-                  variant="secondary"
-                  onClick={() => setIconUrl(null)}
-                  className="text-muted-foreground"
+            {(() => {
+              const Icon = resolveCategoryIcon(iconName);
+              const color = iconColor || "var(--color-accent)";
+              return (
+                <div
+                  className="flex h-16 w-16 items-center justify-center rounded-lg border"
+                  style={{
+                    backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
+                    borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
+                  }}
                 >
-                  Remove
-                </LoadingButton>
-              )}
+                  <Icon className="h-7 w-7" style={{ color }} strokeWidth={1.75} />
+                </div>
+              );
+            })()}
+            <div className="flex flex-col gap-1">
+              <LoadingButton
+                variant="secondary"
+                onClick={handleRegenerateIcon}
+                icon={<RefreshCw className="h-4 w-4" />}
+              >
+                Regenerate icon
+              </LoadingButton>
+              <p className="text-xs text-muted-foreground">A unique icon and color, distinct from every other category.</p>
             </div>
           </div>
         </div>
