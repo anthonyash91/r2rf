@@ -623,7 +623,51 @@ function NewCategoryForm({
         />
       </label>
 
-      <p className="text-xs text-muted-foreground">A unique icon and color are generated automatically when this category is created.</p>
+      <div>
+        <span className="text-sm font-medium">Icon</span>
+        <div className="mt-2 flex items-center gap-4">
+          {(() => {
+            const Icon = resolveCategoryIcon(iconName);
+            const color = iconColor || "var(--color-accent)";
+            const hasIcon = !!iconName;
+            return (
+              <div
+                className="flex h-16 w-16 items-center justify-center rounded-lg border"
+                style={{
+                  backgroundColor: hasIcon
+                    ? `color-mix(in oklab, ${color} 12%, transparent)`
+                    : "transparent",
+                  borderColor: hasIcon
+                    ? `color-mix(in oklab, ${color} 25%, transparent)`
+                    : "var(--border)",
+                  borderStyle: hasIcon ? "solid" : "dashed",
+                }}
+              >
+                {hasIcon ? (
+                  <Icon className="h-7 w-7" style={{ color }} strokeWidth={1.75} />
+                ) : (
+                  <span className="text-[10px] text-muted-foreground text-center px-1">No icon yet</span>
+                )}
+              </div>
+            );
+          })()}
+          <div className="flex flex-col gap-1">
+            <LoadingButton
+              variant="secondary"
+              onClick={handleGenerateIcon}
+              disabled={!name.trim()}
+              icon={<RefreshCw className="h-4 w-4" />}
+            >
+              {iconName ? "Regenerate icon" : "Generate icon"}
+            </LoadingButton>
+            <p className="text-xs text-muted-foreground">
+              {iconName
+                ? "Don't like it? Click to try another. Leave blank to auto-generate on create."
+                : "Generate a preview now, or one will be picked automatically when you create the category."}
+            </p>
+          </div>
+        </div>
+      </div>
 
 
 
