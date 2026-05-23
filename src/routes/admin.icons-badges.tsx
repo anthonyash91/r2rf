@@ -477,21 +477,29 @@ function AdminIconsBadgesPage() {
           </Button>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <CategoryIconPreview draft={draft} />
-            <div className="min-w-0">
-              <div className="text-sm font-medium">Default Category Color</div>
-              <div className="text-xs text-muted-foreground truncate">
-                {PALETTES[draft.categoryDefault].label}
+        {(() => {
+          const defDup = isDup(draft.categoryDefault);
+          return (
+            <div
+              className={`mt-4 flex items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${defDup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <CategoryIconPreview draft={draft} />
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">Default Category Color</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {PALETTES[draft.categoryDefault].label}
+                    {defDup && <span className="ml-1 text-amber-500">• duplicate</span>}
+                  </div>
+                </div>
               </div>
+              <Button variant="outline" onClick={cycleCategoryDefault} className={REGEN_BTN_CLASS}>
+                <RefreshCw className="h-4 w-4" />
+                Regenerate
+              </Button>
             </div>
-          </div>
-          <Button variant="outline" onClick={cycleCategoryDefault} className={REGEN_BTN_CLASS}>
-            <RefreshCw className="h-4 w-4" />
-            Regenerate
-          </Button>
-        </div>
+          );
+        })()}
 
         {categories && categories.length > 0 && (
           <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -499,16 +507,20 @@ function AdminIconsBadgesPage() {
               const color = catDraft[c.id] ?? c.icon_color ?? null;
               const idx = paletteIndexOfColor(color);
               const label = idx >= 0 ? PALETTES[idx].label : "Custom";
+              const dup = idx >= 0 && isDup(idx);
               return (
                 <li
                   key={c.id}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3"
+                  className={`flex items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <CategoryIcon name={c.icon_name} color={color} size="sm" />
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{c.name}</div>
-                      <div className="text-xs text-muted-foreground truncate">{label}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {label}
+                        {dup && <span className="ml-1 text-amber-500">• duplicate</span>}
+                      </div>
                     </div>
                   </div>
                   <Button variant="outline" onClick={() => cycleCategory(c.id)} className={REGEN_BTN_CLASS}>
@@ -520,6 +532,7 @@ function AdminIconsBadgesPage() {
             })}
           </ul>
         )}
+
       </SectionCard>
 
       <SectionCard>
