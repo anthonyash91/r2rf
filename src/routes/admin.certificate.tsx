@@ -165,7 +165,7 @@ function AdminCertificatePage() {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Preview</p>
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">EN</span>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-[2px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+              <div className="inline-flex items-center gap-2 rounded-[4px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
                 {hero.eyebrow || "—"}
               </div>
@@ -284,7 +284,7 @@ function AdminCertificatePage() {
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Preview</p>
                     <span className="text-[10px] uppercase tracking-wide text-muted-foreground">ES</span>
                   </div>
-                  <div className="inline-flex items-center gap-2 rounded-[2px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                  <div className="inline-flex items-center gap-2 rounded-[4px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
                     {hero.eyebrow_es || hero.eyebrow || "—"}
                   </div>
