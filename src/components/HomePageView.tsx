@@ -171,13 +171,13 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                     const Icon = entry.icon;
                     return (
                       <div
-                        className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl border"
+                        className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border"
                         style={{
                           backgroundColor: `color-mix(in oklab, ${entry.color} 12%, transparent)`,
                           borderColor: `color-mix(in oklab, ${entry.color} 25%, transparent)`,
                         }}
                       >
-                        <Icon className="h-7 w-7 sm:h-9 sm:w-9" style={{ color: entry.color }} strokeWidth={1.5} />
+                        <Icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: entry.color }} strokeWidth={1.75} />
                       </div>
                     );
                   })()}
