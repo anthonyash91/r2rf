@@ -103,19 +103,24 @@ function AdminCategoriesPage() {
       slug: string;
       tagline: string;
       description: string;
-      icon_url: string | null;
       published: boolean;
       home_page_mode: "default" | "custom";
       name_es: string | null;
       tagline_es: string | null;
       description_es: string | null;
     }) => {
+      const generated = generateUniqueCategoryIcon({
+        usedNames: categories.map((c) => c.icon_name),
+        usedColors: categories.map((c) => c.icon_color),
+      });
       const { error } = await supabase.from("categories").insert({
         name: input.name,
         slug: input.slug,
         tagline: input.tagline,
         description: input.description,
-        icon_url: input.icon_url,
+        icon_url: null,
+        icon_name: generated.icon_name,
+        icon_color: generated.icon_color,
         published: input.published,
         home_page_mode: input.home_page_mode,
         name_es: input.name_es,
