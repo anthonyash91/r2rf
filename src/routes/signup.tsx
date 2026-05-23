@@ -517,7 +517,7 @@ function SignupPage() {
                 </>
               )}
 
-              <div className="flex justify-end">
+              <div className="flex justify-end !mt-6">
                 <button
                   type="submit"
                   disabled={busy || (mode === "sign-up" && (!challengeQuery.data || usernameStatus === "taken" || usernameStatus === "checking"))}
