@@ -78,7 +78,11 @@ function AdminIconsBadgesPage() {
       const { error } = await supabase
         .from("site_settings")
         .upsert(
-          { key: BADGE_STYLES_KEY, value: next as unknown as object, updated_at: new Date().toISOString() },
+          {
+            key: BADGE_STYLES_KEY,
+            value: next as unknown as never,
+            updated_at: new Date().toISOString(),
+          },
           { onConflict: "key" },
         );
       if (error) throw error;
@@ -131,7 +135,7 @@ function AdminIconsBadgesPage() {
           <LoadingButton
             onClick={() => saveMutation.mutate(draft)}
             disabled={!dirty}
-            loading={saveMutation.isPending}
+            pending={saveMutation.isPending}
             className="px-4 py-2 text-sm w-full sm:w-auto"
           >
             <Save className="h-4 w-4" />
