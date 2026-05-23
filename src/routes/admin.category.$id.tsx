@@ -520,8 +520,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-display text-lg font-semibold text-foreground leading-snug truncate">{item.title}</h3>
-                    {item.description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{item.description}</p>}
-                    {item.source && <p className="mt-2 text-xs text-muted-foreground/80">Source · {item.source}</p>}
+                    {item.description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed truncate">{item.description}</p>}
+                    {item.source && <p className="mt-2 text-xs text-muted-foreground/80 truncate">Source · {item.source}</p>}
                   </div>
                 </div>
                 <TooltipProvider delayDuration={150}>
