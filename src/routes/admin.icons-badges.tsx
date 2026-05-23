@@ -113,20 +113,36 @@ function AdminIconsBadgesPage() {
     onError: (err: Error) => toast.error(err.message ?? "Failed to save"),
   });
 
+  function nextUnusedIndex(cur: number, used: Set<number>): number {
+    const n = PALETTES.length;
+    // Try to find a non-used index after current
+    for (let step = 1; step <= n; step++) {
+      const candidate = (cur + step) % n;
+      if (!used.has(candidate)) return candidate;
+    }
+    // All in use — fall back to plain cycle
+    return (cur + 1) % n;
+  }
   function cycleVariant(key: BadgeVariantKey) {
     setDraft((d) => {
       const cur = d.variants[key] ?? 0;
-      return { ...d, variants: { ...d.variants, [key]: (cur + 1) % PALETTES.length } };
+      const used = new Set<number>(
+        BADGE_VARIANTS.filter((k) => k !== key).map((k) => d.variants[k] ?? DEFAULT_BADGE_STYLES.variants[k] ?? 0),
+      );
+      return { ...d, variants: { ...d.variants, [key]: nextUnusedIndex(cur, used) } };
     });
   }
   function cycleType(key: KnownTypeKey) {
     setDraft((d) => {
       const cur = d.types[key] ?? 0;
-      return { ...d, types: { ...d.types, [key]: (cur + 1) % PALETTES.length } };
+      const used = new Set<number>(
+        KNOWN_TYPES.filter((k) => k !== key).map((k) => d.types[k] ?? DEFAULT_BADGE_STYLES.types[k] ?? 0),
+      );
+      return { ...d, types: { ...d.types, [key]: nextUnusedIndex(cur, used) } };
     });
   }
   function cycleCategoryDefault() {
-    setDraft((d) => ({ ...d, categoryDefault: (d.categoryDefault + 1) % PALETTES.length }));
+    setDraft((d) => ({ ...d, categoryDefault: nextUnusedIndex(d.categoryDefault, new Set<number>()) }));
   }
 
   function reset() {
