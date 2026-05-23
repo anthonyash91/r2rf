@@ -357,6 +357,7 @@ function SignupPage() {
                 setResetAnswer1("");
                 setResetAnswer2("");
                 setResetNewPassword("");
+                setResetConfirmPassword("");
               }}
               className="mt-4 text-sm text-muted-foreground hover:text-foreground"
             >
