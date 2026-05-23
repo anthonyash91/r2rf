@@ -63,7 +63,7 @@ function SortableRow({ id, children, handleClassName }: { id: string; children: 
         type="button"
         {...attributes}
         {...listeners}
-        className={cn("flex items-center pl-4 pr-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none", handleClassName)}
+        className={cn("flex items-center pl-5 pr-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none", handleClassName)}
         aria-label="Drag to reorder"
       >
         <GripVertical className="h-4 w-4" />
