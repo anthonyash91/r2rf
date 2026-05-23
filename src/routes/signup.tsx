@@ -348,7 +348,7 @@ function SignupPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-border bg-[#fffdf8] px-6 pt-6 pb-0">
+            <div className="rounded-lg border border-border bg-[#fffdf8] px-6 py-0">
             <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
               {mode === "sign-up" && (
                 <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
