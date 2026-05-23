@@ -207,6 +207,11 @@ function SignupPage() {
     e.preventDefault();
     setBusy(true);
     try {
+      if (resetNewPassword !== resetConfirmPassword) {
+        toast.error(t("signup.passwordMismatch"));
+        setBusy(false);
+        return;
+      }
       const uname = resetUsername.trim().toLowerCase();
       await submitReset({
         data: {
