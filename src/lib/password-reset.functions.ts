@@ -2,10 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { createHash } from "crypto";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getClientIp } from "./ip-allowlist";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
 import { hashAnswer, verifyAnswer } from "./security-hash.server";
+
 
 const USER_EMAIL_DOMAIN = "users.local";
 const RESET_WINDOW_MS = 60 * 60 * 1000;
