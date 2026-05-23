@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy } from "@/lib/category-ai.functions";
+import { generateUniqueCategoryIcon, resolveCategoryIcon } from "@/lib/category-icons";
 
 function categoryTranslationStatus(c: Category): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
