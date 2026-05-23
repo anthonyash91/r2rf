@@ -33,6 +33,29 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  "reentry-to-recovery": RefreshCw,
+  "mind-rehab": Brain,
+  "resources-partners": Handshake,
+  "narcotics-anonymous": CircleDot,
+  "alcoholics-anonymous": Wine,
+  "personal-finance": Wallet,
+  recovery: Sparkles,
+  "health-and-wellness": Heart,
+  ged: GraduationCap,
+  parenting: Users,
+  "devotional-books": BookOpen,
+  books: Library,
+  "galleries-devotion": ImageIcon,
+  "workforce-integration": Briefcase,
+  education: School,
+  "cover-letter-resume": FileText,
+  "english-study-sheets": BookA,
+  "math-study-sheets": Calculator,
+  "legal-information": Scale,
+  "learning-center": Lightbulb,
+};
+
 type CategoryStats = { count: number; recentItemIds: Set<string> };
 
 function useUserProgress(userId: string | null, categoryIds: string[]) {
