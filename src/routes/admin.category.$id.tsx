@@ -184,15 +184,18 @@ function CategoryEditor({
       return;
     }
     const others = (data ?? []).filter((r) => r.id !== category.id);
+    const trimmed = name.trim();
+    const kw = iconKeywords.trim();
     const next = generateUniqueCategoryIcon({
       usedNames: others.map((c) => c.icon_name),
       usedColors: others.map((c) => c.icon_color),
-      title: name,
+      title: kw ? `${trimmed} ${kw}` : trimmed,
     });
     setIconName(next.icon_name);
     setIconColor(next.icon_color);
     toast.success("New icon generated. Save to apply.");
   }
+
 
   return (
     <SectionCard className="mt-8">
