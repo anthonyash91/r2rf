@@ -56,6 +56,7 @@ function SignupPage() {
   const [resetAnswer1, setResetAnswer1] = useState("");
   const [resetAnswer2, setResetAnswer2] = useState("");
   const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
 
   const getChallenge = useServerFn(getSignupChallenge);
   const submitSignup = useServerFn(signupUser);
