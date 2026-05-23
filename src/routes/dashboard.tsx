@@ -395,7 +395,7 @@ function DashboardPage() {
                       <span>{total.toLocaleString()}</span>
                     </span>
                   );
-                  const stats: Array<{ icon: typeof BookOpen; label: string; value: React.ReactNode }> = [
+                  const stats: Array<{ icon: typeof BookOpen; label: string; value: ReactNode }> = [
                     { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: fraction(readAll, totalAll) },
                     { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: fraction(completedCats, totalCats) },
                     { icon: Clock, label: t("dashboard.statHours"), value: hours.toLocaleString() },
