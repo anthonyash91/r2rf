@@ -141,32 +141,22 @@ export const resetPassword = createServerFn({ method: "POST" })
     return { ok: true as const, email: syntheticEmailLocal(data.username) };
   });
 
-export const getMySecurityQuestions = createServerFn({ method: "GET" }).handler(async () => {
-  const request = getRequest();
-  const auth = request.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return { keys: [] as string[] };
-  const token = auth.slice("Bearer ".length);
-  const { data: userRes } = await supabaseAdmin.auth.getUser(token);
-  if (!userRes?.user) return { keys: [] as string[] };
-  const { data: rows } = await supabaseAdmin
-    .from("user_security_answers")
-    .select("question_key")
-    .eq("user_id", userRes.user.id)
-    .order("created_at", { ascending: true });
-  return { keys: (rows ?? []).map((r) => r.question_key) };
-});
+export const getMySecurityQuestions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: rows } = await supabaseAdmin
+      .from("user_security_answers")
+      .select("question_key")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: true });
+    return { keys: (rows ?? []).map((r) => r.question_key) };
+  });
 
 export const updateSecurityAnswers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ answers: answersSchema }).parse(input))
-  .handler(async ({ data }) => {
-    const request = getRequest();
-    const auth = request.headers.get("authorization");
-    if (!auth?.startsWith("Bearer ")) throw new Error("Not signed in.");
-    const token = auth.slice("Bearer ".length);
-    const { data: userRes } = await supabaseAdmin.auth.getUser(token);
-    if (!userRes?.user) throw new Error("Not signed in.");
-    const userId = userRes.user.id;
-
+  .handler(async ({ data, context }) => {
+    const userId = context.userId;
     await supabaseAdmin.from("user_security_answers").delete().eq("user_id", userId);
     const rows = data.answers.map((a) => ({
       user_id: userId,
@@ -177,3 +167,4 @@ export const updateSecurityAnswers = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
