@@ -253,13 +253,13 @@ function CategoryPage() {
           <section className="border-b border-border/60 bg-background">
             <div className="mx-auto max-w-5xl px-6 py-20">
               <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5">
-                {data.category.icon_url && (
-                  <img
-                    src={data.category.icon_url}
-                    alt=""
-                    className="h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 rounded-2xl object-cover border border-border bg-muted flex-shrink-0"
-                  />
-                )}
+                <CategoryIcon
+                  name={data.category.icon_name}
+                  color={data.category.icon_color}
+                  size="lg"
+                  className="h-24 w-24 sm:h-32 sm:w-32 lg:h-40 lg:w-40 rounded-2xl"
+                />
+                {/** sizing overrides via className above */}
                 <div className="max-w-3xl flex-1">
                   <p className="text-sm font-medium text-[var(--color-accent)]">{pickLang(lang, data.category.tagline, data.category.tagline_es)}</p>
                   <h1 className="mt-2 font-display font-bold tracking-tight text-4xl">{pickLang(lang, data.category.name, data.category.name_es)}</h1>
