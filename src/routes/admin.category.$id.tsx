@@ -252,16 +252,19 @@ function CategoryEditor({
               const Icon = resolveCategoryIcon(iconName);
               const color = iconColor || "var(--color-accent)";
               return (
-                <div
-                  className="flex aspect-square self-stretch items-center justify-center rounded-lg border"
-                  style={{
-                    backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
-                    borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
-                  }}
-                >
-                  <Icon className="h-7 w-7" style={{ color }} strokeWidth={1.75} />
+                <div className="self-stretch aspect-square shrink-0">
+                  <div
+                    className="flex h-full w-full items-center justify-center rounded-lg border"
+                    style={{
+                      backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
+                      borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
+                    }}
+                  >
+                    <Icon className="h-7 w-7" style={{ color }} strokeWidth={1.75} />
+                  </div>
                 </div>
               );
+
             })()}
 
             <div className="flex flex-col gap-2 flex-1 min-w-0">
