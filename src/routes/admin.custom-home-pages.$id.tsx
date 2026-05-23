@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
 import { ArrowLeft, Save, ExternalLink, LayoutTemplate } from "lucide-react";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { Badge } from "@/components/Badge";
 import { LabeledInput, LabeledTextarea } from "@/components/FormField";
 import { LoadingButton, actionButtonClassName } from "@/components/LoadingButton";
