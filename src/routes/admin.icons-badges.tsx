@@ -340,7 +340,7 @@ function AdminIconsBadgesPage() {
           <Button
             variant="outline"
             onClick={reset}
-            className="px-4 py-2 text-sm w-full sm:w-auto"
+            className="px-4 py-2 text-sm w-full sm:w-auto !shadow-none"
           >
             <RotateCcw className="h-4 w-4" />
             Reset to Defaults
