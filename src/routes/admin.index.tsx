@@ -30,7 +30,7 @@ function categoryTranslationStatus(c: Category): "complete" | "partial" | "missi
   return "complete";
 }
 import { SortableList } from "@/components/SortableList";
-import { FileUploader } from "@/components/FileUploader";
+
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { TooltipProvider } from "@/components/ui/tooltip";
