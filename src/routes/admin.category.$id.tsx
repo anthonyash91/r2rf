@@ -134,7 +134,9 @@ function CategoryEditor({
   const [showEs, setShowEs] = useState(
     !!(category.name_es || category.tagline_es || category.description_es),
   );
+  const [iconKeywords, setIconKeywords] = useState("");
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
+
 
   useEffect(() => {
     setName(category.name);
