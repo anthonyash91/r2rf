@@ -56,6 +56,7 @@ function SignupPage() {
   const [resetAnswer1, setResetAnswer1] = useState("");
   const [resetAnswer2, setResetAnswer2] = useState("");
   const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetConfirmPassword, setResetConfirmPassword] = useState("");
 
   const getChallenge = useServerFn(getSignupChallenge);
   const submitSignup = useServerFn(signupUser);
@@ -206,6 +207,11 @@ function SignupPage() {
     e.preventDefault();
     setBusy(true);
     try {
+      if (resetNewPassword !== resetConfirmPassword) {
+        toast.error(t("signup.passwordMismatch"));
+        setBusy(false);
+        return;
+      }
       const uname = resetUsername.trim().toLowerCase();
       await submitReset({
         data: {
@@ -312,6 +318,22 @@ function SignupPage() {
                     onChange={(e) => setResetNewPassword(e.target.value)}
                     className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
+                  <PasswordStrengthMeter password={resetNewPassword} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">{t("signup.confirmPassword")}</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    maxLength={72}
+                    value={resetConfirmPassword}
+                    onChange={(e) => setResetConfirmPassword(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                  {resetConfirmPassword.length > 0 && resetConfirmPassword !== resetNewPassword && (
+                    <p className="mt-1 text-xs text-destructive">{t("signup.passwordMismatch")}</p>
+                  )}
                 </div>
                 <div className="flex justify-end !mt-6">
                   <button
@@ -335,6 +357,7 @@ function SignupPage() {
                 setResetAnswer1("");
                 setResetAnswer2("");
                 setResetNewPassword("");
+                setResetConfirmPassword("");
               }}
               className="mt-4 text-sm text-muted-foreground hover:text-foreground"
             >
