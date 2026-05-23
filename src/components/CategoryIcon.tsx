@@ -1,5 +1,7 @@
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
+import { PALETTES } from "@/lib/badge-styles";
+import { useBadgeStyles } from "@/hooks/use-badge-styles";
 
 type Props = {
   name: string | null | undefined;
@@ -17,7 +19,11 @@ const SIZES = {
 
 export function CategoryIcon({ name, color, size = "md", className, iconClassName }: Props) {
   const Icon = resolveCategoryIcon(name);
-  const c = color || "var(--color-accent)";
+  const styles = useBadgeStyles();
+  const fallback =
+    PALETTES[((styles.categoryDefault % PALETTES.length) + PALETTES.length) % PALETTES.length]
+      ?.oklch ?? "var(--color-accent)";
+  const c = color || fallback;
   const s = SIZES[size];
   return (
     <div
