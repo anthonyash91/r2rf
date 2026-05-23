@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
-import { Pencil, Sparkles } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
