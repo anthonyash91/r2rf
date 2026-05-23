@@ -319,7 +319,12 @@ function CategoryEditor({
           </label>
         </TranslationPanel>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Link to="/admin">
+            <LoadingButton variant="secondary" type="button">
+              Cancel
+            </LoadingButton>
+          </Link>
           <LoadingButton
             type="submit"
             pending={busy}
