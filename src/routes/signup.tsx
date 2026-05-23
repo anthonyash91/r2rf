@@ -244,7 +244,7 @@ function SignupPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-border bg-[#fffdf8] p-6">
+            <div className="rounded-lg border border-border bg-[#fffdf8] px-6 pt-4 pb-2">
             {resetStep === 1 ? (
               <form onSubmit={handleResetStart} className="space-y-4">
                 <div>
@@ -260,14 +260,16 @@ function SignupPage() {
                     className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
-                <button
-                  type="submit"
-                  disabled={busy}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                >
-                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {busy ? "Saving…" : t("security.continue")}
-                </button>
+                <div className="flex justify-end !mt-6">
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  >
+                    {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {busy ? "Saving…" : t("security.continue")}
+                  </button>
+                </div>
               </form>
             ) : (
               <form onSubmit={handleResetSubmit} className="space-y-4">
@@ -311,14 +313,16 @@ function SignupPage() {
                     className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
-                <button
-                  type="submit"
-                  disabled={busy}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                >
-                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {busy ? "Saving…" : t("security.resetSubmit")}
-                </button>
+                <div className="flex justify-end !mt-6">
+                  <button
+                    type="submit"
+                    disabled={busy}
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  >
+                    {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {busy ? "Saving…" : t("security.resetSubmit")}
+                  </button>
+                </div>
               </form>
             )}
 
