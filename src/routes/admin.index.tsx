@@ -309,8 +309,8 @@ function AdminCategoriesPage() {
                         )}
                         {!c.published && <Badge variant="draft">Draft</Badge>}
                         {s !== "complete" && (
-                          <Badge variant="translation" title={trTitle} className="gap-1">
-                            <Languages className="h-3 w-3" /> {trLabel}
+                          <Badge variant="translation" title={trTitle}>
+                            {trLabel}
                           </Badge>
                         )}
                       </BadgeGroup>
