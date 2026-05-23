@@ -253,7 +253,7 @@ function SignupPage() {
               </p>
             </div>
 
-            <div className="rounded-lg border border-border bg-[#fffdf8] px-6 pt-4 pb-4">
+            <div className="rounded-lg border border-border bg-[#fffdf8] px-6 pt-4 pb-8">
             {resetStep === 1 ? (
               <form onSubmit={handleResetStart} className="space-y-4">
                 <div>
