@@ -18,6 +18,8 @@ export type Category = {
   tagline: string;
   description: string;
   icon_url: string | null;
+  icon_name: string | null;
+  icon_color: string | null;
   sort_order: number;
   published: boolean;
   home_page_mode: HomePageMode;
