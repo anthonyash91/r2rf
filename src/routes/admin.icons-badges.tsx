@@ -425,10 +425,11 @@ function AdminIconsBadgesPage() {
             const palette = PALETTES[idx];
             const Icon = iconForType(t);
             const ps = paletteStyle(idx);
+            const dup = isDup(idx);
             return (
               <li
                 key={t}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/40 p-3"
+                className={`flex items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span
@@ -439,7 +440,10 @@ function AdminIconsBadgesPage() {
                     {TYPE_LABELS[t]}
                   </span>
                   <div className="min-w-0">
-                    <div className="text-xs text-muted-foreground truncate">{palette.label}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {palette.label}
+                      {dup && <span className="ml-1 text-amber-500">• duplicate</span>}
+                    </div>
                   </div>
                 </div>
                 <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
@@ -450,6 +454,7 @@ function AdminIconsBadgesPage() {
             );
           })}
         </ul>
+
       </SectionCard>
 
       <SectionCard>
