@@ -21,6 +21,7 @@ import { readStatusLabels } from "@/lib/read-status";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
 import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, X, ChevronDown, BookOpen, CheckCircle2, Loader2, Layers, Clock, Flame, Trophy } from "lucide-react";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
