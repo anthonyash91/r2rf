@@ -1,7 +1,7 @@
 import { createFileRoute, redirect, Link, useBlocker } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { setSecurityLock } from "@/lib/security-lock";
 import { toast } from "sonner";
 import { Badge } from "@/components/Badge";
@@ -388,10 +388,16 @@ function DashboardPage() {
                     }
                   }
                   const totalCats = (categoriesQuery.data ?? []).length;
-                  const stats: Array<{ icon: typeof BookOpen; label: string; value: string }> = [
-                    { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: `${readAll.toLocaleString()}/${totalAll.toLocaleString()}` },
-                    
-                    { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: `${completedCats.toLocaleString()}/${totalCats.toLocaleString()}` },
+                  const fraction = (done: number, total: number) => (
+                    <span className="inline-flex items-baseline gap-1.5">
+                      <span>{done.toLocaleString()}</span>
+                      <span className="font-serif italic text-base font-normal text-[var(--color-accent)] lowercase tracking-wide">of</span>
+                      <span>{total.toLocaleString()}</span>
+                    </span>
+                  );
+                  const stats: Array<{ icon: typeof BookOpen; label: string; value: ReactNode }> = [
+                    { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: fraction(readAll, totalAll) },
+                    { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: fraction(completedCats, totalCats) },
                     { icon: Clock, label: t("dashboard.statHours"), value: hours.toLocaleString() },
                     { icon: Flame, label: t("dashboard.statStreak"), value: streak.toLocaleString() },
                   ];
