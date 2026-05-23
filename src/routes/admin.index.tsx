@@ -651,11 +651,12 @@ function NewCategoryForm({
                   <Icon className="h-7 w-7" style={{ color }} strokeWidth={1.75} />
                 ) : (
                   <span className="text-[10px] text-muted-foreground text-center px-1">No icon yet</span>
-                {)}
+                )}
                 </div>
               </div>
             );
           })()}
+
 
 
           <div className="flex flex-col gap-2 flex-1 min-w-0">
