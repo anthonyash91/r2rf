@@ -370,7 +370,12 @@ function SignupPage() {
         ) : (
           <>
             <div className="mb-8">
-              <h1 className="font-display text-3xl font-semibold">
+              <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+                {mode === "sign-up" ? (
+                  <UserPlus className="h-7 w-7 text-[var(--color-accent)]" />
+                ) : (
+                  <LogIn className="h-7 w-7 text-[var(--color-accent)]" />
+                )}
                 {mode === "sign-up" ? t("signup.title") : t("signup.signInTitle")}
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">
