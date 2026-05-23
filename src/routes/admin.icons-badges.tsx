@@ -226,7 +226,6 @@ function AdminIconsBadgesPage() {
       if (skip?.kind === "type" && skip.key === k) continue;
       out.push(d.types[k] ?? DEFAULT_BADGE_STYLES.types[k] ?? 0);
     }
-    if (!(skip?.kind === "default")) out.push(d.categoryDefault);
     for (const [id, v] of Object.entries(cd)) {
       if (skip?.kind === "category" && skip.key === id) continue;
       const idx = paletteIndexOfColor(v);
