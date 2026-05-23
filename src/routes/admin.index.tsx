@@ -234,6 +234,8 @@ function AdminCategoriesPage() {
           onCancel={() => setCreating(false)}
           onSubmit={(values) => createMut.mutate(values)}
           busy={createMut.isPending}
+          usedIconNames={categories.map((c) => c.icon_name)}
+          usedIconColors={categories.map((c) => c.icon_color)}
         />
       )}
 
