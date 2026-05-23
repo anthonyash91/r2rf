@@ -730,7 +730,7 @@ function CategoryProgressSection({
                     {!isAdmin && (() => {
                       const labels = readStatusLabels(t, it);
                       return (
-                        <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
+                        <span className={`inline-flex items-center gap-1.5 rounded-[2px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
                           isRead
                             ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
                             : "border-input bg-background text-foreground"
