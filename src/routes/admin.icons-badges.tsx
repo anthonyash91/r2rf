@@ -340,7 +340,7 @@ function AdminIconsBadgesPage() {
           <Button
             variant="outline"
             onClick={reset}
-            className="px-4 py-2 text-sm w-full sm:w-auto"
+            className="px-4 py-2 text-sm w-full sm:w-auto !shadow-none"
           >
             <RotateCcw className="h-4 w-4" />
             Reset to Defaults
@@ -378,7 +378,7 @@ function AdminIconsBadgesPage() {
             return (
               <li
                 key={v}
-                className={`flex items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
+                className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <BadgePreview variant={v} draft={draft} />
@@ -424,7 +424,7 @@ function AdminIconsBadgesPage() {
             return (
               <li
                 key={t}
-                className={`flex items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
+                className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span
@@ -484,7 +484,7 @@ function AdminIconsBadgesPage() {
               return (
                 <li
                   key={c.id}
-                  className={`flex items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
+                  className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <CategoryIcon name={c.icon_name} color={color} size="sm" />
