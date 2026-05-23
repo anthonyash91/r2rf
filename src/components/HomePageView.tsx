@@ -5,10 +5,56 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
-import { Pencil } from "lucide-react";
+import {
+  Pencil,
+  RefreshCw,
+  Brain,
+  Handshake,
+  CircleDot,
+  Wine,
+  Wallet,
+  Sparkles,
+  Heart,
+  GraduationCap,
+  Users,
+  BookOpen,
+  Library,
+  Image as ImageIcon,
+  Briefcase,
+  School,
+  FileText,
+  BookA,
+  Calculator,
+  Scale,
+  Lightbulb,
+  type LucideIcon,
+} from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  "reentry-to-recovery": RefreshCw,
+  "mind-rehab": Brain,
+  "resources-partners": Handshake,
+  "narcotics-anonymous": CircleDot,
+  "alcoholics-anonymous": Wine,
+  "personal-finance": Wallet,
+  recovery: Sparkles,
+  "health-and-wellness": Heart,
+  ged: GraduationCap,
+  parenting: Users,
+  "devotional-books": BookOpen,
+  books: Library,
+  "galleries-devotion": ImageIcon,
+  "workforce-integration": Briefcase,
+  education: School,
+  "cover-letter-resume": FileText,
+  "english-study-sheets": BookA,
+  "math-study-sheets": Calculator,
+  "legal-information": Scale,
+  "learning-center": Lightbulb,
+};
 
 type CategoryStats = { count: number; recentItemIds: Set<string> };
 
@@ -100,15 +146,14 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                 className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 pb-6 sm:pb-8 transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
               >
                 <div className="flex justify-center">
-                  {c.icon_url ? (
-                    <img
-                      src={c.icon_url}
-                      alt=""
-                      className="h-48 w-48 sm:h-56 sm:w-56 lg:h-64 lg:w-64 rounded-xl object-cover border border-border bg-muted"
-                    />
-                  ) : (
-                    <div className="h-48 w-48 sm:h-56 sm:w-56 lg:h-64 lg:w-64 rounded-xl border border-dashed border-border bg-muted/40" />
-                  )}
+                  {(() => {
+                    const Icon = CATEGORY_ICONS[c.slug] ?? Sparkles;
+                    return (
+                      <div className="flex h-36 w-36 sm:h-40 sm:w-40 lg:h-44 lg:w-44 items-center justify-center rounded-full border bg-[oklch(0.95_0.02_165)] border-[oklch(0.85_0.03_165)]">
+                        <Icon className="h-16 w-16 sm:h-18 sm:w-18 lg:h-20 lg:w-20 text-[var(--color-accent)]" strokeWidth={1.5} />
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div className="mt-5 text-center">
                   <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground leading-tight">
