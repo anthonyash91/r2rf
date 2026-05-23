@@ -1,14 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Palette, RefreshCw, RotateCcw, Save } from "lucide-react";
+import {
+  Palette,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Sparkles,
+  Layers,
+  FileEdit,
+  Star,
+  Tag,
+  Languages,
+  Shield,
+  PenLine,
+  BadgeCheck,
+  AlertCircle,
+  User,
+  Building2,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
-import { Badge, iconForType } from "@/components/Badge";
+import { iconForType } from "@/components/Badge";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { LoadingButton } from "@/components/LoadingButton";
 import { Button } from "@/components/ui/button";
