@@ -457,8 +457,7 @@ function AdminIconsBadgesPage() {
           <div>
             <h2 className="font-display text-lg font-semibold">Category Icons</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Default fallback color and per-category icon colors. Regenerate cycles each through the palette without
-              repeating.
+              Per-category icon colors. Regenerate cycles each through the palette without repeating.
             </p>
           </div>
           <Button
