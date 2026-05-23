@@ -77,8 +77,8 @@ const TYPE_LABELS: Record<KnownTypeKey, string> = {
   link: "Link",
 };
 
-const REGEN_BTN_CLASS = "px-4 py-2 text-sm shrink-0 shadow-none";
-const REGEN_ALL_BTN_CLASS = "px-4 py-2 text-sm w-full sm:w-auto shadow-none";
+const REGEN_BTN_CLASS = "px-4 py-2 text-sm shrink-0 !shadow-none";
+const REGEN_ALL_BTN_CLASS = "px-4 py-2 text-sm w-full sm:w-auto !shadow-none";
 
 type CategoryRow = {
   id: string;
@@ -226,7 +226,6 @@ function AdminIconsBadgesPage() {
       if (skip?.kind === "type" && skip.key === k) continue;
       out.push(d.types[k] ?? DEFAULT_BADGE_STYLES.types[k] ?? 0);
     }
-    if (!(skip?.kind === "default")) out.push(d.categoryDefault);
     for (const [id, v] of Object.entries(cd)) {
       if (skip?.kind === "category" && skip.key === id) continue;
       const idx = paletteIndexOfColor(v);
@@ -293,13 +292,8 @@ function AdminIconsBadgesPage() {
     });
   }
 
-  // -------- Category default + per-category --------
-  function cycleCategoryDefault() {
-    setDraft((d) => {
-      const used = new Set<number>(collectGlobalIndices(d, catDraft, { kind: "default" }));
-      return { ...d, categoryDefault: nextUnusedIndex(d.categoryDefault, used) };
-    });
-  }
+  // -------- Per-category --------
+
 
   function cycleCategory(id: string) {
     setCatDraft((d) => {
@@ -463,8 +457,7 @@ function AdminIconsBadgesPage() {
           <div>
             <h2 className="font-display text-lg font-semibold">Category Icons</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Default fallback color and per-category icon colors. Regenerate cycles each through the palette without
-              repeating.
+              Per-category icon colors. Regenerate cycles each through the palette without repeating.
             </p>
           </div>
           <Button
@@ -478,29 +471,8 @@ function AdminIconsBadgesPage() {
           </Button>
         </div>
 
-        {(() => {
-          const defDup = isDup(draft.categoryDefault);
-          return (
-            <div
-              className={`mt-4 flex items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${defDup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <CategoryIconPreview draft={draft} />
-                <div className="min-w-0">
-                  <div className="text-sm font-medium">Default Category Color</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {PALETTES[draft.categoryDefault].label}
-                    {defDup && <span className="ml-1 text-amber-500">• duplicate</span>}
-                  </div>
-                </div>
-              </div>
-              <Button variant="outline" onClick={cycleCategoryDefault} className={REGEN_BTN_CLASS}>
-                <RefreshCw className="h-4 w-4" />
-                Regenerate
-              </Button>
-            </div>
-          );
-        })()}
+
+
 
         {categories && categories.length > 0 && (
           <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -593,9 +565,4 @@ function BadgePreview({ variant, draft }: { variant: BadgeVariantKey; draft: Bad
       {VARIANT_LABELS[variant]}
     </span>
   );
-}
-
-function CategoryIconPreview({ draft }: { draft: BadgeStyles }) {
-  const palette = PALETTES[draft.categoryDefault];
-  return <CategoryIcon name="default" color={palette.oklch} size="md" />;
 }
