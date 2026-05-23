@@ -543,14 +543,20 @@ function AdminIconsBadgesPage() {
         <ul className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
           {PALETTES.map((p, i) => {
             const ps = paletteStyle(i);
+            const count = usageCount.get(i) ?? 0;
+            const used = count > 0;
             return (
               <li
                 key={p.label}
-                className="rounded-md border px-2 py-1.5 text-xs flex items-center gap-2"
+                className={`rounded-md border px-2 py-1.5 text-xs flex items-center gap-2 transition-shadow ${
+                  used ? "ring-2 ring-offset-1 ring-offset-background ring-foreground/40 font-medium" : "opacity-70"
+                }`}
                 style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
+                title={used ? `Used ${count}×` : "Unused"}
               >
                 <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: ps.color }} />
-                {p.label}
+                <span className="flex-1 truncate">{p.label}</span>
+                {used && <span className="text-[10px] opacity-70">×{count}</span>}
               </li>
             );
           })}
