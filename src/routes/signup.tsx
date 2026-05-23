@@ -244,7 +244,10 @@ function SignupPage() {
         {mode === "reset" ? (
           <>
             <div className="mb-8">
-              <h1 className="font-display text-3xl font-semibold">{t("security.resetTitle")}</h1>
+              <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+                <KeyRound className="h-7 w-7 text-[var(--color-accent)]" />
+                {t("security.resetTitle")}
+              </h1>
               <p className="mt-2 text-sm text-muted-foreground">
                 {resetStep === 1 ? t("security.resetStep1") : t("security.resetStep2")}
               </p>
