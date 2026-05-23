@@ -77,8 +77,8 @@ const TYPE_LABELS: Record<KnownTypeKey, string> = {
   link: "Link",
 };
 
-const REGEN_BTN_CLASS = "px-4 py-2 text-sm shrink-0 shadow-none";
-const REGEN_ALL_BTN_CLASS = "px-4 py-2 text-sm w-full sm:w-auto shadow-none";
+const REGEN_BTN_CLASS = "px-4 py-2 text-sm shrink-0 !shadow-none";
+const REGEN_ALL_BTN_CLASS = "px-4 py-2 text-sm w-full sm:w-auto !shadow-none";
 
 type CategoryRow = {
   id: string;
