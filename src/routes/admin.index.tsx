@@ -113,6 +113,7 @@ function AdminCategoriesPage() {
       const generated = generateUniqueCategoryIcon({
         usedNames: categories.map((c) => c.icon_name),
         usedColors: categories.map((c) => c.icon_color),
+        title: input.name,
       });
       const { error } = await supabase.from("categories").insert({
         name: input.name,

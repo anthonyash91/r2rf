@@ -185,6 +185,7 @@ function CategoryEditor({
     const next = generateUniqueCategoryIcon({
       usedNames: others.map((c) => c.icon_name),
       usedColors: others.map((c) => c.icon_color),
+      title: name,
     });
     setIconName(next.icon_name);
     setIconColor(next.icon_color);
