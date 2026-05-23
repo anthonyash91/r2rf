@@ -167,10 +167,17 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
               >
                 <div className="flex">
                   {(() => {
-                    const Icon = CATEGORY_ICONS[c.slug] ?? Sparkles;
+                    const entry = CATEGORY_ICONS[c.slug] ?? { icon: Sparkles, color: "var(--color-accent)" };
+                    const Icon = entry.icon;
                     return (
-                      <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[var(--color-accent)]/10 border border-[var(--color-accent)]/20">
-                        <Icon className="h-8 w-8 sm:h-10 sm:w-10 text-[var(--color-accent)]" strokeWidth={1.5} />
+                      <div
+                        className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full border"
+                        style={{
+                          backgroundColor: `color-mix(in oklab, ${entry.color} 12%, transparent)`,
+                          borderColor: `color-mix(in oklab, ${entry.color} 25%, transparent)`,
+                        }}
+                      >
+                        <Icon className="h-7 w-7 sm:h-9 sm:w-9" style={{ color: entry.color }} strokeWidth={1.5} />
                       </div>
                     );
                   })()}
