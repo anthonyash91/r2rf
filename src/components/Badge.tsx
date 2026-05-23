@@ -25,7 +25,7 @@ type BadgeProps = {
   title?: string;
 };
 
-const BASE = "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium flex-shrink-0";
+const BASE = "inline-flex items-center rounded-[2px] border px-2 py-0.5 text-xs font-medium flex-shrink-0";
 
 const VARIANT_CLASSES: Record<Exclude<BadgeVariant, "type">, string> = {
   // Emerald — used for "New" / "New Content"
