@@ -389,7 +389,7 @@ function DashboardPage() {
                   }
                   const totalCats = (categoriesQuery.data ?? []).length;
                   const fraction = (done: number, total: number) => (
-                    <span className="inline-flex items-baseline gap-1.5">
+                    <span className="inline-flex items-center gap-1.5">
                       <span>{done.toLocaleString()}</span>
                       <span className="font-serif italic text-base font-normal text-[var(--color-accent)] lowercase tracking-wide">of</span>
                       <span>{total.toLocaleString()}</span>
