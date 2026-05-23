@@ -338,7 +338,7 @@ export function HomePageView({
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-[2px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+            <div className="inline-flex items-center gap-2 rounded-[4px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
               {heroEyebrow}
             </div>
@@ -368,7 +368,7 @@ export function HomePageView({
         <section className="border-t border-border/60">
           <div className="mx-auto max-w-6xl px-6 py-20">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-[2px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+              <div className="inline-flex items-center gap-2 rounded-[4px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
                 {certEyebrow}
               </div>
