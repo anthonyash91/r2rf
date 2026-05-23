@@ -5,76 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { useI18n, pickLang, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  Pencil,
-  RefreshCw,
-  Brain,
-  Handshake,
-  CircleDot,
-  Wine,
-  Wallet,
-  Sparkles,
-  Heart,
-  GraduationCap,
-  Users,
-  BookOpen,
-  Library,
-  Image as ImageIcon,
-  Briefcase,
-  School,
-  FileText,
-  BookA,
-  Calculator,
-  Scale,
-  Lightbulb,
-  type LucideIcon,
-} from "lucide-react";
+import { Pencil, Sparkles } from "lucide-react";
+import { resolveCategoryIcon } from "@/lib/category-icons";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
-
-const CATEGORY_ICONS: Record<string, { icon: LucideIcon; color: string }> = {
-  // Emerald (primary brand)
-  "reentry-to-recovery": { icon: RefreshCw, color: "oklch(0.45 0.09 165)" },
-  // Indigo
-  "mind-rehab": { icon: Brain, color: "oklch(0.45 0.10 280)" },
-  // Teal
-  "resources-partners": { icon: Handshake, color: "oklch(0.48 0.08 210)" },
-  // Slate
-  "narcotics-anonymous": { icon: CircleDot, color: "oklch(0.45 0.04 250)" },
-  // Plum
-  "alcoholics-anonymous": { icon: Wine, color: "oklch(0.45 0.10 330)" },
-  // Gold
-  "personal-finance": { icon: Wallet, color: "oklch(0.52 0.10 85)" },
-  // Moss
-  recovery: { icon: Sparkles, color: "oklch(0.48 0.09 145)" },
-  // Rose
-  "health-and-wellness": { icon: Heart, color: "oklch(0.50 0.11 15)" },
-  // Amber
-  ged: { icon: GraduationCap, color: "oklch(0.50 0.10 70)" },
-  // Terracotta
-  parenting: { icon: Users, color: "oklch(0.50 0.10 40)" },
-  // Olive
-  "devotional-books": { icon: BookOpen, color: "oklch(0.48 0.08 110)" },
-  // Burgundy
-  books: { icon: Library, color: "oklch(0.42 0.10 20)" },
-  // Violet
-  "galleries-devotion": { icon: ImageIcon, color: "oklch(0.48 0.10 305)" },
-  // Deep teal
-  "workforce-integration": { icon: Briefcase, color: "oklch(0.42 0.07 200)" },
-  // Forest
-  education: { icon: School, color: "oklch(0.40 0.08 155)" },
-  // Cyan
-  "cover-letter-resume": { icon: FileText, color: "oklch(0.46 0.08 195)" },
-  // Sage
-  "english-study-sheets": { icon: BookA, color: "oklch(0.48 0.06 140)" },
-  // Steel blue
-  "math-study-sheets": { icon: Calculator, color: "oklch(0.45 0.07 240)" },
-  // Stone
-  "legal-information": { icon: Scale, color: "oklch(0.45 0.04 70)" },
-  // Mustard
-  "learning-center": { icon: Lightbulb, color: "oklch(0.55 0.11 90)" },
-};
 
 type CategoryStats = { count: number; recentItemIds: Set<string> };
 
