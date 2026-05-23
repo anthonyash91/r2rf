@@ -330,17 +330,17 @@ function AdminIconsBadgesPage() {
 
   return (
     <div>
-      <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <PageHeader
           icon={Palette}
           title="Icons & Badges"
           description="Regenerate the color combination of every badge and icon, then save to apply across the entire app."
         />
-        <div className="flex w-full sm:w-auto items-center gap-2">
+        <div className="flex w-full lg:w-auto items-center gap-2">
           <Button
             variant="outline"
             onClick={reset}
-            className="px-4 py-2 text-sm w-full sm:w-auto !shadow-none"
+            className="px-4 py-2 text-sm w-full lg:w-auto whitespace-nowrap !shadow-none"
           >
             <RotateCcw className="h-4 w-4" />
             Reset to Defaults
@@ -349,7 +349,7 @@ function AdminIconsBadgesPage() {
             onClick={() => saveMutation.mutate()}
             disabled={!dirty}
             pending={saveMutation.isPending}
-            className="px-4 py-2 text-sm w-full sm:w-auto"
+            className="px-4 py-2 text-sm w-full lg:w-auto whitespace-nowrap"
           >
             <Save className="h-4 w-4" />
             Save Changes
