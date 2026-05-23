@@ -283,7 +283,7 @@ function CategoryEditor({
                 >
                   Regenerate icon
                 </LoadingButton>
-                <p className="text-xs text-muted-foreground">A unique icon and color, distinct from every other category.</p>
+                <p className="text-xs text-muted-foreground">Generate an icon preview.</p>
               </div>
             </div>
           </div>
