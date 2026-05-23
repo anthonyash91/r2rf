@@ -586,38 +586,8 @@ function NewCategoryForm({
         />
       </label>
 
-      <div>
-        <span className="text-sm font-medium">Icon</span>
-        <div className="mt-2 flex items-center gap-4">
-          {iconUrl ? (
-            <img
-              src={iconUrl}
-              alt="Category icon"
-              className="h-16 w-16 rounded-lg object-cover border border-border bg-muted"
-            />
-          ) : (
-            <div className="h-16 w-16 rounded-lg border border-dashed border-border bg-muted/40 grid place-items-center text-xs text-muted-foreground">
-              No icon
-            </div>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <FileUploader
-              label={iconUrl ? "Replace icon" : "Upload icon"}
-              mimeTypes={["image/*"]}
-              onUploaded={(u) => setIconUrl(u)}
-            />
-            {iconUrl && (
-              <LoadingButton
-                variant="secondary"
-                onClick={() => setIconUrl(null)}
-                className="text-muted-foreground"
-              >
-                Remove
-              </LoadingButton>
-            )}
-          </div>
-        </div>
-      </div>
+      <p className="text-xs text-muted-foreground">A unique icon and color are generated automatically when this category is created.</p>
+
 
 
 
