@@ -122,7 +122,8 @@ function CategoryEditor({
   const [slug, setSlug] = useState(category.slug);
   const [tagline, setTagline] = useState(category.tagline);
   const [description, setDescription] = useState(category.description);
-  const [iconUrl, setIconUrl] = useState<string | null>(category.icon_url);
+  const [iconName, setIconName] = useState<string | null>(category.icon_name);
+  const [iconColor, setIconColor] = useState<string | null>(category.icon_color);
   const [published, setPublished] = useState(category.published);
   const [homePageMode, setHomePageMode] = useState<"default" | "custom">(
     category.home_page_mode ?? "default",
@@ -140,7 +141,8 @@ function CategoryEditor({
     setSlug(category.slug);
     setTagline(category.tagline);
     setDescription(category.description);
-    setIconUrl(category.icon_url);
+    setIconName(category.icon_name);
+    setIconColor(category.icon_color);
     setPublished(category.published);
     setHomePageMode(category.home_page_mode ?? "default");
     setNameEs(category.name_es ?? "");
@@ -171,6 +173,24 @@ function CategoryEditor({
     }
   }
 
+  async function handleRegenerateIcon() {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, icon_name, icon_color");
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const others = (data ?? []).filter((r) => r.id !== category.id);
+    const next = generateUniqueCategoryIcon({
+      usedNames: others.map((c) => c.icon_name),
+      usedColors: others.map((c) => c.icon_color),
+    });
+    setIconName(next.icon_name);
+    setIconColor(next.icon_color);
+    toast.success("New icon generated. Save to apply.");
+  }
+
   return (
     <SectionCard className="mt-8">
       <form
@@ -182,7 +202,8 @@ function CategoryEditor({
             slug: slugify(slug),
             tagline,
             description,
-            icon_url: iconUrl,
+            icon_name: iconName,
+            icon_color: iconColor,
             published,
             home_page_mode: homePageMode,
             name_es: nameEs.trim() || null,
