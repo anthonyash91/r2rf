@@ -525,7 +525,6 @@ function NewCategoryForm({
           slug: slug.trim() || slugify(name),
           tagline: tagline.trim(),
           description: description.trim(),
-          icon_url: iconUrl,
           published,
           home_page_mode: homePageMode,
           name_es: nameEs.trim() || null,
