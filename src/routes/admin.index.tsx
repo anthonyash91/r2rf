@@ -664,7 +664,7 @@ function NewCategoryForm({
               type="text"
               value={iconKeywords}
               onChange={(e) => setIconKeywords(e.target.value)}
-              placeholder="Optional keywords (e.g. coffee, gym, books)"
+              placeholder="Optional keywords for a better result (e.g. coffee, gym, books)"
               className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
             <div className="flex flex-wrap items-center gap-3">
@@ -677,10 +677,9 @@ function NewCategoryForm({
                 {iconName ? "Regenerate icon" : "Generate icon"}
               </LoadingButton>
               <p className="text-xs text-muted-foreground">
-                {iconName
-                  ? "Don't like it? Click to try another. Leave blank to auto-generate on create."
-                  : "Generate a preview now."}
+                Generate an icon preview.
               </p>
+
             </div>
           </div>
         </div>
