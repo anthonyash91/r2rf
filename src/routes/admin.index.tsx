@@ -478,6 +478,8 @@ function NewCategoryForm({
   onCancel,
   onSubmit,
   busy,
+  usedIconNames,
+  usedIconColors,
 }: {
   onCancel: () => void;
   onSubmit: (v: {
@@ -490,8 +492,12 @@ function NewCategoryForm({
     name_es: string | null;
     tagline_es: string | null;
     description_es: string | null;
+    icon_name: string | null;
+    icon_color: string | null;
   }) => void;
   busy: boolean;
+  usedIconNames: (string | null)[];
+  usedIconColors: (string | null)[];
 }) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -504,9 +510,27 @@ function NewCategoryForm({
   const [taglineEs, setTaglineEs] = useState("");
   const [descriptionEs, setDescriptionEs] = useState("");
   const [showEs, setShowEs] = useState(false);
+  const [iconName, setIconName] = useState<string | null>(null);
+  const [iconColor, setIconColor] = useState<string | null>(null);
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
   const generate = useServerFn(generateCategoryCopy);
   const [generating, setGenerating] = useState(false);
+
+  function handleGenerateIcon() {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast.error("Enter a name first");
+      return;
+    }
+    const next = generateUniqueCategoryIcon({
+      usedNames: usedIconNames,
+      usedColors: usedIconColors,
+      title: trimmed,
+    });
+    setIconName(next.icon_name);
+    setIconColor(next.icon_color);
+  }
+
 
   async function handleAutoGenerate() {
     const trimmed = name.trim();
