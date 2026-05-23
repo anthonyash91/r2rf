@@ -512,6 +512,7 @@ function NewCategoryForm({
   const [showEs, setShowEs] = useState(false);
   const [iconName, setIconName] = useState<string | null>(null);
   const [iconColor, setIconColor] = useState<string | null>(null);
+  const [iconKeywords, setIconKeywords] = useState("");
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
   const generate = useServerFn(generateCategoryCopy);
   const [generating, setGenerating] = useState(false);
@@ -522,10 +523,11 @@ function NewCategoryForm({
       toast.error("Enter a name first");
       return;
     }
+    const kw = iconKeywords.trim();
     const next = generateUniqueCategoryIcon({
       usedNames: usedIconNames,
       usedColors: usedIconColors,
-      title: trimmed,
+      title: kw ? `${trimmed} ${kw}` : trimmed,
     });
     setIconName(next.icon_name);
     setIconColor(next.icon_color);
