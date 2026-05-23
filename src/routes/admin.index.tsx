@@ -294,9 +294,9 @@ function AdminCategoriesPage() {
                     );
                   })()}
                 </div>
-                <p className="text-xs text-muted-foreground break-words">/{c.slug} · {c.tagline}</p>
+                <p className="mt-1 text-xs text-muted-foreground break-words">/{c.slug} · {c.tagline}</p>
                 {c.description && (
-                  <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
+                  <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
                 )}
                 {c.home_page_mode === "custom" && (
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
