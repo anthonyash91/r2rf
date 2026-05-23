@@ -677,10 +677,9 @@ function NewCategoryForm({
                 {iconName ? "Regenerate icon" : "Generate icon"}
               </LoadingButton>
               <p className="text-xs text-muted-foreground">
-                {iconName
-                  ? "Don't like it? Click to try another. Leave blank to auto-generate on create."
-                  : "Generate a preview now."}
+                Generate an icon preview.
               </p>
+
             </div>
           </div>
         </div>
