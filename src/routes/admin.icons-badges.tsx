@@ -209,21 +209,60 @@ function AdminIconsBadgesPage() {
     onError: (err: Error) => toast.error(err.message ?? "Failed to save"),
   });
 
+  // -------- Global usage tracking --------
+  /** All palette indices currently in use across variants, types, default, and categories. */
+  function collectGlobalIndices(
+    d: BadgeStyles,
+    cd: Record<string, string | null>,
+    skip?: { kind: "variant" | "type" | "default" | "category"; key?: string },
+  ): number[] {
+    const out: number[] = [];
+    for (const k of BADGE_VARIANTS) {
+      if (skip?.kind === "variant" && skip.key === k) continue;
+      out.push(d.variants[k] ?? DEFAULT_BADGE_STYLES.variants[k] ?? 0);
+    }
+    for (const k of KNOWN_TYPES) {
+      if (skip?.kind === "type" && skip.key === k) continue;
+      out.push(d.types[k] ?? DEFAULT_BADGE_STYLES.types[k] ?? 0);
+    }
+    if (!(skip?.kind === "default")) out.push(d.categoryDefault);
+    for (const [id, v] of Object.entries(cd)) {
+      if (skip?.kind === "category" && skip.key === id) continue;
+      const idx = paletteIndexOfColor(v);
+      if (idx >= 0) out.push(idx);
+    }
+    return out;
+  }
+
+  const usageCount = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const idx of collectGlobalIndices(draft, catDraft)) {
+      m.set(idx, (m.get(idx) ?? 0) + 1);
+    }
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, catDraft]);
+
+  const isDup = (idx: number) => (usageCount.get(idx) ?? 0) > 1;
+
   // -------- Variant cycling --------
   function cycleVariant(key: BadgeVariantKey) {
     setDraft((d) => {
       const cur = d.variants[key] ?? 0;
-      const used = new Set<number>(
-        BADGE_VARIANTS.filter((k) => k !== key).map(
-          (k) => d.variants[k] ?? DEFAULT_BADGE_STYLES.variants[k] ?? 0,
-        ),
-      );
+      const used = new Set<number>(collectGlobalIndices(d, catDraft, { kind: "variant", key }));
       return { ...d, variants: { ...d.variants, [key]: nextUnusedIndex(cur, used) } };
     });
   }
   function regenerateAllVariants() {
     setDraft((d) => {
-      const indices = distributeUnique(BADGE_VARIANTS.length, Math.floor(Math.random() * PALETTES.length));
+      const excluded = new Set<number>(collectGlobalIndices(d, catDraft));
+      // remove this section's own indices from excluded (we're replacing them)
+      for (const k of BADGE_VARIANTS) excluded.delete(d.variants[k] ?? 0);
+      const indices = pickAvoiding(
+        BADGE_VARIANTS.length,
+        excluded,
+        Math.floor(Math.random() * PALETTES.length),
+      );
       const variants: Partial<Record<BadgeVariantKey, number>> = {};
       BADGE_VARIANTS.forEach((k, i) => (variants[k] = indices[i]));
       return { ...d, variants };
@@ -234,17 +273,19 @@ function AdminIconsBadgesPage() {
   function cycleType(key: KnownTypeKey) {
     setDraft((d) => {
       const cur = d.types[key] ?? 0;
-      const used = new Set<number>(
-        KNOWN_TYPES.filter((k) => k !== key).map(
-          (k) => d.types[k] ?? DEFAULT_BADGE_STYLES.types[k] ?? 0,
-        ),
-      );
+      const used = new Set<number>(collectGlobalIndices(d, catDraft, { kind: "type", key }));
       return { ...d, types: { ...d.types, [key]: nextUnusedIndex(cur, used) } };
     });
   }
   function regenerateAllTypes() {
     setDraft((d) => {
-      const indices = distributeUnique(KNOWN_TYPES.length, Math.floor(Math.random() * PALETTES.length));
+      const excluded = new Set<number>(collectGlobalIndices(d, catDraft));
+      for (const k of KNOWN_TYPES) excluded.delete(d.types[k] ?? 0);
+      const indices = pickAvoiding(
+        KNOWN_TYPES.length,
+        excluded,
+        Math.floor(Math.random() * PALETTES.length),
+      );
       const types: Partial<Record<KnownTypeKey, number>> = {};
       KNOWN_TYPES.forEach((k, i) => (types[k] = indices[i]));
       return { ...d, types };
@@ -253,18 +294,16 @@ function AdminIconsBadgesPage() {
 
   // -------- Category default + per-category --------
   function cycleCategoryDefault() {
-    setDraft((d) => ({ ...d, categoryDefault: nextUnusedIndex(d.categoryDefault, new Set<number>()) }));
+    setDraft((d) => {
+      const used = new Set<number>(collectGlobalIndices(d, catDraft, { kind: "default" }));
+      return { ...d, categoryDefault: nextUnusedIndex(d.categoryDefault, used) };
+    });
   }
 
   function cycleCategory(id: string) {
     setCatDraft((d) => {
       const cur = paletteIndexOfColor(d[id]);
-      const used = new Set<number>();
-      for (const [k, v] of Object.entries(d)) {
-        if (k === id) continue;
-        const idx = paletteIndexOfColor(v);
-        if (idx >= 0) used.add(idx);
-      }
+      const used = new Set<number>(collectGlobalIndices(draft, d, { kind: "category", key: id }));
       const next = nextUnusedIndex(cur >= 0 ? cur : 0, used);
       return { ...d, [id]: PALETTES[next].oklch };
     });
@@ -272,7 +311,16 @@ function AdminIconsBadgesPage() {
   function regenerateAllCategories() {
     setCatDraft((d) => {
       const ids = Object.keys(d);
-      const indices = distributeUnique(ids.length, Math.floor(Math.random() * PALETTES.length));
+      const excluded = new Set<number>(collectGlobalIndices(draft, d));
+      for (const id of ids) {
+        const idx = paletteIndexOfColor(d[id]);
+        if (idx >= 0) excluded.delete(idx);
+      }
+      const indices = pickAvoiding(
+        ids.length,
+        excluded,
+        Math.floor(Math.random() * PALETTES.length),
+      );
       const next: Record<string, string | null> = {};
       ids.forEach((id, i) => (next[id] = PALETTES[indices[i]].oklch));
       return next;
@@ -283,6 +331,7 @@ function AdminIconsBadgesPage() {
     setDraft(DEFAULT_BADGE_STYLES);
     setCatDraft({ ...originalCatMap });
   }
+
 
   return (
     <div className="space-y-6">
