@@ -527,7 +527,12 @@ function AdminIconsBadgesPage() {
               >
                 <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: ps.color }} />
                 <span className="flex-1 truncate">{p.label}</span>
-                {used && <Check className="h-3.5 w-3.5 shrink-0" aria-label="Used" />}
+                {used && (
+                  <span className="inline-flex items-center gap-0.5 shrink-0">
+                    <Check className="h-3.5 w-3.5" aria-label="Used" />
+                    {count > 1 && <span className="text-[10px] font-medium">×{count}</span>}
+                  </span>
+                )}
               </li>
             );
           })}
