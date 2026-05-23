@@ -125,11 +125,12 @@ function useCategoryItemStats(categoryIds: string[]) {
 }
 
 function useColumnCount() {
-  const [cols, setCols] = useState(3);
+  const [cols, setCols] = useState(4);
   useEffect(() => {
     const compute = () => {
       const w = window.innerWidth;
-      if (w >= 1024) setCols(3);
+      if (w >= 1280) setCols(4);
+      else if (w >= 1024) setCols(3);
       else if (w >= 640) setCols(2);
       else setCols(1);
     };
