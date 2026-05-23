@@ -512,6 +512,7 @@ function NewCategoryForm({
   const [showEs, setShowEs] = useState(false);
   const [iconName, setIconName] = useState<string | null>(null);
   const [iconColor, setIconColor] = useState<string | null>(null);
+  const [iconKeywords, setIconKeywords] = useState("");
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
   const generate = useServerFn(generateCategoryCopy);
   const [generating, setGenerating] = useState(false);
@@ -522,10 +523,11 @@ function NewCategoryForm({
       toast.error("Enter a name first");
       return;
     }
+    const kw = iconKeywords.trim();
     const next = generateUniqueCategoryIcon({
       usedNames: usedIconNames,
       usedColors: usedIconColors,
-      title: trimmed,
+      title: kw ? `${trimmed} ${kw}` : trimmed,
     });
     setIconName(next.icon_name);
     setIconColor(next.icon_color);
@@ -651,20 +653,29 @@ function NewCategoryForm({
               </div>
             );
           })()}
-          <div className="flex flex-col gap-1">
-            <LoadingButton
-              variant="secondary"
-              onClick={handleGenerateIcon}
-              disabled={!name.trim()}
-              icon={<RefreshCw className="h-4 w-4" />}
-            >
-              {iconName ? "Regenerate icon" : "Generate icon"}
-            </LoadingButton>
-            <p className="text-xs text-muted-foreground">
-              {iconName
-                ? "Don't like it? Click to try another. Leave blank to auto-generate on create."
-                : "Generate a preview now, or one will be picked automatically when you create the category."}
-            </p>
+          <div className="flex flex-col gap-2 flex-1 min-w-0">
+            <input
+              type="text"
+              value={iconKeywords}
+              onChange={(e) => setIconKeywords(e.target.value)}
+              placeholder="Optional keywords (e.g. coffee, gym, books)"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <LoadingButton
+                variant="secondary"
+                onClick={handleGenerateIcon}
+                disabled={!name.trim()}
+                icon={<RefreshCw className="h-4 w-4" />}
+              >
+                {iconName ? "Regenerate icon" : "Generate icon"}
+              </LoadingButton>
+              <p className="text-xs text-muted-foreground">
+                {iconName
+                  ? "Don't like it? Click to try another. Leave blank to auto-generate on create."
+                  : "Generate a preview now."}
+              </p>
+            </div>
           </div>
         </div>
       </div>
