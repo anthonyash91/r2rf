@@ -171,7 +171,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                     const Icon = entry.icon;
                     return (
                       <div
-                        className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full border"
+                        className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl border"
                         style={{
                           backgroundColor: `color-mix(in oklab, ${entry.color} 12%, transparent)`,
                           borderColor: `color-mix(in oklab, ${entry.color} 25%, transparent)`,
