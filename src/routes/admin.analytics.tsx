@@ -243,7 +243,6 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
           </div>
           <CategoryList rows={aggregated.rows} />
         </>
-        </>
       )}
     </div>
   );
