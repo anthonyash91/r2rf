@@ -47,11 +47,11 @@ export const Route = createFileRoute("/admin/analytics")({
 
 type RangeKey = "7d" | "30d" | "90d" | "all";
 
-const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
-  { key: "7d", label: "Last 7 days" },
-  { key: "30d", label: "Last 30 days" },
-  { key: "90d", label: "Last 90 days" },
-  { key: "all", label: "All time" },
+const RANGE_OPTIONS: { key: RangeKey; label: string; shortLabel: string }[] = [
+  { key: "7d", label: "Last 7 days", shortLabel: "7 days" },
+  { key: "30d", label: "Last 30 days", shortLabel: "30 days" },
+  { key: "90d", label: "Last 90 days", shortLabel: "90 days" },
+  { key: "all", label: "All time", shortLabel: "All time" },
 ];
 
 type EventRow = {
