@@ -143,6 +143,7 @@ function AdminUsersPage() {
     onSuccess: () => {
       toast.success("User created. A verification email has been sent.");
       closeAddForm();
+      newUsersSinceRef.current = new Date().toISOString();
       invalidate();
     },
     onError: (e: any) => toast.error(e.message),
@@ -152,6 +153,7 @@ function AdminUsersPage() {
     onSuccess: () => {
       toast.success("Test user created");
       closeAddForm();
+      newUsersSinceRef.current = new Date().toISOString();
       invalidate();
     },
     onError: (e: any) => toast.error(e.message),
