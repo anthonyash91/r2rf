@@ -166,10 +166,18 @@ function downloadCsv(filename: string, lines: string[]) {
 
 function AdminReportsPage() {
   const [tab, setTab] = useState<"overall" | "facility" | "user">("overall");
+  const [facilityKey, setFacilityKey] = useState(0);
 
   return (
     <div>
-      <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mt-6">
+      <Tabs
+        value={tab}
+        onValueChange={(v) => {
+          if (v === "facility") setFacilityKey((k) => k + 1);
+          setTab(v as any);
+        }}
+        className="mt-6"
+      >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <PageHeader
             icon={BarChart3}
@@ -193,7 +201,7 @@ function AdminReportsPage() {
           <UsageReportView scope={{ kind: "overall" }} />
         </TabsContent>
         <TabsContent value="facility" className="mt-6">
-          <FacilityReportTab />
+          <FacilityReportTab key={facilityKey} />
         </TabsContent>
         <TabsContent value="user" className="mt-6">
           <UsersReportTab />
@@ -339,9 +347,9 @@ function FacilityReportTab() {
 
   const selectedLabel = facilities.find((f) => f.value === selected)?.label ?? "";
 
-  return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+  if (!selected) {
+    return (
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <label className="text-sm font-medium">Facility</label>
         <div className="w-full sm:w-auto sm:min-w-[260px]">
           <FacilityCombobox
@@ -352,14 +360,13 @@ function FacilityReportTab() {
           />
         </div>
       </div>
-      {selected ? (
-        <UsageReportView
-          scope={{ kind: "facility", facilityValue: selected, facilityLabel: selectedLabel }}
-        />
-      ) : (
-        <p className="mt-6 text-muted-foreground">Select a facility to view its report.</p>
-      )}
-    </div>
+    );
+  }
+
+  return (
+    <UsageReportView
+      scope={{ kind: "facility", facilityValue: selected, facilityLabel: selectedLabel }}
+    />
   );
 }
 
