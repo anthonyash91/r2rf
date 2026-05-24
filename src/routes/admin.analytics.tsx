@@ -67,6 +67,45 @@ type AggregatedRow = {
   items: { item: ContentItem; clicks: number }[];
 };
 
+function CircleProgress({
+  value,
+  size = 52,
+  stroke = 5,
+  className = "",
+}: {
+  value: number;
+  size?: number;
+  stroke?: number;
+  className?: string;
+}) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const pct = Math.max(0, Math.min(100, Math.round(value)));
+  const offset = c - (pct / 100) * c;
+  return (
+    <div className={`relative flex-shrink-0 ${className}`} style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e5e7eb" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="var(--color-accent)"
+          strokeWidth={stroke}
+          strokeDasharray={c}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-[stroke-dashoffset] duration-500"
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold tabular-nums">
+        {pct}%
+      </div>
+    </div>
+  );
+}
+
 function fmtDate(iso?: string | null) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -692,7 +731,7 @@ function UserCategorySection({
       >
         <div className="flex items-center gap-3 min-w-0">
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
-          <CategoryIcon name={g.category.icon_name} color={g.category.icon_color} size="sm" />
+          <CircleProgress value={g.total > 0 ? (g.read / g.total) * 100 : 0} size={52} stroke={5} />
           <div className="min-w-0">
             <h2 className="font-display text-lg font-semibold truncate">{g.category.name}</h2>
             <p className="text-xs text-muted-foreground truncate">/{g.category.slug}</p>
