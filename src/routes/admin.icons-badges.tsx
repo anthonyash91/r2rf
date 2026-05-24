@@ -622,7 +622,8 @@ const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
 function BadgePreview({ variant, draft }: { variant: BadgeVariantKey; draft: BadgeStyles }) {
   const idx = draft.variants[variant] ?? 0;
   const ps = paletteStyle(idx);
-  const Icon = VARIANT_ICONS[variant];
+  const overrideName = draft.variantIcons?.[variant];
+  const Icon = (overrideName && ICON_REGISTRY[overrideName]) || VARIANT_ICONS[variant];
   return (
     <span
       className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-xs font-medium"
