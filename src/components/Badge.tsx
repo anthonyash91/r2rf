@@ -127,6 +127,7 @@ const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   translation: Languages,
   admin: Shield,
   contributor: PenLine,
+  tester: Wrench,
   verified: BadgeCheck,
   unverified: AlertCircle,
   user: User,
