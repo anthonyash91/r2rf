@@ -182,7 +182,10 @@ function AdminUsersPage() {
           );
         }
         const adminUsers = data.users.filter(
-          (u) => u.roles.includes("admin") || u.roles.includes("contributor") || u.roles.includes("tester"),
+          (u) => u.roles.includes("admin") || u.roles.includes("contributor"),
+        );
+        const testerUsers = data.users.filter(
+          (u) => u.roles.includes("tester") && !u.roles.includes("admin") && !u.roles.includes("contributor"),
         );
         const regularUsers = data.users.filter(
           (u) => !u.roles.includes("admin") && !u.roles.includes("contributor") && !u.roles.includes("tester"),
