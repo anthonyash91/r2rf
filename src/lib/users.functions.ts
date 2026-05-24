@@ -83,25 +83,108 @@ export const createUser = createServerFn({ method: "POST" })
       .object({
         email: z.string().trim().email().max(255),
         password: z.string().min(8).max(72),
-        emailConfirm: z.boolean().optional(),
-        role: z.enum(["admin", "contributor", "tester"]).optional(),
+        role: z.enum(["admin", "contributor"]),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
+    // Create with email_confirm:false so the user must verify via email.
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
-      email_confirm: data.emailConfirm ?? true,
+      email_confirm: false,
     });
     if (error) throw new Error(error.message);
-    if (data.role && created.user) {
+    if (created.user) {
       const { error: roleErr } = await supabaseAdmin
         .from("user_roles")
         .insert({ user_id: created.user.id, role: data.role });
       if (roleErr) throw new Error(roleErr.message);
     }
+    // Trigger the verification email.
+    const { error: resendErr } = await supabaseAdmin.auth.resend({
+      type: "signup",
+      email: data.email,
+    });
+    if (resendErr) {
+      // Non-fatal: user is created. Surface the message so the admin knows.
+      console.error("createUser: resend signup failed", resendErr.message);
+    }
+    return { ok: true };
+  });
+
+const TESTER_EMAIL_DOMAIN = "tester.local";
+function testerSyntheticEmail(username: string): string {
+  return `${username.toLowerCase()}@${TESTER_EMAIL_DOMAIN}`;
+}
+
+export const createTesterUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        username: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(/^[a-z0-9_]{3,32}$/, "Username must be 3–32 chars, letters/numbers/underscore"),
+        password: z.string().min(8).max(72),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+
+    const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
+    if (exists) throw new Error("That username is already taken.");
+
+    const email = testerSyntheticEmail(data.username);
+
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { username: data.username, must_reset_password: true },
+    });
+    if (error || !created?.user) throw new Error(error?.message ?? "Failed to create tester");
+    const userId = created.user.id;
+
+    const { error: profErr } = await supabaseAdmin.from("user_profiles").insert({
+      user_id: userId,
+      username: data.username,
+      facility: "",
+      first_name: "",
+      last_name: "",
+    });
+    if (profErr) {
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      throw new Error(profErr.message);
+    }
+
+    const { error: roleErr } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: userId, role: "tester" });
+    if (roleErr) {
+      await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      throw new Error(roleErr.message);
+    }
+
+    return { ok: true };
+  });
+
+export const clearMustResetPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    if (getErr) throw new Error(getErr.message);
+    const meta = { ...((userRes?.user?.user_metadata ?? {}) as Record<string, unknown>) };
+    delete meta.must_reset_password;
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(context.userId, {
+      user_metadata: meta,
+    });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 

@@ -14,7 +14,10 @@ import { getMyProfile, getMyFacilityCustomHome } from "@/lib/user-signup.functio
 import { facilityLabel } from "@/lib/user-signup";
 import { listFacilities } from "@/lib/facilities.functions";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
+import { clearMustResetPassword } from "@/lib/users.functions";
 import { questionLabel } from "@/lib/security-questions";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { LoadingButton } from "@/components/LoadingButton";
 import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
 import { readStatusLabels } from "@/lib/read-status";
@@ -262,6 +265,31 @@ function DashboardPage() {
   const [pending, setPending] = useState<SecurityAnswerInput[]>([]);
   const [busy, setBusy] = useState(false);
 
+  // Forced password reset for tester first sign-in.
+  const mustResetPassword = (user?.user_metadata as Record<string, unknown> | undefined)?.must_reset_password === true;
+  const clearMustResetFn = useServerFn(clearMustResetPassword);
+  const [resetPw, setResetPw] = useState("");
+  const [resetPw2, setResetPw2] = useState("");
+  const [resetBusy, setResetBusy] = useState(false);
+  async function handleForcedReset(e: React.FormEvent) {
+    e.preventDefault();
+    if (resetPw.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (resetPw !== resetPw2) { toast.error("Passwords do not match"); return; }
+    setResetBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: resetPw });
+      if (error) throw error;
+      await clearMustResetFn();
+      await supabase.auth.refreshSession();
+      toast.success("Password updated");
+      setResetPw(""); setResetPw2("");
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to update password");
+    } finally {
+      setResetBusy(false);
+    }
+  }
+
   const profile = data?.profile;
   const currentKeys = questionsQuery.data?.keys ?? [];
   const mustSetup = !questionsQuery.isLoading && currentKeys.length < 2;
@@ -303,7 +331,47 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Dialog open={mustResetPassword} onOpenChange={() => { /* non-dismissible */ }}>
+        <DialogContent
+          className="sm:max-w-md"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Set a new password</DialogTitle>
+            <DialogDescription>
+              For security, please choose a new password before continuing.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleForcedReset} className="mt-2 space-y-3">
+            <input
+              type="password"
+              autoComplete="new-password"
+              required
+              value={resetPw}
+              onChange={(e) => setResetPw(e.target.value)}
+              placeholder="New password (min 8 chars)"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
+            <input
+              type="password"
+              autoComplete="new-password"
+              required
+              value={resetPw2}
+              onChange={(e) => setResetPw2(e.target.value)}
+              placeholder="Confirm new password"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
+            <div className="flex justify-end">
+              <LoadingButton type="submit" pending={resetBusy} pendingText="Saving…">
+                Save password
+              </LoadingButton>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
       <SiteHeader />
+
       <SiteMessageBanner kind="user" />
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
         <Tabs
