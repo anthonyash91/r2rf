@@ -696,19 +696,24 @@ function UserItem({
   const isTester = user.roles.includes("tester");
 
   const isRegularUser = !!user.profile && !isAdmin && !isContributor && !isTester;
+  const isUsernameUser = !!user.profile && (isRegularUser || isTester);
 
   return (
     <li className="p-4 sm:p-5 pr-[22px] pl-[10px]">
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-4">
         <div className="min-w-0 flex-1">
-          {isRegularUser ? (
+          {isUsernameUser ? (
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
                 <BadgeGroup>
-                  <Badge variant="facility">
-                    {facilityLabel || user.profile!.facility}
-                  </Badge>
-                  {user.roles.includes("user") && (
+                  {isTester ? (
+                    <Badge variant="tester">Tester</Badge>
+                  ) : (
+                    <Badge variant="facility">
+                      {facilityLabel || user.profile!.facility}
+                    </Badge>
+                  )}
+                  {!isTester && user.roles.includes("user") && (
                     <Badge variant="user">User</Badge>
                   )}
                   {isNew && <Badge variant="new">New</Badge>}
@@ -722,10 +727,14 @@ function UserItem({
                   </span>
                 )}
                 <BadgeGroup className="hidden sm:inline-flex">
-                  <Badge variant="facility">
-                    {facilityLabel || user.profile!.facility}
-                  </Badge>
-                  {user.roles.includes("user") && (
+                  {isTester ? (
+                    <Badge variant="tester">Tester</Badge>
+                  ) : (
+                    <Badge variant="facility">
+                      {facilityLabel || user.profile!.facility}
+                    </Badge>
+                  )}
+                  {!isTester && user.roles.includes("user") && (
                     <Badge variant="user">User</Badge>
                   )}
                   {isNew && <Badge variant="new">New</Badge>}
