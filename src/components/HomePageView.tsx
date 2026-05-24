@@ -123,16 +123,15 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
                     {pickLang(lang, c.name, c.name_es)}
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
-                  <div className="mt-3 flex justify-start">
-                    <BadgeGroup>
-                      <Badge variant="count">
-                        {count} {t(count === 1 ? "home.item" : "home.items")}
-                      </Badge>
-                      {hasRecent && (
-                        <Badge variant="new">{t("category.newContentAdded")}</Badge>
-                      )}
-                    </BadgeGroup>
+                  <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                    <Badge variant="count">
+                      {count} {t(count === 1 ? "home.item" : "home.items")}
+                    </Badge>
+                    {hasRecent && (
+                      <Badge variant="new">{t("category.newContentAdded")}</Badge>
+                    )}
                   </div>
+
 
 
 
