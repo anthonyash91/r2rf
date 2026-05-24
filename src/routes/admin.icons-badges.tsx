@@ -77,7 +77,7 @@ const TYPE_LABELS: Record<KnownTypeKey, string> = {
   link: "Link",
 };
 
-const REGEN_BTN_CLASS = "px-4 py-2 text-sm shrink-0 !shadow-none";
+const REGEN_BTN_CLASS = "px-4 py-2 text-sm shrink-0 w-full @[20rem]:w-auto !shadow-none";
 const REGEN_ALL_BTN_CLASS = "px-4 py-2 text-sm w-full sm:w-auto !shadow-none";
 
 type CategoryRow = {
@@ -378,7 +378,7 @@ function AdminIconsBadgesPage() {
             return (
               <li
                 key={v}
-                className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
+                className={`@container flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <BadgePreview variant={v} draft={draft} />
@@ -424,7 +424,7 @@ function AdminIconsBadgesPage() {
             return (
               <li
                 key={t}
-                className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
+                className={`@container flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span
@@ -484,7 +484,7 @@ function AdminIconsBadgesPage() {
               return (
                 <li
                   key={c.id}
-                  className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
+                  className={`@container flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <CategoryIcon name={c.icon_name} color={color} size="sm" />
