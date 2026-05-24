@@ -269,7 +269,7 @@ function AdminReportsPage() {
                 />
               </PopoverContent>
             </Popover>
-            <Popover open={userPickerOpen} onOpenChange={setUserPickerOpen}>
+            <Popover open={userPickerOpen} onOpenChange={(o) => { if (o) setPickerOpen(false); setUserPickerOpen(o); }}>
               <PopoverAnchor asChild>
                 <TabsTrigger
                   value="user"
