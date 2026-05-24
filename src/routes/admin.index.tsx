@@ -326,10 +326,11 @@ function AdminCategoriesPage() {
                   <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
                 )}
                 {(itemsByCategory[c.id]?.length ?? 0) > 0 && (
-                  <ul className="mt-2 space-y-1 text-sm">
-                    {(itemsByCategory[c.id] ?? []).map((item) => (
-                      <li key={item.id} className="flex items-center gap-2 min-w-0">
-                        <span className="text-muted-foreground shrink-0">·</span>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">Courses:</span>{" "}
+                    {(itemsByCategory[c.id] ?? []).map((item, i) => (
+                      <span key={item.id}>
+                        {i > 0 && ", "}
                         {c.published && item.published ? (
                           <Link
                             to="/category/$slug"
@@ -337,20 +338,19 @@ function AdminCategoriesPage() {
                             hash={`item-${item.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="truncate text-[var(--color-accent)] hover:underline"
-                            title={item.title}
+                            className="text-[var(--color-accent)] hover:underline"
                           >
                             {item.title}
                           </Link>
                         ) : (
-                          <span className="truncate text-muted-foreground" title={item.title}>
+                          <span>
                             {item.title}
-                            {!item.published && <span className="ml-2 text-xs italic">(draft)</span>}
+                            {!item.published && <span className="ml-1 text-xs italic">(draft)</span>}
                           </span>
                         )}
-                      </li>
+                      </span>
                     ))}
-                  </ul>
+                  </p>
                 )}
                 {c.home_page_mode === "custom" && (
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
