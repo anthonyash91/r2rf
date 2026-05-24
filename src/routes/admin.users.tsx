@@ -819,7 +819,7 @@ function UserItem({
 
         <TooltipProvider delayDuration={150}>
           <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
-            {!isRegularUser && (
+            {!isUsernameUser && (
               <IconButton
                 aria-label="Send password reset email"
                 tooltip="Send reset email"
@@ -837,7 +837,7 @@ function UserItem({
               onClick={() => setPwOpen((v) => !v)}
             />
 
-            {isRegularUser && (
+            {isUsernameUser && (
               <IconButton
                 aria-label="Reset security questions"
                 tooltip="Reset security questions"
@@ -849,7 +849,7 @@ function UserItem({
 
 
 
-            {!isRegularUser && (
+            {!isUsernameUser && (
               <>
                 <IconButton
                   aria-label={isAdmin ? "Revoke admin" : "Make admin"}
