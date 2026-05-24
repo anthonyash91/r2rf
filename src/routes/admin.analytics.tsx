@@ -38,6 +38,7 @@ import {
   listFacilityUsers,
   getUserProgressReport,
 } from "@/lib/reports.functions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
@@ -167,13 +168,30 @@ function downloadCsv(filename: string, lines: string[]) {
 function AdminReportsPage() {
   const [tab, setTab] = useState<"overall" | "facility" | "user">("overall");
   const [facilityKey, setFacilityKey] = useState(0);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [selectedFacility, setSelectedFacility] = useState<{ value: string; label: string } | null>(null);
+
+  const fetchFacilities = useServerFn(listFacilities);
+  const facilitiesQuery = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilities(),
+    enabled: pickerOpen,
+  });
+  const facilities = facilitiesQuery.data?.facilities ?? [];
+
+  const openFacilityPicker = () => {
+    setPickerOpen(true);
+  };
 
   return (
     <div>
       <Tabs
         value={tab}
         onValueChange={(v) => {
-          if (v === "facility") setFacilityKey((k) => k + 1);
+          if (v === "facility") {
+            openFacilityPicker();
+            return;
+          }
           setTab(v as any);
         }}
         className="mt-6"
@@ -188,7 +206,16 @@ function AdminReportsPage() {
             <TabsTrigger value="overall" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
               <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Overall
             </TabsTrigger>
-            <TabsTrigger value="facility" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
+            <TabsTrigger
+              value="facility"
+              onClick={(e) => {
+                if (tab === "facility") {
+                  e.preventDefault();
+                  openFacilityPicker();
+                }
+              }}
+              className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
+            >
               <Building2 className="h-3.5 w-3.5 mr-1.5" /> By Facility
             </TabsTrigger>
             <TabsTrigger value="user" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
@@ -201,12 +228,40 @@ function AdminReportsPage() {
           <UsageReportView scope={{ kind: "overall" }} />
         </TabsContent>
         <TabsContent value="facility" className="mt-6">
-          <FacilityReportTab key={facilityKey} />
+          {selectedFacility ? (
+            <FacilityReportTab
+              key={`${facilityKey}-${selectedFacility.value}`}
+              preselected={selectedFacility}
+            />
+          ) : null}
         </TabsContent>
         <TabsContent value="user" className="mt-6">
           <UsersReportTab />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select a facility</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2">
+            <FacilityCombobox
+              value={selectedFacility?.value ?? ""}
+              onChange={(v) => {
+                const f = facilities.find((x) => x.value === v);
+                if (!f) return;
+                setSelectedFacility({ value: f.value, label: f.label });
+                setFacilityKey((k) => k + 1);
+                setPickerOpen(false);
+                setTab("facility");
+              }}
+              options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+              placeholder={facilitiesQuery.isLoading || facilities.length === 0 ? "Loading…" : "Select a facility"}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -340,36 +395,10 @@ function exportUsageCsv(
 
 /* ---------------- Facility Tab ---------------- */
 
-function FacilityReportTab() {
-  const fetchFacilities = useServerFn(listFacilities);
-  const facilitiesQuery = useQuery({
-    queryKey: ["facilities"],
-    queryFn: () => fetchFacilities(),
-  });
-  const facilities = facilitiesQuery.data?.facilities ?? [];
-  const [selected, setSelected] = useState<string>("");
-
-  const selectedLabel = facilities.find((f) => f.value === selected)?.label ?? "";
-
-  if (!selected) {
-    return (
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <label className="text-sm font-medium">Facility</label>
-        <div className="w-full sm:w-auto sm:min-w-[260px]">
-          <FacilityCombobox
-            value={selected}
-            onChange={(v) => setSelected(v)}
-            options={facilities.map((f) => ({ value: f.value, label: f.label }))}
-            placeholder={facilities.length === 0 ? "Loading…" : "Select a facility"}
-          />
-        </div>
-      </div>
-    );
-  }
-
+function FacilityReportTab({ preselected }: { preselected: { value: string; label: string } }) {
   return (
     <UsageReportView
-      scope={{ kind: "facility", facilityValue: selected, facilityLabel: selectedLabel }}
+      scope={{ kind: "facility", facilityValue: preselected.value, facilityLabel: preselected.label }}
     />
   );
 }
