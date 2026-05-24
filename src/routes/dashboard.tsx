@@ -18,6 +18,7 @@ import { clearMustResetPassword } from "@/lib/users.functions";
 import { questionLabel } from "@/lib/security-questions";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingButton } from "@/components/LoadingButton";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
 import { readStatusLabels } from "@/lib/read-status";
@@ -271,6 +272,7 @@ function DashboardPage() {
   const [resetPw, setResetPw] = useState("");
   const [resetPw2, setResetPw2] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
   async function handleForcedReset(e: React.FormEvent) {
     e.preventDefault();
     if (resetPw.length < 8) { toast.error("Password must be at least 8 characters"); return; }
@@ -283,6 +285,7 @@ function DashboardPage() {
       await supabase.auth.refreshSession();
       toast.success("Password updated");
       setResetPw(""); setResetPw2("");
+      setResetDone(true);
     } catch (err: any) {
       toast.error(err.message ?? "Failed to update password");
     } finally {
@@ -331,9 +334,9 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Dialog open={mustResetPassword} onOpenChange={() => { /* non-dismissible */ }}>
+      <Dialog open={mustResetPassword && !resetDone} onOpenChange={() => { /* non-dismissible */ }}>
         <DialogContent
-          className="sm:max-w-md"
+          className="sm:max-w-md pt-[22px]"
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
@@ -343,16 +346,19 @@ function DashboardPage() {
               For security, please choose a new password before continuing.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleForcedReset} className="mt-2 space-y-3">
-            <input
-              type="password"
-              autoComplete="new-password"
-              required
-              value={resetPw}
-              onChange={(e) => setResetPw(e.target.value)}
-              placeholder="New password (min 8 chars)"
-              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-            />
+          <form onSubmit={handleForcedReset} className="mt-[-4px] space-y-3">
+            <div>
+              <input
+                type="password"
+                autoComplete="new-password"
+                required
+                value={resetPw}
+                onChange={(e) => setResetPw(e.target.value)}
+                placeholder="New password (min 8 chars)"
+                className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+              />
+              <PasswordStrengthMeter password={resetPw} />
+            </div>
             <input
               type="password"
               autoComplete="new-password"
