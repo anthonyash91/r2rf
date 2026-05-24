@@ -191,7 +191,7 @@ export const clearMustResetPassword = createServerFn({ method: "POST" })
     const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(context.userId);
     if (getErr) throw new Error(getErr.message);
     const meta = { ...((userRes?.user?.user_metadata ?? {}) as Record<string, unknown>) };
-    delete meta.must_reset_password;
+    meta.must_reset_password = false;
     const { error } = await supabaseAdmin.auth.admin.updateUserById(context.userId, {
       user_metadata: meta,
     });
