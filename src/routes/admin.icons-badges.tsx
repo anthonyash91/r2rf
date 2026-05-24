@@ -205,24 +205,27 @@ function AdminIconsBadgesPage() {
           );
         if (error) throw error;
       }
-      if (dirtyCats) {
-        const updates = Object.entries(catDraft).filter(
-          ([id, val]) => (val ?? null) !== (originalCatMap[id] ?? null),
-        );
-        for (const [id, val] of updates) {
-          const { error } = await supabase
-            .from("categories")
-            .update({ icon_color: val })
-            .eq("id", id);
-          if (error) throw error;
-        }
+      // Build per-category updates (color and/or icon_name) and apply with one update per row.
+      const catIds = new Set<string>([
+        ...Object.keys(catDraft),
+        ...Object.keys(catIconDraft),
+      ]);
+      for (const id of catIds) {
+        const colorChanged = (catDraft[id] ?? null) !== (originalCatMap[id] ?? null);
+        const iconChanged = (catIconDraft[id] ?? null) !== (originalCatIconMap[id] ?? null);
+        if (!colorChanged && !iconChanged) continue;
+        const patch: { icon_color?: string | null; icon_name?: string | null } = {};
+        if (colorChanged) patch.icon_color = catDraft[id] ?? null;
+        if (iconChanged) patch.icon_name = catIconDraft[id] ?? null;
+        const { error } = await supabase.from("categories").update(patch).eq("id", id);
+        if (error) throw error;
       }
     },
     onSuccess: () => {
       qc.setQueryData(badgeStylesQueryKey, draft);
       qc.invalidateQueries({ queryKey: ["admin", "icons-badges", "categories"] });
       qc.invalidateQueries({ queryKey: ["categories"] });
-      toast.success("Saved color combinations");
+      toast.success("Saved icons & colors");
     },
     onError: (err: Error) => toast.error(err.message ?? "Failed to save"),
   });
