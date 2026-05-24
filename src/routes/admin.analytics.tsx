@@ -547,7 +547,7 @@ function UserProgressView({
               { icon: Flame, label: "Day streak", value: streak.toLocaleString() },
             ];
             return (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mt-8 mb-8">
                 {stats.map((s) => {
                   const Icon = s.icon;
                   return (
