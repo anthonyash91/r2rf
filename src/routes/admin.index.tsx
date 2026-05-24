@@ -83,20 +83,24 @@ function AdminCategoriesPage() {
     },
   });
 
-  const { data: itemCountsByCategory = {} } = useQuery({
-    queryKey: ["admin", "category-item-counts"],
-    queryFn: async (): Promise<Record<string, number>> => {
+  const { data: itemsByCategory = {} } = useQuery({
+    queryKey: ["admin", "category-items"],
+    queryFn: async (): Promise<Record<string, { id: string; title: string; published: boolean; sort_order: number }[]>> => {
       const { data, error } = await supabase
         .from("content_items")
-        .select("category_id");
+        .select("id, category_id, title, published, sort_order")
+        .order("sort_order", { ascending: true });
       if (error) throw error;
-      const counts: Record<string, number> = {};
-      for (const row of (data ?? []) as { category_id: string }[]) {
-        counts[row.category_id] = (counts[row.category_id] ?? 0) + 1;
+      const map: Record<string, { id: string; title: string; published: boolean; sort_order: number }[]> = {};
+      for (const row of (data ?? []) as { id: string; category_id: string; title: string; published: boolean; sort_order: number }[]) {
+        (map[row.category_id] ??= []).push({ id: row.id, title: row.title, published: row.published, sort_order: row.sort_order });
       }
-      return counts;
+      return map;
     },
   });
+  const itemCountsByCategory: Record<string, number> = Object.fromEntries(
+    Object.entries(itemsByCategory).map(([k, v]) => [k, v.length])
+  );
 
   const createMut = useMutation({
     mutationFn: async (input: {
