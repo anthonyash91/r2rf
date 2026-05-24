@@ -325,6 +325,33 @@ function AdminCategoriesPage() {
                 {c.description && (
                   <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
                 )}
+                {(itemsByCategory[c.id]?.length ?? 0) > 0 && (
+                  <ul className="mt-2 space-y-1 text-sm">
+                    {(itemsByCategory[c.id] ?? []).map((item) => (
+                      <li key={item.id} className="flex items-center gap-2 min-w-0">
+                        <span className="text-muted-foreground shrink-0">·</span>
+                        {c.published && item.published ? (
+                          <Link
+                            to="/category/$slug"
+                            params={{ slug: c.slug }}
+                            hash={`item-${item.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="truncate text-[var(--color-accent)] hover:underline"
+                            title={item.title}
+                          >
+                            {item.title}
+                          </Link>
+                        ) : (
+                          <span className="truncate text-muted-foreground" title={item.title}>
+                            {item.title}
+                            {!item.published && <span className="ml-2 text-xs italic">(draft)</span>}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {c.home_page_mode === "custom" && (
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
                     <span className="text-xs text-muted-foreground">Custom home page:</span>
