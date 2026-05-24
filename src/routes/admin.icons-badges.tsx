@@ -434,10 +434,16 @@ function AdminIconsBadgesPage() {
                     </div>
                   </div>
                 </div>
-                <Button variant="outline" onClick={() => cycleVariant(v)} className={REGEN_BTN_CLASS}>
-                  <RefreshCw className="h-4 w-4" />
-                  Regenerate
-                </Button>
+                <div className="flex w-full @[20rem]:w-auto items-center gap-2">
+                  <Button variant="outline" onClick={() => cycleVariant(v)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-4 w-4" />
+                    Color
+                  </Button>
+                  <Button variant="outline" onClick={() => cycleVariantIcon(v)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-4 w-4" />
+                    Icon
+                  </Button>
+                </div>
               </li>
             );
           })}
