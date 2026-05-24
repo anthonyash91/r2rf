@@ -234,9 +234,15 @@ function CategoryList({ rows }: { rows: AggregatedRow[] }) {
   );
 }
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+function Stat({ icon, label, value, position }: { icon: React.ReactNode; label: string; value: number; position?: "first" | "last" | "middle" }) {
+  const radius =
+    position === "first"
+      ? "rounded-l-[4px]"
+      : position === "last"
+        ? "rounded-r-[4px] -ml-px"
+        : "-ml-px";
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-[4px] border border-border bg-background px-3 py-1 text-xs font-medium">
+    <span className={`inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium ${radius}`}>
       {icon}
       <span className="tabular-nums">{value.toLocaleString()}</span>
       <span className="text-muted-foreground">{label}</span>
@@ -262,7 +268,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-[#fffdf8]"} text-left hover:bg-muted/50 transition-colors`}
+        className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-6 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-[#fffdf8]"} text-left hover:bg-muted/50 transition-colors`}
       >
         <div className="flex items-center gap-3 min-w-0">
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
@@ -275,9 +281,9 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
             </p>
           </div>
         </div>
-        <div className="flex gap-2 flex-shrink-0">
-          <Stat icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "view" : "views"} value={row.views} />
-          <Stat icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "click" : "clicks"} value={row.clicks} />
+        <div className="inline-flex flex-shrink-0">
+          <Stat position="first" icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "view" : "views"} value={row.views} />
+          <Stat position="last" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "click" : "clicks"} value={row.clicks} />
         </div>
       </button>
       {open && (
@@ -286,7 +292,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
         ) : (
           <ul className="divide-y divide-border">
             {row.items.map(({ item, clicks }) => (
-              <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] py-4 pl-[22px] pr-[22px]">
+              <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] p-6">
                 <Badge variant="type" type={item.type}>
                   {item.type}
                 </Badge>
