@@ -13,7 +13,12 @@ import {
   Users as UsersIcon,
   ArrowLeft,
   CheckCircle2,
-  Circle,
+  Check,
+  
+  X,
+  Clock,
+  Flame,
+  Trophy,
 } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import type { Category, ContentItem } from "@/lib/categories";
@@ -22,7 +27,11 @@ import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { listFacilities } from "@/lib/facilities.functions";
+
+import { readStatusLabels } from "@/lib/read-status";
+import { useI18n } from "@/lib/i18n";
 import {
   getUsageReport,
   listFacilityUsers,
@@ -120,26 +129,25 @@ function AdminReportsPage() {
 
   return (
     <div>
-      <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
-        <PageHeader
-          icon={BarChart3}
-          title="Reports"
-          description="Usage, facility, and per-user reports across the site."
-        />
-      </div>
-
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mt-6">
-        <TabsList className="h-auto p-2 gap-1 w-full sm:w-auto bg-muted/40">
-          <TabsTrigger value="overall" className="flex-1 sm:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
-            <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Overall
-          </TabsTrigger>
-          <TabsTrigger value="facility" className="flex-1 sm:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
-            <Building2 className="h-3.5 w-3.5 mr-1.5" /> By Facility
-          </TabsTrigger>
-          <TabsTrigger value="user" className="flex-1 sm:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
-            <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <PageHeader
+            icon={BarChart3}
+            title="Reports"
+            description="Usage, facility, and per-user reports across the site."
+          />
+          <TabsList className="h-auto p-2 gap-1 w-full lg:w-auto bg-muted/40 self-stretch lg:self-center">
+            <TabsTrigger value="overall" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
+              <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Overall
+            </TabsTrigger>
+            <TabsTrigger value="facility" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
+              <Building2 className="h-3.5 w-3.5 mr-1.5" /> By Facility
+            </TabsTrigger>
+            <TabsTrigger value="user" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
+              <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overall" className="mt-6">
           <UsageReportView scope={{ kind: "overall" }} />
@@ -292,18 +300,14 @@ function FacilityReportTab() {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
         <label className="text-sm font-medium">Facility</label>
-        <select
-          value={selected}
-          onChange={(e) => setSelected(e.target.value)}
-          className="rounded-md border border-input bg-background px-4 py-2 text-sm w-full sm:w-auto sm:min-w-[260px]"
-        >
-          {facilities.length === 0 && <option value="">Loading…</option>}
-          {facilities.map((f) => (
-            <option key={f.id} value={f.value}>
-              {f.label}
-            </option>
-          ))}
-        </select>
+        <div className="w-full sm:w-auto sm:min-w-[260px]">
+          <FacilityCombobox
+            value={selected}
+            onChange={(v) => setSelected(v)}
+            options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+            placeholder={facilities.length === 0 ? "Loading…" : "Select a facility"}
+          />
+        </div>
       </div>
       {selected && (
         <UsageReportView
@@ -355,18 +359,14 @@ function UsersReportTab() {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
         <label className="text-sm font-medium">Facility</label>
-        <select
-          value={selected}
-          onChange={(e) => setSelected(e.target.value)}
-          className="rounded-md border border-input bg-background px-4 py-2 text-sm w-full sm:w-auto sm:min-w-[260px]"
-        >
-          {facilities.length === 0 && <option value="">Loading…</option>}
-          {facilities.map((f) => (
-            <option key={f.id} value={f.value}>
-              {f.label}
-            </option>
-          ))}
-        </select>
+        <div className="w-full sm:w-auto sm:min-w-[260px]">
+          <FacilityCombobox
+            value={selected}
+            onChange={(v) => setSelected(v)}
+            options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+            placeholder={facilities.length === 0 ? "Loading…" : "Select a facility"}
+          />
+        </div>
         <LoadingButton
           variant="secondary"
           onClick={() => exportFacilityUsersCsv(users, selectedLabel)}
@@ -494,34 +494,90 @@ function UserProgressView({
         <p className="text-muted-foreground">Loading…</p>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <SummaryCard
-              icon={<CheckCircle2 className="h-5 w-5" />}
-              label="Items read"
-              value={data.items.filter((i: any) => i.read).length}
-            />
-            <SummaryCard
-              icon={<Eye className="h-5 w-5" />}
-              label="Category views"
-              value={data.eventCounts.categoryViews}
-            />
-            <SummaryCard
-              icon={<MousePointerClick className="h-5 w-5" />}
-              label="Content clicks"
-              value={data.eventCounts.contentClicks}
-            />
-            <SummaryCard
-              icon={<UsersIcon className="h-5 w-5" />}
-              label="Login days"
-              value={data.logins.length}
-            />
-          </div>
+          {(() => {
+            const totalItems = data.items.length;
+            const readItems = data.items.filter((i: any) => i.read).length;
+            const minutesSpent = data.items
+              .filter((i: any) => i.read)
+              .reduce((acc: number, i: any) => acc + parseMinutes(i.duration), 0);
+            const hours = Math.floor(minutesSpent / 60);
+            // categories completed
+            let totalCats = 0;
+            let completedCats = 0;
+            for (const g of grouped) {
+              if (g.total > 0) {
+                totalCats += 1;
+                if (g.read >= g.total) completedCats += 1;
+              }
+            }
+            // streak
+            const loginDays = new Set<string>(data.logins ?? []);
+            let streak = 0;
+            if (loginDays.size > 0) {
+              const fmt = (d: Date) => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, "0");
+                const dd = String(d.getDate()).padStart(2, "0");
+                return `${y}-${m}-${dd}`;
+              };
+              const cursor = new Date();
+              if (!loginDays.has(fmt(cursor))) cursor.setDate(cursor.getDate() - 1);
+              while (loginDays.has(fmt(cursor))) {
+                streak += 1;
+                cursor.setDate(cursor.getDate() - 1);
+              }
+            }
+            const fraction = (done: number, total: number) => (
+              <span className="inline-flex items-center gap-1.5">
+                <span>{done.toLocaleString()}</span>
+                <span className="font-serif italic text-base font-normal text-[var(--color-accent)] lowercase tracking-wide">of</span>
+                <span>{total.toLocaleString()}</span>
+              </span>
+            );
+            const stats = [
+              { icon: CheckCircle2, label: "Items completed", value: fraction(readItems, totalItems) },
+              { icon: Trophy, label: "Categories completed", value: fraction(completedCats, totalCats) },
+              { icon: Clock, label: "Hours spent", value: hours.toLocaleString() },
+              { icon: Flame, label: "Day streak", value: streak.toLocaleString() },
+            ];
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-8">
+                {stats.map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <div key={s.label} className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-[var(--color-accent)] flex-shrink-0">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex flex-col items-start">
+                        <p className="font-display text-2xl font-semibold leading-none tabular-nums">{s.value}</p>
+                        <p className="text-xs text-muted-foreground mt-1 whitespace-nowrap">{s.label}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           <UserCategoryList groups={grouped} />
         </>
       )}
     </div>
   );
+}
+
+function parseMinutes(d?: string | null): number {
+  if (!d) return 0;
+  let total = 0;
+  const re = /(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)?/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(d)) !== null) {
+    const n = parseFloat(m[1]);
+    const u = (m[2] ?? "min").toLowerCase();
+    total += u.startsWith("h") ? n * 60 : n;
+  }
+  return total;
 }
 
 function exportUserProgressCsv(
@@ -571,6 +627,7 @@ function UserCategoryList({
 }: {
   groups: { category: any; items: any[]; total: number; read: number }[];
 }) {
+  const { t } = useI18n();
   const [openId, setOpenId] = useState<string | null>(null);
   if (groups.length === 0) {
     return <p className="text-muted-foreground">No categories yet.</p>;
@@ -600,7 +657,7 @@ function UserCategoryList({
                   <p className="text-xs text-muted-foreground truncate">/{g.category.slug}</p>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium rounded-[4px] tabular-nums">
+              <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium rounded-[4px] tabular-nums self-start sm:self-auto">
                 <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
                 {g.read} of {g.total} read
               </span>
@@ -610,28 +667,41 @@ function UserCategoryList({
                 <p className="p-5 text-sm text-muted-foreground">No content items.</p>
               ) : (
                 <ul className="divide-y divide-border">
-                  {g.items.map((item: any) => (
-                    <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] px-6 py-[19px]">
-                      <Badge variant="type" type={item.type}>
-                        {item.type}
-                      </Badge>
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate text-sm font-bold">{item.title}</p>
-                        {item.duration && (
-                          <p className="text-xs text-muted-foreground">{item.duration}</p>
-                        )}
-                      </div>
-                      {item.read ? (
-                        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-accent)]">
-                          <CheckCircle2 className="h-4 w-4" /> Read
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                          <Circle className="h-4 w-4" /> Not read
-                        </span>
-                      )}
-                    </li>
-                  ))}
+                  {g.items.map((item: any) => {
+                    const labels = readStatusLabels(t, item);
+                    return (
+                      <li key={item.id} className="flex flex-col gap-[10px] bg-[#fffdf8] p-6">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Badge variant="type" type={item.type}>
+                            {item.type}
+                          </Badge>
+                          <span className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
+                            item.read
+                              ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
+                              : "border-input bg-background text-foreground"
+                          }`}>
+                            {item.read ? (
+                              <>
+                                <Check className="h-3.5 w-3.5" />
+                                {labels.read}
+                              </>
+                            ) : (
+                              <>
+                                <X className="h-3.5 w-3.5" />
+                                {labels.unread}
+                              </>
+                            )}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-lg font-semibold text-foreground">{item.title}</p>
+                          {item.description && (
+                            <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               ))}
           </SectionCard>

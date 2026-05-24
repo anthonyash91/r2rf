@@ -148,7 +148,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         .order("sort_order", { ascending: true }),
       supabaseAdmin
         .from("content_items")
-        .select("id, category_id, title, type, duration, sort_order, published")
+        .select("id, category_id, title, description, type, duration, url, file_url, sort_order, published")
         .eq("published", true)
         .order("sort_order", { ascending: true }),
       supabaseAdmin
@@ -202,8 +202,11 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         id: i.id,
         category_id: i.category_id,
         title: i.title,
+        description: i.description ?? "",
         type: i.type,
         duration: i.duration,
+        url: i.url ?? null,
+        file_url: i.file_url ?? null,
         read: readSet.has(i.id),
       })),
       progress: (progRes.data ?? []).map((r: any) => ({
