@@ -37,11 +37,6 @@ import {
   listFacilityUsers,
   getUserProgressReport,
 } from "@/lib/reports.functions";
-import {
-  getUsageReport,
-  listFacilityUsers,
-  getUserProgressReport,
-} from "@/lib/reports.functions";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
