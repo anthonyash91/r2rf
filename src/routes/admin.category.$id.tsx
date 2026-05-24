@@ -198,7 +198,7 @@ function CategoryEditor({
 
 
   return (
-    <SectionCard className="mt-8">
+    <SectionCard className="mt-8 pt-[18px]">
       <form
         className="space-y-4"
         onSubmit={(e) => {
@@ -860,7 +860,7 @@ function ItemEditor({
           file_name_es: fileNameEs,
         });
       }}
-      className="mt-6 mb-8 rounded-2xl border border-border bg-card p-6 space-y-4"
+      className="mt-6 mb-8 rounded-2xl border border-border bg-card p-6 pt-[18px] space-y-4"
     >
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold">{item ? "Edit item" : "New item"}</h3>
