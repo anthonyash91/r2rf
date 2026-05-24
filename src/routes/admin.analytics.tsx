@@ -32,14 +32,11 @@ import { listFacilities } from "@/lib/facilities.functions";
 import { withActionWord } from "@/lib/duration";
 import { readStatusLabels } from "@/lib/read-status";
 import { useI18n } from "@/lib/i18n";
-import { CategoryIcon } from "@/components/CategoryIcon";
-import type { Category, ContentItem } from "@/lib/categories";
-import { Badge } from "@/components/Badge";
-import { LoadingButton } from "@/components/LoadingButton";
-import { SectionCard } from "@/components/SectionCard";
-import { PageHeader } from "@/components/PageHeader";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { listFacilities } from "@/lib/facilities.functions";
+import {
+  getUsageReport,
+  listFacilityUsers,
+  getUserProgressReport,
+} from "@/lib/reports.functions";
 import {
   getUsageReport,
   listFacilityUsers,
