@@ -126,6 +126,7 @@ export const BADGE_VARIANTS = [
   "translation",
   "admin",
   "contributor",
+  "tester",
   "verified",
   "unverified",
   "user",
@@ -157,6 +158,7 @@ export const DEFAULT_VARIANT_INDEX: Record<BadgeVariantKey, number> = {
   translation: 1, // gold
   admin: 6, // indigo
   contributor: 2, // teal
+  tester: 9, // amber
   verified: 5, // moss
   unverified: 9, // amber
   user: 6, // indigo

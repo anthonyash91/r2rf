@@ -71,7 +71,7 @@ function AdminUsersPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
+  const [newRole, setNewRole] = useState<"admin" | "contributor" | "tester">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [regularVisible, setRegularVisible] = useState<number>(10);
   const bulk = useBulkSelect();
@@ -119,12 +119,12 @@ function AdminUsersPage() {
     onError: (e: any) => toast.error(e.message),
   });
   const roleMut = useMutation({
-    mutationFn: (input: { userId: string; role: "admin" | "contributor"; enabled: boolean }) => setRole({ data: input }),
+    mutationFn: (input: { userId: string; role: "admin" | "contributor" | "tester"; enabled: boolean }) => setRole({ data: input }),
     onSuccess: () => { toast.success("Role updated"); invalidate(); },
     onError: (e: any) => toast.error(e.message),
   });
   const createMut = useMutation({
-    mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" }) => createFn({ data: input }),
+    mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" | "tester" }) => createFn({ data: input }),
     onSuccess: () => {
       toast.success("User created");
       setNewEmail(""); setNewPassword(""); setNewRole("admin"); setShowCreate(false);
@@ -182,10 +182,10 @@ function AdminUsersPage() {
           );
         }
         const adminUsers = data.users.filter(
-          (u) => u.roles.includes("admin") || u.roles.includes("contributor"),
+          (u) => u.roles.includes("admin") || u.roles.includes("contributor") || u.roles.includes("tester"),
         );
         const regularUsers = data.users.filter(
-          (u) => !u.roles.includes("admin") && !u.roles.includes("contributor"),
+          (u) => !u.roles.includes("admin") && !u.roles.includes("contributor") && !u.roles.includes("tester"),
         );
 
         const isPendingEmail = rowPending<string>(emailMut, "userId");
@@ -302,13 +302,14 @@ function AdminUsersPage() {
                     placeholder="Password (min 8 chars)"
                     className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
                   />
-                  <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "contributor")}>
+                  <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "contributor" | "tester")}>
                     <SelectTrigger className="h-[38px] w-full sm:col-span-2 lg:col-span-1">
                       <SelectValue placeholder="Role" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="contributor">Contributor</SelectItem>
+                      <SelectItem value="tester">Tester</SelectItem>
                     </SelectContent>
                   </Select>
                   <LoadingButton
@@ -582,8 +583,9 @@ function UserItem({
 
   const isAdmin = user.roles.includes("admin");
   const isContributor = user.roles.includes("contributor");
+  const isTester = user.roles.includes("tester");
 
-  const isRegularUser = !!user.profile;
+  const isRegularUser = !!user.profile && !isAdmin && !isContributor && !isTester;
 
   return (
     <li className="p-4 sm:p-5 pr-[22px] pl-[10px]">
@@ -656,6 +658,7 @@ function UserItem({
                 <BadgeGroup>
                   {isAdmin && <Badge variant="admin">Admin</Badge>}
                   {isContributor && <Badge variant="contributor">Contributor</Badge>}
+                  {isTester && <Badge variant="tester">Tester</Badge>}
                   {user.email_confirmed_at ? (
                     <Badge variant="verified">Verified</Badge>
                   ) : (
@@ -676,6 +679,7 @@ function UserItem({
                 <BadgeGroup className="ml-1 hidden sm:inline-flex">
                   {isAdmin && <Badge variant="admin">Admin</Badge>}
                   {isContributor && <Badge variant="contributor">Contributor</Badge>}
+                  {isTester && <Badge variant="tester">Tester</Badge>}
                   {user.email_confirmed_at ? (
                     <Badge variant="verified">Verified</Badge>
                   ) : (
