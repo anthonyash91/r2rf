@@ -161,7 +161,7 @@ export const createTesterUser = createServerFn({ method: "POST" })
     const { error: profErr } = await supabaseAdmin.from("user_profiles").insert({
       user_id: userId,
       username: data.username,
-      facility: "",
+      facility: "test_facility",
       first_name: "",
       last_name: "",
     });
