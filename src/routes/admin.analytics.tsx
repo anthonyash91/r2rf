@@ -267,6 +267,10 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
 
       {isLoading || !aggregated ? (
         <p className="mt-8 text-muted-foreground">Loading…</p>
+      ) : scope.kind === "facility" && ((data as any)?.facilityUserCount ?? 0) === 0 ? (
+        <p className="mt-8 text-muted-foreground">
+          No reporting to show as there are no registered users for this facility.
+        </p>
       ) : (
         <>
           <div className={`mt-8 grid gap-4 ${scope.kind === "facility" ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
