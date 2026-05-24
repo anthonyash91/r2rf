@@ -170,17 +170,23 @@ function AdminReportsPage() {
   const [facilityKey, setFacilityKey] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<{ value: string; label: string } | null>(null);
+  const [userPickerOpen, setUserPickerOpen] = useState(false);
+  const [userKey, setUserKey] = useState(0);
+  const [selectedUserFacility, setSelectedUserFacility] = useState<{ value: string; label: string } | null>(null);
 
   const fetchFacilities = useServerFn(listFacilities);
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
     queryFn: () => fetchFacilities(),
-    enabled: pickerOpen,
+    enabled: pickerOpen || userPickerOpen,
   });
   const facilities = facilitiesQuery.data?.facilities ?? [];
 
   const openFacilityPicker = () => {
     setPickerOpen(true);
+  };
+  const openUserPicker = () => {
+    setUserPickerOpen(true);
   };
 
   return (
