@@ -279,8 +279,13 @@ function DashboardPage() {
     if (resetPw !== resetPw2) { toast.error("Passwords do not match"); return; }
     setResetBusy(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: resetPw });
+      const { error } = await supabase.auth.updateUser({
+        password: resetPw,
+        data: { must_reset_password: null },
+      });
       if (error) throw error;
+      // Clear server-side metadata too (admin API), then refresh the local
+      // session so the JWT reflects the cleared flag on next page load.
       await clearMustResetFn();
       await supabase.auth.refreshSession();
       toast.success("Password updated");
@@ -291,6 +296,7 @@ function DashboardPage() {
     } finally {
       setResetBusy(false);
     }
+
   }
 
   const profile = data?.profile;
