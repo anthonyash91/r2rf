@@ -221,11 +221,14 @@ function AdminReportsPage() {
               <PopoverAnchor asChild>
                 <TabsTrigger
                   value="facility"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openFacilityPicker();
+                  }}
                   onClick={(e) => {
-                    if (tab === "facility") {
-                      e.preventDefault();
-                      openFacilityPicker();
-                    }
+                    e.preventDefault();
+                    e.stopPropagation();
                   }}
                   className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
                 >
