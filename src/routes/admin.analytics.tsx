@@ -221,7 +221,22 @@ function AdminReportsPage() {
                   <Building2 className="h-3.5 w-3.5 mr-1.5" /> By Facility
                 </TabsTrigger>
               </PopoverAnchor>
-              <PopoverContent align="center" className="w-80 p-3">
+              <PopoverContent
+                align="center"
+                className="w-80 p-3"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onPointerDownOutside={(e) => {
+                  const target = e.target as Node | null;
+                  if (target && (e.currentTarget as HTMLElement).parentElement?.contains(target) === false) {
+                    // default
+                  }
+                  // Ignore clicks on the anchor (TabsTrigger) that toggled it
+                  const t = e.target as HTMLElement | null;
+                  if (t && t.closest('[data-state][role="tab"]')) {
+                    e.preventDefault();
+                  }
+                }}
+              >
                 <div className="mb-2 text-sm font-medium">Select a facility</div>
                 <FacilityCombobox
                   value={selectedFacility?.value ?? ""}
