@@ -71,7 +71,7 @@ function AdminUsersPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
+  const [newRole, setNewRole] = useState<"admin" | "contributor" | "tester">("admin");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [regularVisible, setRegularVisible] = useState<number>(10);
   const bulk = useBulkSelect();
