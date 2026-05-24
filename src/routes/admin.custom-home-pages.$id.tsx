@@ -325,18 +325,18 @@ function AdminCustomHomePageEdit() {
           <p className="text-xs text-muted-foreground my-[8px] mt-[8px]">
             Only published categories appear publicly on the custom home page, even if drafts are selected here.
           </p>
-        </SectionCard>
 
-        <div className="flex justify-end">
-          <LoadingButton
-            type="submit"
-            pending={saveMut.isPending}
-            pendingText="Saving…"
-            icon={<Save className="h-4 w-4" />}
-          >
-            Save
-          </LoadingButton>
-        </div>
+          <div className="flex justify-end pt-2">
+            <LoadingButton
+              type="submit"
+              pending={saveMut.isPending}
+              pendingText="Saving…"
+              icon={<Save className="h-4 w-4" />}
+            >
+              Save
+            </LoadingButton>
+          </div>
+        </SectionCard>
       </form>
     </div>
   );
