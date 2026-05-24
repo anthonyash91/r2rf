@@ -298,10 +298,6 @@ function FacilityReportTab() {
   const facilities = facilitiesQuery.data?.facilities ?? [];
   const [selected, setSelected] = useState<string>("");
 
-  useEffect(() => {
-    if (!selected && facilities.length > 0) setSelected(facilities[0].value);
-  }, [facilities, selected]);
-
   const selectedLabel = facilities.find((f) => f.value === selected)?.label ?? "";
 
   return (
@@ -317,10 +313,12 @@ function FacilityReportTab() {
           />
         </div>
       </div>
-      {selected && (
+      {selected ? (
         <UsageReportView
           scope={{ kind: "facility", facilityValue: selected, facilityLabel: selectedLabel }}
         />
+      ) : (
+        <p className="mt-6 text-muted-foreground">Select a facility to view its report.</p>
       )}
     </div>
   );
