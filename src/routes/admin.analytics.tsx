@@ -339,9 +339,9 @@ function FacilityReportTab() {
 
   const selectedLabel = facilities.find((f) => f.value === selected)?.label ?? "";
 
-  return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+  if (!selected) {
+    return (
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <label className="text-sm font-medium">Facility</label>
         <div className="w-full sm:w-auto sm:min-w-[260px]">
           <FacilityCombobox
@@ -352,14 +352,13 @@ function FacilityReportTab() {
           />
         </div>
       </div>
-      {selected ? (
-        <UsageReportView
-          scope={{ kind: "facility", facilityValue: selected, facilityLabel: selectedLabel }}
-        />
-      ) : (
-        <p className="mt-6 text-muted-foreground">Select a facility to view its report.</p>
-      )}
-    </div>
+    );
+  }
+
+  return (
+    <UsageReportView
+      scope={{ kind: "facility", facilityValue: selected, facilityLabel: selectedLabel }}
+    />
   );
 }
 
