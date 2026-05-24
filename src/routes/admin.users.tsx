@@ -742,7 +742,7 @@ function UserItem({
                   {!isTester && user.roles.includes("user") && (
                     <Badge variant="user">User</Badge>
                   )}
-                  {isNew && <Badge variant="new">New</Badge>}
+                  {isNew && !isTester && user.roles.includes("user") && <Badge variant="new">New</Badge>}
                 </BadgeGroup>
               </div>
             </>
