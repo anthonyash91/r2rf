@@ -468,7 +468,9 @@ function AdminIconsBadgesPage() {
           {KNOWN_TYPES.map((t) => {
             const idx = draft.types[t] ?? 0;
             const palette = PALETTES[idx];
-            const Icon = iconForType(t);
+            const overrideIconName = draft.typeIcons?.[t];
+            const Icon =
+              (overrideIconName && ICON_REGISTRY[overrideIconName]) || iconForType(t);
             const ps = paletteStyle(idx);
             const dup = isDup(idx);
             return (
@@ -491,10 +493,16 @@ function AdminIconsBadgesPage() {
                     </div>
                   </div>
                 </div>
-                <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
-                  <RefreshCw className="h-4 w-4" />
-                  Regenerate
-                </Button>
+                <div className="flex w-full @[20rem]:w-auto items-center gap-2">
+                  <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-4 w-4" />
+                    Color
+                  </Button>
+                  <Button variant="outline" onClick={() => cycleTypeIcon(t)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-4 w-4" />
+                    Icon
+                  </Button>
+                </div>
               </li>
             );
           })}
