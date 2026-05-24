@@ -88,7 +88,12 @@ function AdminUsersPage() {
   // highlighted for the duration of this visit. On unmount (or now), bump
   // lastSeen so the AdminNav badge clears and these won't highlight next time.
   const newUsersSinceRef = useRef<string>(getLastSeenUsersAt());
-  const isNewUser = (u: UserRow) => u.created_at > newUsersSinceRef.current;
+  const isNewUser = (u: UserRow) =>
+    u.created_at > newUsersSinceRef.current &&
+    u.roles.includes("user") &&
+    !u.roles.includes("tester") &&
+    !u.roles.includes("admin") &&
+    !u.roles.includes("contributor");
   useEffect(() => {
     setLastSeenUsersAt(new Date().toISOString());
   }, []);
@@ -721,7 +726,7 @@ function UserItem({
                   {!isTester && user.roles.includes("user") && (
                     <Badge variant="user">User</Badge>
                   )}
-                  {isNew && <Badge variant="new">New</Badge>}
+                  {isNew && !isTester && user.roles.includes("user") && <Badge variant="new">New</Badge>}
                 </BadgeGroup>
               </div>
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
@@ -742,7 +747,7 @@ function UserItem({
                   {!isTester && user.roles.includes("user") && (
                     <Badge variant="user">User</Badge>
                   )}
-                  {isNew && <Badge variant="new">New</Badge>}
+                  {isNew && !isTester && user.roles.includes("user") && <Badge variant="new">New</Badge>}
                 </BadgeGroup>
               </div>
             </>
