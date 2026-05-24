@@ -1,6 +1,7 @@
 import {
   Activity,
   AlarmClock,
+  AlertOctagon,
   AlertTriangle,
   Ambulance,
   Anchor,
@@ -151,6 +152,7 @@ import {
   Link as LinkIcon,
   Lock,
   Magnet,
+  Mail,
   Mail,
   Map,
   MapPin,
