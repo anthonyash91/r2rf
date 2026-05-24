@@ -182,10 +182,10 @@ function AdminUsersPage() {
           );
         }
         const adminUsers = data.users.filter(
-          (u) => u.roles.includes("admin") || u.roles.includes("contributor"),
+          (u) => u.roles.includes("admin") || u.roles.includes("contributor") || u.roles.includes("tester"),
         );
         const regularUsers = data.users.filter(
-          (u) => !u.roles.includes("admin") && !u.roles.includes("contributor"),
+          (u) => !u.roles.includes("admin") && !u.roles.includes("contributor") && !u.roles.includes("tester"),
         );
 
         const isPendingEmail = rowPending<string>(emailMut, "userId");
