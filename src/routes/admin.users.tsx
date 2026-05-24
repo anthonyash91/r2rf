@@ -648,7 +648,7 @@ function AdminUsersPage() {
                 );
               })()}
             </section>
-          </>
+          </div>
         );
       })()}
     </div>
