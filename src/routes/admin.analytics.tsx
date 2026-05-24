@@ -263,11 +263,51 @@ function AdminReportsPage() {
                 />
               </PopoverContent>
             </Popover>
-            <TabsTrigger value="user" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
-              <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
-            </TabsTrigger>
+            <Popover open={userPickerOpen} onOpenChange={setUserPickerOpen}>
+              <PopoverAnchor asChild>
+                <TabsTrigger
+                  value="user"
+                  onClick={(e) => {
+                    if (tab === "user") {
+                      e.preventDefault();
+                      openUserPicker();
+                    }
+                  }}
+                  className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
+                >
+                  <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
+                </TabsTrigger>
+              </PopoverAnchor>
+              <PopoverContent
+                align="center"
+                className="w-80 p-3"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onPointerDownOutside={(e) => {
+                  const t = e.target as HTMLElement | null;
+                  if (t && t.closest('[data-state][role="tab"]')) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <div className="mb-2 text-sm font-medium">Select a facility</div>
+                <FacilityCombobox
+                  value={selectedUserFacility?.value ?? ""}
+                  onChange={(v) => {
+                    const f = facilities.find((x) => x.value === v);
+                    if (!f) return;
+                    setSelectedUserFacility({ value: f.value, label: f.label });
+                    setUserKey((k) => k + 1);
+                    setUserPickerOpen(false);
+                    setTab("user");
+                  }}
+                  options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+                  placeholder={facilitiesQuery.isLoading || facilities.length === 0 ? "Loading…" : "Select a facility"}
+                />
+              </PopoverContent>
+            </Popover>
           </TabsList>
         </div>
+
 
         <TabsContent value="overall" className="mt-6">
           <UsageReportView scope={{ kind: "overall" }} />
