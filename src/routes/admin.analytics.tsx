@@ -194,14 +194,7 @@ function AdminReportsPage() {
       <Tabs
         value={tab}
         onValueChange={(v) => {
-          if (v === "facility") {
-            openFacilityPicker();
-            return;
-          }
-          if (v === "user") {
-            openUserPicker();
-            return;
-          }
+          if (v === "facility" || v === "user") return;
           setTab(v as any);
         }}
         className="mt-6"
@@ -228,11 +221,14 @@ function AdminReportsPage() {
               <PopoverAnchor asChild>
                 <TabsTrigger
                   value="facility"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openFacilityPicker();
+                  }}
                   onClick={(e) => {
-                    if (tab === "facility") {
-                      e.preventDefault();
-                      openFacilityPicker();
-                    }
+                    e.preventDefault();
+                    e.stopPropagation();
                   }}
                   className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
                 >
@@ -275,11 +271,14 @@ function AdminReportsPage() {
               <PopoverAnchor asChild>
                 <TabsTrigger
                   value="user"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openUserPicker();
+                  }}
                   onClick={(e) => {
-                    if (tab === "user") {
-                      e.preventDefault();
-                      openUserPicker();
-                    }
+                    e.preventDefault();
+                    e.stopPropagation();
                   }}
                   className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
                 >
