@@ -692,7 +692,7 @@ function UserCategorySection({
       >
         <div className="flex items-center gap-3 min-w-0">
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
-          <CategoryIcon name={g.category.icon_name} color={g.category.icon_color} size="sm" />
+          <CircleProgress value={g.total > 0 ? (g.read / g.total) * 100 : 0} size={52} stroke={5} />
           <div className="min-w-0">
             <h2 className="font-display text-lg font-semibold truncate">{g.category.name}</h2>
             <p className="text-xs text-muted-foreground truncate">/{g.category.slug}</p>
