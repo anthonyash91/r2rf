@@ -39,6 +39,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
     const facilityValue = data.facilityValue ?? null;
 
     let userIdFilter: string[] | null = null;
+    let facilityUserCount = 0;
     if (facilityValue) {
       const { data: profs, error } = await supabaseAdmin
         .from("user_profiles")
@@ -46,6 +47,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
         .eq("facility", facilityValue);
       if (error) throw new Error(error.message);
       userIdFilter = (profs ?? []).map((p: any) => p.user_id as string);
+      facilityUserCount = userIdFilter.length;
     }
 
     const [catsRes, itemsRes] = await Promise.all([
