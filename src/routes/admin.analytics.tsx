@@ -170,17 +170,23 @@ function AdminReportsPage() {
   const [facilityKey, setFacilityKey] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState<{ value: string; label: string } | null>(null);
+  const [userPickerOpen, setUserPickerOpen] = useState(false);
+  const [userKey, setUserKey] = useState(0);
+  const [selectedUserFacility, setSelectedUserFacility] = useState<{ value: string; label: string } | null>(null);
 
   const fetchFacilities = useServerFn(listFacilities);
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
     queryFn: () => fetchFacilities(),
-    enabled: pickerOpen,
+    enabled: pickerOpen || userPickerOpen,
   });
   const facilities = facilitiesQuery.data?.facilities ?? [];
 
   const openFacilityPicker = () => {
     setPickerOpen(true);
+  };
+  const openUserPicker = () => {
+    setUserPickerOpen(true);
   };
 
   return (
@@ -190,6 +196,10 @@ function AdminReportsPage() {
         onValueChange={(v) => {
           if (v === "facility") {
             openFacilityPicker();
+            return;
+          }
+          if (v === "user") {
+            openUserPicker();
             return;
           }
           setTab(v as any);
@@ -253,11 +263,51 @@ function AdminReportsPage() {
                 />
               </PopoverContent>
             </Popover>
-            <TabsTrigger value="user" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
-              <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
-            </TabsTrigger>
+            <Popover open={userPickerOpen} onOpenChange={setUserPickerOpen}>
+              <PopoverAnchor asChild>
+                <TabsTrigger
+                  value="user"
+                  onClick={(e) => {
+                    if (tab === "user") {
+                      e.preventDefault();
+                      openUserPicker();
+                    }
+                  }}
+                  className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
+                >
+                  <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
+                </TabsTrigger>
+              </PopoverAnchor>
+              <PopoverContent
+                align="center"
+                className="w-80 p-3"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                onPointerDownOutside={(e) => {
+                  const t = e.target as HTMLElement | null;
+                  if (t && t.closest('[data-state][role="tab"]')) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <div className="mb-2 text-sm font-medium">Select a facility</div>
+                <FacilityCombobox
+                  value={selectedUserFacility?.value ?? ""}
+                  onChange={(v) => {
+                    const f = facilities.find((x) => x.value === v);
+                    if (!f) return;
+                    setSelectedUserFacility({ value: f.value, label: f.label });
+                    setUserKey((k) => k + 1);
+                    setUserPickerOpen(false);
+                    setTab("user");
+                  }}
+                  options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+                  placeholder={facilitiesQuery.isLoading || facilities.length === 0 ? "Loading…" : "Select a facility"}
+                />
+              </PopoverContent>
+            </Popover>
           </TabsList>
         </div>
+
 
         <TabsContent value="overall" className="mt-6">
           <UsageReportView scope={{ kind: "overall" }} />
@@ -271,7 +321,12 @@ function AdminReportsPage() {
           ) : null}
         </TabsContent>
         <TabsContent value="user" className="mt-6">
-          <UsersReportTab />
+          {selectedUserFacility ? (
+            <UsersReportTab
+              key={`${userKey}-${selectedUserFacility.value}`}
+              preselected={selectedUserFacility}
+            />
+          ) : null}
         </TabsContent>
       </Tabs>
     </div>
@@ -418,20 +473,10 @@ function FacilityReportTab({ preselected }: { preselected: { value: string; labe
 
 /* ---------------- Users Tab ---------------- */
 
-function UsersReportTab() {
-  const fetchFacilities = useServerFn(listFacilities);
+function UsersReportTab({ preselected }: { preselected: { value: string; label: string } }) {
   const fetchUsers = useServerFn(listFacilityUsers);
-  const facilitiesQuery = useQuery({
-    queryKey: ["facilities"],
-    queryFn: () => fetchFacilities(),
-  });
-  const facilities = facilitiesQuery.data?.facilities ?? [];
-  const [selected, setSelected] = useState<string>("");
+  const selected = preselected.value;
   const [activeUser, setActiveUser] = useState<{ userId: string; name: string } | null>(null);
-
-  useEffect(() => {
-    if (!selected && facilities.length > 0) setSelected(facilities[0].value);
-  }, [facilities, selected]);
 
   const usersQuery = useQuery({
     queryKey: ["admin", "facility-users", selected],
@@ -439,7 +484,7 @@ function UsersReportTab() {
     queryFn: () => fetchUsers({ data: { facilityValue: selected } }),
   });
 
-  const selectedLabel = facilities.find((f) => f.value === selected)?.label ?? "";
+  const selectedLabel = preselected.label;
 
   if (activeUser) {
     return (
@@ -456,16 +501,9 @@ function UsersReportTab() {
   return (
     <div>
       <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:items-center sm:justify-between mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <label className="text-sm font-medium">Facility</label>
-          <div className="w-full sm:w-auto sm:min-w-[260px]">
-            <FacilityCombobox
-              value={selected}
-              onChange={(v) => setSelected(v)}
-              options={facilities.map((f) => ({ value: f.value, label: f.label }))}
-              placeholder={facilities.length === 0 ? "Loading…" : "Select a facility"}
-            />
-          </div>
+        <div className="text-sm">
+          <span className="text-muted-foreground">Facility: </span>
+          <span className="font-medium">{selectedLabel}</span>
         </div>
         <LoadingButton
           variant="secondary"
