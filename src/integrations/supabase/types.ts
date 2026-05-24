@@ -259,6 +259,7 @@ export type Database = {
       facilities: {
         Row: {
           created_at: string
+          hidden: boolean
           id: string
           label: string
           sort_order: number
@@ -267,6 +268,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          hidden?: boolean
           id?: string
           label: string
           sort_order?: number
@@ -275,6 +277,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          hidden?: boolean
           id?: string
           label?: string
           sort_order?: number

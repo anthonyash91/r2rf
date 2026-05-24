@@ -15,6 +15,7 @@ export const listFacilities = createServerFn({ method: "GET" }).handler(async ()
   const { data, error } = await supabaseAdmin
     .from("facilities")
     .select("id, value, label, sort_order")
+    .eq("hidden", false)
     .order("label", { ascending: true });
   if (error) throw new Error(error.message);
   return {
@@ -26,6 +27,25 @@ export const listFacilities = createServerFn({ method: "GET" }).handler(async ()
     })),
   };
 });
+
+export const listAllFacilities = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("facilities")
+      .select("id, value, label, sort_order")
+      .order("label", { ascending: true });
+    if (error) throw new Error(error.message);
+    return {
+      facilities: (data ?? []).map((f) => ({
+        id: f.id as string,
+        value: f.value as string,
+        label: f.label as string,
+        sort_order: f.sort_order as number,
+      })),
+    };
+  });
 
 export const listFacilitiesWithStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

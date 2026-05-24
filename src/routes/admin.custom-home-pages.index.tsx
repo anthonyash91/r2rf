@@ -19,7 +19,7 @@ import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconB
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useServerFn } from "@tanstack/react-start";
-import { listFacilities } from "@/lib/facilities.functions";
+import { listAllFacilities } from "@/lib/facilities.functions";
 import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { Badge } from "@/components/Badge";
 
@@ -90,7 +90,7 @@ function AdminCustomHomePagesList() {
     },
   });
 
-  const fetchFacilities = useServerFn(listFacilities);
+  const fetchFacilities = useServerFn(listAllFacilities);
   const { data: facilitiesData } = useQuery({
     queryKey: ["facilities"],
     queryFn: () => fetchFacilities(),
