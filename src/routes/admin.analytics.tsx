@@ -494,34 +494,90 @@ function UserProgressView({
         <p className="text-muted-foreground">Loading…</p>
       ) : (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <SummaryCard
-              icon={<CheckCircle2 className="h-5 w-5" />}
-              label="Items read"
-              value={data.items.filter((i: any) => i.read).length}
-            />
-            <SummaryCard
-              icon={<Eye className="h-5 w-5" />}
-              label="Category views"
-              value={data.eventCounts.categoryViews}
-            />
-            <SummaryCard
-              icon={<MousePointerClick className="h-5 w-5" />}
-              label="Content clicks"
-              value={data.eventCounts.contentClicks}
-            />
-            <SummaryCard
-              icon={<UsersIcon className="h-5 w-5" />}
-              label="Login days"
-              value={data.logins.length}
-            />
-          </div>
+          {(() => {
+            const totalItems = data.items.length;
+            const readItems = data.items.filter((i: any) => i.read).length;
+            const minutesSpent = data.items
+              .filter((i: any) => i.read)
+              .reduce((acc: number, i: any) => acc + parseMinutes(i.duration), 0);
+            const hours = Math.floor(minutesSpent / 60);
+            // categories completed
+            let totalCats = 0;
+            let completedCats = 0;
+            for (const g of grouped) {
+              if (g.total > 0) {
+                totalCats += 1;
+                if (g.read >= g.total) completedCats += 1;
+              }
+            }
+            // streak
+            const loginDays = new Set<string>(data.logins ?? []);
+            let streak = 0;
+            if (loginDays.size > 0) {
+              const fmt = (d: Date) => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, "0");
+                const dd = String(d.getDate()).padStart(2, "0");
+                return `${y}-${m}-${dd}`;
+              };
+              const cursor = new Date();
+              if (!loginDays.has(fmt(cursor))) cursor.setDate(cursor.getDate() - 1);
+              while (loginDays.has(fmt(cursor))) {
+                streak += 1;
+                cursor.setDate(cursor.getDate() - 1);
+              }
+            }
+            const fraction = (done: number, total: number) => (
+              <span className="inline-flex items-center gap-1.5">
+                <span>{done.toLocaleString()}</span>
+                <span className="font-serif italic text-base font-normal text-[var(--color-accent)] lowercase tracking-wide">of</span>
+                <span>{total.toLocaleString()}</span>
+              </span>
+            );
+            const stats = [
+              { icon: CheckCircle2, label: "Items completed", value: fraction(readItems, totalItems) },
+              { icon: Trophy, label: "Categories completed", value: fraction(completedCats, totalCats) },
+              { icon: Clock, label: "Hours spent", value: hours.toLocaleString() },
+              { icon: Flame, label: "Day streak", value: streak.toLocaleString() },
+            ];
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-8">
+                {stats.map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <div key={s.label} className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-[var(--color-accent)] flex-shrink-0">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex flex-col items-start">
+                        <p className="font-display text-2xl font-semibold leading-none tabular-nums">{s.value}</p>
+                        <p className="text-xs text-muted-foreground mt-1 whitespace-nowrap">{s.label}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           <UserCategoryList groups={grouped} />
         </>
       )}
     </div>
   );
+}
+
+function parseMinutes(d?: string | null): number {
+  if (!d) return 0;
+  let total = 0;
+  const re = /(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)?/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(d)) !== null) {
+    const n = parseFloat(m[1]);
+    const u = (m[2] ?? "min").toLowerCase();
+    total += u.startsWith("h") ? n * 60 : n;
+  }
+  return total;
 }
 
 function exportUserProgressCsv(
