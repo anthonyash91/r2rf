@@ -341,7 +341,7 @@ function AdminUsersPage() {
 
             <section className="mt-8">
               <div>
-                <h2 className="font-display text-xl font-semibold">Tester Users <span className="text-muted-foreground font-normal">({testerUsers.length})</span></h2>
+                <h2 className="font-display text-xl font-semibold">Test Users <span className="text-muted-foreground font-normal">({testerUsers.length})</span></h2>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Accounts used for internal testing. They behave like regular users.
                 </p>
