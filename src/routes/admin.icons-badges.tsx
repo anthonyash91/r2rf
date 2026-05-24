@@ -42,6 +42,7 @@ import {
   type BadgeVariantKey,
   type KnownTypeKey,
 } from "@/lib/badge-styles";
+import { ICON_REGISTRY, pickRelevantIcon } from "@/lib/category-icons";
 import { badgeStylesQueryKey, fetchBadgeStyles, BADGE_STYLES_KEY } from "@/hooks/use-badge-styles";
 
 export const Route = createFileRoute("/admin/icons-badges")({
@@ -77,8 +78,9 @@ const TYPE_LABELS: Record<KnownTypeKey, string> = {
   link: "Link",
 };
 
-const REGEN_BTN_CLASS = "px-4 py-2 text-sm shrink-0 w-full @[20rem]:w-auto !shadow-none";
+const REGEN_BTN_CLASS = "px-3 py-2 text-xs shrink-0 flex-1 @[20rem]:flex-initial !shadow-none";
 const REGEN_ALL_BTN_CLASS = "px-4 py-2 text-sm w-full sm:w-auto !shadow-none";
+
 
 type CategoryRow = {
   id: string;
@@ -147,6 +149,7 @@ function AdminIconsBadgesPage() {
 
   const [draft, setDraft] = useState<BadgeStyles>(saved ?? DEFAULT_BADGE_STYLES);
   const [catDraft, setCatDraft] = useState<Record<string, string | null>>({});
+  const [catIconDraft, setCatIconDraft] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     if (saved) setDraft(saved);
@@ -154,9 +157,14 @@ function AdminIconsBadgesPage() {
 
   useEffect(() => {
     if (categories) {
-      const map: Record<string, string | null> = {};
-      for (const c of categories) map[c.id] = c.icon_color ?? null;
-      setCatDraft(map);
+      const colorMap: Record<string, string | null> = {};
+      const iconMap: Record<string, string | null> = {};
+      for (const c of categories) {
+        colorMap[c.id] = c.icon_color ?? null;
+        iconMap[c.id] = c.icon_name ?? null;
+      }
+      setCatDraft(colorMap);
+      setCatIconDraft(iconMap);
     }
   }, [categories]);
 
@@ -165,13 +173,22 @@ function AdminIconsBadgesPage() {
     for (const c of categories ?? []) m[c.id] = c.icon_color ?? null;
     return m;
   }, [categories]);
+  const originalCatIconMap = useMemo(() => {
+    const m: Record<string, string | null> = {};
+    for (const c of categories ?? []) m[c.id] = c.icon_name ?? null;
+    return m;
+  }, [categories]);
 
   const dirtyStyles = JSON.stringify(draft) !== JSON.stringify(saved ?? DEFAULT_BADGE_STYLES);
   const dirtyCats = useMemo(() => {
     const ids = Object.keys(catDraft);
     return ids.some((id) => (catDraft[id] ?? null) !== (originalCatMap[id] ?? null));
   }, [catDraft, originalCatMap]);
-  const dirty = dirtyStyles || dirtyCats;
+  const dirtyCatIcons = useMemo(() => {
+    const ids = Object.keys(catIconDraft);
+    return ids.some((id) => (catIconDraft[id] ?? null) !== (originalCatIconMap[id] ?? null));
+  }, [catIconDraft, originalCatIconMap]);
+  const dirty = dirtyStyles || dirtyCats || dirtyCatIcons;
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -188,24 +205,27 @@ function AdminIconsBadgesPage() {
           );
         if (error) throw error;
       }
-      if (dirtyCats) {
-        const updates = Object.entries(catDraft).filter(
-          ([id, val]) => (val ?? null) !== (originalCatMap[id] ?? null),
-        );
-        for (const [id, val] of updates) {
-          const { error } = await supabase
-            .from("categories")
-            .update({ icon_color: val })
-            .eq("id", id);
-          if (error) throw error;
-        }
+      // Build per-category updates (color and/or icon_name) and apply with one update per row.
+      const catIds = new Set<string>([
+        ...Object.keys(catDraft),
+        ...Object.keys(catIconDraft),
+      ]);
+      for (const id of catIds) {
+        const colorChanged = (catDraft[id] ?? null) !== (originalCatMap[id] ?? null);
+        const iconChanged = (catIconDraft[id] ?? null) !== (originalCatIconMap[id] ?? null);
+        if (!colorChanged && !iconChanged) continue;
+        const patch: { icon_color?: string | null; icon_name?: string | null } = {};
+        if (colorChanged) patch.icon_color = catDraft[id] ?? null;
+        if (iconChanged) patch.icon_name = catIconDraft[id] ?? null;
+        const { error } = await supabase.from("categories").update(patch).eq("id", id);
+        if (error) throw error;
       }
     },
     onSuccess: () => {
       qc.setQueryData(badgeStylesQueryKey, draft);
       qc.invalidateQueries({ queryKey: ["admin", "icons-badges", "categories"] });
       qc.invalidateQueries({ queryKey: ["categories"] });
-      toast.success("Saved color combinations");
+      toast.success("Saved icons & colors");
     },
     onError: (err: Error) => toast.error(err.message ?? "Failed to save"),
   });
@@ -292,7 +312,30 @@ function AdminIconsBadgesPage() {
     });
   }
 
-  // -------- Per-category --------
+  // -------- Icon cycling (per-row) --------
+  function cycleVariantIcon(key: BadgeVariantKey) {
+    setDraft((d) => {
+      const cur = d.variantIcons?.[key] ?? null;
+      const next = pickRelevantIcon({ title: VARIANT_LABELS[key], exclude: cur });
+      return { ...d, variantIcons: { ...(d.variantIcons ?? {}), [key]: next } };
+    });
+  }
+  function cycleTypeIcon(key: KnownTypeKey) {
+    setDraft((d) => {
+      const cur = d.typeIcons?.[key] ?? null;
+      const next = pickRelevantIcon({ title: TYPE_LABELS[key], exclude: cur });
+      return { ...d, typeIcons: { ...(d.typeIcons ?? {}), [key]: next } };
+    });
+  }
+  function cycleCategoryIconFor(id: string, name: string) {
+    setCatIconDraft((d) => {
+      const cur = d[id] ?? null;
+      const next = pickRelevantIcon({ title: name, exclude: cur });
+      return { ...d, [id]: next };
+    });
+  }
+
+  // -------- Per-category color --------
 
 
   function cycleCategory(id: string) {
@@ -325,6 +368,7 @@ function AdminIconsBadgesPage() {
   function reset() {
     setDraft(DEFAULT_BADGE_STYLES);
     setCatDraft({ ...originalCatMap });
+    setCatIconDraft({ ...originalCatIconMap });
   }
 
 
@@ -390,10 +434,16 @@ function AdminIconsBadgesPage() {
                     </div>
                   </div>
                 </div>
-                <Button variant="outline" onClick={() => cycleVariant(v)} className={REGEN_BTN_CLASS}>
-                  <RefreshCw className="h-4 w-4" />
-                  Regenerate
-                </Button>
+                <div className="flex w-full @[20rem]:w-auto items-center gap-2">
+                  <Button variant="outline" onClick={() => cycleVariant(v)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-4 w-4" />
+                    Color
+                  </Button>
+                  <Button variant="outline" onClick={() => cycleVariantIcon(v)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-4 w-4" />
+                    Icon
+                  </Button>
+                </div>
               </li>
             );
           })}
@@ -418,7 +468,9 @@ function AdminIconsBadgesPage() {
           {KNOWN_TYPES.map((t) => {
             const idx = draft.types[t] ?? 0;
             const palette = PALETTES[idx];
-            const Icon = iconForType(t);
+            const overrideIconName = draft.typeIcons?.[t];
+            const Icon =
+              (overrideIconName && ICON_REGISTRY[overrideIconName]) || iconForType(t);
             const ps = paletteStyle(idx);
             const dup = isDup(idx);
             return (
@@ -441,10 +493,16 @@ function AdminIconsBadgesPage() {
                     </div>
                   </div>
                 </div>
-                <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
-                  <RefreshCw className="h-4 w-4" />
-                  Regenerate
-                </Button>
+                <div className="flex w-full @[20rem]:w-auto items-center gap-2">
+                  <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-4 w-4" />
+                    Color
+                  </Button>
+                  <Button variant="outline" onClick={() => cycleTypeIcon(t)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-4 w-4" />
+                    Icon
+                  </Button>
+                </div>
               </li>
             );
           })}
@@ -475,6 +533,7 @@ function AdminIconsBadgesPage() {
           <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {categories.map((c) => {
               const color = catDraft[c.id] ?? c.icon_color ?? null;
+              const iconName = catIconDraft[c.id] ?? c.icon_name ?? null;
               const idx = paletteIndexOfColor(color);
               const label = idx >= 0 ? PALETTES[idx].label : "Custom";
               const dup = idx >= 0 && isDup(idx);
@@ -484,7 +543,7 @@ function AdminIconsBadgesPage() {
                   className={`@container flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <CategoryIcon name={c.icon_name} color={color} size="sm" />
+                    <CategoryIcon name={iconName} color={color} size="sm" />
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{c.name}</div>
                       <div className="text-xs text-muted-foreground truncate">
@@ -493,10 +552,16 @@ function AdminIconsBadgesPage() {
                       </div>
                     </div>
                   </div>
-                  <Button variant="outline" onClick={() => cycleCategory(c.id)} className={REGEN_BTN_CLASS}>
-                    <RefreshCw className="h-4 w-4" />
-                    Regenerate
-                  </Button>
+                  <div className="flex w-full @[20rem]:w-auto items-center gap-2">
+                    <Button variant="outline" onClick={() => cycleCategory(c.id)} className={REGEN_BTN_CLASS}>
+                      <RefreshCw className="h-4 w-4" />
+                      Color
+                    </Button>
+                    <Button variant="outline" onClick={() => cycleCategoryIconFor(c.id, c.name)} className={REGEN_BTN_CLASS}>
+                      <RefreshCw className="h-4 w-4" />
+                      Icon
+                    </Button>
+                  </div>
                 </li>
               );
             })}
@@ -557,7 +622,8 @@ const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
 function BadgePreview({ variant, draft }: { variant: BadgeVariantKey; draft: BadgeStyles }) {
   const idx = draft.variants[variant] ?? 0;
   const ps = paletteStyle(idx);
-  const Icon = VARIANT_ICONS[variant];
+  const overrideName = draft.variantIcons?.[variant];
+  const Icon = (overrideName && ICON_REGISTRY[overrideName]) || VARIANT_ICONS[variant];
   return (
     <span
       className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-xs font-medium"

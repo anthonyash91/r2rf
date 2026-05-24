@@ -680,6 +680,31 @@ function scoreIconForTitle(iconName: string, title: string): number {
 }
 
 /**
+ * Pick a single icon name relevant to `title`, optionally excluding one icon
+ * (typically the current one). Falls back to a random icon when no keywords match.
+ */
+export function pickRelevantIcon(opts: {
+  title?: string | null;
+  exclude?: string | null;
+}): string {
+  const title = (opts.title ?? "").trim();
+  const exclude = opts.exclude ?? null;
+  const names = Object.keys(ICON_REGISTRY).filter((n) => n !== exclude);
+  const rand = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+  if (!title) return rand(names);
+  const scored = names
+    .map((n) => ({ n, s: scoreIconForTitle(n, title) }))
+    .filter((x) => x.s > 0)
+    .sort((a, b) => b.s - a.s);
+  if (scored.length) {
+    const top = scored[0].s;
+    const tied = scored.filter((x) => x.s === top).map((x) => x.n);
+    return rand(tied);
+  }
+  return rand(names);
+}
+
+/**
  * Pick an icon name + color that don't collide with anything already in use.
  * If a title is provided, prefer icons whose keywords match the title.
  */

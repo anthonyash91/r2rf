@@ -181,12 +181,18 @@ export type BadgeStyles = {
   variants: Partial<Record<BadgeVariantKey, number>>;
   types: Partial<Record<KnownTypeKey, number>>;
   categoryDefault: number;
+  /** Per-variant icon name override (lucide-react icon name). */
+  variantIcons?: Partial<Record<BadgeVariantKey, string>>;
+  /** Per-type icon name override (keyed by lowercased type string). */
+  typeIcons?: Record<string, string>;
 };
 
 export const DEFAULT_BADGE_STYLES: BadgeStyles = {
   variants: { ...DEFAULT_VARIANT_INDEX },
   types: { ...DEFAULT_TYPE_INDEX },
   categoryDefault: DEFAULT_CATEGORY_INDEX,
+  variantIcons: {},
+  typeIcons: {},
 };
 
 export function mergeBadgeStyles(input: unknown): BadgeStyles {
@@ -196,6 +202,8 @@ export function mergeBadgeStyles(input: unknown): BadgeStyles {
     types: { ...DEFAULT_TYPE_INDEX, ...(v.types ?? {}) },
     categoryDefault:
       typeof v.categoryDefault === "number" ? v.categoryDefault : DEFAULT_CATEGORY_INDEX,
+    variantIcons: { ...(v.variantIcons ?? {}) },
+    typeIcons: { ...(v.typeIcons ?? {}) },
   };
 }
 
