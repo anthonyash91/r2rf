@@ -509,8 +509,8 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
   return (
     <div>
       <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:items-center sm:justify-between mb-8">
-        <div className="text-sm">
-          <span className="text-muted-foreground">Facility: </span>
+        <div className="text-sm flex items-center">
+          <span className="text-muted-foreground">Facility:&nbsp;</span>
           <span className="font-medium">{selectedLabel}</span>
         </div>
         <LoadingButton
