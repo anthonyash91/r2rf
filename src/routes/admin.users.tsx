@@ -679,6 +679,7 @@ function UserItem({
                 <BadgeGroup className="ml-1 hidden sm:inline-flex">
                   {isAdmin && <Badge variant="admin">Admin</Badge>}
                   {isContributor && <Badge variant="contributor">Contributor</Badge>}
+                  {isTester && <Badge variant="tester">Tester</Badge>}
                   {user.email_confirmed_at ? (
                     <Badge variant="verified">Verified</Badge>
                   ) : (
