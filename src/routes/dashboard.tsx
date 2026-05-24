@@ -334,9 +334,9 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Dialog open={mustResetPassword} onOpenChange={() => { /* non-dismissible */ }}>
+      <Dialog open={mustResetPassword && !resetDone} onOpenChange={() => { /* non-dismissible */ }}>
         <DialogContent
-          className="sm:max-w-md"
+          className="sm:max-w-md pt-[22px]"
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
@@ -346,16 +346,19 @@ function DashboardPage() {
               For security, please choose a new password before continuing.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleForcedReset} className="mt-2 space-y-3">
-            <input
-              type="password"
-              autoComplete="new-password"
-              required
-              value={resetPw}
-              onChange={(e) => setResetPw(e.target.value)}
-              placeholder="New password (min 8 chars)"
-              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-            />
+          <form onSubmit={handleForcedReset} className="mt-[-4px] space-y-3">
+            <div>
+              <input
+                type="password"
+                autoComplete="new-password"
+                required
+                value={resetPw}
+                onChange={(e) => setResetPw(e.target.value)}
+                placeholder="New password (min 8 chars)"
+                className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+              />
+              <PasswordStrengthMeter password={resetPw} />
+            </div>
             <input
               type="password"
               autoComplete="new-password"
