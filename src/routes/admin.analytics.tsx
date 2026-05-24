@@ -409,7 +409,7 @@ function UsersReportTab() {
 
   return (
     <div>
-      <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:items-center sm:justify-between mb-4">
+      <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:items-center sm:justify-between mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <label className="text-sm font-medium">Facility</label>
           <div className="w-full sm:w-auto sm:min-w-[260px]">
