@@ -219,7 +219,7 @@ function AdminReportsPage() {
             <TabsTrigger value="overall" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
               <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Overall
             </TabsTrigger>
-            <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+            <Popover open={pickerOpen} onOpenChange={(o) => { if (o) setUserPickerOpen(false); setPickerOpen(o); }}>
               <PopoverAnchor asChild>
                 <TabsTrigger
                   value="facility"
