@@ -300,18 +300,14 @@ function FacilityReportTab() {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
         <label className="text-sm font-medium">Facility</label>
-        <select
-          value={selected}
-          onChange={(e) => setSelected(e.target.value)}
-          className="rounded-md border border-input bg-background px-4 py-2 text-sm w-full sm:w-auto sm:min-w-[260px]"
-        >
-          {facilities.length === 0 && <option value="">Loading…</option>}
-          {facilities.map((f) => (
-            <option key={f.id} value={f.value}>
-              {f.label}
-            </option>
-          ))}
-        </select>
+        <div className="w-full sm:w-auto sm:min-w-[260px]">
+          <FacilityCombobox
+            value={selected}
+            onChange={(v) => setSelected(v)}
+            options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+            placeholder={facilities.length === 0 ? "Loading…" : "Select a facility"}
+          />
+        </div>
       </div>
       {selected && (
         <UsageReportView
