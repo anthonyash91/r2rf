@@ -321,7 +321,12 @@ function AdminReportsPage() {
           ) : null}
         </TabsContent>
         <TabsContent value="user" className="mt-6">
-          <UsersReportTab />
+          {selectedUserFacility ? (
+            <UsersReportTab
+              key={`${userKey}-${selectedUserFacility.value}`}
+              preselected={selectedUserFacility}
+            />
+          ) : null}
         </TabsContent>
       </Tabs>
     </div>
