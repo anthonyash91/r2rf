@@ -153,7 +153,6 @@ import {
   Lock,
   Magnet,
   Mail,
-  Mail,
   Map,
   MapPin,
   Martini,
