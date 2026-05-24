@@ -66,14 +66,19 @@ function AdminUsersPage() {
   const sendReset = useServerFn(sendPasswordResetEmail);
   const setRole = useServerFn(setUserRole);
   const createFn = useServerFn(createUser);
+  const createTesterFn = useServerFn(createTesterUser);
   const deleteFn = useServerFn(deleteUser);
   const deleteManyFn = useServerFn(deleteUsers);
   const clearSecFn = useServerFn(clearUserSecurityAnswers);
 
-  const [showCreate, setShowCreate] = useState(false);
+  // Add-user flow: picker dialog -> one of two inline forms.
+  const [showKindPicker, setShowKindPicker] = useState(false);
+  const [addKind, setAddKind] = useState<null | "adminContributor" | "tester">(null);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [newRole, setNewRole] = useState<"admin" | "contributor" | "tester">("admin");
+  const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
+  const [newUsername, setNewUsername] = useState("");
+  const [newTesterPassword, setNewTesterPassword] = useState("");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const [regularVisible, setRegularVisible] = useState<number>(10);
   const bulk = useBulkSelect();
