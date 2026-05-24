@@ -271,6 +271,7 @@ function DashboardPage() {
   const [resetPw, setResetPw] = useState("");
   const [resetPw2, setResetPw2] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
   async function handleForcedReset(e: React.FormEvent) {
     e.preventDefault();
     if (resetPw.length < 8) { toast.error("Password must be at least 8 characters"); return; }
@@ -283,6 +284,7 @@ function DashboardPage() {
       await supabase.auth.refreshSession();
       toast.success("Password updated");
       setResetPw(""); setResetPw2("");
+      setResetDone(true);
     } catch (err: any) {
       toast.error(err.message ?? "Failed to update password");
     } finally {
