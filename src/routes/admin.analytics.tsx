@@ -259,29 +259,6 @@ function AdminReportsPage() {
           <UsersReportTab />
         </TabsContent>
       </Tabs>
-
-      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Select a facility</DialogTitle>
-          </DialogHeader>
-          <div className="mt-2">
-            <FacilityCombobox
-              value={selectedFacility?.value ?? ""}
-              onChange={(v) => {
-                const f = facilities.find((x) => x.value === v);
-                if (!f) return;
-                setSelectedFacility({ value: f.value, label: f.label });
-                setFacilityKey((k) => k + 1);
-                setPickerOpen(false);
-                setTab("facility");
-              }}
-              options={facilities.map((f) => ({ value: f.value, label: f.label }))}
-              placeholder={facilitiesQuery.isLoading || facilities.length === 0 ? "Loading…" : "Select a facility"}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
