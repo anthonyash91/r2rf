@@ -23,20 +23,21 @@ async function fetchTable(table: string): Promise<Set<string>> {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     console.error(`[ip-allowlist] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY (table=${table})`);
-    return new Set(["74.138.97.209"]);
+    // Fail closed — without DB access we cannot verify any IP is allowed.
+    return new Set();
   }
   const res = await fetch(`${url}/rest/v1/${table}?select=ip_address`, {
     headers: { apikey: key, Authorization: `Bearer ${key}` },
   });
   if (!res.ok) {
     console.error(`[ip-allowlist] Fetch failed for ${table}:`, res.status, await res.text());
-    return new Set(["74.138.97.209"]);
+    // Fail closed on DB error.
+    return new Set();
   }
   const rows = (await res.json()) as Array<{ ip_address: string }>;
-  const ips = new Set(rows.map((r) => r.ip_address.trim()));
-  ips.add("74.138.97.209");
-  return ips;
+  return new Set(rows.map((r) => r.ip_address.trim()));
 }
+
 
 export async function getAllowedIps(): Promise<Set<string>> {
   const now = Date.now();
