@@ -60,6 +60,7 @@ const VARIANT_LABELS: Record<BadgeVariantKey, string> = {
   translation: "Translation",
   admin: "Admin",
   contributor: "Contributor",
+  tester: "Tester",
   verified: "Verified",
   unverified: "Unverified",
   user: "User",
