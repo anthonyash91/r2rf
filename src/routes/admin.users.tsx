@@ -124,7 +124,7 @@ function AdminUsersPage() {
     onError: (e: any) => toast.error(e.message),
   });
   const createMut = useMutation({
-    mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" }) => createFn({ data: input }),
+    mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" | "tester" }) => createFn({ data: input }),
     onSuccess: () => {
       toast.success("User created");
       setNewEmail(""); setNewPassword(""); setNewRole("admin"); setShowCreate(false);
