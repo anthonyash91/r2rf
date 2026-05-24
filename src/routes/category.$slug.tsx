@@ -569,7 +569,7 @@ function CategoryPage() {
       </Dialog>
 
       <Dialog open={!!audioPlayer} onOpenChange={(open) => !open && setAudioPlayer(null)}>
-        <DialogContent className="max-w-lg pt-[22px]">
+        <DialogContent className="max-w-lg pt-[18px]">
           <DialogTitle className="text-base font-semibold pr-8 break-words">{audioPlayer?.title ?? "Audio"}</DialogTitle>
           {audioPlayer && (
             <audio
@@ -577,7 +577,7 @@ function CategoryPage() {
               src={audioPlayer.url}
               controls
               autoPlay
-              className="w-full mt-2"
+              className="w-full mt-[-5px]"
             />
           )}
         </DialogContent>
