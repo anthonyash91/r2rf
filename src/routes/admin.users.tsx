@@ -583,8 +583,9 @@ function UserItem({
 
   const isAdmin = user.roles.includes("admin");
   const isContributor = user.roles.includes("contributor");
+  const isTester = user.roles.includes("tester");
 
-  const isRegularUser = !!user.profile;
+  const isRegularUser = !!user.profile && !isAdmin && !isContributor && !isTester;
 
   return (
     <li className="p-4 sm:p-5 pr-[22px] pl-[10px]">
