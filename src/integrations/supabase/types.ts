@@ -21,6 +21,7 @@ export type Database = {
           created_at: string
           event_type: string
           id: string
+          user_id: string | null
         }
         Insert: {
           category_id?: string | null
@@ -28,6 +29,7 @@ export type Database = {
           created_at?: string
           event_type: string
           id?: string
+          user_id?: string | null
         }
         Update: {
           category_id?: string | null
@@ -35,6 +37,7 @@ export type Database = {
           created_at?: string
           event_type?: string
           id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
