@@ -265,6 +265,31 @@ function DashboardPage() {
   const [pending, setPending] = useState<SecurityAnswerInput[]>([]);
   const [busy, setBusy] = useState(false);
 
+  // Forced password reset for tester first sign-in.
+  const mustResetPassword = (user?.user_metadata as Record<string, unknown> | undefined)?.must_reset_password === true;
+  const clearMustResetFn = useServerFn(clearMustResetPassword);
+  const [resetPw, setResetPw] = useState("");
+  const [resetPw2, setResetPw2] = useState("");
+  const [resetBusy, setResetBusy] = useState(false);
+  async function handleForcedReset(e: React.FormEvent) {
+    e.preventDefault();
+    if (resetPw.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (resetPw !== resetPw2) { toast.error("Passwords do not match"); return; }
+    setResetBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: resetPw });
+      if (error) throw error;
+      await clearMustResetFn();
+      await supabase.auth.refreshSession();
+      toast.success("Password updated");
+      setResetPw(""); setResetPw2("");
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to update password");
+    } finally {
+      setResetBusy(false);
+    }
+  }
+
   const profile = data?.profile;
   const currentKeys = questionsQuery.data?.keys ?? [];
   const mustSetup = !questionsQuery.isLoading && currentKeys.length < 2;
