@@ -161,7 +161,10 @@ export const createTesterUser = createServerFn({ method: "POST" })
 
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: userId, role: "tester" });
+      .insert([
+        { user_id: userId, role: "tester" },
+        { user_id: userId, role: "user" },
+      ]);
     if (roleErr) {
       await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
       await supabaseAdmin.auth.admin.deleteUser(userId);
