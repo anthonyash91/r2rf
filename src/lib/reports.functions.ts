@@ -148,7 +148,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         .order("sort_order", { ascending: true }),
       supabaseAdmin
         .from("content_items")
-        .select("id, category_id, title, type, duration, sort_order, published")
+        .select("id, category_id, title, description, type, duration, url, file_url, sort_order, published")
         .eq("published", true)
         .order("sort_order", { ascending: true }),
       supabaseAdmin
