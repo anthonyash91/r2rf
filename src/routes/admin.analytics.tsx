@@ -28,7 +28,7 @@ import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FacilityCombobox } from "@/components/FacilityCombobox";
-import { listFacilities } from "@/lib/facilities.functions";
+import { listAllFacilities } from "@/lib/facilities.functions";
 
 import { readStatusLabels } from "@/lib/read-status";
 import { withActionWord } from "@/lib/duration";
@@ -174,7 +174,7 @@ function AdminReportsPage() {
   const [userKey, setUserKey] = useState(0);
   const [selectedUserFacility, setSelectedUserFacility] = useState<{ value: string; label: string } | null>(null);
 
-  const fetchFacilities = useServerFn(listFacilities);
+  const fetchFacilities = useServerFn(listAllFacilities);
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
     queryFn: () => fetchFacilities(),

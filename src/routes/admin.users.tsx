@@ -26,7 +26,7 @@ import {
   deleteUsers,
   clearUserSecurityAnswers,
 } from "@/lib/users.functions";
-import { listFacilities } from "@/lib/facilities.functions";
+import { listAllFacilities } from "@/lib/facilities.functions";
 import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
@@ -91,7 +91,7 @@ function AdminUsersPage() {
     queryFn: () => list(),
   });
 
-  const fetchFacilities = useServerFn(listFacilities);
+  const fetchFacilities = useServerFn(listAllFacilities);
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
     queryFn: () => fetchFacilities(),
