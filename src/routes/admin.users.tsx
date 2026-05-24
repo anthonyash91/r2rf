@@ -340,6 +340,22 @@ function AdminUsersPage() {
             </section>
 
             <section className="mt-8">
+              <div>
+                <h2 className="font-display text-xl font-semibold">Tester Users <span className="text-muted-foreground font-normal">({testerUsers.length})</span></h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Accounts used for internal testing. They behave like regular users.
+                </p>
+              </div>
+              <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
+                {testerUsers.length ? (
+                  <ul className="divide-y divide-border">{testerUsers.map(renderItem)}</ul>
+                ) : (
+                  <EmptyState size="sm">No tester users.</EmptyState>
+                )}
+              </SectionCard>
+            </section>
+
+            <section className="mt-8">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:flex-wrap">
                 <div>
                   {(() => {
