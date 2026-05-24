@@ -200,12 +200,12 @@ function AdminUsersPage() {
       </div>
 
       <Dialog open={showKindPicker} onOpenChange={setShowKindPicker}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md pt-[22px]">
           <DialogHeader>
             <DialogTitle>Add user</DialogTitle>
             <DialogDescription>What type of user would you like to add?</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 mt-2">
+          <div className="grid gap-2 mt-[-4px]">
             <button
               type="button"
               onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("admin"); }}
