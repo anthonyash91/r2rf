@@ -378,7 +378,7 @@ function CategoryPage() {
 
                         <Wrapper
                           {...wrapperProps}
-                          className="w-full text-left flex flex-col gap-4 p-6 pr-6 sm:pr-[160px] pb-[20px] hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
+                          className="w-full text-left flex flex-col gap-4 p-6 pr-[140px] sm:pr-[160px] pb-[20px] hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
                         >
                           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap">
                             <BadgeGroup>
@@ -463,7 +463,7 @@ function CategoryPage() {
                           }
                           const label = isRead ? readLabel : unreadLabel;
                           return (
-                            <div className="sm:absolute sm:top-6 sm:right-6 mt-2 sm:mt-0 flex items-center gap-1.5 flex-wrap justify-start sm:justify-end z-10 pointer-events-none">
+                            <div className="absolute top-6 right-6 flex items-center gap-1.5 justify-end z-10 pointer-events-none">
                               <span
                                 aria-label={label}
                                 className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium ${
