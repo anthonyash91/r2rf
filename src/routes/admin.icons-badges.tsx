@@ -78,8 +78,9 @@ const TYPE_LABELS: Record<KnownTypeKey, string> = {
   link: "Link",
 };
 
-const REGEN_BTN_CLASS = "px-4 py-2 text-sm shrink-0 w-full @[20rem]:w-auto !shadow-none";
+const REGEN_BTN_CLASS = "px-3 py-2 text-xs shrink-0 flex-1 @[20rem]:flex-initial !shadow-none";
 const REGEN_ALL_BTN_CLASS = "px-4 py-2 text-sm w-full sm:w-auto !shadow-none";
+
 
 type CategoryRow = {
   id: string;
@@ -148,6 +149,7 @@ function AdminIconsBadgesPage() {
 
   const [draft, setDraft] = useState<BadgeStyles>(saved ?? DEFAULT_BADGE_STYLES);
   const [catDraft, setCatDraft] = useState<Record<string, string | null>>({});
+  const [catIconDraft, setCatIconDraft] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
     if (saved) setDraft(saved);
@@ -155,9 +157,14 @@ function AdminIconsBadgesPage() {
 
   useEffect(() => {
     if (categories) {
-      const map: Record<string, string | null> = {};
-      for (const c of categories) map[c.id] = c.icon_color ?? null;
-      setCatDraft(map);
+      const colorMap: Record<string, string | null> = {};
+      const iconMap: Record<string, string | null> = {};
+      for (const c of categories) {
+        colorMap[c.id] = c.icon_color ?? null;
+        iconMap[c.id] = c.icon_name ?? null;
+      }
+      setCatDraft(colorMap);
+      setCatIconDraft(iconMap);
     }
   }, [categories]);
 
@@ -166,13 +173,22 @@ function AdminIconsBadgesPage() {
     for (const c of categories ?? []) m[c.id] = c.icon_color ?? null;
     return m;
   }, [categories]);
+  const originalCatIconMap = useMemo(() => {
+    const m: Record<string, string | null> = {};
+    for (const c of categories ?? []) m[c.id] = c.icon_name ?? null;
+    return m;
+  }, [categories]);
 
   const dirtyStyles = JSON.stringify(draft) !== JSON.stringify(saved ?? DEFAULT_BADGE_STYLES);
   const dirtyCats = useMemo(() => {
     const ids = Object.keys(catDraft);
     return ids.some((id) => (catDraft[id] ?? null) !== (originalCatMap[id] ?? null));
   }, [catDraft, originalCatMap]);
-  const dirty = dirtyStyles || dirtyCats;
+  const dirtyCatIcons = useMemo(() => {
+    const ids = Object.keys(catIconDraft);
+    return ids.some((id) => (catIconDraft[id] ?? null) !== (originalCatIconMap[id] ?? null));
+  }, [catIconDraft, originalCatIconMap]);
+  const dirty = dirtyStyles || dirtyCats || dirtyCatIcons;
 
   const saveMutation = useMutation({
     mutationFn: async () => {
