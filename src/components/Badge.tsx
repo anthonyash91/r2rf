@@ -77,6 +77,25 @@ import {
   Flag,
   Compass,
   Bookmark,
+  IdCard,
+  Fingerprint,
+  Utensils,
+  Apple,
+  Soup,
+  Shirt,
+  School,
+  Backpack,
+  Siren,
+  AlertOctagon,
+  Laptop,
+  Smartphone,
+  Wifi,
+  Landmark,
+  Vote,
+  KeyRound,
+  Unlock,
+  HeartHandshake,
+  Inbox,
   type LucideIcon,
 } from "lucide-react";
 import { paletteStyle, indexForType, type BadgeVariantKey } from "@/lib/badge-styles";
@@ -213,6 +232,45 @@ const TYPE_KEYWORD_ICONS: Array<[RegExp, LucideIcon]> = [
   [/\b(flag|milestone-?flag|priority)\b/, Flag],
   [/\b(compass|guidance|direction|navigate|orient)\b/, Compass],
   [/\b(bookmark|saved|favorite|reference)\b/, Bookmark],
+
+  // IDs & records
+  [/\b(id|identification|license|state-?id|driver|driver'?s)\b/, IdCard],
+  [/\b(fingerprint|background|biometric|live-?scan)\b/, Fingerprint],
+
+  // Food / nutrition
+  [/\b(food|meal|eat|dining|nutrition|kitchen|pantry|snap|ebt)\b/, Utensils],
+  [/\b(fruit|apple|healthy|produce)\b/, Apple],
+  [/\b(soup|kitchen-?meal|hot-?meal)\b/, Soup],
+
+  // Clothing / basic needs
+  [/\b(clothing|clothes|apparel|uniform|hygiene|closet)\b/, Shirt],
+
+  // Childcare / school
+  [/\b(school|class-?room|k-?12|daycare|childcare)\b/, School],
+  [/\b(youth|student|backpack|enrollment)\b/, Backpack],
+
+  // Crisis / safety
+  [/\b(crisis|hotline|emergency|911|police|urgent)\b/, Siren],
+  [/\b(danger|stop|warn|warning|caution)\b/, AlertOctagon],
+
+  // Digital literacy
+  [/\b(laptop|computer|pc|tech|digital-?lit|online-?class)\b/, Laptop],
+  [/\b(mobile|smartphone|app|cellphone|cell-?phone|texting)\b/, Smartphone],
+  [/\b(wifi|internet|broadband|connectivity)\b/, Wifi],
+
+  // Civic / government
+  [/\b(government|civic|capitol|institution|dmv|agency|federal|state)\b/, Landmark],
+  [/\b(vote|voting|election|ballot|register-?to-?vote)\b/, Vote],
+
+  // Re-entry symbols
+  [/\b(release|reentry|re-entry|freedom|access|unlock|open)\b/, Unlock],
+  [/\b(key|keyring)\b/, KeyRound],
+
+  // Mentorship
+  [/\b(mentor|sponsor|peer-?support|companion|buddy|mentorship)\b/, HeartHandshake],
+
+  // Mail / inbox
+  [/\b(inbox|messages-?folder|case-?manager|paperwork|caseload)\b/, Inbox],
 ];
 
 export function iconForType(type: string | null | undefined): LucideIcon {

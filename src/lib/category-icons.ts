@@ -1,6 +1,7 @@
 import {
   Activity,
   AlarmClock,
+  AlertOctagon,
   AlertTriangle,
   Ambulance,
   Anchor,
@@ -222,6 +223,7 @@ import {
   ShowerHead,
   Signal,
   Siren,
+  Smartphone,
   Smile,
   Snowflake,
   Soup,
@@ -255,6 +257,7 @@ import {
   Truck,
   Tv,
   Umbrella,
+  Unlock,
   UserCheck,
   UserPlus,
   Users,
@@ -281,7 +284,7 @@ import {
 } from "lucide-react";
 
 export const ICON_REGISTRY: Record<string, LucideIcon> = {
-  Activity, AlarmClock, AlertTriangle, Ambulance, Anchor, Apple, Archive, Armchair,
+  Activity, AlarmClock, AlertOctagon, AlertTriangle, Ambulance, Anchor, Apple, Archive, Armchair,
   Award, Axe, Baby, Backpack, BadgeCheck, Banana, Bandage, BarChart3, Bath, Battery,
   Beaker, Bed, BedDouble, Beef, Beer, Bell, Bike, Bird, Bone, Book, BookA, BookHeart,
   BookMarked, BookOpen, BookOpenCheck, Bookmark, Boxes, Brain, Briefcase, Brush,
@@ -306,11 +309,11 @@ export const ICON_REGISTRY: Record<string, LucideIcon> = {
   Popcorn, Printer, Puzzle, Radio, Rainbow, Receipt, Recycle, RefreshCw, Ribbon,
   Rocket, Route, Ruler, Salad, Sandwich, Scale, School, Scissors, ScrollText, Search,
   Send, Settings, Shield, ShieldCheck, Ship, Shirt, ShoppingBag, ShoppingBasket,
-  ShoppingCart, Shovel, ShowerHead, Signal, Siren, Smile, Snowflake, Soup, Sparkles,
+  ShoppingCart, Shovel, ShowerHead, Signal, Siren, Smartphone, Smile, Snowflake, Soup, Sparkles,
   Speaker, Sprout, Stamp, Star, Stethoscope, Store, Sun, Sunrise, Sunset, Swords,
   Syringe, Tag, Target, Telescope, Tent, Terminal, ThumbsUp, Ticket, Timer, Tractor,
   TrafficCone, Train, TrainFront, TreeDeciduous, TreePine, Trophy, Truck, Tv,
-  Umbrella, UserCheck, UserPlus, Users, Utensils, UtensilsCrossed, Vegan, Video,
+  Umbrella, Unlock, UserCheck, UserPlus, Users, Utensils, UtensilsCrossed, Vegan, Video,
   Volleyball, Volume2, Vote, Wallet, Wand, Watch, Waves, Webcam, Weight, Wheat, Wifi,
   Wind, Wine, Wrench, Zap,
 };
@@ -460,8 +463,10 @@ const ICON_KEYWORDS: Record<string, string[]> = {
   Key: ["access", "key", "unlock", "security"],
   Shield: ["safety", "security", "protect", "defense", "insurance"],
   ShieldCheck: ["protected", "secure", "verified"],
-  Siren: ["emergency", "alert", "police", "911"],
+  Siren: ["emergency", "alert", "police", "911", "crisis", "hotline"],
+  AlertOctagon: ["urgent", "stop", "danger", "warning", "alert"],
   AlertTriangle: ["warning", "alert", "caution", "risk"],
+  Unlock: ["release", "freedom", "fresh start", "reentry", "open"],
 
   // Finance / money / benefits
   Wallet: ["wallet", "money", "budget", "finance"],
@@ -538,7 +543,8 @@ const ICON_KEYWORDS: Record<string, string[]> = {
 
   // Tech / digital literacy
   Computer: ["computer", "pc", "tech"],
-  Laptop: ["laptop", "computer", "digital"],
+  Laptop: ["laptop", "computer", "digital", "online", "device"],
+  Smartphone: ["phone", "mobile", "smartphone", "device", "app", "digital"],
   Monitor: ["monitor", "screen", "computer"],
   Keyboard: ["keyboard", "typing", "computer"],
   Code: ["coding", "developer", "software", "programming"],
