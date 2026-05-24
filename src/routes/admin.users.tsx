@@ -302,13 +302,14 @@ function AdminUsersPage() {
                     placeholder="Password (min 8 chars)"
                     className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
                   />
-                  <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "contributor")}>
+                  <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "contributor" | "tester")}>
                     <SelectTrigger className="h-[38px] w-full sm:col-span-2 lg:col-span-1">
                       <SelectValue placeholder="Role" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="contributor">Contributor</SelectItem>
+                      <SelectItem value="tester">Tester</SelectItem>
                     </SelectContent>
                   </Select>
                   <LoadingButton
