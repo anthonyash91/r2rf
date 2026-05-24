@@ -198,6 +198,10 @@ function AdminReportsPage() {
             openFacilityPicker();
             return;
           }
+          if (v === "user") {
+            openUserPicker();
+            return;
+          }
           setTab(v as any);
         }}
         className="mt-6"
