@@ -342,7 +342,7 @@ function DashboardPage() {
     <div className="min-h-screen flex flex-col">
       <Dialog open={mustResetPassword && !resetDone} onOpenChange={() => { /* non-dismissible */ }}>
         <DialogContent
-          className="sm:max-w-md pt-[22px]"
+          className="sm:max-w-md pt-[22px] [&>button.absolute]:hidden"
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
