@@ -69,6 +69,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
           categories: catsRes.data ?? [],
           items: itemsRes.data ?? [],
           events: [],
+          facilityUserCount,
         };
       }
       q = q.in("user_id", userIdFilter);
@@ -80,6 +81,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
       categories: catsRes.data ?? [],
       items: itemsRes.data ?? [],
       events: evRes.data ?? [],
+      facilityUserCount,
     };
   });
 
