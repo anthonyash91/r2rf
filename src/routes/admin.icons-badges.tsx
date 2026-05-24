@@ -42,6 +42,7 @@ import {
   type BadgeVariantKey,
   type KnownTypeKey,
 } from "@/lib/badge-styles";
+import { ICON_REGISTRY, pickRelevantIcon } from "@/lib/category-icons";
 import { badgeStylesQueryKey, fetchBadgeStyles, BADGE_STYLES_KEY } from "@/hooks/use-badge-styles";
 
 export const Route = createFileRoute("/admin/icons-badges")({
