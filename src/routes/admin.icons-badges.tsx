@@ -78,7 +78,7 @@ const TYPE_LABELS: Record<KnownTypeKey, string> = {
   link: "Link",
 };
 
-const REGEN_BTN_CLASS = "px-3 py-2 text-xs shrink-0 flex-1 @[20rem]:flex-initial !shadow-none";
+const REGEN_BTN_CLASS = "px-3 py-2 text-xs shrink-0 flex-1 @[26rem]:flex-initial !shadow-none";
 const REGEN_ALL_BTN_CLASS = "px-4 py-2 text-sm w-full sm:w-auto !shadow-none";
 
 
@@ -434,7 +434,7 @@ function AdminIconsBadgesPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex w-full @[20rem]:w-auto items-center gap-2">
+                <div className="flex w-full @[26rem]:w-auto items-center gap-2">
                   <Button variant="outline" onClick={() => cycleVariant(v)} className={REGEN_BTN_CLASS}>
                     <RefreshCw className="h-4 w-4" />
                     Color
@@ -493,7 +493,7 @@ function AdminIconsBadgesPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex w-full @[20rem]:w-auto items-center gap-2">
+                <div className="flex w-full @[26rem]:w-auto items-center gap-2">
                   <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
                     <RefreshCw className="h-4 w-4" />
                     Color
@@ -552,7 +552,7 @@ function AdminIconsBadgesPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex w-full @[20rem]:w-auto items-center gap-2">
+                  <div className="flex w-full @[26rem]:w-auto items-center gap-2">
                     <Button variant="outline" onClick={() => cycleCategory(c.id)} className={REGEN_BTN_CLASS}>
                       <RefreshCw className="h-4 w-4" />
                       Color
