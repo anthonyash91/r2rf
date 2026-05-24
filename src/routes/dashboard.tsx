@@ -683,8 +683,8 @@ function CategoryProgressSection({
           <CategoryIcon name={category.icon_name} color={category.icon_color} size="md" />
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex flex-col-reverse items-start gap-2 sm:flex-row sm:items-center sm:flex-wrap">
-            <h2 className="font-display text-base sm:text-lg font-semibold truncate">
+          <div className="flex flex-col-reverse items-start gap-2 sm:flex-row sm:items-center sm:flex-wrap min-w-0">
+            <h2 className="font-display text-base sm:text-lg font-semibold truncate max-w-full">
               {pickLang(lang, category.name, category.name_es)}
             </h2>
             {hasRecent && (
