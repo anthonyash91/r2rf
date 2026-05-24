@@ -206,18 +206,38 @@ function AdminReportsPage() {
             <TabsTrigger value="overall" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
               <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Overall
             </TabsTrigger>
-            <TabsTrigger
-              value="facility"
-              onClick={(e) => {
-                if (tab === "facility") {
-                  e.preventDefault();
-                  openFacilityPicker();
-                }
-              }}
-              className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
-            >
-              <Building2 className="h-3.5 w-3.5 mr-1.5" /> By Facility
-            </TabsTrigger>
+            <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+              <PopoverAnchor asChild>
+                <TabsTrigger
+                  value="facility"
+                  onClick={(e) => {
+                    if (tab === "facility") {
+                      e.preventDefault();
+                      openFacilityPicker();
+                    }
+                  }}
+                  className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
+                >
+                  <Building2 className="h-3.5 w-3.5 mr-1.5" /> By Facility
+                </TabsTrigger>
+              </PopoverAnchor>
+              <PopoverContent align="center" className="w-80 p-3">
+                <div className="mb-2 text-sm font-medium">Select a facility</div>
+                <FacilityCombobox
+                  value={selectedFacility?.value ?? ""}
+                  onChange={(v) => {
+                    const f = facilities.find((x) => x.value === v);
+                    if (!f) return;
+                    setSelectedFacility({ value: f.value, label: f.label });
+                    setFacilityKey((k) => k + 1);
+                    setPickerOpen(false);
+                    setTab("facility");
+                  }}
+                  options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+                  placeholder={facilitiesQuery.isLoading || facilities.length === 0 ? "Loading…" : "Select a facility"}
+                />
+              </PopoverContent>
+            </Popover>
             <TabsTrigger value="user" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
               <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
             </TabsTrigger>
