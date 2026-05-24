@@ -484,7 +484,7 @@ function AdminIconsBadgesPage() {
               return (
                 <li
                   key={c.id}
-                  className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
+                  className={`@container flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <CategoryIcon name={c.icon_name} color={color} size="sm" />
