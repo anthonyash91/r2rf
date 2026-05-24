@@ -114,10 +114,7 @@ export const createUser = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const TESTER_EMAIL_DOMAIN = "tester.local";
-function testerSyntheticEmail(username: string): string {
-  return `${username.toLowerCase()}@${TESTER_EMAIL_DOMAIN}`;
-}
+import { syntheticEmail as userSyntheticEmail } from "@/lib/user-signup";
 
 export const createTesterUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -139,7 +136,7 @@ export const createTesterUser = createServerFn({ method: "POST" })
     const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
     if (exists) throw new Error("That username is already taken.");
 
-    const email = testerSyntheticEmail(data.username);
+    const email = userSyntheticEmail(data.username);
 
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -164,7 +161,10 @@ export const createTesterUser = createServerFn({ method: "POST" })
 
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
-      .insert({ user_id: userId, role: "tester" });
+      .insert([
+        { user_id: userId, role: "tester" },
+        { user_id: userId, role: "user" },
+      ]);
     if (roleErr) {
       await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
       await supabaseAdmin.auth.admin.deleteUser(userId);
