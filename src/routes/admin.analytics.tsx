@@ -302,7 +302,8 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
                   : "border-input bg-background hover:bg-muted"
               }`}
             >
-              {opt.label}
+              <span className="sm:hidden">{opt.shortLabel}</span>
+              <span className="hidden sm:inline">{opt.label}</span>
             </button>
           ))}
         </div>
