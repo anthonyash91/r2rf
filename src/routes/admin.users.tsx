@@ -182,13 +182,141 @@ function AdminUsersPage() {
 
   return (
     <div>
-      <PageHeader
-        className="mt-6"
-        icon={Users}
-        title="Users"
-        count={!isLoading && data?.users ? data.users.length : undefined}
-        description="Add users, edit emails, reset passwords, and manage access."
-      />
+      <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <PageHeader
+          icon={Users}
+          title="Users"
+          count={!isLoading && data?.users ? data.users.length : undefined}
+          description="Add users, edit emails, reset passwords, and manage access."
+        />
+        <LoadingButton
+          onClick={() => setShowKindPicker(true)}
+          disabled={addKind !== null}
+          icon={<UserPlus className="h-4 w-4" />}
+          className="w-full sm:w-auto self-stretch sm:self-center"
+        >
+          Add User
+        </LoadingButton>
+      </div>
+
+      <Dialog open={showKindPicker} onOpenChange={setShowKindPicker}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add user</DialogTitle>
+            <DialogDescription>What type of user would you like to add?</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 mt-2">
+            <button
+              type="button"
+              onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("admin"); }}
+              className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
+            >
+              <div className="font-medium">Admin</div>
+              <div className="text-xs text-muted-foreground">Full access. Verification email sent.</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("contributor"); }}
+              className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
+            >
+              <div className="font-medium">Contributor</div>
+              <div className="text-xs text-muted-foreground">Can manage content. Verification email sent.</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => { setShowKindPicker(false); setAddKind("tester"); }}
+              className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
+            >
+              <div className="font-medium">Tester</div>
+              <div className="text-xs text-muted-foreground">Behaves like a regular user. Username + password.</div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {addKind === "adminContributor" && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+            createMut.mutate({ email: newEmail.trim(), password: newPassword, role: newRole });
+          }}
+          className="mt-4 rounded-2xl border border-border bg-card p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_180px_auto_auto] gap-2"
+        >
+          <input
+            type="email"
+            required
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            placeholder="user@example.com"
+            className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+          />
+          <input
+            type="text"
+            autoComplete="new-password"
+            required
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Password (min 8 chars)"
+            className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+          />
+          <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "contributor")}>
+            <SelectTrigger className="h-[38px] w-full sm:col-span-2 lg:col-span-1">
+              <SelectValue placeholder="Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="contributor">Contributor</SelectItem>
+            </SelectContent>
+          </Select>
+          <LoadingButton variant="secondary" onClick={closeAddForm}>
+            Cancel
+          </LoadingButton>
+          <LoadingButton type="submit" pending={createMut.isPending} pendingText="Creating…">
+            Create
+          </LoadingButton>
+        </form>
+      )}
+
+      {addKind === "tester" && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const uname = newUsername.trim().toLowerCase();
+            if (!/^[a-z0-9_]{3,32}$/.test(uname)) {
+              toast.error("Username must be 3–32 chars: letters, numbers, underscores");
+              return;
+            }
+            if (newTesterPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+            createTesterMut.mutate({ username: uname, password: newTesterPassword });
+          }}
+          className="mt-4 rounded-2xl border border-border bg-card p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto] gap-2"
+        >
+          <input
+            type="text"
+            required
+            value={newUsername}
+            onChange={(e) => setNewUsername(e.target.value)}
+            placeholder="username"
+            className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+          />
+          <input
+            type="text"
+            autoComplete="new-password"
+            required
+            value={newTesterPassword}
+            onChange={(e) => setNewTesterPassword(e.target.value)}
+            placeholder="Password (min 8 chars)"
+            className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+          />
+          <LoadingButton variant="secondary" onClick={closeAddForm}>
+            Cancel
+          </LoadingButton>
+          <LoadingButton type="submit" pending={createTesterMut.isPending} pendingText="Creating…">
+            Create
+          </LoadingButton>
+        </form>
+      )}
 
       {(() => {
         if (isLoading) {
