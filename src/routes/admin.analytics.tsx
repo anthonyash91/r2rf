@@ -129,26 +129,25 @@ function AdminReportsPage() {
 
   return (
     <div>
-      <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
-        <PageHeader
-          icon={BarChart3}
-          title="Reports"
-          description="Usage, facility, and per-user reports across the site."
-        />
-      </div>
-
       <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mt-6">
-        <TabsList className="h-auto p-2 gap-1 w-full sm:w-auto bg-muted/40">
-          <TabsTrigger value="overall" className="flex-1 sm:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
-            <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Overall
-          </TabsTrigger>
-          <TabsTrigger value="facility" className="flex-1 sm:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
-            <Building2 className="h-3.5 w-3.5 mr-1.5" /> By Facility
-          </TabsTrigger>
-          <TabsTrigger value="user" className="flex-1 sm:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
-            <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <PageHeader
+            icon={BarChart3}
+            title="Reports"
+            description="Usage, facility, and per-user reports across the site."
+          />
+          <TabsList className="h-auto p-2 gap-1 w-full lg:w-auto bg-muted/40 self-stretch lg:self-center">
+            <TabsTrigger value="overall" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
+              <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Overall
+            </TabsTrigger>
+            <TabsTrigger value="facility" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
+              <Building2 className="h-3.5 w-3.5 mr-1.5" /> By Facility
+            </TabsTrigger>
+            <TabsTrigger value="user" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
+              <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overall" className="mt-6">
           <UsageReportView scope={{ kind: "overall" }} />
