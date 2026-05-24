@@ -281,7 +281,7 @@ function DashboardPage() {
     try {
       const { error } = await supabase.auth.updateUser({
         password: resetPw,
-        data: { must_reset_password: null },
+        data: { must_reset_password: false },
       });
       if (error) throw error;
       // Clear server-side metadata too (admin API), then refresh the local
