@@ -38,7 +38,7 @@ import {
   listFacilityUsers,
   getUserProgressReport,
 } from "@/lib/reports.functions";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
