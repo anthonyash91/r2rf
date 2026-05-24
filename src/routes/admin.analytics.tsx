@@ -194,14 +194,7 @@ function AdminReportsPage() {
       <Tabs
         value={tab}
         onValueChange={(v) => {
-          if (v === "facility") {
-            openFacilityPicker();
-            return;
-          }
-          if (v === "user") {
-            openUserPicker();
-            return;
-          }
+          if (v === "facility" || v === "user") return;
           setTab(v as any);
         }}
         className="mt-6"
