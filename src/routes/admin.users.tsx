@@ -182,7 +182,10 @@ function AdminUsersPage() {
           );
         }
         const adminUsers = data.users.filter(
-          (u) => u.roles.includes("admin") || u.roles.includes("contributor") || u.roles.includes("tester"),
+          (u) => u.roles.includes("admin") || u.roles.includes("contributor"),
+        );
+        const testerUsers = data.users.filter(
+          (u) => u.roles.includes("tester") && !u.roles.includes("admin") && !u.roles.includes("contributor"),
         );
         const regularUsers = data.users.filter(
           (u) => !u.roles.includes("admin") && !u.roles.includes("contributor") && !u.roles.includes("tester"),
@@ -332,6 +335,22 @@ function AdminUsersPage() {
                   <ul className="divide-y divide-border">{adminUsers.map(renderItem)}</ul>
                 ) : (
                   <EmptyState size="sm">No admin users.</EmptyState>
+                )}
+              </SectionCard>
+            </section>
+
+            <section className="mt-8">
+              <div>
+                <h2 className="font-display text-xl font-semibold">Tester Users <span className="text-muted-foreground font-normal">({testerUsers.length})</span></h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Accounts used for internal testing. They behave like regular users.
+                </p>
+              </div>
+              <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
+                {testerUsers.length ? (
+                  <ul className="divide-y divide-border">{testerUsers.map(renderItem)}</ul>
+                ) : (
+                  <EmptyState size="sm">No tester users.</EmptyState>
                 )}
               </SectionCard>
             </section>
