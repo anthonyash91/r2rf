@@ -38,6 +38,7 @@ import {
   listFacilityUsers,
   getUserProgressReport,
 } from "@/lib/reports.functions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
