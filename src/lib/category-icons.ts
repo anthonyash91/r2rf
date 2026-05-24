@@ -463,8 +463,10 @@ const ICON_KEYWORDS: Record<string, string[]> = {
   Key: ["access", "key", "unlock", "security"],
   Shield: ["safety", "security", "protect", "defense", "insurance"],
   ShieldCheck: ["protected", "secure", "verified"],
-  Siren: ["emergency", "alert", "police", "911"],
+  Siren: ["emergency", "alert", "police", "911", "crisis", "hotline"],
+  AlertOctagon: ["urgent", "stop", "danger", "warning", "alert"],
   AlertTriangle: ["warning", "alert", "caution", "risk"],
+  Unlock: ["release", "freedom", "fresh start", "reentry", "open"],
 
   // Finance / money / benefits
   Wallet: ["wallet", "money", "budget", "finance"],
