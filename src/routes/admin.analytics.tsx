@@ -627,6 +627,7 @@ function UserCategoryList({
 }: {
   groups: { category: any; items: any[]; total: number; read: number }[];
 }) {
+  const { t } = useI18n();
   const [openId, setOpenId] = useState<string | null>(null);
   if (groups.length === 0) {
     return <p className="text-muted-foreground">No categories yet.</p>;
@@ -656,7 +657,7 @@ function UserCategoryList({
                   <p className="text-xs text-muted-foreground truncate">/{g.category.slug}</p>
                 </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium rounded-[4px] tabular-nums">
+              <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium rounded-[4px] tabular-nums self-start sm:self-auto">
                 <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
                 {g.read} of {g.total} read
               </span>
@@ -666,28 +667,41 @@ function UserCategoryList({
                 <p className="p-5 text-sm text-muted-foreground">No content items.</p>
               ) : (
                 <ul className="divide-y divide-border">
-                  {g.items.map((item: any) => (
-                    <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] px-6 py-[19px]">
-                      <Badge variant="type" type={item.type}>
-                        {item.type}
-                      </Badge>
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate text-sm font-bold">{item.title}</p>
-                        {item.duration && (
-                          <p className="text-xs text-muted-foreground">{item.duration}</p>
-                        )}
-                      </div>
-                      {item.read ? (
-                        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--color-accent)]">
-                          <CheckCircle2 className="h-4 w-4" /> Read
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                          <Circle className="h-4 w-4" /> Not read
-                        </span>
-                      )}
-                    </li>
-                  ))}
+                  {g.items.map((item: any) => {
+                    const labels = readStatusLabels(t, item);
+                    return (
+                      <li key={item.id} className="flex flex-col gap-[10px] bg-[#fffdf8] p-6">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Badge variant="type" type={item.type}>
+                            {item.type}
+                          </Badge>
+                          <span className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
+                            item.read
+                              ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
+                              : "border-input bg-background text-foreground"
+                          }`}>
+                            {item.read ? (
+                              <>
+                                <Check className="h-3.5 w-3.5" />
+                                {labels.read}
+                              </>
+                            ) : (
+                              <>
+                                <X className="h-3.5 w-3.5" />
+                                {labels.unread}
+                              </>
+                            )}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-lg font-semibold text-foreground">{item.title}</p>
+                          {item.description && (
+                            <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               ))}
           </SectionCard>
