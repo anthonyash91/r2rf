@@ -284,7 +284,7 @@ import {
 } from "lucide-react";
 
 export const ICON_REGISTRY: Record<string, LucideIcon> = {
-  Activity, AlarmClock, AlertTriangle, Ambulance, Anchor, Apple, Archive, Armchair,
+  Activity, AlarmClock, AlertOctagon, AlertTriangle, Ambulance, Anchor, Apple, Archive, Armchair,
   Award, Axe, Baby, Backpack, BadgeCheck, Banana, Bandage, BarChart3, Bath, Battery,
   Beaker, Bed, BedDouble, Beef, Beer, Bell, Bike, Bird, Bone, Book, BookA, BookHeart,
   BookMarked, BookOpen, BookOpenCheck, Bookmark, Boxes, Brain, Briefcase, Brush,
@@ -309,11 +309,11 @@ export const ICON_REGISTRY: Record<string, LucideIcon> = {
   Popcorn, Printer, Puzzle, Radio, Rainbow, Receipt, Recycle, RefreshCw, Ribbon,
   Rocket, Route, Ruler, Salad, Sandwich, Scale, School, Scissors, ScrollText, Search,
   Send, Settings, Shield, ShieldCheck, Ship, Shirt, ShoppingBag, ShoppingBasket,
-  ShoppingCart, Shovel, ShowerHead, Signal, Siren, Smile, Snowflake, Soup, Sparkles,
+  ShoppingCart, Shovel, ShowerHead, Signal, Siren, Smartphone, Smile, Snowflake, Soup, Sparkles,
   Speaker, Sprout, Stamp, Star, Stethoscope, Store, Sun, Sunrise, Sunset, Swords,
   Syringe, Tag, Target, Telescope, Tent, Terminal, ThumbsUp, Ticket, Timer, Tractor,
   TrafficCone, Train, TrainFront, TreeDeciduous, TreePine, Trophy, Truck, Tv,
-  Umbrella, UserCheck, UserPlus, Users, Utensils, UtensilsCrossed, Vegan, Video,
+  Umbrella, Unlock, UserCheck, UserPlus, Users, Utensils, UtensilsCrossed, Vegan, Video,
   Volleyball, Volume2, Vote, Wallet, Wand, Watch, Waves, Webcam, Weight, Wheat, Wifi,
   Wind, Wine, Wrench, Zap,
 };
