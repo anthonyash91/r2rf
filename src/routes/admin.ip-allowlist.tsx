@@ -494,27 +494,27 @@ function IpRestrictionToggle() {
   const enabled = data ?? true;
 
   return (
-    <section className={`mt-8 rounded-2xl border bg-card p-6 flex flex-row items-center justify-between gap-4 transition-all ${enabled ? "border-[var(--color-accent)] shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--color-accent)_45%,transparent)]" : "border-border"}`}>
-      <div className="flex items-start gap-3 min-w-0">
-        <Power className={`h-6 w-6 mt-0.5 shrink-0 ${enabled ? "text-[var(--color-accent)]" : "text-muted-foreground"}`} />
-        <div className="min-w-0">
+    <section className={`mt-8 rounded-2xl border bg-card p-6 flex items-start gap-3 transition-all ${enabled ? "border-[var(--color-accent)] shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--color-accent)_45%,transparent)]" : "border-border"}`}>
+      <Power className={`h-6 w-6 mt-0.5 shrink-0 ${enabled ? "text-[var(--color-accent)]" : "text-muted-foreground"}`} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-3">
           <h2 className="font-display text-xl font-semibold">IP restriction</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            When off, anyone can access any part of the site — the allowlist, blocklist, and per-page IP
-            rules below are bypassed. When on, restrictions apply as configured. Changes take effect within ~30 seconds.
-          </p>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className={`text-sm font-medium ${enabled ? "text-foreground" : "text-muted-foreground"}`}>
+              {isLoading ? "Loading…" : enabled ? "On" : "Off"}
+            </span>
+            <Switch
+              checked={enabled}
+              disabled={isLoading || updateMut.isPending}
+              onCheckedChange={(v) => updateMut.mutate(v)}
+              aria-label="Toggle IP restriction"
+            />
+          </div>
         </div>
-      </div>
-      <div className="flex items-center gap-3 shrink-0">
-        <span className={`text-sm font-medium ${enabled ? "text-foreground" : "text-muted-foreground"}`}>
-          {isLoading ? "Loading…" : enabled ? "On" : "Off"}
-        </span>
-        <Switch
-          checked={enabled}
-          disabled={isLoading || updateMut.isPending}
-          onCheckedChange={(v) => updateMut.mutate(v)}
-          aria-label="Toggle IP restriction"
-        />
+        <p className="mt-1 text-sm text-muted-foreground">
+          When off, anyone can access any part of the site — the allowlist, blocklist, and per-page IP
+          rules below are bypassed. When on, restrictions apply as configured. Changes take effect within ~30 seconds.
+        </p>
       </div>
     </section>
   );
