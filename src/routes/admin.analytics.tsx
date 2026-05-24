@@ -183,9 +183,11 @@ function AdminReportsPage() {
   const facilities = facilitiesQuery.data?.facilities ?? [];
 
   const openFacilityPicker = () => {
+    setUserPickerOpen(false);
     setPickerOpen(true);
   };
   const openUserPicker = () => {
+    setPickerOpen(false);
     setUserPickerOpen(true);
   };
 
