@@ -411,7 +411,10 @@ function AdminUsersPage() {
         );
 
         return (
-          <>
+          <div
+            className={`transition-opacity ${addKind ? "opacity-40 pointer-events-none" : ""}`}
+            aria-hidden={addKind ? true : undefined}
+          >
 
 
 
@@ -645,7 +648,7 @@ function AdminUsersPage() {
                 );
               })()}
             </section>
-          </>
+          </div>
         );
       })()}
     </div>

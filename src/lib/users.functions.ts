@@ -68,10 +68,21 @@ export const countNewUsers = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ since: z.string().min(1) }).parse(input))
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { count, error } = await supabaseAdmin
+    // Exclude admin/contributor/tester accounts — only count self-signed-up users.
+    const { data: privilegedRoles, error: rolesErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .in("role", ["admin", "contributor", "tester"]);
+    if (rolesErr) throw new Error(rolesErr.message);
+    const excludeIds = Array.from(new Set((privilegedRoles ?? []).map((r) => r.user_id)));
+    let q = supabaseAdmin
       .from("user_profiles")
       .select("user_id", { count: "exact", head: true })
       .gt("created_at", data.since);
+    if (excludeIds.length) {
+      q = q.not("user_id", "in", `(${excludeIds.join(",")})`);
+    }
+    const { count, error } = await q;
     if (error) throw new Error(error.message);
     return { count: count ?? 0 };
   });
