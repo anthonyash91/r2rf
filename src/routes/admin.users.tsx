@@ -22,6 +22,7 @@ import {
   sendPasswordResetEmail,
   setUserRole,
   createUser,
+  createTesterUser,
   deleteUser,
   deleteUsers,
   clearUserSecurityAnswers,
