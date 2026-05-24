@@ -84,7 +84,7 @@ export const createUser = createServerFn({ method: "POST" })
         email: z.string().trim().email().max(255),
         password: z.string().min(8).max(72),
         emailConfirm: z.boolean().optional(),
-        role: z.enum(["admin", "contributor"]).optional(),
+        role: z.enum(["admin", "contributor", "tester"]).optional(),
       })
       .parse(input),
   )
@@ -206,7 +206,7 @@ export const setUserRole = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        role: z.enum(["admin", "contributor"]),
+        role: z.enum(["admin", "contributor", "tester"]),
         enabled: z.boolean(),
       })
       .parse(input),
