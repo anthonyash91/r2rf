@@ -533,6 +533,7 @@ function AdminIconsBadgesPage() {
           <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {categories.map((c) => {
               const color = catDraft[c.id] ?? c.icon_color ?? null;
+              const iconName = catIconDraft[c.id] ?? c.icon_name ?? null;
               const idx = paletteIndexOfColor(color);
               const label = idx >= 0 ? PALETTES[idx].label : "Custom";
               const dup = idx >= 0 && isDup(idx);
@@ -542,7 +543,7 @@ function AdminIconsBadgesPage() {
                   className={`@container flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <CategoryIcon name={c.icon_name} color={color} size="sm" />
+                    <CategoryIcon name={iconName} color={color} size="sm" />
                     <div className="min-w-0">
                       <div className="text-sm font-medium truncate">{c.name}</div>
                       <div className="text-xs text-muted-foreground truncate">
@@ -551,10 +552,16 @@ function AdminIconsBadgesPage() {
                       </div>
                     </div>
                   </div>
-                  <Button variant="outline" onClick={() => cycleCategory(c.id)} className={REGEN_BTN_CLASS}>
-                    <RefreshCw className="h-4 w-4" />
-                    Regenerate
-                  </Button>
+                  <div className="flex w-full @[20rem]:w-auto items-center gap-2">
+                    <Button variant="outline" onClick={() => cycleCategory(c.id)} className={REGEN_BTN_CLASS}>
+                      <RefreshCw className="h-4 w-4" />
+                      Color
+                    </Button>
+                    <Button variant="outline" onClick={() => cycleCategoryIconFor(c.id, c.name)} className={REGEN_BTN_CLASS}>
+                      <RefreshCw className="h-4 w-4" />
+                      Icon
+                    </Button>
+                  </div>
                 </li>
               );
             })}
