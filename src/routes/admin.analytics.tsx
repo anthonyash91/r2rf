@@ -640,80 +640,117 @@ function UserCategoryList({
   }
   return (
     <div className="flex flex-col [&>section]:rounded-none [&>section:first-child]:rounded-t-2xl [&>section:last-child]:rounded-b-2xl [&>section:not(:first-child)]:-mt-px">
-      {groups.map((g) => {
-        const open = openId === g.category.id;
-        const dimmed = openId !== null && openId !== g.category.id;
-        return (
-          <SectionCard
-            key={g.category.id}
-            padded={false}
-            className={`overflow-hidden bg-[#fffdf8] transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "!border-2 !border-[var(--color-accent)]" : ""}`}
-          >
-            <button
-              type="button"
-              onClick={() => setOpenId((cur) => (cur === g.category.id ? null : g.category.id))}
-              aria-expanded={open}
-              className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-6 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-[#fffdf8]"} text-left hover:bg-muted/50 transition-colors`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
-                <CategoryIcon name={g.category.icon_name} color={g.category.icon_color} size="sm" />
-                <div className="min-w-0">
-                  <h2 className="font-display text-lg font-semibold truncate">{g.category.name}</h2>
-                  <p className="text-xs text-muted-foreground truncate">/{g.category.slug}</p>
-                </div>
-              </div>
-              <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium rounded-[4px] tabular-nums self-start sm:self-auto">
-                <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
-                {g.read} of {g.total} read
-              </span>
-            </button>
-            {open &&
-              (g.items.length === 0 ? (
-                <p className="p-5 text-sm text-muted-foreground">No content items.</p>
-              ) : (
-                <ul className="divide-y divide-border">
-                  {g.items.map((item: any) => {
-                    const labels = readStatusLabels(t, item);
-                    return (
-                      <li key={item.id} className="flex flex-col gap-[10px] bg-[#fffdf8] p-6">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Badge variant="type" type={item.type}>
-                            {item.type}
-                          </Badge>
-                          <span className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
-                            item.read
-                              ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
-                              : "border-input bg-background text-foreground"
-                          }`}>
-                            {item.read ? (
-                              <>
-                                <Check className="h-3.5 w-3.5" />
-                                {labels.read}
-                              </>
-                            ) : (
-                              <>
-                                <X className="h-3.5 w-3.5" />
-                                {labels.unread}
-                              </>
-                            )}
-                          </span>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-lg font-semibold text-foreground">{item.title}</p>
-                          {item.description && (
-                            <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{item.description}</p>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ))}
-          </SectionCard>
-        );
-      })}
+      {groups.map((g) => (
+        <UserCategorySection
+          key={g.category.id}
+          group={g}
+          isOpen={openId === g.category.id}
+          dimmed={openId !== null && openId !== g.category.id}
+          onToggle={() => setOpenId((cur) => (cur === g.category.id ? null : g.category.id))}
+          t={t}
+        />
+      ))}
     </div>
+  );
+}
+
+function UserCategorySection({
+  group: g,
+  isOpen,
+  dimmed,
+  onToggle,
+  t,
+}: {
+  group: { category: any; items: any[]; total: number; read: number };
+  isOpen: boolean;
+  dimmed: boolean;
+  onToggle: () => void;
+  t: ReturnType<typeof useI18n>["t"];
+}) {
+  const open = isOpen;
+  const sectionRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (isOpen && sectionRef.current) {
+      const el = sectionRef.current;
+      requestAnimationFrame(() => {
+        const top = el.getBoundingClientRect().top + window.scrollY - 96;
+        window.scrollTo({ top, behavior: "smooth" });
+      });
+    }
+  }, [isOpen]);
+  return (
+    <SectionCard
+      ref={sectionRef as any}
+      padded={false}
+      className={`scroll-mt-24 overflow-hidden bg-[#fffdf8] transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "!border-2 !border-[var(--color-accent)]" : ""}`}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-6 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-[#fffdf8]"} text-left hover:bg-muted/50 transition-colors`}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
+          <CategoryIcon name={g.category.icon_name} color={g.category.icon_color} size="sm" />
+          <div className="min-w-0">
+            <h2 className="font-display text-lg font-semibold truncate">{g.category.name}</h2>
+            <p className="text-xs text-muted-foreground truncate">/{g.category.slug}</p>
+          </div>
+        </div>
+        <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium rounded-[4px] tabular-nums self-start sm:self-auto">
+          <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+          {g.read} of {g.total} read
+        </span>
+      </button>
+      {open &&
+        (g.items.length === 0 ? (
+          <p className="p-5 text-sm text-muted-foreground">No content items.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {g.items.map((item: any) => {
+              const labels = readStatusLabels(t, item);
+              return (
+                <li key={item.id} className="flex flex-col gap-[10px] bg-[#fffdf8] p-6">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Badge variant="type" type={item.type}>
+                      {item.type}
+                    </Badge>
+                    {item.duration && (
+                      <span className="text-xs text-muted-foreground truncate min-w-0">
+                        {withActionWord(item.duration, item.type)}
+                      </span>
+                    )}
+                    <span className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
+                      item.read
+                        ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
+                        : "border-input bg-background text-foreground"
+                    }`}>
+                      {item.read ? (
+                        <>
+                          <Check className="h-3.5 w-3.5" />
+                          {labels.read}
+                        </>
+                      ) : (
+                        <>
+                          <X className="h-3.5 w-3.5" />
+                          {labels.unread}
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-lg font-semibold text-foreground">{item.title}</p>
+                    {item.description && (
+                      <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ))}
+    </SectionCard>
   );
 }
 
