@@ -331,7 +331,47 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <Dialog open={mustResetPassword} onOpenChange={() => { /* non-dismissible */ }}>
+        <DialogContent
+          className="sm:max-w-md"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Set a new password</DialogTitle>
+            <DialogDescription>
+              For security, please choose a new password before continuing.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleForcedReset} className="mt-2 space-y-3">
+            <input
+              type="password"
+              autoComplete="new-password"
+              required
+              value={resetPw}
+              onChange={(e) => setResetPw(e.target.value)}
+              placeholder="New password (min 8 chars)"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
+            <input
+              type="password"
+              autoComplete="new-password"
+              required
+              value={resetPw2}
+              onChange={(e) => setResetPw2(e.target.value)}
+              placeholder="Confirm new password"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
+            <div className="flex justify-end">
+              <LoadingButton type="submit" pending={resetBusy} pendingText="Saving…">
+                Save password
+              </LoadingButton>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
       <SiteHeader />
+
       <SiteMessageBanner kind="user" />
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
         <Tabs
