@@ -658,6 +658,7 @@ function UserItem({
                 <BadgeGroup>
                   {isAdmin && <Badge variant="admin">Admin</Badge>}
                   {isContributor && <Badge variant="contributor">Contributor</Badge>}
+                  {isTester && <Badge variant="tester">Tester</Badge>}
                   {user.email_confirmed_at ? (
                     <Badge variant="verified">Verified</Badge>
                   ) : (
