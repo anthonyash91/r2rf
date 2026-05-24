@@ -100,6 +100,7 @@ import {
 } from "lucide-react";
 import { paletteStyle, indexForType, type BadgeVariantKey } from "@/lib/badge-styles";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
+import { ICON_REGISTRY } from "@/lib/category-icons";
 
 type BadgeVariant = BadgeVariantKey | "type";
 
@@ -293,7 +294,17 @@ export function Badge({ variant, type, hideIcon, children, className, title }: B
       : (styles.variants[variant] ?? 0);
 
   const ps = paletteStyle(idx);
-  const Icon = variant === "type" ? iconForType(type) : VARIANT_ICONS[variant];
+
+  let Icon: LucideIcon | undefined;
+  if (variant === "type") {
+    const key = (type ?? "").trim().toLowerCase();
+    const overrideName = styles.typeIcons?.[key];
+    Icon = (overrideName && ICON_REGISTRY[overrideName]) || iconForType(type);
+  } else {
+    const overrideName = styles.variantIcons?.[variant];
+    Icon = (overrideName && ICON_REGISTRY[overrideName]) || VARIANT_ICONS[variant];
+  }
+
 
   return (
     <span
