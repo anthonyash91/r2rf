@@ -312,7 +312,30 @@ function AdminIconsBadgesPage() {
     });
   }
 
-  // -------- Per-category --------
+  // -------- Icon cycling (per-row) --------
+  function cycleVariantIcon(key: BadgeVariantKey) {
+    setDraft((d) => {
+      const cur = d.variantIcons?.[key] ?? null;
+      const next = pickRelevantIcon({ title: VARIANT_LABELS[key], exclude: cur });
+      return { ...d, variantIcons: { ...(d.variantIcons ?? {}), [key]: next } };
+    });
+  }
+  function cycleTypeIcon(key: KnownTypeKey) {
+    setDraft((d) => {
+      const cur = d.typeIcons?.[key] ?? null;
+      const next = pickRelevantIcon({ title: TYPE_LABELS[key], exclude: cur });
+      return { ...d, typeIcons: { ...(d.typeIcons ?? {}), [key]: next } };
+    });
+  }
+  function cycleCategoryIconFor(id: string, name: string) {
+    setCatIconDraft((d) => {
+      const cur = d[id] ?? null;
+      const next = pickRelevantIcon({ title: name, exclude: cur });
+      return { ...d, [id]: next };
+    });
+  }
+
+  // -------- Per-category color --------
 
 
   function cycleCategory(id: string) {
@@ -345,6 +368,7 @@ function AdminIconsBadgesPage() {
   function reset() {
     setDraft(DEFAULT_BADGE_STYLES);
     setCatDraft({ ...originalCatMap });
+    setCatIconDraft({ ...originalCatIconMap });
   }
 
 
