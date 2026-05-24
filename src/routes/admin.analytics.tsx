@@ -14,7 +14,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   Check,
-  Circle,
+  
   X,
   Clock,
   Flame,
