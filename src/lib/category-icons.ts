@@ -543,7 +543,8 @@ const ICON_KEYWORDS: Record<string, string[]> = {
 
   // Tech / digital literacy
   Computer: ["computer", "pc", "tech"],
-  Laptop: ["laptop", "computer", "digital"],
+  Laptop: ["laptop", "computer", "digital", "online", "device"],
+  Smartphone: ["phone", "mobile", "smartphone", "device", "app", "digital"],
   Monitor: ["monitor", "screen", "computer"],
   Keyboard: ["keyboard", "typing", "computer"],
   Code: ["coding", "developer", "software", "programming"],
