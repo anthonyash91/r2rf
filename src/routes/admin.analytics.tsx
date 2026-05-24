@@ -209,7 +209,15 @@ function AdminReportsPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <PageHeader
             icon={BarChart3}
-            title="Reports"
+            title={
+              tab === "overall"
+                ? "Reports > Overall"
+                : tab === "facility" && selectedFacility
+                  ? `Reports > ${selectedFacility.label}`
+                  : tab === "user" && selectedUserFacility
+                    ? `Reports > ${selectedUserFacility.label}`
+                    : "Reports"
+            }
             description="Usage, facility, and per-user reports across the site."
           />
           <TabsList className="h-auto p-2 gap-1 w-full lg:w-auto bg-muted/40 self-stretch lg:self-center">
