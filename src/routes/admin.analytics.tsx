@@ -473,20 +473,10 @@ function FacilityReportTab({ preselected }: { preselected: { value: string; labe
 
 /* ---------------- Users Tab ---------------- */
 
-function UsersReportTab() {
-  const fetchFacilities = useServerFn(listFacilities);
+function UsersReportTab({ preselected }: { preselected: { value: string; label: string } }) {
   const fetchUsers = useServerFn(listFacilityUsers);
-  const facilitiesQuery = useQuery({
-    queryKey: ["facilities"],
-    queryFn: () => fetchFacilities(),
-  });
-  const facilities = facilitiesQuery.data?.facilities ?? [];
-  const [selected, setSelected] = useState<string>("");
+  const selected = preselected.value;
   const [activeUser, setActiveUser] = useState<{ userId: string; name: string } | null>(null);
-
-  useEffect(() => {
-    if (!selected && facilities.length > 0) setSelected(facilities[0].value);
-  }, [facilities, selected]);
 
   const usersQuery = useQuery({
     queryKey: ["admin", "facility-users", selected],
@@ -494,7 +484,7 @@ function UsersReportTab() {
     queryFn: () => fetchUsers({ data: { facilityValue: selected } }),
   });
 
-  const selectedLabel = facilities.find((f) => f.value === selected)?.label ?? "";
+  const selectedLabel = preselected.label;
 
   if (activeUser) {
     return (
@@ -511,16 +501,9 @@ function UsersReportTab() {
   return (
     <div>
       <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:items-center sm:justify-between mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <label className="text-sm font-medium">Facility</label>
-          <div className="w-full sm:w-auto sm:min-w-[260px]">
-            <FacilityCombobox
-              value={selected}
-              onChange={(v) => setSelected(v)}
-              options={facilities.map((f) => ({ value: f.value, label: f.label }))}
-              placeholder={facilities.length === 0 ? "Loading…" : "Select a facility"}
-            />
-          </div>
+        <div className="text-sm">
+          <span className="text-muted-foreground">Facility: </span>
+          <span className="font-medium">{selectedLabel}</span>
         </div>
         <LoadingButton
           variant="secondary"
