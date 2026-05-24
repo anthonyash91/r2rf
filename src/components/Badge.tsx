@@ -41,6 +41,42 @@ import {
   PlayCircle,
   Radio,
   Presentation,
+  Scale,
+  Gavel,
+  FileSignature,
+  Home,
+  Bus,
+  Car,
+  MapPin,
+  Wallet,
+  DollarSign,
+  CreditCard,
+  PiggyBank,
+  Stethoscope,
+  Pill,
+  Activity,
+  Brain,
+  Dumbbell,
+  Leaf,
+  Sprout,
+  Church,
+  Sun,
+  HandHeart,
+  Wrench,
+  Hammer,
+  Lightbulb,
+  Award,
+  Trophy,
+  Scroll,
+  Baby,
+  Users2,
+  Gift,
+  Coffee,
+  Clock,
+  Target,
+  Flag,
+  Compass,
+  Bookmark,
   type LucideIcon,
 } from "lucide-react";
 import { paletteStyle, indexForType, type BadgeVariantKey } from "@/lib/badge-styles";
@@ -124,6 +160,59 @@ const TYPE_KEYWORD_ICONS: Array<[RegExp, LucideIcon]> = [
   [/\b(guide|manual|handbook|playbook)\b/, BookOpen],
   [/\b(verify|verified|approved)\b/, BadgeCheck],
   [/\b(translate|language|spanish|english)\b/, Languages],
+
+  // Legal / justice
+  [/\b(legal|law|justice|court|attorney|lawyer|rights)\b/, Scale],
+  [/\b(gavel|hearing|trial|case|sentencing|parole|probation)\b/, Gavel],
+  [/\b(contract|agreement|waiver|consent|signature|sign-?up|enroll)\b/, FileSignature],
+  [/\b(safety|protect|protection|security|privacy|safe)\b/, Shield],
+
+  // Housing / transport / location
+  [/\b(home|housing|shelter|residence|apartment|rent)\b/, Home],
+  [/\b(bus|transit|transport|transportation|commute)\b/, Bus],
+  [/\b(car|drive|driving|vehicle|ride|rideshare|uber|lyft)\b/, Car],
+  [/\b(pin|address|nearby|destination)\b/, MapPin],
+
+  // Money / finance
+  [/\b(wallet|finance|financial|budget)\b/, Wallet],
+  [/\b(money|cash|pay|payment|cost|fee|dollar|expense|income)\b/, DollarSign],
+  [/\b(credit|debit|card|banking)\b/, CreditCard],
+  [/\b(savings|save|piggy|fund)\b/, PiggyBank],
+
+  // Health / recovery
+  [/\b(medical|doctor|clinic|physician|appointment-?med)\b/, Stethoscope],
+  [/\b(pill|medication|prescription|rx|drug|pharmacy)\b/, Pill],
+  [/\b(activity|fitness|vitals|pulse)\b/, Activity],
+  [/\b(brain|mental|therapy|counseling|psychology|psych)\b/, Brain],
+  [/\b(exercise|gym|workout|sport)\b/, Dumbbell],
+  [/\b(sober|sobriety|nature|green|clean)\b/, Leaf],
+  [/\b(growth|grow|seed|sprout|progress|new-?start)\b/, Sprout],
+
+  // Faith / wellness
+  [/\b(faith|religion|religious|church|spiritual|prayer|worship)\b/, Church],
+  [/\b(meditation|mindful|wellness|sun|morning|peace)\b/, Sun],
+  [/\b(volunteer|donate|donation|charity|kindness|outreach)\b/, HandHeart],
+
+  // Skills / tools / education
+  [/\b(tool|toolkit|fix|repair|maintenance)\b/, Wrench],
+  [/\b(skill|trade|craft|build|construction)\b/, Hammer],
+  [/\b(tip|tips|idea|advice|insight|hint)\b/, Lightbulb],
+  [/\b(award|certificate|certification|credential)\b/, Award],
+  [/\b(achievement|milestone|win|success|trophy)\b/, Trophy],
+  [/\b(scroll|diploma|transcript|record)\b/, Scroll],
+
+  // Family / community
+  [/\b(baby|child|kid|family|parent|parenting)\b/, Baby],
+  [/\b(team|peer|peers|cohort|members)\b/, Users2],
+  [/\b(gift|donation-?gift|present|reward)\b/, Gift],
+  [/\b(coffee|cafe|social|chat-?meet)\b/, Coffee],
+
+  // Time / planning
+  [/\b(clock|time|hour|schedule-?time|deadline)\b/, Clock],
+  [/\b(target|goal|objective)\b/, Target],
+  [/\b(flag|milestone-?flag|priority)\b/, Flag],
+  [/\b(compass|guidance|direction|navigate|orient)\b/, Compass],
+  [/\b(bookmark|saved|favorite|reference)\b/, Bookmark],
 ];
 
 export function iconForType(type: string | null | undefined): LucideIcon {
