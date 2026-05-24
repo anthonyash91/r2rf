@@ -130,11 +130,28 @@ function AdminUsersPage() {
     onSuccess: () => { toast.success("Role updated"); invalidate(); },
     onError: (e: any) => toast.error(e.message),
   });
+  const closeAddForm = () => {
+    setAddKind(null);
+    setNewEmail("");
+    setNewPassword("");
+    setNewRole("admin");
+    setNewUsername("");
+    setNewTesterPassword("");
+  };
   const createMut = useMutation({
-    mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" | "tester" }) => createFn({ data: input }),
+    mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" }) => createFn({ data: input }),
     onSuccess: () => {
-      toast.success("User created");
-      setNewEmail(""); setNewPassword(""); setNewRole("admin"); setShowCreate(false);
+      toast.success("User created. A verification email has been sent.");
+      closeAddForm();
+      invalidate();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+  const createTesterMut = useMutation({
+    mutationFn: (input: { username: string; password: string }) => createTesterFn({ data: input }),
+    onSuccess: () => {
+      toast.success("Test user created");
+      closeAddForm();
       invalidate();
     },
     onError: (e: any) => toast.error(e.message),
