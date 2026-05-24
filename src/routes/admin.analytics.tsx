@@ -409,22 +409,24 @@ function UsersReportTab() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
-        <label className="text-sm font-medium">Facility</label>
-        <div className="w-full sm:w-auto sm:min-w-[260px]">
-          <FacilityCombobox
-            value={selected}
-            onChange={(v) => setSelected(v)}
-            options={facilities.map((f) => ({ value: f.value, label: f.label }))}
-            placeholder={facilities.length === 0 ? "Loading…" : "Select a facility"}
-          />
+      <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:items-center sm:justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <label className="text-sm font-medium">Facility</label>
+          <div className="w-full sm:w-auto sm:min-w-[260px]">
+            <FacilityCombobox
+              value={selected}
+              onChange={(v) => setSelected(v)}
+              options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+              placeholder={facilities.length === 0 ? "Loading…" : "Select a facility"}
+            />
+          </div>
         </div>
         <LoadingButton
           variant="secondary"
           onClick={() => exportFacilityUsersCsv(users, selectedLabel)}
           disabled={users.length === 0}
           icon={<Download className="h-4 w-4" />}
-          className="sm:ml-auto w-full sm:w-auto"
+          className="w-full sm:w-auto"
         >
           Export CSV
         </LoadingButton>
