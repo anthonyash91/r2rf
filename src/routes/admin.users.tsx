@@ -414,74 +414,13 @@ function AdminUsersPage() {
 
 
             <section className="mt-8">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                <div>
-                  <h2 className="font-display text-xl font-semibold">Admin Users <span className="text-muted-foreground font-normal">({adminUsers.length})</span></h2>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Accounts with admin or contributor access.
-                  </p>
-                </div>
-                <LoadingButton
-                  onClick={() => setShowCreate(true)}
-                  disabled={showCreate}
-                  icon={<UserPlus className="h-4 w-4" />}
-                  className="w-full sm:w-auto"
-                >
-                  Add admin user
-                </LoadingButton>
+              <div>
+                <h2 className="font-display text-xl font-semibold">Admin Users <span className="text-muted-foreground font-normal">({adminUsers.length})</span></h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Accounts with admin or contributor access.
+                </p>
               </div>
 
-              {showCreate && (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
-                    createMut.mutate({ email: newEmail.trim(), password: newPassword, role: newRole });
-                  }}
-                  className="mt-3 mb-8 rounded-2xl border border-border bg-card p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_180px_auto_auto] gap-2"
-                >
-                  <input
-                    type="email"
-                    required
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="user@example.com"
-                    className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-                  />
-                  <input
-                    type="text"
-                    autoComplete="new-password"
-                    required
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Password (min 8 chars)"
-                    className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-                  />
-                  <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "contributor" | "tester")}>
-                    <SelectTrigger className="h-[38px] w-full sm:col-span-2 lg:col-span-1">
-                      <SelectValue placeholder="Role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="contributor">Contributor</SelectItem>
-                      <SelectItem value="tester">Tester</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <LoadingButton
-                    variant="secondary"
-                    onClick={() => { setShowCreate(false); setNewEmail(""); setNewPassword(""); setNewRole("admin"); }}
-                  >
-                    Cancel
-                  </LoadingButton>
-                  <LoadingButton
-                    type="submit"
-                    pending={createMut.isPending}
-                    pendingText="Creating…"
-                  >
-                    Create
-                  </LoadingButton>
-                </form>
-              )}
               <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
                 {adminUsers.length ? (
                   <ul className="divide-y divide-border">{adminUsers.map(renderItem)}</ul>
