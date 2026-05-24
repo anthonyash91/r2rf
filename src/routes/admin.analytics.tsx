@@ -395,36 +395,10 @@ function exportUsageCsv(
 
 /* ---------------- Facility Tab ---------------- */
 
-function FacilityReportTab() {
-  const fetchFacilities = useServerFn(listFacilities);
-  const facilitiesQuery = useQuery({
-    queryKey: ["facilities"],
-    queryFn: () => fetchFacilities(),
-  });
-  const facilities = facilitiesQuery.data?.facilities ?? [];
-  const [selected, setSelected] = useState<string>("");
-
-  const selectedLabel = facilities.find((f) => f.value === selected)?.label ?? "";
-
-  if (!selected) {
-    return (
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <label className="text-sm font-medium">Facility</label>
-        <div className="w-full sm:w-auto sm:min-w-[260px]">
-          <FacilityCombobox
-            value={selected}
-            onChange={(v) => setSelected(v)}
-            options={facilities.map((f) => ({ value: f.value, label: f.label }))}
-            placeholder={facilities.length === 0 ? "Loading…" : "Select a facility"}
-          />
-        </div>
-      </div>
-    );
-  }
-
+function FacilityReportTab({ preselected }: { preselected: { value: string; label: string } }) {
   return (
     <UsageReportView
-      scope={{ kind: "facility", facilityValue: selected, facilityLabel: selectedLabel }}
+      scope={{ kind: "facility", facilityValue: preselected.value, facilityLabel: preselected.label }}
     />
   );
 }
