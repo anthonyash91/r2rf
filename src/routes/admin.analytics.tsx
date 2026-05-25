@@ -359,6 +359,8 @@ function AdminReportsPage() {
               <UsersReportTab
                 key={`${userKey}-${selectedUserFacility.value}`}
                 preselected={selectedUserFacility}
+                activeUser={activeUser}
+                setActiveUser={setActiveUser}
               />
             ) : null}
         </TabsContent>
