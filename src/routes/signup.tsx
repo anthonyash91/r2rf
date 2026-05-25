@@ -609,5 +609,6 @@ function SignupPage() {
       </main>
       <SiteFooter />
     </div>
+    </OnScreenKeyboardProvider>
   );
 }
