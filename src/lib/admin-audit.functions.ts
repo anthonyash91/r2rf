@@ -92,7 +92,7 @@ export const listAuditLog = createServerFn({ method: "POST" })
         r.target_username ??
         (r.target_user_id ? profileMap.get(r.target_user_id)?.username ?? null : null),
       target_email: r.target_user_id ? emailMap.get(r.target_user_id) ?? null : null,
-      details: (r.details ?? {}) as Record<string, unknown>,
+      details: (r.details ?? {}) as Record<string, string | number | boolean | null>,
       ip_address: r.ip_address,
       user_agent: r.user_agent,
     }));

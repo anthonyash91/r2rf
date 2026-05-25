@@ -59,7 +59,7 @@ function describeUser(username: string | null, email: string | null, id: string 
   return "—";
 }
 
-function describeDetails(action: ActionType, details: Record<string, unknown>) {
+function describeDetails(action: ActionType, details: Record<string, string | number | boolean | null>) {
   const parts: string[] = [];
   if (action === "user.create" || action === "user.role_grant" || action === "user.role_revoke") {
     if (details.role) parts.push(`role: ${String(details.role)}`);
