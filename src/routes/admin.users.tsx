@@ -374,22 +374,14 @@ function AdminUsersPage() {
             </SectionCard>
           );
         }
-        if (!data?.users.length) {
+        if (totalUsers === 0) {
           return (
             <SectionCard as="div" className="mt-6 text-muted-foreground">
               No users yet.
             </SectionCard>
           );
         }
-        const adminUsers = data.users.filter(
-          (u) => u.roles.includes("admin") || u.roles.includes("contributor"),
-        );
-        const testerUsers = data.users.filter(
-          (u) => u.roles.includes("tester") && !u.roles.includes("admin") && !u.roles.includes("contributor"),
-        );
-        const regularUsers = data.users.filter(
-          (u) => !u.roles.includes("admin") && !u.roles.includes("contributor") && !u.roles.includes("tester"),
-        );
+
 
         const isPendingEmail = rowPending<string>(emailMut, "userId");
         const isPendingPw = rowPending<string>(pwMut, "userId");
