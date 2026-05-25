@@ -244,6 +244,9 @@ export function renderBlockedPage(
       var lbl=document.getElementById('pk-label');
       var msg=document.getElementById('pk-msg');
       var btn=document.getElementById('pk-submit');
+      var eyeBtn=document.getElementById('pk-eye');
+      var eyeIcon=document.getElementById('pk-eye-icon');
+      if(eyeBtn){eyeBtn.addEventListener('click',function(){var on=inp.getAttribute('type')==='password';inp.setAttribute('type',on?'text':'password');eyeBtn.setAttribute('aria-label',on?'Hide passkey':'Show passkey');eyeIcon.innerHTML=on?'<path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-10-7-10-7a18.5 18.5 0 0 1 4.22-5.18M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M1 1l22 22"/><path d="M9.5 9.5a3 3 0 0 0 4.24 4.24"/>':'<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>';});}
       var blocked=document.getElementById('pk-blocked');
       var osk=document.getElementById('osk');
       var isMobile=window.matchMedia&&window.matchMedia('(pointer: coarse) and (max-width: 900px)').matches;
