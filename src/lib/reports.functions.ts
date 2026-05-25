@@ -156,29 +156,53 @@ function parseDurationMinutes(d?: string | null): number {
 export const listFacilityUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ facilityValue: z.string().min(1).max(64) }).parse(input),
+    z
+      .object({ facilityValue: z.string().min(0).max(64).nullable().optional() })
+      .parse(input),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    const { data: profs, error } = await supabaseAdmin
+    const facilityValue = data.facilityValue ?? "";
+    let pq = supabaseAdmin
       .from("user_profiles")
       .select("user_id, username, first_name, last_name, facility, created_at")
-      .eq("facility", data.facilityValue)
       .eq("is_synthetic", false);
+    if (facilityValue) pq = pq.eq("facility", facilityValue);
+
+    const { data: profs, error } = await pq;
     if (error) throw new Error(error.message);
     const ids = (profs ?? []).map((p: any) => p.user_id as string);
 
     const emailById = new Map<string, string>();
+    const lastSignInById = new Map<string, string | null>();
     if (ids.length > 0) {
-      // listUsers paginates; 200 is enough for typical facility sizes
       const { data: usersData, error: ue } = await supabaseAdmin.auth.admin.listUsers({
         page: 1,
         perPage: 1000,
       });
       if (ue) throw new Error(ue.message);
+      const idSet = new Set(ids);
       for (const u of usersData.users) {
-        if (ids.includes(u.id)) emailById.set(u.id, u.email ?? "");
+        if (idSet.has(u.id)) {
+          emailById.set(u.id, u.email ?? "");
+          lastSignInById.set(u.id, (u as any).last_sign_in_at ?? null);
+        }
+      }
+    }
+
+    // Also fetch most recent user_logins date for each user as a fallback / more accurate "last login"
+    const lastLoginById = new Map<string, string | null>();
+    if (ids.length > 0) {
+      const { data: loginRows, error: le } = await supabaseAdmin
+        .from("user_logins")
+        .select("user_id, login_date")
+        .in("user_id", ids);
+      if (le) throw new Error(le.message);
+      for (const r of loginRows ?? []) {
+        const prev = lastLoginById.get(r.user_id as string);
+        const d = r.login_date as string;
+        if (!prev || d > prev) lastLoginById.set(r.user_id as string, d);
       }
     }
 
@@ -188,8 +212,11 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
         username: (p.username as string) ?? "",
         first_name: (p.first_name as string) ?? "",
         last_name: (p.last_name as string) ?? "",
+        facility: (p.facility as string) ?? "",
         email: emailById.get(p.user_id as string) ?? "",
         created_at: p.created_at as string,
+        last_sign_in_at: lastSignInById.get(p.user_id as string) ?? null,
+        last_login_date: lastLoginById.get(p.user_id as string) ?? null,
       })),
     };
   });
