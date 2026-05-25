@@ -206,40 +206,40 @@ function AdminUsersPage() {
         </LoadingButton>
       </div>
 
-      <Dialog open={showKindPicker} onOpenChange={setShowKindPicker}>
-        <DialogContent className="sm:max-w-md pt-[22px]">
-          <DialogHeader>
-            <DialogTitle>Add user</DialogTitle>
-            <DialogDescription>What type of user would you like to add?</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-2 mt-[-4px]">
-            <button
-              type="button"
-              onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("admin"); }}
-              className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
-            >
-              <div className="font-medium">Admin</div>
-              <div className="text-xs text-muted-foreground">Full access. Verification email sent.</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("contributor"); }}
-              className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
-            >
-              <div className="font-medium">Contributor</div>
-              <div className="text-xs text-muted-foreground">Can manage content. Verification email sent.</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowKindPicker(false); setAddKind("tester"); }}
-              className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
-            >
-              <div className="font-medium">Tester</div>
-              <div className="text-xs text-muted-foreground">Behaves like a regular user. Username + password.</div>
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <FormDialog
+        open={showKindPicker}
+        onOpenChange={setShowKindPicker}
+        title="Add user"
+        description="What type of user would you like to add?"
+        size="sm"
+      >
+        <div className="grid gap-2 mt-[-4px]">
+          <button
+            type="button"
+            onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("admin"); }}
+            className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
+          >
+            <div className="font-medium">Admin</div>
+            <div className="text-xs text-muted-foreground">Full access. Verification email sent.</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("contributor"); }}
+            className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
+          >
+            <div className="font-medium">Contributor</div>
+            <div className="text-xs text-muted-foreground">Can manage content. Verification email sent.</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowKindPicker(false); setAddKind("tester"); }}
+            className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
+          >
+            <div className="font-medium">Tester</div>
+            <div className="text-xs text-muted-foreground">Behaves like a regular user. Username + password.</div>
+          </button>
+        </div>
+      </FormDialog>
 
       {addKind === "adminContributor" && (
         <form
