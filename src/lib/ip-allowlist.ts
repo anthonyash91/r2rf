@@ -198,11 +198,11 @@ export function renderBlockedPage(
   const passkeyForm = scope === "site" ? `
   <form id="pk-form" style="margin-top:24px;display:flex;flex-direction:column;gap:10px;text-align:left">
     <label for="pk-label" style="font-size:13px;color:#a1a1aa">Your name or label</label>
-    <input id="pk-label" type="text" autocomplete="name" inputmode="none" placeholder="e.g. Jane Doe" required maxlength="80"
+    <input id="pk-label" type="text" autocomplete="name" placeholder="e.g. Jane Doe" required maxlength="80"
       style="background:#1f1f23;border:1px solid #2e2e34;color:#e8e8ea;padding:10px 12px;border-radius:8px;font-size:14px;outline:none"/>
     <label for="pk-input" style="font-size:13px;color:#a1a1aa;margin-top:4px">Access passkey</label>
     <div style="display:flex;gap:8px">
-      <input id="pk-input" type="password" autocomplete="off" inputmode="none" placeholder="Enter passkey" required maxlength="64"
+      <input id="pk-input" type="password" autocomplete="off" placeholder="Enter passkey" required maxlength="64"
         style="flex:1;background:#1f1f23;border:1px solid #2e2e34;color:#e8e8ea;padding:10px 12px;border-radius:8px;font-size:14px;outline:none"/>
       <button type="submit" id="pk-submit"
         style="background:#e8e8ea;color:#0b0b0c;border:0;padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Unlock</button>
@@ -212,13 +212,23 @@ export function renderBlockedPage(
   <div id="pk-blocked" style="display:none;margin-top:24px;padding:16px;background:#3a1212;border:1px solid #7a2222;border-radius:8px;color:#fca5a5;font-size:14px;line-height:1.5">
     You have unsuccessfully entered the passkey too many times. Your IP has been logged and you have been permanently blocked from this website.
   </div>
-  <div id="osk" aria-label="On-screen keyboard" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#141416;border-top:1px solid #2e2e34;padding:10px 10px calc(env(safe-area-inset-bottom,0px) + 10px);box-shadow:0 -10px 32px rgba(0,0,0,.35)">
-    <div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:7px">
-      <div style="display:flex;align-items:center;justify-content:space-between;color:#a1a1aa;font-size:12px"><span>On-screen keyboard</span><button type="button" data-key="HIDE" aria-label="Hide keyboard" style="background:transparent;color:#a1a1aa;border:0;font-size:20px;padding:0 8px;line-height:1">×</button></div>
-      <div style="display:flex;justify-content:center;gap:5px"><button type="button" data-key="q">q</button><button type="button" data-key="w">w</button><button type="button" data-key="e">e</button><button type="button" data-key="r">r</button><button type="button" data-key="t">t</button><button type="button" data-key="y">y</button><button type="button" data-key="u">u</button><button type="button" data-key="i">i</button><button type="button" data-key="o">o</button><button type="button" data-key="p">p</button></div>
-      <div style="display:flex;justify-content:center;gap:5px"><button type="button" data-key="a">a</button><button type="button" data-key="s">s</button><button type="button" data-key="d">d</button><button type="button" data-key="f">f</button><button type="button" data-key="g">g</button><button type="button" data-key="h">h</button><button type="button" data-key="j">j</button><button type="button" data-key="k">k</button><button type="button" data-key="l">l</button></div>
-      <div style="display:flex;justify-content:center;gap:5px"><button type="button" data-key="SHIFT">⇧</button><button type="button" data-key="z">z</button><button type="button" data-key="x">x</button><button type="button" data-key="c">c</button><button type="button" data-key="v">v</button><button type="button" data-key="b">b</button><button type="button" data-key="n">n</button><button type="button" data-key="m">m</button><button type="button" data-key="BACK">⌫</button></div>
-      <div style="display:flex;justify-content:center;gap:5px"><button type="button" data-key="123" style="min-width:52px">123</button><button type="button" data-key="SPACE" style="flex:1;max-width:280px">space</button><button type="button" data-key="ENTER" style="min-width:52px">↵</button></div>
+  <style>
+    #osk button[data-key]{flex:1 1 0;min-width:0;height:48px;background:#1f1f23;border:1px solid #2e2e34;color:#e8e8ea;border-radius:8px;font-size:16px;font-weight:500;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center}
+    #osk button[data-key]:active{background:#2a2a30}
+    #osk button[data-key="SHIFT"],#osk button[data-key="BACK"]{flex:1.5 1 0}
+    #osk button[data-key="123"],#osk button[data-key="ABC"],#osk button[data-key="ENTER"]{flex:1.5 1 0}
+    #osk button[data-key="SPACE"]{flex:5 1 0;font-size:13px;color:#a1a1aa}
+    #osk .osk-row{display:flex;gap:5px;width:100%}
+    .pk-active{outline:2px solid #4ade80!important;outline-offset:2px}
+    @media (min-width:600px){#osk button[data-key]{height:56px;font-size:18px}}
+  </style>
+  <div id="osk" aria-label="On-screen keyboard" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#141416;border-top:1px solid #2e2e34;padding:8px 8px calc(env(safe-area-inset-bottom,0px) + 8px);box-shadow:0 -10px 32px rgba(0,0,0,.35)">
+    <div style="max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;color:#a1a1aa;font-size:12px;padding:0 4px"><span>On-screen keyboard</span><button type="button" data-key="HIDE" aria-label="Hide keyboard" style="background:transparent;color:#a1a1aa;border:0;font-size:20px;padding:0 8px;line-height:1;cursor:pointer">×</button></div>
+      <div class="osk-row"><button type="button" data-key="q">q</button><button type="button" data-key="w">w</button><button type="button" data-key="e">e</button><button type="button" data-key="r">r</button><button type="button" data-key="t">t</button><button type="button" data-key="y">y</button><button type="button" data-key="u">u</button><button type="button" data-key="i">i</button><button type="button" data-key="o">o</button><button type="button" data-key="p">p</button></div>
+      <div class="osk-row"><button type="button" data-key="a">a</button><button type="button" data-key="s">s</button><button type="button" data-key="d">d</button><button type="button" data-key="f">f</button><button type="button" data-key="g">g</button><button type="button" data-key="h">h</button><button type="button" data-key="j">j</button><button type="button" data-key="k">k</button><button type="button" data-key="l">l</button></div>
+      <div class="osk-row"><button type="button" data-key="SHIFT">⇧</button><button type="button" data-key="z">z</button><button type="button" data-key="x">x</button><button type="button" data-key="c">c</button><button type="button" data-key="v">v</button><button type="button" data-key="b">b</button><button type="button" data-key="n">n</button><button type="button" data-key="m">m</button><button type="button" data-key="BACK">⌫</button></div>
+      <div class="osk-row"><button type="button" data-key="123">123</button><button type="button" data-key="SPACE">space</button><button type="button" data-key="ENTER">↵</button></div>
     </div>
   </div>
   <script>
@@ -230,13 +240,16 @@ export function renderBlockedPage(
       var btn=document.getElementById('pk-submit');
       var blocked=document.getElementById('pk-blocked');
       var osk=document.getElementById('osk');
+      var isMobile=window.matchMedia&&window.matchMedia('(pointer: coarse) and (max-width: 900px)').matches;
+      if(isMobile){inp.setAttribute('inputmode','none');lbl.setAttribute('inputmode','none');}
       var target=null,shift=false,symbols=false;
       var letterKeys=['q','w','e','r','t','y','u','i','o','p','a','s','d','f','g','h','j','k','l','z','x','c','v','b','n','m'];
       var symbolKeys=['1','2','3','4','5','6','7','8','9','0','-','/',';',':','(',')','$','&','@','.','?','!','_','#','*',','];
-      function showFor(el){target=el;osk.style.display='block';document.body.style.paddingBottom='230px';}
-      function hide(){osk.style.display='none';document.body.style.paddingBottom='24px';}
+      function setActive(el){[inp,lbl].forEach(function(x){x.classList.remove('pk-active');});if(el)el.classList.add('pk-active');}
+      function showFor(el){if(!isMobile){setActive(el);return;}target=el;setActive(el);osk.style.display='block';document.body.style.paddingBottom='340px';}
+      function hide(){osk.style.display='none';document.body.style.paddingBottom='24px';setActive(null);}
       function redraw(){var i=0;osk.querySelectorAll('button[data-key]').forEach(function(b){var k=b.getAttribute('data-key');if(letterKeys.indexOf(k)>-1){var next=(symbols?symbolKeys[i]:letterKeys[i])||k;b.setAttribute('data-key',next);b.textContent=symbols?next:(shift?next.toUpperCase():next);i++;}else if(k==='123'||k==='ABC'){b.setAttribute('data-key',symbols?'ABC':'123');b.textContent=symbols?'ABC':'123';}});}
-      [inp,lbl].forEach(function(el){['focus','click','touchstart','pointerdown'].forEach(function(ev){el.addEventListener(ev,function(){showFor(el);});});});
+      [inp,lbl].forEach(function(el){['focus','click','touchstart','pointerdown'].forEach(function(ev){el.addEventListener(ev,function(){showFor(el);});});el.addEventListener('blur',function(){if(!isMobile)setActive(null);});});
       osk.addEventListener('mousedown',function(e){e.preventDefault();});osk.addEventListener('touchstart',function(e){e.preventDefault();},{passive:false});
       osk.addEventListener('click',function(e){var b=e.target.closest('button[data-key]');if(!b||!target)return;var k=b.getAttribute('data-key');if(k==='HIDE'){hide();return;}if(k==='SHIFT'){shift=!shift;redraw();return;}if(k==='123'||k==='ABC'){symbols=!symbols;shift=false;redraw();return;}if(k==='BACK')target.value=target.value.slice(0,-1);else if(k==='SPACE')target.value+=' ';else if(k==='ENTER')f.requestSubmit();else target.value+=shift?k.toUpperCase():k;if(shift){shift=false;redraw();}target.focus();});
       redraw();
