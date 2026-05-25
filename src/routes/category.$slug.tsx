@@ -563,7 +563,7 @@ function CategoryPage() {
       <SiteFooter />
 
       <Dialog open={!!videoPlayer} onOpenChange={(open) => !open && setVideoPlayer(null)}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0">
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
           <DialogTitle className="sr-only">{videoPlayer?.title ?? "Video"}</DialogTitle>
           {videoPlayer && (
             <video
@@ -571,14 +571,14 @@ function CategoryPage() {
               src={videoPlayer.url}
               controls
               autoPlay
-              className="w-full h-auto max-h-[80vh] bg-black"
+              className="w-full h-auto max-h-[calc(100dvh-2rem)] bg-black"
             />
           )}
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!audioPlayer} onOpenChange={(open) => !open && setAudioPlayer(null)}>
-        <DialogContent className="max-w-lg pt-[18px]">
+        <DialogContent className="max-w-lg pt-[18px] max-h-[calc(100dvh-2rem)] overflow-auto">
           <DialogTitle className="text-base font-semibold pr-8 break-words">{audioPlayer?.title ?? "Audio"}</DialogTitle>
           {audioPlayer && (
             <audio
@@ -593,10 +593,10 @@ function CategoryPage() {
       </Dialog>
 
       <Dialog open={!!pdfViewer} onOpenChange={(open) => !open && setPdfViewer(null)}>
-        <DialogContent className="w-[95vw] min-w-0 max-w-[95vw] sm:max-w-[95vw] p-0 overflow-hidden">
+        <DialogContent className="w-[95vw] min-w-0 max-w-[95vw] sm:max-w-[95vw] p-0 overflow-hidden max-h-[calc(100dvh-2rem)]">
           <DialogTitle className="sr-only">{pdfViewer?.title ?? "PDF"}</DialogTitle>
           {pdfViewer && (
-            <Suspense fallback={<div className="p-8 text-sm text-muted-foreground h-[85vh]">Loading PDF…</div>}>
+            <Suspense fallback={<div className="p-8 text-sm text-muted-foreground h-[calc(100dvh-4rem)]">Loading PDF…</div>}>
               <PdfViewer key={pdfViewer.url} url={pdfViewer.url} />
             </Suspense>
           )}
@@ -604,14 +604,14 @@ function CategoryPage() {
       </Dialog>
 
       <Dialog open={!!imageViewer} onOpenChange={(open) => !open && setImageViewer(null)}>
-        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden bg-black border-0">
+        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
           <DialogTitle className="sr-only">{imageViewer?.title ?? "Image"}</DialogTitle>
           {imageViewer && (
             <img
               key={imageViewer.url}
               src={imageViewer.url}
               alt={imageViewer.title}
-              className="w-full h-auto max-h-[85vh] object-contain bg-black"
+              className="w-full h-auto max-h-[calc(100dvh-2rem)] object-contain bg-black"
             />
           )}
         </DialogContent>
