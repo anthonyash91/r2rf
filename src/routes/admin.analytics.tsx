@@ -114,6 +114,13 @@ function fmtDate(iso?: string | null) {
   return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
+function fmtDateShort(iso?: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { year: "2-digit", month: "2-digit", day: "2-digit" });
+}
+
 function aggregate(report: { categories: Category[]; items: ContentItem[]; events: EventRow[] }) {
   const catViews = new Map<string, number>();
   const catClicks = new Map<string, number>();
