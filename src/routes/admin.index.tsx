@@ -280,13 +280,13 @@ function AdminCategoriesPage() {
       {(() => {
         const renderCategoryRow = (c: Category) => (
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 pt-[17px] pr-6 pb-[24px] sm:pb-[19px] pl-3">
-            <div className="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="flex items-stretch sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
               {(() => {
                 const Icon = resolveCategoryIcon(c.icon_name);
                 const color = c.icon_color || "var(--color-accent)";
                 return (
                   <div
-                    className="flex h-12 w-12 items-center justify-center rounded-lg border shrink-0"
+                    className="flex w-12 self-stretch sm:self-auto sm:h-12 items-center justify-center rounded-lg border shrink-0"
                     style={{
                       backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
                       borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
