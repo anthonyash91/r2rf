@@ -876,7 +876,54 @@ function exportUserProgressCsv(
     (max: string | null, d: string) => (!max || d > max ? d : max),
     null as string | null,
   );
-  lines.push(`Last login,${csvEscape(lastLogin ? fmtDateShort(lastLogin) : "Never")}`);
+
+  // Summary metrics
+  const itemsArr = data.items as any[];
+  const totalItems = itemsArr.length;
+  const readItems = itemsArr.filter((i) => i.read).length;
+  const minutesSpent = itemsArr
+    .filter((i) => i.read)
+    .reduce((acc: number, i: any) => acc + parseMinutes(i.duration), 0);
+  const hoursSpent = Math.floor(minutesSpent / 60);
+  const itemsByCatForSummary = new Map<string, any[]>();
+  for (const it of itemsArr) {
+    const arr = itemsByCatForSummary.get(it.category_id) ?? [];
+    arr.push(it);
+    itemsByCatForSummary.set(it.category_id, arr);
+  }
+  let totalCats = 0;
+  let completedCats = 0;
+  for (const c of data.categories as any[]) {
+    const items = itemsByCatForSummary.get(c.id) ?? [];
+    if (items.length > 0) {
+      totalCats += 1;
+      if (items.every((i) => i.read)) completedCats += 1;
+    }
+  }
+  const loginDays = new Set<string>(data.logins ?? []);
+  let streak = 0;
+  if (loginDays.size > 0) {
+    const fmt = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${dd}`;
+    };
+    const cursor = new Date();
+    if (!loginDays.has(fmt(cursor))) cursor.setDate(cursor.getDate() - 1);
+    while (loginDays.has(fmt(cursor))) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+  }
+
+  lines.push(["Overall usage"].map(csvEscape).join(","));
+  lines.push(["Metric", "Value"].map(csvEscape).join(","));
+  lines.push(["Items completed", `${readItems} of ${totalItems}`].map(csvEscape).join(","));
+  lines.push(["Categories completed", `${completedCats} of ${totalCats}`].map(csvEscape).join(","));
+  lines.push(["Hours spent", hoursSpent].map(csvEscape).join(","));
+  lines.push(["Day streak", streak].map(csvEscape).join(","));
+  lines.push(["Last login", lastLogin ? fmtDateShort(lastLogin) : "Never"].map(csvEscape).join(","));
   lines.push("");
   lines.push(
     ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on"]
