@@ -46,7 +46,7 @@ export async function recordAdminAudit(entry: AdminAuditEntry): Promise<void> {
     action: entry.action,
     target_user_id: entry.targetUserId ?? null,
     target_username: entry.targetUsername ?? null,
-    details: entry.details ?? {},
+    details: (entry.details ?? {}) as never,
     ip_address: meta.ip,
     user_agent: meta.userAgent,
   });
