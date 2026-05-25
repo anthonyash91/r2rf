@@ -124,6 +124,12 @@ export const createUser = createServerFn({ method: "POST" })
       // Non-fatal: user is created. Surface the message so the admin knows.
       console.error("createUser: resend signup failed", resendErr.message);
     }
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.create",
+      targetUserId: created.user?.id ?? null,
+      details: { email: data.email, role: data.role },
+    });
     return { ok: true };
   });
 
