@@ -739,7 +739,7 @@ function UserItem({
 
 
         <TooltipProvider delayDuration={150}>
-          <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
+          <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0 self-end md:self-auto">
             {!isUsernameUser && (
               <IconButton
                 aria-label="Send password reset email"

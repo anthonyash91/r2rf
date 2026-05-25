@@ -223,7 +223,7 @@ function AdminFacilitiesPage() {
                             className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
                             autoFocus
                           />
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
                             <LoadingButton
                               variant="secondary"
                               onClick={() => setEditingId(null)}
@@ -287,7 +287,7 @@ function AdminFacilitiesPage() {
                             )}
                           </div>
                           <TooltipProvider delayDuration={150}>
-                            <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                            <div className="flex items-center gap-1.5 shrink-0 self-end md:self-auto">
                               <IconButton
                                 aria-label="Edit"
                                 tooltip="Edit"
