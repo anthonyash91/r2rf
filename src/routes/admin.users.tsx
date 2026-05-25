@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useRef, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, HelpCircle, Loader2, Download } from "lucide-react";
@@ -12,6 +12,9 @@ import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { UserStatusBadges } from "@/components/UserStatusBadges";
+import { LoadMorePager, useLoadMore } from "@/components/LoadMorePager";
+import { useToastMutation } from "@/hooks/use-toast-mutation";
 import { rowPending } from "@/hooks/use-row-pending";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
@@ -35,7 +38,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FormDialog } from "@/components/FormDialog";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
 
@@ -80,7 +83,7 @@ function AdminUsersPage() {
   const [newUsername, setNewUsername] = useState("");
   const [newTesterPassword, setNewTesterPassword] = useState("");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
-  const [regularVisible, setRegularVisible] = useState<number>(10);
+  const regularPager = useLoadMore(10, 10);
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -113,27 +116,26 @@ function AdminUsersPage() {
     facilities.map((f) => [f.value, f.label]),
   );
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["admin", "users"] });
+  const usersKey = ["admin", "users"] as const;
+  const invalidate = () => qc.invalidateQueries({ queryKey: usersKey });
 
-  const emailMut = useMutation({
+  const emailMut = useToastMutation({
     mutationFn: (input: { userId: string; email: string }) => updateEmail({ data: input }),
-    onSuccess: () => { toast.success("Email updated"); invalidate(); },
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Email updated",
+    invalidate: usersKey,
   });
-  const pwMut = useMutation({
+  const pwMut = useToastMutation({
     mutationFn: (input: { userId: string; password: string }) => setPassword({ data: input }),
-    onSuccess: () => toast.success("Password updated"),
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Password updated",
   });
-  const resetMut = useMutation({
+  const resetMut = useToastMutation({
     mutationFn: (input: { email: string }) => sendReset({ data: input }),
-    onSuccess: () => toast.success("Password reset email sent"),
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Password reset email sent",
   });
-  const roleMut = useMutation({
+  const roleMut = useToastMutation({
     mutationFn: (input: { userId: string; role: "admin" | "contributor" | "tester"; enabled: boolean }) => setRole({ data: input }),
-    onSuccess: () => { toast.success("Role updated"); invalidate(); },
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Role updated",
+    invalidate: usersKey,
   });
   const closeAddForm = () => {
     setAddKind(null);
@@ -143,48 +145,46 @@ function AdminUsersPage() {
     setNewUsername("");
     setNewTesterPassword("");
   };
-  const createMut = useMutation({
+  const createMut = useToastMutation({
     mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" }) => createFn({ data: input }),
+    successMessage: "User created. A verification email has been sent.",
+    invalidate: usersKey,
     onSuccess: () => {
-      toast.success("User created. A verification email has been sent.");
       closeAddForm();
       newUsersSinceRef.current = new Date().toISOString();
-      invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
   });
-  const createTesterMut = useMutation({
+  const createTesterMut = useToastMutation({
     mutationFn: (input: { username: string; password: string }) => createTesterFn({ data: input }),
+    successMessage: "Test user created",
+    invalidate: usersKey,
     onSuccess: () => {
-      toast.success("Test user created");
       closeAddForm();
       newUsersSinceRef.current = new Date().toISOString();
-      invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
   });
-  const deleteMut = useMutation({
+  const deleteMut = useToastMutation({
     mutationFn: (input: { userId: string }) => deleteFn({ data: input }),
-    onSuccess: () => { toast.success("User deleted"); invalidate(); },
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "User deleted",
+    invalidate: usersKey,
   });
-  const deleteManyMut = useMutation({
+  const deleteManyMut = useToastMutation({
     mutationFn: (input: { userIds: string[] }) => deleteManyFn({ data: input }),
-    onSuccess: async (res) => {
+    successMessage: (res) => {
       const parts: string[] = [];
       parts.push(`Deleted ${res.deleted} ${res.deleted === 1 ? "user" : "users"}`);
       if (res.failed.length) parts.push(`${res.failed.length} failed`);
       if (res.skippedSelf) parts.push("skipped your own account");
-      toast.success(parts.join(" • "));
-      await invalidate();
+      return parts.join(" • ");
+    },
+    invalidate: usersKey,
+    onSuccess: () => {
       bulk.clear();
     },
-    onError: (e: any) => toast.error(e.message),
   });
-  const clearSecMut = useMutation({
+  const clearSecMut = useToastMutation({
     mutationFn: (input: { userId: string }) => clearSecFn({ data: input }),
-    onSuccess: () => toast.success("Security questions reset. User must set new ones on next sign-in."),
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Security questions reset. User must set new ones on next sign-in.",
   });
 
   return (
@@ -206,40 +206,40 @@ function AdminUsersPage() {
         </LoadingButton>
       </div>
 
-      <Dialog open={showKindPicker} onOpenChange={setShowKindPicker}>
-        <DialogContent className="sm:max-w-md pt-[22px]">
-          <DialogHeader>
-            <DialogTitle>Add user</DialogTitle>
-            <DialogDescription>What type of user would you like to add?</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-2 mt-[-4px]">
-            <button
-              type="button"
-              onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("admin"); }}
-              className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
-            >
-              <div className="font-medium">Admin</div>
-              <div className="text-xs text-muted-foreground">Full access. Verification email sent.</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("contributor"); }}
-              className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
-            >
-              <div className="font-medium">Contributor</div>
-              <div className="text-xs text-muted-foreground">Can manage content. Verification email sent.</div>
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowKindPicker(false); setAddKind("tester"); }}
-              className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
-            >
-              <div className="font-medium">Tester</div>
-              <div className="text-xs text-muted-foreground">Behaves like a regular user. Username + password.</div>
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <FormDialog
+        open={showKindPicker}
+        onOpenChange={setShowKindPicker}
+        title="Add user"
+        description="What type of user would you like to add?"
+        size="sm"
+      >
+        <div className="grid gap-2 mt-[-4px]">
+          <button
+            type="button"
+            onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("admin"); }}
+            className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
+          >
+            <div className="font-medium">Admin</div>
+            <div className="text-xs text-muted-foreground">Full access. Verification email sent.</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("contributor"); }}
+            className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
+          >
+            <div className="font-medium">Contributor</div>
+            <div className="text-xs text-muted-foreground">Can manage content. Verification email sent.</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowKindPicker(false); setAddKind("tester"); }}
+            className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
+          >
+            <div className="font-medium">Tester</div>
+            <div className="text-xs text-muted-foreground">Behaves like a regular user. Username + password.</div>
+          </button>
+        </div>
+      </FormDialog>
 
       {addKind === "adminContributor" && (
         <form
@@ -485,7 +485,7 @@ function AdminUsersPage() {
                   <div className="w-full sm:flex-1 sm:min-w-0">
                     <FacilityCombobox
                       value={facilityFilter === "all" ? "" : facilityFilter}
-                      onChange={(v) => { setFacilityFilter(v || "all"); setRegularVisible(10); }}
+                      onChange={(v) => { setFacilityFilter(v || "all"); regularPager.reset(); }}
                       options={facilities.map((f) => ({ value: f.value, label: f.label }))}
                       placeholder="Filter by facility"
                       allowClear
@@ -559,8 +559,7 @@ function AdminUsersPage() {
                 const rest = filteredBase.filter((u) => !isNewUser(u));
                 const filtered = [...newOnes, ...rest];
 
-                const visible = filtered.slice(0, regularVisible);
-                const remaining = filtered.length - visible.length;
+                const visible = filtered.slice(0, regularPager.visibleCount);
 
                 return (
                   <>
@@ -570,7 +569,7 @@ function AdminUsersPage() {
                         filteredCount={filtered.length}
                         noun={{ singular: "user", plural: "users" }}
                         searchQuery={searchQuery}
-                        onSearchChange={(v) => { setSearchQuery(v); setRegularVisible(10); }}
+                        onSearchChange={(v) => { setSearchQuery(v); regularPager.reset(); }}
                         searchPlaceholder="Search users…"
                         onDeleteSelected={async (ids) =>
                           confirmDelete({
@@ -616,39 +615,7 @@ function AdminUsersPage() {
                         <EmptyState size="sm">{q ? "No users match your search." : "No users for this facility."}</EmptyState>
                       )}
                     </div>
-                    {filtered.length > 10 && (
-                      <div className="mt-3 flex items-center justify-between gap-3 flex-wrap text-sm">
-                        <span className="text-muted-foreground">
-                          Showing {visible.length} of {filtered.length}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {remaining > 0 && (
-                            <>
-                              <LoadingButton
-                                variant="secondary"
-                                onClick={() => setRegularVisible((n) => n + 10)}
-                              >
-                                Show 10 more
-                              </LoadingButton>
-                              <LoadingButton
-                                variant="secondary"
-                                onClick={() => setRegularVisible(filtered.length)}
-                              >
-                                Show all
-                              </LoadingButton>
-                            </>
-                          )}
-                          {visible.length > 10 && (
-                            <LoadingButton
-                              variant="secondary"
-                              onClick={() => setRegularVisible(10)}
-                            >
-                              Collapse
-                            </LoadingButton>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                    <LoadMorePager pager={regularPager} total={filtered.length} itemLabel="user" />
                   </>
                 );
               })()}
@@ -715,19 +682,7 @@ function UserItem({
           {isUsernameUser ? (
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
-                <BadgeGroup>
-                  {isTester ? (
-                    <Badge variant="tester">Tester</Badge>
-                  ) : (
-                    <Badge variant="facility">
-                      {facilityLabel || user.profile!.facility}
-                    </Badge>
-                  )}
-                  {!isTester && user.roles.includes("user") && (
-                    <Badge variant="user">User</Badge>
-                  )}
-                  {isNew && !isTester && user.roles.includes("user") && <Badge variant="new">New</Badge>}
-                </BadgeGroup>
+                <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} />
               </div>
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
                 <span className="font-mono text-sm truncate">{user.profile!.username}</span>
@@ -736,19 +691,12 @@ function UserItem({
                     {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
                   </span>
                 )}
-                <BadgeGroup className="hidden sm:inline-flex">
-                  {isTester ? (
-                    <Badge variant="tester">Tester</Badge>
-                  ) : (
-                    <Badge variant="facility">
-                      {facilityLabel || user.profile!.facility}
-                    </Badge>
-                  )}
-                  {!isTester && user.roles.includes("user") && (
-                    <Badge variant="user">User</Badge>
-                  )}
-                  {isNew && !isTester && user.roles.includes("user") && <Badge variant="new">New</Badge>}
-                </BadgeGroup>
+                <UserStatusBadges
+                  user={user}
+                  facilityLabel={facilityLabel}
+                  isNew={isNew}
+                  className="hidden sm:inline-flex"
+                />
               </div>
             </>
           ) : editingEmail ? (
