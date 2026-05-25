@@ -88,6 +88,7 @@ function AdminUsersPage() {
   const [newTesterPassword, setNewTesterPassword] = useState("");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const regularPager = useLoadMore(10, 10);
+  const [isExporting, setIsExporting] = useState(false);
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
