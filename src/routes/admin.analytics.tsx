@@ -515,12 +515,23 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
 
   return (
     <div>
-
+      <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center sm:justify-end mb-4">
+        <LoadingButton
+          variant="secondary"
+          onClick={() => exportFacilityUsersCsv(users, selectedLabel)}
+          disabled={users.length === 0}
+          icon={<Download className="h-4 w-4" />}
+          className="w-full sm:w-auto"
+        >
+          Export CSV
+        </LoadingButton>
+      </div>
 
       {usersQuery.isLoading ? (
         <p className="text-muted-foreground">Loading…</p>
       ) : users.length === 0 ? (
         <p className="text-muted-foreground">No users in this facility.</p>
+
       ) : (
         <SectionCard padded={false} className="overflow-hidden">
           <ul className="divide-y divide-border">
