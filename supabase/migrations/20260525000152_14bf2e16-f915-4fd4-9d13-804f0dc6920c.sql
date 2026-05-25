@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "category_icons_authenticated_read" ON storage.objects;
