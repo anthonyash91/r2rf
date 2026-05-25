@@ -607,24 +607,31 @@ function UserProgressView({
 
   const data = useMemo(() => {
     if (!rawData) return rawData;
-    if (range === "all") return rawData;
-    const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-    const readSet = new Set<string>(
-      (rawData.progress ?? [])
-        .filter((p: any) => new Date(p.created_at).getTime() >= cutoff)
-        .map((p: any) => p.content_item_id as string),
+    const allProgress = rawData.progress ?? [];
+    const days = range === "all" ? null : range === "7d" ? 7 : range === "30d" ? 30 : 90;
+    const cutoff = days === null ? -Infinity : Date.now() - days * 24 * 60 * 60 * 1000;
+    const filteredProgress = allProgress.filter(
+      (p: any) => new Date(p.created_at).getTime() >= cutoff,
     );
+    const readAtMap = new Map<string, string>();
+    for (const p of filteredProgress) {
+      const prev = readAtMap.get(p.content_item_id);
+      if (!prev || new Date(p.created_at).getTime() < new Date(prev).getTime()) {
+        readAtMap.set(p.content_item_id, p.created_at);
+      }
+    }
     return {
       ...rawData,
-      items: rawData.items.map((i: any) => ({ ...i, read: readSet.has(i.id) })),
+      items: rawData.items.map((i: any) => ({
+        ...i,
+        read: readAtMap.has(i.id),
+        read_at: readAtMap.get(i.id) ?? null,
+      })),
       logins: (rawData.logins ?? []).filter((d: string) => {
         const t = new Date(d).getTime();
         return !isNaN(t) && t >= cutoff;
       }),
-      progress: (rawData.progress ?? []).filter(
-        (p: any) => new Date(p.created_at).getTime() >= cutoff,
-      ),
+      progress: filteredProgress,
     };
   }, [rawData, range]);
 
