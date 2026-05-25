@@ -306,8 +306,21 @@ function AdminReportsPage() {
                 }}
               >
                 <div className="mb-2 text-sm font-medium">Select a facility</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedUserFacility({ value: "__all__", label: "All Facilities" });
+                    setUserKey((k) => k + 1);
+                    setUserPickerOpen(false);
+                    setTab("user");
+                  }}
+                  className="mb-2 w-full rounded-md border border-input bg-background px-4 py-2 text-left text-sm hover:bg-muted"
+                >
+                  <span className="font-medium">All Facilities</span>
+                  <span className="ml-2 text-xs text-muted-foreground">Every registered user</span>
+                </button>
                 <FacilityCombobox
-                  value={selectedUserFacility?.value ?? ""}
+                  value={selectedUserFacility?.value && selectedUserFacility.value !== "__all__" ? selectedUserFacility.value : ""}
                   onChange={(v) => {
                     const f = facilities.find((x) => x.value === v);
                     if (!f) return;
