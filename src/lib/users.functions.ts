@@ -172,6 +172,7 @@ export const createTesterUser = createServerFn({ method: "POST" })
       facility: "test_facility",
       first_name: "",
       last_name: "",
+      is_synthetic: true,
     });
     if (profErr) {
       await supabaseAdmin.auth.admin.deleteUser(userId);
