@@ -387,8 +387,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       const el = document.querySelector<HTMLElement>(`[data-item-id="${pendingScrollId}"]`);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
-        el.classList.add("ring-2", "ring-[var(--color-accent)]", "transition-all");
-        setTimeout(() => el.classList.remove("ring-2", "ring-[var(--color-accent)]", "transition-all"), 1800);
+        el.classList.add("bg-[var(--color-accent)]/15", "transition-colors", "duration-700");
+        setTimeout(() => el.classList.remove("bg-[var(--color-accent)]/15"), 1800);
       }
       setPendingScrollId(null);
     }, 100);
