@@ -406,8 +406,9 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         const { id: itemId, ...rest } = values;
         const { error } = await supabase.from("content_items").update(rest).eq("id", itemId);
         if (error) throw error;
+        return itemId;
       } else {
-        const { error } = await supabase.from("content_items").insert({
+        const { data, error } = await supabase.from("content_items").insert({
           category_id: categoryId,
           title: values.title!,
           type: values.type ?? "Article",
@@ -424,13 +425,15 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           file_name_es: values.file_name_es ?? null,
           published: values.published ?? true,
           sort_order: (items.at(-1)?.sort_order ?? 0) + 1,
-        });
+        }).select("id").single();
         if (error) throw error;
+        return data.id as string;
       }
     },
-    onSuccess: () => {
+    onSuccess: (savedId) => {
       toast.success("Saved");
       setEditing(null);
+      if (savedId) setPendingScrollId(savedId);
       invalidate();
     },
     onError: (e: any) => toast.error(e.message),
