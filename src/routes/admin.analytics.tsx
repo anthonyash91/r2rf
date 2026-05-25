@@ -654,7 +654,7 @@ function UserProgressView({
           <ArrowLeft className="h-4 w-4" /> Back to users
         </button>
         <h2 className="font-display text-xl font-semibold flex-1 min-w-0 truncate">{userName}</h2>
-        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto mt-8 xl:mt-0">
           <div className="flex flex-wrap gap-2 flex-1 xl:flex-initial">
             {RANGE_OPTIONS.map((opt) => (
               <button
