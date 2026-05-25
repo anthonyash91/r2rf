@@ -628,41 +628,44 @@ function UserProgressView({
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted self-start"
+          className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
         >
           <ArrowLeft className="h-4 w-4" /> Back to users
         </button>
         <h2 className="font-display text-xl font-semibold flex-1 min-w-0 truncate">{userName}</h2>
-        <div className="flex flex-wrap gap-2">
-          {RANGE_OPTIONS.map((opt) => (
-            <button
-              key={opt.key}
-              onClick={() => setRange(opt.key)}
-              className={`flex-1 sm:flex-initial rounded-md border px-4 py-2 text-sm text-center transition-colors ${
-                range === opt.key
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "border-input bg-background hover:bg-muted"
-              }`}
-            >
-              <span className="sm:hidden">{opt.shortLabel}</span>
-              <span className="hidden sm:inline">{opt.label}</span>
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+          <div className="flex gap-2 flex-1 xl:flex-initial">
+            {RANGE_OPTIONS.map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setRange(opt.key)}
+                className={`flex-1 xl:flex-initial rounded-md border px-4 py-2 text-sm text-center transition-colors ${
+                  range === opt.key
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-input bg-background hover:bg-muted"
+                }`}
+              >
+                <span className="sm:hidden">{opt.shortLabel}</span>
+                <span className="hidden sm:inline">{opt.label}</span>
+              </button>
+            ))}
+          </div>
+          <LoadingButton
+            variant="secondary"
+            onClick={() => data && exportUserProgressCsv(data, userName)}
+            disabled={!data}
+            icon={<Download className="h-4 w-4" />}
+            className="w-full sm:w-auto"
+          >
+            Export CSV
+          </LoadingButton>
         </div>
-        <LoadingButton
-          variant="secondary"
-          onClick={() => data && exportUserProgressCsv(data, userName)}
-          disabled={!data}
-          icon={<Download className="h-4 w-4" />}
-          className="w-full sm:w-auto"
-        >
-          Export CSV
-        </LoadingButton>
       </div>
+
 
       {isLoading || !data ? (
         <p className="text-muted-foreground">Loading…</p>
