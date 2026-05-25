@@ -125,10 +125,10 @@ export default {
         console.error("[ip-blocklist] check failed:", err);
       }
       if (isBlocked) {
-        return new Response(renderBlockedPage(ip, "permanent"), {
+        return applySecurityHeaders(new Response(renderBlockedPage(ip, "permanent"), {
           status: 403,
           headers: { "content-type": "text/html; charset=utf-8" },
-        });
+        }));
       }
 
       // Global kill switch: when disabled, skip all other IP-based restrictions.
@@ -141,7 +141,7 @@ export default {
       if (!restrictionsEnabled) {
         const handler = await getServerEntry();
         const response = await handler.fetch(request, env, ctx);
-        return await normalizeCatastrophicSsrResponse(response);
+        return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response));
       }
 
       // Allow the self-service passkey endpoint through the site allowlist
@@ -164,10 +164,10 @@ export default {
         console.error("[ip-allowlist] check failed:", err);
       }
       if (!allowed && !isPasskeyEndpoint && !hasPasskeyCookie) {
-        return new Response(renderBlockedPage(ip, "site"), {
+        return applySecurityHeaders(new Response(renderBlockedPage(ip, "site"), {
           status: 403,
           headers: { "content-type": "text/html; charset=utf-8" },
-        });
+        }));
       }
 
 
@@ -182,10 +182,10 @@ export default {
           const restrictions = await getCustomHomeRestrictions();
           const allowedForSlug = restrictions.get(firstSegment);
           if (allowedForSlug && (!ip || !allowedForSlug.has(ip))) {
-            return new Response(renderBlockedPage(ip, "custom-home"), {
+            return applySecurityHeaders(new Response(renderBlockedPage(ip, "custom-home"), {
               status: 403,
               headers: { "content-type": "text/html; charset=utf-8" },
-            });
+            }));
           }
         } catch (err) {
           console.error("[custom-home-restrictions] check failed:", err);
@@ -193,7 +193,7 @@ export default {
       }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response));
     } catch (error) {
       console.error(error);
       return brandedErrorResponse();
