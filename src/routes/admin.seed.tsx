@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
 import { LoadingButton } from "@/components/LoadingButton";
 import { Badge } from "@/components/Badge";
+import { defaultDurationForType } from "@/lib/duration";
 
 export const Route = createFileRoute("/admin/seed")({
   beforeLoad: requireAdminBeforeLoad,
