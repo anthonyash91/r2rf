@@ -939,7 +939,7 @@ function UserCategorySection({
                         <>
                           <Check className="h-3.5 w-3.5" />
                           {labels.read}
-                          {item.read_at && <> on {fmtDate(item.read_at)}</>}
+                          {item.read_at && <> on {fmtDateShort(item.read_at)}</>}
                         </>
                       ) : (
                         <>
