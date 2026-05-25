@@ -355,27 +355,25 @@ function DashboardPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleForcedReset} className="mt-[-4px] space-y-3">
-            <div>
-              <input
-                type="password"
+              <div>
+                <PasswordInput
+                  autoComplete="new-password"
+                  required
+                  value={resetPw}
+                  onChange={(e) => setResetPw(e.target.value)}
+                  placeholder="New password (min 8 chars)"
+                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                />
+                <PasswordStrengthMeter password={resetPw} />
+              </div>
+              <PasswordInput
                 autoComplete="new-password"
                 required
-                value={resetPw}
-                onChange={(e) => setResetPw(e.target.value)}
-                placeholder="New password (min 8 chars)"
+                value={resetPw2}
+                onChange={(e) => setResetPw2(e.target.value)}
+                placeholder="Confirm new password"
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
-              <PasswordStrengthMeter password={resetPw} />
-            </div>
-            <input
-              type="password"
-              autoComplete="new-password"
-              required
-              value={resetPw2}
-              onChange={(e) => setResetPw2(e.target.value)}
-              placeholder="Confirm new password"
-              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-            />
             <div className="flex justify-end">
               <LoadingButton type="submit" pending={resetBusy} pendingText="Saving…">
                 Save password
