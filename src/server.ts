@@ -19,11 +19,54 @@ async function getServerEntry(): Promise<ServerEntry> {
   return serverEntryPromise;
 }
 
-function brandedErrorResponse(): Response {
-  return new Response(renderErrorPage(), {
-    status: 500,
-    headers: { "content-type": "text/html; charset=utf-8" },
+// Baseline security headers applied to every response leaving the worker.
+// CSP intentionally allows inline styles/scripts because the SSR shell and
+// some libraries (recharts, sonner) inject them; tighten with nonces in a
+// follow-up pass.
+const SECURITY_HEADERS: Record<string, string> = {
+  "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY",
+  "referrer-policy": "strict-origin-when-cross-origin",
+  "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+  "cross-origin-opener-policy": "same-origin",
+  "x-xss-protection": "0",
+  "content-security-policy": [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "object-src 'none'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data: https:",
+    "style-src 'self' 'unsafe-inline' https:",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
+    "connect-src 'self' https: wss:",
+    "media-src 'self' https: blob:",
+    "worker-src 'self' blob:",
+  ].join("; "),
+};
+
+function applySecurityHeaders(response: Response): Response {
+  // Clone headers so we don't mutate frozen response headers from upstream.
+  const headers = new Headers(response.headers);
+  for (const [k, v] of Object.entries(SECURITY_HEADERS)) {
+    if (!headers.has(k)) headers.set(k, v);
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
   });
+}
+
+function brandedErrorResponse(): Response {
+  return applySecurityHeaders(
+    new Response(renderErrorPage(), {
+      status: 500,
+      headers: { "content-type": "text/html; charset=utf-8" },
+    }),
+  );
 }
 
 function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boolean {
