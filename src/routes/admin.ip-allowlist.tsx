@@ -118,24 +118,26 @@ function BlockedSection() {
                   </p>
                 </div>
                 <TooltipProvider delayDuration={150}>
-                  <IconButton
-                    aria-label="Unblock"
-                    tooltip="Unblock"
-                    pendingTooltip="Unblocking…"
-                    variant="destructive"
-                    icon={Trash2}
-                    pending={isMutationPendingFor(deleteMut, r.id)}
-                    onClick={async () => {
-                      await confirmDelete({
-                        title: `Unblock ${r.ip_address}?`,
-                        description:
-                          "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
-                        confirmLabel: "Unblock",
-                        pendingLabel: "Unblocking",
-                        onConfirm: () => deleteMut.mutateAsync(r.id),
-                      });
-                    }}
-                  />
+                  <div className="self-end md:self-auto">
+                    <IconButton
+                      aria-label="Unblock"
+                      tooltip="Unblock"
+                      pendingTooltip="Unblocking…"
+                      variant="destructive"
+                      icon={Trash2}
+                      pending={isMutationPendingFor(deleteMut, r.id)}
+                      onClick={async () => {
+                        await confirmDelete({
+                          title: `Unblock ${r.ip_address}?`,
+                          description:
+                            "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
+                          confirmLabel: "Unblock",
+                          pendingLabel: "Unblocking",
+                          onConfirm: () => deleteMut.mutateAsync(r.id),
+                        });
+                      }}
+                    />
+                  </div>
                 </TooltipProvider>
               </li>
             ))}
@@ -385,7 +387,7 @@ function AllowlistRow({
           )}
         </div>
         <TooltipProvider delayDuration={150}>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 self-end md:self-auto">
             <IconButton
               aria-label="Edit label"
               tooltip="Edit label"
