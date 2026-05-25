@@ -70,17 +70,18 @@ export const countNewUsers = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ since: z.string().min(1) }).parse(input))
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
-    // Exclude admin/contributor/tester accounts — only count self-signed-up users.
+    // Exclude admin/contributor accounts and any synthetic test users.
     const { data: privilegedRoles, error: rolesErr } = await supabaseAdmin
       .from("user_roles")
       .select("user_id")
       .in("role", ["admin", "contributor", "tester"]);
     if (rolesErr) throw new Error(rolesErr.message);
-    const excludeIds = Array.from(new Set((privilegedRoles ?? []).map((r) => r.user_id)));
     let q = supabaseAdmin
       .from("user_profiles")
       .select("user_id", { count: "exact", head: true })
-      .gt("created_at", data.since);
+      .gt("created_at", data.since)
+      .eq("is_synthetic", false);
+    const excludeIds = Array.from(new Set((privilegedRoles ?? []).map((r) => r.user_id)));
     if (excludeIds.length) {
       q = q.not("user_id", "in", `(${excludeIds.join(",")})`);
     }
@@ -172,6 +173,7 @@ export const createTesterUser = createServerFn({ method: "POST" })
       facility: "test_facility",
       first_name: "",
       last_name: "",
+      is_synthetic: true,
     });
     if (profErr) {
       await supabaseAdmin.auth.admin.deleteUser(userId);

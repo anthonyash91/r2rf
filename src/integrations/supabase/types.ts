@@ -489,6 +489,7 @@ export type Database = {
           created_at: string
           facility: string
           first_name: string
+          is_synthetic: boolean
           last_name: string
           updated_at: string
           user_id: string
@@ -498,6 +499,7 @@ export type Database = {
           created_at?: string
           facility: string
           first_name?: string
+          is_synthetic?: boolean
           last_name?: string
           updated_at?: string
           user_id: string
@@ -507,6 +509,7 @@ export type Database = {
           created_at?: string
           facility?: string
           first_name?: string
+          is_synthetic?: boolean
           last_name?: string
           updated_at?: string
           user_id?: string
