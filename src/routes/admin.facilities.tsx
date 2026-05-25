@@ -182,7 +182,7 @@ function AdminFacilitiesPage() {
             isFiltered={Boolean(q)}
             noun={{ singular: "facility", plural: "facilities" }}
             searchQuery={searchQuery}
-            onSearchChange={(v) => { setSearchQuery(v); setVisibleCount(10); }}
+            onSearchChange={(v) => { setSearchQuery(v); pager.reset(); }}
             searchPlaceholder="Search facilities…"
             onEnterEditMode={() => setEditingId(null)}
             onDeleteSelected={async (ids) =>
@@ -323,39 +323,7 @@ function AdminFacilitiesPage() {
             <EmptyState size="sm">{q ? "No facilities match your search." : "No facilities yet."}</EmptyState>
           )}
         </div>
-        {facilities.length > 10 && (
-          <div className="mt-3 flex items-center justify-between gap-3 flex-wrap text-sm">
-            <span className="text-muted-foreground">
-              Showing {visibleFacilities.length} of {facilities.length}
-            </span>
-            <div className="flex items-center gap-2">
-              {remaining > 0 && (
-                <>
-                  <LoadingButton
-                    variant="secondary"
-                    onClick={() => setVisibleCount((n) => n + 10)}
-                  >
-                    Show 10 more
-                  </LoadingButton>
-                  <LoadingButton
-                    variant="secondary"
-                    onClick={() => setVisibleCount(facilities.length)}
-                  >
-                    Show all
-                  </LoadingButton>
-                </>
-              )}
-              {visibleFacilities.length > 10 && (
-                <LoadingButton
-                  variant="secondary"
-                  onClick={() => setVisibleCount(10)}
-                >
-                  Collapse
-                </LoadingButton>
-              )}
-            </div>
-          </div>
-        )}
+        <LoadMorePager pager={pager} total={facilities.length} itemLabel="facility" itemLabelPlural="facilities" />
 
       </section>
     </div>
