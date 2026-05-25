@@ -6,6 +6,7 @@ import {
   questionLabel,
 } from "@/lib/security-questions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useKeyboardInput } from "@/components/OnScreenKeyboard";
 
 export type SecurityAnswerInput = { key: string; value: string };
 
@@ -60,30 +61,64 @@ export function SecurityQuestionsForm({ onChange, rows = 2 }: Props) {
       {Array.from({ length: rows }).map((_, i) => {
         const usedElsewhere = new Set(questionKeys.filter((_, j) => j !== i));
         return (
-          <div key={i} className="space-y-1.5">
-            <Select value={questionKeys[i]} onValueChange={(v) => setKey(i, v)}>
-              <SelectTrigger className="w-full px-4 py-2 text-sm">
-                <SelectValue placeholder={t("security.chooseQuestion")} />
-              </SelectTrigger>
-              <SelectContent>
-                {SECURITY_QUESTION_KEYS.map((k) => (
-                  <SelectItem key={k} value={k} disabled={usedElsewhere.has(k)}>
-                    {questionLabel(t, k)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <input
-              type="text"
-              value={answers[i]}
-              onChange={(e) => setAnswer(i, e.target.value)}
-              placeholder={t("security.yourAnswer")}
-              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-              maxLength={200}
-            />
-          </div>
+          <QuestionRow
+            key={i}
+            questionKey={questionKeys[i]}
+            answer={answers[i]}
+            onQuestionChange={(v) => setKey(i, v)}
+            onAnswerChange={(v) => setAnswer(i, v)}
+            disabledKeys={usedElsewhere}
+            placeholder={t("security.yourAnswer")}
+            chooseLabel={t("security.chooseQuestion")}
+          />
         );
       })}
+    </div>
+  );
+}
+
+function QuestionRow({
+  questionKey,
+  answer,
+  onQuestionChange,
+  onAnswerChange,
+  disabledKeys,
+  placeholder,
+  chooseLabel,
+}: {
+  questionKey: string;
+  answer: string;
+  onQuestionChange: (v: string) => void;
+  onAnswerChange: (v: string) => void;
+  disabledKeys: Set<string>;
+  placeholder: string;
+  chooseLabel: string;
+}) {
+  const { t } = useI18n();
+  const kb = useKeyboardInput(answer, onAnswerChange);
+  return (
+    <div className="space-y-1.5">
+      <Select value={questionKey} onValueChange={onQuestionChange}>
+        <SelectTrigger className="w-full px-4 py-2 text-sm">
+          <SelectValue placeholder={chooseLabel} />
+        </SelectTrigger>
+        <SelectContent>
+          {SECURITY_QUESTION_KEYS.map((k) => (
+            <SelectItem key={k} value={k} disabled={disabledKeys.has(k)}>
+              {questionLabel(t, k)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <input
+        type="text"
+        value={answer}
+        onChange={(e) => onAnswerChange(e.target.value)}
+        {...kb}
+        placeholder={placeholder}
+        className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+        maxLength={200}
+      />
     </div>
   );
 }

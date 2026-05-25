@@ -21,6 +21,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Check, ChevronsUpDown, KeyRound, Loader2, LogIn, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { PasswordInput } from "@/components/PasswordInput";
 import { OnScreenKeyboardProvider, useKeyboardInput } from "@/components/OnScreenKeyboard";
 
 export const Route = createFileRoute("/signup")({
@@ -335,27 +336,27 @@ function SignupPageContent() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">{t("security.newPassword")}</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     required
                     minLength={8}
                     maxLength={72}
                     value={resetNewPassword}
                     onChange={(e) => setResetNewPassword(e.target.value)} {...kbResetNew}
-                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    wrapperClassName="mt-1"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                   <PasswordStrengthMeter password={resetNewPassword} />
                 </div>
                 <div>
                   <label className="text-sm font-medium">{t("signup.confirmPassword")}</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     required
                     minLength={8}
                     maxLength={72}
                     value={resetConfirmPassword}
                     onChange={(e) => setResetConfirmPassword(e.target.value)} {...kbResetConfirm}
-                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    wrapperClassName="mt-1"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                   {resetConfirmPassword.length > 0 && resetConfirmPassword !== resetNewPassword && (
                     <p className="mt-1 text-xs text-destructive">{t("signup.passwordMismatch")}</p>
@@ -446,14 +447,14 @@ function SignupPageContent() {
 
               <div>
                 <label className="text-sm font-medium">{t("signup.password")}</label>
-                <input
-                  type="password"
+                <PasswordInput
                   required
                   minLength={8}
                   maxLength={72}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)} {...kbPassword}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  wrapperClassName="mt-1"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
                 {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
               </div>
@@ -462,14 +463,14 @@ function SignupPageContent() {
                 <>
                   <div>
                     <label className="text-sm font-medium">{t("signup.confirmPassword")}</label>
-                    <input
-                      type="password"
+                    <PasswordInput
                       required
                       minLength={8}
                       maxLength={72}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)} {...kbConfirm}
-                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      wrapperClassName="mt-1"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     />
                     {confirmPassword.length > 0 && confirmPassword !== password && (
                       <p className="mt-1 text-xs text-destructive">{t("signup.passwordMismatch")}</p>

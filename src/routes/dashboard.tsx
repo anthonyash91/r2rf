@@ -19,6 +19,8 @@ import { questionLabel } from "@/lib/security-questions";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { PasswordInput } from "@/components/PasswordInput";
+import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
 import { readStatusLabels } from "@/lib/read-status";
@@ -101,8 +103,16 @@ export const Route = createFileRoute("/dashboard")({
       throw redirect({ to: "/signup", search: { redirect: location.href } as any });
     }
   },
-  component: DashboardPage,
+  component: DashboardRoute,
 });
+
+function DashboardRoute() {
+  return (
+    <OnScreenKeyboardProvider>
+      <DashboardPage />
+    </OnScreenKeyboardProvider>
+  );
+}
 
 function DashboardPage() {
   const { t, lang } = useI18n();
@@ -353,27 +363,25 @@ function DashboardPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleForcedReset} className="mt-[-4px] space-y-3">
-            <div>
-              <input
-                type="password"
+              <div>
+                <PasswordInput
+                  autoComplete="new-password"
+                  required
+                  value={resetPw}
+                  onChange={(e) => setResetPw(e.target.value)}
+                  placeholder="New password (min 8 chars)"
+                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                />
+                <PasswordStrengthMeter password={resetPw} />
+              </div>
+              <PasswordInput
                 autoComplete="new-password"
                 required
-                value={resetPw}
-                onChange={(e) => setResetPw(e.target.value)}
-                placeholder="New password (min 8 chars)"
+                value={resetPw2}
+                onChange={(e) => setResetPw2(e.target.value)}
+                placeholder="Confirm new password"
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
-              <PasswordStrengthMeter password={resetPw} />
-            </div>
-            <input
-              type="password"
-              autoComplete="new-password"
-              required
-              value={resetPw2}
-              onChange={(e) => setResetPw2(e.target.value)}
-              placeholder="Confirm new password"
-              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-            />
             <div className="flex justify-end">
               <LoadingButton type="submit" pending={resetBusy} pendingText="Saving…">
                 Save password
