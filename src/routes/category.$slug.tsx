@@ -18,6 +18,7 @@ import { BadgeGroup } from "@/components/BadgeGroup";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
+import AutoHeight from "embla-carousel-auto-height";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveCustomHome } from "@/lib/custom-home-context";
 
@@ -345,9 +346,6 @@ function CategoryPage() {
 
                     const handleActivate = () => {
                       trackContentClick(item.id, data.category.id);
-                      if (user?.id && !readSet.has(item.id)) {
-                        toggleRead.mutate({ itemId: item.id, markRead: true });
-                      }
                     };
 
                     let Wrapper: any = "div";
@@ -472,18 +470,25 @@ function CategoryPage() {
                           }
                           const label = isRead ? readLabel : unreadLabel;
                           return (
-                            <div className="absolute top-6 right-6 flex items-center gap-1.5 justify-end z-10 pointer-events-none">
-                              <span
+                            <div className="absolute top-6 right-6 flex items-center gap-1.5 justify-end z-10">
+                              <button
+                                type="button"
                                 aria-label={label}
-                                className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium ${
+                                aria-pressed={isRead}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  toggleRead.mutate({ itemId: item.id, markRead: !isRead });
+                                }}
+                                className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
                                   isRead
-                                    ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
-                                    : "border-input bg-background text-foreground"
+                                    ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background hover:opacity-90"
+                                    : "border-input bg-background text-foreground hover:bg-muted"
                                 }`}
                               >
                                 {isRead ? <Check className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
                                 {label}
-                              </span>
+                              </button>
                             </div>
                           );
                         })()}
@@ -502,7 +507,7 @@ function CategoryPage() {
               <section className="mx-auto max-w-5xl px-6 pb-20">
                 <div className="border-t border-border/60 pt-20">
                   <h2 className="font-display text-xl font-semibold mb-6">{t("category.exploreOthers")}</h2>
-                  <Carousel setApi={setOthersApi} opts={{ align: "start", loop: false }} className="relative">
+                  <Carousel setApi={setOthersApi} opts={{ align: "start", loop: false }} plugins={[AutoHeight()]} className="relative">
                     <CarouselContent>
                       {Array.from({ length: Math.ceil(data.others.length / 9) }).map((_, slideIdx) => {
                         const slide = data.others.slice(slideIdx * 9, slideIdx * 9 + 9);

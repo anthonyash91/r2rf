@@ -306,8 +306,21 @@ function AdminReportsPage() {
                 }}
               >
                 <div className="mb-2 text-sm font-medium">Select a facility</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedUserFacility({ value: "__all__", label: "All Facilities" });
+                    setUserKey((k) => k + 1);
+                    setUserPickerOpen(false);
+                    setTab("user");
+                  }}
+                  className="mb-2 w-full rounded-md border border-input bg-background px-4 py-2 text-left text-sm hover:bg-muted"
+                >
+                  <span className="font-medium">All Facilities</span>
+                  <span className="ml-2 text-xs text-muted-foreground">Every registered user</span>
+                </button>
                 <FacilityCombobox
-                  value={selectedUserFacility?.value ?? ""}
+                  value={selectedUserFacility?.value && selectedUserFacility.value !== "__all__" ? selectedUserFacility.value : ""}
                   onChange={(v) => {
                     const f = facilities.find((x) => x.value === v);
                     if (!f) return;
@@ -418,7 +431,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
         </p>
       ) : (
         <>
-          <div className={`mt-8 grid gap-4 ${scope.kind === "facility" ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+          <div className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <SummaryCard
               icon={<Eye className="h-5 w-5" />}
               label={aggregated.totalViews === 1 ? "Category view" : "Category views"}
@@ -429,13 +442,20 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
               label={aggregated.totalClicks === 1 ? "Content click" : "Content clicks"}
               value={aggregated.totalClicks}
             />
-            {scope.kind === "facility" && (
-              <SummaryCard
-                icon={<UsersIcon className="h-5 w-5" />}
-                label={(data as any)?.facilityUserCount === 1 ? "User" : "Users"}
-                value={(data as any)?.facilityUserCount ?? 0}
-              />
-            )}
+            <SummaryCard
+              icon={<Clock className="h-5 w-5" />}
+              label="Hours spent"
+              value={(data as any)?.hoursSpent ?? 0}
+            />
+            <SummaryCard
+              icon={<UsersIcon className="h-5 w-5" />}
+              label={
+                scope.kind === "facility"
+                  ? ((data as any)?.facilityUserCount === 1 ? "User" : "Users")
+                  : ((data as any)?.totalUsers === 1 ? "User" : "Users")
+              }
+              value={scope.kind === "facility" ? ((data as any)?.facilityUserCount ?? 0) : ((data as any)?.totalUsers ?? 0)}
+            />
           </div>
           <CategoryList rows={aggregated.rows} />
         </>
@@ -498,12 +518,13 @@ function FacilityReportTab({ preselected }: { preselected: { value: string; labe
 function UsersReportTab({ preselected }: { preselected: { value: string; label: string } }) {
   const fetchUsers = useServerFn(listFacilityUsers);
   const selected = preselected.value;
+  const isAll = selected === "__all__";
   const [activeUser, setActiveUser] = useState<{ userId: string; name: string } | null>(null);
 
   const usersQuery = useQuery({
     queryKey: ["admin", "facility-users", selected],
     enabled: !!selected,
-    queryFn: () => fetchUsers({ data: { facilityValue: selected } }),
+    queryFn: () => fetchUsers({ data: { facilityValue: isAll ? "" : selected } }),
   });
 
   const selectedLabel = preselected.label;
@@ -525,7 +546,7 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
       <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center sm:justify-end">
         <LoadingButton
           variant="secondary"
-          onClick={() => exportFacilityUsersCsv(users, selectedLabel)}
+          onClick={() => exportFacilityUsersCsv(users, selectedLabel, isAll)}
           disabled={users.length === 0}
           icon={<Download className="h-4 w-4" />}
           className="w-full sm:w-auto"
@@ -537,22 +558,24 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
       {usersQuery.isLoading ? (
         <p className="mt-8 text-muted-foreground">Loading…</p>
       ) : users.length === 0 ? (
-        <p className="mt-8 text-muted-foreground">No users in this facility.</p>
-
-
+        <p className="mt-8 text-muted-foreground">
+          {isAll ? "No registered users." : "No users in this facility."}
+        </p>
       ) : (
         <SectionCard padded={false} className="mt-8 overflow-hidden">
           <ul className="divide-y divide-border">
             {users.map((u) => {
-              const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || u.email;
+              const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "—";
+              const meta: string[] = [];
+              if (u.username) meta.push(`@${u.username}`);
+              if (isAll && (u as any).facility) meta.push((u as any).facility);
               return (
                 <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{name}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {u.username ? `@${u.username}` : ""}
-                      {u.email ? ` · ${u.email}` : ""}
-                    </p>
+                    {meta.length > 0 && (
+                      <p className="text-xs text-muted-foreground truncate">{meta.join(" · ")}</p>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -573,20 +596,21 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
 
 
 function exportFacilityUsersCsv(
-  users: { user_id: string; username: string; first_name: string; last_name: string; email: string; created_at: string }[],
+  users: { user_id: string; username: string; first_name: string; last_name: string; email: string; created_at: string; facility?: string; last_sign_in_at?: string | null; last_login_date?: string | null }[],
   facilityLabel: string,
+  includeFacility = false,
 ) {
   const lines: string[] = [];
-  lines.push(["First name", "Last name", "Username", "Joined"].map(csvEscape).join(","));
+  const headers = includeFacility
+    ? ["First name", "Last name", "Username", "Facility", "Joined", "Last login"]
+    : ["First name", "Last name", "Username", "Joined", "Last login"];
+  lines.push(headers.map(csvEscape).join(","));
   for (const u of users) {
-    lines.push(
-      [
-        csvEscape(u.first_name),
-        csvEscape(u.last_name),
-        csvEscape(u.username),
-        csvEscape(fmtDate(u.created_at)),
-      ].join(","),
-    );
+    const lastLogin = u.last_sign_in_at || u.last_login_date || "";
+    const row = includeFacility
+      ? [u.first_name, u.last_name, u.username, u.facility ?? "", fmtDate(u.created_at), fmtDate(lastLogin)]
+      : [u.first_name, u.last_name, u.username, fmtDate(u.created_at), fmtDate(lastLogin)];
+    lines.push(row.map(csvEscape).join(","));
   }
   downloadCsv(
     `users-${facilityLabel || "facility"}-${new Date().toISOString().slice(0, 10)}.csv`,
@@ -748,14 +772,19 @@ function UserProgressView({
                 <span>{total.toLocaleString()}</span>
               </span>
             );
+            const lastLogin = (data.logins ?? []).reduce(
+              (max: string | null, d: string) => (!max || d > max ? d : max),
+              null as string | null,
+            );
             const stats = [
               { icon: CheckCircle2, label: "Items completed", value: fraction(readItems, totalItems) },
               { icon: Trophy, label: "Categories completed", value: fraction(completedCats, totalCats) },
               { icon: Clock, label: "Hours spent", value: hours.toLocaleString() },
               { icon: Flame, label: "Day streak", value: streak.toLocaleString() },
+              { icon: Clock, label: "Last login", value: lastLogin ? fmtDateShort(lastLogin) : "Never" },
             ];
             return (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mt-8 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 mt-8 mb-8">
                 {stats.map((s) => {
                   const Icon = s.icon;
                   return (
@@ -799,6 +828,12 @@ function exportUserProgressCsv(
   userName: string,
 ) {
   const lines: string[] = [];
+  const lastLogin = (data.logins ?? []).reduce(
+    (max: string | null, d: string) => (!max || d > max ? d : max),
+    null as string | null,
+  );
+  lines.push(`Last login,${csvEscape(lastLogin ? fmtDateShort(lastLogin) : "Never")}`);
+  lines.push("");
   lines.push(
     ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on"]
       .map(csvEscape)

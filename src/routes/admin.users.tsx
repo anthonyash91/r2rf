@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, HelpCircle, Loader2, Download } from "lucide-react";
+import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, HelpCircle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { LoadingButton } from "@/components/LoadingButton";
@@ -88,7 +88,7 @@ function AdminUsersPage() {
   const [newTesterPassword, setNewTesterPassword] = useState("");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
   const regularPager = useLoadMore(10, 10);
-  const [isExporting, setIsExporting] = useState(false);
+  
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -290,7 +290,7 @@ function AdminUsersPage() {
             if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
             createMut.mutate({ email: newEmail.trim(), password: newPassword, role: newRole });
           }}
-          className="mt-4 rounded-2xl border border-border bg-card p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_180px_auto_auto] gap-2"
+          className="mt-4 rounded-2xl border-2 border-[var(--color-accent)] bg-[var(--color-accent)]/5 shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-accent)_12%,transparent)] p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_180px_auto_auto] gap-2"
         >
           <input
             type="email"
@@ -339,7 +339,7 @@ function AdminUsersPage() {
             if (newTesterPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
             createTesterMut.mutate({ username: uname, password: newTesterPassword });
           }}
-          className="mt-4 rounded-2xl border border-border bg-card p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto] gap-2"
+          className="mt-4 rounded-2xl border-2 border-[var(--color-accent)] bg-[var(--color-accent)]/5 shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-accent)_12%,transparent)] p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto] gap-2"
         >
           <input
             type="text"
@@ -520,82 +520,6 @@ function AdminUsersPage() {
                       triggerClassName="h-10"
                     />
                   </div>
-                  <button
-                    type="button"
-                    disabled={isExporting}
-                    onClick={async () => {
-                      if (regularTotal === 0) { toast.error("No users to export"); return; }
-                      setIsExporting(true);
-                      try {
-                      // Fetch every user matching current filters for export.
-                      const exportRes = await listRegularFn({
-                        data: {
-                          limit: Math.min(regularTotal, 200),
-                          offset: 0,
-                          search: debouncedSearch,
-                          facility: facilityFilter === "all" ? "" : facilityFilter,
-                        },
-                      });
-                      const rows = exportRes.users;
-                      // For totals over 200, page through to gather all.
-                      let nextOffset = rows.length;
-                      while (nextOffset < exportRes.total) {
-                        const more = await listRegularFn({
-                          data: {
-                            limit: 200,
-                            offset: nextOffset,
-                            search: debouncedSearch,
-                            facility: facilityFilter === "all" ? "" : facilityFilter,
-                          },
-                        });
-                        rows.push(...more.users);
-                        if (more.users.length === 0) break;
-                        nextOffset += more.users.length;
-                      }
-                      const headers = ["Username","First name","Last name","Email","Facility","Created","Last sign in"];
-                      const esc = (v: string | null | undefined) => {
-                        const s = (v ?? "").toString();
-                        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-                      };
-                      const lines = [headers.join(",")];
-                      for (const u of rows) {
-                        lines.push([
-                          esc(u.profile?.username),
-                          esc(u.profile?.first_name),
-                          esc(u.profile?.last_name),
-                          esc(u.email),
-                          esc(u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""),
-                          esc(u.created_at),
-                          esc(u.last_sign_in_at),
-                        ].join(","));
-                      }
-
-                      const csv = lines.join("\n");
-                      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement("a");
-                      const stamp = new Date().toISOString().slice(0, 10);
-                      const scope = facilityFilter === "all" ? "all" : facilityFilter;
-                      a.href = url;
-                      a.download = `users-${scope}-${stamp}.csv`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      URL.revokeObjectURL(url);
-                      } catch (e) {
-                        toast.error(e instanceof Error ? e.message : "Export failed");
-                      } finally {
-                        setIsExporting(false);
-                      }
-                    }}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted w-full sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {isExporting ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Exporting…</>
-                    ) : (
-                      <><Download className="h-4 w-4" /> Export CSV</>
-                    )}
-                  </button>
                 </div>
               </div>
               {(() => {

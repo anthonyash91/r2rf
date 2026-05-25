@@ -59,12 +59,23 @@ export const getUsageReport = createServerFn({ method: "POST" })
       facilityUserCount = userIdFilter.length;
     }
 
-    const [catsRes, itemsRes] = await Promise.all([
+    const [catsRes, itemsRes, totalUsersRes] = await Promise.all([
       supabaseAdmin.from("categories").select("*").order("sort_order", { ascending: true }),
       supabaseAdmin.from("content_items").select("*").order("sort_order", { ascending: true }),
+      supabaseAdmin
+        .from("user_profiles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("is_synthetic", false),
     ]);
     if (catsRes.error) throw new Error(catsRes.error.message);
     if (itemsRes.error) throw new Error(itemsRes.error.message);
+    const totalUsers = totalUsersRes.count ?? 0;
+
+    // Build duration minutes lookup per item
+    const minutesByItem = new Map<string, number>();
+    for (const it of (itemsRes.data ?? []) as any[]) {
+      minutesByItem.set(it.id, parseDurationMinutes(it.duration));
+    }
 
     let q = supabaseAdmin
       .from("analytics_events")
@@ -79,28 +90,65 @@ export const getUsageReport = createServerFn({ method: "POST" })
           items: itemsRes.data ?? [],
           events: [],
           facilityUserCount,
+          totalUsers,
+          hoursSpent: 0,
         };
       }
       q = q.in("user_id", userIdFilter);
     } else if (syntheticIds.size > 0) {
       q = q.not("user_id", "in", `(${Array.from(syntheticIds).join(",")})`);
     }
-    const evRes = await q;
-    if (evRes.error) throw new Error(evRes.error.message);
 
-    // Filter out anonymous events from synthetic users that may have leaked in
-    // (defense in depth — `not in` above already filters by user_id).
+    // Progress (completed items) for hours-spent calculation
+    let pq = supabaseAdmin
+      .from("user_content_progress")
+      .select("content_item_id, user_id, created_at")
+      .limit(50000);
+    if (sinceIso) pq = pq.gte("created_at", sinceIso);
+    if (userIdFilter !== null) {
+      pq = pq.in("user_id", userIdFilter);
+    } else if (syntheticIds.size > 0) {
+      pq = pq.not("user_id", "in", `(${Array.from(syntheticIds).join(",")})`);
+    }
+
+    const [evRes, progRes] = await Promise.all([q, pq]);
+    if (evRes.error) throw new Error(evRes.error.message);
+    if (progRes.error) throw new Error(progRes.error.message);
+
     const events = (evRes.data ?? []).filter(
       (e: any) => !e.user_id || !syntheticIds.has(e.user_id),
     );
+    const progress = (progRes.data ?? []).filter(
+      (p: any) => !syntheticIds.has(p.user_id),
+    );
+    let totalMinutes = 0;
+    for (const p of progress) {
+      totalMinutes += minutesByItem.get(p.content_item_id as string) ?? 0;
+    }
+    const hoursSpent = Math.round((totalMinutes / 60) * 10) / 10;
 
     return {
       categories: catsRes.data ?? [],
       items: itemsRes.data ?? [],
       events,
       facilityUserCount,
+      totalUsers,
+      hoursSpent,
     };
   });
+
+function parseDurationMinutes(d?: string | null): number {
+  if (!d) return 0;
+  let total = 0;
+  const re = /(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)?/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(d)) !== null) {
+    const n = parseFloat(m[1]);
+    const u = (m[2] ?? "min").toLowerCase();
+    total += u.startsWith("h") ? n * 60 : n;
+  }
+  return total;
+}
 
 /**
  * List users belonging to a facility, with names/email/username.
@@ -108,29 +156,53 @@ export const getUsageReport = createServerFn({ method: "POST" })
 export const listFacilityUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ facilityValue: z.string().min(1).max(64) }).parse(input),
+    z
+      .object({ facilityValue: z.string().min(0).max(64).nullable().optional() })
+      .parse(input),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    const { data: profs, error } = await supabaseAdmin
+    const facilityValue = data.facilityValue ?? "";
+    let pq = supabaseAdmin
       .from("user_profiles")
       .select("user_id, username, first_name, last_name, facility, created_at")
-      .eq("facility", data.facilityValue)
       .eq("is_synthetic", false);
+    if (facilityValue) pq = pq.eq("facility", facilityValue);
+
+    const { data: profs, error } = await pq;
     if (error) throw new Error(error.message);
     const ids = (profs ?? []).map((p: any) => p.user_id as string);
 
     const emailById = new Map<string, string>();
+    const lastSignInById = new Map<string, string | null>();
     if (ids.length > 0) {
-      // listUsers paginates; 200 is enough for typical facility sizes
       const { data: usersData, error: ue } = await supabaseAdmin.auth.admin.listUsers({
         page: 1,
         perPage: 1000,
       });
       if (ue) throw new Error(ue.message);
+      const idSet = new Set(ids);
       for (const u of usersData.users) {
-        if (ids.includes(u.id)) emailById.set(u.id, u.email ?? "");
+        if (idSet.has(u.id)) {
+          emailById.set(u.id, u.email ?? "");
+          lastSignInById.set(u.id, (u as any).last_sign_in_at ?? null);
+        }
+      }
+    }
+
+    // Also fetch most recent user_logins date for each user as a fallback / more accurate "last login"
+    const lastLoginById = new Map<string, string | null>();
+    if (ids.length > 0) {
+      const { data: loginRows, error: le } = await supabaseAdmin
+        .from("user_logins")
+        .select("user_id, login_date")
+        .in("user_id", ids);
+      if (le) throw new Error(le.message);
+      for (const r of loginRows ?? []) {
+        const prev = lastLoginById.get(r.user_id as string);
+        const d = r.login_date as string;
+        if (!prev || d > prev) lastLoginById.set(r.user_id as string, d);
       }
     }
 
@@ -140,8 +212,11 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
         username: (p.username as string) ?? "",
         first_name: (p.first_name as string) ?? "",
         last_name: (p.last_name as string) ?? "",
+        facility: (p.facility as string) ?? "",
         email: emailById.get(p.user_id as string) ?? "",
         created_at: p.created_at as string,
+        last_sign_in_at: lastSignInById.get(p.user_id as string) ?? null,
+        last_login_date: lastLoginById.get(p.user_id as string) ?? null,
       })),
     };
   });
