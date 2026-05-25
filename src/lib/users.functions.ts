@@ -143,7 +143,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
-        limit: z.number().int().min(1).max(200).default(10),
+        limit: z.number().int().min(1).max(10000).default(10),
         offset: z.number().int().min(0).default(0),
         search: z.string().trim().max(100).optional().default(""),
         facility: z.string().trim().max(100).optional().default(""),
