@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { recordAdminAudit } from "@/lib/admin-audit.server";
+
 
 
 type Role = "admin" | "contributor" | "tester" | "user";
@@ -122,6 +124,12 @@ export const createUser = createServerFn({ method: "POST" })
       // Non-fatal: user is created. Surface the message so the admin knows.
       console.error("createUser: resend signup failed", resendErr.message);
     }
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.create",
+      targetUserId: created.user?.id ?? null,
+      details: { email: data.email, role: data.role },
+    });
     return { ok: true };
   });
 
@@ -213,6 +221,11 @@ export const deleteUser = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.delete",
+      targetUserId: data.userId,
+    });
     return { ok: true };
   });
 
@@ -232,6 +245,12 @@ export const deleteUsers = createServerFn({ method: "POST" })
         const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
         if (error) throw new Error(error.message);
         deleted++;
+        await recordAdminAudit({
+          actorUserId: context.userId,
+          action: "user.delete",
+          targetUserId: userId,
+          details: { bulk: true },
+        });
       } catch (e: any) {
         failed.push({ userId, message: e?.message ?? "unknown error" });
       }
@@ -279,6 +298,12 @@ export const setUserPassword = createServerFn({ method: "POST" })
       password: data.password,
     });
     if (error) throw new Error(error.message);
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.password_reset",
+      targetUserId: data.userId,
+      details: { method: "admin_set" },
+    });
     return { ok: true };
   });
 
@@ -291,6 +316,12 @@ export const sendPasswordResetEmail = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email);
     if (error) throw new Error(error.message);
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.password_reset",
+      targetUserId: null,
+      details: { method: "email_link", email: data.email },
+    });
     return { ok: true };
   });
 
@@ -337,6 +368,14 @@ export const setUserRole = createServerFn({ method: "POST" })
         .eq("role", data.role);
       if (error) throw new Error(error.message);
     }
+
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: data.enabled ? "user.role_grant" : "user.role_revoke",
+      targetUserId: data.userId,
+      details: { role: data.role },
+    });
+
     return { ok: true };
   });
 
@@ -352,6 +391,11 @@ export const clearUserSecurityAnswers = createServerFn({ method: "POST" })
       .delete()
       .eq("user_id", data.userId);
     if (error) throw new Error(error.message);
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.security_answers_clear",
+      targetUserId: data.userId,
+    });
     return { ok: true };
   });
 

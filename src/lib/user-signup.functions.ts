@@ -18,11 +18,25 @@ function syntheticEmailLocal(username: string): string {
 }
 
 function getSecret(): string {
-  const s = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!s) {
-    throw new Error("Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY is required for signup challenge signing.");
+  // Prefer a dedicated signing secret; fall back to the service role key
+  // only if the dedicated secret is not configured. Reusing the service
+  // role key as an HMAC secret means a compromise of the signature
+  // surface leaks the most privileged key in the system, so this fallback
+  // is a temporary bridge — set SIGNUP_CHALLENGE_SECRET in production.
+  const dedicated = process.env.SIGNUP_CHALLENGE_SECRET;
+  if (dedicated && dedicated.length >= 32) return dedicated;
+  const fallback = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!fallback) {
+    throw new Error(
+      "Server misconfiguration: SIGNUP_CHALLENGE_SECRET (or SUPABASE_SERVICE_ROLE_KEY fallback) is required for signup challenge signing.",
+    );
   }
-  return s;
+  if (!dedicated) {
+    console.warn(
+      "[user-signup] SIGNUP_CHALLENGE_SECRET not set — falling back to SUPABASE_SERVICE_ROLE_KEY. Configure SIGNUP_CHALLENGE_SECRET to harden signing.",
+    );
+  }
+  return fallback;
 }
 
 function signChallenge(a: number, b: number, expiresAt: number): string {
