@@ -298,6 +298,12 @@ export const setUserPassword = createServerFn({ method: "POST" })
       password: data.password,
     });
     if (error) throw new Error(error.message);
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.password_reset",
+      targetUserId: data.userId,
+      details: { method: "admin_set" },
+    });
     return { ok: true };
   });
 
@@ -310,6 +316,12 @@ export const sendPasswordResetEmail = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email);
     if (error) throw new Error(error.message);
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.password_reset",
+      targetUserId: null,
+      details: { method: "email_link", email: data.email },
+    });
     return { ok: true };
   });
 
