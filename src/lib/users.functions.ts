@@ -136,7 +136,7 @@ export const listTesterUsers = createServerFn({ method: "GET" })
   });
 
 /**
- * Regular (signed-up) users with server-side pagination, search and facility filter.
+ * Regular users with server-side pagination, search and facility filter.
  */
 export const listRegularUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -163,8 +163,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
 
     let q = supabaseAdmin
       .from("user_profiles")
-      .select("user_id, username, facility, first_name, last_name, created_at", { count: "exact" })
-      .eq("is_synthetic", false);
+      .select("user_id, username, facility, first_name, last_name, created_at", { count: "exact" });
 
     if (excludeIds.length) {
       q = q.not("user_id", "in", `(${excludeIds.join(",")})`);
