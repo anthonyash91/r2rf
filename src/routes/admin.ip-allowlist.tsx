@@ -109,7 +109,7 @@ function BlockedSection() {
         ) : (
           <ul className="divide-y divide-border">
             {rows.map((r) => (
-              <li key={r.id} className="p-4 sm:p-5 pr-[28px] pl-[18px] flex items-center gap-4">
+              <li key={r.id} className="p-4 sm:p-5 pr-[32px] pl-[22px] flex items-center gap-4">
                 <div className="flex-1 min-w-0">
                   <p className="font-mono text-sm">{r.ip_address}</p>
                   <p className="text-xs text-muted-foreground">
@@ -376,7 +376,7 @@ function AllowlistRow({
   });
 
   return (
-    <li className="p-4 sm:p-5 pr-[28px] pl-[18px]">
+    <li className="p-4 sm:p-5 pr-[32px] pl-[22px]">
       <div className="flex items-center gap-4">
         <div className="flex-1 min-w-0">
           <p className="font-mono text-sm">{row.ip_address}</p>
