@@ -362,6 +362,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
   const [order, setOrder] = useState<ContentItem[]>([]);
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
   useEffect(() => { setOrder(items); }, [items]);
   const didAutoOpenRef = useRef(false);
   useEffect(() => {
@@ -379,6 +380,20 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     }, 50);
     return () => clearTimeout(t);
   }, [editing]);
+  useEffect(() => {
+    if (!pendingScrollId) return;
+    if (!items.some((it) => it.id === pendingScrollId)) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-item-id="${pendingScrollId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-2", "ring-[var(--color-accent)]", "transition-all");
+        setTimeout(() => el.classList.remove("ring-2", "ring-[var(--color-accent)]", "transition-all"), 1800);
+      }
+      setPendingScrollId(null);
+    }, 100);
+    return () => clearTimeout(t);
+  }, [pendingScrollId, items]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin", "category", categoryId] });
@@ -391,8 +406,9 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         const { id: itemId, ...rest } = values;
         const { error } = await supabase.from("content_items").update(rest).eq("id", itemId);
         if (error) throw error;
+        return itemId;
       } else {
-        const { error } = await supabase.from("content_items").insert({
+        const { data, error } = await supabase.from("content_items").insert({
           category_id: categoryId,
           title: values.title!,
           type: values.type ?? "Article",
@@ -409,13 +425,15 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           file_name_es: values.file_name_es ?? null,
           published: values.published ?? true,
           sort_order: (items.at(-1)?.sort_order ?? 0) + 1,
-        });
+        }).select("id").single();
         if (error) throw error;
+        return data.id as string;
       }
     },
-    onSuccess: () => {
+    onSuccess: (savedId) => {
       toast.success("Saved");
       setEditing(null);
+      if (savedId) setPendingScrollId(savedId);
       invalidate();
     },
     onError: (e: any) => toast.error(e.message),
@@ -534,7 +552,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             const isEditingThis = editing !== null && editing !== "new" && editing.id === item.id;
             const isDimmed = editing !== null && !isEditingThis;
             return (
-              <div className={`flex flex-col sm:flex-row sm:items-center gap-3 p-6 pl-3 pb-6 sm:pb-5 transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
+              <div data-item-id={item.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 p-6 pl-3 pb-6 sm:pb-5 transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
                 <div className="flex-1 min-w-0 flex flex-col gap-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     {(() => {
