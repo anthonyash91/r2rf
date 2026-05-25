@@ -201,7 +201,7 @@ function AdminReportsPage() {
         }}
         className="mt-6"
       >
-        <div className="flex flex-col gap-8 lg:gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-10 lg:gap-4 lg:flex-row lg:items-center lg:justify-between">
           <PageHeader
             icon={BarChart3}
             title={
