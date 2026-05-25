@@ -375,10 +375,14 @@ function CategoryPage() {
 
                     return (
                       <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24">
-                        <span
-                          aria-hidden
-                          className={`pointer-events-none absolute inset-0 rounded-[inherit] bg-[var(--color-accent)]/15 transition-opacity duration-1000 ease-in-out ${highlightedId === item.id ? "opacity-100" : "opacity-0"}`}
-                        />
+                        {highlightedId === item.id && (
+                          <span
+                            aria-hidden
+                            className="pointer-events-none absolute inset-0 z-10 rounded-[inherit] bg-[var(--color-accent)]/15 opacity-0 animate-highlight-pulse"
+                          />
+                        )}
+
+
 
 
                         <Wrapper
