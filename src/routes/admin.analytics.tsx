@@ -607,24 +607,31 @@ function UserProgressView({
 
   const data = useMemo(() => {
     if (!rawData) return rawData;
-    if (range === "all") return rawData;
-    const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
-    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-    const readSet = new Set<string>(
-      (rawData.progress ?? [])
-        .filter((p: any) => new Date(p.created_at).getTime() >= cutoff)
-        .map((p: any) => p.content_item_id as string),
+    const allProgress = rawData.progress ?? [];
+    const days = range === "all" ? null : range === "7d" ? 7 : range === "30d" ? 30 : 90;
+    const cutoff = days === null ? -Infinity : Date.now() - days * 24 * 60 * 60 * 1000;
+    const filteredProgress = allProgress.filter(
+      (p: any) => new Date(p.created_at).getTime() >= cutoff,
     );
+    const readAtMap = new Map<string, string>();
+    for (const p of filteredProgress) {
+      const prev = readAtMap.get(p.content_item_id);
+      if (!prev || new Date(p.created_at).getTime() < new Date(prev).getTime()) {
+        readAtMap.set(p.content_item_id, p.created_at);
+      }
+    }
     return {
       ...rawData,
-      items: rawData.items.map((i: any) => ({ ...i, read: readSet.has(i.id) })),
+      items: rawData.items.map((i: any) => ({
+        ...i,
+        read: readAtMap.has(i.id),
+        read_at: readAtMap.get(i.id) ?? null,
+      })),
       logins: (rawData.logins ?? []).filter((d: string) => {
         const t = new Date(d).getTime();
         return !isNaN(t) && t >= cutoff;
       }),
-      progress: (rawData.progress ?? []).filter(
-        (p: any) => new Date(p.created_at).getTime() >= cutoff,
-      ),
+      progress: filteredProgress,
     };
   }, [rawData, range]);
 
@@ -786,7 +793,7 @@ function exportUserProgressCsv(
 ) {
   const lines: string[] = [];
   lines.push(
-    ["Category", "Category slug", "Item title", "Item type", "Duration", "Read"]
+    ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on"]
       .map(csvEscape)
       .join(","),
   );
@@ -800,7 +807,7 @@ function exportUserProgressCsv(
     const items = itemsByCat.get(c.id) ?? [];
     const read = items.filter((i) => i.read).length;
     lines.push(
-      [csvEscape(c.name), csvEscape(c.slug), `${read} of ${items.length} read`, "", "", ""].join(","),
+      [csvEscape(c.name), csvEscape(c.slug), `${read} of ${items.length} read`, "", "", "", ""].join(","),
     );
     for (const it of items) {
       lines.push(
@@ -811,6 +818,7 @@ function exportUserProgressCsv(
           csvEscape(it.type),
           csvEscape(it.duration ?? ""),
           it.read ? "Yes" : "No",
+          csvEscape(it.read && (it as any).read_at ? fmtDate((it as any).read_at) : ""),
         ].join(","),
       );
     }
@@ -924,6 +932,7 @@ function UserCategorySection({
                         <>
                           <Check className="h-3.5 w-3.5" />
                           {labels.read}
+                          {item.read_at && <> on {fmtDate(item.read_at)}</>}
                         </>
                       ) : (
                         <>
