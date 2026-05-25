@@ -370,12 +370,12 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
   return (
     <div>
       <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex gap-2 flex-1 min-w-0">
+        <div className="flex flex-wrap gap-2 flex-1 min-w-0">
           {RANGE_OPTIONS.map((opt) => (
             <button
               key={opt.key}
               onClick={() => setRange(opt.key)}
-              className={`@container flex-1 sm:flex-initial rounded-md border px-4 py-2 text-sm text-center transition-colors ${
+              className={`@container inline-flex min-w-max flex-none items-center justify-center rounded-md border px-4 py-2 text-sm text-center whitespace-nowrap transition-colors ${
                 range === opt.key
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border-input bg-background hover:bg-muted"
@@ -385,7 +385,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
                 "All time"
               ) : (
                 <>
-                  <span className="hidden @[6rem]:inline">Last </span>
+                  <span className="@[max-width:5.5rem]:hidden">Last </span>
                   {opt.shortLabel}
                 </>
               )}
@@ -644,12 +644,12 @@ function UserProgressView({
         </button>
         <h2 className="font-display text-xl font-semibold flex-1 min-w-0 truncate">{userName}</h2>
         <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
-          <div className="flex gap-2 flex-1 xl:flex-initial">
+          <div className="flex flex-wrap gap-2 flex-1 xl:flex-initial">
             {RANGE_OPTIONS.map((opt) => (
               <button
                 key={opt.key}
                 onClick={() => setRange(opt.key)}
-                className={`@container flex-1 xl:flex-initial rounded-md border px-4 py-2 text-sm text-center transition-colors ${
+                className={`@container inline-flex min-w-max flex-none items-center justify-center rounded-md border px-4 py-2 text-sm text-center whitespace-nowrap transition-colors ${
                   range === opt.key
                     ? "bg-primary text-primary-foreground border-primary"
                     : "border-input bg-background hover:bg-muted"
@@ -659,7 +659,7 @@ function UserProgressView({
                   "All time"
                 ) : (
                   <>
-                    <span className="hidden @[6rem]:inline">Last </span>
+                    <span className="@[max-width:5.5rem]:hidden">Last </span>
                     {opt.shortLabel}
                   </>
                 )}
