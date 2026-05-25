@@ -290,7 +290,7 @@ function AdminUsersPage() {
             if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
             createMut.mutate({ email: newEmail.trim(), password: newPassword, role: newRole });
           }}
-          className="mt-4 rounded-2xl border border-border bg-card p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_180px_auto_auto] gap-2"
+          className="mt-4 rounded-2xl border-2 border-[var(--color-accent)] bg-[var(--color-accent)]/5 shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-accent)_12%,transparent)] p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_180px_auto_auto] gap-2"
         >
           <input
             type="email"
