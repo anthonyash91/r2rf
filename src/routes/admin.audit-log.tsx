@@ -130,7 +130,7 @@ function AdminAuditLogPage() {
       </div>
 
       <section className="mt-8 space-y-4">
-        <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+        <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
             <div className="flex-1 min-w-[180px]">
               <label className="block text-xs font-medium text-muted-foreground mb-1">Search</label>
@@ -193,7 +193,7 @@ function AdminAuditLogPage() {
                 const Icon = meta.icon;
                 const detailText = describeDetails(e.action as ActionType, e.details);
                 return (
-                  <li key={e.id} className="p-4 sm:p-5">
+                  <li key={e.id} className="p-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex items-start gap-3 min-w-0">
                         <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${meta.tone}`}>
