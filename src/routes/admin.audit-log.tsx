@@ -193,7 +193,7 @@ function AdminAuditLogPage() {
                 const Icon = meta.icon;
                 const detailText = describeDetails(e.action as ActionType, e.details);
                 return (
-                  <li key={e.id} className="p-4 sm:p-5">
+                  <li key={e.id} className="p-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex items-start gap-3 min-w-0">
                         <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${meta.tone}`}>
