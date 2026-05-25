@@ -239,9 +239,11 @@ function SignupPage() {
   }
 
   return (
+    <OnScreenKeyboardProvider>
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <main className="flex-1 mx-auto w-full max-w-xl px-6 pt-16 pb-11">
+
         {mode === "reset" ? (
           <>
             <div className="mb-8">
