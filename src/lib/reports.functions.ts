@@ -157,13 +157,17 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z
-      .object({ facilityValue: z.string().min(0).max(64).nullable().optional() })
+      .object({
+        facilityValue: z.string().min(0).max(64).nullable().optional(),
+        includeSynthetic: z.boolean().optional(),
+      })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
 
     const facilityValue = data.facilityValue ?? "";
+    const includeSynthetic = data.includeSynthetic ?? false;
 
     // Paginate to fetch ALL profiles (Supabase enforces a per-request row cap).
     const PAGE_SIZE = 1000;
@@ -172,9 +176,9 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
       let pq = supabaseAdmin
         .from("user_profiles")
         .select("user_id, username, first_name, last_name, facility, created_at")
-        .eq("is_synthetic", false)
         .order("created_at", { ascending: false })
         .range(from, from + PAGE_SIZE - 1);
+      if (!includeSynthetic) pq = pq.eq("is_synthetic", false);
       if (facilityValue) pq = pq.eq("facility", facilityValue);
       const { data: page, error } = await pq;
       if (error) throw new Error(error.message);
@@ -189,17 +193,22 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     const emailById = new Map<string, string>();
     const lastSignInById = new Map<string, string | null>();
     if (ids.length > 0) {
-      const { data: usersData, error: ue } = await supabaseAdmin.auth.admin.listUsers({
-        page: 1,
-        perPage: 1000,
-      });
-      if (ue) throw new Error(ue.message);
       const idSet = new Set(ids);
-      for (const u of usersData.users) {
-        if (idSet.has(u.id)) {
-          emailById.set(u.id, u.email ?? "");
-          lastSignInById.set(u.id, (u as any).last_sign_in_at ?? null);
+      const AUTH_PAGE_SIZE = 1000;
+      for (let page = 1; ; page += 1) {
+        const { data: usersData, error: ue } = await supabaseAdmin.auth.admin.listUsers({
+          page,
+          perPage: AUTH_PAGE_SIZE,
+        });
+        if (ue) throw new Error(ue.message);
+        const authUsers = usersData.users ?? [];
+        for (const u of authUsers) {
+          if (idSet.has(u.id)) {
+            emailById.set(u.id, u.email ?? "");
+            lastSignInById.set(u.id, (u as any).last_sign_in_at ?? null);
+          }
         }
+        if (authUsers.length < AUTH_PAGE_SIZE) break;
       }
     }
 

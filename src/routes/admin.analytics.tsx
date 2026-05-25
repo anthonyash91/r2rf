@@ -173,6 +173,12 @@ function downloadCsv(filename: string, lines: string[]) {
   URL.revokeObjectURL(url);
 }
 
+function waitForNextPaint() {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+}
+
 function AdminReportsPage() {
   const [tab, setTab] = useState<"overall" | "facility" | "user">("overall");
   const [facilityKey, setFacilityKey] = useState(0);
@@ -379,6 +385,7 @@ type UsageScope =
 
 function UsageReportView({ scope }: { scope: UsageScope }) {
   const [range, setRange] = useState<RangeKey>("30d");
+  const [isExporting, setIsExporting] = useState(false);
   const fetchReport = useServerFn(getUsageReport);
 
   const facilityValue = scope.kind === "facility" ? scope.facilityValue : null;
@@ -423,17 +430,25 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
         </div>
         <LoadingButton
           variant="secondary"
-          onClick={() =>
-            aggregated &&
-            exportUsageCsv(aggregated, exportLabel, {
-              hoursSpent: (data as any)?.hoursSpent ?? 0,
-              usersSignedUp:
-                scope.kind === "facility"
-                  ? ((data as any)?.facilityUserCount ?? 0)
-                  : ((data as any)?.totalUsers ?? 0),
-            })
-          }
+          onClick={async () => {
+            if (!aggregated) return;
+            setIsExporting(true);
+            try {
+              await waitForNextPaint();
+              exportUsageCsv(aggregated, exportLabel, {
+                hoursSpent: (data as any)?.hoursSpent ?? 0,
+                usersSignedUp:
+                  scope.kind === "facility"
+                    ? ((data as any)?.facilityUserCount ?? 0)
+                    : ((data as any)?.totalUsers ?? 0),
+              });
+            } finally {
+              setTimeout(() => setIsExporting(false), 0);
+            }
+          }}
           disabled={!aggregated}
+          pending={isExporting}
+          pendingText="Exporting…"
           icon={<Download className="h-4 w-4" />}
           className="w-full sm:w-auto"
         >
@@ -553,6 +568,7 @@ function UsersReportTab({
   const fetchUsers = useServerFn(listFacilityUsers);
   const selected = preselected.value;
   const isAll = selected === "__all__";
+  const [isExporting, setIsExporting] = useState(false);
   const pager = useLoadMore(10, 10);
 
   const usersQuery = useQuery({
@@ -581,8 +597,21 @@ function UsersReportTab({
       <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center sm:justify-end">
         <LoadingButton
           variant="secondary"
-          onClick={() => exportFacilityUsersCsv(users, selectedLabel, isAll)}
-          disabled={users.length === 0}
+          onClick={async () => {
+            setIsExporting(true);
+            try {
+              await waitForNextPaint();
+              const exportUsers = isAll
+                ? (await fetchUsers({ data: { facilityValue: "", includeSynthetic: true } })).users ?? []
+                : users;
+              exportFacilityUsersCsv(exportUsers, selectedLabel, isAll);
+            } finally {
+              setTimeout(() => setIsExporting(false), 0);
+            }
+          }}
+          disabled={usersQuery.isLoading || (!isAll && users.length === 0)}
+          pending={isExporting}
+          pendingText="Exporting…"
           icon={<Download className="h-4 w-4" />}
           className="w-full sm:w-auto"
         >
@@ -677,6 +706,7 @@ function UserProgressView({
 }) {
   const fetchProgress = useServerFn(getUserProgressReport);
   const [range, setRange] = useState<RangeKey>("all");
+  const [isExporting, setIsExporting] = useState(false);
   const { data: rawData, isLoading } = useQuery({
     queryKey: ["admin", "user-progress", userId],
     queryFn: () => fetchProgress({ data: { userId } }),
@@ -763,8 +793,19 @@ function UserProgressView({
           </div>
           <LoadingButton
             variant="secondary"
-            onClick={() => data && exportUserProgressCsv(data, userName)}
+            onClick={async () => {
+              if (!data) return;
+              setIsExporting(true);
+              try {
+                await waitForNextPaint();
+                exportUserProgressCsv(data, userName);
+              } finally {
+                setTimeout(() => setIsExporting(false), 0);
+              }
+            }}
             disabled={!data}
+            pending={isExporting}
+            pendingText="Exporting…"
             icon={<Download className="h-4 w-4" />}
             className="w-full sm:w-auto"
           >
