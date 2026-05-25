@@ -317,6 +317,7 @@ function AdminReportsPage() {
                     setSelectedUserFacility({ value: "__all__", label: "All Facilities" });
                     setUserKey((k) => k + 1);
                     setUserPickerOpen(false);
+                    setActiveUser(null);
                     setTab("user");
                   }}
                   className="mb-2 w-full rounded-md border border-input bg-background px-4 py-2 text-left text-sm hover:bg-muted"
@@ -332,6 +333,7 @@ function AdminReportsPage() {
                     setSelectedUserFacility({ value: f.value, label: f.label });
                     setUserKey((k) => k + 1);
                     setUserPickerOpen(false);
+                    setActiveUser(null);
                     setTab("user");
                   }}
                   options={facilities.map((f) => ({ value: f.value, label: f.label }))}
