@@ -463,6 +463,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_dismissed_messages: {
+        Row: {
+          created_at: string
+          dismissed_version: string
+          id: string
+          message_kind: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed_version: string
+          id?: string
+          message_kind: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dismissed_version?: string
+          id?: string
+          message_kind?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_logins: {
         Row: {
           created_at: string
