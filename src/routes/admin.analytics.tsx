@@ -39,6 +39,7 @@ import {
   getUserProgressReport,
 } from "@/lib/reports.functions";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
+import { LoadMorePager, useLoadMore } from "@/components/LoadMorePager";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
@@ -180,6 +181,7 @@ function AdminReportsPage() {
   const [userPickerOpen, setUserPickerOpen] = useState(false);
   const [userKey, setUserKey] = useState(0);
   const [selectedUserFacility, setSelectedUserFacility] = useState<{ value: string; label: string } | null>(null);
+  const [activeUser, setActiveUser] = useState<{ userId: string; name: string } | null>(null);
 
   const fetchFacilities = useServerFn(listAllFacilities);
   const facilitiesQuery = useQuery({
@@ -198,6 +200,17 @@ function AdminReportsPage() {
     setUserPickerOpen(true);
   };
 
+  const headerTitle =
+    tab === "user" && activeUser
+      ? "Reports > User Report"
+      : tab === "overall"
+        ? "Reports > Overall"
+        : tab === "facility" && selectedFacility
+          ? `Reports > ${selectedFacility.label}`
+          : tab === "user" && selectedUserFacility
+            ? `Reports > Users > ${selectedUserFacility.label}`
+            : "Reports";
+
   return (
     <div>
       <Tabs
@@ -211,15 +224,7 @@ function AdminReportsPage() {
         <div className="flex flex-col gap-8 lg:gap-4 lg:flex-row lg:items-center lg:justify-between">
           <PageHeader
             icon={BarChart3}
-            title={
-              tab === "overall"
-                ? "Reports > Overall"
-                : tab === "facility" && selectedFacility
-                  ? `Reports > ${selectedFacility.label}`
-                  : tab === "user" && selectedUserFacility
-                    ? `Reports > ${selectedUserFacility.label}`
-                    : "Reports"
-            }
+            title={headerTitle}
             description="Usage, facility, and per-user reports across the site."
           />
           <TabsList className="h-auto p-2 gap-1 w-full lg:w-auto bg-muted/40 self-stretch lg:self-center">
@@ -354,6 +359,8 @@ function AdminReportsPage() {
               <UsersReportTab
                 key={`${userKey}-${selectedUserFacility.value}`}
                 preselected={selectedUserFacility}
+                activeUser={activeUser}
+                setActiveUser={setActiveUser}
               />
             ) : null}
         </TabsContent>
@@ -414,7 +421,16 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
         </div>
         <LoadingButton
           variant="secondary"
-          onClick={() => aggregated && exportUsageCsv(aggregated, exportLabel)}
+          onClick={() =>
+            aggregated &&
+            exportUsageCsv(aggregated, exportLabel, {
+              hoursSpent: (data as any)?.hoursSpent ?? 0,
+              usersSignedUp:
+                scope.kind === "facility"
+                  ? ((data as any)?.facilityUserCount ?? 0)
+                  : ((data as any)?.totalUsers ?? 0),
+            })
+          }
           disabled={!aggregated}
           icon={<Download className="h-4 w-4" />}
           className="w-full sm:w-auto"
@@ -467,8 +483,16 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
 function exportUsageCsv(
   aggregated: { rows: AggregatedRow[]; totalViews: number; totalClicks: number },
   label: string,
+  summary: { hoursSpent: number; usersSignedUp: number },
 ) {
   const lines: string[] = [];
+  lines.push(["Overall usage"].map(csvEscape).join(","));
+  lines.push(["Metric", "Value"].map(csvEscape).join(","));
+  lines.push(["Category views", aggregated.totalViews].map(csvEscape).join(","));
+  lines.push(["Content clicks", aggregated.totalClicks].map(csvEscape).join(","));
+  lines.push(["Hours spent", summary.hoursSpent].map(csvEscape).join(","));
+  lines.push(["Users signed up", summary.usersSignedUp].map(csvEscape).join(","));
+  lines.push("");
   lines.push(
     ["Category", "Category slug", "Item title", "Item type", "Added", "Views", "Clicks"]
       .map(csvEscape)
@@ -515,11 +539,19 @@ function FacilityReportTab({ preselected }: { preselected: { value: string; labe
 
 /* ---------------- Users Tab ---------------- */
 
-function UsersReportTab({ preselected }: { preselected: { value: string; label: string } }) {
+function UsersReportTab({
+  preselected,
+  activeUser,
+  setActiveUser,
+}: {
+  preselected: { value: string; label: string };
+  activeUser: { userId: string; name: string } | null;
+  setActiveUser: (u: { userId: string; name: string } | null) => void;
+}) {
   const fetchUsers = useServerFn(listFacilityUsers);
   const selected = preselected.value;
   const isAll = selected === "__all__";
-  const [activeUser, setActiveUser] = useState<{ userId: string; name: string } | null>(null);
+  const pager = useLoadMore(10, 10);
 
   const usersQuery = useQuery({
     queryKey: ["admin", "facility-users", selected],
@@ -540,6 +572,7 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
   }
 
   const users = usersQuery.data?.users ?? [];
+  const visibleUsers = isAll ? users.slice(0, pager.visibleCount) : users;
 
   return (
     <div>
@@ -562,33 +595,44 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
           {isAll ? "No registered users." : "No users in this facility."}
         </p>
       ) : (
-        <SectionCard padded={false} className="mt-8 overflow-hidden">
-          <ul className="divide-y divide-border">
-            {users.map((u) => {
-              const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "—";
-              const meta: string[] = [];
-              if (u.username) meta.push(`@${u.username}`);
-              if (isAll && (u as any).facility) meta.push((u as any).facility);
-              return (
-                <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{name}</p>
-                    {meta.length > 0 && (
-                      <p className="text-xs text-muted-foreground truncate">{meta.join(" · ")}</p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveUser({ userId: u.user_id, name })}
-                    className="rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted self-start sm:self-auto"
-                  >
-                    View report
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </SectionCard>
+        <>
+          <SectionCard padded={false} className="mt-8 overflow-hidden">
+            <ul className="divide-y divide-border">
+              {visibleUsers.map((u) => {
+                const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "—";
+                const meta: string[] = [];
+                if (u.username) meta.push(`@${u.username}`);
+                if (isAll && (u as any).facility) meta.push((u as any).facility);
+                const lastLoginIso = (u as any).last_sign_in_at || (u as any).last_login_date || null;
+                return (
+                  <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{name}</p>
+                      {meta.length > 0 && (
+                        <p className="text-xs text-muted-foreground truncate">{meta.join(" · ")}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        Signed up {fmtDate(u.created_at) || "—"}
+                        {" · "}
+                        Last login {lastLoginIso ? fmtDate(lastLoginIso) : "Never"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveUser({ userId: u.user_id, name })}
+                      className="rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted self-start sm:self-auto"
+                    >
+                      View report
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </SectionCard>
+          {isAll && (
+            <LoadMorePager pager={pager} total={users.length} itemLabel="user" />
+          )}
+        </>
       )}
     </div>
   );
@@ -832,7 +876,54 @@ function exportUserProgressCsv(
     (max: string | null, d: string) => (!max || d > max ? d : max),
     null as string | null,
   );
-  lines.push(`Last login,${csvEscape(lastLogin ? fmtDateShort(lastLogin) : "Never")}`);
+
+  // Summary metrics
+  const itemsArr = data.items as any[];
+  const totalItems = itemsArr.length;
+  const readItems = itemsArr.filter((i) => i.read).length;
+  const minutesSpent = itemsArr
+    .filter((i) => i.read)
+    .reduce((acc: number, i: any) => acc + parseMinutes(i.duration), 0);
+  const hoursSpent = Math.floor(minutesSpent / 60);
+  const itemsByCatForSummary = new Map<string, any[]>();
+  for (const it of itemsArr) {
+    const arr = itemsByCatForSummary.get(it.category_id) ?? [];
+    arr.push(it);
+    itemsByCatForSummary.set(it.category_id, arr);
+  }
+  let totalCats = 0;
+  let completedCats = 0;
+  for (const c of data.categories as any[]) {
+    const items = itemsByCatForSummary.get(c.id) ?? [];
+    if (items.length > 0) {
+      totalCats += 1;
+      if (items.every((i) => i.read)) completedCats += 1;
+    }
+  }
+  const loginDays = new Set<string>(data.logins ?? []);
+  let streak = 0;
+  if (loginDays.size > 0) {
+    const fmt = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${dd}`;
+    };
+    const cursor = new Date();
+    if (!loginDays.has(fmt(cursor))) cursor.setDate(cursor.getDate() - 1);
+    while (loginDays.has(fmt(cursor))) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+  }
+
+  lines.push(["Overall usage"].map(csvEscape).join(","));
+  lines.push(["Metric", "Value"].map(csvEscape).join(","));
+  lines.push(["Items completed", `${readItems} of ${totalItems}`].map(csvEscape).join(","));
+  lines.push(["Categories completed", `${completedCats} of ${totalCats}`].map(csvEscape).join(","));
+  lines.push(["Hours spent", hoursSpent].map(csvEscape).join(","));
+  lines.push(["Day streak", streak].map(csvEscape).join(","));
+  lines.push(["Last login", lastLogin ? fmtDateShort(lastLogin) : "Never"].map(csvEscape).join(","));
   lines.push("");
   lines.push(
     ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on"]
