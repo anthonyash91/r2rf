@@ -592,10 +592,34 @@ function UserProgressView({
   onBack: () => void;
 }) {
   const fetchProgress = useServerFn(getUserProgressReport);
-  const { data, isLoading } = useQuery({
+  const [range, setRange] = useState<RangeKey>("all");
+  const { data: rawData, isLoading } = useQuery({
     queryKey: ["admin", "user-progress", userId],
     queryFn: () => fetchProgress({ data: { userId } }),
   });
+
+  const data = useMemo(() => {
+    if (!rawData) return rawData;
+    if (range === "all") return rawData;
+    const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    const readSet = new Set<string>(
+      (rawData.progress ?? [])
+        .filter((p: any) => new Date(p.created_at).getTime() >= cutoff)
+        .map((p: any) => p.content_item_id as string),
+    );
+    return {
+      ...rawData,
+      items: rawData.items.map((i: any) => ({ ...i, read: readSet.has(i.id) })),
+      logins: (rawData.logins ?? []).filter((d: string) => {
+        const t = new Date(d).getTime();
+        return !isNaN(t) && t >= cutoff;
+      }),
+      progress: (rawData.progress ?? []).filter(
+        (p: any) => new Date(p.created_at).getTime() >= cutoff,
+      ),
+    };
+  }, [rawData, range]);
 
   const grouped = useMemo(() => {
     if (!data) return [] as { category: any; items: any[]; total: number; read: number }[];
@@ -623,6 +647,22 @@ function UserProgressView({
           <ArrowLeft className="h-4 w-4" /> Back to users
         </button>
         <h2 className="font-display text-xl font-semibold flex-1 min-w-0 truncate">{userName}</h2>
+        <div className="flex flex-wrap gap-2">
+          {RANGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setRange(opt.key)}
+              className={`flex-1 sm:flex-initial rounded-md border px-4 py-2 text-sm text-center transition-colors ${
+                range === opt.key
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-input bg-background hover:bg-muted"
+              }`}
+            >
+              <span className="sm:hidden">{opt.shortLabel}</span>
+              <span className="hidden sm:inline">{opt.label}</span>
+            </button>
+          ))}
+        </div>
         <LoadingButton
           variant="secondary"
           onClick={() => data && exportUserProgressCsv(data, userName)}
