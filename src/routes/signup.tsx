@@ -21,6 +21,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Check, ChevronsUpDown, KeyRound, Loader2, LogIn, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { PasswordInput } from "@/components/PasswordInput";
 import { OnScreenKeyboardProvider, useKeyboardInput } from "@/components/OnScreenKeyboard";
 
 export const Route = createFileRoute("/signup")({
