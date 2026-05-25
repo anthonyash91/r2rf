@@ -39,6 +39,7 @@ import {
   getUserProgressReport,
 } from "@/lib/reports.functions";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
+import { LoadMorePager, useLoadMore } from "@/components/LoadMorePager";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
