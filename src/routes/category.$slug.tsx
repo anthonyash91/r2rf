@@ -470,18 +470,25 @@ function CategoryPage() {
                           }
                           const label = isRead ? readLabel : unreadLabel;
                           return (
-                            <div className="absolute top-6 right-6 flex items-center gap-1.5 justify-end z-10 pointer-events-none">
-                              <span
+                            <div className="absolute top-6 right-6 flex items-center gap-1.5 justify-end z-10">
+                              <button
+                                type="button"
                                 aria-label={label}
-                                className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium ${
+                                aria-pressed={isRead}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  toggleRead.mutate({ itemId: item.id, markRead: !isRead });
+                                }}
+                                className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
                                   isRead
-                                    ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
-                                    : "border-input bg-background text-foreground"
+                                    ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background hover:opacity-90"
+                                    : "border-input bg-background text-foreground hover:bg-muted"
                                 }`}
                               >
                                 {isRead ? <Check className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
                                 {label}
-                              </span>
+                              </button>
                             </div>
                           );
                         })()}
