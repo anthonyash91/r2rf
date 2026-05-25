@@ -384,7 +384,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     if (!pendingScrollId) return;
     if (!items.some((it) => it.id === pendingScrollId)) return;
     const t = setTimeout(() => {
-      const el = document.querySelector<HTMLElement>(`[data-item-id="${pendingScrollId}"]`);
+      const inner = document.querySelector<HTMLElement>(`[data-item-id="${pendingScrollId}"]`);
+      const el = inner?.closest("li") as HTMLElement | null ?? inner;
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
         el.classList.add("bg-[var(--color-accent)]/15", "transition-colors", "duration-700");
