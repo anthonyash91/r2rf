@@ -339,6 +339,14 @@ export const setUserRole = createServerFn({ method: "POST" })
         .eq("role", data.role);
       if (error) throw new Error(error.message);
     }
+
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: data.enabled ? "user.role_grant" : "user.role_revoke",
+      targetUserId: data.userId,
+      details: { role: data.role },
+    });
+
     return { ok: true };
   });
 
