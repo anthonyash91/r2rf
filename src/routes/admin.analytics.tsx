@@ -828,6 +828,12 @@ function exportUserProgressCsv(
   userName: string,
 ) {
   const lines: string[] = [];
+  const lastLogin = (data.logins ?? []).reduce(
+    (max: string | null, d: string) => (!max || d > max ? d : max),
+    null as string | null,
+  );
+  lines.push(`Last login,${csvEscape(lastLogin ? fmtDateShort(lastLogin) : "Never")}`);
+  lines.push("");
   lines.push(
     ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on"]
       .map(csvEscape)
