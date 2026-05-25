@@ -825,7 +825,7 @@ function exportUserProgressCsv(
           csvEscape(it.type),
           csvEscape(it.duration ?? ""),
           it.read ? "Yes" : "No",
-          csvEscape(it.read && (it as any).read_at ? fmtDate((it as any).read_at) : ""),
+          csvEscape(it.read && (it as any).read_at ? fmtDateShort((it as any).read_at) : ""),
         ].join(","),
       );
     }
