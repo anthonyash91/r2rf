@@ -649,7 +649,7 @@ function UserProgressView({
               <button
                 key={opt.key}
                 onClick={() => setRange(opt.key)}
-                className={`inline-flex flex-none items-center justify-center rounded-md border px-4 py-2 text-sm text-center whitespace-normal sm:whitespace-nowrap transition-colors ${
+                className={`inline-flex flex-1 sm:flex-none items-center justify-center rounded-md border px-4 py-2 text-sm text-center whitespace-normal sm:whitespace-nowrap transition-colors ${
                   range === opt.key
                     ? "bg-primary text-primary-foreground border-primary"
                     : "border-input bg-background hover:bg-muted"
