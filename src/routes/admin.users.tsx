@@ -522,8 +522,11 @@ function AdminUsersPage() {
                   </div>
                   <button
                     type="button"
+                    disabled={isExporting}
                     onClick={async () => {
                       if (regularTotal === 0) { toast.error("No users to export"); return; }
+                      setIsExporting(true);
+                      try {
                       // Fetch every user matching current filters for export.
                       const exportRes = await listRegularFn({
                         data: {
@@ -579,10 +582,19 @@ function AdminUsersPage() {
                       a.click();
                       document.body.removeChild(a);
                       URL.revokeObjectURL(url);
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Export failed");
+                      } finally {
+                        setIsExporting(false);
+                      }
                     }}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted w-full sm:w-auto"
+                    className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted w-full sm:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    <Download className="h-4 w-4" /> Export CSV
+                    {isExporting ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Exporting…</>
+                    ) : (
+                      <><Download className="h-4 w-4" /> Export CSV</>
+                    )}
                   </button>
                 </div>
               </div>
