@@ -103,8 +103,16 @@ export const Route = createFileRoute("/dashboard")({
       throw redirect({ to: "/signup", search: { redirect: location.href } as any });
     }
   },
-  component: DashboardPage,
+  component: DashboardRoute,
 });
+
+function DashboardRoute() {
+  return (
+    <OnScreenKeyboardProvider>
+      <DashboardPage />
+    </OnScreenKeyboardProvider>
+  );
+}
 
 function DashboardPage() {
   const { t, lang } = useI18n();
