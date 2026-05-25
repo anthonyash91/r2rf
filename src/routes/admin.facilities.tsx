@@ -208,13 +208,13 @@ function AdminFacilitiesPage() {
                   <li
                     key={f.value}
                     onClick={editable ? () => bulk.toggle(f.id) : undefined}
-                    className={`py-5 pr-[24px] pl-[24px] transition-colors ${
+                    className={`py-5 pb-6 md:pb-5 pr-[24px] pl-[24px] transition-colors ${
                       editable
                         ? `cursor-pointer ${selected ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"}`
                         : ""
                     }`}
                   >
-                    <div className={`flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between ${editable ? "pointer-events-none" : ""}`}>
+                    <div className={`flex flex-col gap-5 md:flex-row md:items-center md:justify-between ${editable ? "pointer-events-none" : ""}`}>
                       {isEditing ? (
                         <>
                           <input
