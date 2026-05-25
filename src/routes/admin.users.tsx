@@ -485,7 +485,7 @@ function AdminUsersPage() {
                   <div className="w-full sm:flex-1 sm:min-w-0">
                     <FacilityCombobox
                       value={facilityFilter === "all" ? "" : facilityFilter}
-                      onChange={(v) => { setFacilityFilter(v || "all"); setRegularVisible(10); }}
+                      onChange={(v) => { setFacilityFilter(v || "all"); regularPager.reset(); }}
                       options={facilities.map((f) => ({ value: f.value, label: f.label }))}
                       placeholder="Filter by facility"
                       allowClear
@@ -559,8 +559,7 @@ function AdminUsersPage() {
                 const rest = filteredBase.filter((u) => !isNewUser(u));
                 const filtered = [...newOnes, ...rest];
 
-                const visible = filtered.slice(0, regularVisible);
-                const remaining = filtered.length - visible.length;
+                const visible = filtered.slice(0, regularPager.visibleCount);
 
                 return (
                   <>
@@ -570,7 +569,7 @@ function AdminUsersPage() {
                         filteredCount={filtered.length}
                         noun={{ singular: "user", plural: "users" }}
                         searchQuery={searchQuery}
-                        onSearchChange={(v) => { setSearchQuery(v); setRegularVisible(10); }}
+                        onSearchChange={(v) => { setSearchQuery(v); regularPager.reset(); }}
                         searchPlaceholder="Search users…"
                         onDeleteSelected={async (ids) =>
                           confirmDelete({
@@ -616,39 +615,7 @@ function AdminUsersPage() {
                         <EmptyState size="sm">{q ? "No users match your search." : "No users for this facility."}</EmptyState>
                       )}
                     </div>
-                    {filtered.length > 10 && (
-                      <div className="mt-3 flex items-center justify-between gap-3 flex-wrap text-sm">
-                        <span className="text-muted-foreground">
-                          Showing {visible.length} of {filtered.length}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {remaining > 0 && (
-                            <>
-                              <LoadingButton
-                                variant="secondary"
-                                onClick={() => setRegularVisible((n) => n + 10)}
-                              >
-                                Show 10 more
-                              </LoadingButton>
-                              <LoadingButton
-                                variant="secondary"
-                                onClick={() => setRegularVisible(filtered.length)}
-                              >
-                                Show all
-                              </LoadingButton>
-                            </>
-                          )}
-                          {visible.length > 10 && (
-                            <LoadingButton
-                              variant="secondary"
-                              onClick={() => setRegularVisible(10)}
-                            >
-                              Collapse
-                            </LoadingButton>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                    <LoadMorePager pager={regularPager} total={filtered.length} itemLabel="user" />
                   </>
                 );
               })()}
