@@ -164,15 +164,27 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
 
     const facilityValue = data.facilityValue ?? "";
-    let pq = supabaseAdmin
-      .from("user_profiles")
-      .select("user_id, username, first_name, last_name, facility, created_at")
-      .eq("is_synthetic", false);
-    if (facilityValue) pq = pq.eq("facility", facilityValue);
 
-    const { data: profs, error } = await pq;
-    if (error) throw new Error(error.message);
-    const ids = (profs ?? []).map((p: any) => p.user_id as string);
+    // Paginate to fetch ALL profiles (Supabase enforces a per-request row cap).
+    const PAGE_SIZE = 1000;
+    const allProfs: any[] = [];
+    for (let from = 0; ; from += PAGE_SIZE) {
+      let pq = supabaseAdmin
+        .from("user_profiles")
+        .select("user_id, username, first_name, last_name, facility, created_at")
+        .eq("is_synthetic", false)
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+      if (facilityValue) pq = pq.eq("facility", facilityValue);
+      const { data: page, error } = await pq;
+      if (error) throw new Error(error.message);
+      const rows = page ?? [];
+      allProfs.push(...rows);
+      if (rows.length < PAGE_SIZE) break;
+    }
+    const profs = allProfs;
+    const ids = profs.map((p: any) => p.user_id as string);
+
 
     const emailById = new Map<string, string>();
     const lastSignInById = new Map<string, string | null>();
@@ -207,7 +219,7 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     }
 
     return {
-      users: (profs ?? []).map((p: any) => ({
+      users: profs.map((p: any) => ({
         user_id: p.user_id as string,
         username: (p.username as string) ?? "",
         first_name: (p.first_name as string) ?? "",
@@ -219,6 +231,7 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
         last_login_date: lastLoginById.get(p.user_id as string) ?? null,
       })),
     };
+
   });
 
 /**
