@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { getClientIp, invalidateAllowlistCache } from "@/lib/ip-allowlist";
+import { buildPasskeyCookie } from "@/lib/passkey-cookie";
 
 // SHA-256 hash of the site passkey, read from server env. The plaintext
 // passkey is never stored — only its hash, and only outside of source.
