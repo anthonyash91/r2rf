@@ -570,14 +570,13 @@ function exportFacilityUsersCsv(
   facilityLabel: string,
 ) {
   const lines: string[] = [];
-  lines.push(["First name", "Last name", "Username", "Email", "Joined"].map(csvEscape).join(","));
+  lines.push(["First name", "Last name", "Username", "Joined"].map(csvEscape).join(","));
   for (const u of users) {
     lines.push(
       [
         csvEscape(u.first_name),
         csvEscape(u.last_name),
         csvEscape(u.username),
-        csvEscape(u.email),
         csvEscape(fmtDate(u.created_at)),
       ].join(","),
     );
