@@ -374,7 +374,12 @@ function CategoryPage() {
                     const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 && !readSet.has(item.id) && !seenSet.has(item.id);
 
                     return (
-                      <li key={item.id} id={`item-${item.id}`} className={`relative scroll-mt-24 transition-colors duration-700 ${highlightedId === item.id ? "bg-[var(--color-accent)]/15" : ""}`}>
+                      <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24">
+                        <span
+                          aria-hidden
+                          className={`pointer-events-none absolute inset-0 rounded-[inherit] bg-[var(--color-accent)]/15 transition-opacity duration-1000 ease-in-out ${highlightedId === item.id ? "opacity-100" : "opacity-0"}`}
+                        />
+
 
                         <Wrapper
                           {...wrapperProps}
