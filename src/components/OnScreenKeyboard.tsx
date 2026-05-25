@@ -211,17 +211,25 @@ export function useKeyboardInput(value: string, onChange: (v: string) => void) {
     };
   }, [ctx]);
 
+  const doRegister = () => {
+    if (!ref.current || !ctx) return;
+    ctx.register({
+      el: ref.current,
+      getValue: () => valueRef.current,
+      setValue: (v) => onChangeRef.current(v),
+      type: (ref.current as HTMLInputElement).type ?? "text",
+    });
+  };
+
   return {
     ref: ref as React.RefObject<any>,
+    // Suppress the OS virtual keyboard but still allow the field to receive focus.
     inputMode: "none" as const,
-    onFocus: () => {
-      if (!ref.current || !ctx) return;
-      ctx.register({
-        el: ref.current,
-        getValue: () => valueRef.current,
-        setValue: (v) => onChangeRef.current(v),
-        type: (ref.current as HTMLInputElement).type ?? "text",
-      });
-    },
+    // Register on every interaction signal — onFocus alone is unreliable on
+    // mobile Safari when inputMode="none".
+    onFocus: doRegister,
+    onClick: doRegister,
+    onPointerDown: doRegister,
+    onTouchStart: doRegister,
   };
 }
