@@ -18,6 +18,7 @@ import { BadgeGroup } from "@/components/BadgeGroup";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
+import AutoHeight from "embla-carousel-auto-height";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveCustomHome } from "@/lib/custom-home-context";
 
