@@ -362,6 +362,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
   const [order, setOrder] = useState<ContentItem[]>([]);
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
   useEffect(() => { setOrder(items); }, [items]);
   const didAutoOpenRef = useRef(false);
   useEffect(() => {
@@ -379,6 +380,20 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     }, 50);
     return () => clearTimeout(t);
   }, [editing]);
+  useEffect(() => {
+    if (!pendingScrollId) return;
+    if (!items.some((it) => it.id === pendingScrollId)) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector<HTMLElement>(`[data-item-id="${pendingScrollId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-2", "ring-[var(--color-accent)]", "transition-all");
+        setTimeout(() => el.classList.remove("ring-2", "ring-[var(--color-accent)]", "transition-all"), 1800);
+      }
+      setPendingScrollId(null);
+    }, 100);
+    return () => clearTimeout(t);
+  }, [pendingScrollId, items]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["admin", "category", categoryId] });
