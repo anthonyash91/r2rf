@@ -636,7 +636,7 @@ function UsersReportTab({
                 if (isAll && (u as any).facility) meta.push((u as any).facility);
                 const lastLoginIso = (u as any).last_sign_in_at || (u as any).last_login_date || null;
                 return (
-                  <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4">
+                  <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 pb-6 sm:pb-4">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{name}</p>
                       {meta.length > 0 && (
