@@ -772,14 +772,19 @@ function UserProgressView({
                 <span>{total.toLocaleString()}</span>
               </span>
             );
+            const lastLogin = (data.logins ?? []).reduce(
+              (max: string | null, d: string) => (!max || d > max ? d : max),
+              null as string | null,
+            );
             const stats = [
               { icon: CheckCircle2, label: "Items completed", value: fraction(readItems, totalItems) },
               { icon: Trophy, label: "Categories completed", value: fraction(completedCats, totalCats) },
               { icon: Clock, label: "Hours spent", value: hours.toLocaleString() },
               { icon: Flame, label: "Day streak", value: streak.toLocaleString() },
+              { icon: Clock, label: "Last login", value: lastLogin ? fmtDateShort(lastLogin) : "Never" },
             ];
             return (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mt-8 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 mt-8 mb-8">
                 {stats.map((s) => {
                   const Icon = s.icon;
                   return (
