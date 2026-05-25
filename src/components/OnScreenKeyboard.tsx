@@ -1,5 +1,6 @@
 import * as React from "react";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Delete, ArrowBigUp, CornerDownLeft, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
