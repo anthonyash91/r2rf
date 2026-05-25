@@ -346,9 +346,6 @@ function CategoryPage() {
 
                     const handleActivate = () => {
                       trackContentClick(item.id, data.category.id);
-                      if (user?.id && !readSet.has(item.id)) {
-                        toggleRead.mutate({ itemId: item.id, markRead: true });
-                      }
                     };
 
                     let Wrapper: any = "div";
