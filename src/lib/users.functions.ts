@@ -362,6 +362,11 @@ export const clearUserSecurityAnswers = createServerFn({ method: "POST" })
       .delete()
       .eq("user_id", data.userId);
     if (error) throw new Error(error.message);
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.security_answers_clear",
+      targetUserId: data.userId,
+    });
     return { ok: true };
   });
 
