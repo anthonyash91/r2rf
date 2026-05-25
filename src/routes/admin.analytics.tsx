@@ -392,7 +392,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
                 "All time"
               ) : (
                 <>
-                  <span className="hidden sm:inline">Last </span>
+                  <span className="hidden sm:inline">Last&nbsp;</span>
                   {opt.shortLabel}
                 </>
               )}
@@ -684,7 +684,7 @@ function UserProgressView({
                   "All time"
                 ) : (
                   <>
-                    <span className="hidden sm:inline">Last </span>
+                    <span className="hidden sm:inline">Last&nbsp;</span>
                     {opt.shortLabel}
                   </>
                 )}
