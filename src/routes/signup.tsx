@@ -281,7 +281,7 @@ function SignupPage() {
                     maxLength={32}
                     pattern="[A-Za-z0-9_]{3,32}"
                     value={resetUsername}
-                    onChange={(e) => setResetUsername(e.target.value)}
+                    onChange={(e) => setResetUsername(e.target.value)} {...kbResetUsername}
                     className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
@@ -308,7 +308,7 @@ function SignupPage() {
                     minLength={2}
                     maxLength={200}
                     value={resetAnswer1}
-                    onChange={(e) => setResetAnswer1(e.target.value)}
+                    onChange={(e) => setResetAnswer1(e.target.value)} {...kbResetA1}
                     className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
@@ -322,7 +322,7 @@ function SignupPage() {
                     minLength={2}
                     maxLength={200}
                     value={resetAnswer2}
-                    onChange={(e) => setResetAnswer2(e.target.value)}
+                    onChange={(e) => setResetAnswer2(e.target.value)} {...kbResetA2}
                     className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
@@ -334,7 +334,7 @@ function SignupPage() {
                     minLength={8}
                     maxLength={72}
                     value={resetNewPassword}
-                    onChange={(e) => setResetNewPassword(e.target.value)}
+                    onChange={(e) => setResetNewPassword(e.target.value)} {...kbResetNew}
                     className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                   <PasswordStrengthMeter password={resetNewPassword} />
@@ -347,7 +347,7 @@ function SignupPage() {
                     minLength={8}
                     maxLength={72}
                     value={resetConfirmPassword}
-                    onChange={(e) => setResetConfirmPassword(e.target.value)}
+                    onChange={(e) => setResetConfirmPassword(e.target.value)} {...kbResetConfirm}
                     className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                   {resetConfirmPassword.length > 0 && resetConfirmPassword !== resetNewPassword && (
@@ -420,7 +420,7 @@ function SignupPage() {
                   maxLength={mode === "sign-up" ? 32 : 254}
                   pattern={mode === "sign-up" ? "[A-Za-z0-9_]{3,32}" : undefined}
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => setUsername(e.target.value)} {...kbUsername}
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   placeholder={mode === "sign-up" ? t("signup.usernamePlaceholder") : undefined}
                   autoComplete={mode === "sign-up" ? "username" : "username email"}
@@ -445,7 +445,7 @@ function SignupPage() {
                   minLength={8}
                   maxLength={72}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)} {...kbPassword}
                   className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
                 {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
@@ -461,7 +461,7 @@ function SignupPage() {
                       minLength={8}
                       maxLength={72}
                       value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onChange={(e) => setConfirmPassword(e.target.value)} {...kbConfirm}
                       className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     />
                     {confirmPassword.length > 0 && confirmPassword !== password && (
@@ -477,7 +477,7 @@ function SignupPage() {
                         minLength={1}
                         maxLength={100}
                         value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
+                        onChange={(e) => setFirstName(e.target.value)} {...kbFirst}
                         className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       />
                     </div>
@@ -489,7 +489,7 @@ function SignupPage() {
                         minLength={1}
                         maxLength={100}
                         value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
+                        onChange={(e) => setLastName(e.target.value)} {...kbLast}
                         className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       />
                     </div>
@@ -561,7 +561,7 @@ function SignupPage() {
                       type="number"
                       required
                       value={answer}
-                      onChange={(e) => setAnswer(e.target.value)}
+                      onChange={(e) => setAnswer(e.target.value)} {...kbAnswer}
                       className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     />
                   </div>
