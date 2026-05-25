@@ -223,7 +223,7 @@ function AdminSeedPage() {
           title: r.title,
           type: r.type ?? "Article",
           source: r.source ?? "",
-          duration: "",
+          duration: defaultDurationForType(r.type ?? "Article"),
           description: "",
           url: r.url || null,
           published: true,
