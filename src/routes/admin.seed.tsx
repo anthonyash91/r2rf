@@ -310,20 +310,21 @@ function AdminSeedPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold">Preview</h2>
-              <Badge variant="secondary">
+              <Badge variant="count">
                 {validCount} valid
               </Badge>
               {errorCount > 0 && (
-                <Badge variant="destructive">{errorCount} with errors</Badge>
+                <Badge variant="draft">{errorCount} with errors</Badge>
               )}
             </div>
             <LoadingButton
               onClick={handleInsert}
-              loading={submitting}
+              pending={submitting}
+              pendingText="Inserting…"
               disabled={validCount === 0}
+              icon={<Upload className="h-4 w-4" />}
               className="w-full sm:w-auto"
             >
-              <Upload className="mr-2 h-4 w-4" />
               Insert {validCount} {validCount === 1 ? "item" : "items"}
             </LoadingButton>
           </div>
