@@ -18,7 +18,10 @@ function syntheticEmailLocal(username: string): string {
 }
 
 function getSecret(): string {
-  const s = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_URL || "fallback-signup-secret";
+  const s = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!s) {
+    throw new Error("Server misconfiguration: SUPABASE_SERVICE_ROLE_KEY is required for signup challenge signing.");
+  }
   return s;
 }
 
