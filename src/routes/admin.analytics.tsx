@@ -539,11 +539,19 @@ function FacilityReportTab({ preselected }: { preselected: { value: string; labe
 
 /* ---------------- Users Tab ---------------- */
 
-function UsersReportTab({ preselected }: { preselected: { value: string; label: string } }) {
+function UsersReportTab({
+  preselected,
+  activeUser,
+  setActiveUser,
+}: {
+  preselected: { value: string; label: string };
+  activeUser: { userId: string; name: string } | null;
+  setActiveUser: (u: { userId: string; name: string } | null) => void;
+}) {
   const fetchUsers = useServerFn(listFacilityUsers);
   const selected = preselected.value;
   const isAll = selected === "__all__";
-  const [activeUser, setActiveUser] = useState<{ userId: string; name: string } | null>(null);
+  const pager = useLoadMore(10, 10);
 
   const usersQuery = useQuery({
     queryKey: ["admin", "facility-users", selected],
@@ -564,6 +572,7 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
   }
 
   const users = usersQuery.data?.users ?? [];
+  const visibleUsers = isAll ? users.slice(0, pager.visibleCount) : users;
 
   return (
     <div>
@@ -586,33 +595,44 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
           {isAll ? "No registered users." : "No users in this facility."}
         </p>
       ) : (
-        <SectionCard padded={false} className="mt-8 overflow-hidden">
-          <ul className="divide-y divide-border">
-            {users.map((u) => {
-              const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "—";
-              const meta: string[] = [];
-              if (u.username) meta.push(`@${u.username}`);
-              if (isAll && (u as any).facility) meta.push((u as any).facility);
-              return (
-                <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{name}</p>
-                    {meta.length > 0 && (
-                      <p className="text-xs text-muted-foreground truncate">{meta.join(" · ")}</p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setActiveUser({ userId: u.user_id, name })}
-                    className="rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted self-start sm:self-auto"
-                  >
-                    View report
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </SectionCard>
+        <>
+          <SectionCard padded={false} className="mt-8 overflow-hidden">
+            <ul className="divide-y divide-border">
+              {visibleUsers.map((u) => {
+                const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "—";
+                const meta: string[] = [];
+                if (u.username) meta.push(`@${u.username}`);
+                if (isAll && (u as any).facility) meta.push((u as any).facility);
+                const lastLoginIso = (u as any).last_sign_in_at || (u as any).last_login_date || null;
+                return (
+                  <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{name}</p>
+                      {meta.length > 0 && (
+                        <p className="text-xs text-muted-foreground truncate">{meta.join(" · ")}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        Signed up {fmtDate(u.created_at) || "—"}
+                        {" · "}
+                        Last login {lastLoginIso ? fmtDate(lastLoginIso) : "Never"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveUser({ userId: u.user_id, name })}
+                      className="rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted self-start sm:self-auto"
+                    >
+                      View report
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </SectionCard>
+          {isAll && (
+            <LoadMorePager pager={pager} total={users.length} itemLabel="user" />
+          )}
+        </>
       )}
     </div>
   );
