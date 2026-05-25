@@ -129,7 +129,7 @@ function AdminAuditLogPage() {
         />
       </div>
 
-      <section className="mt-8 space-y-4">
+      <section className="mt-8 space-y-8">
         <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
             <div className="flex-1 min-w-[180px]">
