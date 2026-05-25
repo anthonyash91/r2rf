@@ -92,64 +92,70 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
   return (
     <KeyboardCtx.Provider value={ctx}>
       {children}
-      {show && (
-        <div
-          className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/95 backdrop-blur px-3 py-3 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
-          // Prevent button mousedown from blurring the input
-          onMouseDown={(e) => e.preventDefault()}
-        >
-          <div className="mx-auto flex max-w-3xl flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">On-screen keyboard</span>
-              <button
-                type="button"
-                onClick={() => setHidden(true)}
-                aria-label="Hide keyboard"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {rows.map((row, i) => (
-              <div key={i} className="flex justify-center gap-1.5">
-                {i === rows.length - 1 && layout === "letters" && (
-                  <Key
-                    onPress={() => press("SHIFT")}
-                    wide
-                    active={shift}
-                    ariaLabel="Shift"
-                  >
-                    <ArrowBigUp className="h-4 w-4" />
-                  </Key>
-                )}
-                {row.map((k) => (
-                  <Key key={k} onPress={() => press(k)}>
-                    {layout === "letters" && shift ? k.toUpperCase() : k}
-                  </Key>
-                ))}
-                {i === rows.length - 1 && (
-                  <Key onPress={() => press("BACK")} wide ariaLabel="Backspace">
-                    <Delete className="h-4 w-4" />
-                  </Key>
-                )}
+      {show &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-x-0 bottom-0 z-[1000] border-t border-border bg-card px-3 py-3 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
+            // Prevent the keyboard from stealing focus from the input on tap.
+            onMouseDown={(e) => e.preventDefault()}
+            onPointerDown={(e) => e.preventDefault()}
+            onTouchStart={(e) => e.preventDefault()}
+          >
+            <div className="mx-auto flex max-w-3xl flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">On-screen keyboard</span>
+                <button
+                  type="button"
+                  onClick={() => setHidden(true)}
+                  aria-label="Hide keyboard"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-            ))}
 
-            <div className="flex justify-center gap-1.5">
-              <Key onPress={() => press("LAYOUT")} wide>
-                {layout === "letters" ? "123" : "ABC"}
-              </Key>
-              <Key onPress={() => press("SPACE")} className="flex-1 max-w-sm" ariaLabel="Space">
-                <span className="text-xs text-muted-foreground">space</span>
-              </Key>
-              <Key onPress={() => press("ENTER")} wide ariaLabel="Enter">
-                <CornerDownLeft className="h-4 w-4" />
-              </Key>
+              {rows.map((row, i) => (
+                <div key={i} className="flex justify-center gap-1.5">
+                  {i === rows.length - 1 && layout === "letters" && (
+                    <Key
+                      onPress={() => press("SHIFT")}
+                      wide
+                      active={shift}
+                      ariaLabel="Shift"
+                    >
+                      <ArrowBigUp className="h-4 w-4" />
+                    </Key>
+                  )}
+                  {row.map((k) => (
+                    <Key key={k} onPress={() => press(k)}>
+                      {layout === "letters" && shift ? k.toUpperCase() : k}
+                    </Key>
+                  ))}
+                  {i === rows.length - 1 && (
+                    <Key onPress={() => press("BACK")} wide ariaLabel="Backspace">
+                      <Delete className="h-4 w-4" />
+                    </Key>
+                  )}
+                </div>
+              ))}
+
+              <div className="flex justify-center gap-1.5">
+                <Key onPress={() => press("LAYOUT")} wide>
+                  {layout === "letters" ? "123" : "ABC"}
+                </Key>
+                <Key onPress={() => press("SPACE")} className="flex-1 max-w-sm" ariaLabel="Space">
+                  <span className="text-xs text-muted-foreground">space</span>
+                </Key>
+                <Key onPress={() => press("ENTER")} wide ariaLabel="Enter">
+                  <CornerDownLeft className="h-4 w-4" />
+                </Key>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </KeyboardCtx.Provider>
   );
 }
