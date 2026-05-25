@@ -682,19 +682,7 @@ function UserItem({
           {isUsernameUser ? (
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
-                <BadgeGroup>
-                  {isTester ? (
-                    <Badge variant="tester">Tester</Badge>
-                  ) : (
-                    <Badge variant="facility">
-                      {facilityLabel || user.profile!.facility}
-                    </Badge>
-                  )}
-                  {!isTester && user.roles.includes("user") && (
-                    <Badge variant="user">User</Badge>
-                  )}
-                  {isNew && !isTester && user.roles.includes("user") && <Badge variant="new">New</Badge>}
-                </BadgeGroup>
+                <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} />
               </div>
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
                 <span className="font-mono text-sm truncate">{user.profile!.username}</span>
@@ -703,19 +691,12 @@ function UserItem({
                     {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
                   </span>
                 )}
-                <BadgeGroup className="hidden sm:inline-flex">
-                  {isTester ? (
-                    <Badge variant="tester">Tester</Badge>
-                  ) : (
-                    <Badge variant="facility">
-                      {facilityLabel || user.profile!.facility}
-                    </Badge>
-                  )}
-                  {!isTester && user.roles.includes("user") && (
-                    <Badge variant="user">User</Badge>
-                  )}
-                  {isNew && !isTester && user.roles.includes("user") && <Badge variant="new">New</Badge>}
-                </BadgeGroup>
+                <UserStatusBadges
+                  user={user}
+                  facilityLabel={facilityLabel}
+                  isNew={isNew}
+                  className="hidden sm:inline-flex"
+                />
               </div>
             </>
           ) : editingEmail ? (
