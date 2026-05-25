@@ -25,7 +25,6 @@ type NavLink = {
 
 const links: NavLink[] = [
   { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true, matchPrefixes: ["/admin/category"] },
-  { to: "/admin/seed", label: "Seed Content", icon: Sprout, adminOnly: true },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true },
   { to: "/admin/facilities", label: "Facilities", icon: Building2, adminOnly: true },
   { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
@@ -36,6 +35,7 @@ const links: NavLink[] = [
   { to: "/admin/icons-badges", label: "Icons & Badges", icon: Palette, adminOnly: true },
   { to: "/admin/certificate", label: "Certificate Footer", icon: Award, adminOnly: true },
   { to: "/admin/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
+  { to: "/admin/seed", label: "Seed Content", icon: Sprout, adminOnly: true },
 ];
 
 function isLinkActive(l: NavLink, pathname: string) {
