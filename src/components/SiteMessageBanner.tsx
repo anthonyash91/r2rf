@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Megaphone, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -19,7 +19,7 @@ const KEY_FOR_KIND: Record<SiteMessageKind, string> = {
   user: "user_message",
 };
 
-function storageKey(kind: SiteMessageKind) {
+function sessionStorageKey(kind: SiteMessageKind) {
   return `site_message_dismissed:${kind}`;
 }
 
@@ -27,6 +27,9 @@ export function SiteMessageBanner({ kind }: { kind: SiteMessageKind }) {
   const key = KEY_FOR_KIND[kind];
   const { lang } = useI18n();
   const { session } = useAuth();
+  const userId = session?.user?.id ?? null;
+  const qc = useQueryClient();
+
   const { data } = useQuery({
     queryKey: ["site_settings", key],
     queryFn: async (): Promise<SiteMessage | null> => {
@@ -47,30 +50,67 @@ export function SiteMessageBanner({ kind }: { kind: SiteMessageKind }) {
     },
   });
 
-  const [dismissedAt, setDismissedAt] = useState<string | null>(null);
+  // Logged-in: dismissal lives in DB. Anonymous: sessionStorage only.
+  const dismissalQueryKey = ["site_message_dismissal", kind, userId] as const;
+  const { data: dbDismissedAt } = useQuery({
+    queryKey: dismissalQueryKey,
+    enabled: !!userId,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase
+        .from("user_dismissed_messages")
+        .select("dismissed_version")
+        .eq("user_id", userId!)
+        .eq("message_kind", kind)
+        .maybeSingle();
+      if (error) throw error;
+      return data?.dismissed_version ? String(data.dismissed_version) : null;
+    },
+  });
 
+  const [anonDismissedAt, setAnonDismissedAt] = useState<string | null>(null);
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const k = storageKey(kind);
-    const local = window.localStorage.getItem(k);
-    const sess = window.sessionStorage.getItem(k);
-    setDismissedAt(local ?? sess);
-  }, [kind, data?.updatedAt]);
+    if (typeof window === "undefined" || userId) return;
+    setAnonDismissedAt(window.sessionStorage.getItem(sessionStorageKey(kind)));
+  }, [kind, userId, data?.updatedAt]);
 
   if (!data || !data.message.trim()) return null;
-  if (dismissedAt && data.updatedAt && dismissedAt === data.updatedAt) return null;
+
+  const dismissedAt = userId ? dbDismissedAt ?? null : anonDismissedAt;
+  if (
+    dismissedAt &&
+    data.updatedAt &&
+    new Date(dismissedAt).getTime() === new Date(data.updatedAt).getTime()
+  ) {
+    return null;
+  }
 
   const text =
     lang === "es" && data.message_es && data.message_es.trim()
       ? data.message_es
       : data.message;
 
-  const onDismiss = () => {
-    if (typeof window === "undefined") return;
-    const k = storageKey(kind);
-    const store = session ? window.localStorage : window.sessionStorage;
-    store.setItem(k, data.updatedAt);
-    setDismissedAt(data.updatedAt);
+  const onDismiss = async () => {
+    if (userId) {
+      // Optimistic hide
+      qc.setQueryData(dismissalQueryKey, data.updatedAt);
+      const { error } = await supabase
+        .from("user_dismissed_messages")
+        .upsert(
+          {
+            user_id: userId,
+            message_kind: kind,
+            dismissed_version: data.updatedAt,
+          },
+          { onConflict: "user_id,message_kind" },
+        );
+      if (error) {
+        // Revert on failure
+        qc.invalidateQueries({ queryKey: dismissalQueryKey });
+      }
+    } else if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(sessionStorageKey(kind), data.updatedAt);
+      setAnonDismissedAt(data.updatedAt);
+    }
   };
 
   return (
