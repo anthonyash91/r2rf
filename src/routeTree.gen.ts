@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminSeedRouteImport } from './routes/admin.seed'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
 import { Route as AdminIpAllowlistRouteImport } from './routes/admin.ip-allowlist'
 import { Route as AdminIconsBadgesRouteImport } from './routes/admin.icons-badges'
@@ -74,6 +75,11 @@ const CategorySlugRoute = CategorySlugRouteImport.update({
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSeedRoute = AdminSeedRouteImport.update({
+  id: '/seed',
+  path: '/seed',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMessagesRoute = AdminMessagesRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/seed': typeof AdminSeedRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/seed': typeof AdminSeedRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin': typeof AdminIndexRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/seed': typeof AdminSeedRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/admin/icons-badges'
     | '/admin/ip-allowlist'
     | '/admin/messages'
+    | '/admin/seed'
     | '/admin/users'
     | '/category/$slug'
     | '/admin/'
@@ -244,6 +254,7 @@ export interface FileRouteTypes {
     | '/admin/icons-badges'
     | '/admin/ip-allowlist'
     | '/admin/messages'
+    | '/admin/seed'
     | '/admin/users'
     | '/category/$slug'
     | '/admin'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/admin/icons-badges'
     | '/admin/ip-allowlist'
     | '/admin/messages'
+    | '/admin/seed'
     | '/admin/users'
     | '/category/$slug'
     | '/admin/'
@@ -350,6 +362,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/seed': {
+      id: '/admin/seed'
+      path: '/seed'
+      fullPath: '/admin/seed'
+      preLoaderRoute: typeof AdminSeedRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/messages': {
@@ -461,6 +480,7 @@ interface AdminRouteChildren {
   AdminIconsBadgesRoute: typeof AdminIconsBadgesRoute
   AdminIpAllowlistRoute: typeof AdminIpAllowlistRoute
   AdminMessagesRoute: typeof AdminMessagesRoute
+  AdminSeedRoute: typeof AdminSeedRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminCategoryIdRoute: typeof AdminCategoryIdRoute
@@ -475,6 +495,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminIconsBadgesRoute: AdminIconsBadgesRoute,
   AdminIpAllowlistRoute: AdminIpAllowlistRoute,
   AdminMessagesRoute: AdminMessagesRoute,
+  AdminSeedRoute: AdminSeedRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminCategoryIdRoute: AdminCategoryIdRoute,
