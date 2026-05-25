@@ -130,7 +130,7 @@ function AdminAuditLogPage() {
       </div>
 
       <section className="mt-8 space-y-4">
-        <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+        <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
             <div className="flex-1 min-w-[180px]">
               <label className="block text-xs font-medium text-muted-foreground mb-1">Search</label>
