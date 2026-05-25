@@ -446,14 +446,14 @@ function SignupPageContent() {
 
               <div>
                 <label className="text-sm font-medium">{t("signup.password")}</label>
-                <input
-                  type="password"
+                <PasswordInput
                   required
                   minLength={8}
                   maxLength={72}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)} {...kbPassword}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  wrapperClassName="mt-1"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
                 {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
               </div>
@@ -462,14 +462,14 @@ function SignupPageContent() {
                 <>
                   <div>
                     <label className="text-sm font-medium">{t("signup.confirmPassword")}</label>
-                    <input
-                      type="password"
+                    <PasswordInput
                       required
                       minLength={8}
                       maxLength={72}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)} {...kbConfirm}
-                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      wrapperClassName="mt-1"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     />
                     {confirmPassword.length > 0 && confirmPassword !== password && (
                       <p className="mt-1 text-xs text-destructive">{t("signup.passwordMismatch")}</p>
