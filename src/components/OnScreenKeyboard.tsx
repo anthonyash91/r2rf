@@ -6,12 +6,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Accessible on-screen keyboard for forms (sign-in, sign-up, reset password).
- *
- * Usage:
- *   1. Wrap the page in <OnScreenKeyboardProvider>.
- *   2. Spread {...useKeyboardInput(value, setValue)} onto each <input> / <textarea>.
- *      That suppresses the native virtual keyboard (inputMode="none") and routes
- *      key presses from the on-screen keyboard into the controlled value.
+ * Only renders on mobile devices (coarse pointer + narrow viewport).
  */
 
 type Target = {
@@ -24,6 +19,7 @@ type Target = {
 type Ctx = {
   register: (t: Target) => void;
   unregister: (el: HTMLElement) => void;
+  isMobile: boolean;
 };
 
 const KeyboardCtx = createContext<Ctx | null>(null);
@@ -40,11 +36,44 @@ const SYMBOL_ROWS = [
   [".", ",", "?", "!", "'", "_", "#", "*"],
 ];
 
+const HIGHLIGHT_CLASSES = [
+  "ring-2",
+  "ring-[var(--color-accent)]",
+  "ring-offset-2",
+  "ring-offset-background",
+];
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    // Treat as mobile when the primary pointer is coarse (touch) AND the
+    // viewport is narrow. Covers phones and small tablets; excludes desktops.
+    const mql = window.matchMedia("(pointer: coarse) and (max-width: 900px)");
+    const update = () => setIsMobile(mql.matches);
+    update();
+    mql.addEventListener?.("change", update);
+    return () => mql.removeEventListener?.("change", update);
+  }, []);
+  return isMobile;
+}
+
 export function OnScreenKeyboardProvider({ children }: { children: React.ReactNode }) {
+  const isMobile = useIsMobile();
   const [target, setTarget] = useState<Target | null>(null);
   const [shift, setShift] = useState(false);
   const [layout, setLayout] = useState<"letters" | "symbols">("letters");
   const [hidden, setHidden] = useState(false);
+
+  // Apply / clear focus highlight on the active input.
+  useEffect(() => {
+    if (!target) return;
+    const el = target.el;
+    el.classList.add(...HIGHLIGHT_CLASSES);
+    return () => {
+      el.classList.remove(...HIGHLIGHT_CLASSES);
+    };
+  }, [target]);
 
   const ctx = useMemo<Ctx>(
     () => ({
@@ -55,8 +84,9 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
       unregister: (el) => {
         setTarget((cur) => (cur && cur.el === el ? null : cur));
       },
+      isMobile,
     }),
-    [],
+    [isMobile],
   );
 
   function press(key: string) {
@@ -82,12 +112,11 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
       target.setValue(cur + ch);
       if (shift) setShift(false);
     }
-    // keep focus on the input
     requestAnimationFrame(() => el.focus());
   }
 
   const rows = layout === "letters" ? LETTER_ROWS : SYMBOL_ROWS;
-  const show = target !== null && !hidden;
+  const show = isMobile && target !== null && !hidden;
 
   return (
     <KeyboardCtx.Provider value={ctx}>
@@ -96,60 +125,59 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
         typeof document !== "undefined" &&
         createPortal(
           <div
-            className="fixed inset-x-0 bottom-0 z-[1000] border-t border-border bg-card px-3 py-3 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
-            // Prevent the keyboard from stealing focus from the input on tap.
+            className="fixed inset-x-0 bottom-0 z-[1000] border-t border-border bg-card px-2 pt-2 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
             onMouseDown={(e) => e.preventDefault()}
             onPointerDown={(e) => e.preventDefault()}
             onTouchStart={(e) => e.preventDefault()}
           >
-            <div className="mx-auto flex max-w-3xl flex-col gap-2">
-              <div className="flex items-center justify-between">
+            <div className="mx-auto flex w-full max-w-[760px] flex-col gap-1.5">
+              <div className="flex items-center justify-between px-1">
                 <span className="text-xs text-muted-foreground">On-screen keyboard</span>
                 <button
                   type="button"
                   onClick={() => setHidden(true)}
                   aria-label="Hide keyboard"
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
               {rows.map((row, i) => (
-                <div key={i} className="flex justify-center gap-1.5">
+                <div key={i} className="flex w-full justify-center gap-1">
                   {i === rows.length - 1 && layout === "letters" && (
                     <Key
                       onPress={() => press("SHIFT")}
-                      wide
+                      flexBasis={1.5}
                       active={shift}
                       ariaLabel="Shift"
                     >
-                      <ArrowBigUp className="h-4 w-4" />
+                      <ArrowBigUp className="h-5 w-5" />
                     </Key>
                   )}
                   {row.map((k) => (
-                    <Key key={k} onPress={() => press(k)}>
+                    <Key key={k} onPress={() => press(k)} flexBasis={1}>
                       {layout === "letters" && shift ? k.toUpperCase() : k}
                     </Key>
                   ))}
                   {i === rows.length - 1 && (
-                    <Key onPress={() => press("BACK")} wide ariaLabel="Backspace">
-                      <Delete className="h-4 w-4" />
+                    <Key onPress={() => press("BACK")} flexBasis={1.5} ariaLabel="Backspace">
+                      <Delete className="h-5 w-5" />
                     </Key>
                   )}
                 </div>
               ))}
 
-              <div className="flex justify-center gap-1.5">
-                <Key onPress={() => press("LAYOUT")} wide>
+              <div className="flex w-full justify-center gap-1">
+                <Key onPress={() => press("LAYOUT")} flexBasis={1.5}>
                   {layout === "letters" ? "123" : "ABC"}
                 </Key>
-                <Key onPress={() => press("SPACE")} className="flex-1 max-w-sm" ariaLabel="Space">
+                <Key onPress={() => press("SPACE")} flexBasis={5} ariaLabel="Space">
                   <span className="text-xs text-muted-foreground">space</span>
                 </Key>
-                <Key onPress={() => press("ENTER")} wide ariaLabel="Enter">
-                  <CornerDownLeft className="h-4 w-4" />
+                <Key onPress={() => press("ENTER")} flexBasis={1.5} ariaLabel="Enter">
+                  <CornerDownLeft className="h-5 w-5" />
                 </Key>
               </div>
             </div>
@@ -163,14 +191,14 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
 function Key({
   children,
   onPress,
-  wide,
+  flexBasis = 1,
   active,
   className,
   ariaLabel,
 }: {
   children: React.ReactNode;
   onPress: () => void;
-  wide?: boolean;
+  flexBasis?: number;
   active?: boolean;
   className?: string;
   ariaLabel?: string;
@@ -180,9 +208,9 @@ function Key({
       type="button"
       aria-label={ariaLabel}
       onClick={onPress}
+      style={{ flex: `${flexBasis} 1 0`, minWidth: 0 }}
       className={cn(
-        "inline-flex h-10 min-w-[2.25rem] items-center justify-center rounded-md border border-border bg-background text-sm font-medium shadow-sm transition-colors hover:bg-muted active:bg-muted/80 select-none",
-        wide && "px-3 min-w-[3rem]",
+        "inline-flex h-12 sm:h-14 items-center justify-center rounded-md border border-border bg-background text-base font-medium shadow-sm transition-colors hover:bg-muted active:bg-muted/80 select-none",
         active && "bg-accent text-accent-foreground border-accent hover:bg-accent/90",
         className,
       )}
@@ -193,9 +221,10 @@ function Key({
 }
 
 /**
- * Spread the returned props onto a controlled <input> / <textarea> to route
- * on-screen keyboard presses into its value and suppress the native virtual
- * keyboard on touch devices.
+ * Spread the returned props onto a controlled <input> / <textarea>. On mobile
+ * this suppresses the native virtual keyboard and routes presses from the
+ * on-screen keyboard into the controlled value. On desktop it's a no-op so
+ * physical keyboard typing works normally.
  */
 export function useKeyboardInput(value: string, onChange: (v: string) => void) {
   const ctx = useContext(KeyboardCtx);
@@ -211,6 +240,12 @@ export function useKeyboardInput(value: string, onChange: (v: string) => void) {
     };
   }, [ctx]);
 
+  // On desktop, return only a ref — no inputMode override, no register
+  // handlers — so the field behaves like a normal native input.
+  if (!ctx?.isMobile) {
+    return { ref: ref as React.RefObject<any> };
+  }
+
   const doRegister = () => {
     if (!ref.current || !ctx) return;
     ctx.register({
@@ -223,10 +258,7 @@ export function useKeyboardInput(value: string, onChange: (v: string) => void) {
 
   return {
     ref: ref as React.RefObject<any>,
-    // Suppress the OS virtual keyboard but still allow the field to receive focus.
     inputMode: "none" as const,
-    // Register on every interaction signal — onFocus alone is unreliable on
-    // mobile Safari when inputMode="none".
     onFocus: doRegister,
     onClick: doRegister,
     onPointerDown: doRegister,
