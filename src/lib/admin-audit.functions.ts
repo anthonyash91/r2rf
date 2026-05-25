@@ -1,0 +1,120 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+async function assertAdmin(supabase: any, userId: string) {
+  const { data, error } = await supabase.rpc("has_role", {
+    _user_id: userId,
+    _role: "admin",
+  });
+  if (error || !data) throw new Error("Forbidden: admin access required");
+}
+
+const ACTIONS = [
+  "user.create",
+  "user.delete",
+  "user.password_reset",
+  "user.role_grant",
+  "user.role_revoke",
+  "user.security_answers_clear",
+  "user.security_answers_change",
+] as const;
+
+export const listAuditLog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        action: z.enum(ACTIONS).optional(),
+        search: z.string().trim().max(255).optional(),
+        since: z.string().optional(),
+        until: z.string().optional(),
+        limit: z.number().int().min(1).max(500).default(100),
+      })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+
+    let q = supabaseAdmin
+      .from("admin_audit_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+
+    if (data.action) q = q.eq("action", data.action);
+    if (data.since) q = q.gte("created_at", data.since);
+    if (data.until) q = q.lte("created_at", data.until);
+
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    // Collect user ids referenced (actor + target) so we can resolve
+    // emails/usernames for display, since the writers don't always populate
+    // the *_username columns.
+    const ids = new Set<string>();
+    for (const r of rows ?? []) {
+      if (r.actor_user_id) ids.add(r.actor_user_id);
+      if (r.target_user_id) ids.add(r.target_user_id);
+    }
+    const idList = Array.from(ids);
+
+    const profileMap = new Map<string, { username: string | null }>();
+    if (idList.length) {
+      const { data: profs } = await supabaseAdmin
+        .from("user_profiles")
+        .select("user_id, username")
+        .in("user_id", idList);
+      for (const p of profs ?? []) {
+        profileMap.set(p.user_id, { username: p.username });
+      }
+    }
+
+    // Resolve auth emails for any ids missing a profile (e.g. seed admins).
+    const emailMap = new Map<string, string | null>();
+    for (const id of idList) {
+      const { data: u } = await supabaseAdmin.auth.admin.getUserById(id);
+      emailMap.set(id, u?.user?.email ?? null);
+    }
+
+    let entries = (rows ?? []).map((r) => ({
+      id: r.id,
+      created_at: r.created_at,
+      action: r.action,
+      actor_user_id: r.actor_user_id,
+      actor_username:
+        r.actor_username ??
+        (r.actor_user_id ? profileMap.get(r.actor_user_id)?.username ?? null : null),
+      actor_email: r.actor_user_id ? emailMap.get(r.actor_user_id) ?? null : null,
+      target_user_id: r.target_user_id,
+      target_username:
+        r.target_username ??
+        (r.target_user_id ? profileMap.get(r.target_user_id)?.username ?? null : null),
+      target_email: r.target_user_id ? emailMap.get(r.target_user_id) ?? null : null,
+      details: (r.details ?? {}) as Record<string, unknown>,
+      ip_address: r.ip_address,
+      user_agent: r.user_agent,
+    }));
+
+    // Client-side filter by free-text search (username/email/ip/details).
+    if (data.search) {
+      const s = data.search.toLowerCase();
+      entries = entries.filter((e) => {
+        const blob = [
+          e.actor_username,
+          e.actor_email,
+          e.target_username,
+          e.target_email,
+          e.ip_address,
+          JSON.stringify(e.details),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return blob.includes(s);
+      });
+    }
+
+    return { entries };
+  });
