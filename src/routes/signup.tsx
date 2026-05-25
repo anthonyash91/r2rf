@@ -73,6 +73,19 @@ function SignupPage() {
   }, [facilities, facility]);
   const submitReset = useServerFn(resetPassword);
 
+  // On-screen keyboard bindings (suppress native keyboard, route key presses)
+  const kbUsername = useKeyboardInput(username, setUsername);
+  const kbPassword = useKeyboardInput(password, setPassword);
+  const kbConfirm = useKeyboardInput(confirmPassword, setConfirmPassword);
+  const kbFirst = useKeyboardInput(firstName, setFirstName);
+  const kbLast = useKeyboardInput(lastName, setLastName);
+  const kbAnswer = useKeyboardInput(answer, setAnswer);
+  const kbResetUsername = useKeyboardInput(resetUsername, setResetUsername);
+  const kbResetA1 = useKeyboardInput(resetAnswer1, setResetAnswer1);
+  const kbResetA2 = useKeyboardInput(resetAnswer2, setResetAnswer2);
+  const kbResetNew = useKeyboardInput(resetNewPassword, setResetNewPassword);
+  const kbResetConfirm = useKeyboardInput(resetConfirmPassword, setResetConfirmPassword);
+
   const challengeQuery = useQuery({
     queryKey: ["signup-challenge"],
     queryFn: () => getChallenge(),
