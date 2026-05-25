@@ -648,7 +648,7 @@ function UserItem({
                 <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} />
               </div>
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
-                <span className="font-mono text-sm truncate">{user.profile!.username}</span>
+                <span className="font-mono text-sm truncate capitalize">{user.profile!.username}</span>
                 {(user.profile!.first_name || user.profile!.last_name) && (
                   <span className="text-sm text-muted-foreground truncate">
                     {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
