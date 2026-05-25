@@ -2,13 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Building2, Plus, Pencil, Trash2, Users, Home } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { LoadMorePager, useLoadMore } from "@/components/LoadMorePager";
+import { useToastMutation } from "@/hooks/use-toast-mutation";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import {
   listFacilitiesWithStats,
@@ -46,7 +48,7 @@ function AdminFacilitiesPage() {
   const [newLabels, setNewLabels] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
-  const [visibleCount, setVisibleCount] = useState(10);
+  const pager = useLoadMore(10, 10);
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -62,14 +64,16 @@ function AdminFacilitiesPage() {
         [f.label, f.value].filter(Boolean).some((v) => String(v).toLowerCase().includes(q)),
       )
     : allFacilities;
-  const visibleFacilities = facilities.slice(0, visibleCount);
-  const remaining = Math.max(0, facilities.length - visibleFacilities.length);
+  const visibleFacilities = facilities.slice(0, pager.visibleCount);
 
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["facilities"] });
+  const facilitiesKey = ["facilities"] as const;
+  const invalidate = () => qc.invalidateQueries({ queryKey: facilitiesKey });
 
-  const addMut = useMutation({
+  const addMut = useToastMutation({
     mutationFn: (input: { facilities: { label: string }[] }) => addFacilitiesFn({ data: input }),
+    invalidate: facilitiesKey,
+    successMessage: null,
     onSuccess: (res) => {
       const dupes = res.duplicates ?? [];
       const addedMsg = `Added ${res.inserted} ${res.inserted === 1 ? "facility" : "facilities"}`;
@@ -85,29 +89,25 @@ function AdminFacilitiesPage() {
       }
       setNewLabels("");
       setShowAdd(false);
-      invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
   });
 
-  const updateMut = useMutation({
+  const updateMut = useToastMutation({
     mutationFn: (input: { id: string; label: string }) => updateFacilityFn({ data: input }),
-    onSuccess: () => { toast.success("Facility updated"); setEditingId(null); invalidate(); },
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Facility updated",
+    invalidate: facilitiesKey,
+    onSuccess: () => setEditingId(null),
   });
-  const deleteMut = useMutation({
+  const deleteMut = useToastMutation({
     mutationFn: (input: { id: string }) => deleteFacilityFn({ data: input }),
-    onSuccess: () => { toast.success("Facility deleted"); invalidate(); },
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Facility deleted",
+    invalidate: facilitiesKey,
   });
-  const deleteManyMut = useMutation({
+  const deleteManyMut = useToastMutation({
     mutationFn: (input: { ids: string[] }) => deleteFacilitiesFn({ data: input }),
-    onSuccess: async (res) => {
-      toast.success(`Deleted ${res.deleted} ${res.deleted === 1 ? "facility" : "facilities"}`);
-      await invalidate();
-      bulk.clear();
-    },
-    onError: (e: any) => toast.error(e.message),
+    successMessage: (res) => `Deleted ${res.deleted} ${res.deleted === 1 ? "facility" : "facilities"}`,
+    invalidate: facilitiesKey,
+    onSuccess: () => bulk.clear(),
   });
 
 
