@@ -234,7 +234,7 @@ function AdminUsersPage() {
         <PageHeader
           icon={Users}
           title="Users"
-          count={!isLoading && data?.users ? data.users.length : undefined}
+          count={!isLoading ? totalUsers : undefined}
           description="Add users, edit emails, reset passwords, and manage access."
         />
         <LoadingButton
