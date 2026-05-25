@@ -486,6 +486,7 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
   const fetchUsers = useServerFn(listFacilityUsers);
   const selected = preselected.value;
   const [activeUser, setActiveUser] = useState<{ userId: string; name: string } | null>(null);
+  const [range, setRange] = useState<RangeKey>("30d");
 
   const usersQuery = useQuery({
     queryKey: ["admin", "facility-users", selected],
@@ -505,14 +506,35 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
     );
   }
 
-  const users = usersQuery.data?.users ?? [];
+  const allUsers = usersQuery.data?.users ?? [];
+  const users = useMemo(() => {
+    if (range === "all") return allUsers;
+    const days = range === "7d" ? 7 : range === "30d" ? 30 : 90;
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    return allUsers.filter((u) => {
+      const t = u.created_at ? new Date(u.created_at).getTime() : NaN;
+      return !isNaN(t) && t >= cutoff;
+    });
+  }, [allUsers, range]);
 
   return (
     <div>
       <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:items-center sm:justify-between mb-8">
-        <div className="text-sm flex items-center">
-          <span className="text-muted-foreground">Facility:&nbsp;</span>
-          <span className="font-medium">{selectedLabel}</span>
+        <div className="flex gap-2 flex-1 min-w-0">
+          {RANGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setRange(opt.key)}
+              className={`flex-1 sm:flex-initial rounded-md border px-4 py-2 text-sm text-center transition-colors ${
+                range === opt.key
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-input bg-background hover:bg-muted"
+              }`}
+            >
+              <span className="sm:hidden">{opt.shortLabel}</span>
+              <span className="hidden sm:inline">{opt.label}</span>
+            </button>
+          ))}
         </div>
         <LoadingButton
           variant="secondary"
@@ -559,6 +581,7 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
     </div>
   );
 }
+
 
 function exportFacilityUsersCsv(
   users: { user_id: string; username: string; first_name: string; last_name: string; email: string; created_at: string }[],
