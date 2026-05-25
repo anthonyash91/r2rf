@@ -114,6 +114,13 @@ function fmtDate(iso?: string | null) {
   return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
+function fmtDateShort(iso?: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString(undefined, { year: "2-digit", month: "2-digit", day: "2-digit" });
+}
+
 function aggregate(report: { categories: Category[]; items: ContentItem[]; events: EventRow[] }) {
   const catViews = new Map<string, number>();
   const catClicks = new Map<string, number>();
@@ -818,7 +825,7 @@ function exportUserProgressCsv(
           csvEscape(it.type),
           csvEscape(it.duration ?? ""),
           it.read ? "Yes" : "No",
-          csvEscape(it.read && (it as any).read_at ? fmtDate((it as any).read_at) : ""),
+          csvEscape(it.read && (it as any).read_at ? fmtDateShort((it as any).read_at) : ""),
         ].join(","),
       );
     }
@@ -932,7 +939,7 @@ function UserCategorySection({
                         <>
                           <Check className="h-3.5 w-3.5" />
                           {labels.read}
-                          {item.read_at && <> on {fmtDate(item.read_at)}</>}
+                          {item.read_at && <> on {fmtDateShort(item.read_at)}</>}
                         </>
                       ) : (
                         <>
