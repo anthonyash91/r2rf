@@ -116,7 +116,8 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     const { data: profs, error } = await supabaseAdmin
       .from("user_profiles")
       .select("user_id, username, first_name, last_name, facility, created_at")
-      .eq("facility", data.facilityValue);
+      .eq("facility", data.facilityValue)
+      .eq("is_synthetic", false);
     if (error) throw new Error(error.message);
     const ids = (profs ?? []).map((p: any) => p.user_id as string);
 
