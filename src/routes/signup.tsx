@@ -335,27 +335,27 @@ function SignupPageContent() {
                 </div>
                 <div>
                   <label className="text-sm font-medium">{t("security.newPassword")}</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     required
                     minLength={8}
                     maxLength={72}
                     value={resetNewPassword}
                     onChange={(e) => setResetNewPassword(e.target.value)} {...kbResetNew}
-                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    wrapperClassName="mt-1"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                   <PasswordStrengthMeter password={resetNewPassword} />
                 </div>
                 <div>
                   <label className="text-sm font-medium">{t("signup.confirmPassword")}</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     required
                     minLength={8}
                     maxLength={72}
                     value={resetConfirmPassword}
                     onChange={(e) => setResetConfirmPassword(e.target.value)} {...kbResetConfirm}
-                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    wrapperClassName="mt-1"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                   {resetConfirmPassword.length > 0 && resetConfirmPassword !== resetNewPassword && (
                     <p className="mt-1 text-xs text-destructive">{t("signup.passwordMismatch")}</p>
