@@ -515,7 +515,7 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
 
   return (
     <div>
-      <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center sm:justify-end mb-4">
+      <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center sm:justify-end">
         <LoadingButton
           variant="secondary"
           onClick={() => exportFacilityUsersCsv(users, selectedLabel)}
@@ -528,12 +528,13 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
       </div>
 
       {usersQuery.isLoading ? (
-        <p className="text-muted-foreground">Loading…</p>
+        <p className="mt-8 text-muted-foreground">Loading…</p>
       ) : users.length === 0 ? (
-        <p className="text-muted-foreground">No users in this facility.</p>
+        <p className="mt-8 text-muted-foreground">No users in this facility.</p>
+
 
       ) : (
-        <SectionCard padded={false} className="overflow-hidden">
+        <SectionCard padded={false} className="mt-8 overflow-hidden">
           <ul className="divide-y divide-border">
             {users.map((u) => {
               const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || u.email;
