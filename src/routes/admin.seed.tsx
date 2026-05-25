@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
 import { LoadingButton } from "@/components/LoadingButton";
 import { Badge } from "@/components/Badge";
+import { defaultDurationForType } from "@/lib/duration";
 
 export const Route = createFileRoute("/admin/seed")({
   beforeLoad: requireAdminBeforeLoad,
@@ -222,7 +223,7 @@ function AdminSeedPage() {
           title: r.title,
           type: r.type ?? "Article",
           source: r.source ?? "",
-          duration: "",
+          duration: defaultDurationForType(r.type ?? "Article"),
           description: "",
           url: r.url || null,
           published: true,
