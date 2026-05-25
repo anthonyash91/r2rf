@@ -19,7 +19,9 @@ import { rowPending } from "@/hooks/use-row-pending";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
 import {
-  listUsers,
+  listAdminUsers,
+  listTesterUsers,
+  listRegularUsers,
   updateUserEmail,
   setUserPassword,
   sendPasswordResetEmail,
