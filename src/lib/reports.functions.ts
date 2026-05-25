@@ -219,7 +219,7 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     }
 
     return {
-      users: (profs ?? []).map((p: any) => ({
+      users: profs.map((p: any) => ({
         user_id: p.user_id as string,
         username: (p.username as string) ?? "",
         first_name: (p.first_name as string) ?? "",
@@ -231,6 +231,7 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
         last_login_date: lastLoginById.get(p.user_id as string) ?? null,
       })),
     };
+
   });
 
 /**
