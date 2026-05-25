@@ -483,8 +483,16 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
 function exportUsageCsv(
   aggregated: { rows: AggregatedRow[]; totalViews: number; totalClicks: number },
   label: string,
+  summary: { hoursSpent: number; usersSignedUp: number },
 ) {
   const lines: string[] = [];
+  lines.push(["Overall usage"].map(csvEscape).join(","));
+  lines.push(["Metric", "Value"].map(csvEscape).join(","));
+  lines.push(["Category views", aggregated.totalViews].map(csvEscape).join(","));
+  lines.push(["Content clicks", aggregated.totalClicks].map(csvEscape).join(","));
+  lines.push(["Hours spent", summary.hoursSpent].map(csvEscape).join(","));
+  lines.push(["Users signed up", summary.usersSignedUp].map(csvEscape).join(","));
+  lines.push("");
   lines.push(
     ["Category", "Category slug", "Item title", "Item type", "Added", "Views", "Clicks"]
       .map(csvEscape)
