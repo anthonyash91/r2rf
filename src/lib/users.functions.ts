@@ -221,6 +221,11 @@ export const deleteUser = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.delete",
+      targetUserId: data.userId,
+    });
     return { ok: true };
   });
 
