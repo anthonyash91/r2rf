@@ -19,6 +19,8 @@ import { questionLabel } from "@/lib/security-questions";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
+import { PasswordInput } from "@/components/PasswordInput";
+import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
 import { readStatusLabels } from "@/lib/read-status";
