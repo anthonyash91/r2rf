@@ -105,10 +105,47 @@ function AdminUsersPage() {
     setLastSeenUsersAt(new Date().toISOString());
   }, []);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin", "users"],
-    queryFn: () => list(),
+  // Debounce search input so typing doesn't fire a request per keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const adminQuery = useQuery({
+    queryKey: ["admin", "users", "admins"],
+    queryFn: () => listAdminFn(),
   });
+  const testerQuery = useQuery({
+    queryKey: ["admin", "users", "testers"],
+    queryFn: () => listTesterFn(),
+  });
+  const regularQuery = useQuery({
+    queryKey: [
+      "admin",
+      "users",
+      "regular",
+      { limit: regularPager.visibleCount, search: debouncedSearch, facility: facilityFilter },
+    ],
+    queryFn: () =>
+      listRegularFn({
+        data: {
+          limit: regularPager.visibleCount,
+          offset: 0,
+          search: debouncedSearch,
+          facility: facilityFilter === "all" ? "" : facilityFilter,
+        },
+      }),
+    placeholderData: (prev) => prev,
+  });
+
+  const isLoading = adminQuery.isLoading || testerQuery.isLoading || regularQuery.isLoading;
+  const adminUsers: UserRow[] = adminQuery.data?.users ?? [];
+  const testerUsers: UserRow[] = testerQuery.data?.users ?? [];
+  const regularUsers: UserRow[] = regularQuery.data?.users ?? [];
+  const regularTotal = regularQuery.data?.total ?? 0;
+  const totalUsers = adminUsers.length + testerUsers.length + regularTotal;
+
 
   const fetchFacilities = useServerFn(listAllFacilities);
   const facilitiesQuery = useQuery({
