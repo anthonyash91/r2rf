@@ -375,14 +375,20 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
             <button
               key={opt.key}
               onClick={() => setRange(opt.key)}
-              className={`flex-1 sm:flex-initial rounded-md border px-4 py-2 text-sm text-center transition-colors ${
+              className={`@container flex-1 sm:flex-initial rounded-md border px-4 py-2 text-sm text-center whitespace-nowrap transition-colors ${
                 range === opt.key
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border-input bg-background hover:bg-muted"
               }`}
             >
-              <span className="sm:hidden">{opt.shortLabel}</span>
-              <span className="hidden sm:inline">{opt.label}</span>
+              {opt.key === "all" ? (
+                "All time"
+              ) : (
+                <>
+                  <span className="hidden @[6rem]:inline">Last </span>
+                  {opt.shortLabel}
+                </>
+              )}
             </button>
           ))}
         </div>
