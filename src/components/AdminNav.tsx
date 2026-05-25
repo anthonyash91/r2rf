@@ -25,6 +25,7 @@ type NavLink = {
 
 const links: NavLink[] = [
   { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true, matchPrefixes: ["/admin/category"] },
+  { to: "/admin/seed", label: "Seed Content", icon: Sprout, adminOnly: true },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true },
   { to: "/admin/facilities", label: "Facilities", icon: Building2, adminOnly: true },
   { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
