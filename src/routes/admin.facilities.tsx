@@ -208,7 +208,7 @@ function AdminFacilitiesPage() {
                   <li
                     key={f.value}
                     onClick={editable ? () => bulk.toggle(f.id) : undefined}
-                    className={`px-6 py-2 transition-colors ${
+                    className={`px-6 py-6 transition-colors ${
                       editable
                         ? `cursor-pointer ${selected ? "bg-destructive/10 hover:bg-destructive/15" : "hover:bg-muted/50"}`
                         : ""
