@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { getClientIp, invalidateAllowlistCache } from "@/lib/ip-allowlist";
+import { buildPasskeyCookie } from "@/lib/passkey-cookie";
 
 // SHA-256 hash of the site passkey, read from server env. The plaintext
 // passkey is never stored — only its hash, and only outside of source.
@@ -157,17 +158,10 @@ export const Route = createFileRoute("/api/public/site-passkey")({
         }
 
         invalidateAllowlistCache();
-        return Response.json(
-          { ok: true, ip },
-          {
-            headers: {
-              // Grant immediate access on the reload following a successful
-              // unlock. Short-lived: the IP is now persisted in the allowlist
-              // and will be picked up by the normal check after caches refresh.
-              "Set-Cookie": "site_passkey_ok=1; Path=/; Max-Age=300; SameSite=Lax; Secure; HttpOnly",
-            },
-          },
-        );
+        const signedCookie = await buildPasskeyCookie(ip);
+        const headers: Record<string, string> = {};
+        if (signedCookie) headers["Set-Cookie"] = signedCookie;
+        return Response.json({ ok: true, ip }, { headers });
       },
     },
   },

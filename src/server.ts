@@ -3,6 +3,7 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { getAllowedIps, getBlockedIps, getClientIp, getCustomHomeRestrictions, isIpRestrictionEnabled, renderBlockedPage } from "./lib/ip-allowlist";
+import { verifyPasskeyCookie } from "./lib/passkey-cookie";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -151,9 +152,7 @@ export default {
       // works even if the new request lands on a different worker isolate
       // (whose in-memory allowlist cache hasn't been invalidated yet) or
       // before the freshly inserted row is visible.
-      const hasPasskeyCookie = (request.headers.get("cookie") ?? "")
-        .split(";")
-        .some((c) => c.trim().startsWith("site_passkey_ok="));
+      const hasPasskeyCookie = await verifyPasskeyCookie(request.headers.get("cookie"), ip);
 
 
       let allowed = false;
