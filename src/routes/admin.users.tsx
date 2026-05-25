@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useRef, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, HelpCircle, Loader2, Download } from "lucide-react";
@@ -12,6 +12,9 @@ import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
+import { UserStatusBadges } from "@/components/UserStatusBadges";
+import { LoadMorePager, useLoadMore } from "@/components/LoadMorePager";
+import { useToastMutation } from "@/hooks/use-toast-mutation";
 import { rowPending } from "@/hooks/use-row-pending";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
@@ -80,7 +83,7 @@ function AdminUsersPage() {
   const [newUsername, setNewUsername] = useState("");
   const [newTesterPassword, setNewTesterPassword] = useState("");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
-  const [regularVisible, setRegularVisible] = useState<number>(10);
+  const regularPager = useLoadMore(10, 10);
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -113,27 +116,26 @@ function AdminUsersPage() {
     facilities.map((f) => [f.value, f.label]),
   );
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["admin", "users"] });
+  const usersKey = ["admin", "users"] as const;
+  const invalidate = () => qc.invalidateQueries({ queryKey: usersKey });
 
-  const emailMut = useMutation({
+  const emailMut = useToastMutation({
     mutationFn: (input: { userId: string; email: string }) => updateEmail({ data: input }),
-    onSuccess: () => { toast.success("Email updated"); invalidate(); },
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Email updated",
+    invalidate: usersKey,
   });
-  const pwMut = useMutation({
+  const pwMut = useToastMutation({
     mutationFn: (input: { userId: string; password: string }) => setPassword({ data: input }),
-    onSuccess: () => toast.success("Password updated"),
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Password updated",
   });
-  const resetMut = useMutation({
+  const resetMut = useToastMutation({
     mutationFn: (input: { email: string }) => sendReset({ data: input }),
-    onSuccess: () => toast.success("Password reset email sent"),
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Password reset email sent",
   });
-  const roleMut = useMutation({
+  const roleMut = useToastMutation({
     mutationFn: (input: { userId: string; role: "admin" | "contributor" | "tester"; enabled: boolean }) => setRole({ data: input }),
-    onSuccess: () => { toast.success("Role updated"); invalidate(); },
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Role updated",
+    invalidate: usersKey,
   });
   const closeAddForm = () => {
     setAddKind(null);
@@ -143,48 +145,46 @@ function AdminUsersPage() {
     setNewUsername("");
     setNewTesterPassword("");
   };
-  const createMut = useMutation({
+  const createMut = useToastMutation({
     mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" }) => createFn({ data: input }),
+    successMessage: "User created. A verification email has been sent.",
+    invalidate: usersKey,
     onSuccess: () => {
-      toast.success("User created. A verification email has been sent.");
       closeAddForm();
       newUsersSinceRef.current = new Date().toISOString();
-      invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
   });
-  const createTesterMut = useMutation({
+  const createTesterMut = useToastMutation({
     mutationFn: (input: { username: string; password: string }) => createTesterFn({ data: input }),
+    successMessage: "Test user created",
+    invalidate: usersKey,
     onSuccess: () => {
-      toast.success("Test user created");
       closeAddForm();
       newUsersSinceRef.current = new Date().toISOString();
-      invalidate();
     },
-    onError: (e: any) => toast.error(e.message),
   });
-  const deleteMut = useMutation({
+  const deleteMut = useToastMutation({
     mutationFn: (input: { userId: string }) => deleteFn({ data: input }),
-    onSuccess: () => { toast.success("User deleted"); invalidate(); },
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "User deleted",
+    invalidate: usersKey,
   });
-  const deleteManyMut = useMutation({
+  const deleteManyMut = useToastMutation({
     mutationFn: (input: { userIds: string[] }) => deleteManyFn({ data: input }),
-    onSuccess: async (res) => {
+    successMessage: (res) => {
       const parts: string[] = [];
       parts.push(`Deleted ${res.deleted} ${res.deleted === 1 ? "user" : "users"}`);
       if (res.failed.length) parts.push(`${res.failed.length} failed`);
       if (res.skippedSelf) parts.push("skipped your own account");
-      toast.success(parts.join(" • "));
-      await invalidate();
+      return parts.join(" • ");
+    },
+    invalidate: usersKey,
+    onSuccess: () => {
       bulk.clear();
     },
-    onError: (e: any) => toast.error(e.message),
   });
-  const clearSecMut = useMutation({
+  const clearSecMut = useToastMutation({
     mutationFn: (input: { userId: string }) => clearSecFn({ data: input }),
-    onSuccess: () => toast.success("Security questions reset. User must set new ones on next sign-in."),
-    onError: (e: any) => toast.error(e.message),
+    successMessage: "Security questions reset. User must set new ones on next sign-in.",
   });
 
   return (
