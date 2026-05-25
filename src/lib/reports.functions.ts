@@ -97,7 +97,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
     return {
       categories: catsRes.data ?? [],
       items: itemsRes.data ?? [],
-      events: evRes.data ?? [],
+      events,
       facilityUserCount,
     };
   });
