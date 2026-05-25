@@ -173,6 +173,12 @@ function downloadCsv(filename: string, lines: string[]) {
   URL.revokeObjectURL(url);
 }
 
+function waitForNextPaint() {
+  return new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+}
+
 function AdminReportsPage() {
   const [tab, setTab] = useState<"overall" | "facility" | "user">("overall");
   const [facilityKey, setFacilityKey] = useState(0);
@@ -428,6 +434,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
             if (!aggregated) return;
             setIsExporting(true);
             try {
+              await waitForNextPaint();
               exportUsageCsv(aggregated, exportLabel, {
                 hoursSpent: (data as any)?.hoursSpent ?? 0,
                 usersSignedUp:
@@ -593,6 +600,7 @@ function UsersReportTab({
           onClick={async () => {
             setIsExporting(true);
             try {
+              await waitForNextPaint();
               const exportUsers = isAll
                 ? (await fetchUsers({ data: { facilityValue: "", includeSynthetic: true } })).users ?? []
                 : users;
@@ -601,7 +609,7 @@ function UsersReportTab({
               setTimeout(() => setIsExporting(false), 0);
             }
           }}
-          disabled={users.length === 0}
+          disabled={usersQuery.isLoading || (!isAll && users.length === 0)}
           pending={isExporting}
           pendingText="Exporting…"
           icon={<Download className="h-4 w-4" />}
@@ -789,6 +797,7 @@ function UserProgressView({
               if (!data) return;
               setIsExporting(true);
               try {
+                await waitForNextPaint();
                 exportUserProgressCsv(data, userName);
               } finally {
                 setTimeout(() => setIsExporting(false), 0);
