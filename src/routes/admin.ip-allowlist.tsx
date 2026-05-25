@@ -376,7 +376,7 @@ function AllowlistRow({
   });
 
   return (
-    <li className="p-6">
+    <li className="px-6 py-2">
       <div className="flex items-center gap-4">
         <div className="flex-1 min-w-0">
           <p className="font-mono text-sm">{row.ip_address}</p>
