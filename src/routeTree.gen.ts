@@ -26,6 +26,7 @@ import { Route as AdminHomeRouteImport } from './routes/admin.home'
 import { Route as AdminFacilitiesRouteImport } from './routes/admin.facilities'
 import { Route as AdminCustomHomePagesRouteImport } from './routes/admin.custom-home-pages'
 import { Route as AdminCertificateRouteImport } from './routes/admin.certificate'
+import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminCustomHomePagesIndexRouteImport } from './routes/admin.custom-home-pages.index'
 import { Route as ApiPublicSitePasskeyRouteImport } from './routes/api/public/site-passkey'
@@ -117,6 +118,11 @@ const AdminCertificateRoute = AdminCertificateRouteImport.update({
   path: '/certificate',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAuditLogRoute = AdminAuditLogRouteImport.update({
+  id: '/audit-log',
+  path: '/audit-log',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
   '/admin/facilities': typeof AdminFacilitiesRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
   '/admin/facilities': typeof AdminFacilitiesRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/spanish'
     | '/admin/analytics'
+    | '/admin/audit-log'
     | '/admin/certificate'
     | '/admin/custom-home-pages'
     | '/admin/facilities'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/spanish'
     | '/admin/analytics'
+    | '/admin/audit-log'
     | '/admin/certificate'
     | '/admin/facilities'
     | '/admin/home'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/spanish'
     | '/admin/analytics'
+    | '/admin/audit-log'
     | '/admin/certificate'
     | '/admin/custom-home-pages'
     | '/admin/facilities'
@@ -420,6 +432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCertificateRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/audit-log': {
+      id: '/admin/audit-log'
+      path: '/audit-log'
+      fullPath: '/admin/audit-log'
+      preLoaderRoute: typeof AdminAuditLogRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/analytics': {
       id: '/admin/analytics'
       path: '/analytics'
@@ -473,6 +492,7 @@ const AdminCustomHomePagesRouteWithChildren =
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminAuditLogRoute: typeof AdminAuditLogRoute
   AdminCertificateRoute: typeof AdminCertificateRoute
   AdminCustomHomePagesRoute: typeof AdminCustomHomePagesRouteWithChildren
   AdminFacilitiesRoute: typeof AdminFacilitiesRoute
@@ -488,6 +508,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminAuditLogRoute: AdminAuditLogRoute,
   AdminCertificateRoute: AdminCertificateRoute,
   AdminCustomHomePagesRoute: AdminCustomHomePagesRouteWithChildren,
   AdminFacilitiesRoute: AdminFacilitiesRoute,
@@ -516,13 +537,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
