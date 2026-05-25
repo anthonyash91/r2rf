@@ -65,7 +65,9 @@ function AdminUsersPage() {
   const qc = useQueryClient();
   const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
-  const list = useServerFn(listUsers);
+  const listAdminFn = useServerFn(listAdminUsers);
+  const listTesterFn = useServerFn(listTesterUsers);
+  const listRegularFn = useServerFn(listRegularUsers);
   const updateEmail = useServerFn(updateUserEmail);
   const setPassword = useServerFn(setUserPassword);
   const sendReset = useServerFn(sendPasswordResetEmail);
