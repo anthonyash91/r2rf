@@ -421,7 +421,16 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
         </div>
         <LoadingButton
           variant="secondary"
-          onClick={() => aggregated && exportUsageCsv(aggregated, exportLabel)}
+          onClick={() =>
+            aggregated &&
+            exportUsageCsv(aggregated, exportLabel, {
+              hoursSpent: (data as any)?.hoursSpent ?? 0,
+              usersSignedUp:
+                scope.kind === "facility"
+                  ? ((data as any)?.facilityUserCount ?? 0)
+                  : ((data as any)?.totalUsers ?? 0),
+            })
+          }
           disabled={!aggregated}
           icon={<Download className="h-4 w-4" />}
           className="w-full sm:w-auto"
