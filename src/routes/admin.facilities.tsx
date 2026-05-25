@@ -146,7 +146,7 @@ function AdminFacilitiesPage() {
               if (!labels.length) { toast.error("Enter at least one facility"); return; }
               addMut.mutate({ facilities: labels.map((label) => ({ label })) });
             }}
-            className="mt-3 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4"
+            className="mt-3 mb-6 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4"
           >
             <label className="text-sm font-medium">New facilities (one per line)</label>
             <textarea
