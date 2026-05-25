@@ -59,12 +59,23 @@ export const getUsageReport = createServerFn({ method: "POST" })
       facilityUserCount = userIdFilter.length;
     }
 
-    const [catsRes, itemsRes] = await Promise.all([
+    const [catsRes, itemsRes, totalUsersRes] = await Promise.all([
       supabaseAdmin.from("categories").select("*").order("sort_order", { ascending: true }),
       supabaseAdmin.from("content_items").select("*").order("sort_order", { ascending: true }),
+      supabaseAdmin
+        .from("user_profiles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("is_synthetic", false),
     ]);
     if (catsRes.error) throw new Error(catsRes.error.message);
     if (itemsRes.error) throw new Error(itemsRes.error.message);
+    const totalUsers = totalUsersRes.count ?? 0;
+
+    // Build duration minutes lookup per item
+    const minutesByItem = new Map<string, number>();
+    for (const it of (itemsRes.data ?? []) as any[]) {
+      minutesByItem.set(it.id, parseDurationMinutes(it.duration));
+    }
 
     let q = supabaseAdmin
       .from("analytics_events")
@@ -79,28 +90,65 @@ export const getUsageReport = createServerFn({ method: "POST" })
           items: itemsRes.data ?? [],
           events: [],
           facilityUserCount,
+          totalUsers,
+          hoursSpent: 0,
         };
       }
       q = q.in("user_id", userIdFilter);
     } else if (syntheticIds.size > 0) {
       q = q.not("user_id", "in", `(${Array.from(syntheticIds).join(",")})`);
     }
-    const evRes = await q;
-    if (evRes.error) throw new Error(evRes.error.message);
 
-    // Filter out anonymous events from synthetic users that may have leaked in
-    // (defense in depth — `not in` above already filters by user_id).
+    // Progress (completed items) for hours-spent calculation
+    let pq = supabaseAdmin
+      .from("user_content_progress")
+      .select("content_item_id, user_id, created_at")
+      .limit(50000);
+    if (sinceIso) pq = pq.gte("created_at", sinceIso);
+    if (userIdFilter !== null) {
+      pq = pq.in("user_id", userIdFilter);
+    } else if (syntheticIds.size > 0) {
+      pq = pq.not("user_id", "in", `(${Array.from(syntheticIds).join(",")})`);
+    }
+
+    const [evRes, progRes] = await Promise.all([q, pq]);
+    if (evRes.error) throw new Error(evRes.error.message);
+    if (progRes.error) throw new Error(progRes.error.message);
+
     const events = (evRes.data ?? []).filter(
       (e: any) => !e.user_id || !syntheticIds.has(e.user_id),
     );
+    const progress = (progRes.data ?? []).filter(
+      (p: any) => !syntheticIds.has(p.user_id),
+    );
+    let totalMinutes = 0;
+    for (const p of progress) {
+      totalMinutes += minutesByItem.get(p.content_item_id as string) ?? 0;
+    }
+    const hoursSpent = Math.round((totalMinutes / 60) * 10) / 10;
 
     return {
       categories: catsRes.data ?? [],
       items: itemsRes.data ?? [],
       events,
       facilityUserCount,
+      totalUsers,
+      hoursSpent,
     };
   });
+
+function parseDurationMinutes(d?: string | null): number {
+  if (!d) return 0;
+  let total = 0;
+  const re = /(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)?/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(d)) !== null) {
+    const n = parseFloat(m[1]);
+    const u = (m[2] ?? "min").toLowerCase();
+    total += u.startsWith("h") ? n * 60 : n;
+  }
+  return total;
+}
 
 /**
  * List users belonging to a facility, with names/email/username.
