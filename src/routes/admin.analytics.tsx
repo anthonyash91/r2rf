@@ -518,12 +518,13 @@ function FacilityReportTab({ preselected }: { preselected: { value: string; labe
 function UsersReportTab({ preselected }: { preselected: { value: string; label: string } }) {
   const fetchUsers = useServerFn(listFacilityUsers);
   const selected = preselected.value;
+  const isAll = selected === "__all__";
   const [activeUser, setActiveUser] = useState<{ userId: string; name: string } | null>(null);
 
   const usersQuery = useQuery({
     queryKey: ["admin", "facility-users", selected],
     enabled: !!selected,
-    queryFn: () => fetchUsers({ data: { facilityValue: selected } }),
+    queryFn: () => fetchUsers({ data: { facilityValue: isAll ? "" : selected } }),
   });
 
   const selectedLabel = preselected.label;
@@ -545,7 +546,7 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
       <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center sm:justify-end">
         <LoadingButton
           variant="secondary"
-          onClick={() => exportFacilityUsersCsv(users, selectedLabel)}
+          onClick={() => exportFacilityUsersCsv(users, selectedLabel, isAll)}
           disabled={users.length === 0}
           icon={<Download className="h-4 w-4" />}
           className="w-full sm:w-auto"
@@ -557,22 +558,24 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
       {usersQuery.isLoading ? (
         <p className="mt-8 text-muted-foreground">Loading…</p>
       ) : users.length === 0 ? (
-        <p className="mt-8 text-muted-foreground">No users in this facility.</p>
-
-
+        <p className="mt-8 text-muted-foreground">
+          {isAll ? "No registered users." : "No users in this facility."}
+        </p>
       ) : (
         <SectionCard padded={false} className="mt-8 overflow-hidden">
           <ul className="divide-y divide-border">
             {users.map((u) => {
-              const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || u.email;
+              const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "—";
+              const meta: string[] = [];
+              if (u.username) meta.push(`@${u.username}`);
+              if (isAll && (u as any).facility) meta.push((u as any).facility);
               return (
                 <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{name}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {u.username ? `@${u.username}` : ""}
-                      {u.email ? ` · ${u.email}` : ""}
-                    </p>
+                    {meta.length > 0 && (
+                      <p className="text-xs text-muted-foreground truncate">{meta.join(" · ")}</p>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -593,20 +596,21 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
 
 
 function exportFacilityUsersCsv(
-  users: { user_id: string; username: string; first_name: string; last_name: string; email: string; created_at: string }[],
+  users: { user_id: string; username: string; first_name: string; last_name: string; email: string; created_at: string; facility?: string; last_sign_in_at?: string | null; last_login_date?: string | null }[],
   facilityLabel: string,
+  includeFacility = false,
 ) {
   const lines: string[] = [];
-  lines.push(["First name", "Last name", "Username", "Joined"].map(csvEscape).join(","));
+  const headers = includeFacility
+    ? ["First name", "Last name", "Username", "Facility", "Joined", "Last login"]
+    : ["First name", "Last name", "Username", "Joined", "Last login"];
+  lines.push(headers.map(csvEscape).join(","));
   for (const u of users) {
-    lines.push(
-      [
-        csvEscape(u.first_name),
-        csvEscape(u.last_name),
-        csvEscape(u.username),
-        csvEscape(fmtDate(u.created_at)),
-      ].join(","),
-    );
+    const lastLogin = u.last_sign_in_at || u.last_login_date || "";
+    const row = includeFacility
+      ? [u.first_name, u.last_name, u.username, u.facility ?? "", fmtDate(u.created_at), fmtDate(lastLogin)]
+      : [u.first_name, u.last_name, u.username, fmtDate(u.created_at), fmtDate(lastLogin)];
+    lines.push(row.map(csvEscape).join(","));
   }
   downloadCsv(
     `users-${facilityLabel || "facility"}-${new Date().toISOString().slice(0, 10)}.csv`,
