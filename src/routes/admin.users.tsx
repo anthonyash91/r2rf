@@ -639,7 +639,7 @@ function UserItem({
   const isUsernameUser = !!user.profile && (isRegularUser || isTester);
 
   return (
-    <li className="p-6">
+    <li className="py-5 pr-[24px] pl-[24px]">
       <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-5">
         <div className="min-w-0 flex-1">
           {isUsernameUser ? (
