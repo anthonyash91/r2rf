@@ -245,6 +245,12 @@ export const deleteUsers = createServerFn({ method: "POST" })
         const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
         if (error) throw new Error(error.message);
         deleted++;
+        await recordAdminAudit({
+          actorUserId: context.userId,
+          action: "user.delete",
+          targetUserId: userId,
+          details: { bulk: true },
+        });
       } catch (e: any) {
         failed.push({ userId, message: e?.message ?? "unknown error" });
       }
