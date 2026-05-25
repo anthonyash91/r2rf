@@ -38,13 +38,22 @@ export const getUsageReport = createServerFn({ method: "POST" })
     const sinceIso = sinceIsoFor(data.range);
     const facilityValue = data.facilityValue ?? null;
 
+    // Always exclude synthetic (test) users from real-user metrics.
+    const { data: synthRows, error: synthErr } = await supabaseAdmin
+      .from("user_profiles")
+      .select("user_id")
+      .eq("is_synthetic", true);
+    if (synthErr) throw new Error(synthErr.message);
+    const syntheticIds = new Set<string>((synthRows ?? []).map((r: any) => r.user_id as string));
+
     let userIdFilter: string[] | null = null;
     let facilityUserCount = 0;
     if (facilityValue) {
       const { data: profs, error } = await supabaseAdmin
         .from("user_profiles")
         .select("user_id")
-        .eq("facility", facilityValue);
+        .eq("facility", facilityValue)
+        .eq("is_synthetic", false);
       if (error) throw new Error(error.message);
       userIdFilter = (profs ?? []).map((p: any) => p.user_id as string);
       facilityUserCount = userIdFilter.length;
@@ -73,9 +82,17 @@ export const getUsageReport = createServerFn({ method: "POST" })
         };
       }
       q = q.in("user_id", userIdFilter);
+    } else if (syntheticIds.size > 0) {
+      q = q.not("user_id", "in", `(${Array.from(syntheticIds).join(",")})`);
     }
     const evRes = await q;
     if (evRes.error) throw new Error(evRes.error.message);
+
+    // Filter out anonymous events from synthetic users that may have leaked in
+    // (defense in depth — `not in` above already filters by user_id).
+    const events = (evRes.data ?? []).filter(
+      (e: any) => !e.user_id || !syntheticIds.has(e.user_id),
+    );
 
     return {
       categories: catsRes.data ?? [],
