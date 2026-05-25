@@ -611,7 +611,7 @@ function CategoryPage() {
               key={imageViewer.url}
               src={imageViewer.url}
               alt={imageViewer.title}
-              className="w-full h-auto max-h-[85vh] object-contain bg-black"
+              className="w-full h-auto max-h-[calc(100dvh-2rem)] object-contain bg-black"
             />
           )}
         </DialogContent>
