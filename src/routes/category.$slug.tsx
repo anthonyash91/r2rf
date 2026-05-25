@@ -508,7 +508,7 @@ function CategoryPage() {
                 <div className="border-t border-border/60 pt-20">
                   <h2 className="font-display text-xl font-semibold mb-6">{t("category.exploreOthers")}</h2>
                   <Carousel setApi={setOthersApi} opts={{ align: "start", loop: false }} plugins={[AutoHeight()]} className="relative">
-                    <CarouselContent>
+                    <CarouselContent className="items-start transition-[height] duration-300 ease-out">
                       {Array.from({ length: Math.ceil(data.others.length / 9) }).map((_, slideIdx) => {
                         const slide = data.others.slice(slideIdx * 9, slideIdx * 9 + 9);
                         return (
