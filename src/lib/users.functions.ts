@@ -16,53 +16,199 @@ async function assertAdmin(supabase: any, userId: string) {
   if (error || !data) throw new Error("Forbidden: admin access required");
 }
 
-export const listUsers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+type ListedUser = {
+  id: string;
+  email: string;
+  created_at: string;
+  last_sign_in_at: string | null;
+  email_confirmed_at: string | null;
+  roles: Role[];
+  profile: { username: string; facility: string; first_name: string; last_name: string } | null;
+};
 
-    const { data: usersData, error } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 200,
-    });
-    if (error) throw new Error(error.message);
-
-    const ids = usersData.users.map((u) => u.id);
-    const idsForQuery = ids.length ? ids : ["00000000-0000-0000-0000-000000000000"];
-    const { data: roleRows } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id, role")
-      .in("user_id", idsForQuery);
-
-    const { data: profileRows } = await supabaseAdmin
-      .from("user_profiles")
-      .select("user_id, username, facility, first_name, last_name")
-      .in("user_id", idsForQuery);
-
-    const rolesByUser = new Map<string, Role[]>();
-    for (const r of roleRows ?? []) {
-      const arr = rolesByUser.get(r.user_id) ?? [];
-      arr.push(r.role as Role);
-      rolesByUser.set(r.user_id, arr);
-    }
-
-    const profileByUser = new Map<string, { username: string; facility: string; first_name: string; last_name: string }>();
-    for (const p of profileRows ?? []) {
-      profileByUser.set(p.user_id, { username: p.username, facility: p.facility, first_name: (p as any).first_name ?? "", last_name: (p as any).last_name ?? "" });
-    }
-
-    return {
-      users: usersData.users.map((u) => ({
-        id: u.id,
+async function hydrateAuthFields(userIds: string[]): Promise<
+  Map<string, { email: string; created_at: string; last_sign_in_at: string | null; email_confirmed_at: string | null }>
+> {
+  const map = new Map<
+    string,
+    { email: string; created_at: string; last_sign_in_at: string | null; email_confirmed_at: string | null }
+  >();
+  await Promise.all(
+    userIds.map(async (id) => {
+      const { data, error } = await supabaseAdmin.auth.admin.getUserById(id);
+      if (error || !data?.user) return;
+      const u = data.user as any;
+      map.set(id, {
         email: u.email ?? "",
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at ?? null,
-        email_confirmed_at: (u as any).email_confirmed_at ?? null,
-        roles: rolesByUser.get(u.id) ?? [],
+        email_confirmed_at: u.email_confirmed_at ?? null,
+      });
+    }),
+  );
+  return map;
+}
 
-        profile: profileByUser.get(u.id) ?? null,
-      })),
-    };
+async function fetchRolesAndProfiles(userIds: string[]) {
+  if (userIds.length === 0) return { rolesByUser: new Map<string, Role[]>(), profileByUser: new Map<string, ListedUser["profile"]>() };
+  const [{ data: roleRows }, { data: profileRows }] = await Promise.all([
+    supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", userIds),
+    supabaseAdmin
+      .from("user_profiles")
+      .select("user_id, username, facility, first_name, last_name")
+      .in("user_id", userIds),
+  ]);
+  const rolesByUser = new Map<string, Role[]>();
+  for (const r of roleRows ?? []) {
+    const arr = rolesByUser.get(r.user_id) ?? [];
+    arr.push(r.role as Role);
+    rolesByUser.set(r.user_id, arr);
+  }
+  const profileByUser = new Map<string, ListedUser["profile"]>();
+  for (const p of profileRows ?? []) {
+    profileByUser.set(p.user_id, {
+      username: p.username,
+      facility: p.facility,
+      first_name: (p as any).first_name ?? "",
+      last_name: (p as any).last_name ?? "",
+    });
+  }
+  return { rolesByUser, profileByUser };
+}
+
+async function buildListedUsers(userIds: string[]): Promise<ListedUser[]> {
+  if (userIds.length === 0) return [];
+  const [authMap, { rolesByUser, profileByUser }] = await Promise.all([
+    hydrateAuthFields(userIds),
+    fetchRolesAndProfiles(userIds),
+  ]);
+  return userIds
+    .map((id) => {
+      const auth = authMap.get(id);
+      if (!auth) return null;
+      return {
+        id,
+        email: auth.email,
+        created_at: auth.created_at,
+        last_sign_in_at: auth.last_sign_in_at,
+        email_confirmed_at: auth.email_confirmed_at,
+        roles: rolesByUser.get(id) ?? [],
+        profile: profileByUser.get(id) ?? null,
+      } as ListedUser;
+    })
+    .filter((x): x is ListedUser => x !== null);
+}
+
+/**
+ * Admin + contributor users. Small set; returns all.
+ */
+export const listAdminUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data: roleRows, error } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .in("role", ["admin", "contributor"]);
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((roleRows ?? []).map((r) => r.user_id)));
+    const users = await buildListedUsers(ids);
+    users.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    return { users };
+  });
+
+/**
+ * Tester users. Bounded set; returns all.
+ */
+export const listTesterUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data: roleRows, error } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "tester");
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((roleRows ?? []).map((r) => r.user_id)));
+    const users = await buildListedUsers(ids);
+    users.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    return { users };
+  });
+
+/**
+ * Regular (signed-up) users with server-side pagination, search and facility filter.
+ */
+export const listRegularUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        limit: z.number().int().min(1).max(200).default(10),
+        offset: z.number().int().min(0).default(0),
+        search: z.string().trim().max(100).optional().default(""),
+        facility: z.string().trim().max(100).optional().default(""),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+
+    // Exclude any user with a privileged or tester role.
+    const { data: privilegedRows, error: privErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .in("role", ["admin", "contributor", "tester"]);
+    if (privErr) throw new Error(privErr.message);
+    const excludeIds = Array.from(new Set((privilegedRows ?? []).map((r) => r.user_id)));
+
+    let q = supabaseAdmin
+      .from("user_profiles")
+      .select("user_id, username, facility, first_name, last_name, created_at", { count: "exact" })
+      .eq("is_synthetic", false);
+
+    if (excludeIds.length) {
+      q = q.not("user_id", "in", `(${excludeIds.join(",")})`);
+    }
+    if (data.facility) {
+      q = q.eq("facility", data.facility);
+    }
+    if (data.search) {
+      const term = data.search.replace(/[%,()]/g, "").toLowerCase();
+      if (term) {
+        const pat = `%${term}%`;
+        q = q.or(
+          `username.ilike.${pat},first_name.ilike.${pat},last_name.ilike.${pat}`,
+        );
+      }
+    }
+
+    q = q.order("created_at", { ascending: false }).range(data.offset, data.offset + data.limit - 1);
+
+    const { data: rows, error, count } = await q;
+    if (error) throw new Error(error.message);
+
+    const ids = (rows ?? []).map((r) => r.user_id);
+    const authMap = await hydrateAuthFields(ids);
+
+    const users: ListedUser[] = (rows ?? []).map((p) => {
+      const auth = authMap.get(p.user_id);
+      return {
+        id: p.user_id,
+        email: auth?.email ?? "",
+        created_at: auth?.created_at ?? p.created_at,
+        last_sign_in_at: auth?.last_sign_in_at ?? null,
+        email_confirmed_at: auth?.email_confirmed_at ?? null,
+        roles: ["user"],
+        profile: {
+          username: p.username,
+          facility: p.facility,
+          first_name: (p as any).first_name ?? "",
+          last_name: (p as any).last_name ?? "",
+        },
+      };
+    });
+
+    return { users, total: count ?? 0 };
   });
 
 export const countNewUsers = createServerFn({ method: "POST" })

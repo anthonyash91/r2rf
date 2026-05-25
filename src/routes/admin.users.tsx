@@ -19,7 +19,9 @@ import { rowPending } from "@/hooks/use-row-pending";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
 
 import {
-  listUsers,
+  listAdminUsers,
+  listTesterUsers,
+  listRegularUsers,
   updateUserEmail,
   setUserPassword,
   sendPasswordResetEmail,
@@ -63,7 +65,9 @@ function AdminUsersPage() {
   const qc = useQueryClient();
   const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
-  const list = useServerFn(listUsers);
+  const listAdminFn = useServerFn(listAdminUsers);
+  const listTesterFn = useServerFn(listTesterUsers);
+  const listRegularFn = useServerFn(listRegularUsers);
   const updateEmail = useServerFn(updateUserEmail);
   const setPassword = useServerFn(setUserPassword);
   const sendReset = useServerFn(sendPasswordResetEmail);
@@ -101,10 +105,47 @@ function AdminUsersPage() {
     setLastSeenUsersAt(new Date().toISOString());
   }, []);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["admin", "users"],
-    queryFn: () => list(),
+  // Debounce search input so typing doesn't fire a request per keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const adminQuery = useQuery({
+    queryKey: ["admin", "users", "admins"],
+    queryFn: () => listAdminFn(),
   });
+  const testerQuery = useQuery({
+    queryKey: ["admin", "users", "testers"],
+    queryFn: () => listTesterFn(),
+  });
+  const regularQuery = useQuery({
+    queryKey: [
+      "admin",
+      "users",
+      "regular",
+      { limit: regularPager.visibleCount, search: debouncedSearch, facility: facilityFilter },
+    ],
+    queryFn: () =>
+      listRegularFn({
+        data: {
+          limit: regularPager.visibleCount,
+          offset: 0,
+          search: debouncedSearch,
+          facility: facilityFilter === "all" ? "" : facilityFilter,
+        },
+      }),
+    placeholderData: (prev) => prev,
+  });
+
+  const isLoading = adminQuery.isLoading || testerQuery.isLoading || regularQuery.isLoading;
+  const adminUsers: UserRow[] = adminQuery.data?.users ?? [];
+  const testerUsers: UserRow[] = testerQuery.data?.users ?? [];
+  const regularUsers: UserRow[] = regularQuery.data?.users ?? [];
+  const regularTotal = regularQuery.data?.total ?? 0;
+  const totalUsers = adminUsers.length + testerUsers.length + regularTotal;
+
 
   const fetchFacilities = useServerFn(listAllFacilities);
   const facilitiesQuery = useQuery({
@@ -193,7 +234,7 @@ function AdminUsersPage() {
         <PageHeader
           icon={Users}
           title="Users"
-          count={!isLoading && data?.users ? data.users.length : undefined}
+          count={!isLoading ? totalUsers : undefined}
           description="Add users, edit emails, reset passwords, and manage access."
         />
         <LoadingButton
@@ -333,22 +374,14 @@ function AdminUsersPage() {
             </SectionCard>
           );
         }
-        if (!data?.users.length) {
+        if (totalUsers === 0) {
           return (
             <SectionCard as="div" className="mt-6 text-muted-foreground">
               No users yet.
             </SectionCard>
           );
         }
-        const adminUsers = data.users.filter(
-          (u) => u.roles.includes("admin") || u.roles.includes("contributor"),
-        );
-        const testerUsers = data.users.filter(
-          (u) => u.roles.includes("tester") && !u.roles.includes("admin") && !u.roles.includes("contributor"),
-        );
-        const regularUsers = data.users.filter(
-          (u) => !u.roles.includes("admin") && !u.roles.includes("contributor") && !u.roles.includes("tester"),
-        );
+
 
         const isPendingEmail = rowPending<string>(emailMut, "userId");
         const isPendingPw = rowPending<string>(pwMut, "userId");
@@ -460,21 +493,14 @@ function AdminUsersPage() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:flex-wrap">
                 <div>
                   {(() => {
-                    const q = searchQuery.trim().toLowerCase();
-                    const facilityScoped = facilityFilter === "all"
-                      ? regularUsers
-                      : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
-                    const filteredCount = q
-                      ? facilityScoped.filter((u) => {
-                          const facLabel = u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : "";
-                          return [u.email, u.profile?.username, u.profile?.first_name, u.profile?.last_name, facLabel]
-                            .filter(Boolean)
-                            .some((v) => String(v).toLowerCase().includes(q));
-                        }).length
-                      : facilityScoped.length;
-                    const isFiltered = facilityFilter !== "all" || q.length > 0;
+                    const isFiltered = facilityFilter !== "all" || debouncedSearch.length > 0;
                     return (
-                      <h2 className="font-display text-xl font-semibold">Users <span className="text-muted-foreground font-normal">({filteredCount}{isFiltered ? ` of ${regularUsers.length}` : ""})</span></h2>
+                      <h2 className="font-display text-xl font-semibold">
+                        Users{" "}
+                        <span className="text-muted-foreground font-normal">
+                          ({regularTotal}{isFiltered ? " filtered" : ""})
+                        </span>
+                      </h2>
                     );
                   })()}
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -495,11 +521,33 @@ function AdminUsersPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      const rows = (facilityFilter === "all"
-                        ? regularUsers
-                        : regularUsers.filter((u) => u.profile?.facility === facilityFilter));
-                      if (!rows.length) { toast.error("No users to export"); return; }
+                    onClick={async () => {
+                      if (regularTotal === 0) { toast.error("No users to export"); return; }
+                      // Fetch every user matching current filters for export.
+                      const exportRes = await listRegularFn({
+                        data: {
+                          limit: Math.min(regularTotal, 200),
+                          offset: 0,
+                          search: debouncedSearch,
+                          facility: facilityFilter === "all" ? "" : facilityFilter,
+                        },
+                      });
+                      const rows = exportRes.users;
+                      // For totals over 200, page through to gather all.
+                      let nextOffset = rows.length;
+                      while (nextOffset < exportRes.total) {
+                        const more = await listRegularFn({
+                          data: {
+                            limit: 200,
+                            offset: nextOffset,
+                            search: debouncedSearch,
+                            facility: facilityFilter === "all" ? "" : facilityFilter,
+                          },
+                        });
+                        rows.push(...more.users);
+                        if (more.users.length === 0) break;
+                        nextOffset += more.users.length;
+                      }
                       const headers = ["Username","First name","Last name","Email","Facility","Created","Last sign in"];
                       const esc = (v: string | null | undefined) => {
                         const s = (v ?? "").toString();
@@ -538,35 +586,13 @@ function AdminUsersPage() {
                 </div>
               </div>
               {(() => {
-                const q = searchQuery.trim().toLowerCase();
-                const facilityScoped = facilityFilter === "all"
-                  ? regularUsers
-                  : regularUsers.filter((u) => u.profile?.facility === facilityFilter);
-                const filteredBase = q
-                  ? facilityScoped.filter((u) =>
-                      [u.profile?.username, u.profile?.first_name, u.profile?.last_name]
-                        .filter(Boolean)
-                        .some((v) => String(v).toLowerCase().includes(q)),
-                    )
-                  : facilityScoped;
-
-                // Sort: newly signed-up users (since this visit started) first,
-                // newest first; everyone else preserves the existing order.
-                const newOnes = filteredBase
-                  .filter(isNewUser)
-                  .slice()
-                  .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
-                const rest = filteredBase.filter((u) => !isNewUser(u));
-                const filtered = [...newOnes, ...rest];
-
-                const visible = filtered.slice(0, regularPager.visibleCount);
-
+                const visible = regularUsers;
                 return (
                   <>
-                    {filtered.length > 0 && (
+                    {regularTotal > 0 && (
                       <BulkActionBar
                         bulk={bulk}
-                        filteredCount={filtered.length}
+                        filteredCount={regularTotal}
                         noun={{ singular: "user", plural: "users" }}
                         searchQuery={searchQuery}
                         onSearchChange={(v) => { setSearchQuery(v); regularPager.reset(); }}
@@ -580,8 +606,8 @@ function AdminUsersPage() {
                         }
                       />
                     )}
-                    <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${filtered.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
-                      {filtered.length ? (
+                    <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${regularTotal > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
+                      {visible.length ? (
                         <ul className="divide-y divide-border">
                           {visible.map((u) => {
                             const selected = bulk.has(u.id);
@@ -612,10 +638,10 @@ function AdminUsersPage() {
                           })}
                         </ul>
                       ) : (
-                        <EmptyState size="sm">{q ? "No users match your search." : "No users for this facility."}</EmptyState>
+                        <EmptyState size="sm">{debouncedSearch ? "No users match your search." : "No users for this facility."}</EmptyState>
                       )}
                     </div>
-                    <LoadMorePager pager={regularPager} total={filtered.length} itemLabel="user" />
+                    <LoadMorePager pager={regularPager} total={regularTotal} itemLabel="user" />
                   </>
                 );
               })()}
