@@ -318,10 +318,10 @@ function AdminReportsPage() {
         </div>
 
 
-        <TabsContent value="overall" className="mt-10">
+        <TabsContent value="overall" className="mt-8">
           <UsageReportView scope={{ kind: "overall" }} />
         </TabsContent>
-        <TabsContent value="facility" className="mt-10">
+        <TabsContent value="facility" className="mt-8">
           {selectedFacility ? (
             <FacilityReportTab
               key={`${facilityKey}-${selectedFacility.value}`}
@@ -329,7 +329,7 @@ function AdminReportsPage() {
             />
           ) : null}
         </TabsContent>
-        <TabsContent value="user" className="mt-10">
+        <TabsContent value="user" className="mt-8">
             {selectedUserFacility ? (
               <UsersReportTab
                 key={`${userKey}-${selectedUserFacility.value}`}
