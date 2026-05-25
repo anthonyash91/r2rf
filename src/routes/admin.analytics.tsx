@@ -534,7 +534,7 @@ function UsersReportTab({ preselected }: { preselected: { value: string; label: 
 
 
       ) : (
-        <SectionCard padded={false} className="overflow-hidden">
+        <SectionCard padded={false} className="mt-8 overflow-hidden">
           <ul className="divide-y divide-border">
             {users.map((u) => {
               const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || u.email;
