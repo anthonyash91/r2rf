@@ -153,7 +153,7 @@ function CategoryPage() {
       if (!el) return;
       el.scrollIntoView({ behavior: "smooth", block: "start" });
       setHighlightedId(itemId);
-      window.setTimeout(() => setHighlightedId(null), 2000);
+      window.setTimeout(() => setHighlightedId(null), 2500);
     }, 100);
     return () => window.clearTimeout(t);
   }, [data?.items]);
