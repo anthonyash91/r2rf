@@ -431,7 +431,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
         </p>
       ) : (
         <>
-          <div className={`mt-8 grid gap-4 ${scope.kind === "facility" ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+          <div className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <SummaryCard
               icon={<Eye className="h-5 w-5" />}
               label={aggregated.totalViews === 1 ? "Category view" : "Category views"}
@@ -442,13 +442,20 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
               label={aggregated.totalClicks === 1 ? "Content click" : "Content clicks"}
               value={aggregated.totalClicks}
             />
-            {scope.kind === "facility" && (
-              <SummaryCard
-                icon={<UsersIcon className="h-5 w-5" />}
-                label={(data as any)?.facilityUserCount === 1 ? "User" : "Users"}
-                value={(data as any)?.facilityUserCount ?? 0}
-              />
-            )}
+            <SummaryCard
+              icon={<Clock className="h-5 w-5" />}
+              label="Hours spent"
+              value={(data as any)?.hoursSpent ?? 0}
+            />
+            <SummaryCard
+              icon={<UsersIcon className="h-5 w-5" />}
+              label={
+                scope.kind === "facility"
+                  ? ((data as any)?.facilityUserCount === 1 ? "User" : "Users")
+                  : ((data as any)?.totalUsers === 1 ? "User" : "Users")
+              }
+              value={scope.kind === "facility" ? ((data as any)?.facilityUserCount ?? 0) : ((data as any)?.totalUsers ?? 0)}
+            />
           </div>
           <CategoryList rows={aggregated.rows} />
         </>
