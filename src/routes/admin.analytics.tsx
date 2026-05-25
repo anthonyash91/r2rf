@@ -181,6 +181,7 @@ function AdminReportsPage() {
   const [userPickerOpen, setUserPickerOpen] = useState(false);
   const [userKey, setUserKey] = useState(0);
   const [selectedUserFacility, setSelectedUserFacility] = useState<{ value: string; label: string } | null>(null);
+  const [activeUser, setActiveUser] = useState<{ userId: string; name: string } | null>(null);
 
   const fetchFacilities = useServerFn(listAllFacilities);
   const facilitiesQuery = useQuery({
@@ -199,6 +200,17 @@ function AdminReportsPage() {
     setUserPickerOpen(true);
   };
 
+  const headerTitle =
+    tab === "user" && activeUser
+      ? "Reports > User Report"
+      : tab === "overall"
+        ? "Reports > Overall"
+        : tab === "facility" && selectedFacility
+          ? `Reports > ${selectedFacility.label}`
+          : tab === "user" && selectedUserFacility
+            ? `Reports > Users > ${selectedUserFacility.label}`
+            : "Reports";
+
   return (
     <div>
       <Tabs
@@ -212,15 +224,7 @@ function AdminReportsPage() {
         <div className="flex flex-col gap-8 lg:gap-4 lg:flex-row lg:items-center lg:justify-between">
           <PageHeader
             icon={BarChart3}
-            title={
-              tab === "overall"
-                ? "Reports > Overall"
-                : tab === "facility" && selectedFacility
-                  ? `Reports > ${selectedFacility.label}`
-                  : tab === "user" && selectedUserFacility
-                    ? `Reports > ${selectedUserFacility.label}`
-                    : "Reports"
-            }
+            title={headerTitle}
             description="Usage, facility, and per-user reports across the site."
           />
           <TabsList className="h-auto p-2 gap-1 w-full lg:w-auto bg-muted/40 self-stretch lg:self-center">
