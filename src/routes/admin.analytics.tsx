@@ -793,7 +793,7 @@ function exportUserProgressCsv(
 ) {
   const lines: string[] = [];
   lines.push(
-    ["Category", "Category slug", "Item title", "Item type", "Duration", "Read"]
+    ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on"]
       .map(csvEscape)
       .join(","),
   );
@@ -807,7 +807,7 @@ function exportUserProgressCsv(
     const items = itemsByCat.get(c.id) ?? [];
     const read = items.filter((i) => i.read).length;
     lines.push(
-      [csvEscape(c.name), csvEscape(c.slug), `${read} of ${items.length} read`, "", "", ""].join(","),
+      [csvEscape(c.name), csvEscape(c.slug), `${read} of ${items.length} read`, "", "", "", ""].join(","),
     );
     for (const it of items) {
       lines.push(
@@ -818,6 +818,7 @@ function exportUserProgressCsv(
           csvEscape(it.type),
           csvEscape(it.duration ?? ""),
           it.read ? "Yes" : "No",
+          csvEscape(it.read && (it as any).read_at ? fmtDate((it as any).read_at) : ""),
         ].join(","),
       );
     }
