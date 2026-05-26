@@ -39,6 +39,7 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
+  useEffect(() => { reportError(error, { kind: "react.errorBoundary" }); }, [error]);
   const router = useRouter();
 
   return (
