@@ -105,7 +105,7 @@ function AdminCertificatePage() {
           description="Edit the eyebrow, headline, subheading, and callout shown in the certificate program section on the home page."
         />
       </div>
-      <SectionCard className="mt-8">
+      <SectionCard className="mt-8 pt-4">
         {isLoading ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : (
