@@ -152,7 +152,7 @@ function AdminErrorsPage() {
       description: "This removes every error log entry permanently. Cannot be undone.",
       confirmLabel: "Delete all",
       onConfirm: async () => {
-        await deleteAll({});
+        await deleteAll({ data: undefined as never });
         toast.success("All error logs deleted");
         qc.invalidateQueries({ queryKey: ["admin-error-logs"] });
       },
