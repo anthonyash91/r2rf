@@ -163,6 +163,7 @@ const translations: Record<Language, Dict> = {
   },
   es: {
     "nav.categories": "Categorías",
+    "nav.privacy": "Privacidad",
     "nav.admin": "Administración",
     "nav.signIn": "Iniciar sesión",
     "nav.signOut": "Cerrar sesión",
