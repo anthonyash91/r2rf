@@ -53,8 +53,9 @@ export function BulkActionBar({
   onDeleteSelected,
   onEnterEditMode,
   emptyEditHint,
+  extraSelectionActions,
 }: BulkActionBarProps) {
-  const { editMode, selectedCount, isDeleting, enterEditMode, exitEditMode, runBulkDelete } = bulk;
+  const { editMode, selectedCount, selectedIds, isDeleting, enterEditMode, exitEditMode, runBulkDelete } = bulk;
   const countLabel = filteredCount === 1 ? noun.singular : noun.plural;
   const countText =
     isFiltered && totalCount !== undefined
