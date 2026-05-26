@@ -479,6 +479,21 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     onError: (e: any) => toast.error(e.message),
   });
 
+  const updateTypeMut = useMutation({
+    mutationFn: async ({ ids, type }: { ids: string[]; type: string }) => {
+      const { error } = await supabase.from("content_items").update({ type }).in("id", ids);
+      if (error) throw error;
+      return { count: ids.length, type };
+    },
+    onSuccess: async ({ count, type }) => {
+      toast.success(`Updated ${count} ${count === 1 ? "item" : "items"} to ${type}`);
+      await invalidate();
+      bulk.clear();
+      bulk.exitEditMode();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const reorderMut = useMutation({
     mutationFn: async (next: ContentItem[]) => {
       await Promise.all(
