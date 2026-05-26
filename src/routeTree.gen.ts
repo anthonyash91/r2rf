@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SpanishRouteImport } from './routes/spanish'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CustomHomeRouteImport } from './routes/$customHome'
@@ -43,6 +44,11 @@ const SpanishRoute = SpanishRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/privacy': typeof PrivacyRoute
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$customHome': typeof CustomHomeRoute
   '/dashboard': typeof DashboardRoute
+  '/privacy': typeof PrivacyRoute
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/privacy': typeof PrivacyRoute
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/$customHome'
     | '/admin'
     | '/dashboard'
+    | '/privacy'
     | '/signup'
     | '/spanish'
     | '/admin/analytics'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$customHome'
     | '/dashboard'
+    | '/privacy'
     | '/signup'
     | '/spanish'
     | '/admin/analytics'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/$customHome'
     | '/admin'
     | '/dashboard'
+    | '/privacy'
     | '/signup'
     | '/spanish'
     | '/admin/analytics'
@@ -329,6 +341,7 @@ export interface RootRouteChildren {
   CustomHomeRoute: typeof CustomHomeRoute
   AdminRoute: typeof AdminRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  PrivacyRoute: typeof PrivacyRoute
   SignupRoute: typeof SignupRoute
   SpanishRoute: typeof SpanishRoute
   CategorySlugRoute: typeof CategorySlugRoute
@@ -350,6 +363,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -570,6 +590,7 @@ const rootRouteChildren: RootRouteChildren = {
   CustomHomeRoute: CustomHomeRoute,
   AdminRoute: AdminRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  PrivacyRoute: PrivacyRoute,
   SignupRoute: SignupRoute,
   SpanishRoute: SpanishRoute,
   CategorySlugRoute: CategorySlugRoute,
