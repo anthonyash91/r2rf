@@ -113,6 +113,17 @@ export const signupUser = createServerFn({ method: "POST" })
       throw new Error("Captcha failed. Please try again.");
     }
 
+    // Rate limit: cap signups per IP per 24h to deter scripted account creation.
+    const ip = getClientIp(getRequest());
+    await checkAndRecordAttempt({
+      table: "signup_attempts",
+      ip,
+      windowMs: SIGNUP_WINDOW_MS,
+      max: SIGNUP_MAX_PER_IP,
+      extraColumns: { username: data.username },
+      errorMessage: "Too many signups from this network. Please try again later.",
+    });
+
     // Username availability
     const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
     if (exists) throw new Error("That username is already taken.");
