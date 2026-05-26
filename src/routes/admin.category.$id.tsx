@@ -584,7 +584,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                 </LoadingButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" collisionPadding={16} className="max-h-[80vh]">
-                {CONTENT_TYPES.map((t) => (
+                {bulkTypeOptions.map((t) => (
                   <DropdownMenuItem
                     key={t}
                     onSelect={() => updateTypeMut.mutate({ ids, type: t })}
