@@ -8,7 +8,15 @@ import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadMorePager, useLoadMore } from "@/components/LoadMorePager";
+import { LoadingButton } from "@/components/LoadingButton";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   listErrorLogs,
   clearOldErrorLogs,
@@ -172,21 +180,23 @@ function AdminErrorsPage() {
           }
           description="Application errors captured from both server and browser. Read-only."
         />
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <button
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
+          <LoadingButton
+            variant="secondary"
             onClick={handleClearOld}
-            className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
+            icon={<Trash2 className="h-3.5 w-3.5" />}
+            className="w-full sm:w-auto"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-            Clear 30+ days
-          </button>
-          <button
+            Clear 30+ Days
+          </LoadingButton>
+          <LoadingButton
+            variant="destructive"
             onClick={handleDeleteAll}
-            className="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+            icon={<Trash2 className="h-3.5 w-3.5" />}
+            className="w-full sm:w-auto"
           >
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete all
-          </button>
+            Delete All
+          </LoadingButton>
         </div>
       </div>
 
@@ -207,22 +217,26 @@ function AdminErrorsPage() {
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </div>
-            <div className="min-w-[160px]">
+            <div className="w-full sm:w-auto sm:min-w-[180px]">
               <label className="block text-xs font-medium text-muted-foreground mb-1">
                 Source
               </label>
-              <select
-                value={source}
-                onChange={(e) => {
-                  setSource((e.target.value as SourceFilter) || "");
+              <Select
+                value={source || "all"}
+                onValueChange={(v) => {
+                  setSource(v === "all" ? "" : (v as SourceFilter));
                   pager.reset();
                 }}
-                className="w-full sm:w-auto rounded-md border border-input bg-background px-4 py-2 text-sm"
               >
-                <option value="">All sources</option>
-                <option value="server">Server</option>
-                <option value="client">Client</option>
-              </select>
+                <SelectTrigger className="w-full px-4 py-2 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All sources</SelectItem>
+                  <SelectItem value="server">Server</SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="min-w-[180px]">
               <label className="block text-xs font-medium text-muted-foreground mb-1">
