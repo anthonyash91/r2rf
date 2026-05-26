@@ -4,6 +4,7 @@ import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { getAllowedIps, getBlockedIps, getClientIp, getCustomHomeRestrictions, isIpRestrictionEnabled, renderBlockedPage } from "./lib/ip-allowlist";
 import { verifyPasskeyCookie } from "./lib/passkey-cookie";
+import { logServerError } from "./lib/error-logger.server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -97,7 +98,7 @@ function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boole
 
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
-async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
+async function normalizeCatastrophicSsrResponse(response: Response, request: Request): Promise<Response> {
   if (response.status < 500) return response;
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) return response;
@@ -107,7 +108,16 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
     return response;
   }
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
+  const captured = consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`);
+  console.error(captured);
+  // Best-effort: persist to error_logs so admins can see SSR crashes too.
+  void logServerError({
+    error: captured,
+    route: new URL(request.url).pathname,
+    ip: getClientIp(request),
+    userAgent: request.headers.get("user-agent"),
+    context: { kind: "ssr.catastrophic" },
+  });
   return brandedErrorResponse();
 }
 
@@ -142,7 +152,7 @@ export default {
       if (!restrictionsEnabled) {
         const handler = await getServerEntry();
         const response = await handler.fetch(request, env, ctx);
-        return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response));
+        return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response, request));
       }
 
       // Allow the self-service passkey endpoint through the site allowlist
@@ -192,7 +202,7 @@ export default {
       }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response));
+      return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response, request));
     } catch (error) {
       console.error(error);
       return brandedErrorResponse();
