@@ -123,7 +123,7 @@ function MessageEditor({
   });
 
   return (
-    <SectionCard>
+    <SectionCard className="pt-4">
       <div className="flex flex-col gap-1">
         <h2 className="font-display text-2xl font-semibold flex items-center gap-2">
           {icon} {title}
