@@ -35,6 +35,7 @@ const links: NavLink[] = [
   { to: "/admin/icons-badges", label: "Icons & Badges", icon: Palette, adminOnly: true },
   { to: "/admin/certificate", label: "Certificate Footer", icon: Award, adminOnly: true },
   { to: "/admin/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
+  { to: "/admin/errors", label: "Errors", icon: AlertOctagon, adminOnly: true },
   { to: "/admin/seed", label: "Seed Content", icon: Sprout, adminOnly: true },
 ];
 
