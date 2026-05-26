@@ -464,6 +464,15 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   });
 
   const bulk = useBulkSelect();
+  const { data: existingTypes = [] } = useQuery({
+    queryKey: ["content-types"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("content_items").select("type");
+      if (error) throw error;
+      return Array.from(new Set((data ?? []).map((r: { type: string }) => r.type).filter(Boolean)));
+    },
+  });
+  const bulkTypeOptions = Array.from(new Set([...CONTENT_TYPES, ...existingTypes])).sort((a, b) => a.localeCompare(b));
   const [searchQuery, setSearchQuery] = useState("");
   const deleteManyMut = useMutation({
     mutationFn: async (ids: string[]) => {
