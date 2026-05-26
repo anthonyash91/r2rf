@@ -24,6 +24,7 @@ import { Route as AdminIpAllowlistRouteImport } from './routes/admin.ip-allowlis
 import { Route as AdminIconsBadgesRouteImport } from './routes/admin.icons-badges'
 import { Route as AdminHomeRouteImport } from './routes/admin.home'
 import { Route as AdminFacilitiesRouteImport } from './routes/admin.facilities'
+import { Route as AdminErrorsRouteImport } from './routes/admin.errors'
 import { Route as AdminCustomHomePagesRouteImport } from './routes/admin.custom-home-pages'
 import { Route as AdminCertificateRouteImport } from './routes/admin.certificate'
 import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
@@ -109,6 +110,11 @@ const AdminFacilitiesRoute = AdminFacilitiesRouteImport.update({
   path: '/facilities',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminErrorsRoute = AdminErrorsRouteImport.update({
+  id: '/errors',
+  path: '/errors',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminCustomHomePagesRoute = AdminCustomHomePagesRouteImport.update({
   id: '/custom-home-pages',
   path: '/custom-home-pages',
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
+  '/admin/errors': typeof AdminErrorsRoute
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/certificate': typeof AdminCertificateRoute
+  '/admin/errors': typeof AdminErrorsRoute
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
@@ -218,6 +226,7 @@ export interface FileRoutesById {
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/certificate': typeof AdminCertificateRoute
   '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
+  '/admin/errors': typeof AdminErrorsRoute
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/admin/audit-log'
     | '/admin/certificate'
     | '/admin/custom-home-pages'
+    | '/admin/errors'
     | '/admin/facilities'
     | '/admin/home'
     | '/admin/icons-badges'
@@ -270,6 +280,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/audit-log'
     | '/admin/certificate'
+    | '/admin/errors'
     | '/admin/facilities'
     | '/admin/home'
     | '/admin/icons-badges'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/admin/audit-log'
     | '/admin/certificate'
     | '/admin/custom-home-pages'
+    | '/admin/errors'
     | '/admin/facilities'
     | '/admin/home'
     | '/admin/icons-badges'
@@ -431,6 +443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFacilitiesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/errors': {
+      id: '/admin/errors'
+      path: '/errors'
+      fullPath: '/admin/errors'
+      preLoaderRoute: typeof AdminErrorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/custom-home-pages': {
       id: '/admin/custom-home-pages'
       path: '/custom-home-pages'
@@ -515,6 +534,7 @@ interface AdminRouteChildren {
   AdminAuditLogRoute: typeof AdminAuditLogRoute
   AdminCertificateRoute: typeof AdminCertificateRoute
   AdminCustomHomePagesRoute: typeof AdminCustomHomePagesRouteWithChildren
+  AdminErrorsRoute: typeof AdminErrorsRoute
   AdminFacilitiesRoute: typeof AdminFacilitiesRoute
   AdminHomeRoute: typeof AdminHomeRoute
   AdminIconsBadgesRoute: typeof AdminIconsBadgesRoute
@@ -531,6 +551,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditLogRoute: AdminAuditLogRoute,
   AdminCertificateRoute: AdminCertificateRoute,
   AdminCustomHomePagesRoute: AdminCustomHomePagesRouteWithChildren,
+  AdminErrorsRoute: AdminErrorsRoute,
   AdminFacilitiesRoute: AdminFacilitiesRoute,
   AdminHomeRoute: AdminHomeRoute,
   AdminIconsBadgesRoute: AdminIconsBadgesRoute,
@@ -558,3 +579,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
