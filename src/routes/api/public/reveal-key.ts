@@ -24,7 +24,7 @@ const SECRET_NAMES = [
   "BYTESCALE_SECRET_API_KEY",
 ] as const;
 
-export const Route = createFileRoute("/api/public/_reveal-key")({
+export const Route = createFileRoute("/api/public/reveal-key")({
   server: {
     handlers: {
       GET: async ({ request }) => {
