@@ -84,18 +84,8 @@ function AdminPrivacyPage() {
         description="Edit the privacy policy page shown to all visitors. Available in English and Spanish."
       />
 
-      <div className="mt-4 flex justify-end">
-        <Link
-          to="/privacy"
-          target="_blank"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          View public page
-        </Link>
-      </div>
+      <SectionCard className="mt-8">
 
-      <SectionCard className="mt-4">
         {isLoading ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : (
