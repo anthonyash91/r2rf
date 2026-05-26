@@ -27,7 +27,6 @@ async function getServerEntry(): Promise<ServerEntry> {
 const SECURITY_HEADERS: Record<string, string> = {
   "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
   "x-content-type-options": "nosniff",
-  "x-frame-options": "DENY",
   "referrer-policy": "strict-origin-when-cross-origin",
   "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
   "cross-origin-opener-policy": "same-origin",
@@ -35,7 +34,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   "content-security-policy": [
     "default-src 'self'",
     "base-uri 'self'",
-    "frame-ancestors 'none'",
+    "frame-ancestors 'self' https://*.lovable.app https://*.lovable.dev https://lovable.dev",
     "form-action 'self'",
     "object-src 'none'",
     "img-src 'self' data: blob: https:",
@@ -47,6 +46,7 @@ const SECURITY_HEADERS: Record<string, string> = {
     "worker-src 'self' blob:",
   ].join("; "),
 };
+
 
 function applySecurityHeaders(response: Response): Response {
   // Clone headers so we don't mutate frozen response headers from upstream.
