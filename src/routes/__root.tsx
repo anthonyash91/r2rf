@@ -8,9 +8,11 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
+import { installGlobalErrorReporter, reportError } from "@/lib/client-error-reporter";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -37,6 +39,7 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
+  useEffect(() => { reportError(error, { kind: "react.errorBoundary" }); }, [error]);
   const router = useRouter();
 
   return (
@@ -117,6 +120,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => { installGlobalErrorReporter(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
