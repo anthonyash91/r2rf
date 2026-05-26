@@ -107,13 +107,6 @@ export function BulkActionBar({
           </LoadingButton>
         ) : (
           <>
-            <LoadingButton
-              variant="secondary"
-              disabled={isDeleting}
-              onClick={exitEditMode}
-            >
-              {selectedCount > 0 ? "Cancel" : "Done"}
-            </LoadingButton>
             {selectedCount > 0 && extraSelectionActions?.(Array.from(selectedIds))}
             {(selectedCount > 0 || isDeleting) && (
               <LoadingButton
@@ -126,6 +119,13 @@ export function BulkActionBar({
                 Delete selected ({selectedCount})
               </LoadingButton>
             )}
+            <LoadingButton
+              variant="secondary"
+              disabled={isDeleting}
+              onClick={exitEditMode}
+            >
+              {selectedCount > 0 ? "Cancel" : "Done"}
+            </LoadingButton>
           </>
         )}
       </div>
