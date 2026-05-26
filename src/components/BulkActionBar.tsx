@@ -71,16 +71,16 @@ export function BulkActionBar({
             : emptyEditHint ?? `Click ${noun.plural} to select for deletion`
           : countText}
       </span>
-      <div className="flex items-center gap-2 flex-wrap w-full lg:w-auto lg:ml-auto lg:justify-end">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:flex-wrap gap-2 w-full lg:w-auto lg:ml-auto lg:justify-end [&>*]:w-full [&>*]:sm:w-auto">
         {searchQuery !== null && onSearchChange && (
-          <div className="relative flex-1 lg:flex-none min-w-0">
+          <div className="relative sm:w-56 sm:flex-1 lg:flex-none min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder ?? `Search ${noun.plural}…`}
-              className="rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm w-full lg:w-56"
+              className="rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm w-full"
             />
             {searchQuery && (
               <button
