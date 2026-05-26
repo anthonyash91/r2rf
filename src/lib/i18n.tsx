@@ -7,6 +7,7 @@ type Dict = Record<string, string>;
 const translations: Record<Language, Dict> = {
   en: {
     "nav.categories": "Categories",
+    "nav.privacy": "Privacy",
     "nav.admin": "Admin",
     "nav.signIn": "Sign in",
     "nav.signOut": "Sign out",
