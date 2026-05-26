@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SpanishRouteImport } from './routes/spanish'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CustomHomeRouteImport } from './routes/$customHome'
@@ -19,6 +20,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSeedRouteImport } from './routes/admin.seed'
+import { Route as AdminPrivacyRouteImport } from './routes/admin.privacy'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
 import { Route as AdminIpAllowlistRouteImport } from './routes/admin.ip-allowlist'
 import { Route as AdminIconsBadgesRouteImport } from './routes/admin.icons-badges'
@@ -43,6 +45,11 @@ const SpanishRoute = SpanishRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -83,6 +90,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
 const AdminSeedRoute = AdminSeedRouteImport.update({
   id: '/seed',
   path: '/seed',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPrivacyRoute = AdminPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMessagesRoute = AdminMessagesRouteImport.update({
@@ -167,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/privacy': typeof PrivacyRoute
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -179,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -193,6 +207,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$customHome': typeof CustomHomeRoute
   '/dashboard': typeof DashboardRoute
+  '/privacy': typeof PrivacyRoute
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -204,6 +219,7 @@ export interface FileRoutesByTo {
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -220,6 +236,7 @@ export interface FileRoutesById {
   '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
+  '/privacy': typeof PrivacyRoute
   '/signup': typeof SignupRoute
   '/spanish': typeof SpanishRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -232,6 +249,7 @@ export interface FileRoutesById {
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
   '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
+  '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
@@ -249,6 +267,7 @@ export interface FileRouteTypes {
     | '/$customHome'
     | '/admin'
     | '/dashboard'
+    | '/privacy'
     | '/signup'
     | '/spanish'
     | '/admin/analytics'
@@ -261,6 +280,7 @@ export interface FileRouteTypes {
     | '/admin/icons-badges'
     | '/admin/ip-allowlist'
     | '/admin/messages'
+    | '/admin/privacy'
     | '/admin/seed'
     | '/admin/users'
     | '/category/$slug'
@@ -275,6 +295,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$customHome'
     | '/dashboard'
+    | '/privacy'
     | '/signup'
     | '/spanish'
     | '/admin/analytics'
@@ -286,6 +307,7 @@ export interface FileRouteTypes {
     | '/admin/icons-badges'
     | '/admin/ip-allowlist'
     | '/admin/messages'
+    | '/admin/privacy'
     | '/admin/seed'
     | '/admin/users'
     | '/category/$slug'
@@ -301,6 +323,7 @@ export interface FileRouteTypes {
     | '/$customHome'
     | '/admin'
     | '/dashboard'
+    | '/privacy'
     | '/signup'
     | '/spanish'
     | '/admin/analytics'
@@ -313,6 +336,7 @@ export interface FileRouteTypes {
     | '/admin/icons-badges'
     | '/admin/ip-allowlist'
     | '/admin/messages'
+    | '/admin/privacy'
     | '/admin/seed'
     | '/admin/users'
     | '/category/$slug'
@@ -329,6 +353,7 @@ export interface RootRouteChildren {
   CustomHomeRoute: typeof CustomHomeRoute
   AdminRoute: typeof AdminRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  PrivacyRoute: typeof PrivacyRoute
   SignupRoute: typeof SignupRoute
   SpanishRoute: typeof SpanishRoute
   CategorySlugRoute: typeof CategorySlugRoute
@@ -350,6 +375,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -406,6 +438,13 @@ declare module '@tanstack/react-router' {
       path: '/seed'
       fullPath: '/admin/seed'
       preLoaderRoute: typeof AdminSeedRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/privacy': {
+      id: '/admin/privacy'
+      path: '/privacy'
+      fullPath: '/admin/privacy'
+      preLoaderRoute: typeof AdminPrivacyRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/messages': {
@@ -540,6 +579,7 @@ interface AdminRouteChildren {
   AdminIconsBadgesRoute: typeof AdminIconsBadgesRoute
   AdminIpAllowlistRoute: typeof AdminIpAllowlistRoute
   AdminMessagesRoute: typeof AdminMessagesRoute
+  AdminPrivacyRoute: typeof AdminPrivacyRoute
   AdminSeedRoute: typeof AdminSeedRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -557,6 +597,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminIconsBadgesRoute: AdminIconsBadgesRoute,
   AdminIpAllowlistRoute: AdminIpAllowlistRoute,
   AdminMessagesRoute: AdminMessagesRoute,
+  AdminPrivacyRoute: AdminPrivacyRoute,
   AdminSeedRoute: AdminSeedRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
@@ -570,6 +611,7 @@ const rootRouteChildren: RootRouteChildren = {
   CustomHomeRoute: CustomHomeRoute,
   AdminRoute: AdminRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  PrivacyRoute: PrivacyRoute,
   SignupRoute: SignupRoute,
   SpanishRoute: SpanishRoute,
   CategorySlugRoute: CategorySlugRoute,
