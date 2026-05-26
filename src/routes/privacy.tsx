@@ -51,7 +51,7 @@ function PrivacyPage() {
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <main className="flex-1">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-[35px]">
           <div className="rounded-2xl border border-border bg-card p-6 sm:p-10">
             <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
               <Shield className="h-7 w-7 text-[var(--color-accent)]" />
