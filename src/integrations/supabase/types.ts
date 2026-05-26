@@ -400,6 +400,27 @@ export type Database = {
         }
         Relationships: []
       }
+      signup_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string
+          username?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           created_at: string
