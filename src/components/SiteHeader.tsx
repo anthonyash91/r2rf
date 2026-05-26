@@ -61,6 +61,9 @@ export function SiteHeader() {
           <Link {...homeLinkProps} {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`} activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
             {t("nav.categories")}
           </Link>
+          <Link to="/privacy" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`} activeProps={{ className: "text-foreground" }}>
+            {t("nav.privacy")}
+          </Link>
           {canAccessAdmin && (
             <Link to="/admin" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`} activeProps={{ className: "text-foreground" }}>
               Admin
