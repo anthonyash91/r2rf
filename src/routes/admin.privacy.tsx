@@ -83,7 +83,7 @@ function AdminPrivacyPage() {
         description="Edit the privacy policy page shown to all visitors. Available in English and Spanish."
       />
 
-      <SectionCard className="mt-8">
+      <SectionCard className="mt-8 pt-4">
 
         {isLoading ? (
           <p className="text-muted-foreground">Loading…</p>
