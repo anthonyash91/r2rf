@@ -33,6 +33,12 @@ interface BulkActionBarProps {
    * mode is on but nothing is selected.
    */
   emptyEditHint?: string;
+
+  /**
+   * Optional extra actions rendered before the destructive delete button
+   * when one or more rows are selected. Receives the selected ids.
+   */
+  extraSelectionActions?: (selectedIds: string[]) => ReactNode;
 }
 
 export function BulkActionBar({
