@@ -136,7 +136,10 @@ export const resetPassword = createServerFn({ method: "POST" })
     const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
       password: data.newPassword,
     });
-    if (updErr) throw new Error(updErr.message);
+    if (updErr) {
+      console.error("[password-reset] updateUserById failed:", updErr.message);
+      throw new Error("Unable to reset password. Please try again.");
+    }
 
     return { ok: true as const, email: syntheticEmailLocal(data.username) };
   });
