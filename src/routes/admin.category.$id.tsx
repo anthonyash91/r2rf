@@ -561,6 +561,31 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
               onConfirm: () => deleteManyMut.mutateAsync(ids),
             })
           }
+          extraSelectionActions={(ids) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <LoadingButton
+                  variant="secondary"
+                  pending={updateTypeMut.isPending}
+                  pendingText="Updating…"
+                  icon={<Tag className="h-4 w-4" />}
+                >
+                  Change type ({ids.length})
+                  <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                </LoadingButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {CONTENT_TYPES.map((t) => (
+                  <DropdownMenuItem
+                    key={t}
+                    onSelect={() => updateTypeMut.mutate({ ids, type: t })}
+                  >
+                    {t}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         />
       )}
 
