@@ -63,24 +63,24 @@ export function BulkActionBar({
       : `${filteredCount} ${countLabel}`;
 
   return (
-    <div className="mt-3 flex min-h-[56px] flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-t-md border border-b-0 border-border bg-muted/40 px-4 sm:px-5 py-3 sm:py-2 text-sm">
-      <span className="text-muted-foreground">
+    <div className="mt-3 flex min-h-[56px] flex-col lg:flex-row lg:items-center lg:justify-between gap-3 rounded-t-md border border-b-0 border-border bg-muted/40 px-4 lg:px-5 py-3 lg:py-2 text-sm">
+      <span className="text-muted-foreground break-words">
         {editMode
           ? selectedCount > 0
             ? `${selectedCount} selected`
             : emptyEditHint ?? `Click ${noun.plural} to select for deletion`
           : countText}
       </span>
-      <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:ml-auto sm:justify-end">
+      <div className="flex items-center gap-2 flex-wrap w-full lg:w-auto lg:ml-auto lg:justify-end">
         {searchQuery !== null && onSearchChange && (
-          <div className="relative flex-1 sm:flex-none min-w-0">
+          <div className="relative flex-1 lg:flex-none min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder ?? `Search ${noun.plural}…`}
-              className="rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm w-full sm:w-56"
+              className="rounded-md border border-input bg-background pl-8 pr-8 py-2 text-sm w-full lg:w-56"
             />
             {searchQuery && (
               <button
