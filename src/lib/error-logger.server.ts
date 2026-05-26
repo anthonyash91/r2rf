@@ -37,7 +37,7 @@ export async function logServerError(input: {
       ip_address: input.ip ?? null,
       user_agent: clamp(input.userAgent ?? null, MAX_UA),
       user_id: input.userId ?? null,
-      context: input.context ?? {},
+      context: (input.context ?? {}) as never,
     });
   } catch (insertErr) {
     // Logger is best-effort; never throw.
