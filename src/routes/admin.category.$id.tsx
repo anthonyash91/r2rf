@@ -24,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tag, ChevronDown } from "lucide-react";
 import { LabeledInput } from "@/components/FormField";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
@@ -477,6 +479,21 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     onError: (e: any) => toast.error(e.message),
   });
 
+  const updateTypeMut = useMutation({
+    mutationFn: async ({ ids, type }: { ids: string[]; type: string }) => {
+      const { error } = await supabase.from("content_items").update({ type }).in("id", ids);
+      if (error) throw error;
+      return { count: ids.length, type };
+    },
+    onSuccess: async ({ count, type }) => {
+      toast.success(`Updated ${count} ${count === 1 ? "item" : "items"} to ${type}`);
+      await invalidate();
+      bulk.clear();
+      bulk.exitEditMode();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const reorderMut = useMutation({
     mutationFn: async (next: ContentItem[]) => {
       await Promise.all(
@@ -544,6 +561,31 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
               onConfirm: () => deleteManyMut.mutateAsync(ids),
             })
           }
+          extraSelectionActions={(ids) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <LoadingButton
+                  variant="secondary"
+                  pending={updateTypeMut.isPending}
+                  pendingText="Updating…"
+                  icon={<Tag className="h-4 w-4" />}
+                >
+                  Change type ({ids.length})
+                  <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                </LoadingButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {CONTENT_TYPES.map((t) => (
+                  <DropdownMenuItem
+                    key={t}
+                    onSelect={() => updateTypeMut.mutate({ ids, type: t })}
+                  >
+                    {t}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         />
       )}
 

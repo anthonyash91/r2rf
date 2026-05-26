@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Pencil, Search, Trash2, X } from "lucide-react";
 import type { UseBulkSelectReturn } from "@/hooks/use-bulk-select";
 import { LoadingButton } from "@/components/LoadingButton";
@@ -32,6 +33,12 @@ interface BulkActionBarProps {
    * mode is on but nothing is selected.
    */
   emptyEditHint?: string;
+
+  /**
+   * Optional extra actions rendered before the destructive delete button
+   * when one or more rows are selected. Receives the selected ids.
+   */
+  extraSelectionActions?: (selectedIds: string[]) => ReactNode;
 }
 
 export function BulkActionBar({
@@ -46,8 +53,9 @@ export function BulkActionBar({
   onDeleteSelected,
   onEnterEditMode,
   emptyEditHint,
+  extraSelectionActions,
 }: BulkActionBarProps) {
-  const { editMode, selectedCount, isDeleting, enterEditMode, exitEditMode, runBulkDelete } = bulk;
+  const { editMode, selectedCount, selectedIds, isDeleting, enterEditMode, exitEditMode, runBulkDelete } = bulk;
   const countLabel = filteredCount === 1 ? noun.singular : noun.plural;
   const countText =
     isFiltered && totalCount !== undefined
@@ -106,6 +114,7 @@ export function BulkActionBar({
             >
               {selectedCount > 0 ? "Cancel" : "Done"}
             </LoadingButton>
+            {selectedCount > 0 && extraSelectionActions?.(Array.from(selectedIds))}
             {(selectedCount > 0 || isDeleting) && (
               <LoadingButton
                 variant="destructive"
