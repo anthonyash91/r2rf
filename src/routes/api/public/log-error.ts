@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { getClientIp } from "@/lib/ip-allowlist";
-import { logServerError } from "@/lib/error-logger.server";
-import { checkAndRecordAttempt } from "@/lib/rate-limit.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const Body = z.object({
@@ -23,8 +21,6 @@ export const Route = createFileRoute("/api/public/log-error")({
       POST: async ({ request }) => {
         const ip = getClientIp(request);
 
-        // Hand-rolled rate limit (don't reuse checkAndRecordAttempt — we don't
-        // want to insert into error_logs as the rate-limit table itself).
         if (ip) {
           const since = new Date(Date.now() - WINDOW_MS).toISOString();
           const { count } = await supabaseAdmin
@@ -37,9 +33,6 @@ export const Route = createFileRoute("/api/public/log-error")({
             return new Response(null, { status: 204 });
           }
         }
-        // Touch the helper so a future maintainer realizes it's available
-        // for other endpoints; not used here on purpose.
-        void checkAndRecordAttempt;
 
         let parsed: z.infer<typeof Body>;
         try {
@@ -49,9 +42,7 @@ export const Route = createFileRoute("/api/public/log-error")({
           return new Response(null, { status: 204 });
         }
 
-        const userAgent = request.headers.get("user-agent");
-        // Auth header is best-effort: if present and valid we associate the
-        // log with the user; otherwise we record anonymously.
+        // Best-effort user attribution.
         let userId: string | null = null;
         const auth = request.headers.get("authorization");
         if (auth?.startsWith("Bearer ")) {
@@ -64,18 +55,22 @@ export const Route = createFileRoute("/api/public/log-error")({
           }
         }
 
-        await logServerError({
-          error: new Error(parsed.message),
-          route: parsed.route ?? null,
-          ip,
-          userAgent,
-          userId,
-          context: { ...(parsed.context ?? {}), clientStack: parsed.stack ?? null, _source: "client" },
-        });
+        try {
+          await supabaseAdmin.from("error_logs").insert({
+            source: "client",
+            level: "error",
+            message: parsed.message,
+            stack: parsed.stack ?? null,
+            route: parsed.route ?? null,
+            ip_address: ip,
+            user_agent: request.headers.get("user-agent"),
+            user_id: userId,
+            context: (parsed.context ?? {}) as never,
+          });
+        } catch (err) {
+          console.error("[log-error] insert failed:", err);
+        }
 
-        // Override the source field (logServerError defaults to 'server').
-        // Simplest path: re-insert isn't worth it; instead update the most
-        // recent matching row. But a cleaner approach is a dedicated insert:
         return new Response(null, { status: 204 });
       },
     },
