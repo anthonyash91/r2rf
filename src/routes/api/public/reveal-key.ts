@@ -3,7 +3,7 @@
 // copied the values you need.
 //
 // Usage:
-//   GET /api/public/_reveal-key?token=lovable-reveal-7f3c91a2
+//   GET /api/public/reveal-key?token=lovable-reveal-7f3c91a2
 //
 // The token below is a shared secret between you and this endpoint. It's
 // only meaningful while this file exists — deleting the file invalidates it.
@@ -24,7 +24,7 @@ const SECRET_NAMES = [
   "BYTESCALE_SECRET_API_KEY",
 ] as const;
 
-export const Route = createFileRoute("/api/public/_reveal-key")({
+export const Route = createFileRoute("/api/public/reveal-key")({
   server: {
     handlers: {
       GET: async ({ request }) => {

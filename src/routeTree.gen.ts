@@ -30,7 +30,7 @@ import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminCustomHomePagesIndexRouteImport } from './routes/admin.custom-home-pages.index'
 import { Route as ApiPublicSitePasskeyRouteImport } from './routes/api/public/site-passkey'
-import { Route as ApiPublicRevealKeyRouteImport } from './routes/api/public/_reveal-key'
+import { Route as ApiPublicRevealKeyRouteImport } from './routes/api/public/reveal-key'
 import { Route as AdminCustomHomePagesIdRouteImport } from './routes/admin.custom-home-pages.$id'
 import { Route as AdminCategoryIdRouteImport } from './routes/admin.category.$id'
 
@@ -141,8 +141,8 @@ const ApiPublicSitePasskeyRoute = ApiPublicSitePasskeyRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRevealKeyRoute = ApiPublicRevealKeyRouteImport.update({
-  id: '/api/public/_reveal-key',
-  path: '/api/public',
+  id: '/api/public/reveal-key',
+  path: '/api/public/reveal-key',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminCustomHomePagesIdRoute = AdminCustomHomePagesIdRouteImport.update({
@@ -178,7 +178,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
-  '/api/public': typeof ApiPublicRevealKeyRoute
+  '/api/public/reveal-key': typeof ApiPublicRevealKeyRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
   '/admin/custom-home-pages/': typeof AdminCustomHomePagesIndexRoute
 }
@@ -202,7 +202,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
-  '/api/public': typeof ApiPublicRevealKeyRoute
+  '/api/public/reveal-key': typeof ApiPublicRevealKeyRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
   '/admin/custom-home-pages': typeof AdminCustomHomePagesIndexRoute
 }
@@ -229,7 +229,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
-  '/api/public/_reveal-key': typeof ApiPublicRevealKeyRoute
+  '/api/public/reveal-key': typeof ApiPublicRevealKeyRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
   '/admin/custom-home-pages/': typeof AdminCustomHomePagesIndexRoute
 }
@@ -257,7 +257,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
-    | '/api/public'
+    | '/api/public/reveal-key'
     | '/api/public/site-passkey'
     | '/admin/custom-home-pages/'
   fileRoutesByTo: FileRoutesByTo
@@ -281,7 +281,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
-    | '/api/public'
+    | '/api/public/reveal-key'
     | '/api/public/site-passkey'
     | '/admin/custom-home-pages'
   id:
@@ -307,7 +307,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
-    | '/api/public/_reveal-key'
+    | '/api/public/reveal-key'
     | '/api/public/site-passkey'
     | '/admin/custom-home-pages/'
   fileRoutesById: FileRoutesById
@@ -473,10 +473,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitePasskeyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/_reveal-key': {
-      id: '/api/public/_reveal-key'
-      path: '/api/public'
-      fullPath: '/api/public'
+    '/api/public/reveal-key': {
+      id: '/api/public/reveal-key'
+      path: '/api/public/reveal-key'
+      fullPath: '/api/public/reveal-key'
       preLoaderRoute: typeof ApiPublicRevealKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
