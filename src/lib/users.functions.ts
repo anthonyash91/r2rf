@@ -340,17 +340,33 @@ export const createTesterUser = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Atomically rotates the caller's password AND clears the
+ * `must_reset_password` metadata flag. The flag can only be cleared as a
+ * side effect of an actual password change — this prevents authenticated
+ * users from skipping the forced reset by calling the endpoint directly.
+ */
 export const clearMustResetPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input) =>
+    z.object({ newPassword: z.string().min(8).max(72) }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
     const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(context.userId);
-    if (getErr) throw new Error(getErr.message);
+    if (getErr) {
+      console.error("[clearMustResetPassword] getUserById failed:", getErr.message);
+      throw new Error("Unable to update password. Please try again.");
+    }
     const meta = { ...((userRes?.user?.user_metadata ?? {}) as Record<string, unknown>) };
     meta.must_reset_password = false;
     const { error } = await supabaseAdmin.auth.admin.updateUserById(context.userId, {
+      password: data.newPassword,
       user_metadata: meta,
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[clearMustResetPassword] updateUserById failed:", error.message);
+      throw new Error("Unable to update password. Please try again.");
+    }
     return { ok: true };
   });
 
