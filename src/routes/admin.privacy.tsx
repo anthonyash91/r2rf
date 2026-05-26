@@ -130,42 +130,19 @@ function AdminPrivacyPage() {
                       Leave blank to fall back to English when Spanish is selected.
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <LoadingButton
-                      variant="secondary"
-                      pending={translating}
-                      pendingText="Translating…"
-                      disabled={!value.title.trim() && !value.content.trim()}
-                      icon={<RefreshCw className="h-3 w-3" />}
-                      className="gap-1.5"
-                      onClick={() =>
-                        runTranslate(
-                          { title: value.title, content: value.content },
-                          (tr) =>
-                            setValue((prev) => ({
-                              ...prev,
-                              title_es: tr.title ?? prev.title_es,
-                              content_es: tr.content ?? prev.content_es,
-                            })),
-                          "Privacy policy page",
-                        )
-                      }
-                    >
-                      Regenerate
-                    </LoadingButton>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowEs(false);
-                        setValue((prev) => ({ ...prev, title_es: "", content_es: "" }));
-                      }}
-                      className="text-xs text-muted-foreground hover:text-foreground underline"
-                    >
-                      Hide
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEs(false);
+                      setValue((prev) => ({ ...prev, title_es: "", content_es: "" }));
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                  >
+                    Hide
+                  </button>
                 </div>
                 {translating && <TranslatingIndicator />}
+
 
                 <label className="block">
                   <span className="text-sm font-medium">Page title (Spanish)</span>
