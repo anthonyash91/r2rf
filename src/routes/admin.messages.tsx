@@ -246,7 +246,7 @@ function MessageEditor({
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row justify-end gap-2">
+          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
             <LoadingButton
               variant="secondary"
               className="w-full sm:w-auto"
