@@ -134,35 +134,29 @@ function AdminErrorsPage() {
   const visible = filtered.slice(0, pager.visibleCount);
 
   const handleClearOld = async () => {
-    const ok = await confirmDelete({
+    await confirmDelete({
       title: "Clear errors older than 30 days?",
       description: "This removes old error log entries permanently.",
       confirmLabel: "Clear old",
+      onConfirm: async () => {
+        await clearOld({ data: { olderThanDays: 30 } });
+        toast.success("Old error logs cleared");
+        qc.invalidateQueries({ queryKey: ["admin-error-logs"] });
+      },
     });
-    if (!ok) return;
-    try {
-      await clearOld({ data: { olderThanDays: 30 } });
-      toast.success("Old error logs cleared");
-      qc.invalidateQueries({ queryKey: ["admin-error-logs"] });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to clear");
-    }
   };
 
   const handleDeleteAll = async () => {
-    const ok = await confirmDelete({
+    await confirmDelete({
       title: "Delete ALL error logs?",
       description: "This removes every error log entry permanently. Cannot be undone.",
       confirmLabel: "Delete all",
+      onConfirm: async () => {
+        await deleteAll({});
+        toast.success("All error logs deleted");
+        qc.invalidateQueries({ queryKey: ["admin-error-logs"] });
+      },
     });
-    if (!ok) return;
-    try {
-      await deleteAll({});
-      toast.success("All error logs deleted");
-      qc.invalidateQueries({ queryKey: ["admin-error-logs"] });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to delete");
-    }
   };
 
   return (
