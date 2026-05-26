@@ -5,6 +5,11 @@ import { createHmac, timingSafeEqual, randomInt } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
 import { hashAnswer } from "./security-hash.server";
+import { checkAndRecordAttempt } from "./rate-limit.server";
+import { getClientIp } from "./ip-allowlist";
+
+const SIGNUP_WINDOW_MS = 24 * 60 * 60 * 1000;
+const SIGNUP_MAX_PER_IP = 5;
 
 
 
