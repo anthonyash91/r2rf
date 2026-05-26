@@ -140,6 +140,9 @@ export function SiteHeader() {
             <Link {...homeLinkProps} {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`} activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
               {t("nav.categories")}
             </Link>
+            <Link to="/privacy" {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`} activeProps={{ className: "text-foreground" }}>
+              {t("nav.privacy")}
+            </Link>
             {canAccessAdmin && (
               <Link to="/admin" {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`} activeProps={{ className: "text-foreground" }}>
                 Admin
