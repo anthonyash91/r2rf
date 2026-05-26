@@ -95,7 +95,7 @@ function AdminHomePage() {
           description="Edit the eyebrow, headline, and subheading shown at the top of the home page. The headline is split into three parts; the middle part is shown in accent italic."
         />
       </div>
-      <SectionCard className="mt-8">
+      <SectionCard className="mt-8 pt-4">
         {isLoading ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : (
