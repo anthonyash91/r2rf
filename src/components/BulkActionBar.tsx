@@ -114,6 +114,7 @@ export function BulkActionBar({
             >
               {selectedCount > 0 ? "Cancel" : "Done"}
             </LoadingButton>
+            {selectedCount > 0 && extraSelectionActions?.(Array.from(selectedIds))}
             {(selectedCount > 0 || isDeleting) && (
               <LoadingButton
                 variant="destructive"
