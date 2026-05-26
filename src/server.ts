@@ -152,7 +152,7 @@ export default {
       if (!restrictionsEnabled) {
         const handler = await getServerEntry();
         const response = await handler.fetch(request, env, ctx);
-        return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response));
+        return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response, request));
       }
 
       // Allow the self-service passkey endpoint through the site allowlist
