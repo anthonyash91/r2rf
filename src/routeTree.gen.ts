@@ -30,6 +30,7 @@ import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminCustomHomePagesIndexRouteImport } from './routes/admin.custom-home-pages.index'
 import { Route as ApiPublicSitePasskeyRouteImport } from './routes/api/public/site-passkey'
+import { Route as ApiPublicLogErrorRouteImport } from './routes/api/public/log-error'
 import { Route as AdminCustomHomePagesIdRouteImport } from './routes/admin.custom-home-pages.$id'
 import { Route as AdminCategoryIdRouteImport } from './routes/admin.category.$id'
 
@@ -139,6 +140,11 @@ const ApiPublicSitePasskeyRoute = ApiPublicSitePasskeyRouteImport.update({
   path: '/api/public/site-passkey',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLogErrorRoute = ApiPublicLogErrorRouteImport.update({
+  id: '/api/public/log-error',
+  path: '/api/public/log-error',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminCustomHomePagesIdRoute = AdminCustomHomePagesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
+  '/api/public/log-error': typeof ApiPublicLogErrorRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
   '/admin/custom-home-pages/': typeof AdminCustomHomePagesIndexRoute
 }
@@ -195,6 +202,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
+  '/api/public/log-error': typeof ApiPublicLogErrorRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
   '/admin/custom-home-pages': typeof AdminCustomHomePagesIndexRoute
 }
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
+  '/api/public/log-error': typeof ApiPublicLogErrorRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
   '/admin/custom-home-pages/': typeof AdminCustomHomePagesIndexRoute
 }
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
+    | '/api/public/log-error'
     | '/api/public/site-passkey'
     | '/admin/custom-home-pages/'
   fileRoutesByTo: FileRoutesByTo
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
+    | '/api/public/log-error'
     | '/api/public/site-passkey'
     | '/admin/custom-home-pages'
   id:
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
+    | '/api/public/log-error'
     | '/api/public/site-passkey'
     | '/admin/custom-home-pages/'
   fileRoutesById: FileRoutesById
@@ -308,6 +320,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SpanishRoute: typeof SpanishRoute
   CategorySlugRoute: typeof CategorySlugRoute
+  ApiPublicLogErrorRoute: typeof ApiPublicLogErrorRoute
   ApiPublicSitePasskeyRoute: typeof ApiPublicSitePasskeyRoute
 }
 
@@ -460,6 +473,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitePasskeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/log-error': {
+      id: '/api/public/log-error'
+      path: '/api/public/log-error'
+      fullPath: '/api/public/log-error'
+      preLoaderRoute: typeof ApiPublicLogErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/custom-home-pages/$id': {
       id: '/admin/custom-home-pages/$id'
       path: '/$id'
@@ -532,8 +552,19 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SpanishRoute: SpanishRoute,
   CategorySlugRoute: CategorySlugRoute,
+  ApiPublicLogErrorRoute: ApiPublicLogErrorRoute,
   ApiPublicSitePasskeyRoute: ApiPublicSitePasskeyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
