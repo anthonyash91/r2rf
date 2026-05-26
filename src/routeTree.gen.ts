@@ -30,7 +30,6 @@ import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminCustomHomePagesIndexRouteImport } from './routes/admin.custom-home-pages.index'
 import { Route as ApiPublicSitePasskeyRouteImport } from './routes/api/public/site-passkey'
-import { Route as ApiPublicRevealKeyRouteImport } from './routes/api/public/reveal-key'
 import { Route as AdminCustomHomePagesIdRouteImport } from './routes/admin.custom-home-pages.$id'
 import { Route as AdminCategoryIdRouteImport } from './routes/admin.category.$id'
 
@@ -140,11 +139,6 @@ const ApiPublicSitePasskeyRoute = ApiPublicSitePasskeyRouteImport.update({
   path: '/api/public/site-passkey',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicRevealKeyRoute = ApiPublicRevealKeyRouteImport.update({
-  id: '/api/public/reveal-key',
-  path: '/api/public/reveal-key',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminCustomHomePagesIdRoute = AdminCustomHomePagesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -178,7 +172,6 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
-  '/api/public/reveal-key': typeof ApiPublicRevealKeyRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
   '/admin/custom-home-pages/': typeof AdminCustomHomePagesIndexRoute
 }
@@ -202,7 +195,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
-  '/api/public/reveal-key': typeof ApiPublicRevealKeyRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
   '/admin/custom-home-pages': typeof AdminCustomHomePagesIndexRoute
 }
@@ -229,7 +221,6 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
-  '/api/public/reveal-key': typeof ApiPublicRevealKeyRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
   '/admin/custom-home-pages/': typeof AdminCustomHomePagesIndexRoute
 }
@@ -257,7 +248,6 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
-    | '/api/public/reveal-key'
     | '/api/public/site-passkey'
     | '/admin/custom-home-pages/'
   fileRoutesByTo: FileRoutesByTo
@@ -281,7 +271,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
-    | '/api/public/reveal-key'
     | '/api/public/site-passkey'
     | '/admin/custom-home-pages'
   id:
@@ -307,7 +296,6 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
-    | '/api/public/reveal-key'
     | '/api/public/site-passkey'
     | '/admin/custom-home-pages/'
   fileRoutesById: FileRoutesById
@@ -320,7 +308,6 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SpanishRoute: typeof SpanishRoute
   CategorySlugRoute: typeof CategorySlugRoute
-  ApiPublicRevealKeyRoute: typeof ApiPublicRevealKeyRoute
   ApiPublicSitePasskeyRoute: typeof ApiPublicSitePasskeyRoute
 }
 
@@ -473,13 +460,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSitePasskeyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/reveal-key': {
-      id: '/api/public/reveal-key'
-      path: '/api/public/reveal-key'
-      fullPath: '/api/public/reveal-key'
-      preLoaderRoute: typeof ApiPublicRevealKeyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/custom-home-pages/$id': {
       id: '/admin/custom-home-pages/$id'
       path: '/$id'
@@ -552,7 +532,6 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SpanishRoute: SpanishRoute,
   CategorySlugRoute: CategorySlugRoute,
-  ApiPublicRevealKeyRoute: ApiPublicRevealKeyRoute,
   ApiPublicSitePasskeyRoute: ApiPublicSitePasskeyRoute,
 }
 export const routeTree = rootRouteImport
