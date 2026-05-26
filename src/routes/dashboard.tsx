@@ -289,14 +289,11 @@ function DashboardPage() {
     if (resetPw !== resetPw2) { toast.error("Passwords do not match"); return; }
     setResetBusy(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: resetPw,
-        data: { must_reset_password: false },
-      });
-      if (error) throw error;
-      // Clear server-side metadata too (admin API), then refresh the local
-      // session so the JWT reflects the cleared flag on next page load.
-      await clearMustResetFn();
+      // Server-side atomic update: rotates the password AND clears
+      // must_reset_password in the same admin call. This is the only path
+      // that can clear the flag — direct calls without a password change
+      // are rejected by the server fn.
+      await clearMustResetFn({ data: { newPassword: resetPw } });
       await supabase.auth.refreshSession();
       toast.success("Password updated");
       setResetPw(""); setResetPw2("");

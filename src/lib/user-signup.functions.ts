@@ -121,7 +121,8 @@ export const signupUser = createServerFn({ method: "POST" })
       user_metadata: { username: data.username, facility: data.facility },
     });
     if (createErr || !created?.user) {
-      throw new Error(createErr?.message ?? "Failed to create account.");
+      console.error("[signup] createUser failed:", createErr?.message);
+      throw new Error("Account creation failed. Please try again.");
     }
     const userId = created.user.id;
 
@@ -135,17 +136,19 @@ export const signupUser = createServerFn({ method: "POST" })
         last_name: data.lastName,
       });
     if (profErr) {
+      console.error("[signup] user_profiles insert failed:", profErr.message);
       await supabaseAdmin.auth.admin.deleteUser(userId);
-      throw new Error(profErr.message);
+      throw new Error("Account creation failed. Please try again.");
     }
 
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
       .insert({ user_id: userId, role: "user" });
     if (roleErr) {
+      console.error("[signup] user_roles insert failed:", roleErr.message);
       await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
       await supabaseAdmin.auth.admin.deleteUser(userId);
-      throw new Error(roleErr.message);
+      throw new Error("Account creation failed. Please try again.");
     }
 
     if (data.securityAnswers && data.securityAnswers.length === 2) {
@@ -156,10 +159,11 @@ export const signupUser = createServerFn({ method: "POST" })
       }));
       const { error: secErr } = await supabaseAdmin.from("user_security_answers").insert(securityRows);
       if (secErr) {
+        console.error("[signup] user_security_answers insert failed:", secErr.message);
         await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
         await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
         await supabaseAdmin.auth.admin.deleteUser(userId);
-        throw new Error(secErr.message);
+        throw new Error("Account creation failed. Please try again.");
       }
     }
 
