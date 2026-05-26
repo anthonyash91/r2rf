@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, RefreshCw, ExternalLink } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Shield } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
@@ -84,18 +83,8 @@ function AdminPrivacyPage() {
         description="Edit the privacy policy page shown to all visitors. Available in English and Spanish."
       />
 
-      <div className="mt-4 flex justify-end">
-        <Link
-          to="/privacy"
-          target="_blank"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          View public page
-        </Link>
-      </div>
+      <SectionCard className="mt-8">
 
-      <SectionCard className="mt-4">
         {isLoading ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : (
@@ -140,42 +129,19 @@ function AdminPrivacyPage() {
                       Leave blank to fall back to English when Spanish is selected.
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <LoadingButton
-                      variant="secondary"
-                      pending={translating}
-                      pendingText="Translating…"
-                      disabled={!value.title.trim() && !value.content.trim()}
-                      icon={<RefreshCw className="h-3 w-3" />}
-                      className="gap-1.5"
-                      onClick={() =>
-                        runTranslate(
-                          { title: value.title, content: value.content },
-                          (tr) =>
-                            setValue((prev) => ({
-                              ...prev,
-                              title_es: tr.title ?? prev.title_es,
-                              content_es: tr.content ?? prev.content_es,
-                            })),
-                          "Privacy policy page",
-                        )
-                      }
-                    >
-                      Regenerate
-                    </LoadingButton>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowEs(false);
-                        setValue((prev) => ({ ...prev, title_es: "", content_es: "" }));
-                      }}
-                      className="text-xs text-muted-foreground hover:text-foreground underline"
-                    >
-                      Hide
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEs(false);
+                      setValue((prev) => ({ ...prev, title_es: "", content_es: "" }));
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground underline"
+                  >
+                    Hide
+                  </button>
                 </div>
                 {translating && <TranslatingIndicator />}
+
 
                 <label className="block">
                   <span className="text-sm font-medium">Page title (Spanish)</span>
