@@ -217,22 +217,26 @@ function AdminErrorsPage() {
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </div>
-            <div className="min-w-[160px]">
+            <div className="w-full sm:w-auto sm:min-w-[180px]">
               <label className="block text-xs font-medium text-muted-foreground mb-1">
                 Source
               </label>
-              <select
-                value={source}
-                onChange={(e) => {
-                  setSource((e.target.value as SourceFilter) || "");
+              <Select
+                value={source || "all"}
+                onValueChange={(v) => {
+                  setSource(v === "all" ? "" : (v as SourceFilter));
                   pager.reset();
                 }}
-                className="w-full sm:w-auto rounded-md border border-input bg-background px-4 py-2 text-sm"
               >
-                <option value="">All sources</option>
-                <option value="server">Server</option>
-                <option value="client">Client</option>
-              </select>
+                <SelectTrigger className="w-full px-4 py-2 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All sources</SelectItem>
+                  <SelectItem value="server">Server</SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="min-w-[180px]">
               <label className="block text-xs font-medium text-muted-foreground mb-1">
