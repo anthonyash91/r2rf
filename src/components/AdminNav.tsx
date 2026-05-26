@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
-import { LayoutGrid, Users, Shield, BarChart3, Home, LayoutTemplate, Award, Building2, MessageSquare, ChevronDown, MoreHorizontal, Palette, Sprout, ScrollText, AlertOctagon } from "lucide-react";
+import { LayoutGrid, Users, Shield, BarChart3, Home, LayoutTemplate, Award, Building2, MessageSquare, ChevronDown, MoreHorizontal, Palette, Sprout, ScrollText, AlertOctagon, FileText } from "lucide-react";
 import { countNewUsers } from "@/lib/users.functions";
 import { useLastSeenUsersAt } from "@/lib/new-users-tracker";
 
