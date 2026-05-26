@@ -574,7 +574,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                   <ChevronDown className="ml-1 h-3.5 w-3.5" />
                 </LoadingButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" collisionPadding={16} className="max-h-[80vh]">
                 {CONTENT_TYPES.map((t) => (
                   <DropdownMenuItem
                     key={t}
