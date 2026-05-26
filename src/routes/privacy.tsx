@@ -52,23 +52,25 @@ function PrivacyPage() {
       <SiteHeader />
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
-          <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-            <Shield className="h-7 w-7 text-[var(--color-accent)]" />
-            {title}
-          </h1>
-          {isLoading ? (
-            <p className="mt-6 text-muted-foreground">{t("home.loading")}</p>
-          ) : content.trim() ? (
-            <article className="mt-6 whitespace-pre-wrap leading-relaxed text-foreground/90">
-              {content}
-            </article>
-          ) : (
-            <p className="mt-6 text-muted-foreground">
-              {lang === "es"
-                ? "La política de privacidad aún no está disponible."
-                : "The privacy policy is not available yet."}
-            </p>
-          )}
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-10">
+            <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+              <Shield className="h-7 w-7 text-[var(--color-accent)]" />
+              {title}
+            </h1>
+            {isLoading ? (
+              <p className="mt-6 text-muted-foreground">{t("home.loading")}</p>
+            ) : content.trim() ? (
+              <article className="mt-6 whitespace-pre-wrap leading-relaxed text-foreground/90">
+                {content}
+              </article>
+            ) : (
+              <p className="mt-6 text-muted-foreground">
+                {lang === "es"
+                  ? "La política de privacidad aún no está disponible."
+                  : "The privacy policy is not available yet."}
+              </p>
+            )}
+          </div>
         </div>
       </main>
       <SiteFooter />
