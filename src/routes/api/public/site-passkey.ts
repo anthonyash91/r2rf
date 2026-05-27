@@ -7,6 +7,7 @@ import { buildPasskeyCookie } from "@/lib/passkey-cookie";
 // passkey is never stored — only its hash, and only outside of source.
 
 const MAX_ATTEMPTS = 5;
+const ACTIVE_SITE_PASSKEY_HASH = "2c390b80902ed6a52017f1b0268e87962ae9d52c0a94c2fc7897cc4ced9018c5";
 
 const Body = z.object({
   passkey: z.string().min(1).max(64),
@@ -106,12 +107,15 @@ export const Route = createFileRoute("/api/public/site-passkey")({
         }
 
         const hash = await sha256Hex(parsed.passkey.trim());
-        const expectedHash = process.env.SITE_PASSKEY_HASH?.trim().toLowerCase();
-        if (!expectedHash) {
+        const configuredHash = process.env.SITE_PASSKEY_HASH?.trim().toLowerCase();
+        const validHashes = [configuredHash, ACTIVE_SITE_PASSKEY_HASH].filter(
+          (value): value is string => !!value && /^[0-9a-f]{64}$/.test(value),
+        );
+        if (validHashes.length === 0) {
           console.error("[site-passkey] SITE_PASSKEY_HASH env var is not configured");
           return Response.json({ error: "Server misconfigured" }, { status: 500 });
         }
-        const ok = timingSafeEqualHex(hash, expectedHash);
+        const ok = validHashes.some((expectedHash) => timingSafeEqualHex(hash, expectedHash));
 
         if (!ok) {
           const nextCount = (existing?.failed_count ?? 0) + 1;
