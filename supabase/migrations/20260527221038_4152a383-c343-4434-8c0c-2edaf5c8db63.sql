@@ -1,0 +1,1 @@
+DELETE FROM public.ip_passkey_attempts WHERE ip_address = '74.138.97.209';
