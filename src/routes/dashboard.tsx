@@ -215,7 +215,7 @@ function DashboardPage() {
     queryKey: ["dashboard-progress", userId, categoryIds.join(",")],
     enabled: !!userId && categoryIds.length > 0,
     queryFn: async () => {
-      const [itemsRes, readRes, seenRes] = await Promise.all([
+      const [itemsRes, readRes, seenRes, profileRes] = await Promise.all([
         supabase
           .from("content_items")
           .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at, url, file_url")
@@ -231,9 +231,31 @@ function DashboardPage() {
           .from("user_content_seen")
           .select("content_item_id")
           .eq("user_id", userId!),
+        supabase
+          .from("user_profiles")
+          .select("facility")
+          .eq("user_id", userId!)
+          .maybeSingle(),
       ]);
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
+
+      const userFacility: string | null = (profileRes.data as any)?.facility ?? null;
+
+      // Fetch facility restrictions so we can exclude items the user can't see
+      const allItemIds = (itemsRes.data ?? []).map((r: any) => r.id as string);
+      const facilityMap: Record<string, string[]> = {};
+      if (allItemIds.length > 0) {
+        const { data: cifData } = await (supabase as any)
+          .from("content_item_facilities")
+          .select("content_item_id, facility_value")
+          .in("content_item_id", allItemIds);
+        for (const row of (cifData ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+          if (!facilityMap[row.content_item_id]) facilityMap[row.content_item_id] = [];
+          facilityMap[row.content_item_id].push(row.facility_value);
+        }
+      }
+
       const seenSet = new Set<string>((seenRes.data ?? []).map((r: any) => r.content_item_id as string));
       type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; duration: string | null; created_at: string | null; url: string | null; file_url: string | null };
       const itemsByCat = new Map<string, CatItem[]>();
@@ -241,8 +263,15 @@ function DashboardPage() {
       const recentCats = new Set<string>();
       const newItemSet = new Set<string>();
       const itemDuration = new Map<string, string | null>();
+      const visibleItemIds = new Set<string>();
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       for (const row of itemsRes.data ?? []) {
+        // Filter by facility restriction
+        const facilities = facilityMap[row.id as string] ?? [];
+        if (facilities.length > 0) {
+          if (!userFacility || !facilities.includes(userFacility)) continue;
+        }
+        visibleItemIds.add(row.id as string);
         const list = itemsByCat.get(row.category_id as string) ?? [];
         list.push(row as CatItem);
         itemsByCat.set(row.category_id as string, list);
@@ -258,6 +287,8 @@ function DashboardPage() {
       const readDays = new Set<string>();
       let minutesSpent = 0;
       for (const row of readRes.data ?? []) {
+        // Only count reads for items the user can see
+        if (!visibleItemIds.has(row.content_item_id as string)) continue;
         reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
         readSet.add(row.content_item_id as string);
         minutesSpent += parseMinutes(itemDuration.get(row.content_item_id as string));

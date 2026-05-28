@@ -52,18 +52,20 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    const [facRes, profRes, pagesRes, linksRes, catsRes] = await Promise.all([
+    const [facRes, profRes, pagesRes, linksRes, catsRes, cifRes] = await Promise.all([
       supabaseAdmin.from("facilities").select("id, value, label, sort_order").order("label", { ascending: true }),
       supabaseAdmin.from("user_profiles").select("facility"),
       supabaseAdmin.from("custom_home_pages").select("id, name, slug"),
       supabaseAdmin.from("custom_home_page_categories").select("custom_home_page_id, category_id"),
       supabaseAdmin.from("categories").select("id, name, slug, sort_order, home_page_mode").eq("home_page_mode", "custom").order("sort_order", { ascending: true }),
+      (supabaseAdmin as any).from("content_item_facilities").select("facility_value, content_items(id, title, category_id, categories(id, name))"),
     ]);
     if (facRes.error) throw new Error(facRes.error.message);
     if (profRes.error) throw new Error(profRes.error.message);
     if (pagesRes.error) throw new Error(pagesRes.error.message);
     if (linksRes.error) throw new Error(linksRes.error.message);
     if (catsRes.error) throw new Error(catsRes.error.message);
+    if (cifRes.error) console.warn("[listFacilitiesWithStats] content_item_facilities:", cifRes.error.message);
 
     const userCounts = new Map<string, number>();
     for (const p of profRes.data ?? []) {
@@ -89,6 +91,21 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
       pageByName.set((pg as any).name, { id: (pg as any).id, slug: (pg as any).slug, name: (pg as any).name });
     }
 
+    const facilityContentMap = new Map<string, Array<{ id: string; title: string; categoryId: string; categoryName: string }>>();
+    for (const row of cifRes.data ?? []) {
+      const item = (row as any).content_items;
+      if (!item) continue;
+      const fv = (row as any).facility_value as string;
+      const arr = facilityContentMap.get(fv) ?? [];
+      arr.push({
+        id: item.id as string,
+        title: item.title as string,
+        categoryId: item.category_id as string,
+        categoryName: (item.categories?.name ?? "") as string,
+      });
+      facilityContentMap.set(fv, arr);
+    }
+
     return {
       facilities: (facRes.data ?? []).map((f: any) => {
         const page = pageByName.get(f.label) ?? null;
@@ -105,6 +122,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
                 categories: pageCats.get(page.id) ?? [],
               }
             : null,
+          contentItems: facilityContentMap.get(f.value as string) ?? [],
         };
       }),
     };

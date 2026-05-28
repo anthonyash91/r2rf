@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
@@ -23,11 +24,39 @@ import AutoHeight from "embla-carousel-auto-height";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveCustomHome } from "@/lib/custom-home-context";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
+import { listFacilities } from "@/lib/facilities.functions";
 
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
 const PDF_EXT = /\.pdf(\?|#|$)/i;
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp|avif|svg|bmp|heic|heif)(\?|#|$)/i;
+function FacilityBadge({ facilities, facilityLabelMap, className }: {
+  facilities: string[];
+  facilityLabelMap: Record<string, string>;
+  className?: string;
+}) {
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className="cursor-default inline-flex p-0 m-0 h-auto w-auto border-none bg-transparent shadow-none leading-none"
+        >
+          <Badge variant="facility" className={className}>
+            {facilities.length === 1
+              ? (facilityLabelMap[facilities[0]] ?? facilities[0])
+              : `${facilities.length} facilities`}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          {facilities.map((v) => facilityLabelMap[v] ?? v).join("; ")}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 function isVideoUrl(url: string | null | undefined) {
   return !!url && VIDEO_EXT.test(url);
 }
@@ -61,6 +90,17 @@ function CategoryPage() {
   const queryClient = useQueryClient();
   const activeCustomHome = useActiveCustomHome();
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
+  const fetchFacilitiesList = useServerFn(listFacilities);
+  const { data: facilitiesData } = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilitiesList(),
+    enabled: isAdmin,
+  });
+  const facilityLabelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const f of facilitiesData?.facilities ?? []) map[f.value] = f.label;
+    return map;
+  }, [facilitiesData]);
   const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
   const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
@@ -135,19 +175,26 @@ function CategoryPage() {
       // Fetch facility restrictions for all items
       const itemIds = (items ?? []).map((i) => i.id as string);
       const facilityMap: Record<string, string[]> = {};
+      let facilityFetchFailed = false;
       if (itemIds.length > 0) {
-        const { data: facilityLinks } = await (supabase as any)
+        const { data: facilityLinks, error: facilityLinksError } = await (supabase as any)
           .from("content_item_facilities")
           .select("content_item_id, facility_value")
           .in("content_item_id", itemIds);
-        for (const link of (facilityLinks ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
-          if (!facilityMap[link.content_item_id]) facilityMap[link.content_item_id] = [];
-          facilityMap[link.content_item_id].push(link.facility_value);
+        if (facilityLinksError) {
+          console.error("[category] facility restrictions fetch failed:", facilityLinksError.message);
+          facilityFetchFailed = true;
+        } else {
+          for (const link of (facilityLinks ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+            if (!facilityMap[link.content_item_id]) facilityMap[link.content_item_id] = [];
+            facilityMap[link.content_item_id].push(link.facility_value);
+          }
         }
       }
       const itemsWithFacilities = (items ?? []).map((item) => ({
         ...item,
-        facilities: facilityMap[item.id as string] ?? [],
+        // null = fetch failed; visibleItems treats null as "restricted, hide from non-admins"
+        facilities: facilityFetchFailed ? null : (facilityMap[item.id as string] ?? []),
       })) as ContentItem[];
 
       return {
@@ -222,10 +269,11 @@ function CategoryPage() {
     if (!data) return [];
     if (isAdmin) return data.items;
     if (facilityQuery.isLoading && !!user?.id) {
-      return data.items.filter((item) => (item.facilities?.length ?? 0) === 0);
+      return data.items.filter((item) => item.facilities !== null && (item.facilities?.length ?? 0) === 0);
     }
     const facility = facilityQuery.data?.facility ?? null;
     return data.items.filter((item) => {
+      if (item.facilities === null) return false; // unknown restrictions — hide for safety
       const f = item.facilities ?? [];
       if (f.length === 0) return true;
       if (!facility) return false;
@@ -439,11 +487,10 @@ function CategoryPage() {
                                 {translateType(lang, item.type)}
                               </Badge>
                               {isAdmin && (item.facilities?.length ?? 0) > 0 && (
-                                <Badge variant="facility">
-                                  {item.facilities!.length === 1
-                                    ? item.facilities![0]
-                                    : `${item.facilities!.length} facilities`}
-                                </Badge>
+                                <FacilityBadge
+                                  facilities={item.facilities!}
+                                  facilityLabelMap={facilityLabelMap}
+                                />
                               )}
                             </BadgeGroup>
                             {item.duration && (

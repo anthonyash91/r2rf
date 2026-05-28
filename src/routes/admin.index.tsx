@@ -33,7 +33,7 @@ import { SortableList } from "@/components/SortableList";
 
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
@@ -52,6 +52,7 @@ function AdminCategoriesPage() {
   useAuth();
   const confirmDelete = useConfirmDelete();
   const [creating, setCreating] = useState(false);
+  const [expandedCourses, setExpandedCourses] = useState(new Set<string>());
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["admin", "categories"],
@@ -101,6 +102,45 @@ function AdminCategoriesPage() {
   const itemCountsByCategory: Record<string, number> = Object.fromEntries(
     Object.entries(itemsByCategory).map(([k, v]) => [k, v.length])
   );
+
+  const { data: itemFacilityMap = {} } = useQuery({
+    queryKey: ["admin", "item-facility-map"],
+    queryFn: async (): Promise<Record<string, string[]>> => {
+      const { data, error } = await (supabase as any)
+        .from("content_item_facilities")
+        .select("content_item_id, facility_value");
+      if (error) throw error;
+      const map: Record<string, string[]> = {};
+      for (const r of (data ?? []) as { content_item_id: string; facility_value: string }[]) {
+        if (!map[r.content_item_id]) map[r.content_item_id] = [];
+        map[r.content_item_id].push(r.facility_value);
+      }
+      return map;
+    },
+  });
+
+  const { data: facilityLabelList = [] } = useQuery({
+    queryKey: ["admin", "facility-labels"],
+    queryFn: async () => {
+      const { data } = await supabase.from("facilities").select("value, label").order("label");
+      return (data ?? []) as { value: string; label: string }[];
+    },
+  });
+  const facilityLabelMap = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const f of facilityLabelList) map[f.value] = f.label;
+    return map;
+  }, [facilityLabelList]);
+
+  const categoriesWithFacilityContent = React.useMemo(() => {
+    const set = new Set<string>();
+    for (const [categoryId, items] of Object.entries(itemsByCategory)) {
+      if (items.some((item) => !!itemFacilityMap[item.id]?.length)) {
+        set.add(categoryId);
+      }
+    }
+    return set;
+  }, [itemsByCategory, itemFacilityMap]);
 
   const createMut = useMutation({
     mutationFn: async (input: {
@@ -311,6 +351,9 @@ function AdminCategoriesPage() {
                         {c.home_page_mode === "custom" && (
                           <Badge variant="custom" title="Only shown on selected custom home pages">Custom</Badge>
                         )}
+                        {c.home_page_mode !== "custom" && categoriesWithFacilityContent.has(c.id) && (
+                          <Badge variant="custom-content" title="This category has facility-restricted content items">Custom Content</Badge>
+                        )}
                         {!c.published && <Badge variant="draft">Draft</Badge>}
                         {s !== "complete" && (
                           <Badge variant="translation" title={trTitle}>
@@ -325,33 +368,103 @@ function AdminCategoriesPage() {
                 {c.description && (
                   <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
                 )}
-                {(itemsByCategory[c.id]?.length ?? 0) > 0 && (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    <span className="font-medium text-foreground">Courses:</span>{" "}
-                    {(itemsByCategory[c.id] ?? []).map((item, i) => (
-                      <span key={item.id}>
-                        {i > 0 && ", "}
-                        {c.published && item.published ? (
-                          <Link
-                            to="/category/$slug"
-                            params={{ slug: c.slug }}
-                            hash={`item-${item.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[var(--color-accent)] hover:underline"
-                          >
-                            {item.title}
-                          </Link>
-                        ) : (
-                          <span>
-                            {item.title}
-                            {!item.published && <span className="ml-1 text-xs italic">(draft)</span>}
-                          </span>
-                        )}
-                      </span>
-                    ))}
-                  </p>
-                )}
+                {(itemsByCategory[c.id]?.length ?? 0) > 0 && (() => {
+                  const allItems = itemsByCategory[c.id] ?? [];
+                  const standardItems = allItems.filter((item) => !itemFacilityMap[item.id]?.length);
+                  const customItems = allItems.filter((item) => !!itemFacilityMap[item.id]?.length);
+                  const isOpen = expandedCourses.has(c.id);
+                  const renderLink = (item: typeof allItems[0], i: number) => (
+                    <span key={item.id}>
+                      {i > 0 && ", "}
+                      {c.published && item.published ? (
+                        <Link
+                          to="/category/$slug"
+                          params={{ slug: c.slug }}
+                          hash={`item-${item.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[var(--color-accent)] hover:underline"
+                        >
+                          {item.title}
+                        </Link>
+                      ) : (
+                        <span>
+                          {item.title}
+                          {!item.published && <span className="ml-1 text-xs italic">(draft)</span>}
+                        </span>
+                      )}
+                    </span>
+                  );
+                  return (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setExpandedCourses((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(c.id)) next.delete(c.id);
+                          else next.add(c.id);
+                          return next;
+                        })}
+                        className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                      >
+                        {isOpen ? "Hide courses" : "Show courses"} ({allItems.length})
+                      </button>
+                      {isOpen && (
+                        <div className="mt-1.5 space-y-1.5">
+                          {standardItems.length > 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              <span className="font-medium text-foreground">Courses:</span>{" "}
+                              {standardItems.map((item, i) => renderLink(item, i))}
+                            </p>
+                          )}
+                          {customItems.length > 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              <span className="font-medium text-foreground">Custom content:</span>{" "}
+                              <TooltipProvider delayDuration={150}>
+                                {customItems.map((item, i) => {
+                                  const facilityLabel = (itemFacilityMap[item.id] ?? [])
+                                    .map((v) => facilityLabelMap[v] ?? v)
+                                    .join("; ");
+                                  return (
+                                    <span key={item.id}>
+                                      {i > 0 && ", "}
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span className="cursor-help">
+                                            {c.published && item.published ? (
+                                              <Link
+                                                to="/category/$slug"
+                                                params={{ slug: c.slug }}
+                                                hash={`item-${item.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-[var(--color-accent)] hover:underline"
+                                              >
+                                                {item.title}
+                                              </Link>
+                                            ) : (
+                                              <span>
+                                                {item.title}
+                                                {!item.published && <span className="ml-1 text-xs italic">(draft)</span>}
+                                              </span>
+                                            )}
+                                          </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="text-xs">
+                                          {facilityLabel}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </span>
+                                  );
+                                })}
+                              </TooltipProvider>
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 {c.home_page_mode === "custom" && (
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
                     <span className="text-xs text-muted-foreground">Custom home page:</span>

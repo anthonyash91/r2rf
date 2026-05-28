@@ -122,6 +122,7 @@ export const BADGE_VARIANTS = [
   "count",
   "draft",
   "custom",
+  "custom-content",
   "category",
   "translation",
   "admin",
@@ -154,6 +155,7 @@ export const DEFAULT_VARIANT_INDEX: Record<BadgeVariantKey, number> = {
   count: 1, // gold
   draft: 8, // slate
   custom: 4, // plum (custom accent feel)
+  "custom-content": 10, // cyan
   category: 7, // rose
   translation: 1, // gold
   admin: 6, // indigo

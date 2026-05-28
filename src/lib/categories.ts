@@ -48,7 +48,7 @@ export type ContentItem = {
   file_url_es: string | null;
   file_name_es: string | null;
   created_at?: string;
-  facilities?: string[];
+  facilities?: string[] | null; // null = restrictions failed to load; hide for non-admins
 };
 
 export function slugify(s: string) {
