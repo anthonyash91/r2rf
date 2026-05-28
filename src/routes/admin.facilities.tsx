@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Building2, Plus, Pencil, Trash2, Users, Home, Blocks } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Home, Blocks, Link2 } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -254,6 +254,14 @@ function AdminFacilitiesPage() {
                                 <Users className="h-3.5 w-3.5" />
                                 {f.userCount} {f.userCount === 1 ? "user" : "users"} signed up
                               </span>
+                              <Link
+                                to="/facility/$slug"
+                                params={{ slug: f.value }}
+                                className="inline-flex items-center gap-1.5 hover:text-foreground hover:underline"
+                              >
+                                <Link2 className="h-3.5 w-3.5" />
+                                /facility/{f.value}
+                              </Link>
                             </div>
                             {f.customHomePage && (
                               <div className="pt-1 space-y-1">

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, useMemo, lazy, Suspense } from "react";
+import { useEffect, useRef, useState, useMemo, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
 
 const PdfViewer = lazy(() => import("@/components/PdfViewer"));
@@ -86,7 +86,7 @@ export const Route = createFileRoute("/category/$slug")({
 function CategoryPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, canAccessAdmin, isFacilityUser, user } = useAuth();
   const queryClient = useQueryClient();
   const activeCustomHome = useActiveCustomHome();
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
@@ -205,9 +205,13 @@ function CategoryPage() {
     },
   });
 
+  const trackedViewRef = useRef<string | null>(null);
   useEffect(() => {
-    if (data?.category.id) trackCategoryView(data.category.id);
-  }, [data?.category.id]);
+    const id = data?.category.id;
+    if (!id || trackedViewRef.current === id || canAccessAdmin || isFacilityUser) return;
+    trackedViewRef.current = id;
+    trackCategoryView(id);
+  }, [data?.category.id, canAccessAdmin, isFacilityUser]);
 
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   useEffect(() => {
@@ -436,7 +440,7 @@ function CategoryPage() {
                     };
 
                     const handleActivate = () => {
-                      trackContentClick(item.id, data.category.id);
+                      if (!canAccessAdmin && !isFacilityUser) trackContentClick(item.id, data.category.id);
                     };
 
                     let Wrapper: any = "div";

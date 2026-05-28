@@ -26,6 +26,9 @@ import { OnScreenKeyboardProvider, useKeyboardInput } from "@/components/OnScree
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Create your account — Reentry to Recovery" }] }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
   component: SignupPage,
 });
 
@@ -43,6 +46,7 @@ function SignupPageContent() {
   const { user, loading } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
+  const { redirect: redirectTo } = Route.useSearch();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -112,7 +116,10 @@ function SignupPageContent() {
       .then(({ data }) => {
         const roles = (data ?? []).map((r: any) => r.role as string);
         const goesAdmin = roles.includes("admin") || roles.includes("contributor");
-        if (goesAdmin) {
+        if (redirectTo) {
+          // Always honour an explicit redirect param (e.g. from requireAdminBeforeLoad)
+          navigate({ to: redirectTo as any });
+        } else if (goesAdmin) {
           navigate({ to: "/admin" });
         } else if (mode === "sign-up") {
           navigate({ to: "/dashboard", search: { tab: "account" } as any });
@@ -120,7 +127,7 @@ function SignupPageContent() {
           navigate({ to: "/dashboard" });
         }
       });
-  }, [user, loading, navigate, mode]);
+  }, [user, loading, navigate, mode, redirectTo]);
 
   // Debounced username availability check (sign-up only)
   useEffect(() => {

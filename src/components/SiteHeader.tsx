@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { Link, useNavigate, useLocation } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,10 @@ import { useI18n } from "@/lib/i18n";
 import { useActiveCustomHome } from "@/lib/custom-home-context";
 import { useSecurityLock } from "@/lib/security-lock";
 import { Languages, Menu, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getMyFacilityValue } from "@/lib/user-signup.functions";
+import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
 
 export function SiteHeader() {
   const { user, canAccessAdmin, isUser, isAdmin, isContributor } = useAuth();
@@ -14,10 +18,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const activeCustomHome = useActiveCustomHome();
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/" });
-  };
+  const location = useLocation();
   const isAdminUser = isAdmin || isContributor;
   const signOutLabel = isAdminUser ? t("nav.adminSignOut") : t("nav.signOut");
   const signInLabel = t("nav.signIn");
@@ -32,16 +33,51 @@ export function SiteHeader() {
     e.stopPropagation();
     toast.error("Please set up your security questions before leaving this page.");
   };
-  // Wrap all nav Links so they intercept clicks while locked. We render the Link
-  // with pointer-events disabled via class, plus a sibling overlay-free onClick
-  // capture via parent span so the toast still fires when users try to click.
   const lockProps = locked
     ? { onClickCapture: handleLockedNav, "aria-disabled": true as const, tabIndex: -1 }
     : {};
 
-  const homeLinkProps = activeCustomHome
-    ? ({ to: "/$customHome", params: { customHome: activeCustomHome } } as const)
-    : ({ to: "/" } as const);
+  // Detect facility slug from URL (e.g. /facility/adams_id)
+  const facilityRouteMatch = location.pathname.match(/^\/facility\/([^/]+)/);
+  const facilityRouteSlug = facilityRouteMatch ? facilityRouteMatch[1] : null;
+
+  // For logged-in regular users, get their facility from profile
+  const fetchFacilityValue = useServerFn(getMyFacilityValue);
+  const { data: facilityData } = useQuery({
+    queryKey: ["my-facility", user?.id],
+    enabled: !!user?.id && isUser && !facilityRouteSlug,
+    queryFn: () => fetchFacilityValue(),
+  });
+  const userFacilitySlug = isUser ? (facilityData?.facility ?? null) : null;
+
+  // Session-persisted facility slug (survives navigation away from the facility page)
+  const persistedFacilitySlug = useActiveFacilitySlug();
+
+  // Write to session storage whenever a real facility source is discovered
+  useEffect(() => {
+    const source = facilityRouteSlug || userFacilitySlug;
+    if (source) setActiveFacilitySlug(source);
+  }, [facilityRouteSlug, userFacilitySlug]);
+
+  // Priority: URL slug → user's facility → persisted (session) → custom home → default
+  // Admins only follow URL slug (not persisted), so they aren't globally stuck to a facility
+  const activeFacility = facilityRouteSlug || userFacilitySlug || (isAdminUser ? null : persistedFacilitySlug);
+
+  // Sign out navigates back to the facility slug if one is active, otherwise home
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    if (activeFacility) {
+      navigate({ to: "/facility/$slug", params: { slug: activeFacility } });
+    } else {
+      navigate({ to: "/" });
+    }
+  };
+
+  const homeLinkProps = activeFacility
+    ? ({ to: "/facility/$slug", params: { slug: activeFacility } } as const)
+    : activeCustomHome
+      ? ({ to: "/$customHome", params: { customHome: activeCustomHome } } as const)
+      : ({ to: "/" } as const);
 
   return (
     <header className="border-b border-border/60 bg-background/80 backdrop-blur sticky top-0 z-50">

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
@@ -103,7 +103,7 @@ function useColumnCount() {
   return cols;
 }
 
-function MasonryCategories({ categories, lang }: { categories: Category[]; lang: Language }) {
+function MasonryCategories({ categories, lang, facilityContext }: { categories: Category[]; lang: Language; facilityContext?: string }) {
   const cols = useColumnCount();
   const { isAdmin, user } = useAuth();
   const { t } = useI18n();
@@ -113,16 +113,30 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
     enabled: !!user?.id && !isAdmin,
     queryFn: () => fetchFacilityValue(),
   });
-  // undefined = admin (see all), null = no facility/unauthenticated, string = facility value
-  const userFacility: string | null | undefined = isAdmin
-    ? undefined
-    : (facilityData?.facility ?? null);
-  const { data: stats = {} } = useCategoryItemStats(categories.map((c) => c.id), userFacility);
-  const { data: progress } = useUserProgress(user?.id ?? null, categories.map((c) => c.id));
+  // On a facility slug page, facilityContext always wins — even for admins.
+  // Otherwise: undefined = admin (show all), null = no facility (hide restricted), string = specific facility.
+  const userFacility: string | null | undefined = facilityContext
+    ? facilityContext
+    : isAdmin
+      ? undefined
+      : (facilityData?.facility ?? null);
+  // Filter categories: show all with no facility assignments, plus those matching the active facility
+  const visibleCategories = useMemo(() => {
+    return categories.filter((c) => {
+      const f = c.facilities ?? [];
+      if (f.length === 0) return true;
+      if (userFacility === undefined) return true; // admin on non-facility page: show all
+      if (!userFacility) return false;             // no facility: hide restricted
+      return f.includes(userFacility);
+    });
+  }, [categories, userFacility]);
+
+  const { data: stats = {} } = useCategoryItemStats(visibleCategories.map((c) => c.id), userFacility);
+  const { data: progress } = useUserProgress(user?.id ?? null, visibleCategories.map((c) => c.id));
   const reads = progress?.reads ?? {};
   const readSet = progress?.readSet ?? new Set<string>();
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
-  categories.forEach((c, i) => buckets[i % cols].push({ c, i }));
+  visibleCategories.forEach((c, i) => buckets[i % cols].push({ c, i }));
   return (
     <div className="flex gap-9 items-start">
       {buckets.map((bucket, ci) => (
@@ -261,9 +275,11 @@ export const DEFAULT_CERT: CertHero = {
 export function HomePageView({
   categories,
   isLoading,
+  facilityContext,
 }: {
   categories: Category[];
   isLoading?: boolean;
+  facilityContext?: string;
 }) {
   const { t, lang } = useI18n();
 
@@ -332,7 +348,7 @@ export function HomePageView({
             </span>
           </div>
 
-          <MasonryCategories categories={categories} lang={lang} />
+          <MasonryCategories categories={categories} lang={lang} facilityContext={facilityContext} />
           {!isLoading && categories.length === 0 && (
             <p className="text-muted-foreground">{t("home.empty")}</p>
           )}

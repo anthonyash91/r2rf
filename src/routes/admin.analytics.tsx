@@ -55,13 +55,6 @@ const RANGE_OPTIONS: { key: RangeKey; label: string; shortLabel: string }[] = [
   { key: "all", label: "All time", shortLabel: "All time" },
 ];
 
-type EventRow = {
-  event_type: "category_view" | "content_click";
-  category_id: string | null;
-  content_id: string | null;
-  created_at: string;
-};
-
 type AggregatedRow = {
   category: Category;
   views: number;
@@ -122,39 +115,6 @@ function fmtDateShort(iso?: string | null) {
   return d.toLocaleDateString(undefined, { year: "2-digit", month: "2-digit", day: "2-digit" });
 }
 
-function aggregate(report: { categories: Category[]; items: ContentItem[]; events: EventRow[] }) {
-  const catViews = new Map<string, number>();
-  const catClicks = new Map<string, number>();
-  const itemClicks = new Map<string, number>();
-  for (const e of report.events) {
-    if (e.event_type === "category_view" && e.category_id) {
-      catViews.set(e.category_id, (catViews.get(e.category_id) ?? 0) + 1);
-    } else if (e.event_type === "content_click") {
-      if (e.content_id) itemClicks.set(e.content_id, (itemClicks.get(e.content_id) ?? 0) + 1);
-      if (e.category_id) catClicks.set(e.category_id, (catClicks.get(e.category_id) ?? 0) + 1);
-    }
-  }
-  const itemsByCategory = new Map<string, ContentItem[]>();
-  for (const it of report.items) {
-    const list = itemsByCategory.get(it.category_id) ?? [];
-    list.push(it);
-    itemsByCategory.set(it.category_id, list);
-  }
-  const rows: AggregatedRow[] = report.categories.map((cat) => {
-    const items = (itemsByCategory.get(cat.id) ?? [])
-      .map((it) => ({ item: it, clicks: itemClicks.get(it.id) ?? 0 }))
-      .sort((a, b) => b.clicks - a.clicks);
-    return {
-      category: cat,
-      views: catViews.get(cat.id) ?? 0,
-      clicks: catClicks.get(cat.id) ?? 0,
-      items,
-    };
-  });
-  const totalViews = report.events.filter((e) => e.event_type === "category_view").length;
-  const totalClicks = report.events.filter((e) => e.event_type === "content_click").length;
-  return { rows, totalViews, totalClicks };
-}
 
 function csvEscape(v: string | number) {
   const s = String(v);
@@ -398,7 +358,27 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
       }),
   });
 
-  const aggregated = useMemo(() => (data ? aggregate(data as any) : null), [data]);
+  // Build AggregatedRow[] from pre-aggregated counts returned by the server
+  const aggregated = useMemo(() => {
+    if (!data) return null;
+    const d = data as any;
+    const catViews: Record<string, number> = d.catViews ?? {};
+    const catClicks: Record<string, number> = d.catClicks ?? {};
+    const itemClicks: Record<string, number> = d.itemClicks ?? {};
+    const itemsByCategory = new Map<string, ContentItem[]>();
+    for (const it of (d.items ?? []) as ContentItem[]) {
+      const list = itemsByCategory.get(it.category_id) ?? [];
+      list.push(it);
+      itemsByCategory.set(it.category_id, list);
+    }
+    const rows: AggregatedRow[] = (d.categories ?? []).map((cat: Category) => {
+      const items = (itemsByCategory.get(cat.id) ?? [])
+        .map((it) => ({ item: it, clicks: itemClicks[it.id] ?? 0 }))
+        .sort((a, b) => b.clicks - a.clicks);
+      return { category: cat, views: catViews[cat.id] ?? 0, clicks: catClicks[cat.id] ?? 0, items };
+    });
+    return { rows, totalViews: d.totalViews ?? 0, totalClicks: d.totalClicks ?? 0 };
+  }, [data]);
 
   const exportLabel =
     scope.kind === "facility" ? `${scope.facilityLabel}-${range}` : `overall-${range}`;
