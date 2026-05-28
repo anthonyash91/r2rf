@@ -52,16 +52,28 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    const [facRes, profRes, cifRes, catFacRes] = await Promise.all([
+    const [facRes, profRes, cifRes, catFacRes, msgRes] = await Promise.all([
       supabaseAdmin.from("facilities").select("id, value, label, sort_order").order("label", { ascending: true }),
       supabaseAdmin.from("user_profiles").select("facility"),
       (supabaseAdmin as any).from("content_item_facilities").select("facility_value, content_items(id, title, category_id, categories(id, name))"),
       (supabaseAdmin as any).from("category_facilities").select("facility_value, category_id, categories(id, name, slug)"),
+      supabaseAdmin.from("site_settings").select("key, value").like("key", "facility_message_%"),
     ]);
     if (facRes.error) throw new Error(facRes.error.message);
     if (profRes.error) throw new Error(profRes.error.message);
     if (cifRes.error) console.warn("[listFacilitiesWithStats] content_item_facilities:", cifRes.error.message);
     if (catFacRes.error) console.warn("[listFacilitiesWithStats] category_facilities:", catFacRes.error.message);
+
+    // Build map of facility value → message text for facilities that have an active message
+    const facilityMessageMap = new Map<string, string>();
+    for (const row of msgRes.data ?? []) {
+      const val = (row as any).value as { enabled?: boolean; message?: string } | null;
+      const text = val?.message?.trim();
+      if (text) {
+        const facilityValue = ((row as any).key as string).replace("facility_message_", "");
+        facilityMessageMap.set(facilityValue, text);
+      }
+    }
 
     const userCounts = new Map<string, number>();
     for (const p of profRes.data ?? []) {
@@ -103,6 +115,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
         userCount: userCounts.get(f.value as string) ?? 0,
         contentItems: facilityContentMap.get(f.value as string) ?? [],
         customCategories: facilityCategoryMap.get(f.value as string) ?? [],
+        facilityMessage: facilityMessageMap.get(f.value as string) ?? null,
       })),
     };
   });

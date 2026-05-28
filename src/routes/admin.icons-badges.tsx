@@ -59,7 +59,7 @@ const VARIANT_LABELS: Record<BadgeVariantKey, string> = {
   count: "Count",
   draft: "Draft",
   custom: "Custom",
-  "custom-content": "Custom Content",
+  "custom-content": "Custom Item",
   category: "Category",
   translation: "Translation",
   admin: "Admin",
@@ -582,28 +582,30 @@ function AdminIconsBadgesPage() {
           The {PALETTES.length} curated color combinations. Regenerate cycles through these.
         </p>
         <ul className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-          {PALETTES.map((p, i) => {
-            const ps = paletteStyle(i);
-            const count = usageCount.get(i) ?? 0;
-            const used = count > 0;
-            return (
-              <li
-                key={p.label}
-                className={`rounded-md border px-2 py-1.5 text-xs flex items-center gap-2 ${used ? "" : "opacity-70"}`}
-                style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
-                title={used ? `Used ${count}×` : "Unused"}
-              >
-                <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: ps.color }} />
-                <span className="flex-1 truncate">{p.label}</span>
-                {used && (
-                  <span className="inline-flex items-center gap-0.5 shrink-0">
-                    <Check className="h-3.5 w-3.5" aria-label="Used" />
-                    {count > 1 && <span className="text-[10px] font-medium">×{count}</span>}
-                  </span>
-                )}
-              </li>
-            );
-          })}
+          {[...PALETTES.map((p, i) => ({ ...p, i }))]
+            .sort((a, b) => a.label.localeCompare(b.label))
+            .map(({ label, i }) => {
+              const ps = paletteStyle(i);
+              const count = usageCount.get(i) ?? 0;
+              const used = count > 0;
+              return (
+                <li
+                  key={label}
+                  className={`rounded-md border px-2 py-1.5 text-xs flex items-center gap-2 ${used ? "" : "opacity-70"}`}
+                  style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
+                  title={used ? `Used ${count}×` : "Unused"}
+                >
+                  <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: ps.color }} />
+                  <span className="flex-1 truncate">{label}</span>
+                  {used && (
+                    <span className="inline-flex items-center gap-0.5 shrink-0">
+                      <Check className="h-3.5 w-3.5" aria-label="Used" />
+                      {count > 1 && <span className="text-[10px] font-medium">×{count}</span>}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
         </ul>
       </SectionCard>
     </div>

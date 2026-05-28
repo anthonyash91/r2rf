@@ -4,8 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Megaphone, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { getMyFacilityValue } from "@/lib/user-signup.functions";
+import { useBadgeStyles } from "@/hooks/use-badge-styles";
+import { paletteStyle } from "@/lib/badge-styles";
 
-export type SiteMessageKind = "home" | "user";
+export type SiteMessageKind = "home" | "facility";
 
 type SiteMessage = {
   enabled: boolean;
@@ -14,29 +18,56 @@ type SiteMessage = {
   updatedAt: string;
 };
 
-const KEY_FOR_KIND: Record<SiteMessageKind, string> = {
+const KEY_FOR_KIND: Record<Exclude<SiteMessageKind, "facility">, string> = {
   home: "home_message",
-  user: "user_message",
 };
 
-function sessionStorageKey(kind: SiteMessageKind) {
-  return `site_message_dismissed:${kind}`;
+function sessionStorageKey(kind: SiteMessageKind, facilityValue?: string) {
+  return `site_message_dismissed:${kind}${facilityValue ? `:${facilityValue}` : ""}`;
 }
 
-export function SiteMessageBanner({ kind }: { kind: SiteMessageKind }) {
-  const key = KEY_FOR_KIND[kind];
+function messageKindForDismissal(kind: SiteMessageKind, facilityValue?: string) {
+  return kind === "facility" && facilityValue ? `facility_${facilityValue}` : kind;
+}
+
+export function SiteMessageBanner({
+  kind,
+  facilityValue: facilityValueProp,
+}: {
+  kind: SiteMessageKind;
+  /** For kind="facility": the facility slug. Omit to auto-detect from the logged-in user's profile. */
+  facilityValue?: string;
+}) {
   const { lang } = useI18n();
-  const { session } = useAuth();
+  const { session, isAdmin, isContributor } = useAuth();
   const userId = session?.user?.id ?? null;
   const qc = useQueryClient();
 
+  // For facility kind without a prop, auto-detect the user's facility
+  const fetchFacility = useServerFn(getMyFacilityValue);
+  const { data: facilityData } = useQuery({
+    queryKey: ["my-facility", userId],
+    enabled: kind === "facility" && !facilityValueProp && !!userId && !isAdmin && !isContributor,
+    queryFn: () => fetchFacility(),
+  });
+  const facilityValue = kind === "facility"
+    ? (facilityValueProp ?? facilityData?.facility ?? null)
+    : null;
+
+  // Derive the site_settings key
+  const settingsKey = kind === "facility"
+    ? (facilityValue ? `facility_message_${facilityValue}` : null)
+    : KEY_FOR_KIND[kind as Exclude<SiteMessageKind, "facility">];
+
   const { data } = useQuery({
-    queryKey: ["site_settings", key],
+    queryKey: ["site_settings", settingsKey],
+    enabled: !!settingsKey,
     queryFn: async (): Promise<SiteMessage | null> => {
+      if (!settingsKey) return null;
       const { data, error } = await supabase
         .from("site_settings")
         .select("value, updated_at")
-        .eq("key", key)
+        .eq("key", settingsKey)
         .maybeSingle();
       if (error) throw error;
       const v = (data?.value ?? null) as Partial<SiteMessage> | null;
@@ -50,17 +81,17 @@ export function SiteMessageBanner({ kind }: { kind: SiteMessageKind }) {
     },
   });
 
-  // Logged-in: dismissal lives in DB. Anonymous: sessionStorage only.
-  const dismissalQueryKey = ["site_message_dismissal", kind, userId] as const;
+  const dismissalKind = messageKindForDismissal(kind, facilityValue ?? undefined);
+  const dismissalQueryKey = ["site_message_dismissal", dismissalKind, userId] as const;
   const { data: dbDismissedAt } = useQuery({
     queryKey: dismissalQueryKey,
-    enabled: !!userId,
+    enabled: !!userId && !!settingsKey,
     queryFn: async (): Promise<string | null> => {
       const { data, error } = await supabase
         .from("user_dismissed_messages")
         .select("dismissed_version")
         .eq("user_id", userId!)
-        .eq("message_kind", kind)
+        .eq("message_kind", dismissalKind)
         .maybeSingle();
       if (error) throw error;
       return data?.dismissed_version ? String(data.dismissed_version) : null;
@@ -70,10 +101,10 @@ export function SiteMessageBanner({ kind }: { kind: SiteMessageKind }) {
   const [anonDismissedAt, setAnonDismissedAt] = useState<string | null>(null);
   useEffect(() => {
     if (typeof window === "undefined" || userId) return;
-    setAnonDismissedAt(window.sessionStorage.getItem(sessionStorageKey(kind)));
-  }, [kind, userId, data?.updatedAt]);
+    setAnonDismissedAt(window.sessionStorage.getItem(sessionStorageKey(kind, facilityValue ?? undefined)));
+  }, [kind, facilityValue, userId, data?.updatedAt]);
 
-  if (!data || !data.message.trim()) return null;
+  if (!settingsKey || !data || !data.message.trim()) return null;
 
   const dismissedAt = userId ? dbDismissedAt ?? null : anonDismissedAt;
   if (
@@ -91,41 +122,49 @@ export function SiteMessageBanner({ kind }: { kind: SiteMessageKind }) {
 
   const onDismiss = async () => {
     if (userId) {
-      // Optimistic hide
       qc.setQueryData(dismissalQueryKey, data.updatedAt);
       const { error } = await supabase
         .from("user_dismissed_messages")
         .upsert(
-          {
-            user_id: userId,
-            message_kind: kind,
-            dismissed_version: data.updatedAt,
-          },
+          { user_id: userId, message_kind: dismissalKind, dismissed_version: data.updatedAt },
           { onConflict: "user_id,message_kind" },
         );
-      if (error) {
-        // Revert on failure
-        qc.invalidateQueries({ queryKey: dismissalQueryKey });
-      }
+      if (error) qc.invalidateQueries({ queryKey: dismissalQueryKey });
     } else if (typeof window !== "undefined") {
-      window.sessionStorage.setItem(sessionStorageKey(kind), data.updatedAt);
+      window.sessionStorage.setItem(sessionStorageKey(kind, facilityValue ?? undefined), data.updatedAt);
       setAnonDismissedAt(data.updatedAt);
     }
   };
 
+  // Facility messages use whatever color the facility badge is currently set to
+  const badgeStyles = useBadgeStyles();
+  const facilityPs = paletteStyle(badgeStyles.variants["facility"] ?? 11);
+  const isFacilityBanner = kind === "facility";
+  const bannerStyle = isFacilityBanner
+    ? { borderColor: facilityPs.border, backgroundColor: facilityPs.bg }
+    : undefined;
+  const iconStyle = isFacilityBanner ? { color: facilityPs.color } : undefined;
+  const iconClassName = isFacilityBanner
+    ? "h-4 w-4 shrink-0"
+    : "h-4 w-4 shrink-0 text-[var(--color-accent)]";
+  const dismissClassName = isFacilityBanner
+    ? "shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
+    : "shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-[var(--color-accent)]/15 hover:text-foreground transition-colors";
+
   return (
     <div
       role="status"
-      className="w-full border-t border-b border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-foreground"
+      className="w-full border-t border-b text-foreground"
+      style={bannerStyle ?? { borderColor: "color-mix(in oklab, var(--color-accent) 30%, transparent)", backgroundColor: "color-mix(in oklab, var(--color-accent) 10%, transparent)" }}
     >
       <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-start gap-3 text-sm text-left">
-        <Megaphone className="h-4 w-4 shrink-0 text-[var(--color-accent)]" />
+        <Megaphone className={iconClassName} style={iconStyle} />
         <p className="whitespace-pre-wrap leading-relaxed flex-1">{text}</p>
         <button
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss message"
-          className="shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-[var(--color-accent)]/15 hover:text-foreground transition-colors"
+          className={dismissClassName}
         >
           <X className="h-4 w-4" />
         </button>

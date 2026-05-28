@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Building2, Plus, Pencil, Trash2, Users, Blocks, Link2, LayoutGrid } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Blocks, Link2, LayoutGrid, MessageSquare } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -305,6 +305,26 @@ function AdminFacilitiesPage() {
                                       </Link>
                                     </li>
                                   ))}
+                                </ul>
+                              </div>
+                            )}
+                            {f.facilityMessage && (
+                              <div className="pt-1 space-y-1">
+                                <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                                  <MessageSquare className="h-3.5 w-3.5" />
+                                  Facility Message
+                                </p>
+                                <ul className="space-y-0.5">
+                                  <li>
+                                    <Link
+                                      to="/admin/messages"
+                                      className="text-xs text-muted-foreground hover:text-foreground hover:underline truncate block max-w-xs"
+                                    >
+                                      {f.facilityMessage.length > 80
+                                        ? `${f.facilityMessage.slice(0, 80)}…`
+                                        : f.facilityMessage}
+                                    </Link>
+                                  </li>
                                 </ul>
                               </div>
                             )}

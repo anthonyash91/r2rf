@@ -69,6 +69,7 @@ function FacilityPage() {
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <SiteMessageBanner kind="home" />
+      <SiteMessageBanner kind="facility" facilityValue={facilityValue} />
       <HomePageView categories={categories} isLoading={isLoading} facilityContext={facilityValue} />
       <SiteFooter />
     </div>
