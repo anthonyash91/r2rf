@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -140,6 +142,15 @@ function waitForNextPaint() {
 }
 
 function AdminReportsPage() {
+  const { isFacilityUser, user } = useAuth();
+  const fetchMyFacility = useServerFn(getMyFacilityValue);
+  const { data: myFacilityData } = useQuery({
+    queryKey: ["my-facility", user?.id],
+    enabled: isFacilityUser && !!user?.id,
+    queryFn: () => fetchMyFacility(),
+  });
+  const myFacilityValue = isFacilityUser ? (myFacilityData?.facility ?? null) : null;
+
   const [tab, setTab] = useState<"overall" | "facility" | "user">("overall");
   const [facilityKey, setFacilityKey] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -197,7 +208,7 @@ function AdminReportsPage() {
             <TabsTrigger value="overall" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
               <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Overall
             </TabsTrigger>
-            <Popover open={pickerOpen} onOpenChange={(o) => { if (o) setUserPickerOpen(false); setPickerOpen(o); }}>
+            {!isFacilityUser && <Popover open={pickerOpen} onOpenChange={(o) => { if (o) setUserPickerOpen(false); setPickerOpen(o); }}>
               <PopoverAnchor asChild>
                 <TabsTrigger
                   value="facility"
@@ -246,7 +257,7 @@ function AdminReportsPage() {
                   placeholder={facilitiesQuery.isLoading || facilities.length === 0 ? "Loading…" : "Select a facility"}
                 />
               </PopoverContent>
-            </Popover>
+            </Popover>}
             <Popover open={userPickerOpen} onOpenChange={(o) => { if (o) setPickerOpen(false); setUserPickerOpen(o); }}>
               <PopoverAnchor asChild>
                 <TabsTrigger
@@ -254,7 +265,14 @@ function AdminReportsPage() {
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    openUserPicker();
+                    if (isFacilityUser && myFacilityValue) {
+                      setSelectedUserFacility({ value: myFacilityValue, label: myFacilityValue });
+                      setUserKey((k) => k + 1);
+                      setActiveUser(null);
+                      setTab("user");
+                    } else {
+                      openUserPicker();
+                    }
                   }}
                   onClick={(e) => {
                     e.preventDefault();
@@ -312,7 +330,11 @@ function AdminReportsPage() {
 
 
         <TabsContent value="overall" className="mt-8">
-          <UsageReportView scope={{ kind: "overall" }} />
+          {isFacilityUser && myFacilityValue ? (
+            <UsageReportView scope={{ kind: "facility", facilityValue: myFacilityValue, facilityLabel: myFacilityValue }} />
+          ) : (
+            <UsageReportView scope={{ kind: "overall" }} />
+          )}
         </TabsContent>
         <TabsContent value="facility" className="mt-8">
           {selectedFacility ? (
@@ -323,14 +345,16 @@ function AdminReportsPage() {
           ) : null}
         </TabsContent>
         <TabsContent value="user" className="mt-8">
-            {selectedUserFacility ? (
-              <UsersReportTab
-                key={`${userKey}-${selectedUserFacility.value}`}
-                preselected={selectedUserFacility}
-                activeUser={activeUser}
-                setActiveUser={setActiveUser}
-              />
-            ) : null}
+          {selectedUserFacility ? (
+            <UsersReportTab
+              key={`${userKey}-${selectedUserFacility.value}`}
+              preselected={isFacilityUser && myFacilityValue
+                ? { value: myFacilityValue, label: myFacilityValue }
+                : selectedUserFacility}
+              activeUser={activeUser}
+              setActiveUser={setActiveUser}
+            />
+          ) : null}
         </TabsContent>
       </Tabs>
     </div>

@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/hooks/use-auth";
+import { getMyFacilityValue } from "@/lib/user-signup.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { ScrollText, UserPlus, UserMinus, KeyRound, ShieldCheck, ShieldOff, Trash2, HelpCircle, Filter } from "lucide-react";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { PageHeader } from "@/components/PageHeader";
@@ -78,6 +81,28 @@ function describeDetails(action: ActionType, details: Record<string, string | nu
 }
 
 function AdminAuditLogPage() {
+  const { isFacilityUser, user } = useAuth();
+  const fetchMyFacility = useServerFn(getMyFacilityValue);
+  const { data: myFacilityData } = useQuery({
+    queryKey: ["my-facility", user?.id],
+    enabled: isFacilityUser && !!user?.id,
+    queryFn: () => fetchMyFacility(),
+  });
+  const myFacilityValue = isFacilityUser ? (myFacilityData?.facility ?? null) : null;
+
+  // For facilityUser: fetch user IDs at their facility to filter the log
+  const { data: facilityUserIds } = useQuery({
+    queryKey: ["facility-user-ids-for-audit", myFacilityValue],
+    enabled: isFacilityUser && !!myFacilityValue,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_profiles")
+        .select("user_id")
+        .eq("facility", myFacilityValue!);
+      return new Set((data ?? []).map((r: any) => r.user_id as string));
+    },
+  });
+
   const fetchAuditLog = useServerFn(listAuditLog);
   const [action, setAction] = useState<ActionType | "">("");
   const [search, setSearch] = useState("");
@@ -98,7 +123,14 @@ function AdminAuditLogPage() {
       }),
   });
 
-  const all = query.data?.entries ?? [];
+  const allEntries = query.data?.entries ?? [];
+  // facilityUser: only show entries that involve a user at their facility
+  const all = isFacilityUser && facilityUserIds
+    ? allEntries.filter((e) =>
+        (e.actor_user_id && facilityUserIds.has(e.actor_user_id)) ||
+        (e.target_user_id && facilityUserIds.has(e.target_user_id))
+      )
+    : allEntries;
   const s = search.trim().toLowerCase();
   const filtered = s
     ? all.filter((e) => {
@@ -125,7 +157,7 @@ function AdminAuditLogPage() {
           icon={ScrollText}
           title="Audit Log"
           count={!query.isLoading ? `${filtered.length}${s || action ? ` of ${all.length}` : ""}` : undefined}
-          description="Sensitive admin actions, written server-side. Read-only."
+          description={isFacilityUser ? "Actions affecting users at your facility. Read-only." : "Sensitive admin actions, written server-side. Read-only."}
         />
       </div>
 

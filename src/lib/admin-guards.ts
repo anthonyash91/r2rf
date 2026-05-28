@@ -16,7 +16,7 @@ export async function requireAdminBeforeLoad({ location }: { location: { href: s
     .from("user_roles")
     .select("role")
     .eq("user_id", session.user.id)
-    .in("role", ["admin", "contributor"])
+    .in("role", ["admin", "contributor", "facilityUser"])
     .maybeSingle();
   if (!data) {
     throw redirect({ to: "/" });
