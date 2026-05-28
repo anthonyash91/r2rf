@@ -298,7 +298,7 @@ function CategoryEditor({
         <div className="grid sm:grid-cols-3 gap-4 items-start">
           <LabeledInput label="Name" value={name} onChange={setName} />
           <LabeledInput label="Slug" value={slug} onChange={(v) => setSlug(slugify(v))} />
-          <div className="relative">
+          <div className="relative" id="facilities-section">
             <span className="inline-flex items-center gap-1.5 text-sm font-medium">
               Facilities
               <TooltipProvider delayDuration={150}>
@@ -654,7 +654,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       </div>
 
       {editing && (
-        <div ref={editorRef}>
+        <div ref={editorRef} className="scroll-mt-24">
           <ItemEditor
             item={editing === "new" ? null : editing}
             categoryName={categoryName}

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Building2, Plus, Pencil, Trash2, Users, Home, Blocks, Link2 } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Blocks, Link2, LayoutGrid } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -263,22 +263,25 @@ function AdminFacilitiesPage() {
                                 /facility/{f.value}
                               </Link>
                             </div>
-                            {f.customHomePage && (
+                            {(f.customCategories?.length ?? 0) > 0 && (
                               <div className="pt-1 space-y-1">
                                 <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
-                                  <Home className="h-3.5 w-3.5" />
-                                  Custom Home Page
+                                  <LayoutGrid className="h-3.5 w-3.5" />
+                                  Custom Categories ({f.customCategories.length})
                                 </p>
                                 <ul className="space-y-0.5">
-                                  <li>
-                                    <Link
-                                      to="/$customHome"
-                                      params={{ customHome: f.customHomePage.slug }}
-                                      className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-                                    >
-                                      /{f.customHomePage.slug}
-                                    </Link>
-                                  </li>
+                                  {f.customCategories.map((cat) => (
+                                    <li key={cat.id}>
+                                      <Link
+                                        to="/admin/category/$id"
+                                        params={{ id: cat.id }}
+                                        className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                                      >
+                                        {cat.name}
+                                        <span className="ml-1 text-muted-foreground/60">— /{cat.slug}</span>
+                                      </Link>
+                                    </li>
+                                  ))}
                                 </ul>
                               </div>
                             )}
@@ -294,6 +297,7 @@ function AdminFacilitiesPage() {
                                       <Link
                                         to="/admin/category/$id"
                                         params={{ id: item.categoryId }}
+                                        search={{ edit: item.id }}
                                         className="text-xs text-muted-foreground hover:text-foreground hover:underline"
                                       >
                                         {item.title}

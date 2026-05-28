@@ -52,20 +52,16 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    const [facRes, profRes, pagesRes, linksRes, catsRes, cifRes] = await Promise.all([
+    const [facRes, profRes, cifRes, catFacRes] = await Promise.all([
       supabaseAdmin.from("facilities").select("id, value, label, sort_order").order("label", { ascending: true }),
       supabaseAdmin.from("user_profiles").select("facility"),
-      supabaseAdmin.from("custom_home_pages").select("id, name, slug"),
-      supabaseAdmin.from("custom_home_page_categories").select("custom_home_page_id, category_id"),
-      supabaseAdmin.from("categories").select("id, name, slug, sort_order, home_page_mode").eq("home_page_mode", "custom").order("sort_order", { ascending: true }),
       (supabaseAdmin as any).from("content_item_facilities").select("facility_value, content_items(id, title, category_id, categories(id, name))"),
+      (supabaseAdmin as any).from("category_facilities").select("facility_value, category_id, categories(id, name, slug)"),
     ]);
     if (facRes.error) throw new Error(facRes.error.message);
     if (profRes.error) throw new Error(profRes.error.message);
-    if (pagesRes.error) throw new Error(pagesRes.error.message);
-    if (linksRes.error) throw new Error(linksRes.error.message);
-    if (catsRes.error) throw new Error(catsRes.error.message);
     if (cifRes.error) console.warn("[listFacilitiesWithStats] content_item_facilities:", cifRes.error.message);
+    if (catFacRes.error) console.warn("[listFacilitiesWithStats] category_facilities:", catFacRes.error.message);
 
     const userCounts = new Map<string, number>();
     for (const p of profRes.data ?? []) {
@@ -73,22 +69,14 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
       userCounts.set(k, (userCounts.get(k) ?? 0) + 1);
     }
 
-    const catsById = new Map<string, { id: string; name: string; slug: string }>();
-    for (const c of catsRes.data ?? []) {
-      catsById.set((c as any).id, { id: (c as any).id, name: (c as any).name, slug: (c as any).slug });
-    }
-    const pageCats = new Map<string, { id: string; name: string; slug: string }[]>();
-    for (const l of linksRes.data ?? []) {
-      const pid = (l as any).custom_home_page_id as string;
-      const cat = catsById.get((l as any).category_id);
+    const facilityCategoryMap = new Map<string, Array<{ id: string; name: string; slug: string }>>();
+    for (const row of catFacRes.data ?? []) {
+      const cat = (row as any).categories;
       if (!cat) continue;
-      const arr = pageCats.get(pid) ?? [];
-      arr.push(cat);
-      pageCats.set(pid, arr);
-    }
-    const pageByName = new Map<string, { id: string; slug: string; name: string }>();
-    for (const pg of pagesRes.data ?? []) {
-      pageByName.set((pg as any).name, { id: (pg as any).id, slug: (pg as any).slug, name: (pg as any).name });
+      const fv = (row as any).facility_value as string;
+      const arr = facilityCategoryMap.get(fv) ?? [];
+      arr.push({ id: cat.id as string, name: cat.name as string, slug: cat.slug as string });
+      facilityCategoryMap.set(fv, arr);
     }
 
     const facilityContentMap = new Map<string, Array<{ id: string; title: string; categoryId: string; categoryName: string }>>();
@@ -107,24 +95,15 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
     }
 
     return {
-      facilities: (facRes.data ?? []).map((f: any) => {
-        const page = pageByName.get(f.label) ?? null;
-        return {
-          id: f.id as string,
-          value: f.value as string,
-          label: f.label as string,
-          sort_order: f.sort_order as number,
-          userCount: userCounts.get(f.value as string) ?? 0,
-          customHomePage: page
-            ? {
-                id: page.id,
-                slug: page.slug,
-                categories: pageCats.get(page.id) ?? [],
-              }
-            : null,
-          contentItems: facilityContentMap.get(f.value as string) ?? [],
-        };
-      }),
+      facilities: (facRes.data ?? []).map((f: any) => ({
+        id: f.id as string,
+        value: f.value as string,
+        label: f.label as string,
+        sort_order: f.sort_order as number,
+        userCount: userCounts.get(f.value as string) ?? 0,
+        contentItems: facilityContentMap.get(f.value as string) ?? [],
+        customCategories: facilityCategoryMap.get(f.value as string) ?? [],
+      })),
     };
   });
 

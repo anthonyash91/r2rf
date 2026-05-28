@@ -6,7 +6,6 @@ import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { HomePageView } from "@/components/HomePageView";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
-import { setActiveCustomHome } from "@/lib/custom-home-context";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,11 +20,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.user) setActiveCustomHome(null);
-    });
-  }, []);
 
 
 
