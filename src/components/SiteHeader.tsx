@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
-import { useActiveCustomHome } from "@/lib/custom-home-context";
 import { useSecurityLock } from "@/lib/security-lock";
 import { Languages, Menu, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +16,6 @@ export function SiteHeader() {
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const activeCustomHome = useActiveCustomHome();
   const location = useLocation();
   const isAdminUser = isAdmin || isContributor;
   const signOutLabel = isAdminUser ? t("nav.adminSignOut") : t("nav.signOut");
@@ -59,7 +57,7 @@ export function SiteHeader() {
     if (source) setActiveFacilitySlug(source);
   }, [facilityRouteSlug, userFacilitySlug]);
 
-  // Priority: URL slug → user's facility → persisted (session) → custom home → default
+  // Priority: URL slug → user's facility → persisted (session) → default
   // Admins only follow URL slug (not persisted), so they aren't globally stuck to a facility
   const activeFacility = facilityRouteSlug || userFacilitySlug || (isAdminUser ? null : persistedFacilitySlug);
 
@@ -75,9 +73,7 @@ export function SiteHeader() {
 
   const homeLinkProps = activeFacility
     ? ({ to: "/facility/$slug", params: { slug: activeFacility } } as const)
-    : activeCustomHome
-      ? ({ to: "/$customHome", params: { customHome: activeCustomHome } } as const)
-      : ({ to: "/" } as const);
+    : ({ to: "/" } as const);
 
   return (
     <header className="border-b border-border/60 bg-background/80 backdrop-blur sticky top-0 z-50">

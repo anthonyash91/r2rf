@@ -14,7 +14,6 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as CustomHomeRouteImport } from './routes/$customHome'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as FacilitySlugRouteImport } from './routes/facility.$slug'
@@ -28,14 +27,11 @@ import { Route as AdminIconsBadgesRouteImport } from './routes/admin.icons-badge
 import { Route as AdminHomeRouteImport } from './routes/admin.home'
 import { Route as AdminFacilitiesRouteImport } from './routes/admin.facilities'
 import { Route as AdminErrorsRouteImport } from './routes/admin.errors'
-import { Route as AdminCustomHomePagesRouteImport } from './routes/admin.custom-home-pages'
 import { Route as AdminCertificateRouteImport } from './routes/admin.certificate'
 import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
-import { Route as AdminCustomHomePagesIndexRouteImport } from './routes/admin.custom-home-pages.index'
 import { Route as ApiPublicSitePasskeyRouteImport } from './routes/api/public/site-passkey'
 import { Route as ApiPublicLogErrorRouteImport } from './routes/api/public/log-error'
-import { Route as AdminCustomHomePagesIdRouteImport } from './routes/admin.custom-home-pages.$id'
 import { Route as AdminCategoryIdRouteImport } from './routes/admin.category.$id'
 
 const SpanishRoute = SpanishRouteImport.update({
@@ -61,11 +57,6 @@ const DashboardRoute = DashboardRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CustomHomeRoute = CustomHomeRouteImport.update({
-  id: '/$customHome',
-  path: '/$customHome',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -133,11 +124,6 @@ const AdminErrorsRoute = AdminErrorsRouteImport.update({
   path: '/errors',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminCustomHomePagesRoute = AdminCustomHomePagesRouteImport.update({
-  id: '/custom-home-pages',
-  path: '/custom-home-pages',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminCertificateRoute = AdminCertificateRouteImport.update({
   id: '/certificate',
   path: '/certificate',
@@ -153,12 +139,6 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminCustomHomePagesIndexRoute =
-  AdminCustomHomePagesIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AdminCustomHomePagesRoute,
-  } as any)
 const ApiPublicSitePasskeyRoute = ApiPublicSitePasskeyRouteImport.update({
   id: '/api/public/site-passkey',
   path: '/api/public/site-passkey',
@@ -169,11 +149,6 @@ const ApiPublicLogErrorRoute = ApiPublicLogErrorRouteImport.update({
   path: '/api/public/log-error',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminCustomHomePagesIdRoute = AdminCustomHomePagesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AdminCustomHomePagesRoute,
-} as any)
 const AdminCategoryIdRoute = AdminCategoryIdRouteImport.update({
   id: '/category/$id',
   path: '/category/$id',
@@ -182,7 +157,6 @@ const AdminCategoryIdRoute = AdminCategoryIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/privacy': typeof PrivacyRoute
@@ -191,7 +165,6 @@ export interface FileRoutesByFullPath {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/certificate': typeof AdminCertificateRoute
-  '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
   '/admin/errors': typeof AdminErrorsRoute
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
@@ -205,14 +178,11 @@ export interface FileRoutesByFullPath {
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
-  '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
   '/api/public/log-error': typeof ApiPublicLogErrorRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
-  '/admin/custom-home-pages/': typeof AdminCustomHomePagesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/$customHome': typeof CustomHomeRoute
   '/dashboard': typeof DashboardRoute
   '/privacy': typeof PrivacyRoute
   '/signup': typeof SignupRoute
@@ -233,15 +203,12 @@ export interface FileRoutesByTo {
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
-  '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
   '/api/public/log-error': typeof ApiPublicLogErrorRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
-  '/admin/custom-home-pages': typeof AdminCustomHomePagesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/$customHome': typeof CustomHomeRoute
   '/admin': typeof AdminRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/privacy': typeof PrivacyRoute
@@ -250,7 +217,6 @@ export interface FileRoutesById {
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/certificate': typeof AdminCertificateRoute
-  '/admin/custom-home-pages': typeof AdminCustomHomePagesRouteWithChildren
   '/admin/errors': typeof AdminErrorsRoute
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
@@ -264,16 +230,13 @@ export interface FileRoutesById {
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
-  '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
   '/api/public/log-error': typeof ApiPublicLogErrorRoute
   '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
-  '/admin/custom-home-pages/': typeof AdminCustomHomePagesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/$customHome'
     | '/admin'
     | '/dashboard'
     | '/privacy'
@@ -282,7 +245,6 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/audit-log'
     | '/admin/certificate'
-    | '/admin/custom-home-pages'
     | '/admin/errors'
     | '/admin/facilities'
     | '/admin/home'
@@ -296,14 +258,11 @@ export interface FileRouteTypes {
     | '/facility/$slug'
     | '/admin/'
     | '/admin/category/$id'
-    | '/admin/custom-home-pages/$id'
     | '/api/public/log-error'
     | '/api/public/site-passkey'
-    | '/admin/custom-home-pages/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/$customHome'
     | '/dashboard'
     | '/privacy'
     | '/signup'
@@ -324,14 +283,11 @@ export interface FileRouteTypes {
     | '/facility/$slug'
     | '/admin'
     | '/admin/category/$id'
-    | '/admin/custom-home-pages/$id'
     | '/api/public/log-error'
     | '/api/public/site-passkey'
-    | '/admin/custom-home-pages'
   id:
     | '__root__'
     | '/'
-    | '/$customHome'
     | '/admin'
     | '/dashboard'
     | '/privacy'
@@ -340,7 +296,6 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/audit-log'
     | '/admin/certificate'
-    | '/admin/custom-home-pages'
     | '/admin/errors'
     | '/admin/facilities'
     | '/admin/home'
@@ -354,15 +309,12 @@ export interface FileRouteTypes {
     | '/facility/$slug'
     | '/admin/'
     | '/admin/category/$id'
-    | '/admin/custom-home-pages/$id'
     | '/api/public/log-error'
     | '/api/public/site-passkey'
-    | '/admin/custom-home-pages/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CustomHomeRoute: typeof CustomHomeRoute
   AdminRoute: typeof AdminRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -409,13 +361,6 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/$customHome': {
-      id: '/$customHome'
-      path: '/$customHome'
-      fullPath: '/$customHome'
-      preLoaderRoute: typeof CustomHomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -509,13 +454,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminErrorsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/custom-home-pages': {
-      id: '/admin/custom-home-pages'
-      path: '/custom-home-pages'
-      fullPath: '/admin/custom-home-pages'
-      preLoaderRoute: typeof AdminCustomHomePagesRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/certificate': {
       id: '/admin/certificate'
       path: '/certificate'
@@ -537,13 +475,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/custom-home-pages/': {
-      id: '/admin/custom-home-pages/'
-      path: '/'
-      fullPath: '/admin/custom-home-pages/'
-      preLoaderRoute: typeof AdminCustomHomePagesIndexRouteImport
-      parentRoute: typeof AdminCustomHomePagesRoute
-    }
     '/api/public/site-passkey': {
       id: '/api/public/site-passkey'
       path: '/api/public/site-passkey'
@@ -558,13 +489,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLogErrorRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/custom-home-pages/$id': {
-      id: '/admin/custom-home-pages/$id'
-      path: '/$id'
-      fullPath: '/admin/custom-home-pages/$id'
-      preLoaderRoute: typeof AdminCustomHomePagesIdRouteImport
-      parentRoute: typeof AdminCustomHomePagesRoute
-    }
     '/admin/category/$id': {
       id: '/admin/category/$id'
       path: '/category/$id'
@@ -575,24 +499,10 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AdminCustomHomePagesRouteChildren {
-  AdminCustomHomePagesIdRoute: typeof AdminCustomHomePagesIdRoute
-  AdminCustomHomePagesIndexRoute: typeof AdminCustomHomePagesIndexRoute
-}
-
-const AdminCustomHomePagesRouteChildren: AdminCustomHomePagesRouteChildren = {
-  AdminCustomHomePagesIdRoute: AdminCustomHomePagesIdRoute,
-  AdminCustomHomePagesIndexRoute: AdminCustomHomePagesIndexRoute,
-}
-
-const AdminCustomHomePagesRouteWithChildren =
-  AdminCustomHomePagesRoute._addFileChildren(AdminCustomHomePagesRouteChildren)
-
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminAuditLogRoute: typeof AdminAuditLogRoute
   AdminCertificateRoute: typeof AdminCertificateRoute
-  AdminCustomHomePagesRoute: typeof AdminCustomHomePagesRouteWithChildren
   AdminErrorsRoute: typeof AdminErrorsRoute
   AdminFacilitiesRoute: typeof AdminFacilitiesRoute
   AdminHomeRoute: typeof AdminHomeRoute
@@ -610,7 +520,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminAuditLogRoute: AdminAuditLogRoute,
   AdminCertificateRoute: AdminCertificateRoute,
-  AdminCustomHomePagesRoute: AdminCustomHomePagesRouteWithChildren,
   AdminErrorsRoute: AdminErrorsRoute,
   AdminFacilitiesRoute: AdminFacilitiesRoute,
   AdminHomeRoute: AdminHomeRoute,
@@ -628,7 +537,6 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CustomHomeRoute: CustomHomeRoute,
   AdminRoute: AdminRouteWithChildren,
   DashboardRoute: DashboardRoute,
   PrivacyRoute: PrivacyRoute,

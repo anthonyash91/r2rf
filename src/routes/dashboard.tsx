@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
 import { useAuth } from "@/hooks/use-auth";
-import { getMyProfile, getMyFacilityCustomHome } from "@/lib/user-signup.functions";
+import { getMyProfile } from "@/lib/user-signup.functions";
 import { facilityLabel } from "@/lib/user-signup";
 import { listFacilities } from "@/lib/facilities.functions";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
@@ -122,8 +122,6 @@ function DashboardPage() {
   const fetchQuestions = useServerFn(getMySecurityQuestions);
   const submitUpdate = useServerFn(updateSecurityAnswers);
 
-  const fetchFacilityHome = useServerFn(getMyFacilityCustomHome);
-
   const { data, isLoading } = useQuery({
     queryKey: ["my-profile"],
     queryFn: () => fetchProfile(),
@@ -132,12 +130,6 @@ function DashboardPage() {
     queryKey: ["my-security-questions"],
     queryFn: () => fetchQuestions(),
   });
-
-  const facilityHomeQuery = useQuery({
-    queryKey: ["my-facility-custom-home"],
-    queryFn: () => fetchFacilityHome(),
-  });
-  const customSlug = facilityHomeQuery.data?.slug ?? null;
 
   const fetchFacilities = useServerFn(listFacilities);
   const facilitiesQuery = useQuery({
@@ -148,12 +140,11 @@ function DashboardPage() {
     (facilitiesQuery.data?.facilities ?? []).map((f) => [f.value, f.label]),
   );
 
-
   const userFacility = (data?.profile as any)?.facility ?? null;
 
   const categoriesQuery = useQuery({
-    queryKey: ["dashboard-categories", customSlug, userFacility],
-    enabled: !facilityHomeQuery.isLoading && !isLoading,
+    queryKey: ["dashboard-categories", userFacility],
+    enabled: !isLoading,
     queryFn: async (): Promise<Category[]> => {
       // Fetch all published categories + their facility assignments
       const { data: cats, error } = await supabase
@@ -461,7 +452,7 @@ function DashboardPage() {
 
 
           <TabsContent value="categories" className="mt-6">
-            {categoriesQuery.isLoading || facilityHomeQuery.isLoading ? (
+            {categoriesQuery.isLoading ? (
               <p className="text-sm text-muted-foreground">{t("home.loading")}</p>
             ) : (categoriesQuery.data?.length ?? 0) === 0 ? (
               <p className="text-sm text-muted-foreground">{t("home.empty")}</p>

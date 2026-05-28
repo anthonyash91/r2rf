@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"Tooltip\\\\|tooltip\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -10)",
+      "Read(//Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/**)",
+      "Bash(grep -n \"pointer-events\\\\|z-index\\\\|transform\\\\|overflow\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -20)",
+      "Bash(grep -n \"Tooltip\\\\|tooltip\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -10)",
+      "Bash(grep -n \"^function \\\\|^export function \\\\|^const.*=.*\\(\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -20)",
+      "Bash(grep -n \"^function \\\\|^export function \\\\|^const.*Route\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -10)",
+      "Bash(grep -n \"rounded-full\\\\|gap-1 rounded\\\\|pill\\\\|facilities.map\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -20)",
+      "Bash(grep -n \"useBadgeStyles\\\\|paletteStyle\\\\|badgeStyles\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -10)",
+      "Bash(grep -n \"^import\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -30)",
+      "Bash(git commit -m ' *)",
+      "Bash(grep -n \"FacilityCombobox\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -5)",
+      "Bash(grep -n \"home_page_mode\\\\|homePageMode\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -15)",
+      "Bash(grep -n \"listFacilities\\\\|FacilityCombobox\\\\|availableFacilities\\\\b\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -10)",
+      "Bash(grep -n \"^import.*Select\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx)",
+      "Bash(grep -n \"Select[^C]\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | grep -v \"^25:\\\\|import\\\\|useBulkSelect\" | head -10)",
+      "Bash(grep -n \"homePageMode\\\\|setHomePageMode\\\\|home_page_mode.*default\\\\|home_page_mode.*custom\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.index.tsx /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/dashboard.tsx /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/index.tsx 2>/dev/null)",
+      "Bash(grep -n \"url\\\\|URL\\\\|upload\\\\|Upload\\\\|file_url\\\\|FileUpload\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | grep -i \"upload\\\\|url\\\\b\\\\|file_url\" | head -30)",
+      "Bash(grep -n \"type\\\\|Type\\\\|Select\\\\|select\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | grep -i \"select\\\\|typeOption\\\\|content.*type\\\\|type.*select\" | head -20)",
+      "Bash(grep -n \"ItemEditor\\\\|ContentManager\\\\|categoryFacil\\\\|category\\\\.facilities\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -25)",
+      "Bash(grep -n \"Facility\\\\|facility\\\\|FacilityCombobox\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | grep -v \"facilityMap\\\\|facilityLabel\\\\|facilitiesData\\\\|facilityPs\\\\|category_facilities\\\\|content_item_facilities\\\\|facility_value\\\\|catFacilities\\\\|allFacilities\\\\|availableFacilities\\\\|facilityLabelMap\\\\|facilityList\" | tail -20)",
+      "Bash(grep -n \"trackCategoryView\\\\|trackContentClick\\\\|handleActivate\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx)",
+      "Bash(grep -n \"editorRef\\\\|ref={editorRef}\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -10)",
+      "Bash(grep -n \"activeCustomHome\\\\|customHome\\\\|custom-home-context\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -10)",
+      "Bash(rm /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/\\\\$customHome.tsx \\\\ *)",
+      "Bash(grep -n \"activeCustomHome\\\\|useActiveCustomHome\\\\|custom_home_pages\\\\|custom_home_page_categories\\\\|allowedCustomIds\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -20)",
+      "Bash(grep -n \"activeCustomHome\\\\|custom_home_pages\\\\|custom_home_page\\\\|allowedCustomIds\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx)"
+    ],
+    "additionalDirectories": [
+      "/Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes"
+    ]
+  }
+}

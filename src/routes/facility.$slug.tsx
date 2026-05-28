@@ -6,7 +6,6 @@ import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { HomePageView } from "@/components/HomePageView";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
-import { setActiveCustomHome } from "@/lib/custom-home-context";
 import { setActiveFacilitySlug } from "@/lib/facility-context";
 
 export const Route = createFileRoute("/facility/$slug")({
@@ -27,7 +26,6 @@ function FacilityPage() {
   const { facilityValue } = Route.useLoaderData();
 
   useEffect(() => {
-    setActiveCustomHome(null);
     setActiveFacilitySlug(facilityValue);
   }, [facilityValue]);
 

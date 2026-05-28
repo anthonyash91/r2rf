@@ -22,7 +22,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
 import AutoHeight from "embla-carousel-auto-height";
 import { useAuth } from "@/hooks/use-auth";
-import { useActiveCustomHome } from "@/lib/custom-home-context";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { listFacilities } from "@/lib/facilities.functions";
 
@@ -88,7 +87,6 @@ function CategoryPage() {
   const { t, lang } = useI18n();
   const { isAdmin, canAccessAdmin, isFacilityUser, user } = useAuth();
   const queryClient = useQueryClient();
-  const activeCustomHome = useActiveCustomHome();
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
   const fetchFacilitiesList = useServerFn(listFacilities);
   const { data: facilitiesData } = useQuery({
@@ -124,7 +122,7 @@ function CategoryPage() {
   }, [othersApi]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["category", slug, activeCustomHome],
+    queryKey: ["category", slug],
     queryFn: async () => {
       const { data: cat, error: e1 } = await supabase
         .from("categories")
@@ -149,27 +147,7 @@ function CategoryPage() {
         .order("sort_order", { ascending: true });
       if (e3) throw e3;
 
-      // Determine which custom-mode categories are allowed:
-      // only those attached to the currently active custom home (if any).
-      let allowedCustomIds = new Set<string>();
-      if (activeCustomHome) {
-        const { data: page } = await supabase
-          .from("custom_home_pages")
-          .select("id")
-          .eq("slug", activeCustomHome)
-          .maybeSingle();
-        if (page) {
-          const { data: links } = await supabase
-            .from("custom_home_page_categories")
-            .select("category_id")
-            .eq("custom_home_page_id", page.id);
-          allowedCustomIds = new Set((links ?? []).map((l) => l.category_id));
-        }
-      }
-
-      const filtered = (others ?? []).filter((c) =>
-        c.home_page_mode === "custom" ? allowedCustomIds.has(c.id) : true
-      );
+      const filtered = (others ?? []) as typeof others;
       const shuffled = [...filtered].sort(() => Math.random() - 0.5);
 
       // Fetch facility restrictions for all items
