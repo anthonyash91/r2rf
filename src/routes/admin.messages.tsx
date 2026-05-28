@@ -2,13 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Save, MessageSquare, Home, User as UserIcon, Megaphone, RefreshCw } from "lucide-react";
+import { Save, MessageSquare, Megaphone, RefreshCw, Building2 } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
+import { FacilityCombobox } from "@/components/FacilityCombobox";
+import { listFacilities } from "@/lib/facilities.functions";
 
 export const Route = createFileRoute("/admin/messages")({
   beforeLoad: requireAdminBeforeLoad,
@@ -16,6 +19,109 @@ export const Route = createFileRoute("/admin/messages")({
 });
 
 type SiteMessage = { enabled: boolean; message: string; message_es: string };
+
+function FacilityMessageSection() {
+  const qc = useQueryClient();
+  const fetchFacilities = useServerFn(listFacilities);
+  const { data: facilitiesData } = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilities(),
+  });
+  const facilities = facilitiesData?.facilities ?? [];
+
+  // Fetch all existing facility messages so we can show a quick-access list.
+  // Key starts with ["site_settings"] so saves from MessageEditor (which invalidate
+  // ["site_settings", key]) cause this list to refresh automatically.
+  const { data: existingMessages } = useQuery({
+    queryKey: ["site_settings", "facility-messages-list"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("key, value")
+        .like("key", "facility_message_%");
+      const result: { value: string; message: string }[] = [];
+      for (const row of data ?? []) {
+        const text = ((row.value as any)?.message as string | undefined)?.trim();
+        if (text) {
+          result.push({ value: (row.key as string).replace("facility_message_", ""), message: text });
+        }
+      }
+      return result;
+    },
+  });
+
+  const [selected, setSelected] = useState<{ value: string; label: string } | null>(null);
+
+  function selectFacility(facilityValue: string) {
+    const f = facilities.find((x) => x.value === facilityValue);
+    setSelected(f ? { value: f.value, label: f.label } : null);
+  }
+
+  const configuredFacilities = (existingMessages ?? [])
+    .map((m) => {
+      const f = facilities.find((x) => x.value === m.value);
+      return f ? { ...f, message: m.message } : null;
+    })
+    .filter(Boolean) as { value: string; label: string; message: string }[];
+
+  return (
+    <section className="mt-8">
+      <h2 className="font-display text-xl font-semibold">Facility Message</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Shown as a banner under the navigation for users whose account is attached to a specific facility.
+      </p>
+      <SectionCard className="mt-3 pt-4 space-y-4">
+        {configuredFacilities.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">Configured messages:</span>{" "}
+            {configuredFacilities.map((f, i) => (
+              <span key={f.value}>
+                {i > 0 && "; "}
+                <button
+                  type="button"
+                  onClick={() => selectFacility(f.value)}
+                  className="text-[var(--color-accent)] hover:underline"
+                >
+                  {f.label}
+                </button>
+              </span>
+            ))}
+          </p>
+        )}
+
+        <label className="block">
+          <span className="text-sm font-medium">Select facility</span>
+          <div className="mt-1 max-w-sm">
+            <FacilityCombobox
+              value={selected?.value ?? ""}
+              onChange={(v) => {
+                const f = facilities.find((x) => x.value === v);
+                setSelected(f ? { value: f.value, label: f.label } : null);
+              }}
+              options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+              placeholder="Choose a facility…"
+              searchPlaceholder="Search facilities…"
+              emptyMessage={facilities.length === 0 ? "No facilities found." : "No match."}
+            />
+          </div>
+        </label>
+
+        {selected && (
+          <MessageEditor
+            key={selected.value}
+            settingsKey={`facility_message_${selected.value}`}
+            title={`Message for ${selected.label}`}
+            description={`Shown to users at ${selected.label} and anyone visiting /facility/${selected.value}.`}
+            icon={<Building2 className="h-5 w-5 text-[var(--color-accent)]" />}
+            context={`Facility banner message for ${selected.label}`}
+            embedded
+            onSaved={() => qc.invalidateQueries({ queryKey: ["site_settings", "facility-messages-list"] })}
+          />
+        )}
+      </SectionCard>
+    </section>
+  );
+}
 const DEFAULTS: SiteMessage = { enabled: false, message: "", message_es: "" };
 
 function AdminMessagesPage() {
@@ -28,22 +134,14 @@ function AdminMessagesPage() {
         description="Show a banner under the navigation on the home page or user dashboard."
       />
 
-      <div className="mt-8 space-y-6">
-        <MessageEditor
-          settingsKey="home_message"
-          title="Home Page Message"
-          description="Shown as a banner on the main index page under the navigation."
-          icon={<Home className="h-6 w-6 text-[var(--color-accent)]" />}
-          context="Home page banner message"
-        />
-        <MessageEditor
-          settingsKey="user_message"
-          title="User Message"
-          description="Shown as a banner on the user dashboard page under the navigation."
-          icon={<UserIcon className="h-6 w-6 text-[var(--color-accent)]" />}
-          context="User dashboard banner message"
-        />
-      </div>
+      <MessageEditor
+        settingsKey="home_message"
+        title="Admin Message"
+        description="Shown as a banner under the navigation on all pages — home, facility pages, and the user dashboard."
+        icon={<MessageSquare className="h-5 w-5 text-[var(--color-accent)]" />}
+        context="Site-wide banner message"
+      />
+      <FacilityMessageSection />
     </div>
   );
 }
@@ -54,12 +152,16 @@ function MessageEditor({
   description,
   icon,
   context,
+  embedded = false,
+  onSaved,
 }: {
   settingsKey: string;
   title: string;
   description: string;
   icon: React.ReactNode;
   context: string;
+  embedded?: boolean;
+  onSaved?: () => void;
 }) {
   const qc = useQueryClient();
   const queryKey = ["admin", "site_settings", settingsKey] as const;
@@ -99,6 +201,7 @@ function MessageEditor({
       toast.success("Saved");
       qc.invalidateQueries({ queryKey });
       qc.invalidateQueries({ queryKey: ["site_settings", settingsKey] });
+      onSaved?.();
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -118,24 +221,16 @@ function MessageEditor({
       toast.success("Message cleared");
       qc.invalidateQueries({ queryKey });
       qc.invalidateQueries({ queryKey: ["site_settings", settingsKey] });
+      onSaved?.();
     },
     onError: (e: any) => toast.error(e.message),
   });
 
-  return (
-    <SectionCard className="pt-4">
-      <div className="flex flex-col gap-1">
-        <h2 className="font-display text-2xl font-semibold flex items-center gap-2">
-          {icon} {title}
-        </h2>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-
-      {isLoading ? (
-        <p className="mt-6 text-muted-foreground">Loading…</p>
-      ) : (
-        <form
-          className="mt-6 space-y-4"
+  const formContent = isLoading ? (
+    <p className="text-muted-foreground">Loading…</p>
+  ) : (
+    <form
+      className="space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
             saveMut.mutate(value);
@@ -267,8 +362,18 @@ function MessageEditor({
               Save
             </LoadingButton>
           </div>
-        </form>
-      )}
-    </SectionCard>
+      </form>
+  );
+
+  if (embedded) return formContent;
+
+  return (
+    <section className="mt-8">
+      <h2 className="font-display text-xl font-semibold">{title}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      <SectionCard className="mt-3 pt-4">
+        {formContent}
+      </SectionCard>
+    </section>
   );
 }

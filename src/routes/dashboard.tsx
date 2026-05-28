@@ -407,7 +407,8 @@ function DashboardPage() {
       </Dialog>
       <SiteHeader />
 
-      <SiteMessageBanner kind="user" />
+      <SiteMessageBanner kind="home" />
+      <SiteMessageBanner kind="facility" facilityValue={userFacility ?? undefined} />
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
         <Tabs
           value={mustSetup ? "account" : undefined}
