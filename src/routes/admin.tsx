@@ -1,9 +1,7 @@
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { setActiveCustomHome } from "@/lib/custom-home-context";
 import { AdminNav } from "@/components/AdminNav";
 import { SectionCard } from "@/components/SectionCard";
 
@@ -30,9 +28,6 @@ export const Route = createFileRoute("/admin")({
 function AdminLayout() {
   const { user, canAccessAdmin, loading } = useAuth();
 
-  useEffect(() => {
-    setActiveCustomHome(null);
-  }, []);
 
 
 
