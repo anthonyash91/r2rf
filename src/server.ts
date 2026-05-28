@@ -35,7 +35,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   "content-security-policy": [
     "default-src 'self'",
     "base-uri 'self'",
-    "frame-ancestors 'self' https://*.lovable.app https://*.lovable.dev https://lovable.dev",
+    "frame-ancestors 'self'",
     "form-action 'self'",
     "object-src 'none'",
     "img-src 'self' data: blob: https:",
