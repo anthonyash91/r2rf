@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
@@ -24,6 +24,8 @@ import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconB
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
+import { useBadgeStyles } from "@/hooks/use-badge-styles";
+import { paletteStyle } from "@/lib/badge-styles";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tag, ChevronDown } from "lucide-react";
@@ -34,6 +36,33 @@ import { SectionCard } from "@/components/SectionCard";
 import { EmptyState } from "@/components/EmptyState";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { PageHeader } from "@/components/PageHeader";
+
+function FacilityBadge({ facilities, facilityLabelMap, className }: {
+  facilities: string[];
+  facilityLabelMap: Record<string, string>;
+  className?: string;
+}) {
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className="cursor-default inline-flex p-0 m-0 h-auto w-auto border-none bg-transparent shadow-none leading-none"
+        >
+          <Badge variant="facility" className={className}>
+            {facilities.length === 1
+              ? (facilityLabelMap[facilities[0]] ?? facilities[0])
+              : `${facilities.length} facilities`}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          {facilities.map((v) => facilityLabelMap[v] ?? v).join("; ")}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
@@ -76,13 +105,17 @@ function AdminCategoryPage() {
       const itemIds = (items ?? []).map((i) => i.id as string);
       const facilityMap: Record<string, string[]> = {};
       if (itemIds.length > 0) {
-        const { data: links } = await (supabase as any)
+        const { data: links, error: linksError } = await (supabase as any)
           .from("content_item_facilities")
           .select("content_item_id, facility_value")
           .in("content_item_id", itemIds);
-        for (const link of (links ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
-          if (!facilityMap[link.content_item_id]) facilityMap[link.content_item_id] = [];
-          facilityMap[link.content_item_id].push(link.facility_value);
+        if (linksError) {
+          console.error("[admin category] facility restrictions fetch failed:", linksError.message);
+        } else {
+          for (const link of (links ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+            if (!facilityMap[link.content_item_id]) facilityMap[link.content_item_id] = [];
+            facilityMap[link.content_item_id].push(link.facility_value);
+          }
         }
       }
       const itemsWithFacilities = (items ?? []).map((item) => ({
@@ -379,6 +412,16 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
   const { lang } = useI18n();
+  const fetchFacilitiesList = useServerFn(listFacilities);
+  const { data: facilitiesData } = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilitiesList(),
+  });
+  const facilityLabelMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const f of facilitiesData?.facilities ?? []) map[f.value] = f.label;
+    return map;
+  }, [facilitiesData]);
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
   const [order, setOrder] = useState<ContentItem[]>([]);
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -650,11 +693,10 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                             </Badge>
                           )}
                           {(item.facilities?.length ?? 0) > 0 && (
-                            <Badge variant="facility">
-                              {item.facilities!.length === 1
-                                ? item.facilities![0]
-                                : `${item.facilities!.length} facilities`}
-                            </Badge>
+                            <FacilityBadge
+                              facilities={item.facilities!}
+                              facilityLabelMap={facilityLabelMap}
+                            />
                           )}
                         </BadgeGroup>
                       );
@@ -793,6 +835,8 @@ function ItemEditor({
 }) {
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
+  const badgeStyles = useBadgeStyles();
+  const facilityPs = paletteStyle(badgeStyles.variants["facility"] ?? 11);
   const fetchFacilitiesList = useServerFn(listFacilities);
   const { data: facilitiesData } = useQuery({
     queryKey: ["facilities-list"],
@@ -1112,12 +1156,16 @@ function ItemEditor({
               {facilities.map((f) => {
                 const label = availableFacilities.find((a) => a.value === f)?.label ?? f;
                 return (
-                  <span key={f} className="inline-flex items-center gap-1 rounded-full border border-input bg-background px-2.5 py-1 text-xs font-medium">
+                  <span
+                    key={f}
+                    className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-xs font-medium"
+                    style={{ color: facilityPs.color, backgroundColor: facilityPs.bg, borderColor: facilityPs.border }}
+                  >
                     {label}
                     <button
                       type="button"
                       onClick={() => setFacilities((prev) => prev.filter((x) => x !== f))}
-                      className="rounded-full hover:bg-muted p-0.5"
+                      className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
                     >
                       <X className="h-3 w-3" />
                     </button>

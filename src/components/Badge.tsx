@@ -96,6 +96,7 @@ import {
   Unlock,
   HeartHandshake,
   Inbox,
+  Blocks,
   type LucideIcon,
 } from "lucide-react";
 import { paletteStyle, indexForType, type BadgeVariantKey } from "@/lib/badge-styles";
@@ -123,6 +124,7 @@ const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   count: Layers,
   draft: FileEdit,
   custom: Star,
+  "custom-content": Blocks,
   category: Tag,
   translation: Languages,
   admin: Shield,

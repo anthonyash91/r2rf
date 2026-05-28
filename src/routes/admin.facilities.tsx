@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Building2, Plus, Pencil, Trash2, Users, Home } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Users, Home, Blocks } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -23,7 +23,6 @@ import {
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
-import { Badge } from "@/components/Badge";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
 
@@ -255,34 +254,46 @@ function AdminFacilitiesPage() {
                                 <Users className="h-3.5 w-3.5" />
                                 {f.userCount} {f.userCount === 1 ? "user" : "users"} signed up
                               </span>
-                              {f.customHomePage ? (
-                                <Link
-                                  to="/$customHome"
-                                  params={{ customHome: f.customHomePage.slug }}
-                                  className="inline-flex items-center gap-1.5 hover:text-foreground hover:underline"
-                                >
-                                  <Home className="h-3.5 w-3.5" />
-                                  Custom home: /{f.customHomePage.slug}
-                                </Link>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 italic">
-                                  <Home className="h-3.5 w-3.5" />
-                                  No custom home page
-                                </span>
-                              )}
                             </div>
                             {f.customHomePage && (
-                              <div className="flex flex-wrap gap-1.5">
-                                {f.customHomePage.categories.length ? (
-                                  f.customHomePage.categories.map((c) => (
-                                    <Badge key={c.id} variant="category">
-                                      {c.name}
-                                    </Badge>
-                                  ))
-
-                                ) : (
-                                  <span className="text-xs italic text-muted-foreground">No categories assigned</span>
-                                )}
+                              <div className="pt-1 space-y-1">
+                                <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                                  <Home className="h-3.5 w-3.5" />
+                                  Custom Home Page
+                                </p>
+                                <ul className="space-y-0.5">
+                                  <li>
+                                    <Link
+                                      to="/$customHome"
+                                      params={{ customHome: f.customHomePage.slug }}
+                                      className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                                    >
+                                      /{f.customHomePage.slug}
+                                    </Link>
+                                  </li>
+                                </ul>
+                              </div>
+                            )}
+                            {(f.contentItems?.length ?? 0) > 0 && (
+                              <div className="pt-1 space-y-1">
+                                <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                                  <Blocks className="h-3.5 w-3.5" />
+                                  Custom Content ({f.contentItems.length})
+                                </p>
+                                <ul className="space-y-0.5">
+                                  {f.contentItems.map((item) => (
+                                    <li key={item.id}>
+                                      <Link
+                                        to="/admin/category/$id"
+                                        params={{ id: item.categoryId }}
+                                        className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                                      >
+                                        {item.title}
+                                        <span className="ml-1 text-muted-foreground/60">— {item.categoryName}</span>
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
                               </div>
                             )}
                           </div>

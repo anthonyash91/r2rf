@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { useI18n, pickLang, type Language } from "@/lib/i18n";
@@ -11,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { ResponsiveBadgeGroup } from "@/components/ResponsiveBadgeGroup";
+import { getMyFacilityValue } from "@/lib/user-signup.functions";
 
 type CategoryStats = { count: number; recentItemIds: Set<string> };
 
@@ -36,9 +38,11 @@ function useUserProgress(userId: string | null, categoryIds: string[]) {
   });
 }
 
-function useCategoryItemStats(categoryIds: string[]) {
+// userFacility: undefined = admin (see all), null = no facility, string = specific facility
+function useCategoryItemStats(categoryIds: string[], userFacility: string | null | undefined) {
+  const facilityKey = userFacility === undefined ? "admin" : (userFacility ?? "anon");
   return useQuery({
-    queryKey: ["category-item-stats", [...categoryIds].sort().join(",")],
+    queryKey: ["category-item-stats", [...categoryIds].sort().join(","), facilityKey],
     enabled: categoryIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -47,14 +51,36 @@ function useCategoryItemStats(categoryIds: string[]) {
         .eq("published", true)
         .in("category_id", categoryIds);
       if (error) throw error;
+
+      // For non-admins, fetch facility restrictions so we can exclude items
+      // the current user isn't allowed to see.
+      const facilityMap: Record<string, string[]> = {};
+      if (userFacility !== undefined) {
+        const itemIds = (data ?? []).map((r: any) => r.id as string);
+        if (itemIds.length > 0) {
+          const { data: cifData } = await (supabase as any)
+            .from("content_item_facilities")
+            .select("content_item_id, facility_value")
+            .in("content_item_id", itemIds);
+          for (const row of (cifData ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+            if (!facilityMap[row.content_item_id]) facilityMap[row.content_item_id] = [];
+            facilityMap[row.content_item_id].push(row.facility_value);
+          }
+        }
+      }
+
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const stats: Record<string, CategoryStats> = {};
-      (data ?? []).forEach((row: { id: string; category_id: string; created_at: string }) => {
+      for (const row of (data ?? []) as { id: string; category_id: string; created_at: string }[]) {
+        const facilities = facilityMap[row.id] ?? [];
+        if (facilities.length > 0) {
+          if (!userFacility || !facilities.includes(userFacility)) continue;
+        }
         const s = stats[row.category_id] ?? { count: 0, recentItemIds: new Set<string>() };
         s.count += 1;
         if (new Date(row.created_at).getTime() >= cutoff) s.recentItemIds.add(row.id);
         stats[row.category_id] = s;
-      });
+      }
       return stats;
     },
   });
@@ -81,7 +107,17 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
   const cols = useColumnCount();
   const { isAdmin, user } = useAuth();
   const { t } = useI18n();
-  const { data: stats = {} } = useCategoryItemStats(categories.map((c) => c.id));
+  const fetchFacilityValue = useServerFn(getMyFacilityValue);
+  const { data: facilityData } = useQuery({
+    queryKey: ["my-facility", user?.id],
+    enabled: !!user?.id && !isAdmin,
+    queryFn: () => fetchFacilityValue(),
+  });
+  // undefined = admin (see all), null = no facility/unauthenticated, string = facility value
+  const userFacility: string | null | undefined = isAdmin
+    ? undefined
+    : (facilityData?.facility ?? null);
+  const { data: stats = {} } = useCategoryItemStats(categories.map((c) => c.id), userFacility);
   const { data: progress } = useUserProgress(user?.id ?? null, categories.map((c) => c.id));
   const reads = progress?.reads ?? {};
   const readSet = progress?.readSet ?? new Set<string>();
@@ -139,7 +175,7 @@ function MasonryCategories({ categories, lang }: { categories: Category[]; lang:
 
 
                   {user && !isAdmin && count > 0 && (() => {
-                    const read = reads[c.id] ?? 0;
+                    const read = Math.min(reads[c.id] ?? 0, count);
                     const pct = Math.round((read / count) * 100);
                     return (
                       <div className="mt-4 space-y-1.5">
