@@ -136,6 +136,36 @@ export const listTesterUsers = createServerFn({ method: "GET" })
   });
 
 /**
+ * Facility admin users (role = facilityUser). Optionally filtered by facilityValue.
+ */
+export const listFacilityAdminUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ facilityValue: z.string().optional() }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data: roleRows, error } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "facilityUser");
+    if (error) throw new Error(error.message);
+    let ids = Array.from(new Set((roleRows ?? []).map((r) => r.user_id as string)));
+    // If scoped to a facility, filter by profile
+    if (data.facilityValue && ids.length > 0) {
+      const { data: profs } = await supabaseAdmin
+        .from("user_profiles")
+        .select("user_id")
+        .eq("facility", data.facilityValue)
+        .in("user_id", ids);
+      ids = (profs ?? []).map((p: any) => p.user_id as string);
+    }
+    const users = await buildListedUsers(ids);
+    users.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    return { users };
+  });
+
+/**
  * Regular users with server-side pagination, search and facility filter.
  */
 export const listRegularUsers = createServerFn({ method: "POST" })
@@ -275,6 +305,52 @@ export const createUser = createServerFn({ method: "POST" })
       action: "user.create",
       targetUserId: created.user?.id ?? null,
       details: { email: data.email, role: data.role },
+    });
+    return { ok: true };
+  });
+
+/**
+ * Create a facility admin user. Sends a verification email; forces password
+ * reset on first login via the must_reset_password metadata flag.
+ */
+export const createFacilityUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        email: z.string().trim().email().max(255),
+        password: z.string().min(8).max(72),
+        facilityValue: z.string().min(1).max(64),
+      })
+      .parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: false,
+      user_metadata: { must_reset_password: true },
+    });
+    if (error) throw new Error(error.message);
+    const userId = created.user.id;
+    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "facilityUser" });
+    // Store facility in user_profiles so facility-scoped queries work
+    await supabaseAdmin.from("user_profiles").insert({
+      user_id: userId,
+      username: data.email.split("@")[0].slice(0, 32).replace(/[^a-z0-9_]/gi, "_").toLowerCase(),
+      facility: data.facilityValue,
+      first_name: "",
+      last_name: "",
+    });
+    // Send verification email
+    const { error: resendErr } = await supabaseAdmin.auth.resend({ type: "signup", email: data.email });
+    if (resendErr) console.warn("createFacilityUser: resend failed", resendErr.message);
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.create",
+      targetUserId: userId,
+      details: { email: data.email, role: "facilityUser", facility: data.facilityValue },
     });
     return { ok: true };
   });

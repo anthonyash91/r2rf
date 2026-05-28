@@ -3,6 +3,8 @@ import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/hooks/use-auth";
+import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Save, MessageSquare, Megaphone, RefreshCw, Building2 } from "lucide-react";
@@ -20,7 +22,7 @@ export const Route = createFileRoute("/admin/messages")({
 
 type SiteMessage = { enabled: boolean; message: string; message_es: string };
 
-function FacilityMessageSection() {
+function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?: string | null }) {
   const qc = useQueryClient();
   const fetchFacilities = useServerFn(listFacilities);
   const { data: facilitiesData } = useQuery({
@@ -52,6 +54,14 @@ function FacilityMessageSection() {
 
   const [selected, setSelected] = useState<{ value: string; label: string } | null>(null);
 
+  // Auto-select the preselected facility once facilities load
+  useEffect(() => {
+    if (preselectedFacility && facilities.length > 0 && !selected) {
+      const f = facilities.find((x) => x.value === preselectedFacility);
+      if (f) setSelected({ value: f.value, label: f.label });
+    }
+  }, [preselectedFacility, facilities, selected]);
+
   function selectFacility(facilityValue: string) {
     const f = facilities.find((x) => x.value === facilityValue);
     setSelected(f ? { value: f.value, label: f.label } : null);
@@ -71,7 +81,7 @@ function FacilityMessageSection() {
         Shown as a banner under the navigation for users whose account is attached to a specific facility.
       </p>
       <SectionCard className="mt-3 pt-4 space-y-4">
-        {configuredFacilities.length > 0 && (
+        {!preselectedFacility && configuredFacilities.length > 0 && (
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">Configured messages:</span>{" "}
             {configuredFacilities.map((f, i) => (
@@ -89,7 +99,7 @@ function FacilityMessageSection() {
           </p>
         )}
 
-        <label className="block">
+        {!preselectedFacility && <label className="block">
           <span className="text-sm font-medium">Select facility</span>
           <div className="mt-1 max-w-sm">
             <FacilityCombobox
@@ -104,7 +114,7 @@ function FacilityMessageSection() {
               emptyMessage={facilities.length === 0 ? "No facilities found." : "No match."}
             />
           </div>
-        </label>
+        </label>}
 
         {selected && (
           <MessageEditor
@@ -125,23 +135,35 @@ function FacilityMessageSection() {
 const DEFAULTS: SiteMessage = { enabled: false, message: "", message_es: "" };
 
 function AdminMessagesPage() {
+  const { isFacilityUser, user } = useAuth();
+  const fetchMyFacility = useServerFn(getMyFacilityValue);
+  const { data: myFacilityData } = useQuery({
+    queryKey: ["my-facility", user?.id],
+    enabled: isFacilityUser && !!user?.id,
+    queryFn: () => fetchMyFacility(),
+  });
+  const myFacilityValue = isFacilityUser ? (myFacilityData?.facility ?? null) : null;
+
   return (
     <div>
       <PageHeader
         className="mt-6"
         icon={MessageSquare}
         title="Messages"
-        description="Show a banner under the navigation on the home page or user dashboard."
+        description={isFacilityUser
+          ? "Manage the message banner shown to users at your facility."
+          : "Show a banner under the navigation on the home page or user dashboard."}
       />
-
-      <MessageEditor
-        settingsKey="home_message"
-        title="Admin Message"
-        description="Shown as a banner under the navigation on all pages — home, facility pages, and the user dashboard."
-        icon={<MessageSquare className="h-5 w-5 text-[var(--color-accent)]" />}
-        context="Site-wide banner message"
-      />
-      <FacilityMessageSection />
+      {!isFacilityUser && (
+        <MessageEditor
+          settingsKey="home_message"
+          title="Admin Message"
+          description="Shown as a banner under the navigation on all pages — home, facility pages, and the user dashboard."
+          icon={<MessageSquare className="h-5 w-5 text-[var(--color-accent)]" />}
+          context="Site-wide banner message"
+        />
+      )}
+      <FacilityMessageSection preselectedFacility={myFacilityValue} />
     </div>
   );
 }

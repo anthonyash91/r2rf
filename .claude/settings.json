@@ -26,7 +26,8 @@
       "Bash(grep -n \"activeCustomHome\\\\|customHome\\\\|custom-home-context\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -10)",
       "Bash(rm /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/\\\\$customHome.tsx \\\\ *)",
       "Bash(grep -n \"activeCustomHome\\\\|useActiveCustomHome\\\\|custom_home_pages\\\\|custom_home_page_categories\\\\|allowedCustomIds\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -20)",
-      "Bash(grep -n \"activeCustomHome\\\\|custom_home_pages\\\\|custom_home_page\\\\|allowedCustomIds\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx)"
+      "Bash(grep -n \"activeCustomHome\\\\|custom_home_pages\\\\|custom_home_page\\\\|allowedCustomIds\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx)",
+      "Bash(git commit -m 'Fix admin layout crash: remove deleted custom-home-context import *)"
     ],
     "additionalDirectories": [
       "/Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes"

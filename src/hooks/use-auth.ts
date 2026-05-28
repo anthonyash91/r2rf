@@ -81,7 +81,7 @@ export function useAuth() {
     isUser: isUser || isTester,
     isTester,
     isFacilityUser,
-    canAccessAdmin: isAdmin || isContributor,
+    canAccessAdmin: isAdmin || isContributor || isFacilityUser,
     loading,
   };
 }

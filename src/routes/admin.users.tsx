@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, HelpCircle, Loader2 } from "lucide-react";
@@ -22,17 +22,21 @@ import {
   listAdminUsers,
   listTesterUsers,
   listRegularUsers,
+  listFacilityAdminUsers,
   updateUserEmail,
   setUserPassword,
   sendPasswordResetEmail,
   setUserRole,
   createUser,
   createTesterUser,
+  createFacilityUser,
   deleteUser,
   deleteUsers,
   clearUserSecurityAnswers,
 } from "@/lib/users.functions";
 import { listAllFacilities } from "@/lib/facilities.functions";
+import { useAuth } from "@/hooks/use-auth";
+import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
@@ -61,31 +65,45 @@ type UserRow = {
 
 
 function AdminUsersPage() {
-  const qc = useQueryClient();
   const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
+  const { isFacilityUser, user } = useAuth();
   const listAdminFn = useServerFn(listAdminUsers);
   const listTesterFn = useServerFn(listTesterUsers);
   const listRegularFn = useServerFn(listRegularUsers);
+  const listFacilityAdminFn = useServerFn(listFacilityAdminUsers);
   const updateEmail = useServerFn(updateUserEmail);
   const setPassword = useServerFn(setUserPassword);
   const sendReset = useServerFn(sendPasswordResetEmail);
   const setRole = useServerFn(setUserRole);
+  const fetchMyFacility = useServerFn(getMyFacilityValue);
+  const { data: myFacilityData } = useQuery({
+    queryKey: ["my-facility", user?.id],
+    enabled: isFacilityUser && !!user?.id,
+    queryFn: () => fetchMyFacility(),
+  });
+  const myFacilityValue = isFacilityUser ? (myFacilityData?.facility ?? null) : null;
+
   const createFn = useServerFn(createUser);
   const createTesterFn = useServerFn(createTesterUser);
+  const createFacilityFn = useServerFn(createFacilityUser);
   const deleteFn = useServerFn(deleteUser);
   const deleteManyFn = useServerFn(deleteUsers);
   const clearSecFn = useServerFn(clearUserSecurityAnswers);
 
-  // Add-user flow: picker dialog -> one of two inline forms.
+  // Add-user flow: picker dialog -> one of three inline forms.
   const [showKindPicker, setShowKindPicker] = useState(false);
-  const [addKind, setAddKind] = useState<null | "adminContributor" | "tester">(null);
+  const [addKind, setAddKind] = useState<null | "adminContributor" | "tester" | "facilityUser">(null);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
   const [newUsername, setNewUsername] = useState("");
   const [newTesterPassword, setNewTesterPassword] = useState("");
-  const [facilityFilter, setFacilityFilter] = useState<string>("all");
+  const [newFacilityUserEmail, setNewFacilityUserEmail] = useState("");
+  const [newFacilityUserPassword, setNewFacilityUserPassword] = useState("");
+  const [newFacilityUserFacility, setNewFacilityUserFacility] = useState("");
+  // facilityUser admins are locked to their facility; others default to "all"
+  const [facilityFilter, setFacilityFilter] = useState<string>(() => "all");
   const [page, setPage] = useState(0);
   
   const bulk = useBulkSelect();
@@ -112,20 +130,31 @@ function AdminUsersPage() {
     return () => clearTimeout(t);
   }, [searchQuery]);
 
+  // facilityUser admins are locked to their own facility for all user views
+  const effectiveFacilityFilter = isFacilityUser && myFacilityValue
+    ? myFacilityValue
+    : facilityFilter === "all" ? "" : facilityFilter;
+
   const adminQuery = useQuery({
     queryKey: ["admin", "users", "admins"],
+    enabled: !isFacilityUser,
     queryFn: () => listAdminFn(),
   });
   const testerQuery = useQuery({
     queryKey: ["admin", "users", "testers"],
+    enabled: !isFacilityUser,
     queryFn: () => listTesterFn(),
+  });
+  const facilityAdminQuery = useQuery({
+    queryKey: ["admin", "users", "facilityAdmins", myFacilityValue],
+    queryFn: () => listFacilityAdminFn({ data: { facilityValue: myFacilityValue ?? undefined } }),
   });
   const regularQuery = useQuery({
     queryKey: [
       "admin",
       "users",
       "regular",
-      { page, search: debouncedSearch, facility: facilityFilter },
+      { page, search: debouncedSearch, facility: effectiveFacilityFilter },
     ],
     queryFn: () =>
       listRegularFn({
@@ -133,18 +162,19 @@ function AdminUsersPage() {
           limit: 10,
           offset: page * 10,
           search: debouncedSearch,
-          facility: facilityFilter === "all" ? "" : facilityFilter,
+          facility: effectiveFacilityFilter,
         },
       }),
     placeholderData: (prev) => prev,
   });
 
-  const isLoading = adminQuery.isLoading || testerQuery.isLoading || regularQuery.isLoading;
+  const isLoading = (!isFacilityUser && (adminQuery.isLoading || testerQuery.isLoading)) || facilityAdminQuery.isLoading || regularQuery.isLoading;
   const adminUsers: UserRow[] = adminQuery.data?.users ?? [];
   const testerUsers: UserRow[] = testerQuery.data?.users ?? [];
+  const facilityAdminUsers: UserRow[] = facilityAdminQuery.data?.users ?? [];
   const regularUsers: UserRow[] = regularQuery.data?.users ?? [];
   const regularTotal = regularQuery.data?.total ?? 0;
-  const totalUsers = adminUsers.length + testerUsers.length + regularTotal;
+  const totalUsers = (isFacilityUser ? 0 : adminUsers.length + testerUsers.length) + facilityAdminUsers.length + regularTotal;
 
 
   const fetchFacilities = useServerFn(listAllFacilities);
@@ -158,7 +188,6 @@ function AdminUsersPage() {
   );
 
   const usersKey = ["admin", "users"] as const;
-  const invalidate = () => qc.invalidateQueries({ queryKey: usersKey });
 
   const emailMut = useToastMutation({
     mutationFn: (input: { userId: string; email: string }) => updateEmail({ data: input }),
@@ -180,29 +209,27 @@ function AdminUsersPage() {
   });
   const closeAddForm = () => {
     setAddKind(null);
-    setNewEmail("");
-    setNewPassword("");
-    setNewRole("admin");
-    setNewUsername("");
-    setNewTesterPassword("");
+    setNewEmail(""); setNewPassword(""); setNewRole("admin");
+    setNewUsername(""); setNewTesterPassword("");
+    setNewFacilityUserEmail(""); setNewFacilityUserPassword(""); setNewFacilityUserFacility("");
   };
   const createMut = useToastMutation({
     mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" }) => createFn({ data: input }),
     successMessage: "User created. A verification email has been sent.",
     invalidate: usersKey,
-    onSuccess: () => {
-      closeAddForm();
-      newUsersSinceRef.current = new Date().toISOString();
-    },
+    onSuccess: () => { closeAddForm(); newUsersSinceRef.current = new Date().toISOString(); },
   });
   const createTesterMut = useToastMutation({
     mutationFn: (input: { username: string; password: string }) => createTesterFn({ data: input }),
     successMessage: "Test user created",
     invalidate: usersKey,
-    onSuccess: () => {
-      closeAddForm();
-      newUsersSinceRef.current = new Date().toISOString();
-    },
+    onSuccess: () => { closeAddForm(); newUsersSinceRef.current = new Date().toISOString(); },
+  });
+  const createFacilityUserMut = useToastMutation({
+    mutationFn: (input: { email: string; password: string; facilityValue: string }) => createFacilityFn({ data: input }),
+    successMessage: "Facility user created. A verification email has been sent.",
+    invalidate: usersKey,
+    onSuccess: () => { closeAddForm(); newUsersSinceRef.current = new Date().toISOString(); },
   });
   const deleteMut = useToastMutation({
     mutationFn: (input: { userId: string }) => deleteFn({ data: input }),
@@ -270,6 +297,14 @@ function AdminUsersPage() {
           >
             <div className="font-medium">Contributor</div>
             <div className="text-xs text-muted-foreground">Can manage content. Verification email sent.</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowKindPicker(false); setAddKind("facilityUser"); }}
+            className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
+          >
+            <div className="font-medium">Facility User</div>
+            <div className="text-xs text-muted-foreground">Facility staff with facility-scoped admin access. Verification email sent.</div>
           </button>
           <button
             type="button"
@@ -366,6 +401,48 @@ function AdminUsersPage() {
         </form>
       )}
 
+      {addKind === "facilityUser" && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!newFacilityUserFacility) { toast.error("Select a facility"); return; }
+            if (newFacilityUserPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+            createFacilityUserMut.mutate({ email: newFacilityUserEmail.trim(), password: newFacilityUserPassword, facilityValue: newFacilityUserFacility });
+          }}
+          className="mt-4 rounded-2xl border-2 border-[var(--color-accent)] bg-[var(--color-accent)]/5 shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-accent)_12%,transparent)] p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_200px_auto_auto] gap-2"
+        >
+          <input
+            type="email"
+            required
+            value={newFacilityUserEmail}
+            onChange={(e) => setNewFacilityUserEmail(e.target.value)}
+            placeholder="staff@facility.com"
+            className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+          />
+          <input
+            type="text"
+            autoComplete="new-password"
+            required
+            value={newFacilityUserPassword}
+            onChange={(e) => setNewFacilityUserPassword(e.target.value)}
+            placeholder="Temp password (min 8 chars)"
+            className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+          />
+          <FacilityCombobox
+            value={newFacilityUserFacility}
+            onChange={(v) => setNewFacilityUserFacility(v ?? "")}
+            options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+            placeholder="Select facility…"
+            searchPlaceholder="Search facilities…"
+            emptyMessage="No facilities found."
+          />
+          <LoadingButton variant="secondary" onClick={closeAddForm}>Cancel</LoadingButton>
+          <LoadingButton type="submit" pending={createFacilityUserMut.isPending} pendingText="Creating…">
+            Create
+          </LoadingButton>
+        </form>
+      )}
+
       {(() => {
         if (isLoading) {
           return (
@@ -456,38 +533,91 @@ function AdminUsersPage() {
 
 
 
+            {!isFacilityUser && (
+              <section className="mt-8">
+                <div>
+                  <h2 className="font-display text-xl font-semibold">Admin Users <span className="text-muted-foreground font-normal">({adminUsers.length})</span></h2>
+                  <p className="mt-1 text-xs text-muted-foreground">Accounts with admin or contributor access.</p>
+                </div>
+                <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
+                  {adminUsers.length ? (
+                    <ul className="divide-y divide-border">{adminUsers.map(renderItem)}</ul>
+                  ) : (
+                    <EmptyState size="sm">No admin users.</EmptyState>
+                  )}
+                </SectionCard>
+              </section>
+            )}
+
             <section className="mt-8">
               <div>
-                <h2 className="font-display text-xl font-semibold">Admin Users <span className="text-muted-foreground font-normal">({adminUsers.length})</span></h2>
+                <h2 className="font-display text-xl font-semibold">
+                  Facility Users <span className="text-muted-foreground font-normal">({facilityAdminUsers.length})</span>
+                </h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Accounts with admin or contributor access.
+                  Facility staff with facility-scoped admin access.
                 </p>
               </div>
-
               <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
-                {adminUsers.length ? (
-                  <ul className="divide-y divide-border">{adminUsers.map(renderItem)}</ul>
+                {facilityAdminUsers.length ? (
+                  <ul className="divide-y divide-border">{facilityAdminUsers.map((u) => (
+                    <UserItem
+                      key={u.id}
+                      user={u}
+                      isNew={false}
+                      facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""}
+                      showFacilityBadge
+                      showFacilityUserBadge
+                      pendingEmail={isPendingEmail(u.id)}
+                      pendingPassword={isPendingPw(u.id)}
+                      pendingReset={isPendingResetEmail(u.email)}
+                      pendingRole={isPendingRole(u.id)}
+                      pendingDelete={isPendingDelete(u.id)}
+                      pendingClearSec={isPendingClearSec(u.id)}
+                      onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
+                      onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
+                      onSendReset={() => resetMut.mutate({ email: u.email })}
+                      onToggleAdmin={async () => {}}
+                      onToggleContributor={async () => {}}
+                      onDelete={async () => {
+                        await confirmDelete({
+                          title: "Delete facility user?",
+                          description: `Permanently delete ${u.email}?`,
+                          onConfirm: () => deleteMut.mutateAsync({ userId: u.id }),
+                        });
+                      }}
+                      onResetSecurity={async () => {
+                        await confirmDelete({
+                          title: "Reset security questions?",
+                          description: `Clear ${u.email}'s security questions?`,
+                          confirmLabel: "Reset",
+                          pendingLabel: "Resetting",
+                          onConfirm: () => clearSecMut.mutateAsync({ userId: u.id }),
+                        });
+                      }}
+                    />
+                  ))}</ul>
                 ) : (
-                  <EmptyState size="sm">No admin users.</EmptyState>
+                  <EmptyState size="sm">No facility users.</EmptyState>
                 )}
               </SectionCard>
             </section>
 
-            <section className="mt-8">
-              <div>
-                <h2 className="font-display text-xl font-semibold">Test Users <span className="text-muted-foreground font-normal">({testerUsers.length})</span></h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Accounts used for internal testing. They behave like regular users.
-                </p>
-              </div>
-              <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
-                {testerUsers.length ? (
-                  <ul className="divide-y divide-border">{testerUsers.map(renderItem)}</ul>
-                ) : (
-                  <EmptyState size="sm">No tester users.</EmptyState>
-                )}
-              </SectionCard>
-            </section>
+            {!isFacilityUser && (
+              <section className="mt-8">
+                <div>
+                  <h2 className="font-display text-xl font-semibold">Test Users <span className="text-muted-foreground font-normal">({testerUsers.length})</span></h2>
+                  <p className="mt-1 text-xs text-muted-foreground">Accounts used for internal testing. They behave like regular users.</p>
+                </div>
+                <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
+                  {testerUsers.length ? (
+                    <ul className="divide-y divide-border">{testerUsers.map(renderItem)}</ul>
+                  ) : (
+                    <EmptyState size="sm">No tester users.</EmptyState>
+                  )}
+                </SectionCard>
+              </section>
+            )}
 
             <section className="mt-8">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:flex-wrap">
@@ -594,6 +724,8 @@ function UserItem({
   user,
   isNew = false,
   facilityLabel,
+  showFacilityBadge = false,
+  showFacilityUserBadge = false,
   pendingEmail = false,
   pendingPassword = false,
   pendingReset = false,
@@ -611,6 +743,8 @@ function UserItem({
   user: UserRow;
   isNew?: boolean;
   facilityLabel: string;
+  showFacilityBadge?: boolean;
+  showFacilityUserBadge?: boolean;
   pendingEmail?: boolean;
   pendingPassword?: boolean;
   pendingReset?: boolean;
@@ -645,6 +779,8 @@ function UserItem({
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
                 <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} />
+                {showFacilityUserBadge && <Badge variant="facility-user">Facility User</Badge>}
+                {showFacilityBadge && facilityLabel && <Badge variant="facility">{facilityLabel}</Badge>}
               </div>
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
                 <span className="font-mono text-sm truncate capitalize">{user.profile!.username}</span>
