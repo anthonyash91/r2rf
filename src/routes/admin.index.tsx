@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireContentAdminBeforeLoad } from "@/lib/admin-guards";
 import { Checkbox } from "@/components/ui/checkbox";
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,7 @@ import { paletteStyle } from "@/lib/badge-styles";
 
 
 export const Route = createFileRoute("/admin/")({
+  beforeLoad: requireContentAdminBeforeLoad,
   component: AdminCategoriesPage,
 });
 

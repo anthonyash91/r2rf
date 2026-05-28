@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireContentAdminBeforeLoad } from "@/lib/admin-guards";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -80,6 +81,7 @@ function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "mis
 
 
 export const Route = createFileRoute("/admin/category/$id")({
+  beforeLoad: requireContentAdminBeforeLoad,
   validateSearch: (search: Record<string, unknown>) => ({
     edit: typeof search.edit === "string" ? search.edit : undefined,
   }),

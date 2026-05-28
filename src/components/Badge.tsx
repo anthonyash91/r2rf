@@ -117,7 +117,7 @@ type BadgeProps = {
 };
 
 const BASE =
-  "inline-flex items-center rounded-[4px] border px-2 py-0.5 text-xs font-medium flex-shrink-0";
+  "inline-flex items-center leading-none rounded-[4px] border px-2 py-0.5 text-[11px] font-medium flex-shrink-0";
 
 const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   new: Sparkles,

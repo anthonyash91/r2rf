@@ -247,12 +247,10 @@ function AdminAuditLogPage() {
                               <span className="text-muted-foreground"> — {detailText}</span>
                             )}
                           </div>
-                          <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5">
-                            <span>
-                              by {describeUser(e.actor_username, e.actor_email, e.actor_user_id)}
-                            </span>
-                            {e.ip_address && <span>· {e.ip_address}</span>}
-                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            by {describeUser(e.actor_username, e.actor_email, e.actor_user_id)}
+                            {e.ip_address && <>{" · "}{e.ip_address}</>}
+                          </p>
                         </div>
                       </div>
                       <time className="text-xs text-muted-foreground shrink-0 sm:text-right">

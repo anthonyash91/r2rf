@@ -1,3 +1,4 @@
+import React from "react";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { cn } from "@/lib/utils";
@@ -14,18 +15,23 @@ interface UserStatusBadgesProps {
   /** Whether to show the "New" badge. */
   isNew?: boolean;
   className?: string;
+  /** Suppress the facility badge (when showing facility as text metadata instead). */
+  hideFacilityBadge?: boolean;
+  /** Extra badges to render inside the same BadgeGroup, after the standard ones. */
+  children?: React.ReactNode;
 }
 
 /**
- * Standard role/status badge cluster used in admin user lists:
- * Tester | Facility | User | New (the "New" badge only renders for the
- * regular `user` role per the project's existing rule).
+ * Standard role/status badge cluster used in admin user lists.
+ * Pass extra <Badge> children to have them join the same connected pill group.
  */
 export function UserStatusBadges({
   user,
   facilityLabel,
   isNew = false,
+  hideFacilityBadge = false,
   className,
+  children,
 }: UserStatusBadgesProps) {
   const isTester = user.roles.includes("tester");
   const isUser = user.roles.includes("user");
@@ -34,13 +40,14 @@ export function UserStatusBadges({
     <BadgeGroup className={cn(className)}>
       {isTester ? (
         <Badge variant="tester">Tester</Badge>
-      ) : (
+      ) : !hideFacilityBadge ? (
         <Badge variant="facility">
           {facilityLabel || user.profile?.facility || ""}
         </Badge>
-      )}
+      ) : null}
       {!isTester && isUser && <Badge variant="user">User</Badge>}
       {isNew && !isTester && isUser && <Badge variant="new">New</Badge>}
+      {children}
     </BadgeGroup>
   );
 }
