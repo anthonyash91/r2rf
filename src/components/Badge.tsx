@@ -134,6 +134,7 @@ const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   unverified: AlertCircle,
   user: User,
   facility: Building2,
+  "facility-user": HeartHandshake,
 };
 
 const TYPE_ICONS: Record<string, LucideIcon> = {

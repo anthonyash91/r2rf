@@ -20,6 +20,7 @@ import {
   User,
   Building2,
   Blocks,
+  HeartHandshake,
   Shuffle,
   Check,
   type LucideIcon,
@@ -68,6 +69,7 @@ const VARIANT_LABELS: Record<BadgeVariantKey, string> = {
   unverified: "Unverified",
   user: "User",
   facility: "Facility",
+  "facility-user": "Facility User",
 };
 
 const TYPE_LABELS: Record<KnownTypeKey, string> = {
@@ -623,6 +625,7 @@ const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   unverified: AlertCircle,
   user: User,
   facility: Building2,
+  "facility-user": HeartHandshake,
 };
 
 function BadgePreview({ variant, draft }: { variant: BadgeVariantKey; draft: BadgeStyles }) {

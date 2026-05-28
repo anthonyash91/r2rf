@@ -4,7 +4,7 @@ import type { Session } from "@supabase/supabase-js";
 import { setActiveCustomHome } from "@/lib/custom-home-context";
 import { getMyFacilityCustomHome } from "@/lib/user-signup.functions";
 
-export type AppRole = "admin" | "contributor" | "user";
+export type AppRole = "admin" | "contributor" | "user" | "tester" | "facilityUser";
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -85,6 +85,8 @@ export function useAuth() {
   const isAdmin = roles.includes("admin");
   const isContributor = roles.includes("contributor");
   const isUser = roles.includes("user");
+  const isTester = roles.includes("tester");
+  const isFacilityUser = roles.includes("facilityUser");
 
   return {
     session,
@@ -92,7 +94,9 @@ export function useAuth() {
     roles,
     isAdmin,
     isContributor,
-    isUser,
+    isUser: isUser || isTester, // testers have the same end-user access
+    isTester,
+    isFacilityUser,
     canAccessAdmin: isAdmin || isContributor,
     loading,
   };

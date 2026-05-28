@@ -36,10 +36,22 @@ function Index() {
         .from("categories")
         .select("*")
         .eq("published", true)
-        .eq("home_page_mode", "default")
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return data as Category[];
+      const cats = (data ?? []) as Category[];
+      const catIds = cats.map((c) => c.id);
+      const facilityMap: Record<string, string[]> = {};
+      if (catIds.length > 0) {
+        const { data: links } = await (supabase as any)
+          .from("category_facilities")
+          .select("category_id, facility_value")
+          .in("category_id", catIds);
+        for (const r of (links ?? []) as { category_id: string; facility_value: string }[]) {
+          if (!facilityMap[r.category_id]) facilityMap[r.category_id] = [];
+          facilityMap[r.category_id].push(r.facility_value);
+        }
+      }
+      return cats.map((c) => ({ ...c, facilities: facilityMap[c.id] ?? [] }));
     },
   });
 

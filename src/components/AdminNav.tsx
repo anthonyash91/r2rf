@@ -73,7 +73,7 @@ export function AdminNav() {
     return (
       <>
         {l.label}
-        <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)] px-1 text-[10px] font-semibold leading-none text-white">
+        <span className="ml-0.5 inline-flex h-[1.0625rem] min-w-[1.0625rem] shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] px-[3px] text-[10px] font-bold tabular-nums text-white" style={{ lineHeight: 1 }}>
           {newUsersCount > 99 ? "99+" : newUsersCount}
         </span>
       </>

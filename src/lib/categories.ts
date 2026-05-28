@@ -27,6 +27,7 @@ export type Category = {
   tagline_es: string | null;
   description_es: string | null;
   created_at?: string;
+  facilities?: string[] | null; // facility values assigned to this category; null = fetch failed
 };
 
 export type ContentItem = {

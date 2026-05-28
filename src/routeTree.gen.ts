@@ -17,6 +17,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as CustomHomeRouteImport } from './routes/$customHome'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as FacilitySlugRouteImport } from './routes/facility.$slug'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSeedRouteImport } from './routes/admin.seed'
@@ -76,6 +77,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const FacilitySlugRoute = FacilitySlugRouteImport.update({
+  id: '/facility/$slug',
+  path: '/facility/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CategorySlugRoute = CategorySlugRouteImport.update({
   id: '/category/$slug',
@@ -196,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/admin/seed': typeof AdminSeedRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/facility/$slug': typeof FacilitySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/admin/seed': typeof AdminSeedRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/facility/$slug': typeof FacilitySlugRoute
   '/admin': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/admin/seed': typeof AdminSeedRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/facility/$slug': typeof FacilitySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/admin/custom-home-pages/$id': typeof AdminCustomHomePagesIdRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin/seed'
     | '/admin/users'
     | '/category/$slug'
+    | '/facility/$slug'
     | '/admin/'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
     | '/admin/seed'
     | '/admin/users'
     | '/category/$slug'
+    | '/facility/$slug'
     | '/admin'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/admin/seed'
     | '/admin/users'
     | '/category/$slug'
+    | '/facility/$slug'
     | '/admin/'
     | '/admin/category/$id'
     | '/admin/custom-home-pages/$id'
@@ -357,6 +369,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   SpanishRoute: typeof SpanishRoute
   CategorySlugRoute: typeof CategorySlugRoute
+  FacilitySlugRoute: typeof FacilitySlugRoute
   ApiPublicLogErrorRoute: typeof ApiPublicLogErrorRoute
   ApiPublicSitePasskeyRoute: typeof ApiPublicSitePasskeyRoute
 }
@@ -418,6 +431,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/facility/$slug': {
+      id: '/facility/$slug'
+      path: '/facility/$slug'
+      fullPath: '/facility/$slug'
+      preLoaderRoute: typeof FacilitySlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/category/$slug': {
       id: '/category/$slug'
@@ -615,6 +635,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   SpanishRoute: SpanishRoute,
   CategorySlugRoute: CategorySlugRoute,
+  FacilitySlugRoute: FacilitySlugRoute,
   ApiPublicLogErrorRoute: ApiPublicLogErrorRoute,
   ApiPublicSitePasskeyRoute: ApiPublicSitePasskeyRoute,
 }

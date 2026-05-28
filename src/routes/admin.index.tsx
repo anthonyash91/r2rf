@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Eye, EyeOff, Sparkles, RefreshCw, ExternalLink, LayoutGrid, Loader2, GripVertical } from "lucide-react";
+import { Pencil, Plus, Trash2, Eye, EyeOff, Sparkles, RefreshCw, ExternalLink, LayoutGrid, Loader2, GripVertical, X, Info } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -38,9 +38,12 @@ import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
+import { FacilityCombobox } from "@/components/FacilityCombobox";
+import { listFacilities } from "@/lib/facilities.functions";
+import { useBadgeStyles } from "@/hooks/use-badge-styles";
+import { paletteStyle } from "@/lib/badge-styles";
 
 
 export const Route = createFileRoute("/admin/")({
@@ -66,23 +69,6 @@ function AdminCategoriesPage() {
     },
   });
 
-  const { data: customHomePagesByCategory = {} } = useQuery({
-    queryKey: ["admin", "category-custom-home-pages"],
-    queryFn: async (): Promise<Record<string, { id: string; name: string; slug: string }[]>> => {
-      const { data, error } = await supabase
-        .from("custom_home_page_categories")
-        .select("category_id, custom_home_pages:custom_home_page_id(id, name, slug)");
-      if (error) throw error;
-      const map: Record<string, { id: string; name: string; slug: string }[]> = {};
-      for (const row of (data ?? []) as any[]) {
-        const page = row.custom_home_pages;
-        if (!page) continue;
-        (map[row.category_id] ??= []).push({ id: page.id, name: page.name || page.slug, slug: page.slug });
-      }
-      for (const k of Object.keys(map)) map[k].sort((a, b) => a.name.localeCompare(b.name));
-      return map;
-    },
-  });
 
   const { data: itemsByCategory = {} } = useQuery({
     queryKey: ["admin", "category-items"],
@@ -126,6 +112,25 @@ function AdminCategoriesPage() {
       return (data ?? []) as { value: string; label: string }[];
     },
   });
+
+  const { data: categoryFacilityMap = {} } = useQuery({
+    queryKey: ["admin", "category-facility-map"],
+    queryFn: async (): Promise<Record<string, string[]>> => {
+      const { data, error } = await (supabase as any)
+        .from("category_facilities")
+        .select("category_id, facility_value");
+      if (error) throw error;
+      const map: Record<string, string[]> = {};
+      for (const r of (data ?? []) as { category_id: string; facility_value: string }[]) {
+        if (!map[r.category_id]) map[r.category_id] = [];
+        map[r.category_id].push(r.facility_value);
+      }
+      return map;
+    },
+  });
+
+  const adminBadgeStyles = useBadgeStyles();
+  const facilityPs = paletteStyle(adminBadgeStyles.variants["facility"] ?? 11);
   const facilityLabelMap = React.useMemo(() => {
     const map: Record<string, string> = {};
     for (const f of facilityLabelList) map[f.value] = f.label;
@@ -149,7 +154,7 @@ function AdminCategoriesPage() {
       tagline: string;
       description: string;
       published: boolean;
-      home_page_mode: "default" | "custom";
+      facilities: string[];
       name_es: string | null;
       tagline_es: string | null;
       description_es: string | null;
@@ -167,7 +172,7 @@ function AdminCategoriesPage() {
         iconName = generated.icon_name;
         iconColor = generated.icon_color;
       }
-      const { error } = await supabase.from("categories").insert({
+      const { data: inserted, error } = await supabase.from("categories").insert({
         name: input.name,
         slug: input.slug,
         tagline: input.tagline,
@@ -176,18 +181,23 @@ function AdminCategoriesPage() {
         icon_name: iconName,
         icon_color: iconColor,
         published: input.published,
-        home_page_mode: input.home_page_mode,
         name_es: input.name_es,
         tagline_es: input.tagline_es,
         description_es: input.description_es,
         sort_order: (categories.at(-1)?.sort_order ?? 0) + 1,
-      });
+      }).select("id").single();
       if (error) throw error;
+      if (input.facilities.length > 0 && inserted?.id) {
+        await (supabase as any).from("category_facilities").insert(
+          input.facilities.map((f) => ({ category_id: inserted.id, facility_value: f }))
+        );
+      }
     },
     onSuccess: () => {
       toast.success("Category created");
       setCreating(false);
       qc.invalidateQueries({ queryKey: ["admin", "categories"] });
+      qc.invalidateQueries({ queryKey: ["admin", "category-facility-map"] });
       qc.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (e: any) => toast.error(e.message),
@@ -348,12 +358,21 @@ function AdminCategoriesPage() {
                         <Badge variant="count" title="Content items in this category" className="tabular-nums">
                           {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
                         </Badge>
-                        {c.home_page_mode === "custom" && (
-                          <Badge variant="custom" title="Only shown on selected custom home pages">Custom</Badge>
+                        {(categoryFacilityMap[c.id]?.length ?? 0) > 0 && (
+                          <Badge variant="facility" title={`Facility: ${(categoryFacilityMap[c.id] ?? []).map((v) => facilityLabelMap[v] ?? v).join("; ")}`}>
+                            {categoryFacilityMap[c.id]!.length === 1
+                              ? (facilityLabelMap[categoryFacilityMap[c.id]![0]] ?? categoryFacilityMap[c.id]![0])
+                              : `${categoryFacilityMap[c.id]!.length} facilities`}
+                          </Badge>
                         )}
-                        {c.home_page_mode !== "custom" && categoriesWithFacilityContent.has(c.id) && (
-                          <Badge variant="custom-content" title="This category has facility-restricted content items">Custom Content</Badge>
-                        )}
+                        {categoriesWithFacilityContent.has(c.id) && (() => {
+                          const customCount = (itemsByCategory[c.id] ?? []).filter((item) => !!itemFacilityMap[item.id]?.length).length;
+                          return (
+                            <Badge variant="custom-content" title="This category has facility-restricted content items">
+                              {customCount} Custom {customCount === 1 ? "item" : "items"}
+                            </Badge>
+                          );
+                        })()}
                         {!c.published && <Badge variant="draft">Draft</Badge>}
                         {s !== "complete" && (
                           <Badge variant="translation" title={trTitle}>
@@ -465,25 +484,6 @@ function AdminCategoriesPage() {
                     </div>
                   );
                 })()}
-                {c.home_page_mode === "custom" && (
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <span className="text-xs text-muted-foreground">Custom home page:</span>
-                    {(customHomePagesByCategory[c.id] ?? []).length === 0 ? (
-                      <span className="text-xs text-muted-foreground italic">No custom home pages</span>
-                    ) : (
-                      (customHomePagesByCategory[c.id] ?? []).map((p) => (
-                        <Link
-                          key={p.id}
-                          to="/admin/custom-home-pages/$id"
-                          params={{ id: p.id }}
-                          className="rounded-full hover:opacity-80 transition-opacity"
-                        >
-                          <Badge variant="facility">{p.name}</Badge>
-                        </Link>
-                      ))
-                    )}
-                  </div>
-                )}
 
               </div>
             </div>
@@ -632,7 +632,7 @@ function NewCategoryForm({
     tagline: string;
     description: string;
     published: boolean;
-    home_page_mode: "default" | "custom";
+    facilities: string[];
     name_es: string | null;
     tagline_es: string | null;
     description_es: string | null;
@@ -649,7 +649,7 @@ function NewCategoryForm({
   const [description, setDescription] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [published, setPublished] = useState(true);
-  const [homePageMode, setHomePageMode] = useState<"default" | "custom">("default");
+  const [facilities, setFacilities] = useState<string[]>([]);
   const [nameEs, setNameEs] = useState("");
   const [taglineEs, setTaglineEs] = useState("");
   const [descriptionEs, setDescriptionEs] = useState("");
@@ -660,6 +660,14 @@ function NewCategoryForm({
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
   const generate = useServerFn(generateCategoryCopy);
   const [generating, setGenerating] = useState(false);
+  const fetchFacilitiesForForm = useServerFn(listFacilities);
+  const { data: facilitiesForForm } = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilitiesForForm(),
+  });
+  const allFacilitiesForForm = facilitiesForForm?.facilities ?? [];
+  const formBadgeStyles = useBadgeStyles();
+  const formFacilityPs = paletteStyle(formBadgeStyles.variants["facility"] ?? 11);
 
   function handleGenerateIcon() {
     const trimmed = name.trim();
@@ -707,7 +715,7 @@ function NewCategoryForm({
           tagline: tagline.trim(),
           description: description.trim(),
           published,
-          home_page_mode: homePageMode,
+          facilities,
           name_es: nameEs.trim() || null,
           tagline_es: taglineEs.trim() || null,
           description_es: descriptionEs.trim() || null,
@@ -718,7 +726,7 @@ function NewCategoryForm({
       className="mt-6 mb-8 rounded-2xl border border-border bg-card p-6 pt-[18px] space-y-4"
     >
       <h2 className="font-display text-lg font-semibold">New category</h2>
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-3 gap-4 items-start">
         <Field label="Name">
           <input
             required
@@ -738,6 +746,34 @@ function NewCategoryForm({
             className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
         </Field>
+        <div className="relative">
+          <span className="text-sm font-medium">Facilities</span>
+          <div className="mt-1">
+            <FacilityCombobox
+              value=""
+              onChange={(v) => { if (v && !facilities.includes(v)) setFacilities((prev) => [...prev, v]); }}
+              options={allFacilitiesForForm.filter((a) => !facilities.includes(a.value))}
+              placeholder="Add facility…"
+              searchPlaceholder="Search facilities…"
+              emptyMessage={allFacilitiesForForm.length === 0 ? "No facilities found." : "All facilities selected."}
+            />
+          </div>
+          {facilities.length > 0 && (
+            <div className="absolute top-full inset-x-0 pt-2 flex flex-wrap gap-1.5 z-10">
+              {facilities.map((f) => {
+                const label = allFacilitiesForForm.find((a) => a.value === f)?.label ?? f;
+                return (
+                  <span key={f} className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-xs font-medium" style={{ color: formFacilityPs.color, backgroundColor: formFacilityPs.bg, borderColor: formFacilityPs.border }}>
+                    {label}
+                    <button type="button" onClick={() => setFacilities((prev) => prev.filter((x) => x !== f))} className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
       <div>
         <LoadingButton
@@ -828,18 +864,6 @@ function NewCategoryForm({
 
 
 
-
-      <Field label="Home Page">
-        <Select value={homePageMode} onValueChange={(v) => setHomePageMode(v as "default" | "custom")}>
-          <SelectTrigger className="w-full shadow-none">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="default">Default (main home page + all custom home pages)</SelectItem>
-            <SelectItem value="custom">Custom (only on selected custom home pages)</SelectItem>
-          </SelectContent>
-        </Select>
-      </Field>
 
       <label className="inline-flex items-center gap-2 text-sm">
         <Checkbox checked={published} onCheckedChange={(v) => setPublished(Boolean(v))} />

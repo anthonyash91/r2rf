@@ -96,6 +96,11 @@ function AdminCategoryPage() {
     queryFn: async () => {
       const { data: cat, error: e1 } = await supabase.from("categories").select("*").eq("id", id).single();
       if (e1) throw e1;
+      const { data: catFacLinks } = await (supabase as any)
+        .from("category_facilities")
+        .select("facility_value")
+        .eq("category_id", id);
+      const catFacilities = ((catFacLinks ?? []) as { facility_value: string }[]).map((r) => r.facility_value);
       const { data: items, error: e2 } = await supabase
         .from("content_items")
         .select("*")
@@ -122,19 +127,31 @@ function AdminCategoryPage() {
         ...item,
         facilities: facilityMap[item.id as string] ?? [],
       })) as ContentItem[];
-      return { category: cat as Category, items: itemsWithFacilities };
+      return {
+        category: { ...cat, facilities: catFacilities } as Category,
+        items: itemsWithFacilities,
+      };
     },
   });
 
   const saveCategory = useMutation({
     mutationFn: async (input: Partial<Category>) => {
-      const { error } = await supabase.from("categories").update(input).eq("id", id);
+      const { facilities, ...categoryFields } = input;
+      const { error } = await supabase.from("categories").update(categoryFields).eq("id", id);
       if (error) throw error;
+      // Sync category_facilities
+      await (supabase as any).from("category_facilities").delete().eq("category_id", id);
+      if (facilities && facilities.length > 0) {
+        await (supabase as any).from("category_facilities").insert(
+          facilities.map((f) => ({ category_id: id, facility_value: f }))
+        );
+      }
     },
     onSuccess: () => {
       toast.success("Saved");
       qc.invalidateQueries({ queryKey: ["admin", "category", id] });
       qc.invalidateQueries({ queryKey: ["admin", "categories"] });
+      qc.invalidateQueries({ queryKey: ["admin", "category-facility-map"] });
       qc.invalidateQueries({ queryKey: ["categories"] });
       qc.invalidateQueries({ queryKey: ["category"] });
     },
@@ -155,7 +172,7 @@ function AdminCategoryPage() {
             />
           </div>
           <CategoryEditor category={data.category} onSave={(v) => saveCategory.mutate(v)} busy={saveCategory.isPending} />
-          <ContentManager categoryId={id} categoryName={data.category.name} categorySlug={data.category.slug} items={data.items} initialEditId={edit} />
+          <ContentManager categoryId={id} categoryName={data.category.name} categorySlug={data.category.slug} items={data.items} initialEditId={edit} categoryFacilities={data.category.facilities ?? []} />
         </>
       )}
     </div>
@@ -178,9 +195,7 @@ function CategoryEditor({
   const [iconName, setIconName] = useState<string | null>(category.icon_name);
   const [iconColor, setIconColor] = useState<string | null>(category.icon_color);
   const [published, setPublished] = useState(category.published);
-  const [homePageMode, setHomePageMode] = useState<"default" | "custom">(
-    category.home_page_mode ?? "default",
-  );
+  const [catFacilities, setCatFacilities] = useState<string[]>(category.facilities ?? []);
   const [nameEs, setNameEs] = useState(category.name_es ?? "");
   const [taglineEs, setTaglineEs] = useState(category.tagline_es ?? "");
   const [descriptionEs, setDescriptionEs] = useState(category.description_es ?? "");
@@ -199,12 +214,21 @@ function CategoryEditor({
     setIconName(category.icon_name);
     setIconColor(category.icon_color);
     setPublished(category.published);
-    setHomePageMode(category.home_page_mode ?? "default");
+    setCatFacilities(category.facilities ?? []);
     setNameEs(category.name_es ?? "");
     setTaglineEs(category.tagline_es ?? "");
     setDescriptionEs(category.description_es ?? "");
     if (category.name_es || category.tagline_es || category.description_es) setShowEs(true);
   }, [category]);
+
+  const catBadgeStyles = useBadgeStyles();
+  const facilityPs = paletteStyle(catBadgeStyles.variants["facility"] ?? 11);
+  const fetchFacilityList = useServerFn(listFacilities);
+  const { data: facilityListData } = useQuery({
+    queryKey: ["facilities"],
+    queryFn: () => fetchFacilityList(),
+  });
+  const allFacilities = facilityListData?.facilities ?? [];
 
   const generate = useServerFn(generateCategoryCopy);
   const [generating, setGenerating] = useState(false);
@@ -264,16 +288,58 @@ function CategoryEditor({
             icon_name: iconName,
             icon_color: iconColor,
             published,
-            home_page_mode: homePageMode,
+            facilities: catFacilities,
             name_es: nameEs.trim() || null,
             tagline_es: taglineEs.trim() || null,
             description_es: descriptionEs.trim() || null,
           });
         }}
       >
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-3 gap-4 items-start">
           <LabeledInput label="Name" value={name} onChange={setName} />
           <LabeledInput label="Slug" value={slug} onChange={(v) => setSlug(slugify(v))} />
+          <div className="relative">
+            <span className="inline-flex items-center gap-1.5 text-sm font-medium">
+              Facilities
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" className="text-muted-foreground hover:text-foreground rounded-sm focus:outline-none">
+                      <Info className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[240px] text-xs">
+                    Restrict this category to specific facilities. Only users whose profile matches a selected facility will see it. Leave empty to show to everyone.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </span>
+            <div className="mt-1">
+              <FacilityCombobox
+                value=""
+                onChange={(v) => { if (v && !catFacilities.includes(v)) setCatFacilities((prev) => [...prev, v]); }}
+                options={allFacilities.filter((a) => !catFacilities.includes(a.value))}
+                placeholder="Add facility…"
+                searchPlaceholder="Search facilities…"
+                emptyMessage={allFacilities.length === 0 ? "No facilities found." : "All facilities selected."}
+              />
+            </div>
+            {catFacilities.length > 0 && (
+              <div className="absolute top-full inset-x-0 pt-2 flex flex-wrap gap-1.5 z-10">
+                {catFacilities.map((f) => {
+                  const label = allFacilities.find((a) => a.value === f)?.label ?? f;
+                  return (
+                    <span key={f} className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-xs font-medium" style={{ color: facilityPs.color, backgroundColor: facilityPs.bg, borderColor: facilityPs.border }}>
+                      {label}
+                      <button type="button" onClick={() => setCatFacilities((prev) => prev.filter((x) => x !== f))} className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
         <div>
           <LoadingButton
@@ -339,19 +405,6 @@ function CategoryEditor({
           </div>
         </div>
 
-        <label className="block">
-          <span className="text-sm font-medium">Home Page</span>
-          <Select value={homePageMode} onValueChange={(v) => setHomePageMode(v as "default" | "custom")}>
-            <SelectTrigger className="mt-1 w-full shadow-none">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="default">Default (main home page + all custom home pages)</SelectItem>
-              <SelectItem value="custom">Custom (only on selected custom home pages)</SelectItem>
-            </SelectContent>
-          </Select>
-        </label>
-
         <label className="inline-flex items-center gap-2 text-sm">
           <Checkbox checked={published} onCheckedChange={(v) => setPublished(Boolean(v))} />
 
@@ -408,7 +461,7 @@ function CategoryEditor({
   );
 }
 
-function ContentManager({ categoryId, categoryName, categorySlug, items, initialEditId }: { categoryId: string; categoryName: string; categorySlug: string; items: ContentItem[]; initialEditId?: string }) {
+function ContentManager({ categoryId, categoryName, categorySlug, items, initialEditId, categoryFacilities }: { categoryId: string; categoryName: string; categorySlug: string; items: ContentItem[]; initialEditId?: string; categoryFacilities: string[] }) {
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
   const { lang } = useI18n();
@@ -608,6 +661,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             onCancel={() => setEditing(null)}
             onSave={(v) => saveMut.mutate(v)}
             busy={saveMut.isPending}
+            categoryFacilities={categoryFacilities}
           />
         </div>
       )}
@@ -826,12 +880,14 @@ function ItemEditor({
   onCancel,
   onSave,
   busy,
+  categoryFacilities,
 }: {
   item: ContentItem | null;
   categoryName: string;
   onCancel: () => void;
   onSave: (v: Partial<ContentItem> & { id?: string }) => void;
   busy: boolean;
+  categoryFacilities: string[];
 }) {
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
@@ -1066,7 +1122,7 @@ function ItemEditor({
                 else setType(v);
               }}
             >
-              <SelectTrigger className="mt-1 w-full shadow-none">
+              <SelectTrigger className="mt-1 w-full shadow-none bg-background">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1121,7 +1177,7 @@ function ItemEditor({
             </div>
           )}
         </div>
-        <div>
+        <div className={categoryFacilities.length > 0 ? "opacity-40 pointer-events-none select-none" : ""}>
           <span className="inline-flex items-center gap-1.5 text-sm font-medium">
             Facility
             <TooltipProvider delayDuration={150}>
@@ -1132,7 +1188,9 @@ function ItemEditor({
                   </button>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-[220px] text-xs">
-                  Restrict this item to specific facilities. Only users whose profile matches a selected facility will see it. Leave empty to show to everyone.
+                  {categoryFacilities.length > 0
+                    ? "This category is already assigned to a facility. Item-level facility restrictions are not needed."
+                    : "Restrict this item to specific facilities. Only users whose profile matches a selected facility will see it. Leave empty to show to everyone."}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -1177,8 +1235,8 @@ function ItemEditor({
         </div>
       </div>
       <div>
-        <label className="block">
-          <span className="text-sm font-medium">URL (optional)</span>
+        <span className="text-sm font-medium">URL (optional)</span>
+        <div className="mt-1 flex items-center gap-2">
           <input
             type="url"
             placeholder="https://…"
@@ -1201,10 +1259,8 @@ function ItemEditor({
               const estimated = await estimateDuration(v, null, type);
               if (estimated) setDuration(estimated);
             }}
-            className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+            className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
-        </label>
-        <div className="mt-2">
           <FileUploader
             onUploaded={async (u, name) => {
               setUrl(u);

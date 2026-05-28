@@ -59,81 +59,119 @@ export const getUsageReport = createServerFn({ method: "POST" })
       facilityUserCount = userIdFilter.length;
     }
 
-    const [catsRes, itemsRes, totalUsersRes] = await Promise.all([
+    const [catsRes, itemsRes, totalUsersRes, catFacRes, itemFacRes] = await Promise.all([
       supabaseAdmin.from("categories").select("*").order("sort_order", { ascending: true }),
       supabaseAdmin.from("content_items").select("*").order("sort_order", { ascending: true }),
       supabaseAdmin
         .from("user_profiles")
         .select("user_id", { count: "exact", head: true })
         .eq("is_synthetic", false),
+      (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
+      (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
     ]);
     if (catsRes.error) throw new Error(catsRes.error.message);
     if (itemsRes.error) throw new Error(itemsRes.error.message);
+
+    // Build facility maps for category/item filtering
+    const catFacMap: Record<string, string[]> = {};
+    for (const r of (catFacRes.data ?? []) as { category_id: string; facility_value: string }[]) {
+      if (!catFacMap[r.category_id]) catFacMap[r.category_id] = [];
+      catFacMap[r.category_id].push(r.facility_value);
+    }
+    const itemFacMap: Record<string, string[]> = {};
+    for (const r of (itemFacRes.data ?? []) as { content_item_id: string; facility_value: string }[]) {
+      if (!itemFacMap[r.content_item_id]) itemFacMap[r.content_item_id] = [];
+      itemFacMap[r.content_item_id].push(r.facility_value);
+    }
+
+    const filteredCategories = facilityValue
+      ? (catsRes.data ?? []).filter((c: any) => {
+          const f = catFacMap[c.id] ?? [];
+          return f.length === 0 || f.includes(facilityValue);
+        })
+      : (catsRes.data ?? []);
+    const filteredItems = facilityValue
+      ? (itemsRes.data ?? []).filter((i: any) => {
+          const f = itemFacMap[i.id] ?? [];
+          return f.length === 0 || f.includes(facilityValue);
+        })
+      : (itemsRes.data ?? []);
     const totalUsers = totalUsersRes.count ?? 0;
 
-    // Build duration minutes lookup per item
+    // Early exit for facility reports with no users
+    if (facilityValue && facilityUserCount === 0) {
+      return {
+        categories: filteredCategories,
+        items: filteredItems,
+        catViews: {}, catClicks: {}, itemClicks: {},
+        totalViews: 0, totalClicks: 0,
+        facilityUserCount, totalUsers, hoursSpent: 0,
+      };
+    }
+
+    // Query pre-aggregated counts — no row limit, no raw event scanning
+    let countsQ = (supabaseAdmin as any)
+      .from("analytics_daily_counts")
+      .select("event_type, category_id, content_id, count");
+    if (sinceIso) countsQ = countsQ.gte("period_date", sinceIso.slice(0, 10));
+    if (facilityValue) {
+      countsQ = countsQ.eq("facility_value", facilityValue);
+    }
+
+    // Hours spent: still derived from user_content_progress + item durations
     const minutesByItem = new Map<string, number>();
     for (const it of (itemsRes.data ?? []) as any[]) {
       minutesByItem.set(it.id, parseDurationMinutes(it.duration));
     }
-
-    let q = supabaseAdmin
-      .from("analytics_events")
-      .select("event_type, category_id, content_id, created_at, user_id")
-      .order("created_at", { ascending: false })
-      .limit(50000);
-    if (sinceIso) q = q.gte("created_at", sinceIso);
-    if (userIdFilter !== null) {
-      if (userIdFilter.length === 0) {
-        return {
-          categories: catsRes.data ?? [],
-          items: itemsRes.data ?? [],
-          events: [],
-          facilityUserCount,
-          totalUsers,
-          hoursSpent: 0,
-        };
-      }
-      q = q.in("user_id", userIdFilter);
-    } else if (syntheticIds.size > 0) {
-      q = q.not("user_id", "in", `(${Array.from(syntheticIds).join(",")})`);
-    }
-
-    // Progress (completed items) for hours-spent calculation
     let pq = supabaseAdmin
       .from("user_content_progress")
-      .select("content_item_id, user_id, created_at")
-      .limit(50000);
+      .select("content_item_id, user_id");
     if (sinceIso) pq = pq.gte("created_at", sinceIso);
     if (userIdFilter !== null) {
-      pq = pq.in("user_id", userIdFilter);
+      if (userIdFilter.length === 0) {
+        // No users in this facility — skip the progress query
+        pq = pq.eq("user_id", "00000000-0000-0000-0000-000000000000");
+      } else {
+        pq = pq.in("user_id", userIdFilter);
+      }
     } else if (syntheticIds.size > 0) {
       pq = pq.not("user_id", "in", `(${Array.from(syntheticIds).join(",")})`);
     }
 
-    const [evRes, progRes] = await Promise.all([q, pq]);
-    if (evRes.error) throw new Error(evRes.error.message);
+    const [countsRes, progRes] = await Promise.all([countsQ, pq]);
+    if (countsRes.error) throw new Error(countsRes.error.message);
     if (progRes.error) throw new Error(progRes.error.message);
 
-    const events = (evRes.data ?? []).filter(
-      (e: any) => !e.user_id || !syntheticIds.has(e.user_id),
-    );
-    const progress = (progRes.data ?? []).filter(
-      (p: any) => !syntheticIds.has(p.user_id),
-    );
+    // Aggregate the pre-bucketed counts
+    const catViews: Record<string, number> = {};
+    const catClicks: Record<string, number> = {};
+    const itemClicks: Record<string, number> = {};
+    let totalViews = 0;
+    let totalClicks = 0;
+    for (const row of (countsRes.data ?? []) as any[]) {
+      const n = row.count as number;
+      if (row.event_type === "category_view") {
+        if (row.category_id) catViews[row.category_id] = (catViews[row.category_id] ?? 0) + n;
+        totalViews += n;
+      } else if (row.event_type === "content_click") {
+        if (row.category_id) catClicks[row.category_id] = (catClicks[row.category_id] ?? 0) + n;
+        if (row.content_id) itemClicks[row.content_id] = (itemClicks[row.content_id] ?? 0) + n;
+        totalClicks += n;
+      }
+    }
+
     let totalMinutes = 0;
-    for (const p of progress) {
-      totalMinutes += minutesByItem.get(p.content_item_id as string) ?? 0;
+    for (const p of progRes.data ?? []) {
+      totalMinutes += minutesByItem.get((p as any).content_item_id as string) ?? 0;
     }
     const hoursSpent = Math.round((totalMinutes / 60) * 10) / 10;
 
     return {
-      categories: catsRes.data ?? [],
-      items: itemsRes.data ?? [],
-      events,
-      facilityUserCount,
-      totalUsers,
-      hoursSpent,
+      categories: filteredCategories,
+      items: filteredItems,
+      catViews, catClicks, itemClicks,
+      totalViews, totalClicks,
+      facilityUserCount, totalUsers, hoursSpent,
     };
   });
 
@@ -255,7 +293,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes] = await Promise.all([
+    const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes] = await Promise.all([
       supabaseAdmin
         .from("user_profiles")
         .select("user_id, username, first_name, last_name, facility, created_at")
@@ -282,6 +320,8 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         .from("analytics_events")
         .select("event_type, created_at")
         .eq("user_id", data.userId),
+      (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
+      (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
     ]);
     if (profRes.error) throw new Error(profRes.error.message);
     if (catsRes.error) throw new Error(catsRes.error.message);
@@ -292,6 +332,31 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
 
     const { data: userInfo } = await supabaseAdmin.auth.admin.getUserById(data.userId);
     const email = userInfo?.user?.email ?? "";
+
+    // Filter categories and items to what this user's facility can see
+    const userFacility: string | null = (profRes.data as any)?.facility ?? null;
+    const catFacMap: Record<string, string[]> = {};
+    for (const r of (catFacRes.data ?? []) as { category_id: string; facility_value: string }[]) {
+      if (!catFacMap[r.category_id]) catFacMap[r.category_id] = [];
+      catFacMap[r.category_id].push(r.facility_value);
+    }
+    const itemFacMap: Record<string, string[]> = {};
+    for (const r of (itemFacRes.data ?? []) as { content_item_id: string; facility_value: string }[]) {
+      if (!itemFacMap[r.content_item_id]) itemFacMap[r.content_item_id] = [];
+      itemFacMap[r.content_item_id].push(r.facility_value);
+    }
+    const visibleCats = (catsRes.data ?? []).filter((c: any) => {
+      const f = catFacMap[c.id] ?? [];
+      if (f.length === 0) return true;
+      if (!userFacility) return false;
+      return f.includes(userFacility);
+    });
+    const visibleItems = (itemsRes.data ?? []).filter((i: any) => {
+      const f = itemFacMap[i.id] ?? [];
+      if (f.length === 0) return true;
+      if (!userFacility) return false;
+      return f.includes(userFacility);
+    });
 
     const readSet = new Set<string>(
       (progRes.data ?? []).map((r: any) => r.content_item_id as string),
@@ -309,7 +374,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
             created_at: (profRes.data as any).created_at,
           }
         : null,
-      categories: (catsRes.data ?? []).map((c: any) => ({
+      categories: visibleCats.map((c: any) => ({
         id: c.id,
         name: c.name,
         slug: c.slug,
@@ -317,7 +382,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         icon_color: c.icon_color,
         published: c.published,
       })),
-      items: (itemsRes.data ?? []).map((i: any) => ({
+      items: visibleItems.map((i: any) => ({
         id: i.id,
         category_id: i.category_id,
         title: i.title,

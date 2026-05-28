@@ -149,45 +149,41 @@ function DashboardPage() {
   );
 
 
+  const userFacility = (data?.profile as any)?.facility ?? null;
+
   const categoriesQuery = useQuery({
-    queryKey: ["dashboard-categories", customSlug],
-    enabled: !facilityHomeQuery.isLoading,
+    queryKey: ["dashboard-categories", customSlug, userFacility],
+    enabled: !facilityHomeQuery.isLoading && !isLoading,
     queryFn: async (): Promise<Category[]> => {
-      if (customSlug) {
-        const { data: page, error: pe } = await supabase
-          .from("custom_home_pages")
-          .select("id")
-          .eq("slug", customSlug)
-          .maybeSingle();
-        if (pe) throw pe;
-        if (!page) return [];
-        const { data: links, error: le } = await supabase
-          .from("custom_home_page_categories")
-          .select("category_id, sort_order")
-          .eq("custom_home_page_id", page.id)
-          .order("sort_order", { ascending: true });
-        if (le) throw le;
-        const ids = (links ?? []).map((l) => l.category_id);
-        if (ids.length === 0) return [];
-        const { data: cats, error: ce } = await supabase
-          .from("categories")
-          .select("*")
-          .eq("published", true)
-          .in("id", ids);
-        if (ce) throw ce;
-        const order = new Map(ids.map((id, i) => [id, i]));
-        return ((cats ?? []) as Category[]).sort(
-          (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
-        );
-      }
+      // Fetch all published categories + their facility assignments
       const { data: cats, error } = await supabase
         .from("categories")
         .select("*")
         .eq("published", true)
-        .eq("home_page_mode", "default")
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      return (cats ?? []) as Category[];
+      const allCats = (cats ?? []) as Category[];
+      const catIds = allCats.map((c) => c.id);
+      const facilityMap: Record<string, string[]> = {};
+      if (catIds.length > 0) {
+        const { data: links } = await (supabase as any)
+          .from("category_facilities")
+          .select("category_id, facility_value")
+          .in("category_id", catIds);
+        for (const r of (links ?? []) as { category_id: string; facility_value: string }[]) {
+          if (!facilityMap[r.category_id]) facilityMap[r.category_id] = [];
+          facilityMap[r.category_id].push(r.facility_value);
+        }
+      }
+      // Show: categories with no facility restrictions + those matching the user's facility
+      return allCats
+        .filter((c) => {
+          const f = facilityMap[c.id] ?? [];
+          if (f.length === 0) return true;
+          if (!userFacility) return false;
+          return f.includes(userFacility);
+        })
+        .map((c) => ({ ...c, facilities: facilityMap[c.id] ?? [] }));
     },
   });
 
