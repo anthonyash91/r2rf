@@ -1,5 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { requireContentAdminBeforeLoad } from "@/lib/admin-guards";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Checkbox } from "@/components/ui/checkbox";
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -48,14 +47,19 @@ import { paletteStyle } from "@/lib/badge-styles";
 
 
 export const Route = createFileRoute("/admin/")({
-  beforeLoad: requireContentAdminBeforeLoad,
   component: AdminCategoriesPage,
 });
 
 function AdminCategoriesPage() {
   const qc = useQueryClient();
-  useAuth();
+  const { isFacilityUser } = useAuth();
+  const navigate = useNavigate();
   const confirmDelete = useConfirmDelete();
+
+  // Facility users cannot access or edit categories
+  useEffect(() => {
+    if (isFacilityUser) navigate({ to: "/admin/users" });
+  }, [isFacilityUser, navigate]);
   const [creating, setCreating] = useState(false);
   const [expandedCourses, setExpandedCourses] = useState(new Set<string>());
 

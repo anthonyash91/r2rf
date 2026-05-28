@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { requireContentAdminBeforeLoad } from "@/lib/admin-guards";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
@@ -81,7 +81,6 @@ function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "mis
 
 
 export const Route = createFileRoute("/admin/category/$id")({
-  beforeLoad: requireContentAdminBeforeLoad,
   validateSearch: (search: Record<string, unknown>) => ({
     edit: typeof search.edit === "string" ? search.edit : undefined,
   }),
@@ -92,6 +91,11 @@ function AdminCategoryPage() {
   const { id } = Route.useParams();
   const { edit } = Route.useSearch();
   const qc = useQueryClient();
+  const { isFacilityUser } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (isFacilityUser) navigate({ to: "/admin/users" });
+  }, [isFacilityUser, navigate]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "category", id],
