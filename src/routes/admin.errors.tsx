@@ -59,12 +59,12 @@ function ErrorRow({ entry }: { entry: any }) {
             <div className="text-sm break-words">
               <span className="font-medium">{entry.message}</span>
             </div>
-            <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5">
+            <p className="text-xs text-muted-foreground">
               <span className="uppercase tracking-wide">{entry.source}</span>
-              {entry.route && <span>· {entry.route}</span>}
-              {entry.username && <span>· {entry.username}</span>}
-              {entry.ip_address && <span>· {entry.ip_address}</span>}
-            </div>
+              {entry.route && <>{" · "}{entry.route}</>}
+              {entry.username && <>{" · "}{entry.username}</>}
+              {entry.ip_address && <>{" · "}{entry.ip_address}</>}
+            </p>
             {(entry.stack || (entry.context && Object.keys(entry.context).length > 0)) && (
               <button
                 onClick={() => setOpen((o) => !o)}

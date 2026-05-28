@@ -21,20 +21,22 @@ type NavLink = {
   exact?: boolean;
   matchPrefixes?: string[];
   adminOnly?: boolean;
+  /** Also show to facilityUser role (scoped to their facility). */
+  facilityUserVisible?: boolean;
 };
 
 const links: NavLink[] = [
-  { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true, matchPrefixes: ["/admin/category"] },
-  { to: "/admin/users", label: "Users", icon: Users, adminOnly: true },
+  { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true, matchPrefixes: ["/admin/category"], adminOnly: true },
+  { to: "/admin/users", label: "Users", icon: Users, adminOnly: true, facilityUserVisible: true },
   { to: "/admin/facilities", label: "Facilities", icon: Building2, adminOnly: true },
   { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
-  { to: "/admin/analytics", label: "Reports", icon: BarChart3, adminOnly: true },
+  { to: "/admin/analytics", label: "Reports", icon: BarChart3, adminOnly: true, facilityUserVisible: true },
   { to: "/admin/home", label: "Home Header", icon: Home, adminOnly: true },
-  { to: "/admin/messages", label: "Messages", icon: MessageSquare, adminOnly: true },
+  { to: "/admin/messages", label: "Messages", icon: MessageSquare, adminOnly: true, facilityUserVisible: true },
   { to: "/admin/privacy", label: "Privacy Policy", icon: FileText, adminOnly: true },
   { to: "/admin/icons-badges", label: "Icons & Badges", icon: Palette, adminOnly: true },
   { to: "/admin/certificate", label: "Certificate Footer", icon: Award, adminOnly: true },
-  { to: "/admin/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true },
+  { to: "/admin/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true, facilityUserVisible: true },
   { to: "/admin/errors", label: "Errors", icon: AlertOctagon, adminOnly: true },
   { to: "/admin/seed", label: "Seed Content", icon: Sprout, adminOnly: true },
 ];
@@ -50,11 +52,16 @@ const LINK_CLASS_BASE =
   "inline-flex items-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors";
 
 export function AdminNav() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isContributor, isFacilityUser } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
 
-  const visible = links.filter((l) => !l.adminOnly || isAdmin);
+  const visible = links.filter((l) => {
+    if (!l.adminOnly) return true;                          // always visible
+    if (isAdmin || isContributor) return true;              // full admin access
+    if (isFacilityUser && l.facilityUserVisible) return true; // facility-scoped pages
+    return false;
+  });
 
   const lastSeen = useLastSeenUsersAt();
   const countFn = useServerFn(countNewUsers);

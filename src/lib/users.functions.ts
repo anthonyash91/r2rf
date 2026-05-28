@@ -16,6 +16,17 @@ async function assertAdmin(supabase: any, userId: string) {
   if (error || !data) throw new Error("Forbidden: admin access required");
 }
 
+/** Allows admin, contributor, and facilityUser — for read operations scoped to their facility. */
+async function assertAnyAdmin(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .in("role", ["admin", "contributor", "facilityUser"])
+    .maybeSingle();
+  if (error || !data) throw new Error("Forbidden: admin access required");
+}
+
 type ListedUser = {
   id: string;
   email: string;
@@ -144,7 +155,7 @@ export const listFacilityAdminUsers = createServerFn({ method: "POST" })
     z.object({ facilityValue: z.string().optional() }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAnyAdmin(context.userId);
     const { data: roleRows, error } = await supabaseAdmin
       .from("user_roles")
       .select("user_id")
@@ -181,13 +192,13 @@ export const listRegularUsers = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAnyAdmin(context.userId);
 
-    // Exclude any user with a privileged or tester role.
+    // Exclude any user with a privileged, tester, or facilityUser role.
     const { data: privilegedRows, error: privErr } = await supabaseAdmin
       .from("user_roles")
       .select("user_id")
-      .in("role", ["admin", "contributor", "tester"]);
+      .in("role", ["admin", "contributor", "tester", "facilityUser"]);
     if (privErr) throw new Error(privErr.message);
     const excludeIds = Array.from(new Set((privilegedRows ?? []).map((r) => r.user_id)));
 
@@ -334,6 +345,9 @@ export const createFacilityUser = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     const userId = created.user.id;
+    // Remove any auto-created roles (e.g. a trigger that inserts role "user" on signup)
+    // before assigning facilityUser so the account only ever has one role.
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
     await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "facilityUser" });
     // Store facility in user_profiles so facility-scoped queries work
     await supabaseAdmin.from("user_profiles").insert({
@@ -561,6 +575,18 @@ export const sendPasswordResetEmail = createServerFn({ method: "POST" })
       targetUserId: null,
       details: { method: "email_link", email: data.email },
     });
+    return { ok: true };
+  });
+
+export const resendVerificationEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ email: z.string().trim().email().max(255) }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { error } = await supabaseAdmin.auth.resend({ type: "signup", email: data.email });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 

@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,7 +15,6 @@ export function SiteHeader() {
   const { user, canAccessAdmin, isUser, isAdmin, isContributor } = useAuth();
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
   const location = useLocation();
   const isAdminUser = isAdmin || isContributor;
   const signOutLabel = isAdminUser ? t("nav.adminSignOut") : t("nav.signOut");
@@ -61,14 +60,13 @@ export function SiteHeader() {
   // Admins only follow URL slug (not persisted), so they aren't globally stuck to a facility
   const activeFacility = facilityRouteSlug || userFacilitySlug || (isAdminUser ? null : persistedFacilitySlug);
 
-  // Sign out navigates back to the facility slug if one is active, otherwise home
+  // Sign out uses a hard redirect rather than navigate() to avoid a race between
+  // the router re-evaluating the current route's beforeLoad guard (which redirects
+  // to /signup when no session is found) and the in-flight navigate() call.
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    if (activeFacility) {
-      navigate({ to: "/facility/$slug", params: { slug: activeFacility } });
-    } else {
-      navigate({ to: "/" });
-    }
+    const dest = activeFacility ? `/facility/${activeFacility}` : "/";
+    window.location.href = dest;
   };
 
   const homeLinkProps = activeFacility

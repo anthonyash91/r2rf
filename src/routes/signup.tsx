@@ -115,7 +115,7 @@ function SignupPageContent() {
       .eq("user_id", user.id)
       .then(({ data }) => {
         const roles = (data ?? []).map((r: any) => r.role as string);
-        const goesAdmin = roles.includes("admin") || roles.includes("contributor");
+        const goesAdmin = roles.includes("admin") || roles.includes("contributor") || roles.includes("facilityUser");
         if (redirectTo) {
           // Always honour an explicit redirect param (e.g. from requireAdminBeforeLoad)
           navigate({ to: redirectTo as any });

@@ -26,6 +26,7 @@ import {
   updateUserEmail,
   setUserPassword,
   sendPasswordResetEmail,
+  resendVerificationEmail,
   setUserRole,
   createUser,
   createTesterUser,
@@ -87,6 +88,7 @@ function AdminUsersPage() {
   const createFn = useServerFn(createUser);
   const createTesterFn = useServerFn(createTesterUser);
   const createFacilityFn = useServerFn(createFacilityUser);
+  const resendVerifyFn = useServerFn(resendVerificationEmail);
   const deleteFn = useServerFn(deleteUser);
   const deleteManyFn = useServerFn(deleteUsers);
   const clearSecFn = useServerFn(clearUserSecurityAnswers);
@@ -202,6 +204,10 @@ function AdminUsersPage() {
     mutationFn: (input: { email: string }) => sendReset({ data: input }),
     successMessage: "Password reset email sent",
   });
+  const resendVerifyMut = useToastMutation({
+    mutationFn: (input: { email: string }) => resendVerifyFn({ data: input }),
+    successMessage: "Verification email resent",
+  });
   const roleMut = useToastMutation({
     mutationFn: (input: { userId: string; role: "admin" | "contributor" | "tester"; enabled: boolean }) => setRole({ data: input }),
     successMessage: "Role updated",
@@ -264,14 +270,16 @@ function AdminUsersPage() {
           count={!isLoading ? totalUsers : undefined}
           description="Add users, edit emails, reset passwords, and manage access."
         />
-        <LoadingButton
-          onClick={() => setShowKindPicker(true)}
-          disabled={addKind !== null}
-          icon={<UserPlus className="h-4 w-4" />}
-          className="w-full sm:w-auto self-stretch sm:self-center"
-        >
-          Add User
-        </LoadingButton>
+        {!isFacilityUser && (
+          <LoadingButton
+            onClick={() => setShowKindPicker(true)}
+            disabled={addKind !== null}
+            icon={<UserPlus className="h-4 w-4" />}
+            className="w-full sm:w-auto self-stretch sm:self-center"
+          >
+            Add User
+          </LoadingButton>
+        )}
       </div>
 
       <FormDialog
@@ -463,6 +471,7 @@ function AdminUsersPage() {
         const isPendingEmail = rowPending<string>(emailMut, "userId");
         const isPendingPw = rowPending<string>(pwMut, "userId");
         const isPendingResetEmail = rowPending<string>(resetMut, "email");
+        const isPendingResendVerify = rowPending<string>(resendVerifyMut, "email");
         const isPendingRole = rowPending<string>(roleMut, "userId");
         const isPendingDelete = rowPending<string>(deleteMut, "userId");
         const isPendingClearSec = rowPending<string>(clearSecMut, "userId");
@@ -473,15 +482,18 @@ function AdminUsersPage() {
             user={u}
             isNew={isNewUser(u)}
             facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""}
+            hideDelete={isFacilityUser}
             pendingEmail={isPendingEmail(u.id)}
             pendingPassword={isPendingPw(u.id)}
             pendingReset={isPendingResetEmail(u.email)}
+            pendingResendVerify={isPendingResendVerify(u.email)}
             pendingRole={isPendingRole(u.id)}
             pendingDelete={isPendingDelete(u.id)}
             pendingClearSec={isPendingClearSec(u.id)}
             onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
             onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
             onSendReset={() => resetMut.mutate({ email: u.email })}
+            onResendVerify={() => resendVerifyMut.mutate({ email: u.email })}
             onToggleAdmin={async (enabled) => {
               await confirm({
                 title: enabled ? "Make admin?" : "Revoke admin?",
@@ -566,17 +578,21 @@ function AdminUsersPage() {
                       user={u}
                       isNew={false}
                       facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""}
-                      showFacilityBadge
                       showFacilityUserBadge
+                      hideRoleToggles
+                      hideDelete={isFacilityUser}
+                      selfUserId={isFacilityUser ? user?.id : undefined}
                       pendingEmail={isPendingEmail(u.id)}
                       pendingPassword={isPendingPw(u.id)}
                       pendingReset={isPendingResetEmail(u.email)}
+                      pendingResendVerify={isPendingResendVerify(u.email)}
                       pendingRole={isPendingRole(u.id)}
                       pendingDelete={isPendingDelete(u.id)}
                       pendingClearSec={isPendingClearSec(u.id)}
                       onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
                       onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
                       onSendReset={() => resetMut.mutate({ email: u.email })}
+                      onResendVerify={() => resendVerifyMut.mutate({ email: u.email })}
                       onToggleAdmin={async () => {}}
                       onToggleContributor={async () => {}}
                       onDelete={async () => {
@@ -724,17 +740,22 @@ function UserItem({
   user,
   isNew = false,
   facilityLabel,
-  showFacilityBadge = false,
+
   showFacilityUserBadge = false,
+  hideRoleToggles = false,
+  hideDelete = false,
+  selfUserId,
   pendingEmail = false,
   pendingPassword = false,
   pendingReset = false,
+  pendingResendVerify = false,
   pendingRole = false,
   pendingDelete = false,
   pendingClearSec = false,
   onChangeEmail,
   onSetPassword,
   onSendReset,
+  onResendVerify,
   onToggleAdmin,
   onToggleContributor,
   onDelete,
@@ -743,17 +764,25 @@ function UserItem({
   user: UserRow;
   isNew?: boolean;
   facilityLabel: string;
-  showFacilityBadge?: boolean;
+
   showFacilityUserBadge?: boolean;
+  /** Hide the Make/Revoke admin+contributor buttons (for facility user rows). */
+  hideRoleToggles?: boolean;
+  /** Hide the delete button (when the logged-in user is a facilityUser). */
+  hideDelete?: boolean;
+  /** When set, only show the Set Password button for this user ID. */
+  selfUserId?: string;
   pendingEmail?: boolean;
   pendingPassword?: boolean;
   pendingReset?: boolean;
+  pendingResendVerify?: boolean;
   pendingRole?: boolean;
   pendingDelete?: boolean;
   pendingClearSec?: boolean;
   onChangeEmail: (email: string) => void;
   onSetPassword: (password: string) => void;
   onSendReset: () => void;
+  onResendVerify: () => void;
   onToggleAdmin: (enabled: boolean) => void;
   onToggleContributor: (enabled: boolean) => void;
   onDelete: () => void;
@@ -768,7 +797,7 @@ function UserItem({
   const isContributor = user.roles.includes("contributor");
   const isTester = user.roles.includes("tester");
 
-  const isRegularUser = !!user.profile && !isAdmin && !isContributor && !isTester;
+  const isRegularUser = !!user.profile && !isAdmin && !isContributor && !isTester && !showFacilityUserBadge;
   const isUsernameUser = !!user.profile && (isRegularUser || isTester);
 
   return (
@@ -778,12 +807,12 @@ function UserItem({
           {isUsernameUser ? (
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
-                <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} />
-                {showFacilityUserBadge && <Badge variant="facility-user">Facility User</Badge>}
-                {showFacilityBadge && facilityLabel && <Badge variant="facility">{facilityLabel}</Badge>}
+                <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} hideFacilityBadge={isRegularUser} />
               </div>
               <div className="flex items-center gap-2 flex-nowrap min-w-0">
-                <span className="font-mono text-sm truncate capitalize">{user.profile!.username}</span>
+                <span className="font-mono text-sm truncate">
+                  {showFacilityUserBadge ? user.email : user.profile!.username}
+                </span>
                 {(user.profile!.first_name || user.profile!.last_name) && (
                   <span className="text-sm text-muted-foreground truncate">
                     {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
@@ -793,8 +822,16 @@ function UserItem({
                   user={user}
                   facilityLabel={facilityLabel}
                   isNew={isNew}
+                  hideFacilityBadge={isRegularUser}
                   className="hidden sm:inline-flex"
-                />
+                >
+                  {showFacilityUserBadge && <Badge variant="facility-user">Facility User</Badge>}
+                  {showFacilityUserBadge && (
+                    user.email_confirmed_at
+                      ? <Badge variant="verified">Verified</Badge>
+                      : <Badge variant="unverified">Unverified</Badge>
+                  )}
+                </UserStatusBadges>
               </div>
             </>
           ) : editingEmail ? (
@@ -834,6 +871,7 @@ function UserItem({
                   {isAdmin && <Badge variant="admin">Admin</Badge>}
                   {isContributor && <Badge variant="contributor">Contributor</Badge>}
                   {isTester && <Badge variant="tester">Tester</Badge>}
+                  {showFacilityUserBadge && <Badge variant="facility-user">Facility User</Badge>}
                   {user.email_confirmed_at ? (
                     <Badge variant="verified">Verified</Badge>
                   ) : (
@@ -855,6 +893,7 @@ function UserItem({
                   {isAdmin && <Badge variant="admin">Admin</Badge>}
                   {isContributor && <Badge variant="contributor">Contributor</Badge>}
                   {isTester && <Badge variant="tester">Tester</Badge>}
+                  {showFacilityUserBadge && <Badge variant="facility-user">Facility User</Badge>}
                   {user.email_confirmed_at ? (
                     <Badge variant="verified">Verified</Badge>
                   ) : (
@@ -864,9 +903,12 @@ function UserItem({
               </div>
             </>
           )}
-          <p className="mt-1 text-xs text-muted-foreground flex flex-wrap items-center gap-x-2">
-            <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
-            {user.last_sign_in_at && <span>· Last sign-in {new Date(user.last_sign_in_at).toLocaleDateString()}</span>}
+          <p className="mt-1 text-xs text-muted-foreground">
+            {(showFacilityUserBadge || isRegularUser) && facilityLabel && (
+              <><span className="font-medium text-foreground">{facilityLabel}</span>{" · "}</>
+            )}
+            Joined {new Date(user.created_at).toLocaleDateString()}
+            {user.last_sign_in_at && <>{" · "}Last sign-in {new Date(user.last_sign_in_at).toLocaleDateString()}</>}
           </p>
 
         </div>
@@ -875,7 +917,16 @@ function UserItem({
 
         <TooltipProvider delayDuration={150}>
           <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0 self-end md:self-auto">
-            {!isUsernameUser && (
+            {!isUsernameUser && !user.email_confirmed_at && (
+              <IconButton
+                aria-label="Resend verification email"
+                tooltip="Resend verification email"
+                icon={Mail}
+                pending={pendingResendVerify}
+                onClick={onResendVerify}
+              />
+            )}
+            {!isUsernameUser && user.email_confirmed_at && (
               <IconButton
                 aria-label="Send password reset email"
                 tooltip="Send reset email"
@@ -885,13 +936,15 @@ function UserItem({
               />
             )}
 
-            <IconButton
-              aria-label="Set password"
-              tooltip="Set password"
-              icon={KeyRound}
-              pending={pendingPassword}
-              onClick={() => setPwOpen((v) => !v)}
-            />
+            {(!selfUserId || selfUserId === user.id) && (
+              <IconButton
+                aria-label="Set password"
+                tooltip="Set password"
+                icon={KeyRound}
+                pending={pendingPassword}
+                onClick={() => setPwOpen((v) => !v)}
+              />
+            )}
 
             {isUsernameUser && (
               <IconButton
@@ -905,7 +958,7 @@ function UserItem({
 
 
 
-            {!isUsernameUser && (
+            {!isUsernameUser && !hideRoleToggles && (
               <>
                 <IconButton
                   aria-label={isAdmin ? "Revoke admin" : "Make admin"}
@@ -927,17 +980,19 @@ function UserItem({
               </>
             )}
 
-            <div className="mx-1 h-6 w-px bg-border" aria-hidden />
+            {!hideDelete && <div className="mx-1 h-6 w-px bg-border" aria-hidden />}
 
-            <IconButton
-              aria-label="Delete user"
-              tooltip="Delete user"
-              pendingTooltip="Deleting…"
-              variant="destructive"
-              icon={Trash2}
-              pending={pendingDelete}
-              onClick={onDelete}
-            />
+            {!hideDelete && (
+              <IconButton
+                aria-label="Delete user"
+                tooltip="Delete user"
+                pendingTooltip="Deleting…"
+                variant="destructive"
+                icon={Trash2}
+                pending={pendingDelete}
+                onClick={onDelete}
+              />
+            )}
           </div>
         </TooltipProvider>
       </div>

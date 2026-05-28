@@ -46,7 +46,7 @@ export function FacilityCombobox({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full inline-flex items-center justify-between rounded-md border border-input bg-background px-4 py-2 text-sm font-normal hover:bg-muted/40",
+            "w-full inline-flex items-center justify-between rounded-md border border-input bg-background px-4 py-2 text-sm font-normal hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-1",
             triggerClassName,
           )}
         >
