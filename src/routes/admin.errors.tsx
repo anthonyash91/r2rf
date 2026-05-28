@@ -7,7 +7,7 @@ import { AlertOctagon, Filter, Server, Monitor, Trash2 } from "lucide-react";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
-import { LoadMorePager, useLoadMore } from "@/components/LoadMorePager";
+import { Pager } from "@/components/LoadMorePager";
 import { LoadingButton } from "@/components/LoadingButton";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import {
@@ -112,7 +112,7 @@ function AdminErrorsPage() {
   const [source, setSource] = useState<SourceFilter>("");
   const [search, setSearch] = useState("");
   const [since, setSince] = useState("");
-  const pager = useLoadMore(25, 25);
+  const [page, setPage] = useState(0);
 
   const sinceIso = useMemo(() => (since ? new Date(since).toISOString() : undefined), [since]);
 
@@ -139,7 +139,7 @@ function AdminErrorsPage() {
         return blob.includes(s);
       })
     : all;
-  const visible = filtered.slice(0, pager.visibleCount);
+  const visible = filtered.slice(page * 25, (page + 1) * 25);
 
   const handleClearOld = async () => {
     await confirmDelete({
@@ -211,7 +211,7 @@ function AdminErrorsPage() {
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
-                  pager.reset();
+                  setPage(0);
                 }}
                 placeholder="message, stack, route, ip…"
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
@@ -225,7 +225,7 @@ function AdminErrorsPage() {
                 value={source || "all"}
                 onValueChange={(v) => {
                   setSource(v === "all" ? "" : (v as SourceFilter));
-                  pager.reset();
+                  setPage(0);
                 }}
               >
                 <SelectTrigger className="w-full px-4 py-2 text-sm">
@@ -247,7 +247,7 @@ function AdminErrorsPage() {
                 value={since}
                 onChange={(e) => {
                   setSince(e.target.value);
-                  pager.reset();
+                  setPage(0);
                 }}
                 className="w-full sm:w-auto rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
@@ -258,7 +258,7 @@ function AdminErrorsPage() {
                   setSource("");
                   setSearch("");
                   setSince("");
-                  pager.reset();
+                  setPage(0);
                 }}
                 className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
               >
@@ -284,12 +284,7 @@ function AdminErrorsPage() {
             </ul>
           )}
         </div>
-        <LoadMorePager
-          pager={pager}
-          total={filtered.length}
-          itemLabel="error"
-          itemLabelPlural="errors"
-        />
+        <Pager page={page} total={filtered.length} pageSize={25} onPage={setPage} itemLabel="error" itemLabelPlural="errors" />
       </section>
     </div>
   );

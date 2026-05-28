@@ -208,6 +208,21 @@ export const getMyProfile = createServerFn({ method: "GET" }).handler(async () =
 });
 
 
+export const getMyFacilityValue = createServerFn({ method: "GET" }).handler(async () => {
+  const request = getRequest();
+  const auth = request.headers.get("authorization");
+  if (!auth?.startsWith("Bearer ")) return { facility: null as string | null };
+  const token = auth.slice("Bearer ".length);
+  const { data: userRes } = await supabaseAdmin.auth.getUser(token);
+  if (!userRes?.user) return { facility: null };
+  const { data: profile } = await supabaseAdmin
+    .from("user_profiles")
+    .select("facility")
+    .eq("user_id", userRes.user.id)
+    .maybeSingle();
+  return { facility: (profile?.facility as string | undefined) ?? null };
+});
+
 export const getMyFacilityCustomHome = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
   const auth = request.headers.get("authorization");

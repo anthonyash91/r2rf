@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, useMemo, lazy, Suspense } from "react";
+import { useServerFn } from "@tanstack/react-start";
 
 const PdfViewer = lazy(() => import("@/components/PdfViewer"));
 import { trackCategoryView, trackContentClick } from "@/lib/analytics";
@@ -21,6 +22,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 import AutoHeight from "embla-carousel-auto-height";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveCustomHome } from "@/lib/custom-home-context";
+import { getMyFacilityValue } from "@/lib/user-signup.functions";
 
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
@@ -58,6 +60,7 @@ function CategoryPage() {
   const { isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
   const activeCustomHome = useActiveCustomHome();
+  const fetchFacilityValue = useServerFn(getMyFacilityValue);
   const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
   const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
   const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
@@ -128,9 +131,28 @@ function CategoryPage() {
         c.home_page_mode === "custom" ? allowedCustomIds.has(c.id) : true
       );
       const shuffled = [...filtered].sort(() => Math.random() - 0.5);
+
+      // Fetch facility restrictions for all items
+      const itemIds = (items ?? []).map((i) => i.id as string);
+      const facilityMap: Record<string, string[]> = {};
+      if (itemIds.length > 0) {
+        const { data: facilityLinks } = await (supabase as any)
+          .from("content_item_facilities")
+          .select("content_item_id, facility_value")
+          .in("content_item_id", itemIds);
+        for (const link of (facilityLinks ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+          if (!facilityMap[link.content_item_id]) facilityMap[link.content_item_id] = [];
+          facilityMap[link.content_item_id].push(link.facility_value);
+        }
+      }
+      const itemsWithFacilities = (items ?? []).map((item) => ({
+        ...item,
+        facilities: facilityMap[item.id as string] ?? [],
+      })) as ContentItem[];
+
       return {
         category: cat as Category,
-        items: (items ?? []) as ContentItem[],
+        items: itemsWithFacilities,
         others: shuffled as Category[],
       };
     },
@@ -189,6 +211,27 @@ function CategoryPage() {
     },
   });
   const seenSet = seenQuery.data ?? new Set<string>();
+
+  const facilityQuery = useQuery({
+    queryKey: ["my-facility", user?.id],
+    enabled: !!user?.id && !isAdmin,
+    queryFn: () => fetchFacilityValue(),
+  });
+
+  const visibleItems = useMemo(() => {
+    if (!data) return [];
+    if (isAdmin) return data.items;
+    if (facilityQuery.isLoading && !!user?.id) {
+      return data.items.filter((item) => (item.facilities?.length ?? 0) === 0);
+    }
+    const facility = facilityQuery.data?.facility ?? null;
+    return data.items.filter((item) => {
+      const f = item.facilities ?? [];
+      if (f.length === 0) return true;
+      if (!facility) return false;
+      return f.includes(facility);
+    });
+  }, [data, isAdmin, user?.id, facilityQuery.isLoading, facilityQuery.data]);
 
   const toggleRead = useMutation({
     mutationFn: async (vars: { itemId: string; markRead: boolean }) => {
@@ -266,16 +309,16 @@ function CategoryPage() {
                   <p className="text-sm font-medium text-[var(--color-accent)]">{pickLang(lang, data.category.tagline, data.category.tagline_es)}</p>
                   <h1 className="mt-2 font-display font-bold tracking-tight text-4xl">{pickLang(lang, data.category.name, data.category.name_es)}</h1>
                   <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{pickLang(lang, data.category.description, data.category.description_es)}</p>
-                  {user && !isAdmin && data.items.length > 0 && (
+                  {user && !isAdmin && visibleItems.length > 0 && (
                     <div className="mt-6 max-w-md space-y-1.5">
                       <Progress
-                        value={Math.round((data.items.filter((it) => readSet.has(it.id)).length / data.items.length) * 100)}
+                        value={Math.round((visibleItems.filter((it) => readSet.has(it.id)).length / visibleItems.length) * 100)}
                         className="h-2"
                       />
                       <p className="text-xs text-muted-foreground">
                         {t("dashboard.progressItems")
-                          .replace("{done}", String(data.items.filter((it) => readSet.has(it.id)).length))
-                          .replace("{total}", String(data.items.length))}
+                          .replace("{done}", String(visibleItems.filter((it) => readSet.has(it.id)).length))
+                          .replace("{total}", String(visibleItems.length))}
                       </p>
                     </div>
                   )}
@@ -287,13 +330,13 @@ function CategoryPage() {
           <main className="flex-1">
             <section className="mx-auto max-w-5xl px-6 py-20">
               {(() => {
-                const itemsWithKind = data.items.map((item) => {
+                const itemsWithKind = visibleItems.map((item) => {
                   const filterKey = (item.type ?? "other").trim().toLowerCase() || "other";
                   return { item, filterKey };
                 });
                 const availableKinds = Array.from(new Set(itemsWithKind.map((i) => i.filterKey)));
                 const filteredItems = typeFilter === "all"
-                  ? data.items
+                  ? visibleItems
                   : itemsWithKind.filter((i) => i.filterKey === typeFilter).map((i) => i.item);
                 const orderedKinds = availableKinds.sort((a, b) => a.localeCompare(b));
                 const showFilter = orderedKinds.length > 1;
@@ -395,6 +438,13 @@ function CategoryPage() {
                               <Badge variant="type" type={item.type}>
                                 {translateType(lang, item.type)}
                               </Badge>
+                              {isAdmin && (item.facilities?.length ?? 0) > 0 && (
+                                <Badge variant="facility">
+                                  {item.facilities!.length === 1
+                                    ? item.facilities![0]
+                                    : `${item.facilities!.length} facilities`}
+                                </Badge>
+                              )}
                             </BadgeGroup>
                             {item.duration && (
                               <span className="text-xs text-muted-foreground">

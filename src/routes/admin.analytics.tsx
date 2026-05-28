@@ -39,7 +39,7 @@ import {
   getUserProgressReport,
 } from "@/lib/reports.functions";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
-import { LoadMorePager, useLoadMore } from "@/components/LoadMorePager";
+import { Pager } from "@/components/LoadMorePager";
 
 export const Route = createFileRoute("/admin/analytics")({
   beforeLoad: requireAdminBeforeLoad,
@@ -569,7 +569,7 @@ function UsersReportTab({
   const selected = preselected.value;
   const isAll = selected === "__all__";
   const [isExporting, setIsExporting] = useState(false);
-  const pager = useLoadMore(10, 10);
+  const [page, setPage] = useState(0);
 
   const usersQuery = useQuery({
     queryKey: ["admin", "facility-users", selected],
@@ -590,7 +590,7 @@ function UsersReportTab({
   }
 
   const users = usersQuery.data?.users ?? [];
-  const visibleUsers = isAll ? users.slice(0, pager.visibleCount) : users;
+  const visibleUsers = isAll ? users.slice(page * 10, (page + 1) * 10) : users;
 
   return (
     <div>
@@ -661,7 +661,7 @@ function UsersReportTab({
             </ul>
           </SectionCard>
           {isAll && (
-            <LoadMorePager pager={pager} total={users.length} itemLabel="user" />
+            <Pager page={page} total={users.length} pageSize={10} onPage={setPage} itemLabel="user" />
           )}
         </>
       )}
