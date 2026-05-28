@@ -9,7 +9,7 @@ import { Building2, Plus, Pencil, Trash2, Users, Home } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
-import { LoadMorePager, useLoadMore } from "@/components/LoadMorePager";
+import { Pager } from "@/components/LoadMorePager";
 import { useToastMutation } from "@/hooks/use-toast-mutation";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import {
@@ -48,7 +48,7 @@ function AdminFacilitiesPage() {
   const [newLabels, setNewLabels] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
-  const pager = useLoadMore(10, 10);
+  const [page, setPage] = useState(0);
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -64,7 +64,7 @@ function AdminFacilitiesPage() {
         [f.label, f.value].filter(Boolean).some((v) => String(v).toLowerCase().includes(q)),
       )
     : allFacilities;
-  const visibleFacilities = facilities.slice(0, pager.visibleCount);
+  const visibleFacilities = facilities.slice(page * 10, (page + 1) * 10);
 
 
   const facilitiesKey = ["facilities"] as const;
@@ -182,7 +182,7 @@ function AdminFacilitiesPage() {
             isFiltered={Boolean(q)}
             noun={{ singular: "facility", plural: "facilities" }}
             searchQuery={searchQuery}
-            onSearchChange={(v) => { setSearchQuery(v); pager.reset(); }}
+            onSearchChange={(v) => { setSearchQuery(v); setPage(0); }}
             searchPlaceholder="Search facilities…"
             onEnterEditMode={() => setEditingId(null)}
             onDeleteSelected={async (ids) =>
@@ -323,7 +323,7 @@ function AdminFacilitiesPage() {
             <EmptyState size="sm">{q ? "No facilities match your search." : "No facilities yet."}</EmptyState>
           )}
         </div>
-        <LoadMorePager pager={pager} total={facilities.length} itemLabel="facility" itemLabelPlural="facilities" />
+        <Pager page={page} total={facilities.length} pageSize={10} onPage={setPage} itemLabel="facility" itemLabelPlural="facilities" />
 
       </section>
     </div>

@@ -6,7 +6,7 @@ import { ScrollText, UserPlus, UserMinus, KeyRound, ShieldCheck, ShieldOff, Tras
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
-import { LoadMorePager, useLoadMore } from "@/components/LoadMorePager";
+import { Pager } from "@/components/LoadMorePager";
 import { listAuditLog } from "@/lib/admin-audit.functions";
 
 export const Route = createFileRoute("/admin/audit-log")({
@@ -82,7 +82,7 @@ function AdminAuditLogPage() {
   const [action, setAction] = useState<ActionType | "">("");
   const [search, setSearch] = useState("");
   const [since, setSince] = useState("");
-  const pager = useLoadMore(25, 25);
+  const [page, setPage] = useState(0);
 
   const sinceIso = useMemo(() => (since ? new Date(since).toISOString() : undefined), [since]);
 
@@ -116,7 +116,7 @@ function AdminAuditLogPage() {
         return blob.includes(s);
       })
     : all;
-  const visible = filtered.slice(0, pager.visibleCount);
+  const visible = filtered.slice(page * 25, (page + 1) * 25);
 
   return (
     <div>
@@ -136,7 +136,7 @@ function AdminAuditLogPage() {
               <label className="block text-xs font-medium text-muted-foreground mb-1">Search</label>
               <input
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); pager.reset(); }}
+                onChange={(e) => { setSearch(e.target.value); setPage(0); }}
                 placeholder="username, email, ip, details…"
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
@@ -145,7 +145,7 @@ function AdminAuditLogPage() {
               <label className="block text-xs font-medium text-muted-foreground mb-1">Action</label>
               <select
                 value={action}
-                onChange={(e) => { setAction((e.target.value as ActionType) || ""); pager.reset(); }}
+                onChange={(e) => { setAction((e.target.value as ActionType) || ""); setPage(0); }}
                 className="w-full sm:w-auto rounded-md border border-input bg-background px-4 py-2 text-sm"
               >
                 <option value="">All actions</option>
@@ -159,13 +159,13 @@ function AdminAuditLogPage() {
               <input
                 type="datetime-local"
                 value={since}
-                onChange={(e) => { setSince(e.target.value); pager.reset(); }}
+                onChange={(e) => { setSince(e.target.value); setPage(0); }}
                 className="w-full sm:w-auto rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </div>
             {(action || search || since) && (
               <button
-                onClick={() => { setAction(""); setSearch(""); setSince(""); pager.reset(); }}
+                onClick={() => { setAction(""); setSearch(""); setSince(""); setPage(0); }}
                 className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
               >
                 <Filter className="h-3.5 w-3.5" />
@@ -233,7 +233,7 @@ function AdminAuditLogPage() {
             </ul>
           )}
         </div>
-        <LoadMorePager pager={pager} total={filtered.length} itemLabel="entry" itemLabelPlural="entries" />
+        <Pager page={page} total={filtered.length} pageSize={25} onPage={setPage} itemLabel="entry" itemLabelPlural="entries" />
       </section>
     </div>
   );

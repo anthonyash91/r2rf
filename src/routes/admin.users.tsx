@@ -13,7 +13,7 @@ import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { UserStatusBadges } from "@/components/UserStatusBadges";
-import { LoadMorePager, useLoadMore } from "@/components/LoadMorePager";
+import { Pager } from "@/components/LoadMorePager";
 import { useToastMutation } from "@/hooks/use-toast-mutation";
 import { rowPending } from "@/hooks/use-row-pending";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
@@ -38,7 +38,6 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FormDialog } from "@/components/FormDialog";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
@@ -87,7 +86,7 @@ function AdminUsersPage() {
   const [newUsername, setNewUsername] = useState("");
   const [newTesterPassword, setNewTesterPassword] = useState("");
   const [facilityFilter, setFacilityFilter] = useState<string>("all");
-  const regularPager = useLoadMore(10, 10);
+  const [page, setPage] = useState(0);
   
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
@@ -126,13 +125,13 @@ function AdminUsersPage() {
       "admin",
       "users",
       "regular",
-      { limit: regularPager.visibleCount, search: debouncedSearch, facility: facilityFilter },
+      { page, search: debouncedSearch, facility: facilityFilter },
     ],
     queryFn: () =>
       listRegularFn({
         data: {
-          limit: regularPager.visibleCount,
-          offset: 0,
+          limit: 10,
+          offset: page * 10,
           search: debouncedSearch,
           facility: facilityFilter === "all" ? "" : facilityFilter,
         },
@@ -512,7 +511,7 @@ function AdminUsersPage() {
                   <div className="w-full sm:flex-1 sm:min-w-0">
                     <FacilityCombobox
                       value={facilityFilter === "all" ? "" : facilityFilter}
-                      onChange={(v) => { setFacilityFilter(v || "all"); regularPager.reset(); }}
+                      onChange={(v) => { setFacilityFilter(v || "all"); setPage(0); }}
                       options={facilities.map((f) => ({ value: f.value, label: f.label }))}
                       placeholder="Filter by facility"
                       allowClear
@@ -532,7 +531,7 @@ function AdminUsersPage() {
                         filteredCount={regularTotal}
                         noun={{ singular: "user", plural: "users" }}
                         searchQuery={searchQuery}
-                        onSearchChange={(v) => { setSearchQuery(v); regularPager.reset(); }}
+                        onSearchChange={(v) => { setSearchQuery(v); setPage(0); }}
                         searchPlaceholder="Search users…"
                         onDeleteSelected={async (ids) =>
                           confirmDelete({
@@ -578,7 +577,7 @@ function AdminUsersPage() {
                         <EmptyState size="sm">{debouncedSearch ? "No users match your search." : "No users for this facility."}</EmptyState>
                       )}
                     </div>
-                    <LoadMorePager pager={regularPager} total={regularTotal} itemLabel="user" />
+                    <Pager page={page} total={regularTotal} pageSize={10} onPage={setPage} itemLabel="user" />
                   </>
                 );
               })()}

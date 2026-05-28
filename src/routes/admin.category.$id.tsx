@@ -9,16 +9,17 @@ import { BadgeGroup } from "@/components/BadgeGroup";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical, Info } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
+import { listFacilities } from "@/lib/facilities.functions";
 import { generateUniqueCategoryIcon, resolveCategoryIcon } from "@/lib/category-icons";
 import { FileUploader } from "@/components/FileUploader";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
 import { SortableList } from "@/components/SortableList";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,6 +28,7 @@ import { BulkActionBar } from "@/components/BulkActionBar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tag, ChevronDown } from "lucide-react";
 import { LabeledInput } from "@/components/FormField";
+import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { EmptyState } from "@/components/EmptyState";
@@ -71,7 +73,23 @@ function AdminCategoryPage() {
         .eq("category_id", id)
         .order("sort_order", { ascending: true });
       if (e2) throw e2;
-      return { category: cat as Category, items: (items ?? []) as ContentItem[] };
+      const itemIds = (items ?? []).map((i) => i.id as string);
+      const facilityMap: Record<string, string[]> = {};
+      if (itemIds.length > 0) {
+        const { data: links } = await (supabase as any)
+          .from("content_item_facilities")
+          .select("content_item_id, facility_value")
+          .in("content_item_id", itemIds);
+        for (const link of (links ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+          if (!facilityMap[link.content_item_id]) facilityMap[link.content_item_id] = [];
+          facilityMap[link.content_item_id].push(link.facility_value);
+        }
+      }
+      const itemsWithFacilities = (items ?? []).map((item) => ({
+        ...item,
+        facilities: facilityMap[item.id as string] ?? [],
+      })) as ContentItem[];
+      return { category: cat as Category, items: itemsWithFacilities };
     },
   });
 
@@ -405,33 +423,44 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
 
   const saveMut = useMutation({
     mutationFn: async (values: Partial<ContentItem> & { id?: string }) => {
-      if (values.id) {
-        const { id: itemId, ...rest } = values;
-        const { error } = await supabase.from("content_items").update(rest).eq("id", itemId);
+      const { facilities, ...itemValues } = values;
+      let savedId: string;
+      if (itemValues.id) {
+        const { id: itemId, ...rest } = itemValues;
+        const { error } = await supabase.from("content_items").update(rest).eq("id", itemId!);
         if (error) throw error;
-        return itemId;
+        savedId = itemId!;
       } else {
         const { data, error } = await supabase.from("content_items").insert({
           category_id: categoryId,
-          title: values.title!,
-          type: values.type ?? "Article",
-          source: values.source ?? "",
-          duration: values.duration ?? "",
-          description: values.description ?? "",
-          url: values.url ?? null,
-          file_url: values.file_url ?? null,
-          file_name: values.file_name ?? null,
-          title_es: values.title_es ?? null,
-          description_es: values.description_es ?? null,
-          source_es: values.source_es ?? null,
-          file_url_es: values.file_url_es ?? null,
-          file_name_es: values.file_name_es ?? null,
-          published: values.published ?? true,
+          title: itemValues.title!,
+          type: itemValues.type ?? "Article",
+          source: itemValues.source ?? "",
+          duration: itemValues.duration ?? "",
+          description: itemValues.description ?? "",
+          url: itemValues.url ?? null,
+          file_url: itemValues.file_url ?? null,
+          file_name: itemValues.file_name ?? null,
+          title_es: itemValues.title_es ?? null,
+          description_es: itemValues.description_es ?? null,
+          source_es: itemValues.source_es ?? null,
+          file_url_es: itemValues.file_url_es ?? null,
+          file_name_es: itemValues.file_name_es ?? null,
+          published: itemValues.published ?? true,
           sort_order: (items.at(-1)?.sort_order ?? 0) + 1,
         }).select("id").single();
         if (error) throw error;
-        return data.id as string;
+        savedId = data.id as string;
       }
+      // Sync facility restrictions: delete existing, reinsert selected
+      await (supabase as any).from("content_item_facilities").delete().eq("content_item_id", savedId);
+      if (facilities && facilities.length > 0) {
+        const { error: fErr } = await (supabase as any).from("content_item_facilities").insert(
+          facilities.map((f: string) => ({ content_item_id: savedId, facility_value: f }))
+        );
+        if (fErr) throw fErr;
+      }
+      return savedId;
     },
     onSuccess: (savedId) => {
       toast.success("Saved");
@@ -620,6 +649,13 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                               {trLabel}
                             </Badge>
                           )}
+                          {(item.facilities?.length ?? 0) > 0 && (
+                            <Badge variant="facility">
+                              {item.facilities!.length === 1
+                                ? item.facilities![0]
+                                : `${item.facilities!.length} facilities`}
+                            </Badge>
+                          )}
                         </BadgeGroup>
                       );
                     })()}
@@ -757,6 +793,12 @@ function ItemEditor({
 }) {
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
+  const fetchFacilitiesList = useServerFn(listFacilities);
+  const { data: facilitiesData } = useQuery({
+    queryKey: ["facilities-list"],
+    queryFn: () => fetchFacilitiesList(),
+  });
+  const availableFacilities = facilitiesData?.facilities ?? [];
   const { data: sourceSuggestions = [] } = useQuery({
     queryKey: ["admin", "content-sources"],
     queryFn: async (): Promise<string[]> => {
@@ -783,6 +825,7 @@ function ItemEditor({
   const [description, setDescription] = useState(item?.description ?? "");
   const [url, setUrl] = useState(item?.url ?? "");
   const [published, setPublished] = useState(item?.published ?? true);
+  const [facilities, setFacilities] = useState<string[]>(item?.facilities ?? []);
   const [titleEs, setTitleEs] = useState(item?.title_es ?? "");
   const [descriptionEs, setDescriptionEs] = useState(item?.description_es ?? "");
   
@@ -923,6 +966,7 @@ function ItemEditor({
           file_url: null,
           file_name: null,
           published,
+          facilities,
           title_es: titleEs.trim() || null,
           description_es: descriptionEs.trim() || null,
           source_es: null,
@@ -939,7 +983,7 @@ function ItemEditor({
         </button>
       </div>
       <LabeledInput label="Title" value={title} onChange={setTitle} required />
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <label className="block">
           <span className="text-sm font-medium">Type</span>
           {addingType ? (
@@ -1030,6 +1074,56 @@ function ItemEditor({
               {pdfEstimating && (
                 <span className="text-xs text-muted-foreground">Reading PDF to estimate reading time…</span>
               )}
+            </div>
+          )}
+        </div>
+        <div>
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium">
+            Facility
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="text-muted-foreground hover:text-foreground rounded-sm focus:outline-none">
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[220px] text-xs">
+                  Restrict this item to specific facilities. Only users whose profile matches a selected facility will see it. Leave empty to show to everyone.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </span>
+          <div className="mt-1">
+            <FacilityCombobox
+              value=""
+              onChange={(v) => {
+                if (v && !facilities.includes(v)) {
+                  setFacilities((prev) => [...prev, v]);
+                }
+              }}
+              options={availableFacilities.filter((a) => !facilities.includes(a.value))}
+              placeholder="Add facility…"
+              searchPlaceholder="Search facilities…"
+              emptyMessage={availableFacilities.length === 0 ? "No facilities found." : "All facilities selected."}
+            />
+          </div>
+          {facilities.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {facilities.map((f) => {
+                const label = availableFacilities.find((a) => a.value === f)?.label ?? f;
+                return (
+                  <span key={f} className="inline-flex items-center gap-1 rounded-full border border-input bg-background px-2.5 py-1 text-xs font-medium">
+                    {label}
+                    <button
+                      type="button"
+                      onClick={() => setFacilities((prev) => prev.filter((x) => x !== f))}
+                      className="rounded-full hover:bg-muted p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                );
+              })}
             </div>
           )}
         </div>
