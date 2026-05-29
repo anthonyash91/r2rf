@@ -14,11 +14,12 @@ import {
 import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
 import { syntheticEmail } from "@/lib/user-signup";
 import { listFacilities } from "@/lib/facilities.functions";
+import { useActiveFacilitySlug } from "@/lib/facility-context";
 import { questionLabel } from "@/lib/security-questions";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown, KeyRound, Loader2, LogIn, UserPlus } from "lucide-react";
+import { Check, ChevronsUpDown, KeyRound, Lock, Loader2, LogIn, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
@@ -81,9 +82,18 @@ function SignupPageContent() {
     queryFn: () => fetchFacilities(),
   });
   const facilities = facilitiesQuery.data?.facilities ?? [];
+  const activeFacilitySlug = useActiveFacilitySlug();
+  // If the user arrived via a facility slug, that facility is forced
+  const lockedFacility = activeFacilitySlug
+    ? (facilities.find((f) => f.value === activeFacilitySlug || f.customSlug === activeFacilitySlug) ?? null)
+    : null;
   useEffect(() => {
-    if (!facility && facilities.length) setFacility(facilities[0].value);
-  }, [facilities, facility]);
+    if (lockedFacility) {
+      setFacility(lockedFacility.value);
+    } else if (!facility && facilities.length) {
+      setFacility(facilities[0].value);
+    }
+  }, [facilities, facility, lockedFacility]);
   const submitReset = useServerFn(resetPassword);
 
   // On-screen keyboard bindings (suppress native keyboard, route key presses)
@@ -511,6 +521,13 @@ function SignupPageContent() {
                   </div>
                   <div>
                     <label className="text-sm font-medium">{t("signup.facility")}</label>
+                    {lockedFacility ? (
+                      // Facility locked — arrived via a facility slug
+                      <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
+                        <span>{lockedFacility.label}</span>
+                        <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      </div>
+                    ) : (
                     <Popover open={facilityOpen} onOpenChange={setFacilityOpen}>
                       <PopoverTrigger asChild>
                         <button
@@ -560,7 +577,7 @@ function SignupPageContent() {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                  </div>
+                    )}
 
 
 
