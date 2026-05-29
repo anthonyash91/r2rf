@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
@@ -35,16 +35,23 @@ export const Route = createFileRoute("/facility/$slug")({
 
 function FacilityPage() {
   const { facilityValue, facilitySiteId, inmatePin } = Route.useLoaderData();
+  const prevFacilityRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const facilityChanged = prevFacilityRef.current !== facilitySiteId;
+    prevFacilityRef.current = facilitySiteId;
+
     setActiveFacilitySlug(facilitySiteId);
-    // Use loaderData value — the URL param may have been stripped by the router
-    // by the time this effect runs, so we don't use Route.useSearch() here.
+
     if (inmatePin) {
+      // PIN present in loader data — always store it
       setActiveInmatePin(inmatePin);
-    } else {
+    } else if (facilityChanged) {
+      // Visiting a genuinely different facility with no PIN — clear it
       setActiveInmatePin(null);
     }
+    // If same facility and inmatePin is null (router stripped the URL param
+    // and re-ran the loader), leave the stored PIN untouched.
   }, [facilitySiteId, inmatePin]);
 
   const { data: categories = [], isLoading } = useQuery({
