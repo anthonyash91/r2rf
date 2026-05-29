@@ -675,6 +675,7 @@ function NewCategoryForm({
   const fetchFacilitiesForForm = useServerFn(listFacilities);
   const { data: facilitiesForForm } = useQuery({
     queryKey: ["facilities"],
+    staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilitiesForForm(),
   });
   const allFacilitiesForForm = facilitiesForForm?.facilities ?? [];

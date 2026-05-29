@@ -47,6 +47,7 @@ function AdminHomePage() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "site_settings", "home_hero"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<HomeHero> => {
       const { data, error } = await supabase
         .from("site_settings")

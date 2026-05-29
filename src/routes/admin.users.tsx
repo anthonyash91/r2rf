@@ -81,6 +81,7 @@ function AdminUsersPage() {
   const { data: myFacilityData } = useQuery({
     queryKey: ["my-facility", user?.id],
     enabled: isFacilityUser && !!user?.id,
+    staleTime: Infinity,
     queryFn: () => fetchMyFacility(),
   });
   const myFacilityValue = isFacilityUser ? (myFacilityData?.facility ?? null) : null;
@@ -185,6 +186,7 @@ function AdminUsersPage() {
   const fetchFacilities = useServerFn(listAllFacilities);
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
+    staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilities(),
   });
   const facilities = facilitiesQuery.data?.facilities ?? [];

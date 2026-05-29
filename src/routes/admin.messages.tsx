@@ -31,6 +31,7 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
   const { data: facilitiesData } = useQuery({
     queryKey: ["facilities"],
     enabled: !preselectedFacility, // only needed for admin picker view
+    staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilities(),
   });
   const facilities = facilitiesData?.facilities ?? [];
@@ -159,6 +160,7 @@ function AdminMessagesPage() {
   const { data: myFacilityData } = useQuery({
     queryKey: ["my-facility", user?.id],
     enabled: isFacilityUser && !!user?.id,
+    staleTime: Infinity,
     queryFn: () => fetchMyFacility(),
   });
   const myFacilityValue = isFacilityUser ? (myFacilityData?.facility ?? null) : null;

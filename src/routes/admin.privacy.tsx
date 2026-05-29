@@ -37,6 +37,7 @@ function AdminPrivacyPage() {
 
   const { data, isLoading } = useQuery({
     queryKey,
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<PrivacyPolicy> => {
       const { data, error } = await supabase
         .from("site_settings")

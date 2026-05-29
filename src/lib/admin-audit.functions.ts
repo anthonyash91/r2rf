@@ -11,6 +11,23 @@ async function assertAdmin(supabase: any, userId: string) {
   if (error || !data) throw new Error("Forbidden: admin access required");
 }
 
+/** Returns the facility value for a facilityUser caller, or null if not a facilityUser. */
+async function getFacilityUserScope(userId: string): Promise<string | null> {
+  const { data: roleRow } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "facilityUser")
+    .maybeSingle();
+  if (!roleRow) return null;
+  const { data: profile } = await supabaseAdmin
+    .from("user_profiles")
+    .select("facility")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return (profile?.facility as string | null) ?? null;
+}
+
 const ACTIONS = [
   "user.create",
   "user.delete",
@@ -35,7 +52,11 @@ export const listAuditLog = createServerFn({ method: "POST" })
       .parse(input ?? {}),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    // facilityUsers can view the audit log scoped to their facility; others need admin
+    const facilityScope = await getFacilityUserScope(context.userId);
+    if (!facilityScope) {
+      await assertAdmin(context.supabase, context.userId);
+    }
 
     let q = supabaseAdmin
       .from("admin_audit_log")
@@ -49,6 +70,19 @@ export const listAuditLog = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
+
+    // For facilityUser callers, collect user IDs at their facility and filter
+    // entries server-side — we never send cross-facility audit data to the client.
+    let facilityUserIds: Set<string> | null = null;
+    if (facilityScope) {
+      const { data: profiles } = await supabaseAdmin
+        .from("user_profiles")
+        .select("user_id")
+        .eq("facility", facilityScope);
+      facilityUserIds = new Set((profiles ?? []).map((p) => p.user_id as string));
+      // Always include the caller themselves
+      facilityUserIds.add(context.userId);
+    }
 
     // Collect user ids referenced (actor + target) so we can resolve
     // emails/usernames for display, since the writers don't always populate
@@ -78,7 +112,15 @@ export const listAuditLog = createServerFn({ method: "POST" })
       emailMap.set(id, u?.user?.email ?? null);
     }
 
-    let entries = (rows ?? []).map((r) => ({
+    const scoped = facilityUserIds
+      ? (rows ?? []).filter(
+          (r) =>
+            (r.actor_user_id && facilityUserIds!.has(r.actor_user_id)) ||
+            (r.target_user_id && facilityUserIds!.has(r.target_user_id)),
+        )
+      : (rows ?? []);
+
+    let entries = scoped.map((r) => ({
       id: r.id,
       created_at: r.created_at,
       action: r.action,

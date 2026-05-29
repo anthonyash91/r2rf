@@ -30,6 +30,7 @@ function Index() {
   const { data: facilityData } = useQuery({
     queryKey: ["my-facility", user?.id],
     enabled: rolesLoaded && isFacilityUser && !!user?.id,
+    staleTime: Infinity,
     queryFn: () => fetchMyFacility(),
   });
 
@@ -48,6 +49,7 @@ function Index() {
 function IndexContent() {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories", "public"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<Category[]> => {
       const { data, error } = await supabase
         .from("categories")
