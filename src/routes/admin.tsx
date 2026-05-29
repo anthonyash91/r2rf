@@ -26,16 +26,13 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminLayout() {
-  const { user, canAccessAdmin, loading } = useAuth();
-
-
-
+  const { user, canAccessAdmin, loading, rolesLoaded } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-10">
-        {loading || !user ? (
+        {loading || !rolesLoaded || !user ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : !canAccessAdmin ? (
           <SectionCard as="div" padded={false} className="p-8">
