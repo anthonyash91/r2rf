@@ -27,7 +27,7 @@ export const Route = createFileRoute("/facility/$slug")({
       facilityValue: facility.value as string,
       facilityLabel: facility.label as string,
       facilitySiteId: facility.site_id as string,
-      inmatePin: search.user ?? null,
+      inmatePin: search?.user ?? null,
     };
   },
   component: FacilityPage,
