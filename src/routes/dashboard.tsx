@@ -419,9 +419,13 @@ function DashboardPage() {
             <div>
               {(() => {
                 const firstName = ((data as any)?.profile?.first_name ?? "").trim();
+                const inmatePin = ((data as any)?.profile?.inmate_pin ?? "").trim();
                 return (
                   <h1 className="font-display text-3xl font-semibold">
                     {firstName ? t("dashboard.greeting", { name: firstName }) : t("dashboard.greetingNoName")}
+                    {inmatePin && (
+                      <span className="ml-2 text-muted-foreground font-normal text-2xl">({inmatePin})</span>
+                    )}
                   </h1>
                 );
               })()}
