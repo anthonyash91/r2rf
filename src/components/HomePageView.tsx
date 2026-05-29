@@ -105,7 +105,7 @@ function useColumnCount() {
 
 function MasonryCategories({ categories, lang, facilityContext }: { categories: Category[]; lang: Language; facilityContext?: string }) {
   const cols = useColumnCount();
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, isFacilityUser, user } = useAuth();
   const { t } = useI18n();
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
   const { data: facilityData } = useQuery({
@@ -188,7 +188,7 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
 
 
 
-                  {user && !isAdmin && count > 0 && (() => {
+                  {user && !isAdmin && !isFacilityUser && count > 0 && (() => {
                     const read = Math.min(reads[c.id] ?? 0, count);
                     const pct = Math.round((read / count) * 100);
                     return (

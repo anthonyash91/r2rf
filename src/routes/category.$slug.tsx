@@ -339,7 +339,7 @@ function CategoryPage() {
                   <p className="text-sm font-medium text-[var(--color-accent)]">{pickLang(lang, data.category.tagline, data.category.tagline_es)}</p>
                   <h1 className="mt-2 font-display font-bold tracking-tight text-4xl">{pickLang(lang, data.category.name, data.category.name_es)}</h1>
                   <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{pickLang(lang, data.category.description, data.category.description_es)}</p>
-                  {user && !isAdmin && visibleItems.length > 0 && (
+                  {user && !isAdmin && !isFacilityUser && visibleItems.length > 0 && (
                     <div className="mt-6 max-w-md space-y-1.5">
                       <Progress
                         value={Math.round((visibleItems.filter((it) => readSet.has(it.id)).length / visibleItems.length) * 100)}
@@ -530,7 +530,7 @@ function CategoryPage() {
                             )}
                           </div>
                         )}
-                        {user && !isAdmin && (() => {
+                        {user && !isAdmin && !isFacilityUser && (() => {
                           const isRead = readSet.has(item.id);
                           let readLabel = t("category.markedRead");
                           let unreadLabel = t("category.notRead");
