@@ -88,14 +88,14 @@ export const Route = createFileRoute("/admin/category/$id")({
 });
 
 function AdminCategoryPage() {
-  const { isFacilityUser, loading } = useAuth();
+  const { isFacilityUser, rolesLoaded } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && isFacilityUser) navigate({ to: "/admin/users" });
-  }, [isFacilityUser, loading, navigate]);
+    if (rolesLoaded && isFacilityUser) navigate({ to: "/admin/users" });
+  }, [isFacilityUser, rolesLoaded, navigate]);
 
-  if (loading || isFacilityUser) return null;
+  if (!rolesLoaded || isFacilityUser) return null;
   return <AdminCategoryPageContent />;
 }
 
