@@ -13,7 +13,9 @@ export const Route = createFileRoute("/facility/$slug")({
   validateSearch: (search: Record<string, unknown>) => ({
     user: typeof search.user === "string" ? search.user : undefined,
   }),
-  loader: async ({ params }) => {
+  // Loader receives search params before TanStack Router normalizes the URL,
+  // so the PIN is captured reliably here and passed through loaderData.
+  loader: async ({ params, search }) => {
     const { data: facility, error } = await supabase
       .from("facilities")
       .select("id, value, label, site_id")
@@ -25,19 +27,19 @@ export const Route = createFileRoute("/facility/$slug")({
       facilityValue: facility.value as string,
       facilityLabel: facility.label as string,
       facilitySiteId: facility.site_id as string,
+      inmatePin: search.user ?? null,
     };
   },
   component: FacilityPage,
 });
 
 function FacilityPage() {
-  const { facilityValue, facilitySiteId } = Route.useLoaderData();
-  const { user: inmatePin } = Route.useSearch();
+  const { facilityValue, facilitySiteId, inmatePin } = Route.useLoaderData();
 
   useEffect(() => {
     setActiveFacilitySlug(facilitySiteId);
-    // Set the inmate PIN from the URL param, or clear it if absent so it
-    // doesn't carry over from a previously visited facility.
+    // Use loaderData value — the URL param may have been stripped by the router
+    // by the time this effect runs, so we don't use Route.useSearch() here.
     if (inmatePin) {
       setActiveInmatePin(inmatePin);
     } else {
