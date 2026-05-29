@@ -104,6 +104,21 @@ export function SiteMessageBanner({
     setAnonDismissedAt(window.sessionStorage.getItem(sessionStorageKey(kind, facilityValue ?? undefined)));
   }, [kind, facilityValue, userId, data?.updatedAt]);
 
+  // ALL hooks must be called before any conditional returns — Rules of Hooks
+  const badgeStyles = useBadgeStyles();
+  const facilityPs = paletteStyle(badgeStyles.variants["facility"] ?? 11);
+  const isFacilityBanner = kind === "facility";
+  const bannerStyle = isFacilityBanner
+    ? { borderColor: facilityPs.border, backgroundColor: facilityPs.bg }
+    : undefined;
+  const iconStyle = isFacilityBanner ? { color: facilityPs.color } : undefined;
+  const iconClassName = isFacilityBanner
+    ? "h-4 w-4 shrink-0"
+    : "h-4 w-4 shrink-0 text-[var(--color-accent)]";
+  const dismissClassName = isFacilityBanner
+    ? "shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
+    : "shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-[var(--color-accent)]/15 hover:text-foreground transition-colors";
+
   if (!settingsKey || !data || !data.message.trim()) return null;
 
   const dismissedAt = userId ? dbDismissedAt ?? null : anonDismissedAt;
@@ -135,21 +150,6 @@ export function SiteMessageBanner({
       setAnonDismissedAt(data.updatedAt);
     }
   };
-
-  // Facility messages use whatever color the facility badge is currently set to
-  const badgeStyles = useBadgeStyles();
-  const facilityPs = paletteStyle(badgeStyles.variants["facility"] ?? 11);
-  const isFacilityBanner = kind === "facility";
-  const bannerStyle = isFacilityBanner
-    ? { borderColor: facilityPs.border, backgroundColor: facilityPs.bg }
-    : undefined;
-  const iconStyle = isFacilityBanner ? { color: facilityPs.color } : undefined;
-  const iconClassName = isFacilityBanner
-    ? "h-4 w-4 shrink-0"
-    : "h-4 w-4 shrink-0 text-[var(--color-accent)]";
-  const dismissClassName = isFacilityBanner
-    ? "shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground transition-colors"
-    : "shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-[var(--color-accent)]/15 hover:text-foreground transition-colors";
 
   return (
     <div
