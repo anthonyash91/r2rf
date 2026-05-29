@@ -10,12 +10,7 @@ import { setActiveFacilitySlug } from "@/lib/facility-context";
 import { setActiveInmatePin } from "@/lib/inmate-pin-context";
 
 export const Route = createFileRoute("/facility/$slug")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    user: typeof search.user === "string" ? search.user : undefined,
-  }),
-  // Loader receives search params before TanStack Router normalizes the URL,
-  // so the PIN is captured reliably here and passed through loaderData.
-  loader: async ({ params, search }) => {
+  loader: async ({ params }) => {
     const { data: facility, error } = await supabase
       .from("facilities")
       .select("id, value, label, site_id")
@@ -27,32 +22,32 @@ export const Route = createFileRoute("/facility/$slug")({
       facilityValue: facility.value as string,
       facilityLabel: facility.label as string,
       facilitySiteId: facility.site_id as string,
-      inmatePin: search?.user ?? null,
     };
   },
   component: FacilityPage,
 });
 
 function FacilityPage() {
-  const { facilityValue, facilitySiteId, inmatePin } = Route.useLoaderData();
-  const prevFacilityRef = useRef<string | null>(null);
+  const { facilityValue, facilitySiteId } = Route.useLoaderData();
+  const isMountedRef = useRef(false);
 
   useEffect(() => {
-    const facilityChanged = prevFacilityRef.current !== facilitySiteId;
-    prevFacilityRef.current = facilitySiteId;
-
     setActiveFacilitySlug(facilitySiteId);
 
-    if (inmatePin) {
-      // PIN present in loader data — always store it
-      setActiveInmatePin(inmatePin);
-    } else if (facilityChanged) {
-      // Visiting a genuinely different facility with no PIN — clear it
+    if (!isMountedRef.current) {
+      // First mount: read ?user= from the real browser URL before anything strips it.
+      // We avoid validateSearch / loader entirely so the router never touches this param.
+      isMountedRef.current = true;
+      if (typeof window !== "undefined") {
+        const pin = new URLSearchParams(window.location.search).get("user");
+        setActiveInmatePin(pin); // null clears, string sets
+      }
+    } else {
+      // Facility changed via client-side navigation — clear any stored PIN
+      // because the new facility URL didn't supply one.
       setActiveInmatePin(null);
     }
-    // If same facility and inmatePin is null (router stripped the URL param
-    // and re-ran the loader), leave the stored PIN untouched.
-  }, [facilitySiteId, inmatePin]);
+  }, [facilitySiteId]);
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["facility-categories", facilityValue],
