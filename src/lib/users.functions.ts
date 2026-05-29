@@ -16,6 +16,44 @@ async function assertAdmin(supabase: any, userId: string) {
   if (error || !data) throw new Error("Forbidden: admin access required");
 }
 
+/**
+ * Validates that the caller can perform write actions on a specific user.
+ * - admin/contributor: can manage anyone
+ * - facilityUser: can manage themselves OR regular users at their own facility
+ *                 but NOT other facilityUsers
+ */
+async function assertCanManageUser(callerId: string, targetUserId: string) {
+  const { data: roleRow } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", callerId)
+    .in("role", ["admin", "contributor", "facilityUser"])
+    .maybeSingle();
+  if (!roleRow) throw new Error("Forbidden: admin access required");
+
+  if (roleRow.role === "facilityUser") {
+    if (callerId === targetUserId) return; // always allowed to manage self
+
+    // Get caller's facility
+    const { data: callerProf } = await supabaseAdmin
+      .from("user_profiles").select("facility").eq("user_id", callerId).maybeSingle();
+    // Get target's facility
+    const { data: targetProf } = await supabaseAdmin
+      .from("user_profiles").select("facility").eq("user_id", targetUserId).maybeSingle();
+
+    if (!callerProf?.facility || callerProf.facility !== targetProf?.facility) {
+      throw new Error("Forbidden: can only manage users at your facility");
+    }
+
+    // Block managing other facilityUsers
+    const { data: targetRole } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", targetUserId).maybeSingle();
+    if (targetRole?.role === "facilityUser") {
+      throw new Error("Forbidden: cannot manage other facility users");
+    }
+  }
+}
+
 /** Allows admin, contributor, and facilityUser — for read operations scoped to their facility. */
 async function assertAnyAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -546,7 +584,7 @@ export const setUserPassword = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertCanManageUser(context.userId, data.userId);
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       password: data.password,
     });
@@ -566,7 +604,11 @@ export const sendPasswordResetEmail = createServerFn({ method: "POST" })
     z.object({ email: z.string().trim().email().max(255) }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    // Look up target user so we can validate facility scope for facilityUser callers
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+    const target = list?.users?.find((u) => u.email === data.email);
+    if (target) await assertCanManageUser(context.userId, target.id);
+    else await assertAnyAdmin(context.userId); // unknown email — require at least any admin
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email);
     if (error) throw new Error(error.message);
     await recordAdminAudit({
@@ -584,7 +626,10 @@ export const resendVerificationEmail = createServerFn({ method: "POST" })
     z.object({ email: z.string().trim().email().max(255) }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
+    const target = list?.users?.find((u) => u.email === data.email);
+    if (target) await assertCanManageUser(context.userId, target.id);
+    else await assertAnyAdmin(context.userId);
     const { error } = await supabaseAdmin.auth.resend({ type: "signup", email: data.email });
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -650,7 +695,7 @@ export const clearUserSecurityAnswers = createServerFn({ method: "POST" })
     z.object({ userId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertCanManageUser(context.userId, data.userId);
     const { error } = await supabaseAdmin
       .from("user_security_answers")
       .delete()
