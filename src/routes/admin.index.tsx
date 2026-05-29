@@ -776,7 +776,7 @@ function NewCategoryForm({
               {facilities.map((f) => {
                 const label = allFacilitiesForForm.find((a) => a.value === f)?.label ?? f;
                 return (
-                  <span key={f} className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-xs font-medium" style={{ color: formFacilityPs.color, backgroundColor: formFacilityPs.bg, borderColor: formFacilityPs.border }}>
+                  <span key={f} className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-[11px] font-medium" style={{ color: formFacilityPs.color, backgroundColor: formFacilityPs.bg, borderColor: formFacilityPs.border }}>
                     {label}
                     <button type="button" onClick={() => setFacilities((prev) => prev.filter((x) => x !== f))} className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10">
                       <X className="h-3 w-3" />
