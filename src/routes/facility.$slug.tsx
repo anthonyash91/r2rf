@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
@@ -29,24 +29,29 @@ export const Route = createFileRoute("/facility/$slug")({
 
 function FacilityPage() {
   const { facilityValue, facilitySiteId } = Route.useLoaderData();
-  const isMountedRef = useRef(false);
 
   useEffect(() => {
+    // Read the previously stored facility slug BEFORE overwriting it, so we can
+    // detect whether the user has navigated to a genuinely different facility.
+    const prevSlug = typeof window !== "undefined"
+      ? window.sessionStorage.getItem("active-facility-slug")
+      : null;
+
     setActiveFacilitySlug(facilitySiteId);
 
-    if (!isMountedRef.current) {
-      // First mount: read ?user= from the real browser URL before anything strips it.
-      // We avoid validateSearch / loader entirely so the router never touches this param.
-      isMountedRef.current = true;
-      if (typeof window !== "undefined") {
-        const pin = new URLSearchParams(window.location.search).get("user");
-        setActiveInmatePin(pin); // null clears, string sets
-      }
-    } else {
-      // Facility changed via client-side navigation — clear any stored PIN
-      // because the new facility URL didn't supply one.
+    const pin = typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("user")
+      : null;
+
+    if (pin) {
+      // Explicit PIN in URL — always store it.
+      setActiveInmatePin(pin);
+    } else if (prevSlug !== null && prevSlug !== facilitySiteId) {
+      // Navigated to a genuinely different facility with no PIN — clear.
       setActiveInmatePin(null);
     }
+    // Same facility returning without ?user= (or first visit with no PIN):
+    // leave whatever is already in session storage untouched.
   }, [facilitySiteId]);
 
   const { data: categories = [], isLoading } = useQuery({
