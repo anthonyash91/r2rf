@@ -11,6 +11,16 @@ async function assertAdmin(supabase: any, userId: string) {
   if (error || !data) throw new Error("Forbidden: admin access required");
 }
 
+async function assertAnyAdmin(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .in("role", ["admin", "contributor", "facilityUser"])
+    .maybeSingle();
+  if (error || !data) throw new Error("Forbidden: admin access required");
+}
+
 const RangeSchema = z.enum(["7d", "30d", "90d", "all"]);
 
 function sinceIsoFor(range: z.infer<typeof RangeSchema>): string | null {
@@ -34,7 +44,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAnyAdmin(context.userId);
     const sinceIso = sinceIsoFor(data.range);
     const facilityValue = data.facilityValue ?? null;
 
@@ -202,7 +212,7 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAnyAdmin(context.userId);
 
     const facilityValue = data.facilityValue ?? "";
     const includeSynthetic = data.includeSynthetic ?? false;
@@ -291,7 +301,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
     z.object({ userId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAnyAdmin(context.userId);
 
     const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes] = await Promise.all([
       supabaseAdmin
