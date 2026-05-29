@@ -114,6 +114,7 @@ type BadgeProps = {
   children: React.ReactNode;
   className?: string;
   title?: string;
+  onClick?: (e: React.MouseEvent<HTMLSpanElement>) => void;
 };
 
 const BASE =
@@ -289,7 +290,7 @@ export function iconForType(type: string | null | undefined): LucideIcon {
   return File;
 }
 
-export function Badge({ variant, type, hideIcon, children, className, title }: BadgeProps) {
+export function Badge({ variant, type, hideIcon, children, className, title, onClick }: BadgeProps) {
   const styles = useBadgeStyles();
 
   const idx =
@@ -313,6 +314,7 @@ export function Badge({ variant, type, hideIcon, children, className, title }: B
   return (
     <span
       title={title}
+      onClick={onClick}
       className={cn(BASE, "justify-center", !hideIcon && "gap-1", className)}
       style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
     >
