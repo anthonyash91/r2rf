@@ -10,10 +10,11 @@ import { setActiveFacilitySlug } from "@/lib/facility-context";
 
 export const Route = createFileRoute("/facility/$slug")({
   loader: async ({ params }) => {
+    // Match by auto-generated value slug OR custom slug
     const { data: facility, error } = await supabase
       .from("facilities")
-      .select("id, value, label")
-      .eq("value", params.slug)
+      .select("id, value, label, custom_slug")
+      .or(`value.eq.${params.slug},custom_slug.eq.${params.slug}`)
       .maybeSingle();
     if (error) throw error;
     if (!facility) throw notFound();

@@ -24,6 +24,7 @@ export const listFacilities = createServerFn({ method: "GET" }).handler(async ()
       value: f.value as string,
       label: f.label as string,
       sort_order: f.sort_order as number,
+      customSlug: (f.custom_slug ?? null) as string | null,
     })),
   };
 });
@@ -34,7 +35,7 @@ export const listAllFacilities = createServerFn({ method: "GET" })
     await assertAdmin(context.supabase, context.userId);
     const { data, error } = await supabaseAdmin
       .from("facilities")
-      .select("id, value, label, sort_order")
+      .select("id, value, label, sort_order, custom_slug")
       .order("label", { ascending: true });
     if (error) throw new Error(error.message);
     return {
@@ -190,16 +191,33 @@ export const updateFacility = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         label: z.string().trim().min(1).max(100),
+        customSlug: z.string().trim().max(64).nullable().optional(),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
-    const { error } = await supabaseAdmin
-      .from("facilities")
-      .update({ label: data.label })
-      .eq("id", data.id);
-    if (error) throw new Error(error.message);
+    // Validate custom slug uniqueness if provided
+    if (data.customSlug) {
+      const slugified = data.customSlug.toLowerCase().replace(/[^a-z0-9_-]/g, "-").replace(/^-+|-+$/g, "");
+      const { data: conflict } = await supabaseAdmin
+        .from("facilities")
+        .select("id")
+        .eq("custom_slug", slugified)
+        .neq("id", data.id)
+        .maybeSingle();
+      if (conflict) throw new Error("That custom slug is already in use by another facility.");
+      const { error } = await supabaseAdmin
+        .from("facilities")
+        .update({ label: data.label, custom_slug: slugified })
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const patch: Record<string, unknown> = { label: data.label };
+      if (data.customSlug === null) patch.custom_slug = null; // explicit clear
+      const { error } = await supabaseAdmin.from("facilities").update(patch).eq("id", data.id);
+      if (error) throw new Error(error.message);
+    }
     return { ok: true };
   });
 
