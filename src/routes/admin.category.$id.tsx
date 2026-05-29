@@ -88,14 +88,21 @@ export const Route = createFileRoute("/admin/category/$id")({
 });
 
 function AdminCategoryPage() {
+  const { isFacilityUser, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && isFacilityUser) navigate({ to: "/admin/users" });
+  }, [isFacilityUser, loading, navigate]);
+
+  if (loading || isFacilityUser) return null;
+  return <AdminCategoryPageContent />;
+}
+
+function AdminCategoryPageContent() {
   const { id } = Route.useParams();
   const { edit } = Route.useSearch();
   const qc = useQueryClient();
-  const { isFacilityUser } = useAuth();
-  const navigate = useNavigate();
-  useEffect(() => {
-    if (isFacilityUser) navigate({ to: "/admin/users" });
-  }, [isFacilityUser, navigate]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "category", id],

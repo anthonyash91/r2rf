@@ -50,16 +50,22 @@ export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
 });
 
+/** Thin auth gate — blocks facilityUsers and shows nothing while roles load. */
 function AdminCategoriesPage() {
-  const qc = useQueryClient();
-  const { isFacilityUser } = useAuth();
+  const { isFacilityUser, loading } = useAuth();
   const navigate = useNavigate();
-  const confirmDelete = useConfirmDelete();
 
-  // Facility users cannot access or edit categories
   useEffect(() => {
-    if (isFacilityUser) navigate({ to: "/admin/users" });
-  }, [isFacilityUser, navigate]);
+    if (!loading && isFacilityUser) navigate({ to: "/admin/users" });
+  }, [isFacilityUser, loading, navigate]);
+
+  if (loading || isFacilityUser) return null;
+  return <AdminCategoriesContent />;
+}
+
+function AdminCategoriesContent() {
+  const qc = useQueryClient();
+  const confirmDelete = useConfirmDelete();
   const [creating, setCreating] = useState(false);
   const [expandedCourses, setExpandedCourses] = useState(new Set<string>());
 
