@@ -40,6 +40,7 @@ import {
   listFacilityUsers,
   getUserProgressReport,
 } from "@/lib/reports.functions";
+import { listFacilityAdminUsers } from "@/lib/users.functions";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 import { Pager } from "@/components/LoadMorePager";
 
@@ -579,6 +580,7 @@ function UsersReportTab({
   setActiveUser: (u: { userId: string; name: string } | null) => void;
 }) {
   const fetchUsers = useServerFn(listFacilityUsers);
+  const fetchFacilityStaff = useServerFn(listFacilityAdminUsers);
   const selected = preselected.value;
   const isAll = selected === "__all__";
   const [isExporting, setIsExporting] = useState(false);
@@ -588,6 +590,13 @@ function UsersReportTab({
     queryKey: ["admin", "facility-users", selected],
     enabled: !!selected,
     queryFn: () => fetchUsers({ data: { facilityValue: isAll ? "" : selected } }),
+  });
+
+  // Fetch facilityUser accounts for this facility (only on specific facility view)
+  const staffQuery = useQuery({
+    queryKey: ["admin", "facility-staff", selected],
+    enabled: !!selected && !isAll,
+    queryFn: () => fetchFacilityStaff({ data: { facilityValue: selected } }),
   });
 
   const selectedLabel = preselected.label;
@@ -603,7 +612,9 @@ function UsersReportTab({
   }
 
   const users = usersQuery.data?.users ?? [];
+  const staff = staffQuery.data?.users ?? [];
   const visibleUsers = isAll ? users.slice(page * 10, (page + 1) * 10) : users;
+  const isLoading = usersQuery.isLoading || (!isAll && staffQuery.isLoading);
 
   return (
     <div>
@@ -622,7 +633,7 @@ function UsersReportTab({
               setTimeout(() => setIsExporting(false), 0);
             }
           }}
-          disabled={usersQuery.isLoading || (!isAll && users.length === 0)}
+          disabled={isLoading || (!isAll && users.length === 0)}
           pending={isExporting}
           pendingText="Exporting…"
           icon={<Download className="h-4 w-4" />}
@@ -632,50 +643,103 @@ function UsersReportTab({
         </LoadingButton>
       </div>
 
-      {usersQuery.isLoading ? (
+      {isLoading ? (
         <p className="mt-8 text-muted-foreground">Loading…</p>
-      ) : users.length === 0 ? (
-        <p className="mt-8 text-muted-foreground">
-          {isAll ? "No registered users." : "No users in this facility."}
-        </p>
       ) : (
         <>
-          <SectionCard padded={false} className="mt-8 overflow-hidden">
-            <ul className="divide-y divide-border">
-              {visibleUsers.map((u) => {
-                const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "—";
-                const meta: string[] = [];
-                if (u.username) meta.push(`@${u.username}`);
-                if (isAll && (u as any).facility) meta.push((u as any).facility);
-                const lastLoginIso = (u as any).last_sign_in_at || (u as any).last_login_date || null;
-                return (
-                  <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 pb-6 sm:pb-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{name}</p>
-                      {meta.length > 0 && (
-                        <p className="text-xs text-muted-foreground truncate">{meta.join(" · ")}</p>
-                      )}
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        Signed up {fmtDate(u.created_at) || "—"}
-                        {" · "}
-                        Last login {lastLoginIso ? fmtDate(lastLoginIso) : "Never"}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveUser({ userId: u.user_id, name })}
-                      className="rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted self-start sm:self-auto"
-                    >
-                      View report
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </SectionCard>
-          {isAll && (
-            <Pager page={page} total={users.length} pageSize={10} onPage={setPage} itemLabel="user" />
+          {/* Facility Staff section — only shown on specific facility view */}
+          {!isAll && (
+            <div className="mt-8">
+              <div className="mb-3">
+                <h2 className="font-display text-xl font-semibold">
+                  Facility Staff <span className="text-muted-foreground font-normal">({staff.length})</span>
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">Facility admin accounts.</p>
+              </div>
+              <SectionCard padded={false} className="overflow-hidden">
+                {staff.length === 0 ? (
+                  <p className="px-6 py-4 text-sm text-muted-foreground">No facility staff accounts.</p>
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {staff.map((u) => {
+                      const name = [u.profile?.first_name, u.profile?.last_name].filter(Boolean).join(" ") || u.email || "—";
+                      return (
+                        <li key={u.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 pb-6 sm:pb-4">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              Joined {fmtDate(u.created_at) || "—"}
+                              {u.last_sign_in_at && <>{" · "}Last sign-in {fmtDate(u.last_sign_in_at)}</>}
+                            </p>
+                          </div>
+                          <Badge variant={u.email_confirmed_at ? "verified" : "unverified"}>
+                            {u.email_confirmed_at ? "Verified" : "Unverified"}
+                          </Badge>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </SectionCard>
+            </div>
           )}
+
+          {/* Regular users section */}
+          <div className={!isAll ? "mt-8" : "mt-0"}>
+            {!isAll && (
+              <div className="mb-3">
+                <h2 className="font-display text-xl font-semibold">
+                  Users <span className="text-muted-foreground font-normal">({users.length})</span>
+                </h2>
+                <p className="mt-1 text-xs text-muted-foreground">Regular user accounts signed up from the public form.</p>
+              </div>
+            )}
+            {users.length === 0 ? (
+              <p className={`text-muted-foreground ${!isAll ? "" : "mt-8"}`}>
+                {isAll ? "No registered users." : "No users in this facility."}
+              </p>
+            ) : (
+              <>
+                <SectionCard padded={false} className={`overflow-hidden ${!isAll ? "" : "mt-8"}`}>
+                  <ul className="divide-y divide-border">
+                    {visibleUsers.map((u) => {
+                      const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "—";
+                      const meta: string[] = [];
+                      if (u.username) meta.push(`@${u.username}`);
+                      if (isAll && (u as any).facility) meta.push((u as any).facility);
+                      const lastLoginIso = (u as any).last_sign_in_at || (u as any).last_login_date || null;
+                      return (
+                        <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 pb-6 sm:pb-4">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{name}</p>
+                            {meta.length > 0 && (
+                              <p className="text-xs text-muted-foreground truncate">{meta.join(" · ")}</p>
+                            )}
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              Signed up {fmtDate(u.created_at) || "—"}
+                              {" · "}
+                              Last login {lastLoginIso ? fmtDate(lastLoginIso) : "Never"}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setActiveUser({ userId: u.user_id, name })}
+                            className="rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted self-start sm:self-auto"
+                          >
+                            View report
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </SectionCard>
+                {isAll && (
+                  <Pager page={page} total={users.length} pageSize={10} onPage={setPage} itemLabel="user" />
+                )}
+              </>
+            )}
+          </div>
         </>
       )}
     </div>
