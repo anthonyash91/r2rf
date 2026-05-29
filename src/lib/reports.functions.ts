@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { parseMinutes } from "@/lib/duration";
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", {
@@ -147,7 +148,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
     // Hours spent: still derived from user_content_progress + item durations
     const minutesByItem = new Map<string, number>();
     for (const it of (itemsRes.data ?? []) as any[]) {
-      minutesByItem.set(it.id, parseDurationMinutes(it.duration));
+      minutesByItem.set(it.id, parseMinutes(it.duration));
     }
     let pq = supabaseAdmin
       .from("user_content_progress")
@@ -201,18 +202,6 @@ export const getUsageReport = createServerFn({ method: "POST" })
     };
   });
 
-function parseDurationMinutes(d?: string | null): number {
-  if (!d) return 0;
-  let total = 0;
-  const re = /(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)?/gi;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(d)) !== null) {
-    const n = parseFloat(m[1]);
-    const u = (m[2] ?? "min").toLowerCase();
-    total += u.startsWith("h") ? n * 60 : n;
-  }
-  return total;
-}
 
 /**
  * List users belonging to a facility, with names/email/username.

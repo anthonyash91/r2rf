@@ -30,6 +30,19 @@ export function withActionWord(duration: string | null | undefined, type: string
 
 // Sensible default duration string for a given content type, used when no
 // media file is available to probe (e.g. bulk seeding from JSON/CSV).
+export function parseMinutes(d?: string | null): number {
+  if (!d) return 0;
+  let total = 0;
+  const re = /(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)?/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(d)) !== null) {
+    const n = parseFloat(m[1]);
+    const u = (m[2] ?? "min").toLowerCase();
+    total += u.startsWith("h") ? n * 60 : n;
+  }
+  return total;
+}
+
 export function defaultDurationForType(type: string | null | undefined): string {
   const t = (type ?? "").toLowerCase();
   if (t.includes("image")) return "View image";
