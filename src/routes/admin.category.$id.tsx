@@ -10,7 +10,7 @@ import { BadgeGroup } from "@/components/BadgeGroup";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, Loader2, FolderOpen, GripVertical, Info, Tag, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, FolderOpen, GripVertical, Info, Tag, ChevronDown } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { listFacilities } from "@/lib/facilities.functions";
@@ -22,7 +22,6 @@ import { SortableList } from "@/components/SortableList";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
@@ -619,9 +618,9 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       if (error) throw error;
       return ids.length;
     },
-    onSuccess: async (deleted) => {
+    onSuccess: (deleted) => {
       toast.success(`Deleted ${deleted} ${deleted === 1 ? "item" : "items"}`);
-      await invalidate();
+      invalidate();
       bulk.clear();
     },
     onError: (e: any) => toast.error(e.message),
@@ -633,9 +632,9 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       if (error) throw error;
       return { count: ids.length, type };
     },
-    onSuccess: async ({ count, type }) => {
+    onSuccess: ({ count, type }) => {
       toast.success(`Updated ${count} ${count === 1 ? "item" : "items"} to ${type}`);
-      await invalidate();
+      invalidate();
       bulk.clear();
       bulk.exitEditMode();
     },

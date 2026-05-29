@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
 export function StatCard({
@@ -6,7 +7,7 @@ export function StatCard({
   label,
 }: {
   icon: LucideIcon;
-  value: string | number;
+  value: ReactNode;
   label: string;
 }) {
   return (
