@@ -216,41 +216,22 @@ function AdminFacilitiesPage() {
                   >
                     <div className={`flex flex-col gap-5 md:flex-row md:items-center md:justify-between ${editable ? "pointer-events-none" : ""}`}>
                       {isEditing ? (
-                        <>
-                          <div className="flex-1 flex flex-col gap-2">
-                            <input
-                              value={editingLabel}
-                              onChange={(e) => setEditingLabel(e.target.value)}
-                              placeholder="Facility name"
-                              className="rounded-md border border-input bg-background px-4 py-2 text-sm"
-                              autoFocus
-                            />
-                            <div className="flex items-center gap-2">
-                              <input
-                                value={editingCustomSlug}
-                                onChange={(e) => setEditingCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "-"))}
-                                placeholder="Custom slug (optional) — e.g. my-facility"
-                                className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-                              />
-                              {editingCustomSlug && (
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingCustomSlug("")}
-                                  className="text-xs text-muted-foreground hover:text-foreground"
-                                >
-                                  Clear
-                                </button>
-                              )}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              Accessible at <span className="font-mono">/facility/{editingCustomSlug || "<slug>"}</span> in addition to the auto slug.
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
-                            <LoadingButton
-                              variant="secondary"
-                              onClick={() => setEditingId(null)}
-                            >
+                        <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
+                          <input
+                            value={editingLabel}
+                            onChange={(e) => setEditingLabel(e.target.value)}
+                            placeholder="Facility name"
+                            className="flex-1 min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm"
+                            autoFocus
+                          />
+                          <input
+                            value={editingCustomSlug}
+                            onChange={(e) => setEditingCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "-"))}
+                            placeholder="Custom slug (optional)"
+                            className="flex-1 min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+                          />
+                          <div className="flex items-center gap-2 shrink-0">
+                            <LoadingButton variant="secondary" onClick={() => setEditingId(null)}>
                               Cancel
                             </LoadingButton>
                             <LoadingButton
@@ -266,7 +247,7 @@ function AdminFacilitiesPage() {
                               Save
                             </LoadingButton>
                           </div>
-                        </>
+                        </div>
                       ) : (
                         <>
                           <div className="flex-1 min-w-0 space-y-2">
