@@ -46,7 +46,7 @@ export function SiteHeader() {
     staleTime: Infinity,
     queryFn: () => fetchFacilityValue(),
   });
-  const userFacilitySlug = (isUser || isFacilityUser) ? (facilityData?.slug ?? facilityData?.facility ?? null) : null;
+  const userFacilitySlug = (isUser || isFacilityUser) ? (facilityData?.slug ?? null) : null;
 
   // Session-persisted facility slug (survives navigation away from the facility page)
   const persistedFacilitySlug = useActiveFacilitySlug();

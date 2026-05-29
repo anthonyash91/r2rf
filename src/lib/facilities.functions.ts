@@ -14,7 +14,7 @@ async function assertAdmin(supabase: any, userId: string) {
 export const listFacilities = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("facilities")
-    .select("id, value, label, sort_order, custom_slug")
+    .select("id, value, label, sort_order, site_id")
     .eq("hidden", false)
     .order("label", { ascending: true });
   if (error) throw new Error(error.message);
@@ -24,7 +24,7 @@ export const listFacilities = createServerFn({ method: "GET" }).handler(async ()
       value: f.value as string,
       label: f.label as string,
       sort_order: f.sort_order as number,
-      customSlug: (f.custom_slug ?? null) as string | null,
+      siteId: (f.site_id ?? null) as string | null,
     })),
   };
 });
@@ -35,7 +35,7 @@ export const listAllFacilities = createServerFn({ method: "GET" })
     await assertAdmin(context.supabase, context.userId);
     const { data, error } = await supabaseAdmin
       .from("facilities")
-      .select("id, value, label, sort_order, custom_slug")
+      .select("id, value, label, sort_order, site_id")
       .order("label", { ascending: true });
     if (error) throw new Error(error.message);
     return {
@@ -44,6 +44,7 @@ export const listAllFacilities = createServerFn({ method: "GET" })
         value: f.value as string,
         label: f.label as string,
         sort_order: f.sort_order as number,
+        siteId: (f.site_id ?? null) as string | null,
       })),
     };
   });
@@ -54,7 +55,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
     await assertAdmin(context.supabase, context.userId);
 
     const [facRes, profRes, cifRes, catFacRes, msgRes, facilityUserRolesRes] = await Promise.all([
-      supabaseAdmin.from("facilities").select("id, value, label, sort_order, custom_slug").order("label", { ascending: true }),
+      supabaseAdmin.from("facilities").select("id, value, label, sort_order, site_id").order("label", { ascending: true }),
       supabaseAdmin.from("user_profiles").select("user_id, facility"),
       (supabaseAdmin as any).from("content_item_facilities").select("facility_value, content_items(id, title, category_id, categories(id, name))"),
       (supabaseAdmin as any).from("category_facilities").select("facility_value, category_id, categories(id, name, slug)"),
@@ -66,7 +67,6 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
     if (cifRes.error) console.warn("[listFacilitiesWithStats] content_item_facilities:", cifRes.error.message);
     if (catFacRes.error) console.warn("[listFacilitiesWithStats] category_facilities:", catFacRes.error.message);
 
-    // Build map of facility value → message text for facilities that have an active message
     const facilityMessageMap = new Map<string, string>();
     for (const row of msgRes.data ?? []) {
       const val = (row as any).value as { enabled?: boolean; message?: string } | null;
@@ -82,7 +82,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
     );
     const userCounts = new Map<string, number>();
     for (const p of profRes.data ?? []) {
-      if (facilityUserIds.has((p as any).user_id as string)) continue; // exclude facilityUser accounts
+      if (facilityUserIds.has((p as any).user_id as string)) continue;
       const k = (p as any).facility as string;
       userCounts.set(k, (userCounts.get(k) ?? 0) + 1);
     }
@@ -118,7 +118,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
         value: f.value as string,
         label: f.label as string,
         sort_order: f.sort_order as number,
-        customSlug: (f.custom_slug ?? null) as string | null,
+        siteId: (f.site_id ?? null) as string | null,
         userCount: userCounts.get(f.value as string) ?? 0,
         contentItems: facilityContentMap.get(f.value as string) ?? [],
         customCategories: facilityCategoryMap.get(f.value as string) ?? [],
@@ -127,10 +127,9 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
     };
   });
 
-function slugify(input: string): string {
-  return input
+function deriveValue(siteId: string): string {
+  return siteId
     .toLowerCase()
-    .trim()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "")
     .slice(0, 64);
@@ -145,7 +144,7 @@ export const addFacilities = createServerFn({ method: "POST" })
           .array(
             z.object({
               label: z.string().trim().min(1).max(100),
-              value: z.string().trim().min(1).max(64).optional(),
+              siteId: z.string().trim().min(1).max(64),
             }),
           )
           .min(1)
@@ -158,29 +157,32 @@ export const addFacilities = createServerFn({ method: "POST" })
 
     const { data: existing } = await supabaseAdmin
       .from("facilities")
-      .select("value, label, sort_order");
+      .select("value, label, sort_order, site_id");
     const usedValues = new Set((existing ?? []).map((r) => r.value as string));
     const usedLabels = new Set((existing ?? []).map((r) => (r.label as string).trim().toLowerCase()));
+    const usedSiteIds = new Set((existing ?? []).map((r) => r.site_id as string).filter(Boolean));
     const maxOrder = (existing ?? []).reduce(
       (m, r) => Math.max(m, (r.sort_order as number) ?? 0),
       -1,
     );
 
-    const rows: { value: string; label: string; sort_order: number }[] = [];
+    const rows: { value: string; label: string; sort_order: number; site_id: string }[] = [];
     const duplicates: string[] = [];
     let next = maxOrder + 1;
     for (const f of data.facilities) {
       const label = f.label.trim();
-      const base = slugify(f.value || label);
+      const siteId = f.siteId.trim();
+      const base = deriveValue(siteId);
       if (!base) continue;
       const labelKey = label.toLowerCase();
-      if (usedValues.has(base) || usedLabels.has(labelKey)) {
+      if (usedValues.has(base) || usedLabels.has(labelKey) || usedSiteIds.has(siteId)) {
         duplicates.push(label);
         continue;
       }
       usedValues.add(base);
       usedLabels.add(labelKey);
-      rows.push({ value: base, label, sort_order: next++ });
+      usedSiteIds.add(siteId);
+      rows.push({ value: base, label, sort_order: next++, site_id: siteId });
     }
     if (!rows.length) return { ok: true, inserted: 0, duplicates };
 
@@ -197,30 +199,28 @@ export const updateFacility = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         label: z.string().trim().min(1).max(100),
-        customSlug: z.string().trim().max(64).nullable().optional(),
+        siteId: z.string().trim().min(1).max(64).nullable().optional(),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
-    // Validate custom slug uniqueness if provided
-    if (data.customSlug) {
-      const slugified = data.customSlug.toLowerCase().replace(/[^a-z0-9_-]/g, "-").replace(/^-+|-+$/g, "");
+    if (data.siteId) {
       const { data: conflict } = await supabaseAdmin
         .from("facilities")
         .select("id")
-        .eq("custom_slug", slugified)
+        .eq("site_id", data.siteId)
         .neq("id", data.id)
         .maybeSingle();
-      if (conflict) throw new Error("That custom slug is already in use by another facility.");
+      if (conflict) throw new Error("That Site ID is already in use by another facility.");
       const { error } = await supabaseAdmin
         .from("facilities")
-        .update({ label: data.label, custom_slug: slugified })
+        .update({ label: data.label, site_id: data.siteId })
         .eq("id", data.id);
       if (error) throw new Error(error.message);
     } else {
       const patch: Record<string, unknown> = { label: data.label };
-      if (data.customSlug === null) patch.custom_slug = null; // explicit clear
+      if (data.siteId === null) patch.site_id = null;
       const { error } = await supabaseAdmin.from("facilities").update(patch).eq("id", data.id);
       if (error) throw new Error(error.message);
     }
@@ -256,4 +256,3 @@ export const deleteFacilities = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, deleted: data.ids.length };
   });
-

@@ -85,7 +85,7 @@ function SignupPageContent() {
   const activeFacilitySlug = useActiveFacilitySlug();
   // If the user arrived via a facility slug, that facility is forced
   const lockedFacility = activeFacilitySlug
-    ? (facilities.find((f) => f.value === activeFacilitySlug || f.customSlug === activeFacilitySlug) ?? null)
+    ? (facilities.find((f) => f.siteId === activeFacilitySlug) ?? null)
     : null;
   useEffect(() => {
     if (lockedFacility) {
