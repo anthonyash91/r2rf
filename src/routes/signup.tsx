@@ -578,10 +578,7 @@ function SignupPageContent() {
                       </PopoverContent>
                     </Popover>
                     )}
-
-
-
-
+                  </div>
                   <div>
                     <label className="text-sm font-medium">
                       {t("signup.verification")}{" "}
