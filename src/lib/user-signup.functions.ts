@@ -223,13 +223,13 @@ export const getMyFacilityValue = createServerFn({ method: "GET" }).handler(asyn
     .maybeSingle();
   const facilityValue = (profile?.facility as string | undefined) ?? null;
   if (!facilityValue) return { facility: null, slug: null };
-  // Resolve the active slug: custom_slug when set, otherwise the value
+  // Resolve the site_id for this facility — that is the URL slug
   const { data: facilityRow } = await supabaseAdmin
     .from("facilities")
-    .select("custom_slug")
+    .select("site_id")
     .eq("value", facilityValue)
     .maybeSingle();
-  const slug = ((facilityRow as any)?.custom_slug ?? facilityValue) as string;
+  const slug = ((facilityRow as any)?.site_id ?? null) as string | null;
   return { facility: facilityValue, slug };
 });
 

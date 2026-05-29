@@ -44,10 +44,11 @@ function AdminFacilitiesPage() {
   const deleteFacilitiesFn = useServerFn(deleteFacilities);
 
   const [showAdd, setShowAdd] = useState(false);
-  const [newLabels, setNewLabels] = useState("");
+  const [newLabel, setNewLabel] = useState("");
+  const [newSiteId, setNewSiteId] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
-  const [editingCustomSlug, setEditingCustomSlug] = useState("");
+  const [editingSiteId, setEditingSiteId] = useState("");
   const [page, setPage] = useState(0);
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,7 +63,7 @@ function AdminFacilitiesPage() {
   const q = searchQuery.trim().toLowerCase();
   const facilities = q
     ? allFacilities.filter((f) =>
-        [f.label, f.value].filter(Boolean).some((v) => String(v).toLowerCase().includes(q)),
+        [f.label, f.siteId].filter(Boolean).some((v) => String(v).toLowerCase().includes(q)),
       )
     : allFacilities;
   const visibleFacilities = facilities.slice(page * 10, (page + 1) * 10);
@@ -72,7 +73,7 @@ function AdminFacilitiesPage() {
   const invalidate = () => qc.invalidateQueries({ queryKey: facilitiesKey });
 
   const addMut = useToastMutation({
-    mutationFn: (input: { facilities: { label: string }[] }) => addFacilitiesFn({ data: input }),
+    mutationFn: (input: { facilities: { label: string; siteId: string }[] }) => addFacilitiesFn({ data: input }),
     invalidate: facilitiesKey,
     successMessage: null,
     onSuccess: (res) => {
@@ -88,13 +89,14 @@ function AdminFacilitiesPage() {
       } else {
         toast.success(addedMsg);
       }
-      setNewLabels("");
+      setNewLabel("");
+      setNewSiteId("");
       setShowAdd(false);
     },
   });
 
   const updateMut = useToastMutation({
-    mutationFn: (input: { id: string; label: string; customSlug?: string | null }) => updateFacilityFn({ data: input }),
+    mutationFn: (input: { id: string; label: string; siteId?: string | null }) => updateFacilityFn({ data: input }),
     successMessage: "Facility updated",
     invalidate: facilitiesKey,
     onSuccess: () => setEditingId(null),
@@ -131,7 +133,7 @@ function AdminFacilitiesPage() {
           icon={<Plus className="h-4 w-4" />}
           className="w-full sm:w-auto"
         >
-          Add facilities
+          Add facility
         </LoadingButton>
       </div>
 
@@ -143,24 +145,39 @@ function AdminFacilitiesPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              const labels = newLabels.split("\n").map((l) => l.trim()).filter(Boolean);
-              if (!labels.length) { toast.error("Enter at least one facility"); return; }
-              addMut.mutate({ facilities: labels.map((label) => ({ label })) });
+              const label = newLabel.trim();
+              const siteId = newSiteId.trim();
+              if (!label) { toast.error("Facility name is required"); return; }
+              if (!siteId) { toast.error("Site ID is required"); return; }
+              addMut.mutate({ facilities: [{ label, siteId }] });
             }}
-            className="mt-3 mb-8 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-4"
+            className="mt-3 mb-8 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-3"
           >
-            <label className="text-sm font-medium">New facilities (one per line)</label>
-            <textarea
-              value={newLabels}
-              onChange={(e) => setNewLabels(e.target.value)}
-              rows={4}
-              placeholder={"e.g.\nSpringfield, IL\nAustin, TX"}
-              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Facility name</label>
+                <input
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  placeholder="e.g. Springfield, IL"
+                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Site ID</label>
+                <input
+                  value={newSiteId}
+                  onChange={(e) => setNewSiteId(e.target.value)}
+                  placeholder="e.g. S002001041"
+                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+                />
+              </div>
+            </div>
             <div className="flex gap-2 justify-end">
               <LoadingButton
                 variant="secondary"
-                onClick={() => { setShowAdd(false); setNewLabels(""); }}
+                onClick={() => { setShowAdd(false); setNewLabel(""); setNewSiteId(""); }}
               >
                 Cancel
               </LoadingButton>
@@ -207,7 +224,7 @@ function AdminFacilitiesPage() {
                 const editable = bulk.editMode && !isEditing;
                 return (
                   <li
-                    key={f.value}
+                    key={f.id}
                     onClick={editable ? () => bulk.toggle(f.id) : undefined}
                     className={`py-5 pb-6 md:pb-5 pr-[24px] pl-[24px] transition-colors ${
                       editable
@@ -226,9 +243,9 @@ function AdminFacilitiesPage() {
                             autoFocus
                           />
                           <input
-                            value={editingCustomSlug}
-                            onChange={(e) => setEditingCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "-"))}
-                            placeholder="Custom slug (optional)"
+                            value={editingSiteId}
+                            onChange={(e) => setEditingSiteId(e.target.value)}
+                            placeholder="Site ID (e.g. S002001041)"
                             className="flex-1 min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
                           />
                           <div className="flex items-center gap-2 shrink-0">
@@ -239,8 +256,8 @@ function AdminFacilitiesPage() {
                               onClick={() => {
                                 const label = editingLabel.trim();
                                 if (!label) { toast.error("Label required"); return; }
-                                const customSlug = editingCustomSlug.trim() || null;
-                                updateMut.mutate({ id: f.id, label, customSlug });
+                                const siteId = editingSiteId.trim() || null;
+                                updateMut.mutate({ id: f.id, label, siteId });
                               }}
                               pending={updateMut.isPending}
                               pendingText="Saving…"
@@ -254,23 +271,27 @@ function AdminFacilitiesPage() {
                           <div className="flex-1 min-w-0 space-y-2">
                             <div className="flex items-center gap-3 min-w-0 flex-wrap">
                               <span className="text-sm font-medium truncate">{f.label}</span>
-                              <code className="text-xs text-muted-foreground font-mono truncate">{f.value}</code>
+                              {f.siteId && (
+                                <code className="text-xs text-muted-foreground font-mono truncate">{f.siteId}</code>
+                              )}
                             </div>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                               <span className="inline-flex items-center gap-1.5">
                                 <Users className="h-3.5 w-3.5" />
                                 {f.userCount} {f.userCount === 1 ? "user" : "users"} signed up
                               </span>
-                              <span className="inline-flex items-center gap-1.5">
-                                <Link2 className="h-3.5 w-3.5 shrink-0" />
-                                <Link
-                                  to="/facility/$slug"
-                                  params={{ slug: f.customSlug ?? f.value }}
-                                  className="hover:text-foreground hover:underline"
-                                >
-                                  /facility/{f.customSlug ?? f.value}
-                                </Link>
-                              </span>
+                              {f.siteId && (
+                                <span className="inline-flex items-center gap-1.5">
+                                  <Link2 className="h-3.5 w-3.5 shrink-0" />
+                                  <Link
+                                    to="/facility/$slug"
+                                    params={{ slug: f.siteId }}
+                                    className="hover:text-foreground hover:underline"
+                                  >
+                                    /facility/{f.siteId}
+                                  </Link>
+                                </span>
+                              )}
                             </div>
                             {(f.customCategories?.length ?? 0) > 0 && (
                               <div className="pt-1 space-y-1">
@@ -344,7 +365,7 @@ function AdminFacilitiesPage() {
                                 aria-label="Edit"
                                 tooltip="Edit"
                                 icon={Pencil}
-                                onClick={() => { setEditingId(f.id); setEditingLabel(f.label); setEditingCustomSlug(f.customSlug ?? ""); }}
+                                onClick={() => { setEditingId(f.id); setEditingLabel(f.label); setEditingSiteId(f.siteId ?? ""); }}
                               />
                               <div className="mx-1 h-6 w-px bg-border" aria-hidden />
                               <IconButton

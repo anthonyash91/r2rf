@@ -35,7 +35,7 @@ function Index() {
   });
 
   useEffect(() => {
-    const slug = facilityData?.slug ?? facilityData?.facility;
+    const slug = facilityData?.slug;
     if (rolesLoaded && isFacilityUser && slug) {
       navigate({ to: "/facility/$slug", params: { slug }, replace: true });
     }
