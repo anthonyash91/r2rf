@@ -15,9 +15,6 @@ import {
   Users as UsersIcon,
   ArrowLeft,
   CheckCircle2,
-  Check,
-  
-  X,
   Clock,
   Flame,
   Trophy,
