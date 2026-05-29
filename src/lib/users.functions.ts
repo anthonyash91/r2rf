@@ -625,14 +625,19 @@ export const setUserPassword = createServerFn({ method: "POST" })
 export const sendPasswordResetEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ email: z.string().trim().email().max(255) }).parse(input),
+    z.object({
+      email: z.string().trim().email().max(255),
+      userId: z.string().uuid().optional(),
+    }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    // Look up target user so we can validate facility scope for facilityUser callers
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-    const target = list?.users?.find((u) => u.email === data.email);
-    if (target) await assertCanManageUser(context.userId, target.id, { allowFacilityUserTarget: true });
-    else await assertAnyAdmin(context.userId); // unknown email — require at least any admin
+    // userId is supplied by the client from the already-loaded user list — use it
+    // directly for the scope check instead of fetching all users to find by email.
+    if (data.userId) {
+      await assertCanManageUser(context.userId, data.userId, { allowFacilityUserTarget: true });
+    } else {
+      await assertAnyAdmin(context.userId);
+    }
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email);
     if (error) throw new Error(error.message);
     await recordAdminAudit({
@@ -647,13 +652,17 @@ export const sendPasswordResetEmail = createServerFn({ method: "POST" })
 export const resendVerificationEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ email: z.string().trim().email().max(255) }).parse(input),
+    z.object({
+      email: z.string().trim().email().max(255),
+      userId: z.string().uuid().optional(),
+    }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
-    const target = list?.users?.find((u) => u.email === data.email);
-    if (target) await assertCanManageUser(context.userId, target.id, { allowFacilityUserTarget: true });
-    else await assertAnyAdmin(context.userId);
+    if (data.userId) {
+      await assertCanManageUser(context.userId, data.userId, { allowFacilityUserTarget: true });
+    } else {
+      await assertAnyAdmin(context.userId);
+    }
     const { error } = await supabaseAdmin.auth.resend({ type: "signup", email: data.email });
     if (error) throw new Error(error.message);
     return { ok: true };
