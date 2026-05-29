@@ -3,6 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { createHmac, timingSafeEqual, randomInt } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
 import { hashAnswer } from "./security-hash.server";
 import { checkAndRecordAttempt } from "./rate-limit.server";
@@ -223,3 +224,45 @@ export const getMyFacilityValue = createServerFn({ method: "GET" }).handler(asyn
   return { facility: (profile?.facility as string | undefined) ?? null };
 });
 
+
+export const saveFacilityMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      facilityValue: z.string().min(1).max(64),
+      value: z.object({
+        enabled: z.boolean(),
+        message: z.string(),
+        message_es: z.string(),
+      }),
+    }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    // Allow admin, contributor, or facilityUser writing their own facility key
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .in("role", ["admin", "contributor", "facilityUser"])
+      .maybeSingle();
+    if (!roleRow) throw new Error("Forbidden");
+
+    // facilityUser: verify the key matches their own facility
+    if (roleRow.role === "facilityUser") {
+      const { data: prof } = await supabaseAdmin
+        .from("user_profiles")
+        .select("facility")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      if (!prof || prof.facility !== data.facilityValue) {
+        throw new Error("Forbidden: can only edit your own facility's message");
+      }
+    }
+
+    const key = `facility_message_${data.facilityValue}`;
+    const { error } = await supabaseAdmin
+      .from("site_settings")
+      .upsert({ key, value: data.value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
-import { getMyFacilityValue } from "@/lib/user-signup.functions";
+import { getMyFacilityValue, saveFacilityMessage } from "@/lib/user-signup.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Save, MessageSquare, Megaphone, RefreshCw, Building2 } from "lucide-react";
@@ -24,6 +24,7 @@ type SiteMessage = { enabled: boolean; message: string; message_es: string };
 
 function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?: string | null }) {
   const qc = useQueryClient();
+  const saveFacilityMsgFn = useServerFn(saveFacilityMessage);
   const fetchFacilities = useServerFn(listFacilities);
   const { data: facilitiesData } = useQuery({
     queryKey: ["facilities"],
@@ -126,6 +127,9 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
             context={`Facility banner message for ${selected.label}`}
             embedded
             onSaved={() => qc.invalidateQueries({ queryKey: ["site_settings", "facility-messages-list"] })}
+            overrideSave={async (v) => {
+              await saveFacilityMsgFn({ data: { facilityValue: selected.value, value: v } });
+            }}
           />
         )}
       </SectionCard>
@@ -176,6 +180,7 @@ function MessageEditor({
   context,
   embedded = false,
   onSaved,
+  overrideSave,
 }: {
   settingsKey: string;
   title: string;
@@ -184,6 +189,8 @@ function MessageEditor({
   context: string;
   embedded?: boolean;
   onSaved?: () => void;
+  /** When provided, used instead of direct supabase upsert (e.g. for facilityUser RLS bypass). */
+  overrideSave?: (v: SiteMessage) => Promise<void>;
 }) {
   const qc = useQueryClient();
   const queryKey = ["admin", "site_settings", settingsKey] as const;
@@ -214,10 +221,14 @@ function MessageEditor({
 
   const saveMut = useMutation({
     mutationFn: async (v: SiteMessage) => {
-      const { error } = await supabase
-        .from("site_settings")
-        .upsert({ key: settingsKey, value: v }, { onConflict: "key" });
-      if (error) throw error;
+      if (overrideSave) {
+        await overrideSave(v);
+      } else {
+        const { error } = await supabase
+          .from("site_settings")
+          .upsert({ key: settingsKey, value: v }, { onConflict: "key" });
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       toast.success("Saved");
@@ -231,10 +242,14 @@ function MessageEditor({
   const clearMut = useMutation({
     mutationFn: async () => {
       const cleared: SiteMessage = { enabled: false, message: "", message_es: "" };
-      const { error } = await supabase
-        .from("site_settings")
-        .upsert({ key: settingsKey, value: cleared }, { onConflict: "key" });
-      if (error) throw error;
+      if (overrideSave) {
+        await overrideSave(cleared);
+      } else {
+        const { error } = await supabase
+          .from("site_settings")
+          .upsert({ key: settingsKey, value: cleared }, { onConflict: "key" });
+        if (error) throw error;
+      }
       return cleared;
     },
     onSuccess: (cleared) => {
