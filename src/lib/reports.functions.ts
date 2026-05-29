@@ -234,7 +234,13 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
       allProfs.push(...rows);
       if (rows.length < PAGE_SIZE) break;
     }
-    const profs = allProfs;
+    // Exclude facilityUser role accounts — reports should only show regular users
+    const { data: facilityUserRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "facilityUser");
+    const facilityUserIdSet = new Set((facilityUserRoles ?? []).map((r: any) => r.user_id as string));
+    const profs = allProfs.filter((p: any) => !facilityUserIdSet.has(p.user_id));
     const ids = profs.map((p: any) => p.user_id as string);
 
 

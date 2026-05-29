@@ -258,73 +258,80 @@ function AdminReportsPage() {
                 />
               </PopoverContent>
             </Popover>}
-            <Popover open={userPickerOpen} onOpenChange={(o) => { if (o) setPickerOpen(false); setUserPickerOpen(o); }}>
-              <PopoverAnchor asChild>
-                <TabsTrigger
-                  value="user"
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (isFacilityUser && myFacilityValue) {
-                      setSelectedUserFacility({ value: myFacilityValue, label: myFacilityValue });
+            {isFacilityUser ? (
+              // facilityUser: direct tab — no picker, auto-scoped to their facility
+              <TabsTrigger
+                value="user"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedUserFacility({ value: myFacilityValue ?? "__all__", label: myFacilityValue ?? "My Facility" });
+                  setUserKey((k) => k + 1);
+                  setActiveUser(null);
+                  setTab("user");
+                }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
+              >
+                <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
+              </TabsTrigger>
+            ) : (
+              <Popover open={userPickerOpen} onOpenChange={(o) => { if (o) setPickerOpen(false); setUserPickerOpen(o); }}>
+                <PopoverAnchor asChild>
+                  <TabsTrigger
+                    value="user"
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openUserPicker();
+                    }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
+                  >
+                    <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
+                  </TabsTrigger>
+                </PopoverAnchor>
+                <PopoverContent
+                  align="center"
+                  className="w-80 p-3"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  onPointerDownOutside={(e) => {
+                    const t = e.target as HTMLElement | null;
+                    if (t && t.closest('[data-state][role="tab"]')) e.preventDefault();
+                  }}
+                >
+                  <div className="mb-2 text-sm font-medium">Select a facility</div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedUserFacility({ value: "__all__", label: "All Facilities" });
                       setUserKey((k) => k + 1);
+                      setUserPickerOpen(false);
                       setActiveUser(null);
                       setTab("user");
-                    } else {
-                      openUserPicker();
-                    }
-                  }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
-                >
-                  <UsersIcon className="h-3.5 w-3.5 mr-1.5" /> Users
-                </TabsTrigger>
-              </PopoverAnchor>
-              <PopoverContent
-                align="center"
-                className="w-80 p-3"
-                onOpenAutoFocus={(e) => e.preventDefault()}
-                onPointerDownOutside={(e) => {
-                  const t = e.target as HTMLElement | null;
-                  if (t && t.closest('[data-state][role="tab"]')) {
-                    e.preventDefault();
-                  }
-                }}
-              >
-                <div className="mb-2 text-sm font-medium">Select a facility</div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedUserFacility({ value: "__all__", label: "All Facilities" });
-                    setUserKey((k) => k + 1);
-                    setUserPickerOpen(false);
-                    setActiveUser(null);
-                    setTab("user");
-                  }}
-                  className="mb-2 w-full rounded-md border border-input bg-background px-4 py-2 text-left text-sm hover:bg-muted"
-                >
-                  <span className="font-medium">All Facilities</span>
-                  <span className="ml-2 text-xs text-muted-foreground">Every registered user</span>
-                </button>
-                <FacilityCombobox
-                  value={selectedUserFacility?.value && selectedUserFacility.value !== "__all__" ? selectedUserFacility.value : ""}
-                  onChange={(v) => {
-                    const f = facilities.find((x) => x.value === v);
-                    if (!f) return;
-                    setSelectedUserFacility({ value: f.value, label: f.label });
-                    setUserKey((k) => k + 1);
-                    setUserPickerOpen(false);
-                    setActiveUser(null);
-                    setTab("user");
-                  }}
-                  options={facilities.map((f) => ({ value: f.value, label: f.label }))}
-                  placeholder={facilitiesQuery.isLoading || facilities.length === 0 ? "Loading…" : "Select a facility"}
-                />
-              </PopoverContent>
-            </Popover>
+                    }}
+                    className="mb-2 w-full rounded-md border border-input bg-background px-4 py-2 text-left text-sm hover:bg-muted"
+                  >
+                    <span className="font-medium">All Facilities</span>
+                    <span className="ml-2 text-xs text-muted-foreground">Every registered user</span>
+                  </button>
+                  <FacilityCombobox
+                    value={selectedUserFacility?.value && selectedUserFacility.value !== "__all__" ? selectedUserFacility.value : ""}
+                    onChange={(v) => {
+                      const f = facilities.find((x) => x.value === v);
+                      if (!f) return;
+                      setSelectedUserFacility({ value: f.value, label: f.label });
+                      setUserKey((k) => k + 1);
+                      setUserPickerOpen(false);
+                      setActiveUser(null);
+                      setTab("user");
+                    }}
+                    options={facilities.map((f) => ({ value: f.value, label: f.label }))}
+                    placeholder={facilitiesQuery.isLoading || facilities.length === 0 ? "Loading…" : "Select a facility"}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
           </TabsList>
         </div>
 
