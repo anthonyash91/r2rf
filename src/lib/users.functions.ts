@@ -78,7 +78,7 @@ type ListedUser = {
   last_sign_in_at: string | null;
   email_confirmed_at: string | null;
   roles: Role[];
-  profile: { username: string; facility: string; first_name: string; last_name: string } | null;
+  profile: { username: string; facility: string; first_name: string; last_name: string; inmatePin: string | null } | null;
 };
 
 async function hydrateAuthFields(userIds: string[]): Promise<
@@ -110,7 +110,7 @@ async function fetchRolesAndProfiles(userIds: string[]) {
     supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", userIds),
     supabaseAdmin
       .from("user_profiles")
-      .select("user_id, username, facility, first_name, last_name")
+      .select("user_id, username, facility, first_name, last_name, inmate_pin")
       .in("user_id", userIds),
   ]);
   const rolesByUser = new Map<string, Role[]>();
@@ -126,6 +126,7 @@ async function fetchRolesAndProfiles(userIds: string[]) {
       facility: p.facility,
       first_name: (p as any).first_name ?? "",
       last_name: (p as any).last_name ?? "",
+      inmatePin: (p as any).inmate_pin ?? null,
     });
   }
   return { rolesByUser, profileByUser };
@@ -266,7 +267,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
 
     let q = supabaseAdmin
       .from("user_profiles")
-      .select("user_id, username, facility, first_name, last_name, created_at", { count: "exact" });
+      .select("user_id, username, facility, first_name, last_name, inmate_pin, created_at", { count: "exact" });
 
     if (excludeIds.length) {
       q = q.not("user_id", "in", `(${excludeIds.join(",")})`);
@@ -279,7 +280,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
       if (term) {
         const pat = `%${term}%`;
         q = q.or(
-          `username.ilike.${pat},first_name.ilike.${pat},last_name.ilike.${pat}`,
+          `username.ilike.${pat},first_name.ilike.${pat},last_name.ilike.${pat},inmate_pin.ilike.${pat}`,
         );
       }
     }
@@ -306,6 +307,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
           facility: p.facility,
           first_name: (p as any).first_name ?? "",
           last_name: (p as any).last_name ?? "",
+          inmatePin: (p as any).inmate_pin ?? null,
         },
       };
     });

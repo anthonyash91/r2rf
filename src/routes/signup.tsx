@@ -10,11 +10,13 @@ import { useI18n } from "@/lib/i18n";
 import {
   getSignupChallenge,
   signupUser,
+  checkInmatePin,
 } from "@/lib/user-signup.functions";
 import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
 import { syntheticEmail } from "@/lib/user-signup";
 import { listFacilities } from "@/lib/facilities.functions";
 import { useActiveFacilitySlug } from "@/lib/facility-context";
+import { useActiveInmatePin } from "@/lib/inmate-pin-context";
 import { questionLabel } from "@/lib/security-questions";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -83,6 +85,7 @@ function SignupPageContent() {
   });
   const facilities = facilitiesQuery.data?.facilities ?? [];
   const activeFacilitySlug = useActiveFacilitySlug();
+  const activeInmatePin = useActiveInmatePin();
   // If the user arrived via a facility slug, that facility is forced
   const lockedFacility = activeFacilitySlug
     ? (facilities.find((f) => f.siteId === activeFacilitySlug) ?? null)
@@ -94,6 +97,24 @@ function SignupPageContent() {
       setFacility(facilities[0].value);
     }
   }, [facilities, facility, lockedFacility]);
+
+  // Check whether the persisted inmate PIN is already registered for this facility
+  const checkPin = useServerFn(checkInmatePin);
+  const pinCheckQuery = useQuery({
+    queryKey: ["inmate-pin-check", lockedFacility?.value, activeInmatePin],
+    enabled: !!lockedFacility?.value && !!activeInmatePin,
+    staleTime: 30 * 1000,
+    queryFn: () => checkPin({ data: { facilityValue: lockedFacility!.value, inmatePin: activeInmatePin! } }),
+  });
+
+  // Signup disabled reasons (sign-in and reset modes are never blocked)
+  const facilitySlugActive = !!activeFacilitySlug;
+  const signupBlockReason: "no-facility" | "no-pin" | "pin-taken" | null =
+    mode !== "sign-up" ? null
+    : !facilitySlugActive ? "no-facility"
+    : !activeInmatePin ? "no-pin"
+    : pinCheckQuery.data?.available === false ? "pin-taken"
+    : null;
   const submitReset = useServerFn(resetPassword);
 
   // On-screen keyboard bindings (suppress native keyboard, route key presses)
@@ -196,6 +217,7 @@ function SignupPageContent() {
             lastName: lastName.trim(),
             password,
             facility,
+            inmatePin: activeInmatePin ?? undefined,
             challengeToken: challengeQuery.data.token,
             challengeAnswer: ans,
             honeypot,
@@ -476,7 +498,27 @@ function SignupPageContent() {
                 {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
               </div>
 
-              {mode === "sign-up" && (
+              {mode === "sign-up" && signupBlockReason && (
+                <div className="py-4 space-y-2 text-center">
+                  {signupBlockReason === "no-facility" && (
+                    <p className="text-sm text-muted-foreground">
+                      Signup is disabled for non-facility users. Contact the admin if you feel you need an account created.
+                    </p>
+                  )}
+                  {signupBlockReason === "no-pin" && (
+                    <p className="text-sm text-muted-foreground">
+                      A valid inmate PIN is required to sign up. Please use the link provided by your facility.
+                    </p>
+                  )}
+                  {signupBlockReason === "pin-taken" && (
+                    <p className="text-sm text-muted-foreground">
+                      This inmate PIN is already registered at this facility. If you believe this is an error, please contact your facility.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {mode === "sign-up" && !signupBlockReason && (
                 <>
                   <div>
                     <label className="text-sm font-medium">{t("signup.confirmPassword")}</label>
@@ -580,6 +622,13 @@ function SignupPageContent() {
                     )}
                   </div>
                   <div>
+                    <label className="text-sm font-medium">Inmate PIN</label>
+                    <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
+                      <span className="font-mono">{activeInmatePin}</span>
+                      <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div>
                     <label className="text-sm font-medium">
                       {t("signup.verification")}{" "}
                       {challengeQuery.data
@@ -597,16 +646,18 @@ function SignupPageContent() {
                 </>
               )}
 
-              <div className="flex justify-end !mt-6">
-                <button
-                  type="submit"
-                  disabled={busy || (mode === "sign-up" && (!challengeQuery.data || usernameStatus === "taken" || usernameStatus === "checking"))}
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                >
-                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
-                </button>
-              </div>
+              {(!signupBlockReason || mode !== "sign-up") && (
+                <div className="flex justify-end !mt-6">
+                  <button
+                    type="submit"
+                    disabled={busy || (mode === "sign-up" && (!challengeQuery.data || usernameStatus === "taken" || usernameStatus === "checking"))}
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  >
+                    {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
+                  </button>
+                </div>
+              )}
               {/* honeypot — anchored to top so it never adds layout space at the bottom */}
               <div className="!mt-0 absolute top-0 -left-[9999px] h-px w-px overflow-hidden" aria-hidden>
                 <label>
