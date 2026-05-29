@@ -25,6 +25,7 @@ import {
 import { CategoryIcon } from "@/components/CategoryIcon";
 import type { Category, ContentItem } from "@/lib/categories";
 import { Badge } from "@/components/Badge";
+import { CircleProgress } from "@/components/CircleProgress";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
@@ -33,7 +34,10 @@ import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { listAllFacilities } from "@/lib/facilities.functions";
 
 import { readStatusLabels } from "@/lib/read-status";
-import { withActionWord } from "@/lib/duration";
+import { withActionWord, parseMinutes } from "@/lib/duration";
+import { fmtDate, fmtDateShort } from "@/lib/date-format";
+import { csvEscape, downloadCsv } from "@/lib/csv-utils";
+import { waitForNextPaint } from "@/lib/paint";
 import { useI18n } from "@/lib/i18n";
 import {
   getUsageReport,
@@ -65,82 +69,7 @@ type AggregatedRow = {
   items: { item: ContentItem; clicks: number }[];
 };
 
-function CircleProgress({
-  value,
-  size = 52,
-  stroke = 5,
-  className = "",
-}: {
-  value: number;
-  size?: number;
-  stroke?: number;
-  className?: string;
-}) {
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const pct = Math.max(0, Math.min(100, Math.round(value)));
-  const offset = c - (pct / 100) * c;
-  return (
-    <div className={`relative flex-shrink-0 ${className}`} style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e5e7eb" strokeWidth={stroke} />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="var(--color-accent)"
-          strokeWidth={stroke}
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          className="transition-[stroke-dashoffset] duration-500"
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold tabular-nums">
-        {pct}%
-      </div>
-    </div>
-  );
-}
 
-function fmtDate(iso?: string | null) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
-
-function fmtDateShort(iso?: string | null) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  return d.toLocaleDateString(undefined, { year: "2-digit", month: "2-digit", day: "2-digit" });
-}
-
-
-function csvEscape(v: string | number) {
-  const s = String(v);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
-
-function downloadCsv(filename: string, lines: string[]) {
-  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function waitForNextPaint() {
-  return new Promise<void>((resolve) => {
-    requestAnimationFrame(() => resolve());
-  });
-}
 
 function AdminReportsPage() {
   const { isFacilityUser, user } = useAuth();
@@ -974,18 +903,6 @@ function UserProgressView({
   );
 }
 
-function parseMinutes(d?: string | null): number {
-  if (!d) return 0;
-  let total = 0;
-  const re = /(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)?/gi;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(d)) !== null) {
-    const n = parseFloat(m[1]);
-    const u = (m[2] ?? "min").toLowerCase();
-    total += u.startsWith("h") ? n * 60 : n;
-  }
-  return total;
-}
 
 function exportUserProgressCsv(
   data: Awaited<ReturnType<typeof getUserProgressReport>>,

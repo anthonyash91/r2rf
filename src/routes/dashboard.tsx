@@ -6,6 +6,7 @@ import { setSecurityLock } from "@/lib/security-lock";
 import { toast } from "sonner";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
+import { CircleProgress } from "@/components/CircleProgress";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
@@ -22,7 +23,7 @@ import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
 import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
-import { withActionWord } from "@/lib/duration";
+import { withActionWord, parseMinutes } from "@/lib/duration";
 import { readStatusLabels } from "@/lib/read-status";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
@@ -32,64 +33,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
 
-function CircleProgress({
-  value,
-  size = 56,
-  stroke = 5,
-  className = "",
-}: {
-  value: number;
-  size?: number;
-  stroke?: number;
-  className?: string;
-}) {
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const pct = Math.max(0, Math.min(100, value));
-  const offset = c - (pct / 100) * c;
-  return (
-    <div className={`relative flex-shrink-0 ${className}`} style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="#e5e7eb"
-          strokeWidth={stroke}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="var(--color-accent)"
-          strokeWidth={stroke}
-          strokeDasharray={c}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          className="transition-[stroke-dashoffset] duration-500"
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold tabular-nums">
-        {pct}%
-      </div>
-    </div>
-  );
-}
 
-function parseMinutes(d?: string | null): number {
-  if (!d) return 0;
-  let total = 0;
-  const re = /(\d+(?:\.\d+)?)\s*(h|hr|hrs|hour|hours|m|min|mins|minute|minutes)?/gi;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(d)) !== null) {
-    const n = parseFloat(m[1]);
-    const u = (m[2] ?? "min").toLowerCase();
-    total += u.startsWith("h") ? n * 60 : n;
-  }
-  return total;
-}
 
 
 export const Route = createFileRoute("/dashboard")({
