@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
+import { setActiveFacilitySlug } from "@/lib/facility-context";
 
 export type AppRole = "admin" | "contributor" | "user" | "tester" | "facilityUser";
 
@@ -17,8 +18,13 @@ export function useAuth() {
       .select("role")
       .eq("user_id", userId)
       .then(({ data }) => {
-        setRoles(((data ?? []).map((r: any) => r.role)) as AppRole[]);
+        const userRoles = ((data ?? []).map((r: any) => r.role)) as AppRole[];
+        setRoles(userRoles);
         setRolesLoaded(true);
+        // Admins and contributors should never be locked to a facility slug
+        if (userRoles.includes("admin") || userRoles.includes("contributor")) {
+          setActiveFacilitySlug(null);
+        }
       });
   }
 
