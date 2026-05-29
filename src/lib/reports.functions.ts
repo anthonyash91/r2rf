@@ -79,8 +79,14 @@ export const getUsageReport = createServerFn({ method: "POST" })
     }
 
     const [catsRes, itemsRes, totalUsersRes, catFacRes, itemFacRes] = await Promise.all([
-      supabaseAdmin.from("categories").select("*").order("sort_order", { ascending: true }),
-      supabaseAdmin.from("content_items").select("*").order("sort_order", { ascending: true }),
+      supabaseAdmin
+        .from("categories")
+        .select("id, name, slug, icon_name, icon_color, sort_order, published, created_at")
+        .order("sort_order", { ascending: true }),
+      supabaseAdmin
+        .from("content_items")
+        .select("id, category_id, title, type, duration, description, url, file_url, published, sort_order, created_at")
+        .order("sort_order", { ascending: true }),
       supabaseAdmin
         .from("user_profiles")
         .select("user_id", { count: "exact", head: true })

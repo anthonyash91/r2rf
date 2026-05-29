@@ -206,11 +206,11 @@ function AdminUsersPage() {
     successMessage: "Password updated",
   });
   const resetMut = useToastMutation({
-    mutationFn: (input: { email: string }) => sendReset({ data: input }),
+    mutationFn: (input: { email: string; userId?: string }) => sendReset({ data: input }),
     successMessage: "Password reset email sent",
   });
   const resendVerifyMut = useToastMutation({
-    mutationFn: (input: { email: string }) => resendVerifyFn({ data: input }),
+    mutationFn: (input: { email: string; userId?: string }) => resendVerifyFn({ data: input }),
     successMessage: "Verification email resent",
   });
   const roleMut = useToastMutation({
@@ -497,8 +497,8 @@ function AdminUsersPage() {
             pendingClearSec={isPendingClearSec(u.id)}
             onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
             onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
-            onSendReset={() => resetMut.mutate({ email: u.email })}
-            onResendVerify={() => resendVerifyMut.mutate({ email: u.email })}
+            onSendReset={() => resetMut.mutate({ email: u.email, userId: u.id })}
+            onResendVerify={() => resendVerifyMut.mutate({ email: u.email, userId: u.id })}
             onToggleAdmin={async (enabled) => {
               await confirm({
                 title: enabled ? "Make admin?" : "Revoke admin?",
