@@ -7,8 +7,12 @@ import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { HomePageView } from "@/components/HomePageView";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
 import { setActiveFacilitySlug } from "@/lib/facility-context";
+import { setActiveInmatePin } from "@/lib/inmate-pin-context";
 
 export const Route = createFileRoute("/facility/$slug")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    user: typeof search.user === "string" ? search.user : undefined,
+  }),
   loader: async ({ params }) => {
     const { data: facility, error } = await supabase
       .from("facilities")
@@ -28,10 +32,18 @@ export const Route = createFileRoute("/facility/$slug")({
 
 function FacilityPage() {
   const { facilityValue, facilitySiteId } = Route.useLoaderData();
+  const { user: inmatePin } = Route.useSearch();
 
   useEffect(() => {
     setActiveFacilitySlug(facilitySiteId);
-  }, [facilitySiteId]);
+    // Set the inmate PIN from the URL param, or clear it if absent so it
+    // doesn't carry over from a previously visited facility.
+    if (inmatePin) {
+      setActiveInmatePin(inmatePin);
+    } else {
+      setActiveInmatePin(null);
+    }
+  }, [facilitySiteId, inmatePin]);
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["facility-categories", facilityValue],

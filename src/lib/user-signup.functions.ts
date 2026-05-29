@@ -81,6 +81,24 @@ export const getSignupChallenge = createServerFn({ method: "GET" }).handler(asyn
   return { a, b, token: signChallenge(a, b, expiresAt) };
 });
 
+/** Checks whether an inmate PIN is already registered for a given facility. */
+export const checkInmatePin = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z.object({
+      facilityValue: z.string().min(1).max(64),
+      inmatePin: z.string().min(1),
+    }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { data: existing } = await supabaseAdmin
+      .from("user_profiles")
+      .select("user_id")
+      .eq("facility", data.facilityValue)
+      .eq("inmate_pin", data.inmatePin)
+      .maybeSingle();
+    return { available: !existing };
+  });
+
 export const signupUser = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
@@ -90,6 +108,7 @@ export const signupUser = createServerFn({ method: "POST" })
         lastName: z.string().trim().min(1, "Last name is required").max(100),
         password: z.string().min(8).max(72),
         facility: z.string().trim().min(1).max(64),
+        inmatePin: z.string().regex(/^\d+$/, "Inmate PIN must be numbers only").optional(),
         challengeToken: z.string().min(1).max(500),
         challengeAnswer: z.coerce.number().int(),
         honeypot: z.string().max(0).optional().default(""),
@@ -151,6 +170,7 @@ export const signupUser = createServerFn({ method: "POST" })
         facility: data.facility,
         first_name: data.firstName,
         last_name: data.lastName,
+        inmate_pin: data.inmatePin ?? null,
       });
     if (profErr) {
       console.error("[signup] user_profiles insert failed:", profErr.message);

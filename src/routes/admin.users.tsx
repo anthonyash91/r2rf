@@ -60,7 +60,7 @@ type UserRow = {
   last_sign_in_at: string | null;
   email_confirmed_at: string | null;
   roles: string[];
-  profile: { username: string; facility: string; first_name: string; last_name: string } | null;
+  profile: { username: string; facility: string; first_name: string; last_name: string; inmatePin: string | null } | null;
 };
 
 
@@ -915,6 +915,11 @@ function UserItem({
             Joined {new Date(user.created_at).toLocaleDateString()}
             {user.last_sign_in_at && <>{" · "}Last sign-in {new Date(user.last_sign_in_at).toLocaleDateString()}</>}
           </p>
+          {isUsernameUser && !showFacilityUserBadge && user.profile?.inmatePin && (
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              PIN <span className="font-mono font-medium text-foreground">{user.profile.inmatePin}</span>
+            </p>
+          )}
 
         </div>
 
