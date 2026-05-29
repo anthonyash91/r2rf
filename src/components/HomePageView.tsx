@@ -111,6 +111,7 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
   const { data: facilityData } = useQuery({
     queryKey: ["my-facility", user?.id],
     enabled: !!user?.id && !isAdmin,
+    staleTime: Infinity,
     queryFn: () => fetchFacilityValue(),
   });
   // On a facility slug page, facilityContext always wins — even for admins.
@@ -285,6 +286,7 @@ export function HomePageView({
 
   const { data: hero = DEFAULT_HERO } = useQuery({
     queryKey: ["site_settings", "home_hero"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<HomeHero> => {
       const { data, error } = await supabase
         .from("site_settings")
@@ -298,6 +300,7 @@ export function HomePageView({
 
   const { data: cert = DEFAULT_CERT } = useQuery({
     queryKey: ["site_settings", "certificate_hero"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<CertHero> => {
       const { data, error } = await supabase
         .from("site_settings")

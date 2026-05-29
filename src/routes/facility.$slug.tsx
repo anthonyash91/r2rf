@@ -40,6 +40,7 @@ function FacilityPage() {
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["facility-categories", facilityValue],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<Category[]> => {
       // Fetch all published categories
       const { data: cats, error } = await supabase

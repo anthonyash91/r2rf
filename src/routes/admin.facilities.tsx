@@ -55,6 +55,7 @@ function AdminFacilitiesPage() {
 
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
+    staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilities(),
   });
   const allFacilities = facilitiesQuery.data?.facilities ?? [];

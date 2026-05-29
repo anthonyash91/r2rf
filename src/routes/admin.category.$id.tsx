@@ -239,6 +239,7 @@ function CategoryEditor({
   const fetchFacilityList = useServerFn(listFacilities);
   const { data: facilityListData } = useQuery({
     queryKey: ["facilities"],
+    staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilityList(),
   });
   const allFacilities = facilityListData?.facilities ?? [];
@@ -481,6 +482,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   const fetchFacilitiesList = useServerFn(listFacilities);
   const { data: facilitiesData } = useQuery({
     queryKey: ["facilities"],
+    staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilitiesList(),
   });
   const facilityLabelMap = useMemo(() => {
@@ -909,6 +911,7 @@ function ItemEditor({
   const fetchFacilitiesList = useServerFn(listFacilities);
   const { data: facilitiesData } = useQuery({
     queryKey: ["facilities-list"],
+    staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilitiesList(),
   });
   const availableFacilities = facilitiesData?.facilities ?? [];

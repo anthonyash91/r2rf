@@ -86,6 +86,7 @@ function AdminAuditLogPage() {
   const { data: myFacilityData } = useQuery({
     queryKey: ["my-facility", user?.id],
     enabled: isFacilityUser && !!user?.id,
+    staleTime: Infinity,
     queryFn: () => fetchMyFacility(),
   });
   const myFacilityValue = isFacilityUser ? (myFacilityData?.facility ?? null) : null;

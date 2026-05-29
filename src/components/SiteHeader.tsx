@@ -43,6 +43,7 @@ export function SiteHeader() {
   const { data: facilityData } = useQuery({
     queryKey: ["my-facility", user?.id],
     enabled: !!user?.id && (isUser || isFacilityUser) && !facilityRouteSlug,
+    staleTime: Infinity,
     queryFn: () => fetchFacilityValue(),
   });
   const userFacilitySlug = (isUser || isFacilityUser) ? (facilityData?.slug ?? facilityData?.facility ?? null) : null;

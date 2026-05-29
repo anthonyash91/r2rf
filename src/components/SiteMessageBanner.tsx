@@ -48,6 +48,7 @@ export function SiteMessageBanner({
   const { data: facilityData } = useQuery({
     queryKey: ["my-facility", userId],
     enabled: kind === "facility" && !facilityValueProp && !!userId && !isAdmin && !isContributor,
+    staleTime: Infinity,
     queryFn: () => fetchFacility(),
   });
   const facilityValue = kind === "facility"
@@ -62,6 +63,7 @@ export function SiteMessageBanner({
   const { data } = useQuery({
     queryKey: ["site_settings", settingsKey],
     enabled: !!settingsKey,
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<SiteMessage | null> => {
       if (!settingsKey) return null;
       const { data, error } = await supabase

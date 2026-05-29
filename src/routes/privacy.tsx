@@ -33,6 +33,7 @@ function PrivacyPage() {
   const { lang, t } = useI18n();
   const { data, isLoading } = useQuery({
     queryKey: ["site_settings", "privacy_policy"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<PrivacyPolicy> => {
       const { data, error } = await supabase
         .from("site_settings")

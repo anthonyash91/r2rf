@@ -122,7 +122,15 @@ export const translateToSpanish = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdminOrContributor(context.supabase, context.userId);
+    // Translation is available to facilityUsers (for facility messages) in addition to admin/contributor
+    const [adminRes, contribRes, facilityRes] = await Promise.all([
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "contributor" }),
+      context.supabase.rpc("has_role", { _user_id: context.userId, _role: "facilityUser" }),
+    ]);
+    if (!adminRes.data && !contribRes.data && !facilityRes.data) {
+      throw new Error("Forbidden: admin, contributor, or facility user access required");
+    }
     checkApiKey();
 
     const entries = Object.entries(data.fields).filter(([, v]) => v && v.trim());

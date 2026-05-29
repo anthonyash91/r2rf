@@ -40,24 +40,22 @@ async function assertCanManageUser(
   if (roleRow.role === "facilityUser") {
     if (callerId === targetUserId) return; // always allowed to manage self
 
-    // Get caller's facility
-    const { data: callerProf } = await supabaseAdmin
-      .from("user_profiles").select("facility").eq("user_id", callerId).maybeSingle();
-    // Get target's facility
-    const { data: targetProf } = await supabaseAdmin
-      .from("user_profiles").select("facility").eq("user_id", targetUserId).maybeSingle();
+    // Fetch caller's facility, target's facility, and (when needed) target's role
+    // all in parallel — they are independent of each other.
+    const [callerProf, targetProf, targetRoleRow] = await Promise.all([
+      supabaseAdmin.from("user_profiles").select("facility").eq("user_id", callerId).maybeSingle().then((r) => r.data),
+      supabaseAdmin.from("user_profiles").select("facility").eq("user_id", targetUserId).maybeSingle().then((r) => r.data),
+      allowFacilityUserTarget
+        ? Promise.resolve(null)
+        : supabaseAdmin.from("user_roles").select("role").eq("user_id", targetUserId).maybeSingle().then((r) => r.data),
+    ]);
 
     if (!callerProf?.facility || callerProf.facility !== targetProf?.facility) {
       throw new Error("Forbidden: can only manage users at your facility");
     }
 
-    // Block managing other facilityUsers unless explicitly allowed (e.g. reset email)
-    if (!allowFacilityUserTarget) {
-      const { data: targetRole } = await supabaseAdmin
-        .from("user_roles").select("role").eq("user_id", targetUserId).maybeSingle();
-      if (targetRole?.role === "facilityUser") {
-        throw new Error("Forbidden: cannot manage other facility users");
-      }
+    if (!allowFacilityUserTarget && targetRoleRow?.role === "facilityUser") {
+      throw new Error("Forbidden: cannot manage other facility users");
     }
   }
 }
