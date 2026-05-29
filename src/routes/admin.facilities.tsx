@@ -260,27 +260,15 @@ function AdminFacilitiesPage() {
                                 <Users className="h-3.5 w-3.5" />
                                 {f.userCount} {f.userCount === 1 ? "user" : "users"} signed up
                               </span>
-                              <span className="inline-flex items-center gap-1.5 flex-wrap">
+                              <span className="inline-flex items-center gap-1.5">
                                 <Link2 className="h-3.5 w-3.5 shrink-0" />
                                 <Link
                                   to="/facility/$slug"
-                                  params={{ slug: f.value }}
+                                  params={{ slug: f.customSlug ?? f.value }}
                                   className="hover:text-foreground hover:underline"
                                 >
-                                  /facility/{f.value}
+                                  /facility/{f.customSlug ?? f.value}
                                 </Link>
-                                {f.customSlug && (
-                                  <>
-                                    <span className="text-muted-foreground/60">&amp;</span>
-                                    <Link
-                                      to="/facility/$slug"
-                                      params={{ slug: f.customSlug }}
-                                      className="hover:text-foreground hover:underline"
-                                    >
-                                      /facility/{f.customSlug}
-                                    </Link>
-                                  </>
-                                )}
                               </span>
                             </div>
                             {(f.customCategories?.length ?? 0) > 0 && (

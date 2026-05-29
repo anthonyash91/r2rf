@@ -1,11 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { HomePageView } from "@/components/HomePageView";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
+import { useAuth } from "@/hooks/use-auth";
+import { getMyFacilityValue } from "@/lib/user-signup.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,9 +23,29 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { user, isFacilityUser, rolesLoaded } = useAuth();
+  const navigate = useNavigate();
+  const fetchMyFacility = useServerFn(getMyFacilityValue);
 
+  const { data: facilityData } = useQuery({
+    queryKey: ["my-facility", user?.id],
+    enabled: rolesLoaded && isFacilityUser && !!user?.id,
+    queryFn: () => fetchMyFacility(),
+  });
 
+  useEffect(() => {
+    const slug = facilityData?.slug ?? facilityData?.facility;
+    if (rolesLoaded && isFacilityUser && slug) {
+      navigate({ to: "/facility/$slug", params: { slug }, replace: true });
+    }
+  }, [rolesLoaded, isFacilityUser, facilityData, navigate]);
 
+  if (isFacilityUser) return null;
+
+  return <IndexContent />;
+}
+
+function IndexContent() {
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["categories", "public"],
     queryFn: async (): Promise<Category[]> => {

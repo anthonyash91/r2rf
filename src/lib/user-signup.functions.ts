@@ -212,16 +212,25 @@ export const getMyProfile = createServerFn({ method: "GET" }).handler(async () =
 export const getMyFacilityValue = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
   const auth = request.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return { facility: null as string | null };
+  if (!auth?.startsWith("Bearer ")) return { facility: null as string | null, slug: null as string | null };
   const token = auth.slice("Bearer ".length);
   const { data: userRes } = await supabaseAdmin.auth.getUser(token);
-  if (!userRes?.user) return { facility: null };
+  if (!userRes?.user) return { facility: null, slug: null };
   const { data: profile } = await supabaseAdmin
     .from("user_profiles")
     .select("facility")
     .eq("user_id", userRes.user.id)
     .maybeSingle();
-  return { facility: (profile?.facility as string | undefined) ?? null };
+  const facilityValue = (profile?.facility as string | undefined) ?? null;
+  if (!facilityValue) return { facility: null, slug: null };
+  // Resolve the active slug: custom_slug when set, otherwise the value
+  const { data: facilityRow } = await supabaseAdmin
+    .from("facilities")
+    .select("custom_slug")
+    .eq("value", facilityValue)
+    .maybeSingle();
+  const slug = ((facilityRow as any)?.custom_slug ?? facilityValue) as string;
+  return { facility: facilityValue, slug };
 });
 
 
