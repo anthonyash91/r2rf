@@ -26,17 +26,18 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
   const qc = useQueryClient();
   const saveFacilityMsgFn = useServerFn(saveFacilityMessage);
   const fetchFacilities = useServerFn(listFacilities);
+
+  // Always call hooks unconditionally — Rules of Hooks
   const { data: facilitiesData } = useQuery({
     queryKey: ["facilities"],
+    enabled: !preselectedFacility, // only needed for admin picker view
     queryFn: () => fetchFacilities(),
   });
   const facilities = facilitiesData?.facilities ?? [];
 
-  // Fetch all existing facility messages so we can show a quick-access list.
-  // Key starts with ["site_settings"] so saves from MessageEditor (which invalidate
-  // ["site_settings", key]) cause this list to refresh automatically.
   const { data: existingMessages } = useQuery({
     queryKey: ["site_settings", "facility-messages-list"],
+    enabled: !preselectedFacility,
     queryFn: async () => {
       const { data } = await supabase
         .from("site_settings")
@@ -45,23 +46,13 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
       const result: { value: string; message: string }[] = [];
       for (const row of data ?? []) {
         const text = ((row.value as any)?.message as string | undefined)?.trim();
-        if (text) {
-          result.push({ value: (row.key as string).replace("facility_message_", ""), message: text });
-        }
+        if (text) result.push({ value: (row.key as string).replace("facility_message_", ""), message: text });
       }
       return result;
     },
   });
 
   const [selected, setSelected] = useState<{ value: string; label: string } | null>(null);
-
-  // Auto-select the preselected facility once facilities load
-  useEffect(() => {
-    if (preselectedFacility && facilities.length > 0 && !selected) {
-      const f = facilities.find((x) => x.value === preselectedFacility);
-      if (f) setSelected({ value: f.value, label: f.label });
-    }
-  }, [preselectedFacility, facilities, selected]);
 
   function selectFacility(facilityValue: string) {
     const f = facilities.find((x) => x.value === facilityValue);
@@ -75,6 +66,34 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
     })
     .filter(Boolean) as { value: string; label: string; message: string }[];
 
+  // facilityUser view: editor directly, no dropdown
+  if (preselectedFacility) {
+    return (
+      <section className="mt-8">
+        <h2 className="font-display text-xl font-semibold">Facility Message</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Shown as a banner under the navigation for users whose account is attached to a specific facility.
+        </p>
+        <SectionCard className="mt-3 pt-4">
+          <MessageEditor
+            key={preselectedFacility}
+            settingsKey={`facility_message_${preselectedFacility}`}
+            title="Facility Message"
+            description="Shown to users at your facility and anyone visiting your facility's page."
+            icon={<Building2 className="h-5 w-5 text-[var(--color-accent)]" />}
+            context="Facility banner message"
+            embedded
+            onSaved={() => qc.invalidateQueries({ queryKey: ["site_settings", "facility-messages-list"] })}
+            overrideSave={async (v) => {
+              await saveFacilityMsgFn({ data: { facilityValue: preselectedFacility, value: v } });
+            }}
+          />
+        </SectionCard>
+      </section>
+    );
+  }
+
+  // Admin/contributor view: full facility picker + configured messages list
   return (
     <section className="mt-8">
       <h2 className="font-display text-xl font-semibold">Facility Message</h2>
@@ -82,17 +101,13 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
         Shown as a banner under the navigation for users whose account is attached to a specific facility.
       </p>
       <SectionCard className="mt-3 pt-4 space-y-4">
-        {!preselectedFacility && configuredFacilities.length > 0 && (
+        {configuredFacilities.length > 0 && (
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">Configured messages:</span>{" "}
             {configuredFacilities.map((f, i) => (
               <span key={f.value}>
                 {i > 0 && "; "}
-                <button
-                  type="button"
-                  onClick={() => selectFacility(f.value)}
-                  className="text-[var(--color-accent)] hover:underline"
-                >
+                <button type="button" onClick={() => selectFacility(f.value)} className="text-[var(--color-accent)] hover:underline">
                   {f.label}
                 </button>
               </span>
@@ -100,7 +115,7 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
           </p>
         )}
 
-        {!preselectedFacility && <label className="block">
+        <label className="block">
           <span className="text-sm font-medium">Select facility</span>
           <div className="mt-1 max-w-sm">
             <FacilityCombobox
@@ -115,7 +130,7 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
               emptyMessage={facilities.length === 0 ? "No facilities found." : "No match."}
             />
           </div>
-        </label>}
+        </label>
 
         {selected && (
           <MessageEditor
