@@ -1,4 +1,4 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,6 @@ import { setActiveFacilitySlug } from "@/lib/facility-context";
 
 export const Route = createFileRoute("/facility/$slug")({
   loader: async ({ params }) => {
-    // Match by auto-generated value slug OR custom slug
     const { data: facility, error } = await supabase
       .from("facilities")
       .select("id, value, label, custom_slug")
@@ -18,17 +17,26 @@ export const Route = createFileRoute("/facility/$slug")({
       .maybeSingle();
     if (error) throw error;
     if (!facility) throw notFound();
-    return { facilityValue: facility.value as string, facilityLabel: facility.label as string };
+    const activeSlug = (facility.custom_slug ?? facility.value) as string;
+    // When a custom slug exists and the visitor used the value slug, redirect to the canonical URL
+    if (facility.custom_slug && params.slug !== facility.custom_slug) {
+      throw redirect({ to: "/facility/$slug", params: { slug: activeSlug } });
+    }
+    return {
+      facilityValue: facility.value as string,
+      facilityLabel: facility.label as string,
+      facilitySlug: activeSlug,
+    };
   },
   component: FacilityPage,
 });
 
 function FacilityPage() {
-  const { facilityValue } = Route.useLoaderData();
+  const { facilityValue, facilitySlug } = Route.useLoaderData();
 
   useEffect(() => {
-    setActiveFacilitySlug(facilityValue);
-  }, [facilityValue]);
+    setActiveFacilitySlug(facilitySlug);
+  }, [facilitySlug]);
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: ["facility-categories", facilityValue],

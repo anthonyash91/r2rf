@@ -158,6 +158,9 @@ function AdminUsersPage() {
       "regular",
       { page, search: debouncedSearch, facility: effectiveFacilityFilter },
     ],
+    // For facilityUsers, wait until their facility is loaded before querying so we
+    // never fire with an empty filter and accidentally expose cross-facility data.
+    enabled: !isFacilityUser || !!myFacilityValue,
     queryFn: () =>
       listRegularFn({
         data: {

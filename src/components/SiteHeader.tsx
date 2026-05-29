@@ -12,7 +12,7 @@ import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
 
 export function SiteHeader() {
-  const { user, canAccessAdmin, isUser, isAdmin, isContributor } = useAuth();
+  const { user, canAccessAdmin, isUser, isAdmin, isContributor, isFacilityUser } = useAuth();
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
   const location = useLocation();
@@ -38,14 +38,14 @@ export function SiteHeader() {
   const facilityRouteMatch = location.pathname.match(/^\/facility\/([^/]+)/);
   const facilityRouteSlug = facilityRouteMatch ? facilityRouteMatch[1] : null;
 
-  // For logged-in regular users, get their facility from profile
+  // For logged-in regular users and facilityUsers, get their facility from profile
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
   const { data: facilityData } = useQuery({
     queryKey: ["my-facility", user?.id],
-    enabled: !!user?.id && isUser && !facilityRouteSlug,
+    enabled: !!user?.id && (isUser || isFacilityUser) && !facilityRouteSlug,
     queryFn: () => fetchFacilityValue(),
   });
-  const userFacilitySlug = isUser ? (facilityData?.facility ?? null) : null;
+  const userFacilitySlug = (isUser || isFacilityUser) ? (facilityData?.slug ?? facilityData?.facility ?? null) : null;
 
   // Session-persisted facility slug (survives navigation away from the facility page)
   const persistedFacilitySlug = useActiveFacilitySlug();

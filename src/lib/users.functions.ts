@@ -19,10 +19,16 @@ async function assertAdmin(supabase: any, userId: string) {
 /**
  * Validates that the caller can perform write actions on a specific user.
  * - admin/contributor: can manage anyone
- * - facilityUser: can manage themselves OR regular users at their own facility
- *                 but NOT other facilityUsers
+ * - facilityUser: can manage themselves OR users at their own facility
+ *   Options:
+ *   - allowFacilityUserTarget: when true, facilityUsers CAN target other facilityUsers
+ *     at their facility (e.g. sending a reset email), but still cannot set passwords
  */
-async function assertCanManageUser(callerId: string, targetUserId: string) {
+async function assertCanManageUser(
+  callerId: string,
+  targetUserId: string,
+  { allowFacilityUserTarget = false }: { allowFacilityUserTarget?: boolean } = {},
+) {
   const { data: roleRow } = await supabaseAdmin
     .from("user_roles")
     .select("role")
@@ -45,11 +51,13 @@ async function assertCanManageUser(callerId: string, targetUserId: string) {
       throw new Error("Forbidden: can only manage users at your facility");
     }
 
-    // Block managing other facilityUsers
-    const { data: targetRole } = await supabaseAdmin
-      .from("user_roles").select("role").eq("user_id", targetUserId).maybeSingle();
-    if (targetRole?.role === "facilityUser") {
-      throw new Error("Forbidden: cannot manage other facility users");
+    // Block managing other facilityUsers unless explicitly allowed (e.g. reset email)
+    if (!allowFacilityUserTarget) {
+      const { data: targetRole } = await supabaseAdmin
+        .from("user_roles").select("role").eq("user_id", targetUserId).maybeSingle();
+      if (targetRole?.role === "facilityUser") {
+        throw new Error("Forbidden: cannot manage other facility users");
+      }
     }
   }
 }
@@ -232,6 +240,24 @@ export const listRegularUsers = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAnyAdmin(context.userId);
 
+    // facilityUser callers are always scoped to their own facility regardless
+    // of what the client passes — this is the server-side enforcement.
+    let facilityFilter = data.facility;
+    const { data: callerRoleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "facilityUser")
+      .maybeSingle();
+    if (callerRoleRow) {
+      const { data: callerProfile } = await supabaseAdmin
+        .from("user_profiles")
+        .select("facility")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      facilityFilter = callerProfile?.facility ?? "";
+    }
+
     // Exclude any user with a privileged, tester, or facilityUser role.
     const { data: privilegedRows, error: privErr } = await supabaseAdmin
       .from("user_roles")
@@ -247,8 +273,8 @@ export const listRegularUsers = createServerFn({ method: "POST" })
     if (excludeIds.length) {
       q = q.not("user_id", "in", `(${excludeIds.join(",")})`);
     }
-    if (data.facility) {
-      q = q.eq("facility", data.facility);
+    if (facilityFilter) {
+      q = q.eq("facility", facilityFilter);
     }
     if (data.search) {
       const term = data.search.replace(/[%,()]/g, "").toLowerCase();
@@ -607,7 +633,7 @@ export const sendPasswordResetEmail = createServerFn({ method: "POST" })
     // Look up target user so we can validate facility scope for facilityUser callers
     const { data: list } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
     const target = list?.users?.find((u) => u.email === data.email);
-    if (target) await assertCanManageUser(context.userId, target.id);
+    if (target) await assertCanManageUser(context.userId, target.id, { allowFacilityUserTarget: true });
     else await assertAnyAdmin(context.userId); // unknown email — require at least any admin
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email);
     if (error) throw new Error(error.message);
@@ -628,7 +654,7 @@ export const resendVerificationEmail = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { data: list } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
     const target = list?.users?.find((u) => u.email === data.email);
-    if (target) await assertCanManageUser(context.userId, target.id);
+    if (target) await assertCanManageUser(context.userId, target.id, { allowFacilityUserTarget: true });
     else await assertAnyAdmin(context.userId);
     const { error } = await supabaseAdmin.auth.resend({ type: "signup", email: data.email });
     if (error) throw new Error(error.message);
