@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, HelpCircle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
+import { UserSectionHeader } from "@/components/UserSectionHeader";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
@@ -553,8 +554,7 @@ function AdminUsersPage() {
             {!isFacilityUser && (
               <section className="mt-8">
                 <div>
-                  <h2 className="font-display text-xl font-semibold">Admin Users <span className="text-muted-foreground font-normal">({adminUsers.length})</span></h2>
-                  <p className="mt-1 text-xs text-muted-foreground">Accounts with admin or contributor access.</p>
+                  <UserSectionHeader title="Admin Users" count={adminUsers.length} description="Accounts with admin or contributor access." />
                 </div>
                 <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
                   {adminUsers.length ? (
@@ -568,12 +568,7 @@ function AdminUsersPage() {
 
             <section className="mt-8">
               <div>
-                <h2 className="font-display text-xl font-semibold">
-                  Facility Users <span className="text-muted-foreground font-normal">({facilityAdminUsers.length})</span>
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Facility staff with facility-scoped admin access.
-                </p>
+                <UserSectionHeader title="Facility Users" count={facilityAdminUsers.length} description="Facility staff with facility-scoped admin access." />
               </div>
               <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
                 {facilityAdminUsers.length ? (
@@ -627,8 +622,7 @@ function AdminUsersPage() {
             {!isFacilityUser && (
               <section className="mt-8">
                 <div>
-                  <h2 className="font-display text-xl font-semibold">Test Users <span className="text-muted-foreground font-normal">({testerUsers.length})</span></h2>
-                  <p className="mt-1 text-xs text-muted-foreground">Accounts used for internal testing. They behave like regular users.</p>
+                  <UserSectionHeader title="Test Users" count={testerUsers.length} description="Accounts used for internal testing. They behave like regular users." />
                 </div>
                 <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
                   {testerUsers.length ? (
@@ -646,17 +640,13 @@ function AdminUsersPage() {
                   {(() => {
                     const isFiltered = facilityFilter !== "all" || debouncedSearch.length > 0;
                     return (
-                      <h2 className="font-display text-xl font-semibold">
-                        Users{" "}
-                        <span className="text-muted-foreground font-normal">
-                          ({regularTotal}{isFiltered ? " filtered" : ""})
-                        </span>
-                      </h2>
+                      <UserSectionHeader
+                        title="Users"
+                        count={`${regularTotal}${isFiltered ? " filtered" : ""}`}
+                        description="Regular user accounts that signed up from the public form."
+                      />
                     );
                   })()}
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Regular user accounts that signed up from the public form.
-                  </p>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:flex-nowrap gap-2 w-full sm:w-auto sm:flex-1 sm:max-w-md">
                   <div className="w-full sm:flex-1 sm:min-w-0">

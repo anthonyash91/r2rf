@@ -26,6 +26,9 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import type { Category, ContentItem } from "@/lib/categories";
 import { Badge } from "@/components/Badge";
 import { CircleProgress } from "@/components/CircleProgress";
+import { UserSectionHeader } from "@/components/UserSectionHeader";
+import { StatCard } from "@/components/StatCard";
+import { ReadStatusBadge } from "@/components/ReadStatusBadge";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
@@ -579,12 +582,7 @@ function UsersReportTab({
           {/* Facility Staff section — only shown on specific facility view */}
           {!isAll && (
             <div className="mt-8">
-              <div className="mb-3">
-                <h2 className="font-display text-xl font-semibold">
-                  Facility Staff <span className="text-muted-foreground font-normal">({staff.length})</span>
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">Facility admin accounts.</p>
-              </div>
+              <UserSectionHeader className="mb-3" title="Facility Staff" count={staff.length} description="Facility admin accounts." />
               <SectionCard padded={false} className="overflow-hidden">
                 {staff.length === 0 ? (
                   <p className="px-6 py-4 text-sm text-muted-foreground">No facility staff accounts.</p>
@@ -617,12 +615,7 @@ function UsersReportTab({
           {/* Regular users section */}
           <div className={!isAll ? "mt-8" : "mt-0"}>
             {!isAll && (
-              <div className="mb-3">
-                <h2 className="font-display text-xl font-semibold">
-                  Users <span className="text-muted-foreground font-normal">({users.length})</span>
-                </h2>
-                <p className="mt-1 text-xs text-muted-foreground">Regular user accounts signed up from the public form.</p>
-              </div>
+              <UserSectionHeader className="mb-3" title="Users" count={users.length} description="Regular user accounts signed up from the public form." />
             )}
             {users.length === 0 ? (
               <p className={`text-muted-foreground ${!isAll ? "" : "mt-8"}`}>
@@ -878,20 +871,9 @@ function UserProgressView({
             ];
             return (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 mt-8 mb-8">
-                {stats.map((s) => {
-                  const Icon = s.icon;
-                  return (
-                    <div key={s.label} className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-[var(--color-accent)] flex-shrink-0">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0 flex flex-col items-start">
-                        <p className="font-display text-2xl font-semibold leading-none tabular-nums">{s.value}</p>
-                        <p className="text-xs text-muted-foreground mt-1 whitespace-nowrap">{s.label}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+                {stats.map((s) => (
+                  <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
+                ))}
               </div>
             );
           })()}
@@ -1093,24 +1075,13 @@ function UserCategorySection({
                         {withActionWord(item.duration, item.type)}
                       </span>
                     )}
-                    <span className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
-                      item.read
-                        ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
-                        : "border-input bg-background text-foreground"
-                    }`}>
-                      {item.read ? (
-                        <>
-                          <Check className="h-3.5 w-3.5" />
-                          {labels.read}
-                          {item.read_at && <> on {fmtDateShort(item.read_at)}</>}
-                        </>
-                      ) : (
-                        <>
-                          <X className="h-3.5 w-3.5" />
-                          {labels.unread}
-                        </>
-                      )}
-                    </span>
+                    <ReadStatusBadge
+                      read={item.read}
+                      readLabel={labels.read}
+                      unreadLabel={labels.unread}
+                      readAt={item.read_at ? fmtDateShort(item.read_at) : null}
+                      className="ml-auto"
+                    />
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-lg font-semibold text-foreground">{item.title}</p>

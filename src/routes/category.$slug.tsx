@@ -10,11 +10,12 @@ import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Check, Circle } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
+import { ReadStatusBadge } from "@/components/ReadStatusBadge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -550,24 +551,17 @@ function CategoryPage() {
                           const label = isRead ? readLabel : unreadLabel;
                           return (
                             <div className="absolute top-6 right-6 flex items-center gap-1.5 justify-end z-10">
-                              <button
-                                type="button"
-                                aria-label={label}
-                                aria-pressed={isRead}
+                              <ReadStatusBadge
+                                read={isRead}
+                                readLabel={readLabel}
+                                unreadLabel={unreadLabel}
+                                unreadIcon="circle"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   e.preventDefault();
                                   toggleRead.mutate({ itemId: item.id, markRead: !isRead });
                                 }}
-                                className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
-                                  isRead
-                                    ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background hover:opacity-90"
-                                    : "border-input bg-background text-foreground hover:bg-muted"
-                                }`}
-                              >
-                                {isRead ? <Check className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
-                                {label}
-                              </button>
+                              />
                             </div>
                           );
                         })()}

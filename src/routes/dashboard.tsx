@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { CircleProgress } from "@/components/CircleProgress";
+import { StatCard } from "@/components/StatCard";
+import { ReadStatusBadge } from "@/components/ReadStatusBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
@@ -27,7 +29,7 @@ import { withActionWord, parseMinutes } from "@/lib/duration";
 import { readStatusLabels } from "@/lib/read-status";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, Check, Circle, X, ChevronDown, BookOpen, CheckCircle2, Loader2, Layers, Clock, Flame, Trophy } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Layers, Clock, Flame, Trophy } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -467,20 +469,9 @@ function DashboardPage() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-8">
-                        {stats.map((s) => {
-                          const Icon = s.icon;
-                          return (
-                            <div key={s.label} className="rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-[var(--color-accent)] flex-shrink-0">
-                                <Icon className="h-5 w-5" />
-                              </div>
-                              <div className="min-w-0 flex flex-col items-start">
-                                <p className="font-display text-2xl font-semibold leading-none tabular-nums">{s.value}</p>
-                                <p className="text-xs text-muted-foreground mt-1 whitespace-nowrap">{s.label}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {stats.map((s) => (
+                          <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
+                        ))}
                       </div>
 
                       <h2 className="font-display text-lg font-semibold mb-3">{t("dashboard.categoryProgress")}</h2>
@@ -781,23 +772,12 @@ function CategoryProgressSection({
                     {!isAdmin && (() => {
                       const labels = readStatusLabels(t, it);
                       return (
-                        <span className={`inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ml-auto ${
-                          isRead
-                            ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
-                            : "border-input bg-background text-foreground"
-                        }`}>
-                          {isRead ? (
-                            <>
-                              <Check className="h-3.5 w-3.5" />
-                              {labels.read}
-                            </>
-                          ) : (
-                            <>
-                              <X className="h-3.5 w-3.5" />
-                              {labels.unread}
-                            </>
-                          )}
-                        </span>
+                        <ReadStatusBadge
+                          read={isRead}
+                          readLabel={labels.read}
+                          unreadLabel={labels.unread}
+                          className="ml-auto"
+                        />
                       );
                     })()}
 
