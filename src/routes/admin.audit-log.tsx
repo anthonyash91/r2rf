@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ScrollText, UserPlus, UserMinus, KeyRound, ShieldCheck, ShieldOff, Trash2, HelpCircle, Filter } from "lucide-react";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { PageHeader } from "@/components/PageHeader";
+import { FilterField } from "@/components/FilterField";
 import { EmptyState } from "@/components/EmptyState";
 import { Pager } from "@/components/LoadMorePager";
 import { listAuditLog } from "@/lib/admin-audit.functions";
@@ -165,17 +166,15 @@ function AdminAuditLogPage() {
       <section className="mt-8 space-y-8">
         <div className="rounded-2xl border border-border bg-card p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
-            <div className="flex-1 min-w-[180px]">
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Search</label>
+            <FilterField label="Search" className="flex-1 min-w-[180px]">
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(0); }}
                 placeholder="username, email, ip, details…"
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
-            </div>
-            <div className="min-w-[200px]">
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Action</label>
+            </FilterField>
+            <FilterField label="Action" className="min-w-[200px]">
               <select
                 value={action}
                 onChange={(e) => { setAction((e.target.value as ActionType) || ""); setPage(0); }}
@@ -186,16 +185,15 @@ function AdminAuditLogPage() {
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
-            </div>
-            <div className="min-w-[180px]">
-              <label className="block text-xs font-medium text-muted-foreground mb-1">Since</label>
+            </FilterField>
+            <FilterField label="Since" className="min-w-[180px]">
               <input
                 type="datetime-local"
                 value={since}
                 onChange={(e) => { setSince(e.target.value); setPage(0); }}
                 className="w-full sm:w-auto rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
-            </div>
+            </FilterField>
             {(action || search || since) && (
               <button
                 onClick={() => { setAction(""); setSearch(""); setSince(""); setPage(0); }}

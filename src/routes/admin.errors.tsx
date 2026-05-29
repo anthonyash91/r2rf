@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AlertOctagon, Filter, Server, Monitor, Trash2 } from "lucide-react";
 import { requireAdminBeforeLoad } from "@/lib/admin-guards";
 import { PageHeader } from "@/components/PageHeader";
+import { FilterField } from "@/components/FilterField";
 import { EmptyState } from "@/components/EmptyState";
 import { Pager } from "@/components/LoadMorePager";
 import { LoadingButton } from "@/components/LoadingButton";
@@ -203,30 +204,18 @@ function AdminErrorsPage() {
       <section className="mt-8 space-y-8">
         <div className="rounded-2xl border border-border bg-card p-6 pt-[22px]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
-            <div className="flex-1 min-w-[180px]">
-              <label className="block text-xs font-medium text-muted-foreground mb-1">
-                Search
-              </label>
+            <FilterField label="Search" className="flex-1 min-w-[180px]">
               <input
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(0);
-                }}
+                onChange={(e) => { setSearch(e.target.value); setPage(0); }}
                 placeholder="message, stack, route, ip…"
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
-            </div>
-            <div className="w-full sm:w-auto sm:min-w-[180px]">
-              <label className="block text-xs font-medium text-muted-foreground mb-1">
-                Source
-              </label>
+            </FilterField>
+            <FilterField label="Source" className="w-full sm:w-auto sm:min-w-[180px]">
               <Select
                 value={source || "all"}
-                onValueChange={(v) => {
-                  setSource(v === "all" ? "" : (v as SourceFilter));
-                  setPage(0);
-                }}
+                onValueChange={(v) => { setSource(v === "all" ? "" : (v as SourceFilter)); setPage(0); }}
               >
                 <SelectTrigger className="w-full px-4 py-2 text-sm">
                   <SelectValue />
@@ -237,29 +226,18 @@ function AdminErrorsPage() {
                   <SelectItem value="client">Client</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="min-w-[180px]">
-              <label className="block text-xs font-medium text-muted-foreground mb-1">
-                Since
-              </label>
+            </FilterField>
+            <FilterField label="Since" className="min-w-[180px]">
               <input
                 type="datetime-local"
                 value={since}
-                onChange={(e) => {
-                  setSince(e.target.value);
-                  setPage(0);
-                }}
+                onChange={(e) => { setSince(e.target.value); setPage(0); }}
                 className="w-full sm:w-auto rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
-            </div>
+            </FilterField>
             {(source || search || since) && (
               <button
-                onClick={() => {
-                  setSource("");
-                  setSearch("");
-                  setSince("");
-                  setPage(0);
-                }}
+                onClick={() => { setSource(""); setSearch(""); setSince(""); setPage(0); }}
                 className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
               >
                 <Filter className="h-3.5 w-3.5" />
