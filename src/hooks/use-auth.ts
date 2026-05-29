@@ -8,6 +8,8 @@ export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  // True only after the roles fetch has completed (may still be empty for unauthenticated users)
+  const [rolesLoaded, setRolesLoaded] = useState(false);
 
   function loadRoles(userId: string) {
     supabase
@@ -16,6 +18,7 @@ export function useAuth() {
       .eq("user_id", userId)
       .then(({ data }) => {
         setRoles(((data ?? []).map((r: any) => r.role)) as AppRole[]);
+        setRolesLoaded(true);
       });
   }
 
@@ -51,6 +54,7 @@ export function useAuth() {
         setTimeout(() => logDailyLogin(s.user.id), 0);
       } else {
         setRoles([]);
+        setRolesLoaded(true); // no user = no roles, considered loaded
       }
     });
 
@@ -60,6 +64,8 @@ export function useAuth() {
       if (s?.user) {
         loadRoles(s.user.id);
         logDailyLogin(s.user.id);
+      } else {
+        setRolesLoaded(true); // no session = no roles to load
       }
     });
 
@@ -83,5 +89,6 @@ export function useAuth() {
     isFacilityUser,
     canAccessAdmin: isAdmin || isContributor || isFacilityUser,
     loading,
+    rolesLoaded,
   };
 }

@@ -50,16 +50,16 @@ export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
 });
 
-/** Thin auth gate — blocks facilityUsers and shows nothing while roles load. */
+/** Thin auth gate — blocks facilityUsers and shows nothing until roles are confirmed. */
 function AdminCategoriesPage() {
-  const { isFacilityUser, loading } = useAuth();
+  const { isFacilityUser, rolesLoaded } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && isFacilityUser) navigate({ to: "/admin/users" });
-  }, [isFacilityUser, loading, navigate]);
+    if (rolesLoaded && isFacilityUser) navigate({ to: "/admin/users" });
+  }, [isFacilityUser, rolesLoaded, navigate]);
 
-  if (loading || isFacilityUser) return null;
+  if (!rolesLoaded || isFacilityUser) return null;
   return <AdminCategoriesContent />;
 }
 
