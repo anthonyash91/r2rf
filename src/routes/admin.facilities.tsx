@@ -47,6 +47,7 @@ function AdminFacilitiesPage() {
   const [newLabels, setNewLabels] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
+  const [editingCustomSlug, setEditingCustomSlug] = useState("");
   const [page, setPage] = useState(0);
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
@@ -92,7 +93,7 @@ function AdminFacilitiesPage() {
   });
 
   const updateMut = useToastMutation({
-    mutationFn: (input: { id: string; label: string }) => updateFacilityFn({ data: input }),
+    mutationFn: (input: { id: string; label: string; customSlug?: string | null }) => updateFacilityFn({ data: input }),
     successMessage: "Facility updated",
     invalidate: facilitiesKey,
     onSuccess: () => setEditingId(null),
@@ -216,12 +217,35 @@ function AdminFacilitiesPage() {
                     <div className={`flex flex-col gap-5 md:flex-row md:items-center md:justify-between ${editable ? "pointer-events-none" : ""}`}>
                       {isEditing ? (
                         <>
-                          <input
-                            value={editingLabel}
-                            onChange={(e) => setEditingLabel(e.target.value)}
-                            className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
-                            autoFocus
-                          />
+                          <div className="flex-1 flex flex-col gap-2">
+                            <input
+                              value={editingLabel}
+                              onChange={(e) => setEditingLabel(e.target.value)}
+                              placeholder="Facility name"
+                              className="rounded-md border border-input bg-background px-4 py-2 text-sm"
+                              autoFocus
+                            />
+                            <div className="flex items-center gap-2">
+                              <input
+                                value={editingCustomSlug}
+                                onChange={(e) => setEditingCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "-"))}
+                                placeholder="Custom slug (optional) — e.g. my-facility"
+                                className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+                              />
+                              {editingCustomSlug && (
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingCustomSlug("")}
+                                  className="text-xs text-muted-foreground hover:text-foreground"
+                                >
+                                  Clear
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Accessible at <span className="font-mono">/facility/{editingCustomSlug || "<slug>"}</span> in addition to the auto slug.
+                            </p>
+                          </div>
                           <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
                             <LoadingButton
                               variant="secondary"
@@ -233,7 +257,8 @@ function AdminFacilitiesPage() {
                               onClick={() => {
                                 const label = editingLabel.trim();
                                 if (!label) { toast.error("Label required"); return; }
-                                updateMut.mutate({ id: f.id, label });
+                                const customSlug = editingCustomSlug.trim() || null;
+                                updateMut.mutate({ id: f.id, label, customSlug });
                               }}
                               pending={updateMut.isPending}
                               pendingText="Saving…"
@@ -262,6 +287,16 @@ function AdminFacilitiesPage() {
                                 <Link2 className="h-3.5 w-3.5" />
                                 /facility/{f.value}
                               </Link>
+                              {f.customSlug && (
+                                <Link
+                                  to="/facility/$slug"
+                                  params={{ slug: f.customSlug }}
+                                  className="inline-flex items-center gap-1.5 hover:text-foreground hover:underline"
+                                >
+                                  <Link2 className="h-3.5 w-3.5" />
+                                  /facility/{f.customSlug} <span className="text-muted-foreground/60">(custom)</span>
+                                </Link>
+                              )}
                             </div>
                             {(f.customCategories?.length ?? 0) > 0 && (
                               <div className="pt-1 space-y-1">
@@ -335,7 +370,7 @@ function AdminFacilitiesPage() {
                                 aria-label="Edit"
                                 tooltip="Edit"
                                 icon={Pencil}
-                                onClick={() => { setEditingId(f.id); setEditingLabel(f.label); }}
+                                onClick={() => { setEditingId(f.id); setEditingLabel(f.label); setEditingCustomSlug(f.customSlug ?? ""); }}
                               />
                               <div className="mx-1 h-6 w-px bg-border" aria-hidden />
                               <IconButton
