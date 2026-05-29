@@ -14,7 +14,7 @@ async function assertAdmin(supabase: any, userId: string) {
 export const listFacilities = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("facilities")
-    .select("id, value, label, sort_order")
+    .select("id, value, label, sort_order, custom_slug")
     .eq("hidden", false)
     .order("label", { ascending: true });
   if (error) throw new Error(error.message);
@@ -54,7 +54,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
     await assertAdmin(context.supabase, context.userId);
 
     const [facRes, profRes, cifRes, catFacRes, msgRes] = await Promise.all([
-      supabaseAdmin.from("facilities").select("id, value, label, sort_order").order("label", { ascending: true }),
+      supabaseAdmin.from("facilities").select("id, value, label, sort_order, custom_slug").order("label", { ascending: true }),
       supabaseAdmin.from("user_profiles").select("facility"),
       (supabaseAdmin as any).from("content_item_facilities").select("facility_value, content_items(id, title, category_id, categories(id, name))"),
       (supabaseAdmin as any).from("category_facilities").select("facility_value, category_id, categories(id, name, slug)"),
@@ -113,6 +113,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
         value: f.value as string,
         label: f.label as string,
         sort_order: f.sort_order as number,
+        customSlug: (f.custom_slug ?? null) as string | null,
         userCount: userCounts.get(f.value as string) ?? 0,
         contentItems: facilityContentMap.get(f.value as string) ?? [],
         customCategories: facilityCategoryMap.get(f.value as string) ?? [],
