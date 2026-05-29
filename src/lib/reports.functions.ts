@@ -56,6 +56,13 @@ export const getUsageReport = createServerFn({ method: "POST" })
     if (synthErr) throw new Error(synthErr.message);
     const syntheticIds = new Set<string>((synthRows ?? []).map((r: any) => r.user_id as string));
 
+    // Exclude facilityUser role accounts from all user counts
+    const { data: facilityUserRoles } = await supabaseAdmin
+      .from("user_roles").select("user_id").eq("role", "facilityUser");
+    const facilityUserAccountIds = new Set<string>(
+      (facilityUserRoles ?? []).map((r: any) => r.user_id as string)
+    );
+
     let userIdFilter: string[] | null = null;
     let facilityUserCount = 0;
     if (facilityValue) {
@@ -65,7 +72,9 @@ export const getUsageReport = createServerFn({ method: "POST" })
         .eq("facility", facilityValue)
         .eq("is_synthetic", false);
       if (error) throw new Error(error.message);
-      userIdFilter = (profs ?? []).map((p: any) => p.user_id as string);
+      userIdFilter = (profs ?? [])
+        .map((p: any) => p.user_id as string)
+        .filter((id) => !facilityUserAccountIds.has(id));
       facilityUserCount = userIdFilter.length;
     }
 
@@ -75,7 +84,8 @@ export const getUsageReport = createServerFn({ method: "POST" })
       supabaseAdmin
         .from("user_profiles")
         .select("user_id", { count: "exact", head: true })
-        .eq("is_synthetic", false),
+        .eq("is_synthetic", false)
+        .not("user_id", "in", `(${[...facilityUserAccountIds, "00000000-0000-0000-0000-000000000000"].join(",")})`),
       (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
       (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
     ]);

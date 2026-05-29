@@ -53,12 +53,13 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    const [facRes, profRes, cifRes, catFacRes, msgRes] = await Promise.all([
+    const [facRes, profRes, cifRes, catFacRes, msgRes, facilityUserRolesRes] = await Promise.all([
       supabaseAdmin.from("facilities").select("id, value, label, sort_order, custom_slug").order("label", { ascending: true }),
-      supabaseAdmin.from("user_profiles").select("facility"),
+      supabaseAdmin.from("user_profiles").select("user_id, facility"),
       (supabaseAdmin as any).from("content_item_facilities").select("facility_value, content_items(id, title, category_id, categories(id, name))"),
       (supabaseAdmin as any).from("category_facilities").select("facility_value, category_id, categories(id, name, slug)"),
       supabaseAdmin.from("site_settings").select("key, value").like("key", "facility_message_%"),
+      supabaseAdmin.from("user_roles").select("user_id").eq("role", "facilityUser"),
     ]);
     if (facRes.error) throw new Error(facRes.error.message);
     if (profRes.error) throw new Error(profRes.error.message);
@@ -76,8 +77,12 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
       }
     }
 
+    const facilityUserIds = new Set<string>(
+      (facilityUserRolesRes.data ?? []).map((r: any) => r.user_id as string)
+    );
     const userCounts = new Map<string, number>();
     for (const p of profRes.data ?? []) {
+      if (facilityUserIds.has((p as any).user_id as string)) continue; // exclude facilityUser accounts
       const k = (p as any).facility as string;
       userCounts.set(k, (userCounts.get(k) ?? 0) + 1);
     }
