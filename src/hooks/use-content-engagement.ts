@@ -42,7 +42,13 @@ type Params = {
   videoEl?: HTMLVideoElement | null;
   /** The actual audio element (same reasoning as videoEl). */
   audioEl?: HTMLAudioElement | null;
-  /** Called when 95%+ of the media has been reached. */
+  /**
+   * Estimated reading time in seconds for PDF items (derived from the
+   * item's duration field). When provided, the hook auto-marks as read at
+   * 95% of this value based on cumulative active session time.
+   */
+  pdfEstimatedSeconds?: number;
+  /** Called when 95%+ of the media/PDF threshold has been reached. */
   onAutoMarkRead?: () => void;
 };
 
@@ -61,12 +67,19 @@ export function useContentEngagement({
   existing,
   videoEl,
   audioEl,
+  pdfEstimatedSeconds,
   onAutoMarkRead,
 }: Params): { mediaProgressPct: number | null } {
   // Timer state — all in refs so they never cause re-renders
   const lastActivityRef = useRef(Date.now());
   const accSecondsRef = useRef(0);
   const baseSecondsRef = useRef(0);
+
+  // PDF: store estimated seconds in a ref so the timer effect stays stable
+  const pdfEstimatedSecondsRef = useRef(pdfEstimatedSeconds ?? 0);
+  useEffect(() => {
+    pdfEstimatedSecondsRef.current = pdfEstimatedSeconds ?? 0;
+  }, [pdfEstimatedSeconds]);
 
   // Media state
   const furthestRef = useRef(0);
@@ -130,6 +143,16 @@ export function useContentEngagement({
       const idle = Date.now() - lastActivityRef.current > IDLE_MS;
       if (!idle) {
         accSecondsRef.current += 30;
+        // PDF auto-mark: fire when cumulative active time reaches 95% of estimate
+        const pdfThreshold = pdfEstimatedSecondsRef.current;
+        if (!autoMarkedRef.current && pdfThreshold > 0) {
+          const total = baseSecondsRef.current + accSecondsRef.current;
+          if (total >= pdfThreshold * 0.95) {
+            autoMarkedRef.current = true;
+            onAutoMarkRead?.();
+            write();
+          }
+        }
         if (accSecondsRef.current > 0 && accSecondsRef.current % FLUSH_INTERVAL_S === 0) {
           write();
         }
