@@ -10,7 +10,7 @@ import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Circle } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -615,29 +615,53 @@ function CategoryPage() {
                             <div className="absolute top-6 right-6 flex items-center gap-1.5 justify-end z-10">
                               {(() => {
                                 const eng = engagementMap.get(item.id);
-                                if (eng && (mediaKind === "video" || mediaKind === "audio") && eng.media_progress_seconds && eng.media_duration_seconds && eng.media_duration_seconds > 0) {
-                                  const pct = Math.min(100, Math.round((eng.media_progress_seconds / eng.media_duration_seconds) * 100));
-                                  if (pct >= 5) {
-                                    return (
-                                      <span className="text-[11px] text-muted-foreground font-medium tabular-nums">
-                                        {mediaKind === "video" ? "Watched" : "Listened"} {pct}%
+                                const mediaPct = !isRead && eng && (mediaKind === "video" || mediaKind === "audio") && eng.media_progress_seconds && eng.media_duration_seconds && eng.media_duration_seconds > 0
+                                  ? Math.min(100, Math.round((eng.media_progress_seconds / eng.media_duration_seconds) * 100))
+                                  : null;
+
+                                if (mediaPct !== null && mediaPct >= 5) {
+                                  // Progress-filled button: accent fill grows left-to-right as content is consumed
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        toggleRead.mutate({ itemId: item.id, markRead: !isRead });
+                                      }}
+                                      className="relative inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-[11px] font-medium cursor-pointer overflow-hidden transition-colors hover:opacity-90"
+                                      style={{ borderColor: `color-mix(in oklab, var(--color-accent) 60%, transparent)` }}
+                                    >
+                                      {/* Progress fill */}
+                                      <span
+                                        className="absolute inset-y-0 left-0 pointer-events-none"
+                                        style={{
+                                          width: `${mediaPct}%`,
+                                          background: `color-mix(in oklab, var(--color-accent) 22%, transparent)`,
+                                        }}
+                                      />
+                                      <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" style={{ color: `var(--color-accent)` }} />
+                                      <span className="relative tabular-nums" style={{ color: `var(--color-accent)` }}>
+                                        {mediaPct}%
                                       </span>
-                                    );
-                                  }
+                                    </button>
+                                  );
                                 }
-                                return null;
+
+                                return (
+                                  <ReadStatusBadge
+                                    read={isRead}
+                                    readLabel={readLabel}
+                                    unreadLabel={unreadLabel}
+                                    unreadIcon="circle"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      toggleRead.mutate({ itemId: item.id, markRead: !isRead });
+                                    }}
+                                  />
+                                );
                               })()}
-                              <ReadStatusBadge
-                                read={isRead}
-                                readLabel={readLabel}
-                                unreadLabel={unreadLabel}
-                                unreadIcon="circle"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  toggleRead.mutate({ itemId: item.id, markRead: !isRead });
-                                }}
-                              />
                             </div>
                           );
                         })()}
