@@ -16,6 +16,7 @@ import { generateCategoryCopy, generateContentDescription } from "@/lib/category
 import { listFacilities } from "@/lib/facilities.functions";
 import { generateUniqueCategoryIcon, resolveCategoryIcon } from "@/lib/category-icons";
 import { FileUploader } from "@/components/FileUploader";
+import { deleteStorageFile } from "@/lib/storage.functions";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
 import { SortableList } from "@/components/SortableList";
@@ -478,6 +479,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   const confirmDelete = useConfirmDelete();
   const { lang } = useI18n();
   const fetchFacilitiesList = useServerFn(listFacilities);
+  const deleteOldFile = useServerFn(deleteStorageFile);
+  const pendingDeletesRef = useRef<string[]>([]);
   const { data: facilitiesData } = useQuery({
     queryKey: ["facilities"],
     staleTime: 10 * 60 * 1000,
@@ -576,6 +579,12 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       setEditing(null);
       if (savedId) setPendingScrollId(savedId);
       invalidate();
+      // Fire-and-forget cleanup of old storage files now that the new URL is
+      // safely persisted. A failed delete is non-fatal — just wastes storage.
+      const toDelete = pendingDeletesRef.current.splice(0);
+      if (toDelete.length > 0) {
+        Promise.all(toDelete.map((path) => deleteOldFile({ data: { path } }))).catch(() => {});
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -675,6 +684,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             onSave={(v) => saveMut.mutate(v)}
             busy={saveMut.isPending}
             categoryFacilities={categoryFacilities}
+            onPendingDelete={(path) => { pendingDeletesRef.current.push(path); }}
           />
         </div>
       )}
@@ -894,6 +904,7 @@ function ItemEditor({
   onSave,
   busy,
   categoryFacilities,
+  onPendingDelete,
 }: {
   item: ContentItem | null;
   categoryName: string;
@@ -901,6 +912,7 @@ function ItemEditor({
   onSave: (v: Partial<ContentItem> & { id?: string }) => void;
   busy: boolean;
   categoryFacilities: string[];
+  onPendingDelete: (path: string) => void;
 }) {
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
@@ -1277,6 +1289,7 @@ function ItemEditor({
           />
           <FileUploader
             existingFileUrl={url || undefined}
+            onPendingDelete={onPendingDelete}
             onUploaded={async (u, name) => {
               setUrl(u);
               const estimated = await estimateDuration(u, name, type);
@@ -1352,6 +1365,7 @@ function ItemEditor({
             <FileUploader
               label={fileUrlEs ? "Replace Spanish file" : "Upload Spanish file"}
               existingFileUrl={fileUrlEs ?? undefined}
+              onPendingDelete={onPendingDelete}
               onUploaded={(u, name) => { setFileUrlEs(u); setFileNameEs(name ?? null); }}
             />
           </div>
