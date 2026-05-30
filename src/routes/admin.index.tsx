@@ -61,13 +61,18 @@ function AdminCategoriesPage() {
   return <AdminCategoriesContent />;
 }
 
+// Stable empty-array reference used as the default for the categories query.
+// A plain `= []` inline default creates a new array on every render, which
+// makes the `useEffect(() => setOrder(categories), [categories])` loop forever.
+const EMPTY_CATEGORIES: import("@/lib/categories").Category[] = [];
+
 function AdminCategoriesContent() {
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
   const [creating, setCreating] = useState(false);
   const [expandedCourses, setExpandedCourses] = useState(new Set<string>());
 
-  const { data: categories = [], isLoading } = useQuery({
+  const { data: categories = EMPTY_CATEGORIES, isLoading } = useQuery({
     queryKey: ["admin", "categories"],
     queryFn: async (): Promise<Category[]> => {
       const { data, error } = await supabase
