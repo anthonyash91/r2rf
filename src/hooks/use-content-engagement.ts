@@ -34,14 +34,14 @@ type Params = {
   isActive: boolean;
   /** Existing engagement data loaded from the DB for this item. */
   existing: EngagementRecord | null;
-  /** Ref to the video element (only for video items). */
-  videoRef?: React.RefObject<HTMLVideoElement | null>;
-  /** Ref to the audio element (only for audio items). */
-  audioRef?: React.RefObject<HTMLAudioElement | null>;
-  /** True when the video dialog is open. */
-  isVideoActive?: boolean;
-  /** True when the audio dialog is open. */
-  isAudioActive?: boolean;
+  /**
+   * The actual video element — use a callback ref (useState) in the parent
+   * so this updates when the element mounts inside the Dialog Portal.
+   * Using useRef alone would give null here because the Portal renders async.
+   */
+  videoEl?: HTMLVideoElement | null;
+  /** The actual audio element (same reasoning as videoEl). */
+  audioEl?: HTMLAudioElement | null;
   /** Called when 95%+ of the media has been reached. */
   onAutoMarkRead?: () => void;
 };
@@ -59,25 +59,21 @@ export function useContentEngagement({
   userId,
   isActive,
   existing,
-  videoRef,
-  audioRef,
-  isVideoActive = false,
-  isAudioActive = false,
+  videoEl,
+  audioEl,
   onAutoMarkRead,
 }: Params): { mediaProgressPct: number | null } {
   // Timer state — all in refs so they never cause re-renders
   const lastActivityRef = useRef(Date.now());
-  const accSecondsRef = useRef(0);   // accumulated THIS session
-  const baseSecondsRef = useRef(0);  // DB value when item opened
+  const accSecondsRef = useRef(0);
+  const baseSecondsRef = useRef(0);
 
   // Media state
-  const furthestRef = useRef(0);       // furthest playback position reached
-  const durationRef = useRef(0);       // total media duration
+  const furthestRef = useRef(0);
+  const durationRef = useRef(0);
   const autoMarkedRef = useRef(false);
 
-  // Sync base values when a new item opens or when existing data arrives late.
-  // sessionProgress (module-level Map) takes priority over the DB value —
-  // it has the position from this session without any refetch timing issues.
+  // Sync base values when a new item opens or when existing data arrives late
   useEffect(() => {
     if (!isActive || !contentItemId) return;
     baseSecondsRef.current = existing?.session_seconds ?? 0;
@@ -90,21 +86,14 @@ export function useContentEngagement({
     lastActivityRef.current = Date.now();
     autoMarkedRef.current = false;
 
-    console.log('[engagement] sync —', contentItemId, '| dbPos:', dbPos, '| sessionPos:', sessionPos, '| resumePos:', resumePos, '| existing:', existing);
-
-    // If the media element is already loaded (late data arrival or readyState
-    // check missed), seek immediately.
+    // If the element is already loaded, seek immediately
     if (resumePos > 5) {
-      const vid = videoRef?.current;
-      const aud = audioRef?.current;
-      console.log('[engagement] ready to seek — vid readyState:', vid?.readyState, '| aud readyState:', aud?.readyState);
-      if (vid && vid.readyState >= 1) { console.log('[engagement] seeking video to', resumePos); vid.currentTime = resumePos; }
-      if (aud && aud.readyState >= 1) { console.log('[engagement] seeking audio to', resumePos); aud.currentTime = resumePos; }
+      if (videoEl && videoEl.readyState >= 1) videoEl.currentTime = resumePos;
+      if (audioEl && audioEl.readyState >= 1) audioEl.currentTime = resumePos;
     }
-  }, [contentItemId, isActive, existing, videoRef, audioRef]);
+  }, [contentItemId, isActive, existing, videoEl, audioEl]);
 
-  // Write combined record — reads from refs so always has current values.
-  // Always writes the cumulative TOTAL (not a delta) so upserts are idempotent.
+  // Write combined record
   const write = useCallback(() => {
     if (!userId || !contentItemId || !categoryId) return;
     Promise.resolve(
@@ -125,7 +114,7 @@ export function useContentEngagement({
     ).catch(() => {});
   }, [userId, contentItemId, categoryId]);
 
-  // Activity listener — resets idle clock on any user interaction
+  // Activity listener
   useEffect(() => {
     if (!isActive) return;
     const refresh = () => { lastActivityRef.current = Date.now(); };
@@ -134,81 +123,30 @@ export function useContentEngagement({
     return () => events.forEach((e) => document.removeEventListener(e, refresh));
   }, [isActive]);
 
-  // Heartbeat timer — counts active seconds, flushes periodically and on close
+  // Heartbeat timer
   useEffect(() => {
     if (!isActive || !userId || !contentItemId) return;
-
     const interval = setInterval(() => {
       const idle = Date.now() - lastActivityRef.current > IDLE_MS;
       if (!idle) {
         accSecondsRef.current += 30;
-        // Periodic flush so long sessions aren't lost
         if (accSecondsRef.current > 0 && accSecondsRef.current % FLUSH_INTERVAL_S === 0) {
           write();
         }
       }
     }, TICK_MS);
-
     return () => {
       clearInterval(interval);
-      // Flush accumulated time when dialog closes
       if (accSecondsRef.current > 0) write();
     };
   }, [isActive, userId, contentItemId, write]);
 
-  // Video progress tracking + resume
+  // Video progress tracking + resume.
+  // Depends on `videoEl` (the actual element) — re-runs when the element
+  // mounts inside the Dialog Portal, not just when isVideoActive changes.
   useEffect(() => {
-    const el = videoRef?.current; // captured at effect start — stays valid in cleanup
-    if (!el || !isVideoActive) return;
-
-    const onLoadedMetadata = () => {
-      durationRef.current = el.duration || 0;
-      console.log('[engagement] loadedmetadata — furthestRef:', furthestRef.current, '| duration:', el.duration);
-      // Resume from stored position (only seek if > 5s to avoid seeking near start)
-      if (furthestRef.current > 5) {
-        console.log('[engagement] seeking to', furthestRef.current);
-        el.currentTime = furthestRef.current;
-      }
-    };
-
-    let lastSample = 0;
-    const onTimeUpdate = () => {
-      const t = el.currentTime;
-      if (t - lastSample < MEDIA_SAMPLE_S) return;
-      lastSample = t;
-
-      if (el.duration) durationRef.current = el.duration;
-      furthestRef.current = Math.max(furthestRef.current, t);
-      if (contentItemId) sessionProgress.set(contentItemId, furthestRef.current);
-
-      // Auto-mark as read at 95% completion
-      if (
-        !autoMarkedRef.current &&
-        el.duration > 0 &&
-        furthestRef.current / el.duration >= AUTO_READ_PCT
-      ) {
-        autoMarkedRef.current = true;
-        onAutoMarkRead?.();
-        write();
-      }
-    };
-
-    el.addEventListener("loadedmetadata", onLoadedMetadata);
-    el.addEventListener("timeupdate", onTimeUpdate);
-    // Metadata may have already loaded before this effect ran
-    if (el.readyState >= 1) onLoadedMetadata();
-
-    return () => {
-      el.removeEventListener("loadedmetadata", onLoadedMetadata);
-      el.removeEventListener("timeupdate", onTimeUpdate);
-      if (furthestRef.current > 0) write();
-    };
-  }, [videoRef, isVideoActive, write, onAutoMarkRead]);
-
-  // Audio progress tracking + resume (same logic as video)
-  useEffect(() => {
-    const el = audioRef?.current;
-    if (!el || !isAudioActive) return;
+    const el = videoEl;
+    if (!el) return;
 
     const onLoadedMetadata = () => {
       durationRef.current = el.duration || 0;
@@ -222,11 +160,9 @@ export function useContentEngagement({
       const t = el.currentTime;
       if (t - lastSample < MEDIA_SAMPLE_S) return;
       lastSample = t;
-
       if (el.duration) durationRef.current = el.duration;
       furthestRef.current = Math.max(furthestRef.current, t);
       if (contentItemId) sessionProgress.set(contentItemId, furthestRef.current);
-
       if (
         !autoMarkedRef.current &&
         el.duration > 0 &&
@@ -240,7 +176,6 @@ export function useContentEngagement({
 
     el.addEventListener("loadedmetadata", onLoadedMetadata);
     el.addEventListener("timeupdate", onTimeUpdate);
-    // Metadata may have already loaded before this effect ran
     if (el.readyState >= 1) onLoadedMetadata();
 
     return () => {
@@ -248,7 +183,49 @@ export function useContentEngagement({
       el.removeEventListener("timeupdate", onTimeUpdate);
       if (furthestRef.current > 0) write();
     };
-  }, [audioRef, isAudioActive, write, onAutoMarkRead]);
+  }, [videoEl, write, onAutoMarkRead, contentItemId]);
+
+  // Audio progress tracking + resume (same as video)
+  useEffect(() => {
+    const el = audioEl;
+    if (!el) return;
+
+    const onLoadedMetadata = () => {
+      durationRef.current = el.duration || 0;
+      if (furthestRef.current > 5) {
+        el.currentTime = furthestRef.current;
+      }
+    };
+
+    let lastSample = 0;
+    const onTimeUpdate = () => {
+      const t = el.currentTime;
+      if (t - lastSample < MEDIA_SAMPLE_S) return;
+      lastSample = t;
+      if (el.duration) durationRef.current = el.duration;
+      furthestRef.current = Math.max(furthestRef.current, t);
+      if (contentItemId) sessionProgress.set(contentItemId, furthestRef.current);
+      if (
+        !autoMarkedRef.current &&
+        el.duration > 0 &&
+        furthestRef.current / el.duration >= AUTO_READ_PCT
+      ) {
+        autoMarkedRef.current = true;
+        onAutoMarkRead?.();
+        write();
+      }
+    };
+
+    el.addEventListener("loadedmetadata", onLoadedMetadata);
+    el.addEventListener("timeupdate", onTimeUpdate);
+    if (el.readyState >= 1) onLoadedMetadata();
+
+    return () => {
+      el.removeEventListener("loadedmetadata", onLoadedMetadata);
+      el.removeEventListener("timeupdate", onTimeUpdate);
+      if (furthestRef.current > 0) write();
+    };
+  }, [audioEl, write, onAutoMarkRead, contentItemId]);
 
   const mediaProgressPct =
     durationRef.current > 0 && furthestRef.current > 0
