@@ -34,7 +34,7 @@ import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { listAllFacilities } from "@/lib/facilities.functions";
 
 import { readStatusLabels } from "@/lib/read-status";
-import { withActionWord, parseMinutes } from "@/lib/duration";
+import { withActionWord } from "@/lib/duration";
 import { fmtDate, fmtDateShort } from "@/lib/date-format";
 import { csvEscape, downloadCsv } from "@/lib/csv-utils";
 import { waitForNextPaint } from "@/lib/paint";
@@ -818,10 +818,9 @@ function UserProgressView({
           {(() => {
             const totalItems = data.items.length;
             const readItems = data.items.filter((i: any) => i.read).length;
-            const minutesSpent = data.items
-              .filter((i: any) => i.read)
-              .reduce((acc: number, i: any) => acc + parseMinutes(i.duration), 0);
-            const hours = Math.floor(minutesSpent / 60);
+            const totalSessionSeconds = data.items
+              .reduce((acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0), 0);
+            const hours = Math.floor(totalSessionSeconds / 3600);
             // categories completed
             let totalCats = 0;
             let completedCats = 0;
@@ -897,10 +896,9 @@ function exportUserProgressCsv(
   const itemsArr = data.items as any[];
   const totalItems = itemsArr.length;
   const readItems = itemsArr.filter((i) => i.read).length;
-  const minutesSpent = itemsArr
-    .filter((i) => i.read)
-    .reduce((acc: number, i: any) => acc + parseMinutes(i.duration), 0);
-  const hoursSpent = Math.floor(minutesSpent / 60);
+  const hoursSpent = data.hoursSpent ?? Math.floor(
+    itemsArr.reduce((acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0), 0) / 3600
+  );
   const itemsByCatForSummary = new Map<string, any[]>();
   for (const it of itemsArr) {
     const arr = itemsByCatForSummary.get(it.category_id) ?? [];
