@@ -345,6 +345,9 @@ function CategoryPage() {
 
   const invalidateEngagement = () => {
     queryClient.invalidateQueries({ queryKey: ["engagement", user?.id, categoryId] });
+    // Also mark the dashboard progress query stale so hours-spent refreshes
+    // the next time the user visits the dashboard.
+    queryClient.invalidateQueries({ queryKey: ["dashboard-progress"] });
   };
 
   // Engagement tracking hook: timer (all types) + media progress (video/audio)
