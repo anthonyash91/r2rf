@@ -474,6 +474,15 @@ function CategoryPage() {
 
                     const handleActivate = () => {
                       if (!canAccessAdmin && !isFacilityUser) trackContentClick(item.id, data.category.id);
+                      // Mark as seen so the "New" badge is suppressed on any engagement
+                      if (user?.id && !readSet.has(item.id) && !seenSet.has(item.id)) {
+                        Promise.resolve(
+                          supabase.from("user_content_seen")
+                            .insert({ user_id: user.id, content_item_id: item.id })
+                        ).then(() => {
+                          queryClient.invalidateQueries({ queryKey: ["content-seen", user.id] });
+                        }).catch(() => {});
+                      }
                     };
 
                     let Wrapper: any = "div";
@@ -497,7 +506,7 @@ function CategoryPage() {
                               ? ImageIcon
                               : null;
 
-                    const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 && !readSet.has(item.id) && !seenSet.has(item.id);
+                    const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 && !readSet.has(item.id) && !seenSet.has(item.id) && !engagementMap.has(item.id);
 
                     return (
                       <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24">
