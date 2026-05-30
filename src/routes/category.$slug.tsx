@@ -25,6 +25,7 @@ import AutoHeight from "embla-carousel-auto-height";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { listFacilities } from "@/lib/facilities.functions";
+import { useContentEngagement, type EngagementRecord } from "@/hooks/use-content-engagement";
 
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
@@ -100,10 +101,15 @@ function CategoryPage() {
     for (const f of facilitiesData?.facilities ?? []) map[f.value] = f.label;
     return map;
   }, [facilitiesData]);
-  const [videoPlayer, setVideoPlayer] = useState<{ url: string; title: string } | null>(null);
-  const [audioPlayer, setAudioPlayer] = useState<{ url: string; title: string } | null>(null);
-  const [pdfViewer, setPdfViewer] = useState<{ url: string; title: string } | null>(null);
-  const [imageViewer, setImageViewer] = useState<{ url: string; title: string } | null>(null);
+  type PlayerPayload = { url: string; title: string; itemId: string };
+  const [videoPlayer, setVideoPlayer] = useState<PlayerPayload | null>(null);
+  const [audioPlayer, setAudioPlayer] = useState<PlayerPayload | null>(null);
+  const [pdfViewer, setPdfViewer] = useState<PlayerPayload | null>(null);
+  const [imageViewer, setImageViewer] = useState<PlayerPayload | null>(null);
+
+  // Refs for video/audio elements so the engagement hook can attach listeners
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [othersApi, setOthersApi] = useState<CarouselApi>();
   const [othersCurrent, setOthersCurrent] = useState(0);
@@ -307,6 +313,54 @@ function CategoryPage() {
     },
   });
 
+  // Load engagement data for all items in this category (resume positions + progress %)
+  const engagementQuery = useQuery({
+    queryKey: ["engagement", user?.id, categoryId],
+    enabled: !!user?.id && !!categoryId && !isAdmin && !isFacilityUser,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("user_content_engagement")
+        .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      const map = new Map<string, EngagementRecord>();
+      for (const r of (data ?? []) as any[]) {
+        map.set(r.content_item_id as string, {
+          session_seconds: r.session_seconds as number,
+          media_progress_seconds: r.media_progress_seconds as number | null,
+          media_duration_seconds: r.media_duration_seconds as number | null,
+        });
+      }
+      return map;
+    },
+  });
+  const engagementMap = engagementQuery.data ?? new Map<string, EngagementRecord>();
+
+  // Derive which item is currently open and its media kind
+  const activeItemId =
+    videoPlayer?.itemId ?? audioPlayer?.itemId ?? pdfViewer?.itemId ?? imageViewer?.itemId ?? null;
+
+  const invalidateEngagement = () => {
+    queryClient.invalidateQueries({ queryKey: ["engagement", user?.id, categoryId] });
+  };
+
+  // Engagement tracking hook: timer (all types) + media progress (video/audio)
+  useContentEngagement({
+    contentItemId: activeItemId,
+    categoryId: categoryId ?? null,
+    userId: user?.id ?? null,
+    isActive: !!activeItemId && !isAdmin && !isFacilityUser,
+    existing: activeItemId ? (engagementMap.get(activeItemId) ?? null) : null,
+    videoRef,
+    audioRef,
+    isVideoActive: !!videoPlayer,
+    isAudioActive: !!audioPlayer,
+    onAutoMarkRead: activeItemId
+      ? () => toggleRead.mutate({ itemId: activeItemId, markRead: true })
+      : undefined,
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -411,7 +465,7 @@ function CategoryPage() {
 
                     const openMedia = () => {
                       if (!isMedia) return;
-                      const payload = { url: mediaSrc!, title };
+                      const payload = { url: mediaSrc!, title, itemId: item.id };
                       if (mediaKind === "video") setVideoPlayer(payload);
                       else if (mediaKind === "audio") setAudioPlayer(payload);
                       else if (mediaKind === "pdf") setPdfViewer(payload);
@@ -548,9 +602,22 @@ function CategoryPage() {
                             readLabel = t("category.markedClicked");
                             unreadLabel = t("category.notClicked");
                           }
-                          const label = isRead ? readLabel : unreadLabel;
                           return (
                             <div className="absolute top-6 right-6 flex items-center gap-1.5 justify-end z-10">
+                              {(() => {
+                                const eng = engagementMap.get(item.id);
+                                if (eng && (mediaKind === "video" || mediaKind === "audio") && eng.media_progress_seconds && eng.media_duration_seconds && eng.media_duration_seconds > 0) {
+                                  const pct = Math.min(100, Math.round((eng.media_progress_seconds / eng.media_duration_seconds) * 100));
+                                  if (pct >= 5) {
+                                    return (
+                                      <span className="text-[11px] text-muted-foreground font-medium tabular-nums">
+                                        {mediaKind === "video" ? "Watched" : "Listened"} {pct}%
+                                      </span>
+                                    );
+                                  }
+                                }
+                                return null;
+                              })()}
                               <ReadStatusBadge
                                 read={isRead}
                                 readLabel={readLabel}
@@ -640,11 +707,12 @@ function CategoryPage() {
 
       <SiteFooter />
 
-      <Dialog open={!!videoPlayer} onOpenChange={(open) => !open && setVideoPlayer(null)}>
+      <Dialog open={!!videoPlayer} onOpenChange={(open) => { if (!open) { setVideoPlayer(null); invalidateEngagement(); } }}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
           <DialogTitle className="sr-only">{videoPlayer?.title ?? "Video"}</DialogTitle>
           {videoPlayer && (
             <video
+              ref={videoRef}
               key={videoPlayer.url}
               src={videoPlayer.url}
               controls
@@ -655,11 +723,12 @@ function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!audioPlayer} onOpenChange={(open) => !open && setAudioPlayer(null)}>
+      <Dialog open={!!audioPlayer} onOpenChange={(open) => { if (!open) { setAudioPlayer(null); invalidateEngagement(); } }}>
         <DialogContent className="max-w-lg pt-[18px] max-h-[calc(100dvh-2rem)] overflow-auto">
           <DialogTitle className="text-base font-semibold pr-8 break-words">{audioPlayer?.title ?? "Audio"}</DialogTitle>
           {audioPlayer && (
             <audio
+              ref={audioRef}
               key={audioPlayer.url}
               src={audioPlayer.url}
               controls
@@ -670,7 +739,7 @@ function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!pdfViewer} onOpenChange={(open) => !open && setPdfViewer(null)}>
+      <Dialog open={!!pdfViewer} onOpenChange={(open) => { if (!open) { setPdfViewer(null); invalidateEngagement(); } }}>
         <DialogContent className="w-[95vw] min-w-0 max-w-[95vw] sm:max-w-[95vw] p-0 overflow-hidden max-h-[calc(100dvh-2rem)]">
           <DialogTitle className="sr-only">{pdfViewer?.title ?? "PDF"}</DialogTitle>
           {pdfViewer && (
@@ -681,7 +750,7 @@ function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!imageViewer} onOpenChange={(open) => !open && setImageViewer(null)}>
+      <Dialog open={!!imageViewer} onOpenChange={(open) => { if (!open) { setImageViewer(null); invalidateEngagement(); } }}>
         <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
           <DialogTitle className="sr-only">{imageViewer?.title ?? "Image"}</DialogTitle>
           {imageViewer && (

@@ -145,29 +145,30 @@ export const getUsageReport = createServerFn({ method: "POST" })
       countsQ = countsQ.eq("facility_value", facilityValue);
     }
 
-    // Hours spent: still derived from user_content_progress + item durations
-    const minutesByItem = new Map<string, number>();
-    for (const it of (itemsRes.data ?? []) as any[]) {
-      minutesByItem.set(it.id, parseMinutes(it.duration));
-    }
-    let pq = supabaseAdmin
-      .from("user_content_progress")
-      .select("content_item_id, user_id");
-    if (sinceIso) pq = pq.gte("created_at", sinceIso);
+    // Real hours spent: sum actual session_seconds from user_content_engagement
+    let engQ = (supabaseAdmin as any)
+      .from("user_content_engagement")
+      .select("user_id, session_seconds");
     if (userIdFilter !== null) {
       if (userIdFilter.length === 0) {
-        // No users in this facility — skip the progress query
-        pq = pq.eq("user_id", "00000000-0000-0000-0000-000000000000");
+        engQ = engQ.eq("user_id", "00000000-0000-0000-0000-000000000000");
       } else {
-        pq = pq.in("user_id", userIdFilter);
+        engQ = engQ.in("user_id", userIdFilter);
       }
-    } else if (syntheticIds.size > 0) {
-      pq = pq.not("user_id", "in", `(${Array.from(syntheticIds).join(",")})`);
+    } else {
+      // All-users report: exclude synthetic and facilityUser accounts
+      const excludeAll = [
+        ...Array.from(syntheticIds),
+        ...Array.from(facilityUserAccountIds),
+        "00000000-0000-0000-0000-000000000000",
+      ];
+      if (excludeAll.length > 0) {
+        engQ = engQ.not("user_id", "in", `(${excludeAll.join(",")})`);
+      }
     }
 
-    const [countsRes, progRes] = await Promise.all([countsQ, pq]);
+    const [countsRes, engRes] = await Promise.all([countsQ, engQ]);
     if (countsRes.error) throw new Error(countsRes.error.message);
-    if (progRes.error) throw new Error(progRes.error.message);
 
     // Aggregate the pre-bucketed counts
     const catViews: Record<string, number> = {};
@@ -187,11 +188,11 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     }
 
-    let totalMinutes = 0;
-    for (const p of progRes.data ?? []) {
-      totalMinutes += minutesByItem.get((p as any).content_item_id as string) ?? 0;
+    let totalSeconds = 0;
+    for (const r of (engRes?.data ?? []) as any[]) {
+      totalSeconds += (r.session_seconds as number) || 0;
     }
-    const hoursSpent = Math.round((totalMinutes / 60) * 10) / 10;
+    const hoursSpent = Math.round((totalSeconds / 3600) * 10) / 10;
 
     return {
       categories: filteredCategories,
@@ -314,7 +315,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAnyAdmin(context.userId);
 
-    const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes] = await Promise.all([
+    const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes, engRes] = await Promise.all([
       supabaseAdmin
         .from("user_profiles")
         .select("user_id, username, first_name, last_name, facility, created_at")
@@ -343,6 +344,10 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         .eq("user_id", data.userId),
       (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
       (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
+      (supabaseAdmin as any)
+        .from("user_content_engagement")
+        .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds")
+        .eq("user_id", data.userId),
     ]);
     if (profRes.error) throw new Error(profRes.error.message);
     if (catsRes.error) throw new Error(catsRes.error.message);
@@ -383,6 +388,18 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
       (progRes.data ?? []).map((r: any) => r.content_item_id as string),
     );
 
+    // Build engagement map: contentItemId → { sessionSeconds, mediaProgressSeconds, mediaDurationSeconds }
+    const engagementByItem = new Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null }>();
+    for (const r of (engRes?.data ?? []) as any[]) {
+      engagementByItem.set(r.content_item_id as string, {
+        sessionSeconds: (r.session_seconds as number) || 0,
+        mediaProgressSeconds: r.media_progress_seconds as number | null,
+        mediaDurationSeconds: r.media_duration_seconds as number | null,
+      });
+    }
+    const totalSessionSeconds = Array.from(engagementByItem.values()).reduce((s, e) => s + e.sessionSeconds, 0);
+    const hoursSpent = Math.round((totalSessionSeconds / 3600) * 10) / 10;
+
     return {
       profile: profRes.data
         ? {
@@ -403,23 +420,32 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         icon_color: c.icon_color,
         published: c.published,
       })),
-      items: visibleItems.map((i: any) => ({
-        id: i.id,
-        category_id: i.category_id,
-        title: i.title,
-        description: i.description ?? "",
-        type: i.type,
-        duration: i.duration,
-        url: i.url ?? null,
-        file_url: i.file_url ?? null,
-        read: readSet.has(i.id),
-      })),
+      items: visibleItems.map((i: any) => {
+        const eng = engagementByItem.get(i.id as string);
+        const mediaPct = eng?.mediaProgressSeconds && eng?.mediaDurationSeconds && eng.mediaDurationSeconds > 0
+          ? Math.min(100, Math.round((eng.mediaProgressSeconds / eng.mediaDurationSeconds) * 100))
+          : null;
+        return {
+          id: i.id,
+          category_id: i.category_id,
+          title: i.title,
+          description: i.description ?? "",
+          type: i.type,
+          duration: i.duration,
+          url: i.url ?? null,
+          file_url: i.file_url ?? null,
+          read: readSet.has(i.id),
+          sessionSeconds: eng?.sessionSeconds ?? 0,
+          mediaProgressPct: mediaPct,
+        };
+      }),
       progress: (progRes.data ?? []).map((r: any) => ({
         content_item_id: r.content_item_id,
         category_id: r.category_id,
         created_at: r.created_at,
       })),
       logins: (loginsRes.data ?? []).map((r: any) => r.login_date as string),
+      hoursSpent,
       eventCounts: {
         categoryViews: (eventsRes.data ?? []).filter(
           (e: any) => e.event_type === "category_view",

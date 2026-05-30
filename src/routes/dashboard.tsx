@@ -25,7 +25,7 @@ import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
 import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
-import { withActionWord, parseMinutes } from "@/lib/duration";
+import { withActionWord } from "@/lib/duration";
 import { readStatusLabels } from "@/lib/read-status";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
@@ -217,19 +217,25 @@ function DashboardPage() {
       const reads = new Map<string, number>();
       const readSet = new Set<string>();
       const readDays = new Set<string>();
-      let minutesSpent = 0;
       for (const row of readRes.data ?? []) {
         // Only count reads for items the user can see
         if (!visibleItemIds.has(row.content_item_id as string)) continue;
         reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
         readSet.add(row.content_item_id as string);
-        minutesSpent += parseMinutes(itemDuration.get(row.content_item_id as string));
         if ((row as any).created_at) {
           const d = new Date((row as any).created_at as string);
           readDays.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
         }
       }
-      return { totals, reads, itemsByCat, readSet, recentCats, newItemSet, minutesSpent, readDays };
+      // Real session seconds from engagement tracking
+      const { data: engData } = await (supabase as any)
+        .from("user_content_engagement")
+        .select("session_seconds")
+        .eq("user_id", userId);
+      const totalSeconds = ((engData ?? []) as any[]).reduce(
+        (sum: number, r: any) => sum + ((r.session_seconds as number) || 0), 0,
+      );
+      return { totals, reads, itemsByCat, readSet, recentCats, newItemSet, totalSeconds, readDays };
     },
   });
 
@@ -422,8 +428,8 @@ function DashboardPage() {
                     if (t2 > 0 && r2 >= t2) completedCats += 1;
                   }
                   const pctAll = totalAll > 0 ? Math.round((readAll / totalAll) * 100) : 0;
-                  const minutes = progressQuery.data?.minutesSpent ?? 0;
-                  const hours = Math.floor(minutes / 60);
+                  const totalSeconds = progressQuery.data?.totalSeconds ?? 0;
+                  const hours = Math.floor(totalSeconds / 3600);
                   // Day streak: count consecutive days the user has logged in, ending today or yesterday
                   const loginDays = loginsQuery.data ?? new Set<string>();
                   let streak = 0;
