@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
-import { withActionWord } from "@/lib/duration";
+import { withActionWord, parseMinutes } from "@/lib/duration";
 import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Circle } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
@@ -112,6 +112,10 @@ function CategoryPage() {
   // would give null because the Portal renders asynchronously.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
+
+  // Track PDF item IDs opened this session so we only show the progress
+  // button after the user has actually opened the viewer at least once.
+  const openedPdfsRef = useRef(new Set<string>());
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [othersApi, setOthersApi] = useState<CarouselApi>();
   const [othersCurrent, setOthersCurrent] = useState(0);
@@ -350,7 +354,17 @@ function CategoryPage() {
     queryClient.invalidateQueries({ queryKey: ["dashboard-progress"] });
   };
 
-  // Engagement tracking hook: timer (all types) + media progress (video/audio)
+  // For PDF items: derive estimated reading time in seconds from the duration field
+  const activeItem = activeItemId ? data?.items.find((it) => it.id === activeItemId) : null;
+  const activePdfEstimatedSeconds = (() => {
+    if (!activeItem) return undefined;
+    const fileUrl = activeItem.file_url;
+    if (!fileUrl || !PDF_EXT.test(fileUrl)) return undefined;
+    const mins = parseMinutes(activeItem.duration);
+    return mins > 0 ? mins * 60 : undefined;
+  })();
+
+  // Engagement tracking hook: timer (all types) + media progress (video/audio) + PDF auto-mark
   useContentEngagement({
     contentItemId: activeItemId,
     categoryId: categoryId ?? null,
@@ -359,6 +373,7 @@ function CategoryPage() {
     existing: activeItemId ? (engagementMap.get(activeItemId) ?? null) : null,
     videoEl,
     audioEl,
+    pdfEstimatedSeconds: activePdfEstimatedSeconds,
     onAutoMarkRead: activeItemId
       ? () => toggleRead.mutate({ itemId: activeItemId, markRead: true })
       : undefined,
@@ -471,7 +486,10 @@ function CategoryPage() {
                       const payload = { url: mediaSrc!, title, itemId: item.id };
                       if (mediaKind === "video") setVideoPlayer(payload);
                       else if (mediaKind === "audio") setAudioPlayer(payload);
-                      else if (mediaKind === "pdf") setPdfViewer(payload);
+                      else if (mediaKind === "pdf") {
+                        setPdfViewer(payload);
+                        openedPdfsRef.current.add(item.id);
+                      }
                       else if (mediaKind === "image") setImageViewer(payload);
                     };
 
@@ -618,12 +636,13 @@ function CategoryPage() {
                             <div className="absolute top-6 right-6 flex items-center gap-1.5 justify-end z-10">
                               {(() => {
                                 const eng = engagementMap.get(item.id);
+
+                                // ── Video / Audio: progress fill based on playback position ──
                                 const mediaPct = !isRead && eng && (mediaKind === "video" || mediaKind === "audio") && eng.media_progress_seconds && eng.media_duration_seconds && eng.media_duration_seconds > 0
                                   ? Math.min(100, Math.round((eng.media_progress_seconds / eng.media_duration_seconds) * 100))
                                   : null;
 
                                 if (mediaPct !== null && mediaPct >= 5) {
-                                  // Progress-filled button: accent fill grows left-to-right as content is consumed
                                   return (
                                     <button
                                       type="button"
@@ -634,25 +653,65 @@ function CategoryPage() {
                                       }}
                                       className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
                                     >
-                                      {/* Progress fill — grows left-to-right proportional to % watched */}
-                                      <span
-                                        className="absolute inset-y-0 left-0 pointer-events-none"
-                                        style={{
-                                          width: `${mediaPct}%`,
-                                          background: `color-mix(in oklab, var(--color-accent) 22%, transparent)`,
-                                        }}
-                                      />
+                                      <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
                                       <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
                                       <span className="relative text-foreground">
                                         {mediaPct}%{" "}
-                                        {mediaKind === "video"
-                                          ? t("category.markedWatched").toLowerCase()
-                                          : t("category.markedListened").toLowerCase()}
+                                        {mediaKind === "video" ? t("category.markedWatched").toLowerCase() : t("category.markedListened").toLowerCase()}
                                       </span>
                                     </button>
                                   );
                                 }
 
+                                // ── PDF: progress fill based on time open vs estimated reading time ──
+                                if (!isRead && mediaKind === "pdf") {
+                                  const hasOpened = openedPdfsRef.current.has(item.id) || !!eng;
+                                  if (!hasOpened) return null; // hide button until PDF has been opened
+
+                                  const pdfMins = parseMinutes(item.duration);
+                                  const pdfEstSec = pdfMins > 0 ? pdfMins * 60 : 0;
+                                  const sessionSec = eng?.session_seconds ?? 0;
+                                  const pdfPct = pdfEstSec > 0
+                                    ? Math.min(100, Math.round((sessionSec / (pdfEstSec * 0.95)) * 100))
+                                    : null;
+
+                                  if (pdfPct !== null && pdfPct >= 1) {
+                                    return (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          e.preventDefault();
+                                          toggleRead.mutate({ itemId: item.id, markRead: !isRead });
+                                        }}
+                                        className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
+                                      >
+                                        <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
+                                        <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
+                                        <span className="relative text-foreground">
+                                          {pdfPct}% {t("category.markedRead").toLowerCase()}
+                                        </span>
+                                      </button>
+                                    );
+                                  }
+
+                                  // Opened but no estimated duration or < 1% — show plain unread badge
+                                  return (
+                                    <ReadStatusBadge
+                                      read={false}
+                                      readLabel={readLabel}
+                                      unreadLabel={unreadLabel}
+                                      unreadIcon="circle"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        toggleRead.mutate({ itemId: item.id, markRead: true });
+                                      }}
+                                    />
+                                  );
+                                }
+
+                                // ── All other types: standard read/unread badge ──
                                 return (
                                   <ReadStatusBadge
                                     read={isRead}
