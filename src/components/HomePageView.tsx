@@ -10,7 +10,6 @@ import { Pencil } from "lucide-react";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
-import { BadgeGroup } from "@/components/BadgeGroup";
 import { ResponsiveBadgeGroup } from "@/components/ResponsiveBadgeGroup";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 

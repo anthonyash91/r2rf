@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Eye, EyeOff, Sparkles, RefreshCw, ExternalLink, LayoutGrid, Loader2, GripVertical, X, Info } from "lucide-react";
+import { Pencil, Plus, Trash2, Eye, EyeOff, Sparkles, RefreshCw, ExternalLink, LayoutGrid, GripVertical, X } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -139,8 +139,6 @@ function AdminCategoriesContent() {
     },
   });
 
-  const adminBadgeStyles = useBadgeStyles();
-  const facilityPs = paletteStyle(adminBadgeStyles.variants["facility"] ?? 11);
   const facilityLabelMap = React.useMemo(() => {
     const map: Record<string, string> = {};
     for (const f of facilityLabelList) map[f.value] = f.label;
@@ -540,6 +538,7 @@ function AdminCategoriesContent() {
                   <Link
                     to="/admin/category/$id"
                     params={{ id: c.id }}
+                    search={{ edit: undefined }}
                     aria-label="Edit"
                     className={iconButtonClassName()}
                   >
