@@ -1276,6 +1276,7 @@ function ItemEditor({
             className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
           <FileUploader
+            existingFileUrl={url || undefined}
             onUploaded={async (u, name) => {
               setUrl(u);
               const estimated = await estimateDuration(u, name, type);
@@ -1350,6 +1351,7 @@ function ItemEditor({
           <div className="mt-2">
             <FileUploader
               label={fileUrlEs ? "Replace Spanish file" : "Upload Spanish file"}
+              existingFileUrl={fileUrlEs ?? undefined}
               onUploaded={(u, name) => { setFileUrlEs(u); setFileNameEs(name ?? null); }}
             />
           </div>
