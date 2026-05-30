@@ -15,6 +15,7 @@ import {
   Users as UsersIcon,
   ArrowLeft,
   CheckCircle2,
+  Circle,
   Clock,
   Flame,
   Trophy,
@@ -1070,13 +1071,31 @@ function UserCategorySection({
                         {withActionWord(item.duration, item.type)}
                       </span>
                     )}
-                    <ReadStatusBadge
-                      read={item.read}
-                      readLabel={labels.read}
-                      unreadLabel={labels.unread}
-                      readAt={item.read_at ? fmtDateShort(item.read_at) : null}
-                      className="ml-auto"
-                    />
+                    {(() => {
+                      const mediaPct: number | null = item.mediaProgressPct ?? null;
+                      const isMediaType = item.type && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("audio") || item.type.toLowerCase().includes("podcast"));
+                      if (!item.read && isMediaType && mediaPct !== null && mediaPct >= 5) {
+                        const watchedLabel = item.type.toLowerCase().includes("video")
+                          ? t("category.markedWatched").toLowerCase()
+                          : t("category.markedListened").toLowerCase();
+                        return (
+                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium ml-auto flex-shrink-0 overflow-hidden">
+                            <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
+                            <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
+                            <span className="relative">{mediaPct}% {watchedLabel}</span>
+                          </span>
+                        );
+                      }
+                      return (
+                        <ReadStatusBadge
+                          read={item.read}
+                          readLabel={labels.read}
+                          unreadLabel={labels.unread}
+                          readAt={item.read_at ? fmtDateShort(item.read_at) : null}
+                          className="ml-auto"
+                        />
+                      );
+                    })()}
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-lg font-semibold text-foreground">{item.title}</p>
