@@ -940,7 +940,7 @@ function exportUserProgressCsv(
   lines.push(["Last login", lastLogin ? fmtDateShort(lastLogin) : "Never"].map(csvEscape).join(","));
   lines.push("");
   lines.push(
-    ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on"]
+    ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on", "Progress"]
       .map(csvEscape)
       .join(","),
   );
@@ -954,9 +954,13 @@ function exportUserProgressCsv(
     const items = itemsByCat.get(c.id) ?? [];
     const read = items.filter((i) => i.read).length;
     lines.push(
-      [csvEscape(c.name), csvEscape(c.slug), `${read} of ${items.length} read`, "", "", "", ""].join(","),
+      [csvEscape(c.name), csvEscape(c.slug), `${read} of ${items.length} read`, "", "", "", "", ""].join(","),
     );
     for (const it of items) {
+      const isMediaType = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
+      const progressStr = isMediaType && (it as any).mediaProgressPct != null
+        ? `${(it as any).mediaProgressPct}%`
+        : "";
       lines.push(
         [
           csvEscape(c.name),
@@ -966,6 +970,7 @@ function exportUserProgressCsv(
           csvEscape(it.duration ?? ""),
           it.read ? "Yes" : "No",
           csvEscape(it.read && (it as any).read_at ? fmtDateShort((it as any).read_at) : ""),
+          progressStr,
         ].join(","),
       );
     }
