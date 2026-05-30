@@ -90,13 +90,16 @@ export function useContentEngagement({
     lastActivityRef.current = Date.now();
     autoMarkedRef.current = false;
 
+    console.log('[engagement] sync —', contentItemId, '| dbPos:', dbPos, '| sessionPos:', sessionPos, '| resumePos:', resumePos, '| existing:', existing);
+
     // If the media element is already loaded (late data arrival or readyState
     // check missed), seek immediately.
     if (resumePos > 5) {
       const vid = videoRef?.current;
       const aud = audioRef?.current;
-      if (vid && vid.readyState >= 1) vid.currentTime = resumePos;
-      if (aud && aud.readyState >= 1) aud.currentTime = resumePos;
+      console.log('[engagement] ready to seek — vid readyState:', vid?.readyState, '| aud readyState:', aud?.readyState);
+      if (vid && vid.readyState >= 1) { console.log('[engagement] seeking video to', resumePos); vid.currentTime = resumePos; }
+      if (aud && aud.readyState >= 1) { console.log('[engagement] seeking audio to', resumePos); aud.currentTime = resumePos; }
     }
   }, [contentItemId, isActive, existing, videoRef, audioRef]);
 
@@ -160,8 +163,10 @@ export function useContentEngagement({
 
     const onLoadedMetadata = () => {
       durationRef.current = el.duration || 0;
+      console.log('[engagement] loadedmetadata — furthestRef:', furthestRef.current, '| duration:', el.duration);
       // Resume from stored position (only seek if > 5s to avoid seeking near start)
       if (furthestRef.current > 5) {
+        console.log('[engagement] seeking to', furthestRef.current);
         el.currentTime = furthestRef.current;
       }
     };
