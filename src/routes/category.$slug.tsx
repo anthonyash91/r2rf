@@ -107,9 +107,11 @@ function CategoryPage() {
   const [pdfViewer, setPdfViewer] = useState<PlayerPayload | null>(null);
   const [imageViewer, setImageViewer] = useState<PlayerPayload | null>(null);
 
-  // Refs for video/audio elements so the engagement hook can attach listeners
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  // Callback refs (useState) so the engagement hook re-runs its effect when
+  // the element actually mounts inside the Radix Dialog Portal — useRef alone
+  // would give null because the Portal renders asynchronously.
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
+  const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [othersApi, setOthersApi] = useState<CarouselApi>();
   const [othersCurrent, setOthersCurrent] = useState(0);
@@ -352,10 +354,8 @@ function CategoryPage() {
     userId: user?.id ?? null,
     isActive: !!activeItemId && !isAdmin && !isFacilityUser,
     existing: activeItemId ? (engagementMap.get(activeItemId) ?? null) : null,
-    videoRef,
-    audioRef,
-    isVideoActive: !!videoPlayer,
-    isAudioActive: !!audioPlayer,
+    videoEl,
+    audioEl,
     onAutoMarkRead: activeItemId
       ? () => toggleRead.mutate({ itemId: activeItemId, markRead: true })
       : undefined,
@@ -707,12 +707,12 @@ function CategoryPage() {
 
       <SiteFooter />
 
-      <Dialog open={!!videoPlayer} onOpenChange={(open) => { if (!open) { setVideoPlayer(null); invalidateEngagement(); } }}>
+      <Dialog open={!!videoPlayer} onOpenChange={(open) => { if (!open) { setVideoPlayer(null); setVideoEl(null); invalidateEngagement(); } }}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
           <DialogTitle className="sr-only">{videoPlayer?.title ?? "Video"}</DialogTitle>
           {videoPlayer && (
             <video
-              ref={videoRef}
+              ref={setVideoEl}
               key={videoPlayer.url}
               src={videoPlayer.url}
               controls
@@ -723,12 +723,12 @@ function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!audioPlayer} onOpenChange={(open) => { if (!open) { setAudioPlayer(null); invalidateEngagement(); } }}>
+      <Dialog open={!!audioPlayer} onOpenChange={(open) => { if (!open) { setAudioPlayer(null); setAudioEl(null); invalidateEngagement(); } }}>
         <DialogContent className="max-w-lg pt-[18px] max-h-[calc(100dvh-2rem)] overflow-auto">
           <DialogTitle className="text-base font-semibold pr-8 break-words">{audioPlayer?.title ?? "Audio"}</DialogTitle>
           {audioPlayer && (
             <audio
-              ref={audioRef}
+              ref={setAudioEl}
               key={audioPlayer.url}
               src={audioPlayer.url}
               controls
