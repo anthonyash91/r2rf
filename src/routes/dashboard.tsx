@@ -26,6 +26,7 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
 import { withActionWord } from "@/lib/duration";
+import { formatTimeSpent } from "@/lib/date-format";
 import { readStatusLabels } from "@/lib/read-status";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
@@ -436,11 +437,6 @@ function DashboardPage() {
                   }
                   const pctAll = totalAll > 0 ? Math.round((readAll / totalAll) * 100) : 0;
                   const totalSeconds = progressQuery.data?.totalSeconds ?? 0;
-                  const hoursDisplay = totalSeconds < 60
-                    ? "< 1 min"
-                    : totalSeconds < 3600
-                      ? `${Math.floor(totalSeconds / 60)} min`
-                      : `${Math.round((totalSeconds / 3600) * 10) / 10} hr`;
                   // Day streak: count consecutive days the user has logged in, ending today or yesterday
                   const loginDays = loginsQuery.data ?? new Set<string>();
                   let streak = 0;
@@ -469,7 +465,7 @@ function DashboardPage() {
                   const stats: Array<{ icon: typeof BookOpen; label: string; value: ReactNode }> = [
                     { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: fraction(readAll, totalAll) },
                     { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: fraction(completedCats, totalCats) },
-                    { icon: Clock, label: t("dashboard.statHours"), value: hoursDisplay },
+                    { icon: Clock, label: t("dashboard.statHours"), value: formatTimeSpent(totalSeconds) },
                     { icon: Flame, label: t("dashboard.statStreak"), value: streak.toLocaleString() },
                   ];
                   return (
