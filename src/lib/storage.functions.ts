@@ -83,17 +83,18 @@ export const estimatePdfDuration = createServerFn({ method: "POST" })
       if (!res.ok) return { minutes: 0 };
       const pdfData = new Uint8Array(await res.arrayBuffer());
 
-      // Dynamically import pdfjs-dist — runs in Node.js, no web worker needed.
-      // createRequire resolves the worker path relative to installed packages,
-      // which is reliable across any deployment environment.
+      // Use the legacy build — designed for non-browser environments and
+      // avoids the DOMMatrix / browser-API errors that the main build throws
+      // in Node.js. createRequire resolves the worker path reliably across
+      // any deployment environment.
       const [pdfjsLib, { createRequire }, { pathToFileURL }] = await Promise.all([
-        import("pdfjs-dist"),
+        import("pdfjs-dist/legacy/build/pdf.mjs" as any),
         import("module"),
         import("url"),
       ]);
 
       const req = createRequire(import.meta.url);
-      const workerPath = req.resolve("pdfjs-dist/build/pdf.worker.mjs");
+      const workerPath = req.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
       pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
 
       const doc = await pdfjsLib.getDocument({ data: pdfData, verbosity: 0 }).promise;
