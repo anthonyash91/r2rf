@@ -18,7 +18,7 @@ export function ReadStatusBadge({
   onClick?: (e: React.MouseEvent) => void;
   className?: string;
 }) {
-  const baseClass = `inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium ${
+  const baseClass = `inline-flex items-center leading-none gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium ${
     read
       ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
       : "border-input bg-background text-foreground"
