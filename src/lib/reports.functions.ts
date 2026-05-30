@@ -199,7 +199,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
       items: filteredItems,
       catViews, catClicks, itemClicks,
       totalViews, totalClicks,
-      facilityUserCount, totalUsers, hoursSpent,
+      facilityUserCount, totalUsers, hoursSpent, totalSeconds,
     };
   });
 
@@ -446,6 +446,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
       })),
       logins: (loginsRes.data ?? []).map((r: any) => r.login_date as string),
       hoursSpent,
+      totalSeconds: totalSessionSeconds,
       eventCounts: {
         categoryViews: (eventsRes.data ?? []).filter(
           (e: any) => e.event_type === "category_view",

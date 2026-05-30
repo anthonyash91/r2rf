@@ -36,7 +36,7 @@ import { listAllFacilities } from "@/lib/facilities.functions";
 
 import { readStatusLabels } from "@/lib/read-status";
 import { withActionWord } from "@/lib/duration";
-import { fmtDate, fmtDateShort } from "@/lib/date-format";
+import { fmtDate, fmtDateShort, formatTimeSpent } from "@/lib/date-format";
 import { csvEscape, downloadCsv } from "@/lib/csv-utils";
 import { waitForNextPaint } from "@/lib/paint";
 import { useI18n } from "@/lib/i18n";
@@ -381,6 +381,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
               await waitForNextPaint();
               exportUsageCsv(aggregated, exportLabel, {
                 hoursSpent: (data as any)?.hoursSpent ?? 0,
+                totalSeconds: (data as any)?.totalSeconds,
                 usersSignedUp:
                   scope.kind === "facility"
                     ? ((data as any)?.facilityUserCount ?? 0)
@@ -421,8 +422,8 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
             />
             <SummaryCard
               icon={<Clock className="h-5 w-5" />}
-              label="Hours spent"
-              value={(data as any)?.hoursSpent ?? 0}
+              label="Time spent"
+              value={formatTimeSpent((data as any)?.totalSeconds ?? ((data as any)?.hoursSpent ?? 0) * 3600)}
             />
             <SummaryCard
               icon={<UsersIcon className="h-5 w-5" />}
@@ -444,14 +445,14 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
 function exportUsageCsv(
   aggregated: { rows: AggregatedRow[]; totalViews: number; totalClicks: number },
   label: string,
-  summary: { hoursSpent: number; usersSignedUp: number },
+  summary: { hoursSpent: number; usersSignedUp: number; totalSeconds?: number },
 ) {
   const lines: string[] = [];
   lines.push(["Overall usage"].map(csvEscape).join(","));
   lines.push(["Metric", "Value"].map(csvEscape).join(","));
   lines.push(["Category views", aggregated.totalViews].map(csvEscape).join(","));
   lines.push(["Content clicks", aggregated.totalClicks].map(csvEscape).join(","));
-  lines.push(["Hours spent", summary.hoursSpent].map(csvEscape).join(","));
+  lines.push(["Time spent", formatTimeSpent(summary.totalSeconds ?? summary.hoursSpent * 3600)].map(csvEscape).join(","));
   lines.push(["Users signed up", summary.usersSignedUp].map(csvEscape).join(","));
   lines.push("");
   lines.push(
@@ -819,9 +820,8 @@ function UserProgressView({
           {(() => {
             const totalItems = data.items.length;
             const readItems = data.items.filter((i: any) => i.read).length;
-            const totalSessionSeconds = data.items
-              .reduce((acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0), 0);
-            const hours = Math.floor(totalSessionSeconds / 3600);
+            const totalSessionSeconds = (data as any).totalSeconds
+              ?? data.items.reduce((acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0), 0);
             // categories completed
             let totalCats = 0;
             let completedCats = 0;
@@ -862,7 +862,7 @@ function UserProgressView({
             const stats = [
               { icon: CheckCircle2, label: "Items completed", value: fraction(readItems, totalItems) },
               { icon: Trophy, label: "Categories completed", value: fraction(completedCats, totalCats) },
-              { icon: Clock, label: "Hours spent", value: hours.toLocaleString() },
+              { icon: Clock, label: "Time spent", value: formatTimeSpent(totalSessionSeconds) },
               { icon: Flame, label: "Day streak", value: streak.toLocaleString() },
               { icon: Clock, label: "Last login", value: lastLogin ? fmtDateShort(lastLogin) : "Never" },
             ];
@@ -897,9 +897,8 @@ function exportUserProgressCsv(
   const itemsArr = data.items as any[];
   const totalItems = itemsArr.length;
   const readItems = itemsArr.filter((i) => i.read).length;
-  const hoursSpent = data.hoursSpent ?? Math.floor(
-    itemsArr.reduce((acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0), 0) / 3600
-  );
+  const totalSecondsForUser = (data as any).totalSeconds
+    ?? itemsArr.reduce((acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0), 0);
   const itemsByCatForSummary = new Map<string, any[]>();
   for (const it of itemsArr) {
     const arr = itemsByCatForSummary.get(it.category_id) ?? [];
@@ -936,7 +935,7 @@ function exportUserProgressCsv(
   lines.push(["Metric", "Value"].map(csvEscape).join(","));
   lines.push(["Items completed", `${readItems} of ${totalItems}`].map(csvEscape).join(","));
   lines.push(["Categories completed", `${completedCats} of ${totalCats}`].map(csvEscape).join(","));
-  lines.push(["Hours spent", hoursSpent].map(csvEscape).join(","));
+  lines.push(["Time spent", formatTimeSpent(totalSecondsForUser)].map(csvEscape).join(","));
   lines.push(["Day streak", streak].map(csvEscape).join(","));
   lines.push(["Last login", lastLogin ? fmtDateShort(lastLogin) : "Never"].map(csvEscape).join(","));
   lines.push("");
@@ -1114,14 +1113,14 @@ function UserCategorySection({
 
 /* ---------------- Shared subcomponents ---------------- */
 
-function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
     <SectionCard as="div" padded={false} className="p-5">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         {icon}
         {label}
       </div>
-      <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{value.toLocaleString()}</p>
+      <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{typeof value === "number" ? value.toLocaleString() : value}</p>
     </SectionCard>
   );
 }
