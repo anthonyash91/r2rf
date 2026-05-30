@@ -67,16 +67,27 @@ export function useContentEngagement({
   const durationRef = useRef(0);       // total media duration
   const autoMarkedRef = useRef(false);
 
-  // Sync base values when a new item opens
+  // Sync base values when a new item opens or when existing data arrives late
+  // (engagement query refetch completes after the dialog has already reopened).
   useEffect(() => {
     if (!isActive || !contentItemId) return;
     baseSecondsRef.current = existing?.session_seconds ?? 0;
-    furthestRef.current = existing?.media_progress_seconds ?? 0;
+    const resumePos = existing?.media_progress_seconds ?? 0;
+    furthestRef.current = resumePos;
     durationRef.current = existing?.media_duration_seconds ?? 0;
     accSecondsRef.current = 0;
     lastActivityRef.current = Date.now();
     autoMarkedRef.current = false;
-  }, [contentItemId, isActive, existing]);
+
+    // If the media element is already loaded by the time `existing` arrives,
+    // seek immediately — loadedmetadata already fired with furthest = 0.
+    if (resumePos > 5) {
+      const vid = videoRef?.current;
+      const aud = audioRef?.current;
+      if (vid && vid.readyState >= 1) vid.currentTime = resumePos;
+      if (aud && aud.readyState >= 1) aud.currentTime = resumePos;
+    }
+  }, [contentItemId, isActive, existing, videoRef, audioRef]);
 
   // Write combined record — reads from refs so always has current values.
   // Always writes the cumulative TOTAL (not a delta) so upserts are idempotent.
@@ -167,6 +178,8 @@ export function useContentEngagement({
 
     el.addEventListener("loadedmetadata", onLoadedMetadata);
     el.addEventListener("timeupdate", onTimeUpdate);
+    // Metadata may have already loaded before this effect ran
+    if (el.readyState >= 1) onLoadedMetadata();
 
     return () => {
       el.removeEventListener("loadedmetadata", onLoadedMetadata);
@@ -209,6 +222,8 @@ export function useContentEngagement({
 
     el.addEventListener("loadedmetadata", onLoadedMetadata);
     el.addEventListener("timeupdate", onTimeUpdate);
+    // Metadata may have already loaded before this effect ran
+    if (el.readyState >= 1) onLoadedMetadata();
 
     return () => {
       el.removeEventListener("loadedmetadata", onLoadedMetadata);
