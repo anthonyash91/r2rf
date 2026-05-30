@@ -640,8 +640,11 @@ function CategoryPage() {
                                         }}
                                       />
                                       <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
-                                      <span className="relative tabular-nums text-foreground">
-                                        {mediaPct}%
+                                      <span className="relative text-foreground">
+                                        {mediaPct}%{" "}
+                                        {mediaKind === "video"
+                                          ? t("category.markedWatched").toLowerCase()
+                                          : t("category.markedListened").toLowerCase()}
                                       </span>
                                     </button>
                                   );
