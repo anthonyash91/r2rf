@@ -1,6 +1,14 @@
 import { useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+/**
+ * Module-level cache of furthest playback positions for the current page
+ * session. Keyed by contentItemId. Avoids the DB refetch race condition
+ * where invalidateQueries fires at the same time as the flush write — the
+ * read can complete before the write, returning stale data on resume.
+ */
+const sessionProgress = new Map<string, number>();
+
 /** How long without activity before the timer stops counting. */
 const IDLE_MS = 90_000;
 /** Heartbeat interval — how often we check for activity. */
@@ -67,20 +75,23 @@ export function useContentEngagement({
   const durationRef = useRef(0);       // total media duration
   const autoMarkedRef = useRef(false);
 
-  // Sync base values when a new item opens or when existing data arrives late
-  // (engagement query refetch completes after the dialog has already reopened).
+  // Sync base values when a new item opens or when existing data arrives late.
+  // sessionProgress (module-level Map) takes priority over the DB value —
+  // it has the position from this session without any refetch timing issues.
   useEffect(() => {
     if (!isActive || !contentItemId) return;
     baseSecondsRef.current = existing?.session_seconds ?? 0;
-    const resumePos = existing?.media_progress_seconds ?? 0;
+    const dbPos = existing?.media_progress_seconds ?? 0;
+    const sessionPos = sessionProgress.get(contentItemId) ?? 0;
+    const resumePos = Math.max(dbPos, sessionPos);
     furthestRef.current = resumePos;
     durationRef.current = existing?.media_duration_seconds ?? 0;
     accSecondsRef.current = 0;
     lastActivityRef.current = Date.now();
     autoMarkedRef.current = false;
 
-    // If the media element is already loaded by the time `existing` arrives,
-    // seek immediately — loadedmetadata already fired with furthest = 0.
+    // If the media element is already loaded (late data arrival or readyState
+    // check missed), seek immediately.
     if (resumePos > 5) {
       const vid = videoRef?.current;
       const aud = audioRef?.current;
@@ -163,6 +174,7 @@ export function useContentEngagement({
 
       if (el.duration) durationRef.current = el.duration;
       furthestRef.current = Math.max(furthestRef.current, t);
+      if (contentItemId) sessionProgress.set(contentItemId, furthestRef.current);
 
       // Auto-mark as read at 95% completion
       if (
@@ -208,6 +220,7 @@ export function useContentEngagement({
 
       if (el.duration) durationRef.current = el.duration;
       furthestRef.current = Math.max(furthestRef.current, t);
+      if (contentItemId) sessionProgress.set(contentItemId, furthestRef.current);
 
       if (
         !autoMarkedRef.current &&
