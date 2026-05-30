@@ -629,10 +629,9 @@ function CategoryPage() {
                                         e.preventDefault();
                                         toggleRead.mutate({ itemId: item.id, markRead: !isRead });
                                       }}
-                                      className="relative inline-flex items-center gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-[11px] font-medium cursor-pointer overflow-hidden transition-colors hover:opacity-90"
-                                      style={{ borderColor: `color-mix(in oklab, var(--color-accent) 60%, transparent)` }}
+                                      className="relative inline-flex items-center gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
                                     >
-                                      {/* Progress fill */}
+                                      {/* Progress fill — grows left-to-right proportional to % watched */}
                                       <span
                                         className="absolute inset-y-0 left-0 pointer-events-none"
                                         style={{
@@ -640,8 +639,8 @@ function CategoryPage() {
                                           background: `color-mix(in oklab, var(--color-accent) 22%, transparent)`,
                                         }}
                                       />
-                                      <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" style={{ color: `var(--color-accent)` }} />
-                                      <span className="relative tabular-nums" style={{ color: `var(--color-accent)` }}>
+                                      <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
+                                      <span className="relative tabular-nums text-foreground">
                                         {mediaPct}%
                                       </span>
                                     </button>
