@@ -16,7 +16,7 @@ import { generateCategoryCopy, generateContentDescription } from "@/lib/category
 import { listFacilities } from "@/lib/facilities.functions";
 import { generateUniqueCategoryIcon, resolveCategoryIcon } from "@/lib/category-icons";
 import { FileUploader } from "@/components/FileUploader";
-import { deleteStorageFile } from "@/lib/storage.functions";
+import { deleteStorageFile, estimatePdfDuration } from "@/lib/storage.functions";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
 import { SortableList } from "@/components/SortableList";
@@ -1471,55 +1471,15 @@ function defaultDurationForType(type: string): string {
 }
 
 /**
- * Estimates reading time for a PDF in minutes.
- *
- * Strategy:
- *   1. Extract all text via pdfjs-dist and count words.
- *   2. Divide by 120 WPM — appropriate for a 6th-grade reading level
- *      audience (incarcerated population reads ~100–130 WPM).
- *   3. If the PDF yields fewer than 30 extractable words per page it is
- *      likely a scanned document (image-only pages). Fall back to
- *      1.5 minutes per page in that case.
+ * Estimates reading time for a PDF in minutes by delegating to a server
+ * function. Server-side extraction via pdfjs-dist in Node.js avoids the
+ * browser worker / Vite URL-transform issues that caused silent failures
+ * when running pdfjs client-side inside a dynamic import.
  */
 async function estimatePdfReadMinutes(url: string): Promise<number> {
   try {
-    const pdfjsLib = await import("pdfjs-dist");
-
-    // Configure the worker the first time this runs. The URL mirrors what
-    // PdfViewer.tsx sets — safe to set multiple times, it's idempotent.
-    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-        "pdfjs-dist/build/pdf.worker.min.mjs",
-        import.meta.url,
-      ).toString();
-    }
-
-    const loadingTask = pdfjsLib.getDocument({ url, verbosity: 0 });
-    const doc = await loadingTask.promise;
-    const pageCount = doc.numPages;
-    if (pageCount <= 0) return 0;
-
-    // Extract text from every page
-    let totalWords = 0;
-    for (let p = 1; p <= pageCount; p++) {
-      const page = await doc.getPage(p);
-      const content = await page.getTextContent();
-      const pageText = content.items
-        .map((item: any) => ("str" in item ? item.str : ""))
-        .join(" ");
-      const words = pageText.trim().split(/\s+/).filter((w) => w.length > 0);
-      totalWords += words.length;
-    }
-
-    const wordsPerPage = totalWords / pageCount;
-
-    if (wordsPerPage >= 30) {
-      // Text-based PDF — use word count at 120 WPM
-      return Math.max(1, Math.ceil(totalWords / 120));
-    }
-
-    // Scanned / image-only PDF — fall back to page-count estimate
-    return Math.max(1, Math.round(pageCount * 1.5));
+    const result = await estimatePdfDuration({ data: { url } });
+    return result.minutes;
   } catch {
     return 0;
   }
