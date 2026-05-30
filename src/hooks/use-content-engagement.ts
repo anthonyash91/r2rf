@@ -82,21 +82,22 @@ export function useContentEngagement({
   // Always writes the cumulative TOTAL (not a delta) so upserts are idempotent.
   const write = useCallback(() => {
     if (!userId || !contentItemId || !categoryId) return;
-    ;(supabase as any)
-      .from("user_content_engagement")
-      .upsert(
-        {
-          user_id: userId,
-          content_item_id: contentItemId,
-          category_id: categoryId,
-          session_seconds: baseSecondsRef.current + accSecondsRef.current,
-          media_progress_seconds: furthestRef.current > 0 ? furthestRef.current : null,
-          media_duration_seconds: durationRef.current > 0 ? durationRef.current : null,
-          last_updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,content_item_id" },
-      )
-      .catch(() => {});
+    Promise.resolve(
+      (supabase as any)
+        .from("user_content_engagement")
+        .upsert(
+          {
+            user_id: userId,
+            content_item_id: contentItemId,
+            category_id: categoryId,
+            session_seconds: baseSecondsRef.current + accSecondsRef.current,
+            media_progress_seconds: furthestRef.current > 0 ? furthestRef.current : null,
+            media_duration_seconds: durationRef.current > 0 ? durationRef.current : null,
+            last_updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,content_item_id" },
+        )
+    ).catch(() => {});
   }, [userId, contentItemId, categoryId]);
 
   // Activity listener — resets idle clock on any user interaction
