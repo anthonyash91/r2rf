@@ -629,7 +629,7 @@ function CategoryPage() {
                                         e.preventDefault();
                                         toggleRead.mutate({ itemId: item.id, markRead: !isRead });
                                       }}
-                                      className="relative inline-flex items-center gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
+                                      className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
                                     >
                                       {/* Progress fill — grows left-to-right proportional to % watched */}
                                       <span
