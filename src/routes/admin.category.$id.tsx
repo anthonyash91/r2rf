@@ -582,11 +582,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       // Fire-and-forget cleanup of old storage files now that the new URL is
       // safely persisted. A failed delete is non-fatal — just wastes storage.
       const toDelete = pendingDeletesRef.current.splice(0);
-      console.log("[file-cleanup] on save, paths to delete:", toDelete);
       if (toDelete.length > 0) {
-        Promise.all(toDelete.map((path) => deleteOldFile({ data: { path } })))
-          .then(() => console.log("[file-cleanup] deleted:", toDelete))
-          .catch((e) => console.error("[file-cleanup] delete failed:", e));
+        Promise.all(toDelete.map((path) => deleteOldFile({ data: { path } }))).catch(() => {});
       }
     },
     onError: (e: any) => toast.error(e.message),
@@ -687,10 +684,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             onSave={(v) => saveMut.mutate(v)}
             busy={saveMut.isPending}
             categoryFacilities={categoryFacilities}
-            onPendingDelete={(path) => {
-              console.log("[file-cleanup] queuing old path for deletion:", path);
-              pendingDeletesRef.current.push(path);
-            }}
+            onPendingDelete={(path) => { pendingDeletesRef.current.push(path); }}
           />
         </div>
       )}
