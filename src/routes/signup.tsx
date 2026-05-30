@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -155,7 +155,7 @@ function SignupPageContent() {
         } else if (mode === "sign-up") {
           navigate({ to: "/dashboard", search: { tab: "account" } as any });
         } else {
-          navigate({ to: "/dashboard" });
+          navigate({ to: "/dashboard", search: {} as any });
         }
       });
   }, [user, loading, navigate, mode, redirectTo]);
@@ -291,7 +291,7 @@ function SignupPageContent() {
       });
       if (error) throw error;
       toast.success(t("security.resetSuccess"));
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/dashboard", search: {} as any });
     } catch (err: any) {
       toast.error(err.message ?? t("signup.genericError"));
     } finally {
