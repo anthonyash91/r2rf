@@ -136,13 +136,26 @@ export const getUsageReport = createServerFn({ method: "POST" })
       };
     }
 
-    // Query pre-aggregated counts — no row limit, no raw event scanning
-    let countsQ = (supabaseAdmin as any)
-      .from("analytics_daily_counts")
-      .select("event_type, category_id, content_id, count");
-    if (sinceIso) countsQ = countsQ.gte("period_date", sinceIso.slice(0, 10));
-    if (facilityValue) {
-      countsQ = countsQ.eq("facility_value", facilityValue);
+    // Query raw analytics events — analytics_events is the source of truth written by trackContentClick/trackCategoryView
+    let countsQ = supabaseAdmin
+      .from("analytics_events")
+      .select("event_type, category_id, content_id");
+    if (sinceIso) countsQ = (countsQ as any).gte("created_at", sinceIso);
+    if (userIdFilter !== null) {
+      if (userIdFilter.length === 0) {
+        countsQ = (countsQ as any).eq("user_id", "00000000-0000-0000-0000-000000000000");
+      } else {
+        countsQ = (countsQ as any).in("user_id", userIdFilter);
+      }
+    } else {
+      const excludeAll = [
+        ...Array.from(syntheticIds),
+        ...Array.from(facilityUserAccountIds),
+        "00000000-0000-0000-0000-000000000000",
+      ];
+      if (excludeAll.length > 0) {
+        countsQ = (countsQ as any).not("user_id", "in", `(${excludeAll.join(",")})`);
+      }
     }
 
     // Real hours spent: sum actual session_seconds from user_content_engagement
@@ -156,7 +169,6 @@ export const getUsageReport = createServerFn({ method: "POST" })
         engQ = engQ.in("user_id", userIdFilter);
       }
     } else {
-      // All-users report: exclude synthetic and facilityUser accounts
       const excludeAll = [
         ...Array.from(syntheticIds),
         ...Array.from(facilityUserAccountIds),
@@ -175,21 +187,20 @@ export const getUsageReport = createServerFn({ method: "POST" })
     const [countsRes, engRes, itemStatsRes] = await Promise.all([countsQ, engQ, itemStatsQ]);
     if (countsRes.error) throw new Error(countsRes.error.message);
 
-    // Aggregate the pre-bucketed counts
+    // Count each raw event row as 1
     const catViews: Record<string, number> = {};
     const catClicks: Record<string, number> = {};
     const itemClicks: Record<string, number> = {};
     let totalViews = 0;
     let totalClicks = 0;
     for (const row of (countsRes.data ?? []) as any[]) {
-      const n = row.count as number;
       if (row.event_type === "category_view") {
-        if (row.category_id) catViews[row.category_id] = (catViews[row.category_id] ?? 0) + n;
-        totalViews += n;
+        if (row.category_id) catViews[row.category_id] = (catViews[row.category_id] ?? 0) + 1;
+        totalViews += 1;
       } else if (row.event_type === "content_click") {
-        if (row.category_id) catClicks[row.category_id] = (catClicks[row.category_id] ?? 0) + n;
-        if (row.content_id) itemClicks[row.content_id] = (itemClicks[row.content_id] ?? 0) + n;
-        totalClicks += n;
+        if (row.category_id) catClicks[row.category_id] = (catClicks[row.category_id] ?? 0) + 1;
+        if (row.content_id) itemClicks[row.content_id] = (itemClicks[row.content_id] ?? 0) + 1;
+        totalClicks += 1;
       }
     }
 
