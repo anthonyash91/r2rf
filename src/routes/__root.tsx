@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
+import { AuthCheckingProvider } from "@/lib/auth-checking-context";
 import { installGlobalErrorReporter, reportError } from "@/lib/client-error-reporter";
 import appCss from "../styles.css?url";
 
@@ -126,12 +127,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthCheckingProvider>
       <I18nProvider>
         <ConfirmDialogProvider>
           <Outlet />
           <Toaster />
         </ConfirmDialogProvider>
       </I18nProvider>
+      </AuthCheckingProvider>
     </QueryClientProvider>
   );
 }

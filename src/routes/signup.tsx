@@ -17,6 +17,7 @@ import { syntheticEmail } from "@/lib/user-signup";
 import { listFacilities } from "@/lib/facilities.functions";
 import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
 import { useActiveInmatePin, setActiveInmatePin } from "@/lib/inmate-pin-context";
+import { useAuthChecking } from "@/lib/auth-checking-context";
 import { questionLabel } from "@/lib/security-questions";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -61,7 +62,7 @@ function SignupPageContent() {
   const [answer, setAnswer] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
-  const [checkingSignIn, setCheckingSignIn] = useState(false);
+  const { isChecking: checkingSignIn, setIsChecking: setCheckingSignIn } = useAuthChecking();
   const [usernameStatus, setUsernameStatus] = useState<
     "idle" | "checking" | "available" | "taken" | "invalid"
   >("idle");

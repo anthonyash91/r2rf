@@ -11,9 +11,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
 import { useActiveInmatePin } from "@/lib/inmate-pin-context";
+import { useAuthChecking } from "@/lib/auth-checking-context";
 
 export function SiteHeader() {
-  const { user, canAccessAdmin, isUser, isAdmin, isContributor, isFacilityUser } = useAuth();
+  const { isChecking } = useAuthChecking();
+  const authRaw = useAuth();
+  // While post-auth check is in flight, treat user as not yet authenticated
+  // so nav links don't flicker to signed-in state before the check completes.
+  const { user, canAccessAdmin, isUser, isAdmin, isContributor, isFacilityUser } = isChecking
+    ? { ...authRaw, user: null, canAccessAdmin: false, isUser: false, isAdmin: false, isContributor: false, isFacilityUser: false }
+    : authRaw;
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
   const location = useLocation();
