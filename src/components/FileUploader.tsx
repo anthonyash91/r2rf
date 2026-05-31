@@ -73,6 +73,23 @@ export function FileUploader({
   const ps = paletteStyle(indexForType(contentType, badgeStyles));
 
   async function handleFile(file: File) {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    const maxMb: Record<string, number> = {
+      mp4: 500, webm: 500, mov: 500,
+      mp3: 100, wav: 100, ogg: 100, m4a: 100,
+      pdf: 50,
+      jpg: 20, jpeg: 20, png: 20, gif: 20, webp: 20,
+    };
+    const allowed = new Set(Object.keys(maxMb));
+    if (!allowed.has(ext)) {
+      toast.error(`File type .${ext} is not allowed.`);
+      return;
+    }
+    const limitMb = maxMb[ext];
+    if (file.size > limitMb * 1024 * 1024) {
+      toast.error(`File exceeds the ${limitMb} MB limit for .${ext} files.`);
+      return;
+    }
     setUploading(true);
     setUploadProgress(0);
     try {

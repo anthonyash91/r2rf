@@ -5,6 +5,28 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const BUCKET = "content-files";
 
+const ALLOWED_EXTENSIONS = new Set([
+  "mp4", "webm", "mov",          // video
+  "mp3", "wav", "ogg", "m4a",   // audio
+  "pdf",                          // documents
+  "jpg", "jpeg", "png", "gif", "webp", // images
+]);
+
+const MAX_SIZES: Record<string, number> = {
+  mp4: 500, webm: 500, mov: 500,
+  mp3: 100, wav: 100, ogg: 100, m4a: 100,
+  pdf: 50,
+  jpg: 20, jpeg: 20, png: 20, gif: 20, webp: 20,
+}; // MB
+
+function validateUploadPath(path: string) {
+  const ext = path.split(".").pop()?.toLowerCase() ?? "";
+  if (!ALLOWED_EXTENSIONS.has(ext)) {
+    throw new Error(`File type .${ext} is not allowed. Permitted: ${[...ALLOWED_EXTENSIONS].join(", ")}`);
+  }
+  return ext;
+}
+
 async function assertAdminOrContributor(supabase: any, userId: string) {
   const [adminRes, contribRes] = await Promise.all([
     supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
@@ -27,6 +49,7 @@ export const getSignedUploadUrl = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdminOrContributor(context.supabase, context.userId);
+    validateUploadPath(data.path);
 
     const { data: signed, error } = await supabaseAdmin.storage
       .from(BUCKET)

@@ -8,6 +8,21 @@ import { recordAdminAudit } from "@/lib/admin-audit.server";
 
 type Role = "admin" | "contributor" | "tester" | "user";
 
+/** Split an array into chunks to avoid Supabase URL length limits on large IN clauses. */
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
+  return chunks;
+}
+
+/** Apply NOT IN with chunking so large exclusion lists don't exceed URL limits. */
+function applyNotIn(q: any, column: string, ids: string[]): any {
+  for (const chunk of chunkArray(ids, 500)) {
+    q = q.not(column, "in", `(${chunk.join(",")})`);
+  }
+  return q;
+}
+
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", {
     _user_id: userId,
@@ -88,39 +103,47 @@ async function hydrateAuthFields(userIds: string[]): Promise<
     string,
     { email: string; created_at: string; last_sign_in_at: string | null; email_confirmed_at: string | null }
   >();
-  await Promise.all(
-    userIds.map(async (id) => {
-      const { data, error } = await supabaseAdmin.auth.admin.getUserById(id);
-      if (error || !data?.user) return;
-      const u = data.user as any;
-      map.set(id, {
+  if (userIds.length === 0) return map;
+  // Use listUsers() with pagination instead of one getUserById() per user.
+  // This is O(total_users / page_size) API calls instead of O(requested_users).
+  const idSet = new Set(userIds);
+  const PER_PAGE = 1000;
+  for (let page = 1; ; page++) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: PER_PAGE });
+    if (error) break;
+    for (const u of data.users ?? []) {
+      if (!idSet.has(u.id)) continue;
+      const ua = u as any;
+      map.set(u.id, {
         email: u.email ?? "",
         created_at: u.created_at,
-        last_sign_in_at: u.last_sign_in_at ?? null,
+        last_sign_in_at: ua.last_sign_in_at ?? null,
         email_confirmed_at: u.email_confirmed_at ?? null,
       });
-    }),
-  );
+    }
+    if ((data.users?.length ?? 0) < PER_PAGE) break;
+  }
   return map;
 }
 
 async function fetchRolesAndProfiles(userIds: string[]) {
   if (userIds.length === 0) return { rolesByUser: new Map<string, Role[]>(), profileByUser: new Map<string, ListedUser["profile"]>() };
-  const [{ data: roleRows }, { data: profileRows }] = await Promise.all([
-    supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", userIds),
-    supabaseAdmin
-      .from("user_profiles")
-      .select("user_id, username, facility, first_name, last_name, inmate_pin")
-      .in("user_id", userIds),
+  const CHUNK = 500;
+  const chunks = chunkArray(userIds, CHUNK);
+  const [roleChunks, profileChunks] = await Promise.all([
+    Promise.all(chunks.map((c) => supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", c))),
+    Promise.all(chunks.map((c) => supabaseAdmin.from("user_profiles").select("user_id, username, facility, first_name, last_name, inmate_pin").in("user_id", c))),
   ]);
+  const roleRows = roleChunks.flatMap((r) => r.data ?? []);
+  const profileRows = profileChunks.flatMap((r) => r.data ?? []);
   const rolesByUser = new Map<string, Role[]>();
-  for (const r of roleRows ?? []) {
+  for (const r of roleRows) {
     const arr = rolesByUser.get(r.user_id) ?? [];
     arr.push(r.role as Role);
     rolesByUser.set(r.user_id, arr);
   }
   const profileByUser = new Map<string, ListedUser["profile"]>();
-  for (const p of profileRows ?? []) {
+  for (const p of profileRows) {
     profileByUser.set(p.user_id, {
       username: p.username,
       facility: p.facility,
@@ -270,7 +293,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
       .select("user_id, username, facility, first_name, last_name, inmate_pin, created_at", { count: "exact" });
 
     if (excludeIds.length) {
-      q = q.not("user_id", "in", `(${excludeIds.join(",")})`);
+      q = applyNotIn(q, "user_id", excludeIds);
     }
     if (facilityFilter) {
       q = q.eq("facility", facilityFilter);
@@ -333,7 +356,7 @@ export const countNewUsers = createServerFn({ method: "POST" })
       .eq("is_synthetic", false);
     const excludeIds = Array.from(new Set((privilegedRoles ?? []).map((r) => r.user_id)));
     if (excludeIds.length) {
-      q = q.not("user_id", "in", `(${excludeIds.join(",")})`);
+      q = applyNotIn(q, "user_id", excludeIds);
     }
     const { count, error } = await q;
     if (error) throw new Error(error.message);
