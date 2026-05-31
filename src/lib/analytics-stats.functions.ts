@@ -114,6 +114,11 @@ export const getContentItemStats = createServerFn({ method: "POST" })
  * Retention rates, weekly growth, and program completion rates.
  * Scoped to a facility when facilityValue is provided.
  */
+/**
+ * Reads pre-computed growth/retention/program-completion stats from nightly tables.
+ * Scoped by facility when facilityValue is provided.
+ * All heavy computation now runs in refresh_analytics_stats() — not in the request path.
+ */
 export const getGrowthStats = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -123,156 +128,45 @@ export const getGrowthStats = createServerFn({ method: "POST" })
     await assertAnyAdmin(context.userId);
     const facilityValue = data.facilityValue ?? null;
 
-    // Exclude staff from all metrics
-    const { data: staffRoles } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id")
-      .in("role", ["admin", "contributor", "tester", "facilityUser"]);
-    const staffIds = new Set<string>((staffRoles ?? []).map((r: any) => r.user_id as string));
-
-    // Real users (non-staff, non-synthetic, optionally scoped to facility)
-    let usersQ = supabaseAdmin
-      .from("user_profiles")
-      .select("user_id, created_at")
-      .eq("is_synthetic", false);
-    if (facilityValue) usersQ = (usersQ as any).eq("facility", facilityValue);
-    const { data: usersData } = await usersQ;
-    const realUsers = (usersData ?? []).filter((u: any) => !staffIds.has(u.user_id as string));
-    const realUserIds = new Set<string>(realUsers.map((u: any) => u.user_id as string));
-
-    if (realUserIds.size === 0) {
-      return {
-        retention: { day7: null, day30: null, day60: null },
-        weeklyData: [],
-        programCompletion: [],
-        totalUsers: 0,
-      };
-    }
-
-    const now = new Date();
-    const twelveWeeksAgo = new Date(now);
-    twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 84);
-
-    // Fetch logins, recent events, completions, and content in parallel
-    const [loginsRes, eventsRes, completionsRes, itemsRes, catsRes] = await Promise.all([
-      supabaseAdmin
-        .from("user_logins")
-        .select("user_id, login_date")
-        .in("user_id", [...realUserIds]),
-      supabaseAdmin
-        .from("analytics_events")
-        .select("user_id, created_at")
-        .gte("created_at", twelveWeeksAgo.toISOString())
-        .not("user_id", "is", null),
-      supabaseAdmin
-        .from("user_content_progress")
-        .select("user_id, content_item_id"),
-      supabaseAdmin
-        .from("content_items")
-        .select("id, category_id")
-        .eq("published", true),
-      supabaseAdmin
-        .from("categories")
-        .select("id, name")
-        .eq("published", true),
+    const [retentionRes, weeklyRes, programRes] = await Promise.all([
+      (supabaseAdmin as any)
+        .from("analytics_retention")
+        .select("day7_rate, day30_rate, day60_rate, total_users")
+        .is("facility_value", facilityValue),
+      (supabaseAdmin as any)
+        .from("analytics_weekly_growth")
+        .select("week_ending, signups, active_users")
+        .is("facility_value", facilityValue)
+        .order("week_ending", { ascending: true }),
+      (supabaseAdmin as any)
+        .from("analytics_program_completion")
+        .select("category_id, name, total_items, users_engaged, users_completed, completion_rate")
+        .is("facility_value", facilityValue)
+        .order("completion_rate", { ascending: false, nullsFirst: false }),
     ]);
 
-    // ── Retention ────────────────────────────────────────────────────────────
-    const loginsByUser = new Map<string, string[]>();
-    for (const r of (loginsRes.data ?? []) as any[]) {
-      const arr = loginsByUser.get(r.user_id as string) ?? [];
-      arr.push(r.login_date as string);
-      loginsByUser.set(r.user_id as string, arr);
-    }
-
-    const computeRetention = (days: number): number | null => {
-      const cutoff = new Date(now);
-      cutoff.setDate(cutoff.getDate() - days);
-      const eligible = realUsers.filter((u: any) => new Date(u.created_at) < cutoff);
-      if (eligible.length === 0) return null;
-      const returned = eligible.filter((u: any) => {
-        const signupDate = new Date(u.created_at).toISOString().slice(0, 10);
-        return (loginsByUser.get(u.user_id as string) ?? []).some((loginDate) => {
-          if (loginDate <= signupDate) return false;
-          const diff = (new Date(loginDate).getTime() - new Date(signupDate).getTime()) / 86400000;
-          return diff <= days;
-        });
-      });
-      return Math.round((returned.length / eligible.length) * 100);
-    };
-
-    // ── Weekly data (last 12 weeks) ──────────────────────────────────────────
-    const weeklyData: { weekEnding: string; signups: number; activeUsers: number }[] = [];
-    for (let i = 11; i >= 0; i--) {
-      const weekEnd = new Date(now);
-      weekEnd.setDate(weekEnd.getDate() - i * 7);
-      weekEnd.setHours(23, 59, 59, 999);
-      const weekStart = new Date(weekEnd);
-      weekStart.setDate(weekStart.getDate() - 6);
-      weekStart.setHours(0, 0, 0, 0);
-
-      const signups = realUsers.filter((u: any) => {
-        const d = new Date(u.created_at);
-        return d >= weekStart && d <= weekEnd;
-      }).length;
-
-      const activeSet = new Set<string>();
-      for (const e of (eventsRes.data ?? []) as any[]) {
-        const d = new Date(e.created_at as string);
-        if (d >= weekStart && d <= weekEnd && e.user_id && realUserIds.has(e.user_id as string)) {
-          activeSet.add(e.user_id as string);
-        }
-      }
-
-      weeklyData.push({ weekEnding: weekEnd.toISOString().slice(0, 10), signups, activeUsers: activeSet.size });
-    }
-
-    // ── Program completion ───────────────────────────────────────────────────
-    const catItems = new Map<string, string[]>();
-    for (const item of (itemsRes.data ?? []) as any[]) {
-      const arr = catItems.get(item.category_id as string) ?? [];
-      arr.push(item.id as string);
-      catItems.set(item.category_id as string, arr);
-    }
-
-    const userCompletions = new Map<string, Set<string>>();
-    for (const c of (completionsRes.data ?? []) as any[]) {
-      if (!realUserIds.has(c.user_id as string)) continue;
-      const s = userCompletions.get(c.user_id as string) ?? new Set<string>();
-      s.add(c.content_item_id as string);
-      userCompletions.set(c.user_id as string, s);
-    }
-
-    const programCompletion: {
-      categoryId: string; name: string; totalItems: number;
-      usersEngaged: number; usersCompleted: number; rate: number | null;
-    }[] = [];
-
-    for (const cat of (catsRes.data ?? []) as any[]) {
-      const items = catItems.get(cat.id as string) ?? [];
-      if (items.length === 0) continue;
-      let usersEngaged = 0, usersCompleted = 0;
-      for (const [, completed] of userCompletions.entries()) {
-        if (!items.some((id) => completed.has(id))) continue;
-        usersEngaged++;
-        if (items.every((id) => completed.has(id))) usersCompleted++;
-      }
-      programCompletion.push({
-        categoryId: cat.id as string,
-        name: cat.name as string,
-        totalItems: items.length,
-        usersEngaged,
-        usersCompleted,
-        rate: usersEngaged > 0 ? Math.round((usersCompleted / usersEngaged) * 100) : null,
-      });
-    }
-    programCompletion.sort((a, b) => (b.rate ?? -1) - (a.rate ?? -1));
+    const ret = retentionRes.data?.[0] ?? null;
 
     return {
-      retention: { day7: computeRetention(7), day30: computeRetention(30), day60: computeRetention(60) },
-      weeklyData,
-      programCompletion,
-      totalUsers: realUserIds.size,
+      retention: ret ? {
+        day7: ret.day7_rate as number | null,
+        day30: ret.day30_rate as number | null,
+        day60: ret.day60_rate as number | null,
+      } : null,
+      weeklyData: (weeklyRes.data ?? []).map((r: any) => ({
+        weekEnding: r.week_ending as string,
+        signups: r.signups as number,
+        activeUsers: r.active_users as number,
+      })),
+      programCompletion: (programRes.data ?? []).map((r: any) => ({
+        categoryId: r.category_id as string,
+        name: r.name as string,
+        totalItems: r.total_items as number,
+        usersEngaged: r.users_engaged as number,
+        usersCompleted: r.users_completed as number,
+        rate: r.completion_rate as number | null,
+      })),
+      totalUsers: (ret?.total_users as number) ?? 0,
     };
   });
 

@@ -142,59 +142,28 @@ export const getUsageReport = createServerFn({ method: "POST" })
       };
     }
 
-    // Query raw analytics events — includes user_id so we can deduplicate openers per item
-    let countsQ = supabaseAdmin
+    // ── Query 1: analytics_daily_counts for visit/click totals (pre-aggregated, fast) ──
+    // The trigger already excludes staff and synthetic users, so no user filter needed here.
+    let dailyCountsQ = (supabaseAdmin as any)
+      .from("analytics_daily_counts")
+      .select("event_type, category_id, content_id, count");
+    if (sinceIso) dailyCountsQ = dailyCountsQ.gte("period_date", sinceIso.slice(0, 10));
+    if (facilityValue) dailyCountsQ = dailyCountsQ.eq("facility_value", facilityValue);
+
+    // ── Query 2: analytics_events content_click only — for unique openers per item ──
+    // Still needed for completion rate deduplication (daily_counts doesn't have user_id).
+    // Narrower than before: only content_click events, only 2 columns.
+    let openersQ = supabaseAdmin
       .from("analytics_events")
-      .select("event_type, category_id, content_id, user_id");
-    if (sinceIso) countsQ = (countsQ as any).gte("created_at", sinceIso);
+      .select("user_id, content_id")
+      .eq("event_type", "content_click")
+      .not("user_id", "is", null);
+    if (sinceIso) openersQ = (openersQ as any).gte("created_at", sinceIso);
     if (userIdFilter !== null) {
       if (userIdFilter.length === 0) {
-        countsQ = (countsQ as any).eq("user_id", "00000000-0000-0000-0000-000000000000");
+        openersQ = (openersQ as any).eq("user_id", "00000000-0000-0000-0000-000000000000");
       } else {
-        countsQ = (countsQ as any).in("user_id", userIdFilter);
-      }
-    } else {
-      const excludeAll = [
-        ...Array.from(syntheticIds),
-        ...Array.from(facilityUserAccountIds),
-        "00000000-0000-0000-0000-000000000000",
-      ];
-      if (excludeAll.length > 0) {
-        countsQ = (countsQ as any).not("user_id", "in", `(${excludeAll.join(",")})`);
-      }
-    }
-
-    // Real hours spent: sum actual session_seconds from user_content_engagement
-    let engQ = (supabaseAdmin as any)
-      .from("user_content_engagement")
-      .select("user_id, content_item_id, session_seconds");
-    if (userIdFilter !== null) {
-      if (userIdFilter.length === 0) {
-        engQ = engQ.eq("user_id", "00000000-0000-0000-0000-000000000000");
-      } else {
-        engQ = engQ.in("user_id", userIdFilter);
-      }
-    } else {
-      const excludeAll = [
-        ...Array.from(syntheticIds),
-        ...Array.from(facilityUserAccountIds),
-        "00000000-0000-0000-0000-000000000000",
-      ];
-      if (excludeAll.length > 0) {
-        engQ = engQ.not("user_id", "in", `(${excludeAll.join(",")})`);
-      }
-    }
-
-    // Completions from real users only, same date range as clicks
-    let progressQ = (supabaseAdmin as any)
-      .from("user_content_progress")
-      .select("content_item_id, user_id");
-    if (sinceIso) progressQ = progressQ.gte("created_at", sinceIso);
-    if (userIdFilter !== null) {
-      if (userIdFilter.length === 0) {
-        progressQ = progressQ.eq("user_id", "00000000-0000-0000-0000-000000000000");
-      } else {
-        progressQ = progressQ.in("user_id", userIdFilter);
+        openersQ = (openersQ as any).in("user_id", userIdFilter);
       }
     } else {
       const excludeAll = [
@@ -203,78 +172,114 @@ export const getUsageReport = createServerFn({ method: "POST" })
         "00000000-0000-0000-0000-000000000000",
       ];
       if (excludeAll.length > 0) {
-        progressQ = progressQ.not("user_id", "in", `(${excludeAll.join(",")})`);
+        openersQ = (openersQ as any).not("user_id", "in", `(${excludeAll.join(",")})`);
       }
     }
 
-    const [countsRes, engRes, progressRes] = await Promise.all([countsQ, engQ, progressQ]);
-    if (countsRes.error) throw new Error(countsRes.error.message);
+    // ── Query 3: content_item_stats for per-item time (pre-computed nightly) ──
+    // Replaces scanning all user_content_engagement rows.
+    const itemStatsDbQ = (supabaseAdmin as any)
+      .from("content_item_stats")
+      .select("content_item_id, total_session_seconds, avg_session_seconds");
 
-    // Count events; track unique openers per item for completion rate
+    // ── Query 4: user_content_progress for completions (paginated) ──────────
+    const fetchAllProgress = async () => {
+      const PAGE = 1000;
+      const all: any[] = [];
+      for (let from = 0; ; from += PAGE) {
+        let q = (supabaseAdmin as any)
+          .from("user_content_progress")
+          .select("content_item_id, user_id")
+          .range(from, from + PAGE - 1);
+        if (sinceIso) q = q.gte("created_at", sinceIso);
+        if (userIdFilter !== null) {
+          if (userIdFilter.length === 0) {
+            q = q.eq("user_id", "00000000-0000-0000-0000-000000000000");
+          } else {
+            q = q.in("user_id", userIdFilter);
+          }
+        } else {
+          const excludeAll = [
+            ...Array.from(staffUserIds),
+            ...Array.from(syntheticIds),
+            "00000000-0000-0000-0000-000000000000",
+          ];
+          if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
+        }
+        const { data, error } = await q;
+        if (error || !data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < PAGE) break;
+      }
+      return all;
+    };
+
+    const [dailyCountsRes, openersRes, itemStatsDbRes, progressRows] = await Promise.all([
+      dailyCountsQ, openersQ, itemStatsDbQ, fetchAllProgress(),
+    ]);
+    if (dailyCountsRes.error) throw new Error(dailyCountsRes.error.message);
+
+    // Aggregate pre-bucketed counts (fast — one row per day per category/content)
     const catViews: Record<string, number> = {};
     const catClicks: Record<string, number> = {};
     const itemClicks: Record<string, number> = {};
-    const itemOpeners: Record<string, Set<string>> = {}; // unique users who clicked each item
     let totalViews = 0;
     let totalClicks = 0;
-    for (const row of (countsRes.data ?? []) as any[]) {
+    for (const row of (dailyCountsRes.data ?? []) as any[]) {
+      const n = row.count as number;
       if (row.event_type === "category_view") {
-        if (row.category_id) catViews[row.category_id] = (catViews[row.category_id] ?? 0) + 1;
-        totalViews += 1;
+        if (row.category_id) catViews[row.category_id] = (catViews[row.category_id] ?? 0) + n;
+        totalViews += n;
       } else if (row.event_type === "content_click") {
-        if (row.category_id) catClicks[row.category_id] = (catClicks[row.category_id] ?? 0) + 1;
-        if (row.content_id) {
-          itemClicks[row.content_id] = (itemClicks[row.content_id] ?? 0) + 1;
-          if (row.user_id) {
-            if (!itemOpeners[row.content_id]) itemOpeners[row.content_id] = new Set();
-            itemOpeners[row.content_id].add(row.user_id as string);
-          }
-        }
-        totalClicks += 1;
+        if (row.category_id) catClicks[row.category_id] = (catClicks[row.category_id] ?? 0) + n;
+        if (row.content_id) itemClicks[row.content_id] = (itemClicks[row.content_id] ?? 0) + n;
+        totalClicks += n;
       }
     }
 
-    let totalSeconds = 0;
-    const itemTotalSeconds: Record<string, number> = {};
-    const itemEngagerCount: Record<string, number> = {};
-    for (const r of (engRes?.data ?? []) as any[]) {
-      const secs = (r.session_seconds as number) || 0;
-      totalSeconds += secs;
-      if (r.content_item_id && secs > 0) {
-        const id = r.content_item_id as string;
-        itemTotalSeconds[id] = (itemTotalSeconds[id] ?? 0) + secs;
-        itemEngagerCount[id] = (itemEngagerCount[id] ?? 0) + 1;
+    // Build unique openers per item (for completion rate deduplication)
+    const itemOpeners: Record<string, Set<string>> = {};
+    for (const row of (openersRes?.data ?? []) as any[]) {
+      if (row.content_id && row.user_id) {
+        if (!itemOpeners[row.content_id]) itemOpeners[row.content_id] = new Set();
+        itemOpeners[row.content_id].add(row.user_id as string);
       }
+    }
+
+    // Per-item time from pre-computed stats (replaces full engagement table scan)
+    const itemTotalSeconds: Record<string, number> = {};
+    const itemAvgSeconds: Record<string, number | null> = {};
+    let totalSeconds = 0;
+    for (const r of (itemStatsDbRes?.data ?? []) as any[]) {
+      const id = r.content_item_id as string;
+      const secs = (r.total_session_seconds as number) || 0;
+      itemTotalSeconds[id] = secs;
+      itemAvgSeconds[id] = r.avg_session_seconds as number | null;
+      totalSeconds += secs;
     }
     const hoursSpent = Math.round((totalSeconds / 3600) * 10) / 10;
 
-    // Build per-item completion stats from live data.
-    // Completion rate is ONLY shown when there are actual tracked opens (click events).
-    // If a user completed content but there are no click events for that item, we don't
-    // have reliable open data so we hide the rate rather than show a misleading 100%.
     const visibleItemIds = new Set(filteredItems.map((i: any) => i.id as string));
 
+    // Completions from paginated progress rows
     const itemCompleters: Record<string, Set<string>> = {};
-    for (const r of (progressRes?.data ?? []) as any[]) {
+    for (const r of progressRows as any[]) {
       const id = r.content_item_id as string;
       if (!visibleItemIds.has(id)) continue;
       if (!itemCompleters[id]) itemCompleters[id] = new Set();
       itemCompleters[id].add(r.user_id as string);
     }
 
+    // Build per-item stats. Completion rate only shown when click-event open data exists.
     const itemStats: Record<string, { openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }> = {};
     let aggOpens = 0;
     let aggCompletes = 0;
     for (const itemId of visibleItemIds) {
-      const trackedOpens = itemOpeners[itemId]?.size ?? 0; // unique users with a click event
+      const trackedOpens = itemOpeners[itemId]?.size ?? 0;
       const completes = itemCompleters[itemId]?.size ?? 0;
-      // Only compute a rate when we have actual open tracking data.
-      // Without it we can't distinguish "100% of openers completed" from "completions with no open data".
       const openCount = Math.max(trackedOpens, completes);
       const completionRate = trackedOpens > 0 ? Math.round(completes / openCount * 100) : null;
-      const avgSessionSeconds = itemTotalSeconds[itemId]
-        ? Math.round(itemTotalSeconds[itemId] / (itemEngagerCount[itemId] ?? 1))
-        : null;
+      const avgSessionSeconds = itemAvgSeconds[itemId] ?? null;
       itemStats[itemId] = { openCount, completeCount: completes, completionRate, avgSessionSeconds };
       if (trackedOpens > 0) {
         aggOpens += openCount;
@@ -300,7 +305,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
 
     // Category depth: average items completed per user in each category
     const catUserCompletions: Record<string, Record<string, number>> = {};
-    for (const r of (progressRes?.data ?? []) as any[]) {
+    for (const r of progressRows as any[]) {
       const id = r.content_item_id as string;
       if (!visibleItemIds.has(id)) continue;
       const catId = itemCatMap.get(id);
