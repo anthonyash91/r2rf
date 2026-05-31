@@ -79,17 +79,17 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
       (facilityUserRolesRes.data ?? []).map((r: any) => r.user_id as string)
     );
 
-    // Paginate user_profiles to avoid the 1000-row default cap; exclude synthetic + facilityUser accounts
+    // Paginate user_profiles to avoid the 1000-row default cap
     const userCounts = new Map<string, number>();
     const PAGE = 1000;
     for (let from = 0; ; from += PAGE) {
       const { data: profPage, error: profErr } = await supabaseAdmin
         .from("user_profiles")
-        .select("user_id, facility")
-        .neq("is_synthetic", true)
+        .select("user_id, facility, is_synthetic")
         .range(from, from + PAGE - 1);
       if (profErr) throw new Error(profErr.message);
       for (const p of profPage ?? []) {
+        if (p.is_synthetic === true) continue;
         if (facilityUserIds.has(p.user_id)) continue;
         const k = p.facility as string;
         if (k) userCounts.set(k, (userCounts.get(k) ?? 0) + 1);
