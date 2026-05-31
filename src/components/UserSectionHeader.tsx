@@ -5,15 +5,17 @@ export function UserSectionHeader({
   className = "",
 }: {
   title: string;
-  count: number | string;
+  count?: number | string;
   description: string;
   className?: string;
 }) {
   return (
     <div className={className}>
       <h2 className="font-display text-xl font-semibold">
-        {title}{" "}
-        <span className="text-muted-foreground font-normal">({count})</span>
+        {title}
+        {count != null && (
+          <span className="text-muted-foreground font-normal"> ({count})</span>
+        )}
       </h2>
       <p className="mt-1 text-xs text-muted-foreground">{description}</p>
     </div>

@@ -587,7 +587,6 @@ function FacilityComparisonSection() {
       <div className="flex items-start justify-between mb-4 flex-wrap gap-2">
         <UserSectionHeader
           title="Facility Comparison"
-          count={facilities.length}
           description={`All facilities ranked by average content completion rate.${updatedAt ? ` · Updated daily · Last updated ${updatedAt}` : ""}`}
         />
         {facilities.length > 0 && (
@@ -612,12 +611,12 @@ function FacilityComparisonSection() {
               <thead>
                 <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground font-medium">
                   <th className="text-left px-4 py-3">Facility</th>
-                  <th className="text-right px-4 py-3">Users</th>
-                  <th className="text-right px-4 py-3">Active (7d)</th>
-                  <th className="text-right px-4 py-3">Active (30d)</th>
-                  <th className="text-right px-4 py-3">Avg Completion</th>
-                  <th className="text-right px-4 py-3">Items Completed</th>
-                  <th className="text-right px-4 py-3">Time Spent</th>
+                  <th className="text-left px-4 py-3">Users</th>
+                  <th className="text-left px-4 py-3">Active (7d)</th>
+                  <th className="text-left px-4 py-3">Active (30d)</th>
+                  <th className="text-left px-4 py-3">Avg Completion</th>
+                  <th className="text-left px-4 py-3">Items Completed</th>
+                  <th className="text-left px-4 py-3">Time Spent</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -629,10 +628,10 @@ function FacilityComparisonSection() {
                         <span className="ml-2 text-xs text-muted-foreground font-mono">{f.facilitySiteId}</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{f.totalUsers}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{f.activeUsers7d}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{f.activeUsers30d}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">
+                    <td className="px-4 py-3 tabular-nums">{f.totalUsers}</td>
+                    <td className="px-4 py-3 tabular-nums">{f.activeUsers7d}</td>
+                    <td className="px-4 py-3 tabular-nums">{f.activeUsers30d}</td>
+                    <td className="px-4 py-3 tabular-nums">
                       {f.avgCompletionRate != null ? (
                         <span className={f.avgCompletionRate >= 70 ? "text-[var(--color-accent)] font-medium" : f.avgCompletionRate >= 40 ? "" : "text-muted-foreground"}>
                           {f.avgCompletionRate}%
@@ -641,8 +640,8 @@ function FacilityComparisonSection() {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right tabular-nums">{f.itemsCompletedTotal}</td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                    <td className="px-4 py-3 tabular-nums">{f.itemsCompletedTotal}</td>
+                    <td className="px-4 py-3 tabular-nums text-muted-foreground">
                       {f.totalSessionSeconds > 0 ? formatTimeSpent(f.totalSessionSeconds) : "—"}
                     </td>
                   </tr>
@@ -1643,7 +1642,6 @@ function ContentTypeBreakdown({
       <UserSectionHeader
         className="mb-4"
         title="Content type preference"
-        count={rows.length}
         description="Opens, completions, and time spent broken down by content format, sorted by completion rate."
       />
       <SectionCard padded={false} className="overflow-hidden">
@@ -1652,28 +1650,28 @@ function ContentTypeBreakdown({
             <thead>
               <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground font-medium">
                 <th className="text-left px-4 py-3">Type</th>
-                <th className="text-right px-4 py-3">Items</th>
-                <th className="text-right px-4 py-3">Opens</th>
-                <th className="text-right px-4 py-3">Completions</th>
-                <th className="text-right px-4 py-3">Completion rate</th>
-                <th className="text-right px-4 py-3">Time spent</th>
+                <th className="text-left px-4 py-3">Items</th>
+                <th className="text-left px-4 py-3">Opens</th>
+                <th className="text-left px-4 py-3">Completions</th>
+                <th className="text-left px-4 py-3">Completion rate</th>
+                <th className="text-left px-4 py-3">Time spent</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map(([type, t]) => (
                 <tr key={type} className="hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3 font-medium">{capitalize(type)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{t.itemCount}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{t.opens}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{t.completions}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  <td className="px-4 py-3 tabular-nums text-muted-foreground">{t.itemCount}</td>
+                  <td className="px-4 py-3 tabular-nums">{t.opens}</td>
+                  <td className="px-4 py-3 tabular-nums">{t.completions}</td>
+                  <td className="px-4 py-3 tabular-nums">
                     {t.completionRate != null ? (
                       <span className={t.completionRate >= 70 ? "text-[var(--color-accent)] font-medium" : t.completionRate >= 40 ? "" : "text-muted-foreground"}>
                         {t.completionRate}%
                       </span>
                     ) : "—"}
                   </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                  <td className="px-4 py-3 tabular-nums text-muted-foreground">
                     {t.totalSeconds > 0 ? formatTimeSpent(t.totalSeconds) : "—"}
                   </td>
                 </tr>
