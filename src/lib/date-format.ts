@@ -10,9 +10,9 @@ export function formatTimeSpent(totalSeconds: number): string {
   const minutes = Math.floor((s % 3600) / 60);
   const seconds = s % 60;
   const parts: string[] = [];
-  if (hours > 0) parts.push(`${hours} hr`);
-  if (minutes > 0) parts.push(`${minutes} min`);
-  if (seconds > 0 || parts.length === 0) parts.push(`${seconds} sec`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
   return parts.join(" ");
 }
 
