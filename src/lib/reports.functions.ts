@@ -167,7 +167,12 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     }
 
-    const [countsRes, engRes] = await Promise.all([countsQ, engQ]);
+    // Completion stats from pre-computed nightly table
+    const itemStatsQ = (supabaseAdmin as any)
+      .from("content_item_stats")
+      .select("content_item_id, open_count, complete_count, completion_rate, avg_session_seconds");
+
+    const [countsRes, engRes, itemStatsRes] = await Promise.all([countsQ, engQ, itemStatsQ]);
     if (countsRes.error) throw new Error(countsRes.error.message);
 
     // Aggregate the pre-bucketed counts
@@ -194,12 +199,47 @@ export const getUsageReport = createServerFn({ method: "POST" })
     }
     const hoursSpent = Math.round((totalSeconds / 3600) * 10) / 10;
 
+    // Build per-item stats map and aggregate completion rate
+    const visibleItemIds = new Set(filteredItems.map((i: any) => i.id as string));
+    const itemStats: Record<string, { openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }> = {};
+    let aggOpens = 0;
+    let aggCompletes = 0;
+    for (const r of (itemStatsRes?.data ?? []) as any[]) {
+      if (!visibleItemIds.has(r.content_item_id as string)) continue;
+      itemStats[r.content_item_id as string] = {
+        openCount: r.open_count as number,
+        completeCount: r.complete_count as number,
+        completionRate: r.completion_rate as number | null,
+        avgSessionSeconds: r.avg_session_seconds as number | null,
+      };
+      aggOpens += r.open_count as number;
+      aggCompletes += r.complete_count as number;
+    }
+    const overallCompletionRate = aggOpens > 0 ? Math.round(aggCompletes / aggOpens * 100) : null;
+
+    // Per-category completion rates
+    const catItemMap: Record<string, string[]> = {};
+    for (const it of filteredItems as any[]) {
+      if (!catItemMap[it.category_id]) catItemMap[it.category_id] = [];
+      catItemMap[it.category_id].push(it.id as string);
+    }
+    const catCompletionRate: Record<string, number | null> = {};
+    for (const cat of filteredCategories as any[]) {
+      let opens = 0, completes = 0;
+      for (const itemId of catItemMap[cat.id] ?? []) {
+        const s = itemStats[itemId];
+        if (s) { opens += s.openCount; completes += s.completeCount; }
+      }
+      catCompletionRate[cat.id] = opens > 0 ? Math.round(completes / opens * 100) : null;
+    }
+
     return {
       categories: filteredCategories,
       items: filteredItems,
       catViews, catClicks, itemClicks,
       totalViews, totalClicks,
       facilityUserCount, totalUsers, hoursSpent, totalSeconds,
+      itemStats, catCompletionRate, overallCompletionRate,
     };
   });
 

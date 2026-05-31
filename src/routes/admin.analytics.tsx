@@ -64,11 +64,25 @@ const RANGE_OPTIONS: { key: RangeKey; label: string; shortLabel: string }[] = [
   { key: "all", label: "All time", shortLabel: "All time" },
 ];
 
+type FacilityRow = {
+  facilityValue: string;
+  facilityLabel: string;
+  facilitySiteId: string | null;
+  activeUsers7d: number;
+  activeUsers30d: number;
+  totalUsers: number;
+  avgCompletionRate: number | null;
+  totalSessionSeconds: number;
+  itemsCompletedTotal: number;
+  updatedAt: string;
+};
+
 type AggregatedRow = {
   category: Category;
   views: number;
   clicks: number;
-  items: { item: ContentItem; clicks: number }[];
+  completionRate: number | null;
+  items: { item: ContentItem; clicks: number; openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }[];
 };
 
 
@@ -333,6 +347,8 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
     const catViews: Record<string, number> = d.catViews ?? {};
     const catClicks: Record<string, number> = d.catClicks ?? {};
     const itemClicks: Record<string, number> = d.itemClicks ?? {};
+    const itemStats: Record<string, { openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }> = d.itemStats ?? {};
+    const catCompletionRate: Record<string, number | null> = d.catCompletionRate ?? {};
     const itemsByCategory = new Map<string, ContentItem[]>();
     for (const it of (d.items ?? []) as ContentItem[]) {
       const list = itemsByCategory.get(it.category_id) ?? [];
@@ -341,11 +357,21 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
     }
     const rows: AggregatedRow[] = (d.categories ?? []).map((cat: Category) => {
       const items = (itemsByCategory.get(cat.id) ?? [])
-        .map((it) => ({ item: it, clicks: itemClicks[it.id] ?? 0 }))
+        .map((it) => {
+          const s = itemStats[it.id];
+          return {
+            item: it,
+            clicks: itemClicks[it.id] ?? 0,
+            openCount: s?.openCount ?? 0,
+            completeCount: s?.completeCount ?? 0,
+            completionRate: s?.completionRate ?? null,
+            avgSessionSeconds: s?.avgSessionSeconds ?? null,
+          };
+        })
         .sort((a, b) => b.clicks - a.clicks);
-      return { category: cat, views: catViews[cat.id] ?? 0, clicks: catClicks[cat.id] ?? 0, items };
+      return { category: cat, views: catViews[cat.id] ?? 0, clicks: catClicks[cat.id] ?? 0, completionRate: catCompletionRate[cat.id] ?? null, items };
     });
-    return { rows, totalViews: d.totalViews ?? 0, totalClicks: d.totalClicks ?? 0 };
+    return { rows, totalViews: d.totalViews ?? 0, totalClicks: d.totalClicks ?? 0, overallCompletionRate: d.overallCompletionRate ?? null };
   }, [data]);
 
   const exportLabel =
@@ -413,16 +439,21 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
         </p>
       ) : (
         <>
-          <div className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
             <SummaryCard
               icon={<Eye className="h-5 w-5" />}
-              label={aggregated.totalViews === 1 ? "Category view" : "Category views"}
+              label={aggregated.totalViews === 1 ? "Visit" : "Visits"}
               value={aggregated.totalViews}
             />
             <SummaryCard
               icon={<MousePointerClick className="h-5 w-5" />}
-              label={aggregated.totalClicks === 1 ? "Content click" : "Content clicks"}
+              label={aggregated.totalClicks === 1 ? "Open" : "Opens"}
               value={aggregated.totalClicks}
+            />
+            <SummaryCard
+              icon={<BarChart3 className="h-5 w-5" />}
+              label="Completion rate"
+              value={aggregated.overallCompletionRate != null ? `${aggregated.overallCompletionRate}%` : "—"}
             />
             <SummaryCard
               icon={<Clock className="h-5 w-5" />}
@@ -440,6 +471,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
             />
           </div>
           <CategoryList rows={aggregated.rows} />
+          <MostLeastEngaged rows={aggregated.rows} />
         </>
       )}
     </div>
@@ -447,20 +479,21 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
 }
 
 function exportUsageCsv(
-  aggregated: { rows: AggregatedRow[]; totalViews: number; totalClicks: number },
+  aggregated: { rows: AggregatedRow[]; totalViews: number; totalClicks: number; overallCompletionRate?: number | null },
   label: string,
   summary: { hoursSpent: number; usersSignedUp: number; totalSeconds?: number },
 ) {
   const lines: string[] = [];
   lines.push(["Overall usage"].map(csvEscape).join(","));
   lines.push(["Metric", "Value"].map(csvEscape).join(","));
-  lines.push(["Category views", aggregated.totalViews].map(csvEscape).join(","));
-  lines.push(["Content clicks", aggregated.totalClicks].map(csvEscape).join(","));
+  lines.push(["Visits", aggregated.totalViews].map(csvEscape).join(","));
+  lines.push(["Opens", aggregated.totalClicks].map(csvEscape).join(","));
+  lines.push(["Completion rate", aggregated.overallCompletionRate != null ? `${aggregated.overallCompletionRate}%` : ""].map(csvEscape).join(","));
   lines.push(["Time spent", formatTimeSpent(summary.totalSeconds ?? summary.hoursSpent * 3600)].map(csvEscape).join(","));
   lines.push(["Users signed up", summary.usersSignedUp].map(csvEscape).join(","));
   lines.push("");
   lines.push(
-    ["Category", "Category slug", "Item title", "Item type", "Added", "Views", "Clicks"]
+    ["Category", "Category slug", "Item title", "Item type", "Added", "Visits", "Opens", "Completion rate", "Openers", "Completions", "Avg time spent"]
       .map(csvEscape)
       .join(","),
   );
@@ -474,9 +507,13 @@ function exportUsageCsv(
         csvEscape(fmtDate(row.category.created_at)),
         row.views,
         row.clicks,
+        row.completionRate != null ? `${row.completionRate}%` : "",
+        "",
+        "",
+        "",
       ].join(","),
     );
-    for (const { item, clicks } of row.items) {
+    for (const { item, clicks, openCount, completeCount, completionRate, avgSessionSeconds } of row.items) {
       lines.push(
         [
           csvEscape(row.category.name),
@@ -486,6 +523,10 @@ function exportUsageCsv(
           csvEscape(fmtDate(item.created_at)),
           "",
           clicks,
+          completionRate != null ? `${completionRate}%` : "",
+          openCount || "",
+          completeCount || "",
+          avgSessionSeconds ? formatTimeSpent(avgSessionSeconds) : "",
         ].join(","),
       );
     }
@@ -522,7 +563,7 @@ function FacilityComparisonSection() {
         {facilities.length > 0 && (
           <button
             type="button"
-            onClick={() => exportFacilityComparisonCsv(facilities)}
+            onClick={() => exportFacilityComparisonCsv(facilities as FacilityRow[])}
             className="rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted"
           >
             Export CSV
@@ -550,7 +591,7 @@ function FacilityComparisonSection() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {facilities.map((f) => (
+                {(facilities as FacilityRow[]).map((f) => (
                   <tr key={f.facilityValue} className="hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3 font-medium">
                       {f.facilityLabel}
@@ -596,9 +637,10 @@ function FacilityReportTab({ preselected }: { preselected: { value: string; labe
   });
 
   const facilities = data?.facilities ?? [];
-  const rank = facilities.findIndex((f) => f.facilityValue === preselected.value) + 1;
-  const total = facilities.length;
-  const thisStats = facilities.find((f) => f.facilityValue === preselected.value);
+  const typedFacilities = facilities as FacilityRow[];
+  const rank = typedFacilities.findIndex((f) => f.facilityValue === preselected.value) + 1;
+  const total = typedFacilities.length;
+  const thisStats = typedFacilities.find((f) => f.facilityValue === preselected.value);
   const updatedAt = data?.updatedAt ? new Date(data.updatedAt).toLocaleDateString() : null;
 
   return (
@@ -824,9 +866,7 @@ function exportFacilityUsersCsv(
   );
 }
 
-function exportFacilityComparisonCsv(
-  facilities: { facilityLabel: string; facilitySiteId: string | null; totalUsers: number; activeUsers7d: number; activeUsers30d: number; avgCompletionRate: number | null; itemsCompletedTotal: number; totalSessionSeconds: number }[],
-) {
+function exportFacilityComparisonCsv(facilities: FacilityRow[]) {
   const lines: string[] = [];
   lines.push(["Facility", "Site ID", "Total users", "Active (7d)", "Active (30d)", "Avg completion %", "Items completed", "Time spent"].map(csvEscape).join(","));
   for (const f of facilities) {
@@ -1357,7 +1397,7 @@ function CategoryList({ rows }: { rows: AggregatedRow[] }) {
   );
 }
 
-function Stat({ icon, label, value, position }: { icon: React.ReactNode; label: string; value: number; position?: "first" | "last" | "middle" }) {
+function Stat({ icon, label, value, suffix, position }: { icon: React.ReactNode; label: string; value: number | null; suffix?: string; position?: "first" | "last" | "middle" }) {
   const radius =
     position === "first"
       ? "rounded-l-[4px]"
@@ -1367,7 +1407,7 @@ function Stat({ icon, label, value, position }: { icon: React.ReactNode; label: 
   return (
     <span className={`inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium ${radius}`}>
       {icon}
-      <span className="tabular-nums">{value.toLocaleString()}</span>
+      <span className="tabular-nums">{value != null ? `${value.toLocaleString()}${suffix ?? ""}` : "—"}</span>
       <span className="text-muted-foreground">{label}</span>
     </span>
   );
@@ -1405,8 +1445,9 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           </div>
         </div>
         <div className="inline-flex flex-shrink-0">
-          <Stat position="first" icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "view" : "views"} value={row.views} />
-          <Stat position="last" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "click" : "clicks"} value={row.clicks} />
+          <Stat position="first" icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} />
+          <Stat position="middle" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} />
+          <Stat position="last" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate != null ? row.completionRate : null} suffix="%" />
         </div>
       </button>
       {open && (
@@ -1414,7 +1455,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           <p className="p-5 text-sm text-muted-foreground">No content items.</p>
         ) : (
           <ul className="divide-y divide-border">
-            {row.items.map(({ item, clicks }) => (
+            {row.items.map(({ item, clicks, completionRate }) => (
               <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] px-6 py-[19px]">
                 <Badge variant="type" type={item.type}>
                   {item.type}
@@ -1425,15 +1466,86 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                     <p className="text-xs text-muted-foreground">Added {fmtDate(item.created_at)}</p>
                   )}
                 </div>
-                <span className="inline-flex items-center gap-1.5 text-sm font-medium tabular-nums">
-                  <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
-                  {clicks.toLocaleString()}
-                </span>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-medium tabular-nums">
+                    <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
+                    {clicks.toLocaleString()}
+                  </span>
+                  {completionRate != null && (
+                    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
+                      <BarChart3 className="h-3 w-3" />
+                      {completionRate}%
+                    </span>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
         )
       )}
     </SectionCard>
+  );
+}
+
+function MostLeastEngaged({ rows }: { rows: AggregatedRow[] }) {
+  const allItems = rows.flatMap((r) =>
+    r.items
+      .filter((i) => i.openCount >= 3)
+      .map((i) => ({ ...i, categoryName: r.category.name }))
+  );
+  if (allItems.length < 3) return null;
+
+  const byRate = [...allItems].sort((a, b) => (b.completionRate ?? -1) - (a.completionRate ?? -1));
+  const most = byRate.slice(0, 5);
+  const least = byRate.filter((i) => i.completionRate != null).slice(-5).reverse();
+  if (most.length === 0) return null;
+
+  return (
+    <div className="mt-10 grid gap-6 sm:grid-cols-2">
+      <div>
+        <h3 className="font-display text-base font-semibold mb-3 flex items-center gap-2">
+          <Flame className="h-4 w-4 text-[var(--color-accent)]" /> Most engaged content
+        </h3>
+        <SectionCard padded={false} className="overflow-hidden">
+          <ul className="divide-y divide-border">
+            {most.map(({ item, completionRate, openCount, categoryName }) => (
+              <li key={item.id} className="flex items-center gap-3 px-4 py-3">
+                <div className="flex-1 min-w-0">
+                  <p className="truncate text-sm font-medium">{item.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">{categoryName}</p>
+                </div>
+                <div className="flex flex-col items-end flex-shrink-0 gap-0.5">
+                  <span className="text-sm font-semibold tabular-nums text-[var(--color-accent)]">{completionRate}%</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">{openCount} openers</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      </div>
+      {least.length > 0 && (
+        <div>
+          <h3 className="font-display text-base font-semibold mb-3 flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-muted-foreground" /> Least engaged content
+          </h3>
+          <SectionCard padded={false} className="overflow-hidden">
+            <ul className="divide-y divide-border">
+              {least.map(({ item, completionRate, openCount, categoryName }) => (
+                <li key={item.id} className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-sm font-medium">{item.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{categoryName}</p>
+                  </div>
+                  <div className="flex flex-col items-end flex-shrink-0 gap-0.5">
+                    <span className="text-sm font-semibold tabular-nums text-muted-foreground">{completionRate}%</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{openCount} openers</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
+        </div>
+      )}
+    </div>
   );
 }
