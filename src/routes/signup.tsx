@@ -64,6 +64,7 @@ function SignupPageContent() {
   const [busy, setBusy] = useState(false);
   const { isChecking: checkingSignIn, setIsChecking: setCheckingSignIn } = useAuthChecking();
   const [facilityErrorKey, setFacilityErrorKey] = useState<string | null>(null);
+  const [resetErrorKey, setResetErrorKey] = useState<string | null>(null);
   const [usernameStatus, setUsernameStatus] = useState<
     "idle" | "checking" | "available" | "taken" | "invalid"
   >("idle");
@@ -297,14 +298,18 @@ function SignupPageContent() {
 
   async function handleResetStart(e: React.FormEvent) {
     e.preventDefault();
+    setResetErrorKey(null);
+    // Same rule as sign-in: regular users need facility+PIN in session
+    if (!lockedFacility || !activeInmatePin) {
+      setResetErrorKey("signup.wrongLinkBlock");
+      return;
+    }
     setBusy(true);
     try {
       const uname = resetUsername.trim().toLowerCase();
       const { keys } = await fetchResetQuestions({
         data: {
           username: uname,
-          // Pass session PIN + facility so the server can verify they match
-          // the account before returning real security questions.
           inmatePin: activeInmatePin ?? undefined,
           facilityValue: lockedFacility?.value ?? undefined,
         },
@@ -381,10 +386,15 @@ function SignupPageContent() {
                     maxLength={32}
                     pattern="[A-Za-z0-9_]{3,32}"
                     value={resetUsername}
-                    onChange={(e) => setResetUsername(e.target.value)} {...kbResetUsername}
+                    onChange={(e) => { setResetUsername(e.target.value); setResetErrorKey(null); }} {...kbResetUsername}
                     className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
+                {resetErrorKey && (
+                  <div className="!mt-6 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
+                    {t(resetErrorKey as any)}
+                  </div>
+                )}
                 <div className="flex justify-end !mt-6">
                   <button
                     type="submit"
