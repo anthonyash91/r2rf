@@ -1290,6 +1290,7 @@ function ItemEditor({
           <FileUploader
             existingFileUrl={url || undefined}
             onPendingDelete={onPendingDelete}
+            contentType={type}
             onUploaded={async (u, name) => {
               setUrl(u);
               const estimated = await estimateDuration(u, name, type);
@@ -1366,6 +1367,7 @@ function ItemEditor({
               label={fileUrlEs ? "Replace Spanish file" : "Upload Spanish file"}
               existingFileUrl={fileUrlEs ?? undefined}
               onPendingDelete={onPendingDelete}
+              contentType={type}
               onUploaded={(u, name) => { setFileUrlEs(u); setFileNameEs(name ?? null); }}
             />
           </div>

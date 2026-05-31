@@ -4,6 +4,8 @@ import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getSignedUploadUrl } from "@/lib/storage.functions";
 import { actionButtonClassName } from "@/components/LoadingButton";
+import { useBadgeStyles } from "@/hooks/use-badge-styles";
+import { paletteStyle, indexForType } from "@/lib/badge-styles";
 
 const BUCKET = "content-files";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
@@ -14,6 +16,8 @@ type Props = {
   label?: string;
   mimeTypes?: string[];
   existingFileUrl?: string | null;
+  /** Content type string (e.g. "video", "pdf") — used to match the type badge color during upload. */
+  contentType?: string | null;
 };
 
 function extractStoragePath(url: string): string | null {
@@ -59,11 +63,14 @@ export function FileUploader({
   label = "Upload file to fill URL",
   mimeTypes,
   existingFileUrl,
+  contentType,
 }: Props) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const getUrl = useServerFn(getSignedUploadUrl);
+  const badgeStyles = useBadgeStyles();
+  const ps = paletteStyle(indexForType(contentType, badgeStyles));
 
   async function handleFile(file: File) {
     setUploading(true);
@@ -117,10 +124,10 @@ export function FileUploader({
       >
         {uploading ? (
           <>
-            {/* Dark green fill — full opacity accent color */}
+            {/* Badge-colored fill — matches the selected content type badge */}
             <span
               className="absolute inset-y-0 left-0 pointer-events-none transition-[width] duration-150"
-              style={{ width: `${uploadProgress}%`, backgroundColor: "var(--color-accent)" }}
+              style={{ width: `${uploadProgress}%`, backgroundColor: ps.bg, borderRight: `1px solid ${ps.border}` }}
             />
 
             {/* Dark text layer — always visible underneath */}
@@ -129,10 +136,10 @@ export function FileUploader({
               {uploadProgress}% uploading…
             </span>
 
-            {/* White text layer — clipped to the filled area, reveals letter by letter */}
+            {/* Badge-colored text layer — clipped to fill, reveals letter by letter */}
             <span
-              className="absolute inset-0 z-20 flex items-center justify-center gap-2 text-white pointer-events-none whitespace-nowrap tabular-nums transition-[clip-path] duration-150"
-              style={{ clipPath: `inset(0 ${100 - uploadProgress}% 0 0)` }}
+              className="absolute inset-0 z-20 flex items-center justify-center gap-2 pointer-events-none whitespace-nowrap tabular-nums transition-[clip-path] duration-150"
+              style={{ clipPath: `inset(0 ${100 - uploadProgress}% 0 0)`, color: ps.color }}
             >
               <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
               {uploadProgress}% uploading…
