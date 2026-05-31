@@ -15,9 +15,9 @@ import { setActiveInmatePin } from "@/lib/inmate-pin-context";
 
 export const Route = createFileRoute("/")({
   validateSearch: z.object({
-    site: z.string().optional(),
-    user: z.string().optional(),
-    language: z.string().optional(),
+    site: z.coerce.string().optional(),
+    user: z.coerce.string().optional(),
+    language: z.coerce.string().optional(),
   }),
   head: () => ({
     meta: [
@@ -34,8 +34,6 @@ function Index() {
   const { user, isFacilityUser, rolesLoaded } = useAuth();
   const navigate = useNavigate();
   const fetchMyFacility = useServerFn(getMyFacilityValue);
-  const { site } = Route.useSearch();
-
   const { data: facilityData } = useQuery({
     queryKey: ["my-facility", user?.id],
     enabled: rolesLoaded && isFacilityUser && !!user?.id,
