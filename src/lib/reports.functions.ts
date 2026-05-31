@@ -4,6 +4,13 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { parseMinutes } from "@/lib/duration";
 
+/** Chunk a large ID array so each slice stays under Supabase's URL length limit. */
+function chunkIds(ids: string[], size = 500): string[][] {
+  const out: string[][] = [];
+  for (let i = 0; i < ids.length; i += size) out.push(ids.slice(i, i + size));
+  return out;
+}
+
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", {
     _user_id: userId,
@@ -97,7 +104,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
         .from("user_profiles")
         .select("user_id", { count: "exact", head: true })
         .eq("is_synthetic", false)
-        .not("user_id", "in", `(${[...facilityUserAccountIds, "00000000-0000-0000-0000-000000000000"].join(",")})`),
+        .not("user_id", "in", [...facilityUserAccountIds, "00000000-0000-0000-0000-000000000000"]),
       (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
       (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
     ]);
@@ -170,7 +177,16 @@ export const getUsageReport = createServerFn({ method: "POST" })
         .not("user_id", "is", null);
       if (sinceIso) openersQ = (openersQ as any).gte("created_at", sinceIso);
       if (userIdFilter !== null) {
-        openersQ = (openersQ as any).in("user_id", userIdFilter);
+        // Chunk large facility user lists to stay under URL length limits
+        const chunks = chunkIds(userIdFilter);
+        const chunkRows = await Promise.all(chunks.map(async (chunk) => {
+          let q = supabaseAdmin.from("analytics_events").select("user_id, content_id")
+            .eq("event_type", "content_click").not("user_id", "is", null);
+          if (sinceIso) q = (q as any).gte("created_at", sinceIso);
+          const { data } = await (q as any).in("user_id", chunk);
+          return data ?? [];
+        }));
+        return { precomputed: false, rows: chunkRows.flat() };
       } else {
         const excludeAll = [
           ...Array.from(staffUserIds),
@@ -178,7 +194,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
           "00000000-0000-0000-0000-000000000000",
         ];
         if (excludeAll.length > 0) {
-          openersQ = (openersQ as any).not("user_id", "in", `(${excludeAll.join(",")})`);
+          openersQ = (openersQ as any).not("user_id", "in", excludeAll);
         }
       }
       const { data } = await openersQ;
@@ -203,7 +219,24 @@ export const getUsageReport = createServerFn({ method: "POST" })
       if (userIdFilter !== null && userIdFilter.length === 0) {
         return { precomputed: false, rows: [] };
       }
-      // Date-filtered or facility-scoped: paginate user_content_sessions
+      // Facility scope: chunk user IDs, fetch all sessions in parallel (avoids URL limit)
+      if (userIdFilter !== null) {
+        const chunkRows = await Promise.all(chunkIds(userIdFilter).map(async (chunk) => {
+          const PAGE = 1000; const rows: any[] = [];
+          for (let from = 0; ; from += PAGE) {
+            let q = (supabaseAdmin as any).from("user_content_sessions")
+              .select("user_id, content_item_id, session_seconds")
+              .in("user_id", chunk).range(from, from + PAGE - 1);
+            if (sinceIso) q = q.gte("recorded_at", sinceIso);
+            const { data, error } = await q;
+            if (error || !data || data.length === 0) break;
+            rows.push(...data); if (data.length < PAGE) break;
+          }
+          return rows;
+        }));
+        return { precomputed: false, rows: chunkRows.flat() };
+      }
+      // Overall date-filtered: paginate with staff exclusion
       const PAGE = 1000;
       const all: any[] = [];
       for (let from = 0; ; from += PAGE) {
@@ -212,26 +245,38 @@ export const getUsageReport = createServerFn({ method: "POST" })
           .select("user_id, content_item_id, session_seconds")
           .range(from, from + PAGE - 1);
         if (sinceIso) q = q.gte("recorded_at", sinceIso);
-        if (userIdFilter !== null) {
-          q = q.in("user_id", userIdFilter);
-        } else {
-          const excludeAll = [
-            ...Array.from(staffUserIds),
-            ...Array.from(syntheticIds),
-            "00000000-0000-0000-0000-000000000000",
-          ];
-          if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
-        }
+        const excludeAll = [
+          ...Array.from(staffUserIds), ...Array.from(syntheticIds),
+          "00000000-0000-0000-0000-000000000000",
+        ];
+        if (excludeAll.length > 0) q = q.not("user_id", "in", excludeAll);
         const { data, error } = await q;
         if (error || !data || data.length === 0) break;
-        all.push(...data);
-        if (data.length < PAGE) break;
+        all.push(...data); if (data.length < PAGE) break;
       }
       return { precomputed: false, rows: all };
     };
 
     // ── Query 4: user_content_progress for completions (paginated) ──────────
     const fetchAllProgress = async () => {
+      if (userIdFilter !== null) {
+        if (userIdFilter.length === 0) return [];
+        // Chunk large facility user lists to stay under URL length limits
+        const chunkRows = await Promise.all(chunkIds(userIdFilter).map(async (chunk) => {
+          const PAGE = 1000; const rows: any[] = [];
+          for (let from = 0; ; from += PAGE) {
+            let q = (supabaseAdmin as any).from("user_content_progress")
+              .select("content_item_id, user_id").in("user_id", chunk).range(from, from + PAGE - 1);
+            if (sinceIso) q = q.gte("created_at", sinceIso);
+            const { data, error } = await q;
+            if (error || !data || data.length === 0) break;
+            rows.push(...data); if (data.length < PAGE) break;
+          }
+          return rows;
+        }));
+        return chunkRows.flat();
+      }
+      // Overall: paginate with staff exclusion
       const PAGE = 1000;
       const all: any[] = [];
       for (let from = 0; ; from += PAGE) {
@@ -240,24 +285,14 @@ export const getUsageReport = createServerFn({ method: "POST" })
           .select("content_item_id, user_id")
           .range(from, from + PAGE - 1);
         if (sinceIso) q = q.gte("created_at", sinceIso);
-        if (userIdFilter !== null) {
-          if (userIdFilter.length === 0) {
-            q = q.eq("user_id", "00000000-0000-0000-0000-000000000000");
-          } else {
-            q = q.in("user_id", userIdFilter);
-          }
-        } else {
-          const excludeAll = [
-            ...Array.from(staffUserIds),
-            ...Array.from(syntheticIds),
-            "00000000-0000-0000-0000-000000000000",
-          ];
-          if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
-        }
+        const excludeAll = [
+          ...Array.from(staffUserIds), ...Array.from(syntheticIds),
+          "00000000-0000-0000-0000-000000000000",
+        ];
+        if (excludeAll.length > 0) q = q.not("user_id", "in", excludeAll);
         const { data, error } = await q;
         if (error || !data || data.length === 0) break;
-        all.push(...data);
-        if (data.length < PAGE) break;
+        all.push(...data); if (data.length < PAGE) break;
       }
       return all;
     };
