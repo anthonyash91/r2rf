@@ -259,7 +259,13 @@ function SignupPageContent() {
             // Privileged — clear session so nav/redirects don't carry facility params
             setActiveFacilitySlug(null);
             setActiveInmatePin(null);
-          } else if (lockedFacility) {
+          } else if (!lockedFacility || !activeInmatePin) {
+            // Regular user with no facility+PIN context — block entirely
+            await supabase.auth.signOut();
+            setCheckingSignIn(false);
+            setFacilityErrorKey("signup.wrongLinkBlock");
+            return;
+          } else {
             // Regular user via ?site= link — verify they belong to this facility + PIN
             const { data: profile } = await (supabase as any)
               .from("user_profiles").select("facility, inmate_pin")
@@ -268,8 +274,9 @@ function SignupPageContent() {
             const pinMatch = !activeInmatePin || profile?.inmate_pin === activeInmatePin;
             if (!facilityMatch || !pinMatch) {
               await supabase.auth.signOut();
+              setCheckingSignIn(false); // fix: was missing, leaving nav frozen on mismatch
               setFacilityErrorKey("signup.facilityMismatch");
-              return; // don't show toast — inline error handles it
+              return;
             }
           }
         }
