@@ -35,7 +35,7 @@ import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { listAllFacilities } from "@/lib/facilities.functions";
 
 import { readStatusLabels } from "@/lib/read-status";
-import { withActionWord } from "@/lib/duration";
+import { withActionWord, parseMinutes } from "@/lib/duration";
 import { fmtDate, fmtDateShort, formatTimeSpent } from "@/lib/date-format";
 import { csvEscape, downloadCsv } from "@/lib/csv-utils";
 import { waitForNextPaint } from "@/lib/paint";
@@ -957,10 +957,18 @@ function exportUserProgressCsv(
       [csvEscape(c.name), csvEscape(c.slug), `${read} of ${items.length} read`, "", "", "", "", ""].join(","),
     );
     for (const it of items) {
-      const isMediaType = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
-      const progressStr = isMediaType && (it as any).mediaProgressPct != null
+      const isAV = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
+      const isPdf = (it as any).file_url && /\.pdf(\?|#|$)/i.test((it as any).file_url);
+      const pdfMins = isPdf ? parseMinutes(it.duration) : 0;
+      const pdfEstSec = pdfMins * 60;
+      const pdfPct = isPdf && pdfEstSec > 0 && (it as any).sessionSeconds > 0
+        ? Math.min(100, Math.round(((it as any).sessionSeconds / (pdfEstSec * 0.95)) * 100))
+        : null;
+      const progressStr = isAV && (it as any).mediaProgressPct != null
         ? `${(it as any).mediaProgressPct}%`
-        : "";
+        : pdfPct !== null
+          ? `${pdfPct}%`
+          : "";
       lines.push(
         [
           csvEscape(c.name),
@@ -1076,9 +1084,10 @@ function UserCategorySection({
                       </span>
                     )}
                     {(() => {
+                      // Video / Audio — playback progress
                       const mediaPct: number | null = item.mediaProgressPct ?? null;
-                      const isMediaType = item.type && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("audio") || item.type.toLowerCase().includes("podcast"));
-                      if (!item.read && isMediaType && mediaPct !== null && mediaPct >= 5) {
+                      const isAV = item.type && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("audio") || item.type.toLowerCase().includes("podcast"));
+                      if (!item.read && isAV && mediaPct !== null && mediaPct >= 5) {
                         const watchedLabel = item.type.toLowerCase().includes("video")
                           ? t("category.markedWatched").toLowerCase()
                           : t("category.markedListened").toLowerCase();
@@ -1090,6 +1099,24 @@ function UserCategorySection({
                           </span>
                         );
                       }
+
+                      // PDF — time-based reading progress
+                      const isPdf = item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url);
+                      const pdfMins = isPdf ? parseMinutes(item.duration) : 0;
+                      const pdfEstSec = pdfMins * 60;
+                      const pdfPct = !item.read && isPdf && pdfEstSec > 0 && (item.sessionSeconds || 0) > 0
+                        ? Math.min(100, Math.round(((item.sessionSeconds || 0) / (pdfEstSec * 0.95)) * 100))
+                        : null;
+                      if (pdfPct !== null && pdfPct >= 1) {
+                        return (
+                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium ml-auto flex-shrink-0 overflow-hidden">
+                            <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
+                            <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
+                            <span className="relative">{pdfPct}% {t("category.markedRead").toLowerCase()}</span>
+                          </span>
+                        );
+                      }
+
                       return (
                         <ReadStatusBadge
                           read={item.read}

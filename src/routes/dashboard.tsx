@@ -25,7 +25,7 @@ import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
 import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
-import { withActionWord } from "@/lib/duration";
+import { withActionWord, parseMinutes } from "@/lib/duration";
 import { formatTimeSpent } from "@/lib/date-format";
 import { readStatusLabels } from "@/lib/read-status";
 
@@ -236,9 +236,10 @@ function DashboardPage() {
       const totalSeconds = ((engData ?? []) as any[]).reduce(
         (sum: number, r: any) => sum + ((r.session_seconds as number) || 0), 0,
       );
-      const engagementMap = new Map<string, { mediaProgressSeconds: number | null; mediaDurationSeconds: number | null }>();
+      const engagementMap = new Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null }>();
       for (const r of (engData ?? []) as any[]) {
         engagementMap.set(r.content_item_id as string, {
+          sessionSeconds: (r.session_seconds as number) || 0,
           mediaProgressSeconds: r.media_progress_seconds as number | null,
           mediaDurationSeconds: r.media_duration_seconds as number | null,
         });
@@ -708,7 +709,7 @@ function CategoryProgressSection({
   isAdmin: boolean;
   lang: "en" | "es";
   t: (key: string, vars?: Record<string, string | number>) => string;
-  engagementMap: Map<string, { mediaProgressSeconds: number | null; mediaDurationSeconds: number | null }>;
+  engagementMap: Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null }>;
   isOpen: boolean;
   dimmed?: boolean;
   onToggle: () => void;
@@ -787,9 +788,11 @@ function CategoryProgressSection({
 
                     {!isAdmin && (() => {
                       const labels = readStatusLabels(t, it);
-                      const isMediaType = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
                       const eng = engagementMap.get(it.id);
-                      const mediaPct = !isRead && isMediaType && eng?.mediaProgressSeconds && eng?.mediaDurationSeconds && eng.mediaDurationSeconds > 0
+
+                      // Video / Audio — playback progress
+                      const isAV = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
+                      const mediaPct = !isRead && isAV && eng?.mediaProgressSeconds && eng?.mediaDurationSeconds && eng.mediaDurationSeconds > 0
                         ? Math.min(100, Math.round((eng.mediaProgressSeconds / eng.mediaDurationSeconds) * 100))
                         : null;
                       if (mediaPct !== null && mediaPct >= 5) {
@@ -804,6 +807,24 @@ function CategoryProgressSection({
                           </span>
                         );
                       }
+
+                      // PDF — time-based reading progress
+                      const isPdf = it.file_url && /\.pdf(\?|#|$)/i.test(it.file_url);
+                      const pdfMins = isPdf ? parseMinutes(it.duration) : 0;
+                      const pdfEstSec = pdfMins * 60;
+                      const pdfPct = !isRead && isPdf && pdfEstSec > 0 && eng && eng.sessionSeconds > 0
+                        ? Math.min(100, Math.round((eng.sessionSeconds / (pdfEstSec * 0.95)) * 100))
+                        : null;
+                      if (pdfPct !== null && pdfPct >= 1) {
+                        return (
+                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium ml-auto flex-shrink-0 overflow-hidden">
+                            <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
+                            <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
+                            <span className="relative">{pdfPct}% {t("category.markedRead").toLowerCase()}</span>
+                          </span>
+                        );
+                      }
+
                       return (
                         <ReadStatusBadge
                           read={isRead}
