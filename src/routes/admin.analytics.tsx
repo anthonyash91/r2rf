@@ -454,7 +454,6 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
               icon={<BarChart3 className="h-5 w-5" />}
               label="Completion rate"
               value={aggregated.overallCompletionRate != null ? `${aggregated.overallCompletionRate}%` : "—"}
-              note="all time"
             />
             <SummaryCard
               icon={<Clock className="h-5 w-5" />}
@@ -1473,9 +1472,9 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                     {clicks.toLocaleString()}
                   </span>
                   {completionRate != null && (
-                    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground" title="All-time completion rate">
+                    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
                       <BarChart3 className="h-3 w-3" />
-                      {completionRate}% <span className="text-muted-foreground/60">all time</span>
+                      {completionRate}%
                     </span>
                   )}
                 </div>

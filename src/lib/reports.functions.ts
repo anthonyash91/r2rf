@@ -185,10 +185,11 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     }
 
-    // Completions from real users only (exclude all staff roles)
+    // Completions from real users only, same date range as clicks
     let progressQ = (supabaseAdmin as any)
       .from("user_content_progress")
       .select("content_item_id, user_id");
+    if (sinceIso) progressQ = progressQ.gte("created_at", sinceIso);
     if (userIdFilter !== null) {
       if (userIdFilter.length === 0) {
         progressQ = progressQ.eq("user_id", "00000000-0000-0000-0000-000000000000");
