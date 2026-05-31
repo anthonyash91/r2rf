@@ -100,6 +100,17 @@ The "forgot password" flow uses security questions instead of email. When fetchi
 - If the username does not exist, **fake stable question keys are returned** derived deterministically from the username — the response looks identical to a valid username response
 - This prevents an attacker from probing which usernames are registered
 
+### PIN + Facility Verification (Shared Device)
+
+On shared facility devices (where `?site=` and `?user=PIN` are in session), the reset flow adds an additional check at Step 1:
+
+1. The session PIN and facility are sent automatically alongside the username — no extra input is shown to the user
+2. The server verifies the entered username has a matching `inmate_pin` AND `facility` in the database
+3. If either doesn't match, **fake question keys are returned** — the same response as a non-existent username — so nothing is leaked about which check failed
+4. The user appears to advance to Step 2 but will be unable to complete the reset without knowing the real answers
+
+This prevents one inmate from initiating a password reset for another inmate's account on a shared tablet.
+
 ### Rate Limiting
 
 Two separate rate limits apply:

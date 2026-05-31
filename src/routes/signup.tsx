@@ -293,7 +293,15 @@ function SignupPageContent() {
     setBusy(true);
     try {
       const uname = resetUsername.trim().toLowerCase();
-      const { keys } = await fetchResetQuestions({ data: { username: uname } });
+      const { keys } = await fetchResetQuestions({
+        data: {
+          username: uname,
+          // Pass session PIN + facility so the server can verify they match
+          // the account before returning real security questions.
+          inmatePin: activeInmatePin ?? undefined,
+          facilityValue: lockedFacility?.value ?? undefined,
+        },
+      });
       setResetQuestionKeys(keys);
       setResetStep(2);
     } catch (err: any) {

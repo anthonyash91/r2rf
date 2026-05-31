@@ -64,7 +64,11 @@ async function checkAndRecordResetAttempt(ip: string | null, username: string) {
  */
 export const getResetQuestions = createServerFn({ method: "POST" })
   .inputValidator((input) =>
-    z.object({ username: z.string().trim().toLowerCase().regex(/^[a-z0-9_]{3,32}$/) }).parse(input),
+    z.object({
+      username: z.string().trim().toLowerCase().regex(/^[a-z0-9_]{3,32}$/),
+      inmatePin: z.string().optional(),
+      facilityValue: z.string().optional(),
+    }).parse(input),
   )
   .handler(async ({ data }) => {
     // Rate-limit username probing per IP using the existing attempts table.
@@ -82,27 +86,35 @@ export const getResetQuestions = createServerFn({ method: "POST" })
     }
     const userId = await findUserIdByUsername(data.username);
 
-    if (!userId) {
-      // stable fake pair derived from username
-      const hash = createHash("sha256").update(data.username).digest();
+    const fakePair = (username: string) => {
+      const hash = createHash("sha256").update(username).digest();
       const a = SECURITY_QUESTION_KEYS[hash[0] % SECURITY_QUESTION_KEYS.length];
       let b = SECURITY_QUESTION_KEYS[hash[1] % SECURITY_QUESTION_KEYS.length];
       if (b === a) b = SECURITY_QUESTION_KEYS[(hash[1] + 1) % SECURITY_QUESTION_KEYS.length];
       return { keys: [a, b] as string[] };
+    };
+
+    if (!userId) return fakePair(data.username);
+
+    // If PIN + facility were provided (shared-tablet flow), verify they match
+    // the account before returning real questions. Always use the same generic
+    // fake response on mismatch so nothing is leaked.
+    if (data.inmatePin) {
+      const { data: profile } = await (supabaseAdmin as any)
+        .from("user_profiles")
+        .select("inmate_pin, facility")
+        .eq("user_id", userId)
+        .maybeSingle();
+      const pinMatch = profile?.inmate_pin === data.inmatePin;
+      const facilityMatch = !data.facilityValue || profile?.facility === data.facilityValue;
+      if (!pinMatch || !facilityMatch) return fakePair(data.username);
     }
     const { data: rows } = await supabaseAdmin
       .from("user_security_answers")
       .select("question_key")
       .eq("user_id", userId);
     const keys = (rows ?? []).map((r) => r.question_key).slice(0, 2);
-    if (keys.length < 2) {
-      // user hasn't configured questions yet — return stable fake pair
-      const hash = createHash("sha256").update(data.username).digest();
-      const a = SECURITY_QUESTION_KEYS[hash[0] % SECURITY_QUESTION_KEYS.length];
-      let b = SECURITY_QUESTION_KEYS[hash[1] % SECURITY_QUESTION_KEYS.length];
-      if (b === a) b = SECURITY_QUESTION_KEYS[(hash[1] + 1) % SECURITY_QUESTION_KEYS.length];
-      return { keys: [a, b] as string[] };
-    }
+    if (keys.length < 2) return fakePair(data.username);
     return { keys };
   });
 
