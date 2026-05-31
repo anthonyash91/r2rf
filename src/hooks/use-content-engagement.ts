@@ -163,9 +163,23 @@ export function useContentEngagement({
     }, TICK_MS);
     return () => {
       clearInterval(interval);
-      write(); // always flush on close, even sub-tick sessions
+      write(); // flush cumulative total to user_content_engagement (resume position)
+      // Log this session to user_content_sessions for date-range-filterable analytics
+      const sessionSecs = Math.round(accSecondsRef.current);
+      if (sessionSecs > 0 && userId && contentItemId && categoryId) {
+        Promise.resolve(
+          (supabase as any)
+            .from("user_content_sessions")
+            .insert({
+              user_id: userId,
+              content_item_id: contentItemId,
+              category_id: categoryId,
+              session_seconds: sessionSecs,
+            })
+        ).catch(() => {});
+      }
     };
-  }, [isActive, userId, contentItemId, write]);
+  }, [isActive, userId, contentItemId, categoryId, write]);
 
   // Video progress tracking + resume.
   // Depends on `videoEl` (the actual element) — re-runs when the element

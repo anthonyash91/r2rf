@@ -477,7 +477,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
               icon={<Clock className="h-5 w-5" />}
               label="Time spent"
               value={formatTimeSpent((data as any)?.totalSeconds ?? ((data as any)?.hoursSpent ?? 0) * 3600)}
-              tooltip="Total accumulated time users actively spent engaging with content, measured in real session time. All time — not filtered by the selected date range."
+              tooltip="Total time users actively spent engaging with content in the selected period, measured in real session time."
             />
             <SummaryCard
               icon={<Eye className="h-5 w-5" />}
@@ -1554,7 +1554,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           {row.depth != null && (
             <Stat position="middle" icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="depth" value={row.depth} tooltip="Average number of items completed per user who engaged with this category in the selected period." />
           )}
-          <Stat position="last" icon={<Clock className="h-3.5 w-3.5" />} label="spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} tooltip="Total time all users have spent on content in this category. All time." />
+          <Stat position="last" icon={<Clock className="h-3.5 w-3.5" />} label="spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} tooltip="Total time all users spent on content in this category in the selected period." />
         </div>
       </button>
       {open && (
@@ -1613,7 +1613,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                           {formatTimeSpent(avgSessionSeconds)} avg
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent className="max-w-xs px-3 py-2">Average time spent — mean session time per user who engaged with this item. All time.</TooltipContent>
+                      <TooltipContent className="max-w-xs px-3 py-2">Average time spent — mean session time per user who engaged with this item in the selected period.</TooltipContent>
                     </Tooltip>
                   )}
                 </div>

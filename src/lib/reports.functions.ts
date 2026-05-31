@@ -176,27 +176,44 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     }
 
-    // ── Query 3: time data — strategy depends on scope ────────────────────────
-    // Overall view: single query on content_item_time_totals (trigger-maintained,
-    //   always current, one row per item — O(items) not O(users×items)).
-    // Facility view: paginated user_content_engagement filtered to facility users
-    //   (bounded by facility size, still accurate for facility-scoped reports).
+    // ── Query 3: time data from user_content_sessions ────────────────────────
+    // user_content_sessions has a recorded_at timestamp so time can be filtered
+    // by date range. Each row = one session (INSERT on close, never upserted).
+    //
+    // Overall + all-time (no sinceIso): use content_item_time_totals — one row
+    //   per item, O(items), always current via trigger. No date scan needed.
+    // Everything else: paginate user_content_sessions with date + user filters.
     const fetchTimeData = async (): Promise<{ precomputed: boolean; rows: any[] }> => {
-      if (userIdFilter === null) {
+      // Fast path: all-time overall view — single indexed query
+      if (userIdFilter === null && !sinceIso) {
         const { data } = await (supabaseAdmin as any)
           .from("content_item_time_totals")
           .select("content_item_id, total_session_seconds, engager_count");
         return { precomputed: true, rows: data ?? [] };
       }
-      if (userIdFilter.length === 0) return { precomputed: false, rows: [] };
+      if (userIdFilter !== null && userIdFilter.length === 0) {
+        return { precomputed: false, rows: [] };
+      }
+      // Date-filtered or facility-scoped: paginate user_content_sessions
       const PAGE = 1000;
       const all: any[] = [];
       for (let from = 0; ; from += PAGE) {
-        const { data, error } = await (supabaseAdmin as any)
-          .from("user_content_engagement")
+        let q = (supabaseAdmin as any)
+          .from("user_content_sessions")
           .select("user_id, content_item_id, session_seconds")
-          .in("user_id", userIdFilter)
           .range(from, from + PAGE - 1);
+        if (sinceIso) q = q.gte("recorded_at", sinceIso);
+        if (userIdFilter !== null) {
+          q = q.in("user_id", userIdFilter);
+        } else {
+          const excludeAll = [
+            ...Array.from(staffUserIds),
+            ...Array.from(syntheticIds),
+            "00000000-0000-0000-0000-000000000000",
+          ];
+          if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
+        }
+        const { data, error } = await q;
         if (error || !data || data.length === 0) break;
         all.push(...data);
         if (data.length < PAGE) break;
