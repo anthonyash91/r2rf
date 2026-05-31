@@ -34,9 +34,11 @@ export function SiteHeader() {
     ? { onClickCapture: handleLockedNav, "aria-disabled": true as const, tabIndex: -1 }
     : {};
 
-  // Detect facility slug from URL (e.g. /facility/adams_id)
+  // Detect facility slug from URL — supports both /facility/siteId (legacy) and /?site=siteId
   const facilityRouteMatch = location.pathname.match(/^\/facility\/([^/]+)/);
-  const facilityRouteSlug = facilityRouteMatch ? facilityRouteMatch[1] : null;
+  const facilityRouteSlug = facilityRouteMatch
+    ? facilityRouteMatch[1]
+    : new URLSearchParams(location.search).get("site");
 
   // For logged-in regular users and facilityUsers, get their facility from profile
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
@@ -66,12 +68,12 @@ export function SiteHeader() {
   // to /signup when no session is found) and the in-flight navigate() call.
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    const dest = activeFacility ? `/facility/${activeFacility}` : "/";
+    const dest = activeFacility ? `/?site=${activeFacility}` : "/";
     window.location.href = dest;
   };
 
   const homeLinkProps = activeFacility
-    ? ({ to: "/facility/$slug", params: { slug: activeFacility } } as const)
+    ? ({ to: "/", search: { site: activeFacility } } as const)
     : ({ to: "/" } as const);
 
   return (
