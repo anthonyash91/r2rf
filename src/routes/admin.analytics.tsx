@@ -19,7 +19,9 @@ import {
   Clock,
   Flame,
   Trophy,
+  Info,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import type { Category, ContentItem } from "@/lib/categories";
 import { Badge } from "@/components/Badge";
@@ -139,6 +141,7 @@ function AdminReportsPage() {
             : "Reports";
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div>
       <Tabs
         value={tab}
@@ -318,6 +321,18 @@ function AdminReportsPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
+  );
+}
+
+function InfoTooltip({ text }: { text: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Info className="h-3 w-3 text-muted-foreground/50 cursor-help flex-shrink-0" />
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs text-center">{text}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -456,21 +471,25 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
               icon={<BarChart3 className="h-5 w-5" />}
               label="Completion rate"
               value={aggregated.overallCompletionRate != null ? `${aggregated.overallCompletionRate}%` : "—"}
+              tooltip="Of all content opens in this period, the percentage that resulted in the user completing the item. Only shown for items with tracked click events."
             />
             <SummaryCard
               icon={<Clock className="h-5 w-5" />}
               label="Time spent"
               value={formatTimeSpent((data as any)?.totalSeconds ?? ((data as any)?.hoursSpent ?? 0) * 3600)}
+              tooltip="Total accumulated time users actively spent engaging with content, measured in real session time. All time — not filtered by the selected date range."
             />
             <SummaryCard
               icon={<Eye className="h-5 w-5" />}
               label={aggregated.totalViews === 1 ? "Visit" : "Visits"}
               value={aggregated.totalViews}
+              tooltip="How many times a category page was viewed in the selected period."
             />
             <SummaryCard
               icon={<MousePointerClick className="h-5 w-5" />}
               label={aggregated.totalClicks === 1 ? "Open" : "Opens"}
               value={aggregated.totalClicks}
+              tooltip="How many times a content item was clicked and opened in the selected period."
             />
             <SummaryCard
               icon={<UsersIcon className="h-5 w-5" />}
@@ -480,6 +499,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
                   : ((data as any)?.totalUsers === 1 ? "User" : "Users")
               }
               value={scope.kind === "facility" ? ((data as any)?.facilityUserCount ?? 0) : ((data as any)?.totalUsers ?? 0)}
+              tooltip="Total registered users. Excludes admin, staff, testers, and synthetic accounts."
             />
           </div>
           <CategoryList rows={aggregated.rows} />
@@ -621,13 +641,13 @@ function FacilityComparisonSection() {
               <thead>
                 <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground font-medium">
                   <th className="text-left px-4 py-3">Facility</th>
-                  <th className="text-left px-4 py-3">Users</th>
-                  <th className="text-left px-4 py-3">Active (7d)</th>
-                  <th className="text-left px-4 py-3">Active (30d)</th>
-                  <th className="text-left px-4 py-3">Participation</th>
-                  <th className="text-left px-4 py-3">Avg Completion</th>
-                  <th className="text-left px-4 py-3">Items Completed</th>
-                  <th className="text-left px-4 py-3">Time Spent</th>
+                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Users <InfoTooltip text="Total registered users at this facility." /></span></th>
+                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Active (7d) <InfoTooltip text="Users who engaged with at least one piece of content in the last 7 days." /></span></th>
+                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Active (30d) <InfoTooltip text="Users who engaged with at least one piece of content in the last 30 days." /></span></th>
+                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Participation <InfoTooltip text="Percentage of total registered users who were active in the last 30 days." /></span></th>
+                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Avg completion <InfoTooltip text="Average item completion rate across all content visible to this facility's users. Updated nightly." /></span></th>
+                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Items completed <InfoTooltip text="Total number of content items completed by all users at this facility." /></span></th>
+                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Time spent <InfoTooltip text="Total accumulated session time across all users at this facility." /></span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -1435,12 +1455,13 @@ function UserCategorySection({
 
 /* ---------------- Shared subcomponents ---------------- */
 
-function SummaryCard({ icon, label, value, note }: { icon: React.ReactNode; label: string; value: React.ReactNode; note?: string }) {
+function SummaryCard({ icon, label, value, note, tooltip }: { icon: React.ReactNode; label: string; value: React.ReactNode; note?: string; tooltip?: string }) {
   return (
     <SectionCard as="div" padded={false} className="p-5">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         {icon}
         {label}
+        {tooltip && <InfoTooltip text={tooltip} />}
         {note && <span className="ml-auto text-xs italic text-muted-foreground/70">{note}</span>}
       </div>
       <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{typeof value === "number" ? value.toLocaleString() : value}</p>
@@ -1666,11 +1687,11 @@ function ContentTypeBreakdown({
             <thead>
               <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground font-medium">
                 <th className="text-left px-4 py-3">Type</th>
-                <th className="text-left px-4 py-3">Items</th>
-                <th className="text-left px-4 py-3">Opens</th>
-                <th className="text-left px-4 py-3">Completions</th>
-                <th className="text-left px-4 py-3">Completion Rate</th>
-                <th className="text-left px-4 py-3">Time Spent</th>
+                <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Items <InfoTooltip text="Number of published content items of this type." /></span></th>
+                <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Opens <InfoTooltip text="How many times items of this type were opened in the selected period." /></span></th>
+                <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Completions <InfoTooltip text="How many times items of this type were completed in the selected period." /></span></th>
+                <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Completion Rate <InfoTooltip text="Percentage of opens that resulted in completion." /></span></th>
+                <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Time Spent <InfoTooltip text="Total accumulated session time across all users on this content type. All time." /></span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -1720,10 +1741,10 @@ function ProgramCompletionSection({
             <thead>
               <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground font-medium">
                 <th className="text-left px-4 py-3">Category</th>
-                <th className="text-left px-4 py-3">Items</th>
-                <th className="text-left px-4 py-3">Started</th>
-                <th className="text-left px-4 py-3">Completed</th>
-                <th className="text-left px-4 py-3">Completion Rate</th>
+                <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Items <InfoTooltip text="Total published content items in this program." /></span></th>
+                <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Started <InfoTooltip text="Users who have completed at least one item in this program." /></span></th>
+                <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Completed <InfoTooltip text="Users who have completed every single item in this program." /></span></th>
+                <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Completion Rate <InfoTooltip text="Percentage of started users who finished the entire program. A user must complete all items to count." /></span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -1768,9 +1789,9 @@ function RetentionSection({
         description="Of users who signed up at least N days ago, what percentage returned within that window."
       />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <SummaryCard icon={<UsersIcon className="h-5 w-5" />} label="7-day return rate" value={day7 != null ? `${day7}%` : "—"} />
-        <SummaryCard icon={<UsersIcon className="h-5 w-5" />} label="30-day return rate" value={day30 != null ? `${day30}%` : "—"} />
-        <SummaryCard icon={<UsersIcon className="h-5 w-5" />} label="60-day return rate" value={day60 != null ? `${day60}%` : "—"} />
+        <SummaryCard icon={<UsersIcon className="h-5 w-5" />} label="7-day return rate" value={day7 != null ? `${day7}%` : "—"} tooltip="Of users who signed up more than 7 days ago, the percentage who logged back in at least once within their first 7 days." />
+        <SummaryCard icon={<UsersIcon className="h-5 w-5" />} label="30-day return rate" value={day30 != null ? `${day30}%` : "—"} tooltip="Of users who signed up more than 30 days ago, the percentage who logged back in at least once within their first 30 days." />
+        <SummaryCard icon={<UsersIcon className="h-5 w-5" />} label="60-day return rate" value={day60 != null ? `${day60}%` : "—"} tooltip="Of users who signed up more than 60 days ago, the percentage who logged back in at least once within their first 60 days." />
       </div>
     </div>
   );
@@ -1797,8 +1818,8 @@ function GrowthSection({
             <thead>
               <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground font-medium">
                 <th className="text-left px-4 py-3">Week ending</th>
-                <th className="text-left px-4 py-3 w-64">New signups</th>
-                <th className="text-left px-4 py-3 w-64">Active users</th>
+                <th className="text-left px-4 py-3 w-64"><span className="inline-flex items-center gap-1">New signups <InfoTooltip text="Users who created an account during this week." /></span></th>
+                <th className="text-left px-4 py-3 w-64"><span className="inline-flex items-center gap-1">Active users <InfoTooltip text="Unique users who opened at least one piece of content during this week." /></span></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
