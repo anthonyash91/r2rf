@@ -176,37 +176,32 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     }
 
-    // ── Query 3: user_content_engagement for live time data (paginated) ──────
-    // Must read live — content_item_stats.total_session_seconds is nightly and stale.
-    // No date filter: time spent is all-time regardless of the selected range.
-    const fetchAllEngagement = async () => {
+    // ── Query 3: time data — strategy depends on scope ────────────────────────
+    // Overall view: single query on content_item_time_totals (trigger-maintained,
+    //   always current, one row per item — O(items) not O(users×items)).
+    // Facility view: paginated user_content_engagement filtered to facility users
+    //   (bounded by facility size, still accurate for facility-scoped reports).
+    const fetchTimeData = async (): Promise<{ precomputed: boolean; rows: any[] }> => {
+      if (userIdFilter === null) {
+        const { data } = await (supabaseAdmin as any)
+          .from("content_item_time_totals")
+          .select("content_item_id, total_session_seconds, engager_count");
+        return { precomputed: true, rows: data ?? [] };
+      }
+      if (userIdFilter.length === 0) return { precomputed: false, rows: [] };
       const PAGE = 1000;
       const all: any[] = [];
       for (let from = 0; ; from += PAGE) {
-        let q = (supabaseAdmin as any)
+        const { data, error } = await (supabaseAdmin as any)
           .from("user_content_engagement")
           .select("user_id, content_item_id, session_seconds")
+          .in("user_id", userIdFilter)
           .range(from, from + PAGE - 1);
-        if (userIdFilter !== null) {
-          if (userIdFilter.length === 0) {
-            q = q.eq("user_id", "00000000-0000-0000-0000-000000000000");
-          } else {
-            q = q.in("user_id", userIdFilter);
-          }
-        } else {
-          const excludeAll = [
-            ...Array.from(staffUserIds),
-            ...Array.from(syntheticIds),
-            "00000000-0000-0000-0000-000000000000",
-          ];
-          if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
-        }
-        const { data, error } = await q;
         if (error || !data || data.length === 0) break;
         all.push(...data);
         if (data.length < PAGE) break;
       }
-      return all;
+      return { precomputed: false, rows: all };
     };
 
     // ── Query 4: user_content_progress for completions (paginated) ──────────
@@ -241,8 +236,8 @@ export const getUsageReport = createServerFn({ method: "POST" })
       return all;
     };
 
-    const [dailyCountsRes, openersRes, engagementRows, progressRows] = await Promise.all([
-      dailyCountsQ, openersQ, fetchAllEngagement(), fetchAllProgress(),
+    const [dailyCountsRes, openersRes, timeData, progressRows] = await Promise.all([
+      dailyCountsQ, openersQ, fetchTimeData(), fetchAllProgress(),
     ]);
     if (dailyCountsRes.error) throw new Error(dailyCountsRes.error.message);
 
@@ -273,17 +268,29 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     }
 
-    // Live per-item time from paginated user_content_engagement
+    // Aggregate time data — shape differs by source
     const itemTotalSeconds: Record<string, number> = {};
     const itemEngagerCount: Record<string, number> = {};
     let totalSeconds = 0;
-    for (const r of engagementRows as any[]) {
-      const secs = (r.session_seconds as number) || 0;
-      totalSeconds += secs;
-      if (r.content_item_id && secs > 0) {
+    if (timeData.precomputed) {
+      // content_item_time_totals: one row per item with pre-summed totals
+      for (const r of timeData.rows as any[]) {
         const id = r.content_item_id as string;
-        itemTotalSeconds[id] = (itemTotalSeconds[id] ?? 0) + secs;
-        itemEngagerCount[id] = (itemEngagerCount[id] ?? 0) + 1;
+        const secs = (r.total_session_seconds as number) || 0;
+        itemTotalSeconds[id] = secs;
+        itemEngagerCount[id] = (r.engager_count as number) || 0;
+        totalSeconds += secs;
+      }
+    } else {
+      // user_content_engagement: one row per user per item, need to sum
+      for (const r of timeData.rows as any[]) {
+        const secs = (r.session_seconds as number) || 0;
+        totalSeconds += secs;
+        if (r.content_item_id && secs > 0) {
+          const id = r.content_item_id as string;
+          itemTotalSeconds[id] = (itemTotalSeconds[id] ?? 0) + secs;
+          itemEngagerCount[id] = (itemEngagerCount[id] ?? 0) + 1;
+        }
       }
     }
     const hoursSpent = Math.round((totalSeconds / 3600) * 10) / 10;
