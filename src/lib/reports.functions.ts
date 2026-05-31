@@ -176,11 +176,38 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     }
 
-    // ── Query 3: content_item_stats for per-item time (pre-computed nightly) ──
-    // Replaces scanning all user_content_engagement rows.
-    const itemStatsDbQ = (supabaseAdmin as any)
-      .from("content_item_stats")
-      .select("content_item_id, total_session_seconds, avg_session_seconds");
+    // ── Query 3: user_content_engagement for live time data (paginated) ──────
+    // Must read live — content_item_stats.total_session_seconds is nightly and stale.
+    // No date filter: time spent is all-time regardless of the selected range.
+    const fetchAllEngagement = async () => {
+      const PAGE = 1000;
+      const all: any[] = [];
+      for (let from = 0; ; from += PAGE) {
+        let q = (supabaseAdmin as any)
+          .from("user_content_engagement")
+          .select("user_id, content_item_id, session_seconds")
+          .range(from, from + PAGE - 1);
+        if (userIdFilter !== null) {
+          if (userIdFilter.length === 0) {
+            q = q.eq("user_id", "00000000-0000-0000-0000-000000000000");
+          } else {
+            q = q.in("user_id", userIdFilter);
+          }
+        } else {
+          const excludeAll = [
+            ...Array.from(staffUserIds),
+            ...Array.from(syntheticIds),
+            "00000000-0000-0000-0000-000000000000",
+          ];
+          if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
+        }
+        const { data, error } = await q;
+        if (error || !data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < PAGE) break;
+      }
+      return all;
+    };
 
     // ── Query 4: user_content_progress for completions (paginated) ──────────
     const fetchAllProgress = async () => {
@@ -214,8 +241,8 @@ export const getUsageReport = createServerFn({ method: "POST" })
       return all;
     };
 
-    const [dailyCountsRes, openersRes, itemStatsDbRes, progressRows] = await Promise.all([
-      dailyCountsQ, openersQ, itemStatsDbQ, fetchAllProgress(),
+    const [dailyCountsRes, openersRes, engagementRows, progressRows] = await Promise.all([
+      dailyCountsQ, openersQ, fetchAllEngagement(), fetchAllProgress(),
     ]);
     if (dailyCountsRes.error) throw new Error(dailyCountsRes.error.message);
 
@@ -246,16 +273,18 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     }
 
-    // Per-item time from pre-computed stats (replaces full engagement table scan)
+    // Live per-item time from paginated user_content_engagement
     const itemTotalSeconds: Record<string, number> = {};
-    const itemAvgSeconds: Record<string, number | null> = {};
+    const itemEngagerCount: Record<string, number> = {};
     let totalSeconds = 0;
-    for (const r of (itemStatsDbRes?.data ?? []) as any[]) {
-      const id = r.content_item_id as string;
-      const secs = (r.total_session_seconds as number) || 0;
-      itemTotalSeconds[id] = secs;
-      itemAvgSeconds[id] = r.avg_session_seconds as number | null;
+    for (const r of engagementRows as any[]) {
+      const secs = (r.session_seconds as number) || 0;
       totalSeconds += secs;
+      if (r.content_item_id && secs > 0) {
+        const id = r.content_item_id as string;
+        itemTotalSeconds[id] = (itemTotalSeconds[id] ?? 0) + secs;
+        itemEngagerCount[id] = (itemEngagerCount[id] ?? 0) + 1;
+      }
     }
     const hoursSpent = Math.round((totalSeconds / 3600) * 10) / 10;
 
@@ -279,7 +308,9 @@ export const getUsageReport = createServerFn({ method: "POST" })
       const completes = itemCompleters[itemId]?.size ?? 0;
       const openCount = Math.max(trackedOpens, completes);
       const completionRate = trackedOpens > 0 ? Math.round(completes / openCount * 100) : null;
-      const avgSessionSeconds = itemAvgSeconds[itemId] ?? null;
+      const avgSessionSeconds = itemTotalSeconds[itemId] && itemEngagerCount[itemId]
+        ? Math.round(itemTotalSeconds[itemId] / itemEngagerCount[itemId])
+        : null;
       itemStats[itemId] = { openCount, completeCount: completes, completionRate, avgSessionSeconds };
       if (trackedOpens > 0) {
         aggOpens += openCount;
