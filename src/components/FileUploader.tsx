@@ -116,33 +116,41 @@ export function FileUploader({
           if (file) handleFile(file);
         }}
       />
+      {(() => {
+        const typeName = contentType
+          ? contentType.charAt(0).toUpperCase() + contentType.slice(1)
+          : null;
+        const uploadingLabel = typeName
+          ? `${uploadProgress}% Uploading ${typeName}`
+          : `${uploadProgress}% uploading…`;
+        return (
       <button
         type="button"
         disabled={uploading}
         onClick={() => !uploading && inputRef.current?.click()}
-        className={`${actionButtonClassName("secondary")} relative overflow-hidden ${uploading ? "w-44" : ""}`}
+        className={`${actionButtonClassName("secondary")} relative overflow-hidden ${uploading ? "w-52" : ""}`}
       >
         {uploading ? (
           <>
-            {/* Badge-colored fill — matches the selected content type badge */}
+            {/* Fill: badge text color (full saturated) */}
             <span
               className="absolute inset-y-0 left-0 pointer-events-none transition-[width] duration-150"
-              style={{ width: `${uploadProgress}%`, backgroundColor: ps.bg, borderRight: `1px solid ${ps.border}` }}
+              style={{ width: `${uploadProgress}%`, backgroundColor: ps.color }}
             />
 
             {/* Dark text layer — always visible underneath */}
             <span className="relative z-10 flex items-center justify-center gap-2 w-full whitespace-nowrap tabular-nums">
               <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
-              {uploadProgress}% uploading…
+              {uploadingLabel}
             </span>
 
-            {/* Badge-colored text layer — clipped to fill, reveals letter by letter */}
+            {/* Light text layer — clipped to fill, badge bg color, reveals letter by letter */}
             <span
               className="absolute inset-0 z-20 flex items-center justify-center gap-2 pointer-events-none whitespace-nowrap tabular-nums transition-[clip-path] duration-150"
-              style={{ clipPath: `inset(0 ${100 - uploadProgress}% 0 0)`, color: ps.color }}
+              style={{ clipPath: `inset(0 ${100 - uploadProgress}% 0 0)`, color: ps.bg }}
             >
               <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
-              {uploadProgress}% uploading…
+              {uploadingLabel}
             </span>
           </>
         ) : (
@@ -152,6 +160,8 @@ export function FileUploader({
           </>
         )}
       </button>
+        );
+      })()}
     </>
   );
 }
