@@ -1448,8 +1448,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
         </div>
         <div className="inline-flex flex-shrink-0">
           <Stat position="first" icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} />
-          <Stat position="middle" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} />
-          <Stat position="last" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate != null ? row.completionRate : null} suffix="%" />
+          <Stat position="last" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} />
         </div>
       </button>
       {open && (
@@ -1474,9 +1473,9 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                     {clicks.toLocaleString()}
                   </span>
                   {completionRate != null && (
-                    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground" title="All-time completion rate">
                       <BarChart3 className="h-3 w-3" />
-                      {completionRate}%
+                      {completionRate}% <span className="text-muted-foreground/60">all time</span>
                     </span>
                   )}
                 </div>
