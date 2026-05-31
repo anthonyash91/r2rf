@@ -495,7 +495,7 @@ function DashboardPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-8">
                         {stats.map((s) => (
                           <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
                         ))}
