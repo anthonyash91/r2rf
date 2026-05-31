@@ -614,19 +614,20 @@ function FacilityComparisonSection() {
 
   return (
     <div className="mt-12">
-      <div className="flex items-start justify-between mb-4 flex-wrap gap-2">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <UserSectionHeader
           title="Facility Comparison"
           description={`All facilities ranked by average content completion rate.${updatedAt ? ` · Updated daily · Last updated ${updatedAt}` : ""}`}
         />
         {facilities.length > 0 && (
-          <button
-            type="button"
+          <LoadingButton
+            variant="secondary"
+            icon={<Download className="h-4 w-4" />}
             onClick={() => exportFacilityComparisonCsv(facilities as FacilityRow[])}
-            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted flex-shrink-0"
+            className="flex-shrink-0"
           >
             Export CSV
-          </button>
+          </LoadingButton>
         )}
       </div>
 
