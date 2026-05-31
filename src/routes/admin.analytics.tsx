@@ -1174,8 +1174,9 @@ function exportUserProgressCsv(
   for (const c of data.categories as any[]) {
     const items = itemsByCat.get(c.id) ?? [];
     const read = items.filter((i) => i.read).length;
+    const catSecs = items.reduce((sum: number, i: any) => sum + ((i.sessionSeconds as number) || 0), 0);
     lines.push(
-      [csvEscape(c.name), csvEscape(c.slug), `${read} of ${items.length} read`, "", "", "", "", "", ""].join(","),
+      [csvEscape(c.name), csvEscape(c.slug), `${read} of ${items.length} read`, "", "", "", "", "", catSecs > 0 ? formatTimeSpent(catSecs) : ""].join(","),
     );
     for (const it of items) {
       const isAV = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
@@ -1274,18 +1275,42 @@ function UserCategorySection({
         aria-expanded={open}
         className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-6 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-[#fffdf8]"} text-left hover:bg-muted/50 transition-colors`}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
-          <CircleProgress value={g.total > 0 ? (g.read / g.total) * 100 : 0} size={52} stroke={5} />
-          <div className="min-w-0">
-            <h2 className="font-display text-lg font-semibold truncate">{g.category.name}</h2>
-            <p className="text-xs text-muted-foreground truncate">/{g.category.slug}</p>
-          </div>
-        </div>
-        <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium rounded-[4px] tabular-nums self-start sm:self-auto">
-          <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
-          {g.read} of {g.total} read
-        </span>
+        {(() => {
+          const weightedPct = g.total > 0 ? Math.round(
+            g.items.reduce((sum: number, item: any) => {
+              if (item.read) return sum + 1;
+              if (item.manualCompletionPct != null) return sum + item.manualCompletionPct / 100;
+              if (item.mediaProgressPct != null && item.mediaProgressPct >= 5) return sum + Math.min(item.mediaProgressPct / 100, 0.95);
+              if (item.pdfProgressPct != null && item.pdfProgressPct >= 1) return sum + Math.min(item.pdfProgressPct / 100, 0.95);
+              return sum;
+            }, 0) / g.total * 100
+          ) : 0;
+          const catTimeSeconds = g.items.reduce((sum: number, item: any) => sum + ((item.sessionSeconds as number) || 0), 0);
+          return (
+            <>
+              <div className="flex items-center gap-3 min-w-0">
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
+                <CircleProgress value={weightedPct} size={52} stroke={5} />
+                <div className="min-w-0">
+                  <h2 className="font-display text-lg font-semibold truncate">{g.category.name}</h2>
+                  <p className="text-xs text-muted-foreground truncate">/{g.category.slug}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium rounded-[4px] tabular-nums">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+                  {g.read} of {g.total} read
+                </span>
+                {catTimeSeconds > 0 && (
+                  <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium rounded-[4px] tabular-nums">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    {formatTimeSpent(catTimeSeconds)}
+                  </span>
+                )}
+              </div>
+            </>
+          );
+        })()}
       </button>
       {open &&
         (g.items.length === 0 ? (

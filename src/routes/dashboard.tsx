@@ -797,9 +797,17 @@ function CategoryProgressSection({
             )}
           </div>
           {!isAdmin ? (
-            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-              {t("dashboard.itemsCompleted", { done: read.toLocaleString(), total: total.toLocaleString() } as any)}
-            </p>
+            <div className="mt-0.5 flex items-center gap-2 flex-wrap">
+              <p className="text-xs text-muted-foreground tabular-nums">
+                {t("dashboard.itemsCompleted", { done: read.toLocaleString(), total: total.toLocaleString() } as any)}
+              </p>
+              {(() => {
+                const catSecs = items.reduce((sum, it) => sum + (engagementMap.get(it.id)?.sessionSeconds ?? 0), 0);
+                return catSecs > 0 ? (
+                  <p className="text-xs text-muted-foreground tabular-nums">· {formatTimeSpent(catSecs)}</p>
+                ) : null;
+              })()}
+            </div>
           ) : tagline ? (
             <p className="mt-0.5 text-xs text-muted-foreground truncate">{tagline}</p>
           ) : null}
