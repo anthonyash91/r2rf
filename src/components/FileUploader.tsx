@@ -132,19 +132,19 @@ export function FileUploader({
       >
         {uploading ? (
           <>
-            {/* Fill: badge text color (full saturated) */}
+            {/* Fill: badge text color + badge border on leading edge */}
             <span
               className="absolute inset-y-0 left-0 pointer-events-none transition-[width] duration-150"
-              style={{ width: `${uploadProgress}%`, backgroundColor: ps.color }}
+              style={{ width: `${uploadProgress}%`, backgroundColor: ps.color, borderRight: `2px solid ${ps.border}` }}
             />
 
-            {/* Base text layer — badge text color, visible in unfilled area */}
-            <span className="relative z-10 flex items-center justify-center gap-2 w-full whitespace-nowrap tabular-nums" style={{ color: ps.color }}>
+            {/* Base text layer — badge background color, visible in unfilled area */}
+            <span className="relative z-10 flex items-center justify-center gap-2 w-full whitespace-nowrap tabular-nums" style={{ color: ps.bg }}>
               <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
               {uploadingLabel}
             </span>
 
-            {/* Light text layer — clipped to fill, badge bg color, reveals letter by letter */}
+            {/* Revealed text layer — same badge background color, clipped to fill */}
             <span
               className="absolute inset-0 z-20 flex items-center justify-center gap-2 pointer-events-none whitespace-nowrap tabular-nums transition-[clip-path] duration-150"
               style={{ clipPath: `inset(0 ${100 - uploadProgress}% 0 0)`, color: ps.bg }}
