@@ -114,7 +114,9 @@
       "Bash(grep -n \"beforeLoad\\\\|requireAdmin\\\\|Route = createFileRoute\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -5 *)",
       "Bash(grep -n \"AI\\\\|ai\\\\|generate\\\\|Sparkles\\\\|openai\\\\|claude\\\\|translate\\\\|translation\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -15)",
       "Bash(grep -n \"\\\\.not\\(.*in.*join\\\\|\\\\.not\\(.*in.*\\\\`\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/lib/reports.functions.ts /Users/anthony/Desktop/reentry-to-recovery-content-library/src/lib/users.functions.ts)",
-      "Bash(grep -n \"FileUploader\\\\|useBadgeStyles\\\\|badgeStyles\\\\|useStyles\\\\|styles.*query\\\\|stylesQuery\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -20)"
+      "Bash(grep -n \"FileUploader\\\\|useBadgeStyles\\\\|badgeStyles\\\\|useStyles\\\\|styles.*query\\\\|stylesQuery\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -20)",
+      "Bash(git checkout *)",
+      "Bash(grep -n \"\\\\.not\\(.*join\\\\|\\\\.not\\(.*in.*\\\\`\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/lib/reports.functions.ts)"
     ],
     "additionalDirectories": [
       "/Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes",
