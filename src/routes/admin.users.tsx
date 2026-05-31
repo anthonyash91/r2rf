@@ -801,33 +801,42 @@ function UserItem({
         <div className="min-w-0 flex-1">
           {isUsernameUser ? (
             <>
-              <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
-                <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} hideFacilityBadge={isRegularUser} />
-              </div>
-              <div className="flex items-center gap-2 flex-nowrap min-w-0">
-                <span className="font-mono text-sm truncate">
-                  {showFacilityUserBadge ? user.email : user.profile!.username}
-                </span>
-                {(user.profile!.first_name || user.profile!.last_name) && (
-                  <span className="text-sm text-muted-foreground truncate">
-                    {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
-                  </span>
-                )}
-                <UserStatusBadges
-                  user={user}
-                  facilityLabel={facilityLabel}
-                  isNew={isNew}
-                  hideFacilityBadge={isRegularUser}
-                  className="hidden sm:inline-flex"
-                >
-                  {showFacilityUserBadge && <Badge variant="facility-user">Facility User</Badge>}
-                  {showFacilityUserBadge && (
-                    user.email_confirmed_at
-                      ? <Badge variant="verified">Verified</Badge>
-                      : <Badge variant="unverified">Unverified</Badge>
-                  )}
-                </UserStatusBadges>
-              </div>
+              {isRegularUser ? (
+                /* Regular users: match reports page layout */
+                <p className="font-medium truncate">
+                  {[user.profile!.first_name, user.profile!.last_name].filter(Boolean).join(" ") || user.profile!.username}
+                </p>
+              ) : (
+                <>
+                  <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
+                    <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} hideFacilityBadge={isRegularUser} />
+                  </div>
+                  <div className="flex items-center gap-2 flex-nowrap min-w-0">
+                    <span className="font-mono text-sm truncate">
+                      {showFacilityUserBadge ? user.email : user.profile!.username}
+                    </span>
+                    {(user.profile!.first_name || user.profile!.last_name) && (
+                      <span className="text-sm text-muted-foreground truncate">
+                        {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
+                      </span>
+                    )}
+                    <UserStatusBadges
+                      user={user}
+                      facilityLabel={facilityLabel}
+                      isNew={isNew}
+                      hideFacilityBadge={isRegularUser}
+                      className="hidden sm:inline-flex"
+                    >
+                      {showFacilityUserBadge && <Badge variant="facility-user">Facility User</Badge>}
+                      {showFacilityUserBadge && (
+                        user.email_confirmed_at
+                          ? <Badge variant="verified">Verified</Badge>
+                          : <Badge variant="unverified">Unverified</Badge>
+                      )}
+                    </UserStatusBadges>
+                  </div>
+                </>
+              )}
             </>
           ) : editingEmail ? (
             <div className="flex items-center gap-2">
@@ -898,17 +907,33 @@ function UserItem({
               </div>
             </>
           )}
-          <p className="mt-1 text-xs text-muted-foreground">
-            {(showFacilityUserBadge || isRegularUser) && facilityLabel && (
-              <><span className="font-medium text-foreground">{facilityLabel}</span>{" · "}</>
-            )}
-            Joined {new Date(user.created_at).toLocaleDateString()}
-            {user.last_sign_in_at && <>{" · "}Last sign-in {new Date(user.last_sign_in_at).toLocaleDateString()}</>}
-          </p>
-          {isUsernameUser && !showFacilityUserBadge && user.profile?.inmatePin && (
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              PIN <span className="font-mono font-medium text-foreground">{user.profile.inmatePin}</span>
-            </p>
+          {isRegularUser ? (
+            <>
+              <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                @{user.profile!.username}
+                {user.profile?.inmatePin && <> · PIN: {user.profile.inmatePin}</>}
+                {facilityLabel && <> · {facilityLabel}</>}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                Signed up {new Date(user.created_at).toLocaleDateString()}
+                {user.last_sign_in_at && <> · Last login {new Date(user.last_sign_in_at).toLocaleDateString()}</>}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {(showFacilityUserBadge) && facilityLabel && (
+                  <><span className="font-medium text-foreground">{facilityLabel}</span>{" · "}</>
+                )}
+                Joined {new Date(user.created_at).toLocaleDateString()}
+                {user.last_sign_in_at && <>{" · "}Last sign-in {new Date(user.last_sign_in_at).toLocaleDateString()}</>}
+              </p>
+              {isUsernameUser && !showFacilityUserBadge && user.profile?.inmatePin && (
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  PIN <span className="font-mono font-medium text-foreground">{user.profile.inmatePin}</span>
+                </p>
+              )}
+            </>
           )}
 
         </div>
