@@ -72,16 +72,19 @@ function DashboardPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["my-profile"],
+    staleTime: Infinity, // profile only changes on explicit edit
     queryFn: () => fetchProfile(),
   });
   const questionsQuery = useQuery({
     queryKey: ["my-security-questions"],
+    staleTime: Infinity, // questions only change on explicit edit
     queryFn: () => fetchQuestions(),
   });
 
   const fetchFacilities = useServerFn(listFacilities);
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
+    staleTime: 10 * 60 * 1000, // facility list changes rarely
     queryFn: () => fetchFacilities(),
   });
   const facilityNameMap = new Map(
@@ -93,6 +96,7 @@ function DashboardPage() {
   const categoriesQuery = useQuery({
     queryKey: ["dashboard-categories", userFacility],
     enabled: !isLoading,
+    staleTime: 5 * 60 * 1000, // categories change rarely; 5 min is fine
     queryFn: async (): Promise<Category[]> => {
       // Fetch all published categories + their facility assignments
       const { data: cats, error } = await supabase
@@ -137,6 +141,7 @@ function DashboardPage() {
   const loginsQuery = useQuery({
     queryKey: ["my-login-days", user?.id ?? null],
     enabled: !!user?.id,
+    staleTime: 60 * 60 * 1000, // login history only needs refreshing hourly
     queryFn: async (): Promise<Set<string>> => {
       const since = new Date();
       since.setDate(since.getDate() - 365);
@@ -157,6 +162,7 @@ function DashboardPage() {
   const progressQuery = useQuery({
     queryKey: ["dashboard-progress", userId, categoryIds.join(",")],
     enabled: !!userId && categoryIds.length > 0,
+    staleTime: 30 * 1000, // progress should feel near-live; 30s is enough
     queryFn: async () => {
       const [itemsRes, readRes, seenRes, profileRes] = await Promise.all([
         supabase

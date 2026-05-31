@@ -150,31 +150,40 @@ export const getUsageReport = createServerFn({ method: "POST" })
     if (sinceIso) dailyCountsQ = dailyCountsQ.gte("period_date", sinceIso.slice(0, 10));
     if (facilityValue) dailyCountsQ = dailyCountsQ.eq("facility_value", facilityValue);
 
-    // ── Query 2: analytics_events content_click only — for unique openers per item ──
-    // Still needed for completion rate deduplication (daily_counts doesn't have user_id).
-    // Narrower than before: only content_click events, only 2 columns.
-    let openersQ = supabaseAdmin
-      .from("analytics_events")
-      .select("user_id, content_id")
-      .eq("event_type", "content_click")
-      .not("user_id", "is", null);
-    if (sinceIso) openersQ = (openersQ as any).gte("created_at", sinceIso);
-    if (userIdFilter !== null) {
-      if (userIdFilter.length === 0) {
-        openersQ = (openersQ as any).eq("user_id", "00000000-0000-0000-0000-000000000000");
-      } else {
+    // ── Query 2: unique openers per item for completion rate ─────────────────
+    // Overall all-time: use content_item_openers (trigger-maintained, O(items)).
+    // Date-filtered or facility-scoped: scan analytics_events (bounded by date+user filter).
+    const fetchOpenersData = async (): Promise<{ precomputed: boolean; rows: any[] }> => {
+      if (userIdFilter === null && !sinceIso) {
+        const { data } = await (supabaseAdmin as any)
+          .from("content_item_openers")
+          .select("content_item_id, opener_count");
+        return { precomputed: true, rows: data ?? [] };
+      }
+      if (userIdFilter !== null && userIdFilter.length === 0) {
+        return { precomputed: false, rows: [] };
+      }
+      let openersQ = supabaseAdmin
+        .from("analytics_events")
+        .select("user_id, content_id")
+        .eq("event_type", "content_click")
+        .not("user_id", "is", null);
+      if (sinceIso) openersQ = (openersQ as any).gte("created_at", sinceIso);
+      if (userIdFilter !== null) {
         openersQ = (openersQ as any).in("user_id", userIdFilter);
+      } else {
+        const excludeAll = [
+          ...Array.from(staffUserIds),
+          ...Array.from(syntheticIds),
+          "00000000-0000-0000-0000-000000000000",
+        ];
+        if (excludeAll.length > 0) {
+          openersQ = (openersQ as any).not("user_id", "in", `(${excludeAll.join(",")})`);
+        }
       }
-    } else {
-      const excludeAll = [
-        ...Array.from(staffUserIds),
-        ...Array.from(syntheticIds),
-        "00000000-0000-0000-0000-000000000000",
-      ];
-      if (excludeAll.length > 0) {
-        openersQ = (openersQ as any).not("user_id", "in", `(${excludeAll.join(",")})`);
-      }
-    }
+      const { data } = await openersQ;
+      return { precomputed: false, rows: data ?? [] };
+    };
 
     // ── Query 3: time data from user_content_sessions ────────────────────────
     // user_content_sessions has a recorded_at timestamp so time can be filtered
@@ -253,8 +262,8 @@ export const getUsageReport = createServerFn({ method: "POST" })
       return all;
     };
 
-    const [dailyCountsRes, openersRes, timeData, progressRows] = await Promise.all([
-      dailyCountsQ, openersQ, fetchTimeData(), fetchAllProgress(),
+    const [dailyCountsRes, openersData, timeData, progressRows] = await Promise.all([
+      dailyCountsQ, fetchOpenersData(), fetchTimeData(), fetchAllProgress(),
     ]);
     if (dailyCountsRes.error) throw new Error(dailyCountsRes.error.message);
 
@@ -276,13 +285,21 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     }
 
-    // Build unique openers per item (for completion rate deduplication)
-    const itemOpeners: Record<string, Set<string>> = {};
-    for (const row of (openersRes?.data ?? []) as any[]) {
-      if (row.content_id && row.user_id) {
-        if (!itemOpeners[row.content_id]) itemOpeners[row.content_id] = new Set();
-        itemOpeners[row.content_id].add(row.user_id as string);
+    // Build unique opener counts per item
+    const itemOpenerCounts: Record<string, number> = {};
+    if (openersData.precomputed) {
+      for (const row of openersData.rows as any[]) {
+        itemOpenerCounts[row.content_item_id as string] = row.opener_count as number;
       }
+    } else {
+      const tempSets: Record<string, Set<string>> = {};
+      for (const row of openersData.rows as any[]) {
+        if (row.content_id && row.user_id) {
+          if (!tempSets[row.content_id]) tempSets[row.content_id] = new Set();
+          tempSets[row.content_id].add(row.user_id as string);
+        }
+      }
+      for (const [id, s] of Object.entries(tempSets)) itemOpenerCounts[id] = s.size;
     }
 
     // Aggregate time data — shape differs by source
@@ -328,7 +345,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
     let aggOpens = 0;
     let aggCompletes = 0;
     for (const itemId of visibleItemIds) {
-      const trackedOpens = itemOpeners[itemId]?.size ?? 0;
+      const trackedOpens = itemOpenerCounts[itemId] ?? 0;
       const completes = itemCompleters[itemId]?.size ?? 0;
       const openCount = Math.max(trackedOpens, completes);
       const completionRate = trackedOpens > 0 ? Math.round(completes / openCount * 100) : null;

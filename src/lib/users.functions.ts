@@ -254,7 +254,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
       .object({
         limit: z.number().int().min(1).max(10000).default(10),
         offset: z.number().int().min(0).default(0),
-        search: z.string().trim().max(100).optional().default(""),
+        search: z.string().trim().max(50).optional().default(""),
         facility: z.string().trim().max(100).optional().default(""),
       })
       .parse(input),
@@ -299,7 +299,8 @@ export const listRegularUsers = createServerFn({ method: "POST" })
       q = q.eq("facility", facilityFilter);
     }
     if (data.search) {
-      const term = data.search.replace(/[%,()]/g, "").toLowerCase();
+      // Strip all PostgREST operator characters and cap length to prevent injection
+      const term = data.search.replace(/[^a-zA-Z0-9 _\-'.@]/g, "").trim().slice(0, 50).toLowerCase();
       if (term) {
         const pat = `%${term}%`;
         q = q.or(
