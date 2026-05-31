@@ -614,9 +614,9 @@ function FacilityComparisonSection() {
                   <th className="text-left px-4 py-3">Users</th>
                   <th className="text-left px-4 py-3">Active (7d)</th>
                   <th className="text-left px-4 py-3">Active (30d)</th>
-                  <th className="text-left px-4 py-3">Avg completion</th>
-                  <th className="text-left px-4 py-3">Items completed</th>
-                  <th className="text-left px-4 py-3">Time spent</th>
+                  <th className="text-left px-4 py-3">Avg Completion</th>
+                  <th className="text-left px-4 py-3">Items Completed</th>
+                  <th className="text-left px-4 py-3">Time Spent</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -1641,7 +1641,7 @@ function ContentTypeBreakdown({
     <div className="mt-12">
       <UserSectionHeader
         className="mb-4"
-        title="Content type preference"
+        title="Content Type Preference"
         description="Opens, completions, and time spent broken down by content format, sorted by completion rate."
       />
       <SectionCard padded={false} className="overflow-hidden">
@@ -1653,8 +1653,8 @@ function ContentTypeBreakdown({
                 <th className="text-left px-4 py-3">Items</th>
                 <th className="text-left px-4 py-3">Opens</th>
                 <th className="text-left px-4 py-3">Completions</th>
-                <th className="text-left px-4 py-3">Completion rate</th>
-                <th className="text-left px-4 py-3">Time spent</th>
+                <th className="text-left px-4 py-3">Completion Rate</th>
+                <th className="text-left px-4 py-3">Time Spent</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
