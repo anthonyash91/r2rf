@@ -132,7 +132,7 @@ async function fetchRolesAndProfiles(userIds: string[]) {
   const chunks = chunkArray(userIds, CHUNK);
   const [roleChunks, profileChunks] = await Promise.all([
     Promise.all(chunks.map((c) => supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", c))),
-    Promise.all(chunks.map((c) => supabaseAdmin.from("user_profiles").select("user_id, username, facility, first_name, last_name, inmate_pin").in("user_id", c))),
+    Promise.all(chunks.map((c) => (supabaseAdmin as any).from("user_profiles").select("user_id, username, facility, first_name, last_name, inmate_pin").in("user_id", c))),
   ]);
   const roleRows = roleChunks.flatMap((r) => r.data ?? []);
   const profileRows = profileChunks.flatMap((r) => r.data ?? []);
@@ -288,7 +288,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
     if (privErr) throw new Error(privErr.message);
     const excludeIds = Array.from(new Set((privilegedRows ?? []).map((r) => r.user_id)));
 
-    let q = supabaseAdmin
+    let q = (supabaseAdmin as any)
       .from("user_profiles")
       .select("user_id, username, facility, first_name, last_name, inmate_pin, created_at", { count: "exact" });
 
@@ -314,10 +314,10 @@ export const listRegularUsers = createServerFn({ method: "POST" })
     const { data: rows, error, count } = await q;
     if (error) throw new Error(error.message);
 
-    const ids = (rows ?? []).map((r) => r.user_id);
+    const ids = (rows ?? []).map((r: any) => r.user_id);
     const authMap = await hydrateAuthFields(ids);
 
-    const users: ListedUser[] = (rows ?? []).map((p) => {
+    const users: ListedUser[] = (rows ?? []).map((p: any) => {
       const auth = authMap.get(p.user_id);
       return {
         id: p.user_id,
