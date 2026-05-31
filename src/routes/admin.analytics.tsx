@@ -1490,7 +1490,7 @@ function CategoryList({ rows }: { rows: AggregatedRow[] }) {
   );
 }
 
-function Stat({ icon, label, value, suffix, position }: { icon: React.ReactNode; label: string; value: number | string | null; suffix?: string; position?: "first" | "last" | "middle" }) {
+function Stat({ icon, label, value, suffix, position, tooltip }: { icon: React.ReactNode; label: string; value: number | string | null; suffix?: string; position?: "first" | "last" | "middle"; tooltip?: string }) {
   const radius =
     position === "first"
       ? "rounded-l-[4px]"
@@ -1498,12 +1498,19 @@ function Stat({ icon, label, value, suffix, position }: { icon: React.ReactNode;
         ? "rounded-r-[4px] -ml-px"
         : "-ml-px";
   const display = value == null ? "—" : typeof value === "string" ? value : `${value.toLocaleString()}${suffix ?? ""}`;
-  return (
-    <span className={`inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium ${radius}`}>
+  const inner = (
+    <span className={`inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium ${radius}${tooltip ? " cursor-default" : ""}`}>
       {icon}
       <span className="tabular-nums">{display}</span>
       <span className="text-muted-foreground">{label}</span>
     </span>
+  );
+  if (!tooltip) return inner;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{inner}</TooltipTrigger>
+      <TooltipContent className="max-w-xs px-3 py-2">{tooltip}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -1539,15 +1546,15 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           </div>
         </div>
         <div className="inline-flex flex-shrink-0">
-          <Stat position="first" icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} />
-          <Stat position="middle" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} />
+          <Stat position="first" icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} tooltip="How many times this category page was viewed in the selected period." />
+          <Stat position="middle" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} tooltip="How many times content items in this category were opened in the selected period." />
           {row.completionRate != null && (
-            <Stat position="middle" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate} suffix="%" />
+            <Stat position="middle" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate} suffix="%" tooltip="Percentage of opens in this category that resulted in completion during the selected period." />
           )}
           {row.depth != null && (
-            <Stat position="middle" icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="depth" value={row.depth} />
+            <Stat position="middle" icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="depth" value={row.depth} tooltip="Average number of items completed per user who has engaged with this category. All time." />
           )}
-          <Stat position="last" icon={<Clock className="h-3.5 w-3.5" />} label="spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} />
+          <Stat position="last" icon={<Clock className="h-3.5 w-3.5" />} label="spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} tooltip="Total time all users have spent on content in this category. All time." />
         </div>
       </button>
       {open && (
