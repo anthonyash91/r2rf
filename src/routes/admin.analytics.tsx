@@ -1552,7 +1552,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
             <Stat position="middle" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate} suffix="%" tooltip="Percentage of opens in this category that resulted in completion during the selected period." />
           )}
           {row.depth != null && (
-            <Stat position="middle" icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="depth" value={row.depth} tooltip="Average number of items completed per user who has engaged with this category. All time." />
+            <Stat position="middle" icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="depth" value={row.depth} tooltip="Average number of items completed per user who engaged with this category in the selected period." />
           )}
           <Stat position="last" icon={<Clock className="h-3.5 w-3.5" />} label="spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} tooltip="Total time all users have spent on content in this category. All time." />
         </div>
