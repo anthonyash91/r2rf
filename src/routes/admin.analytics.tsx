@@ -1477,7 +1477,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           <Stat position="first" icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} />
           <Stat position="middle" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} />
           {row.completionRate != null && (
-            <Stat position="middle" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate} suffix="%" />
+            <Stat position="middle" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion rate" value={row.completionRate} suffix="%" />
           )}
           <Stat position="last" icon={<Clock className="h-3.5 w-3.5" />} label="time spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} />
         </div>
