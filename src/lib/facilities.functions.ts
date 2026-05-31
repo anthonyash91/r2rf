@@ -86,7 +86,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
       const { data: profPage, error: profErr } = await supabaseAdmin
         .from("user_profiles")
         .select("user_id, facility")
-        .eq("is_synthetic", false)
+        .neq("is_synthetic", true)
         .range(from, from + PAGE - 1);
       if (profErr) throw new Error(profErr.message);
       for (const p of profPage ?? []) {
