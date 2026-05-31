@@ -55,7 +55,7 @@ function AdminFacilitiesPage() {
 
 
   const facilitiesQuery = useQuery({
-    queryKey: ["facilities"],
+    queryKey: ["facilities", "with-stats"],
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilities(),
   });
@@ -69,7 +69,7 @@ function AdminFacilitiesPage() {
   const visibleFacilities = facilities.slice(page * 10, (page + 1) * 10);
 
 
-  const facilitiesKey = ["facilities"] as const;
+  const facilitiesKey = ["facilities", "with-stats"] as const;
   const invalidate = () => qc.invalidateQueries({ queryKey: facilitiesKey });
 
   const addMut = useToastMutation({
