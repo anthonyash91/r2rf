@@ -61,6 +61,7 @@ function SignupPageContent() {
   const [answer, setAnswer] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
+  const [checkingSignIn, setCheckingSignIn] = useState(false);
   const [usernameStatus, setUsernameStatus] = useState<
     "idle" | "checking" | "available" | "taken" | "invalid"
   >("idle");
@@ -138,7 +139,7 @@ function SignupPageContent() {
   });
 
   useEffect(() => {
-    if (loading || !user) return;
+    if (loading || !user || checkingSignIn) return;
     // Role-based redirect after auth state is known
     supabase
       .from("user_roles")
@@ -158,7 +159,7 @@ function SignupPageContent() {
           navigate({ to: "/dashboard", search: {} as any });
         }
       });
-  }, [user, loading, navigate, mode, redirectTo]);
+  }, [user, loading, navigate, mode, redirectTo, checkingSignIn]);
 
   // Debounced username availability check (sign-up only)
   useEffect(() => {
@@ -233,6 +234,8 @@ function SignupPageContent() {
       } else {
         const id = username.trim();
         const email = id.includes("@") ? id.toLowerCase() : syntheticEmail(id.toLowerCase());
+        // Block the redirect useEffect until our post-auth check finishes
+        setCheckingSignIn(true);
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -267,9 +270,12 @@ function SignupPageContent() {
             }
           }
         }
+        // Check passed — unblock the redirect useEffect
+        setCheckingSignIn(false);
         // redirect handled by useEffect once role loads
       }
     } catch (err: any) {
+      setCheckingSignIn(false); // unblock even on failure so UI isn't stuck
       toast.error(err.message ?? t("signup.genericError"));
       if (mode === "sign-up") challengeQuery.refetch();
       setAnswer("");
