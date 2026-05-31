@@ -27,6 +27,7 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
 import { withActionWord, parseMinutes } from "@/lib/duration";
+import { weightedCompletionPct } from "@/lib/content-progress";
 import { formatTimeSpent, fmtDateShort } from "@/lib/date-format";
 import { readStatusLabels } from "@/lib/read-status";
 
@@ -247,7 +248,7 @@ function DashboardPage() {
       const totalSeconds = ((engData ?? []) as any[]).reduce(
         (sum: number, r: any) => sum + ((r.session_seconds as number) || 0), 0,
       );
-      const engagementMap = new Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null }>();
+      const engagementMap = new Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null; manualCompletionPct: number | null }>();
       for (const r of (engData ?? []) as any[]) {
         engagementMap.set(r.content_item_id as string, {
           sessionSeconds: (r.session_seconds as number) || 0,
@@ -448,7 +449,8 @@ function DashboardPage() {
                     if (r2 > 0) activeCats += 1;
                     if (t2 > 0 && r2 >= t2) completedCats += 1;
                   }
-                  const pctAll = totalAll > 0 ? Math.round((readAll / totalAll) * 100) : 0;
+                  const allItems = (categoriesQuery.data ?? []).flatMap((c) => progressQuery.data?.itemsByCat.get(c.id) ?? []);
+                  const pctAll = weightedCompletionPct(allItems, progressQuery.data?.readSet ?? new Set(), progressQuery.data?.engagementMap ?? new Map());
                   const totalSeconds = progressQuery.data?.totalSeconds ?? 0;
                   // Day streak: count consecutive days the user has logged in, ending today or yesterday
                   const loginDays = loginsQuery.data ?? new Set<string>();
@@ -758,7 +760,7 @@ function CategoryProgressSection({
   onToggle: () => void;
 }) {
   const open = isOpen;
-  const pct = total > 0 ? Math.round((read / total) * 100) : 0;
+  const pct = weightedCompletionPct(items, readSet, engagementMap);
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
   const sectionRef = useRef<HTMLElement | null>(null);
   useEffect(() => {

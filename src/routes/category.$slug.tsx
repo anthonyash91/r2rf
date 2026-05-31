@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 
 const PdfViewer = lazy(() => import("@/components/PdfViewer"));
 import { trackCategoryView, trackContentClick } from "@/lib/analytics";
+import { weightedCompletionPct } from "@/lib/content-progress";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
@@ -340,7 +341,7 @@ function CategoryPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("user_content_engagement")
-        .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds")
+        .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct")
         .eq("user_id", user!.id);
       if (error) throw error;
       const map = new Map<string, EngagementRecord>();
@@ -349,6 +350,7 @@ function CategoryPage() {
           session_seconds: r.session_seconds as number,
           media_progress_seconds: r.media_progress_seconds as number | null,
           media_duration_seconds: r.media_duration_seconds as number | null,
+          manual_completion_pct: r.manual_completion_pct as number | null,
         });
       }
       return map;
@@ -429,19 +431,30 @@ function CategoryPage() {
                   <p className="text-sm font-medium text-[var(--color-accent)]">{pickLang(lang, data.category.tagline, data.category.tagline_es)}</p>
                   <h1 className="mt-2 font-display font-bold tracking-tight text-4xl">{pickLang(lang, data.category.name, data.category.name_es)}</h1>
                   <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{pickLang(lang, data.category.description, data.category.description_es)}</p>
-                  {user && !isAdmin && !isFacilityUser && visibleItems.length > 0 && (
-                    <div className="mt-6 max-w-md space-y-1.5">
-                      <Progress
-                        value={Math.round((visibleItems.filter((it) => readSet.has(it.id)).length / visibleItems.length) * 100)}
-                        className="h-2"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        {t("dashboard.progressItems")
-                          .replace("{done}", String(visibleItems.filter((it) => readSet.has(it.id)).length))
-                          .replace("{total}", String(visibleItems.length))}
-                      </p>
-                    </div>
-                  )}
+                  {user && !isAdmin && !isFacilityUser && visibleItems.length > 0 && (() => {
+                    const normEngMap = new Map(
+                      Array.from(engagementMap.entries()).map(([id, r]) => [id, {
+                        sessionSeconds: r.session_seconds,
+                        mediaProgressSeconds: r.media_progress_seconds,
+                        mediaDurationSeconds: r.media_duration_seconds,
+                        manualCompletionPct: r.manual_completion_pct,
+                      }])
+                    );
+                    const completedCount = visibleItems.filter((it) => readSet.has(it.id)).length;
+                    return (
+                      <div className="mt-6 max-w-md space-y-1.5">
+                        <Progress
+                          value={weightedCompletionPct(visibleItems, readSet, normEngMap)}
+                          className="h-2"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {t("dashboard.progressItems")
+                            .replace("{done}", String(completedCount))
+                            .replace("{total}", String(visibleItems.length))}
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

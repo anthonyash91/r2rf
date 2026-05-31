@@ -24,6 +24,7 @@ export type EngagementRecord = {
   session_seconds: number;
   media_progress_seconds: number | null;
   media_duration_seconds: number | null;
+  manual_completion_pct: number | null;
 };
 
 type Params = {
