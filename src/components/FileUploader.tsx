@@ -138,8 +138,8 @@ export function FileUploader({
               style={{ width: `${uploadProgress}%`, backgroundColor: ps.color }}
             />
 
-            {/* Dark text layer — always visible underneath */}
-            <span className="relative z-10 flex items-center justify-center gap-2 w-full whitespace-nowrap tabular-nums">
+            {/* Base text layer — badge text color, visible in unfilled area */}
+            <span className="relative z-10 flex items-center justify-center gap-2 w-full whitespace-nowrap tabular-nums" style={{ color: ps.color }}>
               <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
               {uploadingLabel}
             </span>
