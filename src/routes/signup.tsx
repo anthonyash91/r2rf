@@ -502,7 +502,7 @@ function SignupPageContent() {
 
 
 
-              {!(mode === "sign-up" && signupBlockReason === "pin-taken") && (
+              {!(mode === "sign-up" && (signupBlockReason === "pin-taken" || signupBlockReason === "no-facility")) && (
                 <>
                   <div>
                     <label className="text-sm font-medium">
@@ -550,9 +550,9 @@ function SignupPageContent() {
               {mode === "sign-up" && signupBlockReason && (
                 <div className="py-2 space-y-2">
                   {signupBlockReason === "no-facility" && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      Signup is disabled for non-facility users. Contact the admin if you feel you need an account created.
-                    </p>
+                    <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
+                      {t("signup.noFacilityBlock")}
+                    </div>
                   )}
                   {signupBlockReason === "no-pin" && (
                     <p className="text-sm text-muted-foreground text-center">
