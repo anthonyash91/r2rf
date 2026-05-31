@@ -12,9 +12,11 @@ const sessionProgress = new Map<string, number>();
 /** How long without activity before the timer stops counting. */
 const IDLE_MS = 90_000;
 /** Heartbeat interval — how often we check for activity. */
-const TICK_MS = 30_000;
+const TICK_MS = 5_000;
+/** Seconds added per tick (must match TICK_MS). */
+const TICK_S = TICK_MS / 1000;
 /** Flush accumulated time to DB every this many seconds of active time. */
-const FLUSH_INTERVAL_S = 120;
+const FLUSH_INTERVAL_S = 60;
 /** Media position is sampled at most every this many seconds. */
 const MEDIA_SAMPLE_S = 5;
 /** Completion threshold for auto-marking an item as read. */
@@ -143,7 +145,7 @@ export function useContentEngagement({
     const interval = setInterval(() => {
       const idle = Date.now() - lastActivityRef.current > IDLE_MS;
       if (!idle) {
-        accSecondsRef.current += 30;
+        accSecondsRef.current += TICK_S;
         // PDF auto-mark: fire when cumulative active time reaches 95% of estimate
         const pdfThreshold = pdfEstimatedSecondsRef.current;
         if (!autoMarkedRef.current && pdfThreshold > 0) {
@@ -154,14 +156,14 @@ export function useContentEngagement({
             write();
           }
         }
-        if (accSecondsRef.current > 0 && accSecondsRef.current % FLUSH_INTERVAL_S === 0) {
+        if (accSecondsRef.current % FLUSH_INTERVAL_S === 0) {
           write();
         }
       }
     }, TICK_MS);
     return () => {
       clearInterval(interval);
-      if (accSecondsRef.current > 0) write();
+      write(); // always flush on close, even sub-tick sessions
     };
   }, [isActive, userId, contentItemId, write]);
 
@@ -205,7 +207,7 @@ export function useContentEngagement({
     return () => {
       el.removeEventListener("loadedmetadata", onLoadedMetadata);
       el.removeEventListener("timeupdate", onTimeUpdate);
-      if (furthestRef.current > 0) write();
+      write();
     };
   }, [videoEl, write, onAutoMarkRead, contentItemId]);
 
@@ -247,7 +249,7 @@ export function useContentEngagement({
     return () => {
       el.removeEventListener("loadedmetadata", onLoadedMetadata);
       el.removeEventListener("timeupdate", onTimeUpdate);
-      if (furthestRef.current > 0) write();
+      write();
     };
   }, [audioEl, write, onAutoMarkRead, contentItemId]);
 
