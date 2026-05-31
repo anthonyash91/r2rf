@@ -231,7 +231,7 @@ function DashboardPage() {
       // Real session seconds + per-item media progress from engagement tracking
       const { data: engData } = await (supabase as any)
         .from("user_content_engagement")
-        .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds")
+        .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct")
         .eq("user_id", userId);
       const totalSeconds = ((engData ?? []) as any[]).reduce(
         (sum: number, r: any) => sum + ((r.session_seconds as number) || 0), 0,
@@ -242,6 +242,7 @@ function DashboardPage() {
           sessionSeconds: (r.session_seconds as number) || 0,
           mediaProgressSeconds: r.media_progress_seconds as number | null,
           mediaDurationSeconds: r.media_duration_seconds as number | null,
+          manualCompletionPct: r.manual_completion_pct as number | null,
         });
       }
       return { totals, reads, itemsByCat, readSet, recentCats, newItemSet, totalSeconds, readDays, engagementMap };
@@ -709,7 +710,7 @@ function CategoryProgressSection({
   isAdmin: boolean;
   lang: "en" | "es";
   t: (key: string, vars?: Record<string, string | number>) => string;
-  engagementMap: Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null }>;
+  engagementMap: Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null; manualCompletionPct: number | null }>;
   isOpen: boolean;
   dimmed?: boolean;
   onToggle: () => void;
@@ -828,7 +829,11 @@ function CategoryProgressSection({
                       return (
                         <ReadStatusBadge
                           read={isRead}
-                          readLabel={labels.read}
+                          readLabel={
+                            isRead && isPdf && eng?.manualCompletionPct != null
+                              ? `${labels.read} at ${eng.manualCompletionPct}%`
+                              : labels.read
+                          }
                           unreadLabel={labels.unread}
                           className="ml-auto"
                         />

@@ -720,6 +720,16 @@ function CategoryPage() {
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           e.preventDefault();
+                                          // Record the % they were at when manually marking as read (before auto-mark)
+                                          if (!isRead && pdfPct < 100 && user?.id) {
+                                            Promise.resolve(
+                                              (supabase as any)
+                                                .from("user_content_engagement")
+                                                .update({ manual_completion_pct: pdfPct, last_updated_at: new Date().toISOString() })
+                                                .eq("user_id", user.id)
+                                                .eq("content_item_id", item.id)
+                                            ).catch(() => {});
+                                          }
                                           toggleRead.mutate({ itemId: item.id, markRead: !isRead });
                                         }}
                                         className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"

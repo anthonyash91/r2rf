@@ -346,7 +346,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
       (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
       (supabaseAdmin as any)
         .from("user_content_engagement")
-        .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds")
+        .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct")
         .eq("user_id", data.userId),
     ]);
     if (profRes.error) throw new Error(profRes.error.message);
@@ -388,13 +388,14 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
       (progRes.data ?? []).map((r: any) => r.content_item_id as string),
     );
 
-    // Build engagement map: contentItemId → { sessionSeconds, mediaProgressSeconds, mediaDurationSeconds }
-    const engagementByItem = new Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null }>();
+    // Build engagement map: contentItemId → { sessionSeconds, mediaProgressSeconds, mediaDurationSeconds, manualCompletionPct }
+    const engagementByItem = new Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null; manualCompletionPct: number | null }>();
     for (const r of (engRes?.data ?? []) as any[]) {
       engagementByItem.set(r.content_item_id as string, {
         sessionSeconds: (r.session_seconds as number) || 0,
         mediaProgressSeconds: r.media_progress_seconds as number | null,
         mediaDurationSeconds: r.media_duration_seconds as number | null,
+        manualCompletionPct: r.manual_completion_pct as number | null,
       });
     }
     const totalSessionSeconds = Array.from(engagementByItem.values()).reduce((s, e) => s + e.sessionSeconds, 0);
@@ -437,6 +438,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
           read: readSet.has(i.id),
           sessionSeconds: eng?.sessionSeconds ?? 0,
           mediaProgressPct: mediaPct,
+          manualCompletionPct: eng?.manualCompletionPct ?? null,
         };
       }),
       progress: (progRes.data ?? []).map((r: any) => ({

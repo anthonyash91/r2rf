@@ -964,11 +964,14 @@ function exportUserProgressCsv(
       const pdfPct = isPdf && pdfEstSec > 0 && (it as any).sessionSeconds > 0
         ? Math.min(100, Math.round(((it as any).sessionSeconds / (pdfEstSec * 0.95)) * 100))
         : null;
+      const manualPct: number | null = (it as any).manualCompletionPct ?? null;
       const progressStr = isAV && (it as any).mediaProgressPct != null
         ? `${(it as any).mediaProgressPct}%`
-        : pdfPct !== null
-          ? `${pdfPct}%`
-          : "";
+        : it.read && isPdf && manualPct != null
+          ? `Read manually at ${manualPct}%`
+          : !it.read && pdfPct !== null
+            ? `${pdfPct}%`
+            : "";
       lines.push(
         [
           csvEscape(c.name),
@@ -1120,7 +1123,11 @@ function UserCategorySection({
                       return (
                         <ReadStatusBadge
                           read={item.read}
-                          readLabel={labels.read}
+                          readLabel={
+                            item.read && isPdf && (item as any).manualCompletionPct != null
+                              ? `${labels.read} at ${(item as any).manualCompletionPct}%`
+                              : labels.read
+                          }
                           unreadLabel={labels.unread}
                           readAt={item.read_at ? fmtDateShort(item.read_at) : null}
                           className="ml-auto"
