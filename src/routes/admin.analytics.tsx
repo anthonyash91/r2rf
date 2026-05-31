@@ -471,7 +471,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
               icon={<BarChart3 className="h-5 w-5" />}
               label="Completion rate"
               value={aggregated.overallCompletionRate != null ? `${aggregated.overallCompletionRate}%` : "—"}
-              tooltip="Of all content opens in this period, the percentage that resulted in the user completing the item. Only shown for items with tracked click events."
+              tooltip="Out of everyone who opened content in this period, how many actually finished it."
             />
             <SummaryCard
               icon={<Clock className="h-5 w-5" />}
@@ -1552,7 +1552,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           <Stat position="first" icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} tooltip="How many times this category page was viewed in the selected period." />
           <Stat position="middle" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} tooltip="How many times content items in this category were opened in the selected period." />
           {row.completionRate != null && (
-            <Stat position="middle" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate} suffix="%" tooltip="Percentage of opens in this category that resulted in completion during the selected period." />
+            <Stat position="middle" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate} suffix="%" tooltip="Of everyone who opened content in this category, how many finished it." />
           )}
           {row.depth != null && (
             <Stat position="middle" icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="depth" value={row.depth} tooltip="Average number of items completed per user who engaged with this category in the selected period." />
@@ -1594,7 +1594,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                           {completionRate}%
                         </span>
                       </TooltipTrigger>
-                      <TooltipContent className="max-w-xs px-3 py-2">Completion rate — percentage of openers who completed this item in the selected period.</TooltipContent>
+                      <TooltipContent className="max-w-xs px-3 py-2">Of everyone who opened this item, how many finished it.</TooltipContent>
                     </Tooltip>
                   )}
                   {openCount > completeCount && (
