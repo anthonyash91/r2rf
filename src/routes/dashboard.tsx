@@ -18,6 +18,7 @@ import { facilityLabel } from "@/lib/user-signup";
 import { listFacilities } from "@/lib/facilities.functions";
 import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-reset.functions";
 import { clearMustResetPassword } from "@/lib/users.functions";
+import { getMyEngagementTier } from "@/lib/analytics-stats.functions";
 import { questionLabel } from "@/lib/security-questions";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { LoadingButton } from "@/components/LoadingButton";
@@ -122,6 +123,14 @@ function DashboardPage() {
         })
         .map((c) => ({ ...c, facilities: facilityMap[c.id] ?? [] }));
     },
+  });
+
+  const fetchTier = useServerFn(getMyEngagementTier);
+  const tierQuery = useQuery({
+    queryKey: ["my-engagement-tier", user?.id],
+    enabled: !!user?.id && isUser,
+    staleTime: 60 * 60 * 1000, // 1 hr — data is daily anyway
+    queryFn: () => fetchTier(),
   });
 
   const loginsQuery = useQuery({
@@ -484,11 +493,38 @@ function DashboardPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
                         {stats.map((s) => (
                           <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
                         ))}
                       </div>
+
+                      {tierQuery.data?.tier && (
+                        <div className="mb-8 rounded-2xl border border-border bg-card px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">
+                              Your engagement level at your facility:{" "}
+                              <span className="text-[var(--color-accent)] font-semibold">{tierQuery.data.tier}</span>
+                              {tierQuery.data.percentile != null && (
+                                <span className="text-muted-foreground font-normal">
+                                  {" "}· top {Math.round(100 - tierQuery.data.percentile)}% of readers
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Based on time spent reading · Updates daily
+                              {tierQuery.data.updatedAt && (
+                                <> · Last updated {new Date(tierQuery.data.updatedAt).toLocaleDateString()}</>
+                              )}
+                            </p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-xs text-muted-foreground">
+                              {tierQuery.data.itemsCompleted ?? 0} completed · {tierQuery.data.itemsStarted ?? 0} started
+                            </p>
+                          </div>
+                        </div>
+                      )}
 
                       <h2 className="font-display text-lg font-semibold mb-3">{t("dashboard.categoryProgress")}</h2>
                     </>

@@ -46,6 +46,7 @@ import {
   getUserProgressReport,
 } from "@/lib/reports.functions";
 import { listFacilityAdminUsers } from "@/lib/users.functions";
+import { getFacilityComparison } from "@/lib/analytics-stats.functions";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 import { Pager } from "@/components/LoadMorePager";
 
@@ -273,7 +274,10 @@ function AdminReportsPage() {
           {isFacilityUser && myFacilityValue ? (
             <UsageReportView scope={{ kind: "facility", facilityValue: myFacilityValue, facilityLabel: myFacilityValue }} />
           ) : (
-            <UsageReportView scope={{ kind: "overall" }} />
+            <>
+              <UsageReportView scope={{ kind: "overall" }} />
+              <FacilityComparisonSection />
+            </>
           )}
         </TabsContent>
         <TabsContent value="facility" className="mt-8">
@@ -487,6 +491,89 @@ function exportUsageCsv(
     }
   }
   downloadCsv(`report-${label}-${new Date().toISOString().slice(0, 10)}.csv`, lines);
+}
+
+/* ---------------- Facility Comparison (Overall tab) ---------------- */
+
+function FacilityComparisonSection() {
+  const fetch = useServerFn(getFacilityComparison);
+  const { t } = useI18n();
+  const { data, isLoading } = useQuery({
+    queryKey: ["facility-comparison"],
+    queryFn: () => fetch(),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const facilities = data?.facilities ?? [];
+  const updatedAt = data?.updatedAt ? new Date(data.updatedAt).toLocaleDateString() : null;
+
+  return (
+    <div className="mt-12">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div>
+          <h2 className="font-display text-xl font-semibold">Facility Comparison</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            All facilities ranked by average content completion rate.
+            {updatedAt && (
+              <span className="ml-1 italic">· Updated daily · Last updated {updatedAt}</span>
+            )}
+          </p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading…</p>
+      ) : facilities.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No facility data yet — run content and check back after the nightly refresh.</p>
+      ) : (
+        <SectionCard padded={false} className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground font-medium">
+                  <th className="text-left px-4 py-3">Facility</th>
+                  <th className="text-right px-4 py-3">Users</th>
+                  <th className="text-right px-4 py-3">Active (7d)</th>
+                  <th className="text-right px-4 py-3">Active (30d)</th>
+                  <th className="text-right px-4 py-3">Avg Completion</th>
+                  <th className="text-right px-4 py-3">Items Completed</th>
+                  <th className="text-right px-4 py-3">Time Spent</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {facilities.map((f) => (
+                  <tr key={f.facilityValue} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3 font-medium">
+                      {f.facilityLabel}
+                      {f.facilitySiteId && (
+                        <span className="ml-2 text-xs text-muted-foreground font-mono">{f.facilitySiteId}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">{f.totalUsers}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{f.activeUsers7d}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{f.activeUsers30d}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {f.avgCompletionRate != null ? (
+                        <span className={f.avgCompletionRate >= 70 ? "text-[var(--color-accent)] font-medium" : f.avgCompletionRate >= 40 ? "" : "text-muted-foreground"}>
+                          {f.avgCompletionRate}%
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">{f.itemsCompletedTotal}</td>
+                    <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                      {f.totalSessionSeconds > 0 ? formatTimeSpent(f.totalSessionSeconds) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+      )}
+    </div>
+  );
 }
 
 /* ---------------- Facility Tab ---------------- */
