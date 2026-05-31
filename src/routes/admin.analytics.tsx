@@ -1067,7 +1067,7 @@ function UserProgressView({
             const statsUpdated = (data as any).statsUpdatedAt as string | null;
             return (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 mt-8 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mt-8 mb-8">
                   {stats.map((s) => (
                     <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
                   ))}
