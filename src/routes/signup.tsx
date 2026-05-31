@@ -688,7 +688,7 @@ function SignupPageContent() {
               )}
 
               {facilityError && mode === "sign-in" && (
-                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
+                <div className="!mt-6 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
                   {facilityError}
                 </div>
               )}
