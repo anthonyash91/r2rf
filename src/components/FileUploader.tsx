@@ -113,20 +113,37 @@ export function FileUploader({
         type="button"
         disabled={uploading}
         onClick={() => !uploading && inputRef.current?.click()}
-        className={`${actionButtonClassName("secondary")} relative overflow-hidden`}
+        className={`${actionButtonClassName("secondary")} relative overflow-hidden ${uploading ? "w-44" : ""}`}
       >
-        {/* Progress fill — grows left-to-right while uploading */}
-        {uploading && (
-          <span
-            className="absolute inset-y-0 left-0 pointer-events-none transition-[width] duration-150"
-            style={{ width: `${uploadProgress}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }}
-          />
+        {uploading ? (
+          <>
+            {/* Dark green fill — full opacity accent color */}
+            <span
+              className="absolute inset-y-0 left-0 pointer-events-none transition-[width] duration-150"
+              style={{ width: `${uploadProgress}%`, backgroundColor: "var(--color-accent)" }}
+            />
+
+            {/* Dark text layer — always visible underneath */}
+            <span className="relative z-10 flex items-center justify-center gap-2 w-full whitespace-nowrap tabular-nums">
+              <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+              {uploadProgress}% uploading…
+            </span>
+
+            {/* White text layer — clipped to the filled area, reveals letter by letter */}
+            <span
+              className="absolute inset-0 z-20 flex items-center justify-center gap-2 text-white pointer-events-none whitespace-nowrap tabular-nums transition-[clip-path] duration-150"
+              style={{ clipPath: `inset(0 ${100 - uploadProgress}% 0 0)` }}
+            >
+              <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+              {uploadProgress}% uploading…
+            </span>
+          </>
+        ) : (
+          <>
+            <Upload className="h-4 w-4" />
+            {label}
+          </>
         )}
-        <span className="relative flex items-center gap-2">
-          {uploading
-            ? <><Loader2 className="h-4 w-4 animate-spin" />{uploadProgress}% uploading…</>
-            : <><Upload className="h-4 w-4" />{label}</>}
-        </span>
       </button>
     </>
   );
