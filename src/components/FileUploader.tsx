@@ -109,32 +109,25 @@ export function FileUploader({
           if (file) handleFile(file);
         }}
       />
-      {uploading ? (
-        <div className="flex flex-col gap-1.5 min-w-[180px]">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Uploading…
-            </span>
-            <span className="tabular-nums font-medium">{uploadProgress}%</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-            <div
-              className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-150"
-              style={{ width: `${uploadProgress}%` }}
-            />
-          </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className={actionButtonClassName("secondary")}
-        >
-          <Upload className="h-4 w-4" />
-          {label}
-        </button>
-      )}
+      <button
+        type="button"
+        disabled={uploading}
+        onClick={() => !uploading && inputRef.current?.click()}
+        className={`${actionButtonClassName("secondary")} relative overflow-hidden`}
+      >
+        {/* Progress fill — grows left-to-right while uploading */}
+        {uploading && (
+          <span
+            className="absolute inset-y-0 left-0 pointer-events-none transition-[width] duration-150"
+            style={{ width: `${uploadProgress}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }}
+          />
+        )}
+        <span className="relative flex items-center gap-2">
+          {uploading
+            ? <><Loader2 className="h-4 w-4 animate-spin" />{uploadProgress}% uploading…</>
+            : <><Upload className="h-4 w-4" />{label}</>}
+        </span>
+      </button>
     </>
   );
 }
