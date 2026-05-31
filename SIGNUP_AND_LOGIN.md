@@ -17,7 +17,7 @@ All sign-up fields are validated server-side before any account is created:
 | Last name | Required, max 100 characters |
 | Password | 8–72 characters |
 | Facility | Required, max 64 characters, must exist in the facilities table |
-| Inmate PIN | Numbers only, optional |
+| Inmate PIN | Numbers only, **required** |
 | Security answers | Min 2 characters each, max 200, must choose two different questions |
 
 ### Honeypot Bot Detection
@@ -48,7 +48,7 @@ If a PIN is included in the sign-up URL (`?user=PIN`), the server checks whether
 
 ### Rate Limiting
 
-Sign-up is limited to **5 new accounts per IP address per 24 hours**, enforced server-side by recording the IP in a `signup_attempts` table. This prevents scripted account creation.
+IP-based rate limiting for sign-up is intentionally not applied. Every inmate at a facility shares the same external IP address, so a per-IP limit would block an entire facility after only a handful of sign-ups. Instead, the inmate PIN acts as the hard gate — a PIN can only be used once, making scripted account creation impossible regardless of how many requests are made. The captcha still blocks bots that lack a valid PIN.
 
 ### Security Questions
 

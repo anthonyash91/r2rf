@@ -106,7 +106,7 @@ export const signupUser = createServerFn({ method: "POST" })
         lastName: z.string().trim().min(1, "Last name is required").max(100),
         password: z.string().min(8).max(72),
         facility: z.string().trim().min(1).max(64),
-        inmatePin: z.string().regex(/^\d+$/, "Inmate PIN must be numbers only").optional(),
+        inmatePin: z.string().regex(/^\d+$/, "Inmate PIN must be numbers only"),
         challengeToken: z.string().min(1).max(500),
         challengeAnswer: z.coerce.number().int(),
         honeypot: z.string().max(0).optional().default(""),
@@ -131,16 +131,11 @@ export const signupUser = createServerFn({ method: "POST" })
       throw new Error("Captcha failed. Please try again.");
     }
 
-    // Rate limit: cap signups per IP per 24h to deter scripted account creation.
-    const ip = getClientIp(getRequest());
-    await checkAndRecordAttempt({
-      table: "signup_attempts",
-      ip,
-      windowMs: SIGNUP_WINDOW_MS,
-      max: SIGNUP_MAX_PER_IP,
-      extraColumns: { username: data.username },
-      errorMessage: "Too many signups from this network. Please try again later.",
-    });
+    // IP-based rate limiting intentionally removed: all inmates at a facility
+    // share the same external IP, so a per-IP limit would block an entire
+    // facility after a handful of sign-ups. The inmate PIN requirement already
+    // acts as the hard gate — a PIN can only be used once, so scripted account
+    // creation is impossible regardless of how many requests are made.
 
     // Validate facility exists
     const { data: facilityRow } = await supabaseAdmin
