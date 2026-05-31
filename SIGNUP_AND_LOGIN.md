@@ -6,6 +6,10 @@ This document covers every security measure and feature in the user sign-up and 
 
 ## Sign Up
 
+### Access Requirement
+
+Sign-up is only available through a valid facility link (`/?site=facilityId&user=PIN`). Users who attempt to access the sign-up form without a facility link see only an error message — no input fields are shown. This applies to regular users only; admin, contributor, and facilityUser accounts are created through the admin panel.
+
 ### Input Validation (Server-Side)
 
 All sign-up fields are validated server-side before any account is created:
@@ -44,7 +48,7 @@ The submitted facility value is checked against the `facilities` table. A user c
 
 ### Inmate PIN Uniqueness
 
-If a PIN is included in the sign-up URL (`?user=PIN`), the server checks whether that PIN is already registered at that facility. If it is, the sign-up form is blocked entirely and only an error message is shown — no input fields are displayed, making it clear the user should sign in instead.
+The server checks whether the PIN is already registered at that facility before creating an account. If it is, the sign-up form is blocked entirely and only an error message is shown — no input fields are displayed, making it clear the user should sign in instead.
 
 ### Rate Limiting
 
@@ -65,26 +69,31 @@ Users are required to set up 2 security questions during sign-up (or immediately
 
 Sign-in errors always return a generic message ("Incorrect username or password") regardless of whether the username exists. An attacker cannot determine which usernames are registered by analyzing error messages.
 
-### Facility + PIN Gate (Shared Device Security)
+### Facility + PIN Required (Shared Device Security)
 
-When a user accesses the app via a URL containing `?site=facilityId&user=PIN`, an additional security check runs after successful authentication:
+Regular users can only sign in when both a **facility** and a **PIN** are present in the current session (set by visiting a URL like `/?site=facilityId&user=PIN`). The check runs after Supabase verifies credentials:
 
 1. The user enters their username and password
 2. Supabase verifies the credentials (standard auth)
-3. The server then checks:
-   - The authenticated user's `facility` matches the facility in the URL
-   - The authenticated user's `inmate_pin` matches the PIN in the URL
-4. If either check fails, the user is **immediately signed out** and shown an error — they never reach the dashboard
+3. The server checks the user's role:
+   - **Privileged roles** (admin, contributor, facilityUser) → allowed through regardless of session state; facility/PIN context cleared from session so staff nav links don't include those parameters
+   - **Regular user, no facility+PIN in session** → immediately signed out, inline error shown: *"Looks like you're trying to login using the wrong link. Make sure you're accessing this website through the service on your device."*
+   - **Regular user, facility+PIN in session** → proceeds to the match check below
 
-**Why this order matters:** Checking after auth (not before) prevents username enumeration — an attacker can't probe whether a username exists by watching how the PIN check responds.
+### Facility + PIN Match Check
 
-**Role exemptions:** Admin, contributor, and facilityUser accounts bypass this check entirely. Staff can sign in from any device regardless of the PIN in the URL.
+When a regular user signs in with a valid facility+PIN session, the server further verifies:
 
-**Nav freeze:** While the post-auth check is running, the navigation bar stays in its unauthenticated state so users don't see a brief flash of the authenticated interface before a potential rejection.
+- The authenticated user's `facility` matches the facility identified by `?site=`
+- The authenticated user's `inmate_pin` matches the PIN from `?user=`
 
-### Session Storage Cleared for Staff
+If either doesn't match, the user is **immediately signed out** and shown an inline error. This prevents one inmate from using another inmate's facility link to sign into a different account on a shared tablet.
 
-When an admin, contributor, or facilityUser signs in, the active facility slug and inmate PIN are cleared from session storage. This prevents staff from being inadvertently sent to facility-specific URLs (`/?site=...&user=...`) after signing in or out.
+**Why checks happen post-auth:** Checking after Supabase verifies the password prevents username enumeration — an attacker can't probe whether a username exists by watching how the facility/PIN check responds.
+
+### Nav Freeze During Check
+
+While the post-auth check is running, the navigation bar stays in its unauthenticated state so users don't see a brief flash of the signed-in interface before a potential rejection.
 
 ### Sign-Out URL Preservation
 
@@ -104,10 +113,10 @@ The "forgot password" flow uses security questions instead of email. When fetchi
 
 On shared facility devices (where `?site=` and `?user=PIN` are in session), the reset flow adds an additional check at Step 1:
 
-1. The session PIN and facility are sent automatically alongside the username — no extra input is shown to the user
+1. The session PIN and facility are passed to the server automatically alongside the username — no extra input is shown to the user
 2. The server verifies the entered username has a matching `inmate_pin` AND `facility` in the database
 3. If either doesn't match, **fake question keys are returned** — the same response as a non-existent username — so nothing is leaked about which check failed
-4. The user appears to advance to Step 2 but will be unable to complete the reset without knowing the real answers
+4. The user appears to advance to Step 2 but cannot complete the reset without knowing the real answers
 
 This prevents one inmate from initiating a password reset for another inmate's account on a shared tablet.
 
