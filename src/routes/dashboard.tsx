@@ -63,7 +63,7 @@ function DashboardRoute() {
 
 function DashboardPage() {
   const { t, lang } = useI18n();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isUser } = useAuth();
   const queryClient = useQueryClient();
   const fetchProfile = useServerFn(getMyProfile);
   const fetchQuestions = useServerFn(getMySecurityQuestions);
