@@ -643,23 +643,16 @@ function CategoryPage() {
                                   : null;
 
                                 if (mediaPct !== null && mediaPct >= 5) {
+                                  // Display-only progress fill — no manual click; auto-mark fires at 95%
                                   return (
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        toggleRead.mutate({ itemId: item.id, markRead: !isRead });
-                                      }}
-                                      className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
-                                    >
+                                    <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium overflow-hidden flex-shrink-0">
                                       <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
                                       <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
                                       <span className="relative text-foreground">
                                         {mediaPct}%{" "}
                                         {mediaKind === "video" ? t("category.markedWatched").toLowerCase() : t("category.markedListened").toLowerCase()}
                                       </span>
-                                    </button>
+                                    </span>
                                   );
                                 }
 
@@ -730,6 +723,32 @@ function CategoryPage() {
                                         toggleRead.mutate({ itemId: item.id, markRead: true });
                                       }}
                                     />
+                                  );
+                                }
+
+                                // ── Unread video/audio with no tracked progress yet: dimmed + tooltip ──
+                                if (!isRead && (mediaKind === "video" || mediaKind === "audio")) {
+                                  const tipLabel = mediaKind === "video"
+                                    ? "Watch the video to track your progress"
+                                    : "Listen to the audio to track your progress";
+                                  return (
+                                    <TooltipProvider delayDuration={100}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
+                                            className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
+                                          >
+                                            <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                            <span>{unreadLabel}</span>
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
+                                          {tipLabel}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   );
                                 }
 
