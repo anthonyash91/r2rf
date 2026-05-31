@@ -57,11 +57,16 @@ export const getUsageReport = createServerFn({ method: "POST" })
     if (synthErr) throw new Error(synthErr.message);
     const syntheticIds = new Set<string>((synthRows ?? []).map((r: any) => r.user_id as string));
 
-    // Exclude facilityUser role accounts from all user counts
-    const { data: facilityUserRoles } = await supabaseAdmin
-      .from("user_roles").select("user_id").eq("role", "facilityUser");
+    // Exclude staff role accounts from all user counts and completion stats
+    const { data: staffRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role")
+      .in("role", ["admin", "contributor", "tester", "facilityUser"]);
     const facilityUserAccountIds = new Set<string>(
-      (facilityUserRoles ?? []).map((r: any) => r.user_id as string)
+      (staffRoles ?? []).filter((r: any) => r.role === "facilityUser").map((r: any) => r.user_id as string)
+    );
+    const staffUserIds = new Set<string>(
+      (staffRoles ?? []).map((r: any) => r.user_id as string)
     );
 
     let userIdFilter: string[] | null = null;
@@ -133,13 +138,14 @@ export const getUsageReport = createServerFn({ method: "POST" })
         catViews: {}, catClicks: {}, itemClicks: {},
         totalViews: 0, totalClicks: 0,
         facilityUserCount, totalUsers, hoursSpent: 0,
+        itemStats: {}, catCompletionRate: {}, overallCompletionRate: null,
       };
     }
 
-    // Query raw analytics events — analytics_events is the source of truth written by trackContentClick/trackCategoryView
+    // Query raw analytics events — includes user_id so we can deduplicate openers per item
     let countsQ = supabaseAdmin
       .from("analytics_events")
-      .select("event_type, category_id, content_id");
+      .select("event_type, category_id, content_id, user_id");
     if (sinceIso) countsQ = (countsQ as any).gte("created_at", sinceIso);
     if (userIdFilter !== null) {
       if (userIdFilter.length === 0) {
@@ -179,18 +185,35 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     }
 
-    // Completion stats from pre-computed nightly table
-    const itemStatsQ = (supabaseAdmin as any)
-      .from("content_item_stats")
-      .select("content_item_id, open_count, complete_count, completion_rate, avg_session_seconds");
+    // Completions from real users only (exclude all staff roles)
+    let progressQ = (supabaseAdmin as any)
+      .from("user_content_progress")
+      .select("content_item_id, user_id");
+    if (userIdFilter !== null) {
+      if (userIdFilter.length === 0) {
+        progressQ = progressQ.eq("user_id", "00000000-0000-0000-0000-000000000000");
+      } else {
+        progressQ = progressQ.in("user_id", userIdFilter);
+      }
+    } else {
+      const excludeAll = [
+        ...Array.from(staffUserIds),
+        ...Array.from(syntheticIds),
+        "00000000-0000-0000-0000-000000000000",
+      ];
+      if (excludeAll.length > 0) {
+        progressQ = progressQ.not("user_id", "in", `(${excludeAll.join(",")})`);
+      }
+    }
 
-    const [countsRes, engRes, itemStatsRes] = await Promise.all([countsQ, engQ, itemStatsQ]);
+    const [countsRes, engRes, progressRes] = await Promise.all([countsQ, engQ, progressQ]);
     if (countsRes.error) throw new Error(countsRes.error.message);
 
-    // Count each raw event row as 1
+    // Count events; track unique openers per item for completion rate
     const catViews: Record<string, number> = {};
     const catClicks: Record<string, number> = {};
     const itemClicks: Record<string, number> = {};
+    const itemOpeners: Record<string, Set<string>> = {}; // unique users who clicked each item
     let totalViews = 0;
     let totalClicks = 0;
     for (const row of (countsRes.data ?? []) as any[]) {
@@ -199,7 +222,13 @@ export const getUsageReport = createServerFn({ method: "POST" })
         totalViews += 1;
       } else if (row.event_type === "content_click") {
         if (row.category_id) catClicks[row.category_id] = (catClicks[row.category_id] ?? 0) + 1;
-        if (row.content_id) itemClicks[row.content_id] = (itemClicks[row.content_id] ?? 0) + 1;
+        if (row.content_id) {
+          itemClicks[row.content_id] = (itemClicks[row.content_id] ?? 0) + 1;
+          if (row.user_id) {
+            if (!itemOpeners[row.content_id]) itemOpeners[row.content_id] = new Set();
+            itemOpeners[row.content_id].add(row.user_id as string);
+          }
+        }
         totalClicks += 1;
       }
     }
@@ -210,25 +239,39 @@ export const getUsageReport = createServerFn({ method: "POST" })
     }
     const hoursSpent = Math.round((totalSeconds / 3600) * 10) / 10;
 
-    // Build per-item stats map and aggregate completion rate
+    // Build per-item completion stats from live data.
+    // Completion rate is ONLY shown when there are actual tracked opens (click events).
+    // If a user completed content but there are no click events for that item, we don't
+    // have reliable open data so we hide the rate rather than show a misleading 100%.
     const visibleItemIds = new Set(filteredItems.map((i: any) => i.id as string));
+
+    const itemCompleters: Record<string, Set<string>> = {};
+    for (const r of (progressRes?.data ?? []) as any[]) {
+      const id = r.content_item_id as string;
+      if (!visibleItemIds.has(id)) continue;
+      if (!itemCompleters[id]) itemCompleters[id] = new Set();
+      itemCompleters[id].add(r.user_id as string);
+    }
+
     const itemStats: Record<string, { openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }> = {};
     let aggOpens = 0;
     let aggCompletes = 0;
-    for (const r of (itemStatsRes?.data ?? []) as any[]) {
-      if (!visibleItemIds.has(r.content_item_id as string)) continue;
-      itemStats[r.content_item_id as string] = {
-        openCount: r.open_count as number,
-        completeCount: r.complete_count as number,
-        completionRate: r.completion_rate as number | null,
-        avgSessionSeconds: r.avg_session_seconds as number | null,
-      };
-      aggOpens += r.open_count as number;
-      aggCompletes += r.complete_count as number;
+    for (const itemId of visibleItemIds) {
+      const trackedOpens = itemOpeners[itemId]?.size ?? 0; // unique users with a click event
+      const completes = itemCompleters[itemId]?.size ?? 0;
+      // Only compute a rate when we have actual open tracking data.
+      // Without it we can't distinguish "100% of openers completed" from "completions with no open data".
+      const openCount = Math.max(trackedOpens, completes);
+      const completionRate = trackedOpens > 0 ? Math.round(completes / openCount * 100) : null;
+      itemStats[itemId] = { openCount, completeCount: completes, completionRate, avgSessionSeconds: null };
+      if (trackedOpens > 0) {
+        aggOpens += openCount;
+        aggCompletes += completes;
+      }
     }
     const overallCompletionRate = aggOpens > 0 ? Math.round(aggCompletes / aggOpens * 100) : null;
 
-    // Per-category completion rates
+    // Per-category completion rates (only from items with tracked opens)
     const catItemMap: Record<string, string[]> = {};
     for (const it of filteredItems as any[]) {
       if (!catItemMap[it.category_id]) catItemMap[it.category_id] = [];
@@ -239,7 +282,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
       let opens = 0, completes = 0;
       for (const itemId of catItemMap[cat.id] ?? []) {
         const s = itemStats[itemId];
-        if (s) { opens += s.openCount; completes += s.completeCount; }
+        if (s && s.completionRate !== null) { opens += s.openCount; completes += s.completeCount; }
       }
       catCompletionRate[cat.id] = opens > 0 ? Math.round(completes / opens * 100) : null;
     }
