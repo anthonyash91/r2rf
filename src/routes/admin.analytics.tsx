@@ -46,7 +46,7 @@ import {
   getUserProgressReport,
 } from "@/lib/reports.functions";
 import { listFacilityAdminUsers } from "@/lib/users.functions";
-import { getFacilityComparison } from "@/lib/analytics-stats.functions";
+import { getFacilityComparison, getGrowthStats } from "@/lib/analytics-stats.functions";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 import { Pager } from "@/components/LoadMorePager";
 
@@ -331,6 +331,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
   const [range, setRange] = useState<RangeKey>("30d");
   const [isExporting, setIsExporting] = useState(false);
   const fetchReport = useServerFn(getUsageReport);
+  const fetchGrowth = useServerFn(getGrowthStats);
 
   const facilityValue = scope.kind === "facility" ? scope.facilityValue : null;
 
@@ -340,6 +341,12 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
       fetchReport({
         data: { range, facilityValue: facilityValue ?? null },
       }),
+  });
+
+  const { data: growthData } = useQuery({
+    queryKey: ["admin", "growth", scope.kind, facilityValue],
+    queryFn: () => fetchGrowth({ data: { facilityValue } }),
+    staleTime: 30 * 60 * 1000,
   });
 
   // Build AggregatedRow[] from pre-aggregated counts returned by the server
@@ -478,6 +485,9 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
           <CategoryList rows={aggregated.rows} />
           <MostLeastEngaged rows={aggregated.rows} />
           <ContentTypeBreakdown typeStats={aggregated.typeStats} />
+          <ProgramCompletionSection programs={growthData?.programCompletion ?? []} />
+          <RetentionSection retention={growthData?.retention ?? null} totalUsers={growthData?.totalUsers ?? 0} />
+          <GrowthSection weeklyData={growthData?.weeklyData ?? []} />
         </>
       )}
     </div>
@@ -614,6 +624,7 @@ function FacilityComparisonSection() {
                   <th className="text-left px-4 py-3">Users</th>
                   <th className="text-left px-4 py-3">Active (7d)</th>
                   <th className="text-left px-4 py-3">Active (30d)</th>
+                  <th className="text-left px-4 py-3">Participation</th>
                   <th className="text-left px-4 py-3">Avg Completion</th>
                   <th className="text-left px-4 py-3">Items Completed</th>
                   <th className="text-left px-4 py-3">Time Spent</th>
@@ -631,6 +642,9 @@ function FacilityComparisonSection() {
                     <td className="px-4 py-3 tabular-nums">{f.totalUsers}</td>
                     <td className="px-4 py-3 tabular-nums">{f.activeUsers7d}</td>
                     <td className="px-4 py-3 tabular-nums">{f.activeUsers30d}</td>
+                    <td className="px-4 py-3 tabular-nums">
+                      {f.totalUsers > 0 ? `${Math.round((f.activeUsers30d / f.totalUsers) * 100)}%` : "—"}
+                    </td>
                     <td className="px-4 py-3 tabular-nums">
                       {f.avgCompletionRate != null ? (
                         <span className={f.avgCompletionRate >= 70 ? "text-[var(--color-accent)] font-medium" : f.avgCompletionRate >= 40 ? "" : "text-muted-foreground"}>
@@ -897,14 +911,16 @@ function exportFacilityUsersCsv(
 
 function exportFacilityComparisonCsv(facilities: FacilityRow[]) {
   const lines: string[] = [];
-  lines.push(["Facility", "Site ID", "Total users", "Active (7d)", "Active (30d)", "Avg completion %", "Items completed", "Time spent"].map(csvEscape).join(","));
+  lines.push(["Facility", "Site ID", "Total users", "Active (7d)", "Active (30d)", "Participation (30d)", "Avg completion %", "Items completed", "Time spent"].map(csvEscape).join(","));
   for (const f of facilities) {
+    const participation = f.totalUsers > 0 ? `${Math.round((f.activeUsers30d / f.totalUsers) * 100)}%` : "";
     const row = [
       f.facilityLabel,
       f.facilitySiteId ?? "",
       String(f.totalUsers),
       String(f.activeUsers7d),
       String(f.activeUsers30d),
+      participation,
       f.avgCompletionRate != null ? `${f.avgCompletionRate}%` : "",
       String(f.itemsCompletedTotal),
       f.totalSessionSeconds > 0 ? formatTimeSpent(f.totalSessionSeconds) : "",
@@ -1673,6 +1689,137 @@ function ContentTypeBreakdown({
                   </td>
                   <td className="px-4 py-3 tabular-nums text-muted-foreground">
                     {t.totalSeconds > 0 ? formatTimeSpent(t.totalSeconds) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
+function ProgramCompletionSection({
+  programs,
+}: {
+  programs: { categoryId: string; name: string; totalItems: number; usersEngaged: number; usersCompleted: number; rate: number | null }[];
+}) {
+  const visible = programs.filter((p) => p.usersEngaged > 0);
+  if (visible.length === 0) return null;
+  return (
+    <div className="mt-12">
+      <UserSectionHeader
+        className="mb-4"
+        title="Program Completion"
+        description="Of users who started a category, what percentage completed every item in it. All time."
+      />
+      <SectionCard padded={false} className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground font-medium">
+                <th className="text-left px-4 py-3">Category</th>
+                <th className="text-left px-4 py-3">Items</th>
+                <th className="text-left px-4 py-3">Started</th>
+                <th className="text-left px-4 py-3">Completed</th>
+                <th className="text-left px-4 py-3">Completion Rate</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {visible.map((p) => (
+                <tr key={p.categoryId} className="hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-3 font-medium">{p.name}</td>
+                  <td className="px-4 py-3 tabular-nums text-muted-foreground">{p.totalItems}</td>
+                  <td className="px-4 py-3 tabular-nums">{p.usersEngaged}</td>
+                  <td className="px-4 py-3 tabular-nums">{p.usersCompleted}</td>
+                  <td className="px-4 py-3 tabular-nums">
+                    {p.rate != null ? (
+                      <span className={p.rate >= 70 ? "text-[var(--color-accent)] font-medium" : p.rate >= 40 ? "" : "text-muted-foreground"}>
+                        {p.rate}%
+                      </span>
+                    ) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
+function RetentionSection({
+  retention,
+  totalUsers,
+}: {
+  retention: { day7: number | null; day30: number | null; day60: number | null } | null;
+  totalUsers: number;
+}) {
+  if (!retention || totalUsers === 0) return null;
+  const { day7, day30, day60 } = retention;
+  if (day7 === null && day30 === null && day60 === null) return null;
+  return (
+    <div className="mt-12">
+      <UserSectionHeader
+        className="mb-4"
+        title="User Retention"
+        description="Of users who signed up at least N days ago, what percentage returned within that window."
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <SummaryCard icon={<UsersIcon className="h-5 w-5" />} label="7-day return rate" value={day7 != null ? `${day7}%` : "—"} />
+        <SummaryCard icon={<UsersIcon className="h-5 w-5" />} label="30-day return rate" value={day30 != null ? `${day30}%` : "—"} />
+        <SummaryCard icon={<UsersIcon className="h-5 w-5" />} label="60-day return rate" value={day60 != null ? `${day60}%` : "—"} />
+      </div>
+    </div>
+  );
+}
+
+function GrowthSection({
+  weeklyData,
+}: {
+  weeklyData: { weekEnding: string; signups: number; activeUsers: number }[];
+}) {
+  if (weeklyData.length === 0) return null;
+  const maxSignups = Math.max(...weeklyData.map((w) => w.signups), 1);
+  const maxActive = Math.max(...weeklyData.map((w) => w.activeUsers), 1);
+  return (
+    <div className="mt-12">
+      <UserSectionHeader
+        className="mb-4"
+        title="Growth"
+        description="New signups and active users per week over the last 12 weeks."
+      />
+      <SectionCard padded={false} className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground font-medium">
+                <th className="text-left px-4 py-3">Week ending</th>
+                <th className="text-left px-4 py-3 w-64">New signups</th>
+                <th className="text-left px-4 py-3 w-64">Active users</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {weeklyData.map((w) => (
+                <tr key={w.weekEnding} className="hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-3 tabular-nums text-muted-foreground text-xs">{w.weekEnding}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full rounded-full bg-[var(--color-accent)]" style={{ width: `${(w.signups / maxSignups) * 100}%` }} />
+                      </div>
+                      <span className="tabular-nums text-xs w-6 text-right">{w.signups}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full rounded-full bg-muted-foreground/50" style={{ width: `${(w.activeUsers / maxActive) * 100}%` }} />
+                      </div>
+                      <span className="tabular-nums text-xs w-6 text-right">{w.activeUsers}</span>
+                    </div>
                   </td>
                 </tr>
               ))}
