@@ -16,6 +16,11 @@ import { installGlobalErrorReporter, reportError } from "@/lib/client-error-repo
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
+  // Preserve ?site= if the user arrived via a facility link
+  const activeSite = typeof window !== "undefined"
+    ? window.sessionStorage.getItem("active-facility-slug")
+    : null;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -27,6 +32,7 @@ function NotFoundComponent() {
         <div className="mt-6">
           <Link
             to="/"
+            search={activeSite ? { site: activeSite } : {}}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Go home
