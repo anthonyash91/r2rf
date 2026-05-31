@@ -89,10 +89,37 @@
       "Bash(grep -n \"estimateDuration\\\\|probeMedia\\\\|formatMedia\\\\|duration\\\\|pdfjs\\\\|PdfViewer\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -30)",
       "Bash(grep -n \"estimatePdfRead\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -5)",
       "Bash(grep -n \"onPendingDelete=\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -5)",
-      "Bash(grep -n \"video\\\\|audio\\\\|mediaKind\\\\|detectMedia\\\\|Dialog\\\\|Carousel\\\\|isRead\\\\|toggleRead\\\\|readLabel\\\\|unreadLabel\\\\|progressQuery\\\\|seenQuery\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -50)"
+      "Bash(grep -n \"video\\\\|audio\\\\|mediaKind\\\\|detectMedia\\\\|Dialog\\\\|Carousel\\\\|isRead\\\\|toggleRead\\\\|readLabel\\\\|unreadLabel\\\\|progressQuery\\\\|seenQuery\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -50)",
+      "Bash(grep -n \"videoRef\\\\|audioRef\\\\|isVideoActive\\\\|isAudioActive\\\\|videoRef\\\\|audioRef\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -20)",
+      "Bash(grep -n \"isNew\\\\|handleActivate\\\\|seenSet\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -15)",
+      "Bash(grep -n \"^import.*lucide\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx)",
+      "Bash(grep -n \"invalidateEngagement\\\\|invalidate.*engagement\\\\|Engagement\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -10)",
+      "Bash(grep -n \"markedRead\\\\|notRead\\\\|markedClicked\\\\|notClicked\\\\|markedWatched\\\\|notWatched\\\\|readLabel\\\\|unreadLabel\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -20)",
+      "Bash(grep -n \"isMeetingOrCall\\\\|isExternalLink\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -15)",
+      "Bash(grep -n \"invalidateEngagement\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -10)",
+      "Bash(grep -n \"file_url.*pdf\\\\|isPdf\\\\|activePdfEstimated\\\\|PDF_EXT.*file_url\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.analytics.tsx /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/dashboard.tsx /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | grep -v \"node_modules\")",
+      "Bash(grep -n \"read_at\\\\|readAt\\\\|created_at.*progress\\\\|progress.*created_at\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/dashboard.tsx /Users/anthony/Desktop/reentry-to-recovery-content-library/src/lib/reports.functions.ts | head -30)",
+      "Bash(grep -n \"content_item_id\\\\|created_at\\\\|readAt\\\\|read_at\\\\|readSet\\\\|progressQuery\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -20 *)",
+      "Bash(grep -n \"from.*duration\\\\|from.*date-format\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx)",
+      "Bash(grep -n \"return { totals, reads, itemsByCat, readSet\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/dashboard.tsx)",
+      "Bash(grep -rn \"trackContentClick\\\\|trackClick\\\\|trackView\\\\|trackCategory\\\\|analytics\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -20)",
+      "Bash(grep -n \"trackContentClick\\\\|trackCategoryView\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx)",
+      "Bash(grep -n \"canAccessAdmin\\\\|isFacilityUser\\\\|isAdmin\\\\|useAuth\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -20)",
+      "Bash(grep -n \"completedCount\\\\|completionPct\\\\|completion.*ring\\\\|ring.*completion\\\\|readSet.*size\\\\|\\\\.size.*total\\\\|pct.*Math\\\\|Math.*round.*read\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -20)",
+      "Bash(grep -n \"engagementMap\\\\|engagementQuery\\\\|useContentEngagement\\\\|engMap\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -15)",
+      "Bash(grep -E 'dashboard|category\\\\.$slug|content-progress|use-content-engagement')",
+      "Bash(grep -E 'dashboard\\\\.tsx|admin\\\\.analytics|category\\\\.$slug')",
+      "Bash(grep -n \"requireContentAdmin\\\\|requireAdmin\\\\|isFacilityUser\\\\|isAdmin\\\\|isContributor\\\\|isTester\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -15 *)",
+      "Bash(grep -n \"requireContentAdmin\\\\|requireContentAdminBeforeLoad\\\\|beforeLoad\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -5 *)",
+      "Bash(grep -n \"beforeLoad\\\\|requireAdmin\\\\|Route = createFileRoute\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -5 *)",
+      "Bash(grep -n \"AI\\\\|ai\\\\|generate\\\\|Sparkles\\\\|openai\\\\|claude\\\\|translate\\\\|translation\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -15)",
+      "Bash(grep -n \"\\\\.not\\(.*in.*join\\\\|\\\\.not\\(.*in.*\\\\`\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/lib/reports.functions.ts /Users/anthony/Desktop/reentry-to-recovery-content-library/src/lib/users.functions.ts)",
+      "Bash(grep -n \"FileUploader\\\\|useBadgeStyles\\\\|badgeStyles\\\\|useStyles\\\\|styles.*query\\\\|stylesQuery\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/admin.category.\\\\$id.tsx | head -20)"
     ],
     "additionalDirectories": [
-      "/Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes"
+      "/Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes",
+      "/tmp",
+      "/private/tmp"
     ]
   }
 }
