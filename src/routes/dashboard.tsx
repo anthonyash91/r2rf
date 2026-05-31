@@ -511,24 +511,29 @@ function DashboardPage() {
                         <div className="mb-6 rounded-2xl border border-border bg-card px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
                           <div>
                             <p className="text-sm font-medium text-foreground">
-                              Your engagement level at your facility:{" "}
-                              <span className="text-[var(--color-accent)] font-semibold">{tierQuery.data.tier}</span>
+                              {t("dashboard.tierLabel")}{" "}
+                              <span className="text-[var(--color-accent)] font-semibold">
+                                {t(`dashboard.tierName.${tierQuery.data.tier}` as any) || tierQuery.data.tier}
+                              </span>
                               {tierQuery.data.percentile != null && (
                                 <span className="text-muted-foreground font-normal">
-                                  {" "}· top {Math.round(100 - tierQuery.data.percentile)}% of readers
+                                  {" "}· {t("dashboard.tierTopReaders", { pct: String(Math.round(100 - tierQuery.data.percentile)) })}
                                 </span>
                               )}
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              Based on time spent reading · Updates daily
+                              {t("dashboard.tierMeta")}
                               {tierQuery.data.updatedAt && (
-                                <> · Last updated {new Date(tierQuery.data.updatedAt).toLocaleDateString()}</>
+                                <> · {t("dashboard.tierUpdated", { date: new Date(tierQuery.data.updatedAt).toLocaleDateString() })}</>
                               )}
                             </p>
                           </div>
                           <div className="text-right shrink-0">
                             <p className="text-xs text-muted-foreground">
-                              {tierQuery.data.itemsCompleted ?? 0} completed · {tierQuery.data.itemsStarted ?? 0} started
+                              {t("dashboard.tierStats", {
+                                completed: String(tierQuery.data.itemsCompleted ?? 0),
+                                started: String(tierQuery.data.itemsStarted ?? 0),
+                              })}
                             </p>
                           </div>
                         </div>
