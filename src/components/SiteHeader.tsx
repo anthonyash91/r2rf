@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
+import { useActiveInmatePin } from "@/lib/inmate-pin-context";
 
 export function SiteHeader() {
   const { user, canAccessAdmin, isUser, isAdmin, isContributor, isFacilityUser } = useAuth();
@@ -52,6 +53,7 @@ export function SiteHeader() {
 
   // Session-persisted facility slug (survives navigation away from the facility page)
   const persistedFacilitySlug = useActiveFacilitySlug();
+  const persistedPin = useActiveInmatePin();
 
   // Write to session storage whenever a real facility source is discovered
   useEffect(() => {
@@ -68,7 +70,9 @@ export function SiteHeader() {
   // to /signup when no session is found) and the in-flight navigate() call.
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    const dest = activeFacility ? `/?site=${activeFacility}` : "/";
+    // Restore full facility URL including PIN so the next sign-in is still PIN-gated
+    const pinParam = persistedPin ? `&user=${persistedPin}` : "";
+    const dest = activeFacility ? `/?site=${activeFacility}${pinParam}` : "/";
     window.location.href = dest;
   };
 

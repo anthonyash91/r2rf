@@ -238,6 +238,28 @@ function SignupPageContent() {
           password,
         });
         if (error) throw new Error(t("signup.invalidLogin"));
+
+        // Facility + PIN gate: if the user arrived via a facility link (?site=),
+        // verify the authenticated account actually belongs to that facility.
+        // If a PIN is also stored (from ?user= on initial visit), verify it too.
+        // This prevents one inmate from using another inmate's tablet to sign in.
+        if (lockedFacility) {
+          const { data: { user: authedUser } } = await supabase.auth.getUser();
+          if (authedUser) {
+            const { data: profile } = await (supabase as any)
+              .from("user_profiles")
+              .select("facility, inmate_pin")
+              .eq("user_id", authedUser.id)
+              .maybeSingle();
+            const facilityMatch = profile?.facility === lockedFacility.value;
+            // Only enforce PIN check if a PIN was stored from the original URL
+            const pinMatch = !activeInmatePin || profile?.inmate_pin === activeInmatePin;
+            if (!facilityMatch || !pinMatch) {
+              await supabase.auth.signOut();
+              throw new Error(t("signup.facilityMismatch"));
+            }
+          }
+        }
         // redirect handled by useEffect once role loads
       }
     } catch (err: any) {
