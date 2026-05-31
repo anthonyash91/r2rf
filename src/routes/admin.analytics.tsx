@@ -1544,10 +1544,10 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                       {completionRate}%
                     </span>
                   )}
-                  {openCount > 0 && (
+                  {openCount > completeCount && (
                     <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
                       <Circle className="h-3 w-3" />
-                      {openCount - completeCount} drop-offs
+                      {openCount - completeCount} drop-off{openCount - completeCount === 1 ? "" : "s"}
                     </span>
                   )}
                   {avgSessionSeconds != null && avgSessionSeconds > 0 && (
