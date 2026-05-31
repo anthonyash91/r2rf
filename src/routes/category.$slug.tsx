@@ -666,7 +666,29 @@ function CategoryPage() {
                                 // ── PDF: progress fill based on time open vs estimated reading time ──
                                 if (!isRead && mediaKind === "pdf") {
                                   const hasOpened = openedPdfsRef.current.has(item.id) || !!eng;
-                                  if (!hasOpened) return null; // hide button until PDF has been opened
+
+                                  if (!hasOpened) {
+                                    // Not yet opened — show dimmed badge with tooltip nudging them to open it
+                                    return (
+                                      <TooltipProvider delayDuration={100}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
+                                              className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer"
+                                            >
+                                              <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                              <span>{unreadLabel}</span>
+                                            </button>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
+                                            Open the PDF to start tracking your reading time
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    );
+                                  }
 
                                   const pdfMins = parseMinutes(item.duration);
                                   const pdfEstSec = pdfMins > 0 ? pdfMins * 60 : 0;
