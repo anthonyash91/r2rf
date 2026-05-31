@@ -443,16 +443,6 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
         <>
           <div className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
             <SummaryCard
-              icon={<Eye className="h-5 w-5" />}
-              label={aggregated.totalViews === 1 ? "Visit" : "Visits"}
-              value={aggregated.totalViews}
-            />
-            <SummaryCard
-              icon={<MousePointerClick className="h-5 w-5" />}
-              label={aggregated.totalClicks === 1 ? "Open" : "Opens"}
-              value={aggregated.totalClicks}
-            />
-            <SummaryCard
               icon={<BarChart3 className="h-5 w-5" />}
               label="Completion rate"
               value={aggregated.overallCompletionRate != null ? `${aggregated.overallCompletionRate}%` : "—"}
@@ -461,6 +451,16 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
               icon={<Clock className="h-5 w-5" />}
               label="Time spent"
               value={formatTimeSpent((data as any)?.totalSeconds ?? ((data as any)?.hoursSpent ?? 0) * 3600)}
+            />
+            <SummaryCard
+              icon={<Eye className="h-5 w-5" />}
+              label={aggregated.totalViews === 1 ? "Visit" : "Visits"}
+              value={aggregated.totalViews}
+            />
+            <SummaryCard
+              icon={<MousePointerClick className="h-5 w-5" />}
+              label={aggregated.totalClicks === 1 ? "Open" : "Opens"}
+              value={aggregated.totalClicks}
             />
             <SummaryCard
               icon={<UsersIcon className="h-5 w-5" />}
