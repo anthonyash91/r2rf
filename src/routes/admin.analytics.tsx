@@ -454,6 +454,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
               icon={<BarChart3 className="h-5 w-5" />}
               label="Completion rate"
               value={aggregated.overallCompletionRate != null ? `${aggregated.overallCompletionRate}%` : "—"}
+              note="all time"
             />
             <SummaryCard
               icon={<Clock className="h-5 w-5" />}
@@ -1365,12 +1366,13 @@ function UserCategorySection({
 
 /* ---------------- Shared subcomponents ---------------- */
 
-function SummaryCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
+function SummaryCard({ icon, label, value, note }: { icon: React.ReactNode; label: string; value: React.ReactNode; note?: string }) {
   return (
     <SectionCard as="div" padded={false} className="p-5">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         {icon}
         {label}
+        {note && <span className="ml-auto text-xs italic text-muted-foreground/70">{note}</span>}
       </div>
       <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{typeof value === "number" ? value.toLocaleString() : value}</p>
     </SectionCard>
