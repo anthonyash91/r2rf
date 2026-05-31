@@ -123,6 +123,9 @@ export function FileUploader({
         const uploadingLabel = typeName
           ? `${uploadProgress}% Uploading ${typeName}`
           : `${uploadProgress}% uploading…`;
+        // Text color: badge bg mixed against white so it renders as a visible
+        // light tint rather than a near-invisible transparent overlay
+        const uploadTextColor = `color-mix(in oklab, ${ps.color} 15%, white)`;
         return (
       <button
         type="button"
@@ -138,16 +141,16 @@ export function FileUploader({
               style={{ width: `${uploadProgress}%`, backgroundColor: ps.color, borderRight: `2px solid ${ps.border}` }}
             />
 
-            {/* Base text layer — badge background color, visible in unfilled area */}
-            <span className="relative z-10 flex items-center justify-center gap-2 w-full whitespace-nowrap tabular-nums" style={{ color: ps.bg }}>
+            {/* Base text layer — light tint of badge color */}
+            <span className="relative z-10 flex items-center justify-center gap-2 w-full whitespace-nowrap tabular-nums" style={{ color: uploadTextColor }}>
               <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
               {uploadingLabel}
             </span>
 
-            {/* Revealed text layer — same badge background color, clipped to fill */}
+            {/* Revealed text layer — same light tint, clipped to fill */}
             <span
               className="absolute inset-0 z-20 flex items-center justify-center gap-2 pointer-events-none whitespace-nowrap tabular-nums transition-[clip-path] duration-150"
-              style={{ clipPath: `inset(0 ${100 - uploadProgress}% 0 0)`, color: ps.bg }}
+              style={{ clipPath: `inset(0 ${100 - uploadProgress}% 0 0)`, color: uploadTextColor }}
             >
               <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
               {uploadingLabel}
