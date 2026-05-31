@@ -862,7 +862,8 @@ function UsersReportTab({
                       const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "—";
                       const meta: string[] = [];
                       if (u.username) meta.push(`@${u.username}`);
-                      if (isAll && (u as any).facility) meta.push((u as any).facility);
+                      if ((u as any).inmate_pin) meta.push(`PIN: ${(u as any).inmate_pin}`);
+                      if (isAll && (u as any).facility_label) meta.push((u as any).facility_label);
                       const lastLoginIso = (u as any).last_sign_in_at || (u as any).last_login_date || null;
                       return (
                         <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 pb-6 sm:pb-4">
@@ -912,16 +913,18 @@ function exportFacilityUsersCsv(
 ) {
   const lines: string[] = [];
   const headers = includeFacility
-    ? ["First name", "Last name", "Username", "Facility", "Joined", "Last login", "Engagement tier", "Facility percentile"]
-    : ["First name", "Last name", "Username", "Joined", "Last login", "Engagement tier", "Facility percentile"];
+    ? ["First name", "Last name", "Username", "PIN", "Facility", "Joined", "Last login", "Engagement tier", "Facility percentile"]
+    : ["First name", "Last name", "Username", "PIN", "Joined", "Last login", "Engagement tier", "Facility percentile"];
   lines.push(headers.map(csvEscape).join(","));
   for (const u of users) {
     const lastLogin = u.last_sign_in_at || u.last_login_date || "";
     const tier = (u as any).engagement_tier ?? "";
     const pct = (u as any).facility_percentile != null ? `${(u as any).facility_percentile}%` : "";
+    const pin = (u as any).inmate_pin ?? "";
+    const facilityName = (u as any).facility_label || u.facility || "";
     const row = includeFacility
-      ? [u.first_name, u.last_name, u.username, u.facility ?? "", fmtDate(u.created_at), fmtDate(lastLogin), tier, pct]
-      : [u.first_name, u.last_name, u.username, fmtDate(u.created_at), fmtDate(lastLogin), tier, pct];
+      ? [u.first_name, u.last_name, u.username, pin, facilityName, fmtDate(u.created_at), fmtDate(lastLogin), tier, pct]
+      : [u.first_name, u.last_name, u.username, pin, fmtDate(u.created_at), fmtDate(lastLogin), tier, pct];
     lines.push(row.map(csvEscape).join(","));
   }
   downloadCsv(

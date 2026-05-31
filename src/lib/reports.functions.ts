@@ -439,7 +439,7 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     for (let from = 0; ; from += PAGE_SIZE) {
       let pq = supabaseAdmin
         .from("user_profiles")
-        .select("user_id, username, first_name, last_name, facility, created_at")
+        .select("user_id, username, first_name, last_name, facility, created_at, inmate_pin")
         .order("created_at", { ascending: false })
         .range(from, from + PAGE_SIZE - 1);
       if (!includeSynthetic) pq = pq.eq("is_synthetic", false);
@@ -497,6 +497,14 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
       }
     }
 
+    // Fetch facility labels so we can show names instead of slugs
+    const { data: facilitiesData } = await supabaseAdmin
+      .from("facilities")
+      .select("value, label");
+    const facilityLabelMap = new Map<string, string>(
+      (facilitiesData ?? []).map((f: any) => [f.value as string, f.label as string])
+    );
+
     // Fetch engagement tiers from pre-computed user_stats
     const tierById = new Map<string, { tier: string | null; percentile: number | null }>();
     if (ids.length > 0) {
@@ -522,6 +530,8 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
         first_name: (p.first_name as string) ?? "",
         last_name: (p.last_name as string) ?? "",
         facility: (p.facility as string) ?? "",
+        facility_label: facilityLabelMap.get(p.facility as string) ?? (p.facility as string) ?? "",
+        inmate_pin: (p.inmate_pin as string) ?? null,
         email: emailById.get(p.user_id as string) ?? "",
         created_at: p.created_at as string,
         last_sign_in_at: lastSignInById.get(p.user_id as string) ?? null,
