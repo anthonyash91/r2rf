@@ -69,6 +69,17 @@ const EMPTY_CATEGORIES: import("@/lib/categories").Category[] = [];
 function AdminCategoriesContent() {
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
+
+  // Invalidate every cache that shows categories to any user, so changes
+  // appear immediately without waiting for staleTime to expire.
+  const invalidateAllCategoryQueries = () => {
+    qc.invalidateQueries({ queryKey: ["admin", "categories"] });
+    qc.invalidateQueries({ queryKey: ["admin", "category-facility-map"] });
+    qc.invalidateQueries({ queryKey: ["admin", "category-items"] });
+    qc.invalidateQueries({ queryKey: ["categories"] });           // home page (["categories", "public"])
+    qc.invalidateQueries({ queryKey: ["dashboard-categories"] }); // user dashboard (all facility variants)
+    qc.invalidateQueries({ queryKey: ["facility-categories"] });  // facility home pages
+  };
   const [creating, setCreating] = useState(false);
   const [expandedCourses, setExpandedCourses] = useState(new Set<string>());
 
@@ -214,9 +225,7 @@ function AdminCategoriesContent() {
     onSuccess: () => {
       toast.success("Category created");
       setCreating(false);
-      qc.invalidateQueries({ queryKey: ["admin", "categories"] });
-      qc.invalidateQueries({ queryKey: ["admin", "category-facility-map"] });
-      qc.invalidateQueries({ queryKey: ["categories"] });
+      invalidateAllCategoryQueries();
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -230,7 +239,7 @@ function AdminCategoriesContent() {
         .eq("id", cat.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "categories"] }),
+    onSuccess: () => invalidateAllCategoryQueries(),
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -241,7 +250,7 @@ function AdminCategoriesContent() {
     },
     onSuccess: () => {
       toast.success("Category deleted");
-      qc.invalidateQueries({ queryKey: ["admin", "categories"] });
+      invalidateAllCategoryQueries();
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -253,9 +262,9 @@ function AdminCategoriesContent() {
       if (error) throw error;
       return ids.length;
     },
-    onSuccess: async (deleted) => {
+    onSuccess: (deleted) => {
       toast.success(`Deleted ${deleted} ${deleted === 1 ? "category" : "categories"}`);
-      await qc.invalidateQueries({ queryKey: ["admin", "categories"] });
+      invalidateAllCategoryQueries();
       bulk.clear();
     },
     onError: (e: any) => toast.error(e.message),
@@ -273,10 +282,7 @@ function AdminCategoriesContent() {
         ),
       );
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin", "categories"] });
-      qc.invalidateQueries({ queryKey: ["categories"] });
-    },
+    onSuccess: () => invalidateAllCategoryQueries(),
     onError: (e: any) => toast.error(e.message),
   });
 
