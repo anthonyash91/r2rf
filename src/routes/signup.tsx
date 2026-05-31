@@ -15,8 +15,8 @@ import {
 import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
 import { syntheticEmail } from "@/lib/user-signup";
 import { listFacilities } from "@/lib/facilities.functions";
-import { useActiveFacilitySlug } from "@/lib/facility-context";
-import { useActiveInmatePin } from "@/lib/inmate-pin-context";
+import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
+import { useActiveInmatePin, setActiveInmatePin } from "@/lib/inmate-pin-context";
 import { questionLabel } from "@/lib/security-questions";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -239,30 +239,31 @@ function SignupPageContent() {
         });
         if (error) throw new Error(t("signup.invalidLogin"));
 
-        // Facility + PIN gate: if the user arrived via a facility link (?site=),
-        // verify the authenticated account actually belongs to that facility.
-        // If a PIN is also stored (from ?user= on initial visit), verify it too.
-        // Admins, contributors, and facilityUsers are exempt — they can sign in anywhere.
-        if (lockedFacility) {
-          const { data: { user: authedUser } } = await supabase.auth.getUser();
-          if (authedUser) {
-            const [{ data: roleRow }, { data: profile }] = await Promise.all([
-              supabase.from("user_roles").select("role")
-                .eq("user_id", authedUser.id)
-                .in("role", ["admin", "contributor", "facilityUser"])
-                .maybeSingle(),
-              (supabase as any).from("user_profiles").select("facility, inmate_pin")
-                .eq("user_id", authedUser.id)
-                .maybeSingle(),
-            ]);
-            // Privileged roles bypass the check entirely
-            if (!roleRow) {
-              const facilityMatch = profile?.facility === lockedFacility.value;
-              const pinMatch = !activeInmatePin || profile?.inmate_pin === activeInmatePin;
-              if (!facilityMatch || !pinMatch) {
-                await supabase.auth.signOut();
-                throw new Error(t("signup.facilityMismatch"));
-              }
+        // Role-aware post-auth checks:
+        // - Privileged users (admin/contributor/facilityUser) → clear facility/PIN context
+        //   so nav links don't send them to ?site= URLs
+        // - Regular users via facility link → verify facility + PIN match
+        const { data: { user: authedUser } } = await supabase.auth.getUser();
+        if (authedUser) {
+          const { data: roleRow } = await supabase.from("user_roles").select("role")
+            .eq("user_id", authedUser.id)
+            .in("role", ["admin", "contributor", "facilityUser"])
+            .maybeSingle();
+
+          if (roleRow) {
+            // Privileged — clear session so nav/redirects don't carry facility params
+            setActiveFacilitySlug(null);
+            setActiveInmatePin(null);
+          } else if (lockedFacility) {
+            // Regular user via ?site= link — verify they belong to this facility + PIN
+            const { data: profile } = await (supabase as any)
+              .from("user_profiles").select("facility, inmate_pin")
+              .eq("user_id", authedUser.id).maybeSingle();
+            const facilityMatch = profile?.facility === lockedFacility.value;
+            const pinMatch = !activeInmatePin || profile?.inmate_pin === activeInmatePin;
+            if (!facilityMatch || !pinMatch) {
+              await supabase.auth.signOut();
+              throw new Error(t("signup.facilityMismatch"));
             }
           }
         }
