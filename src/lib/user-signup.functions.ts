@@ -62,6 +62,17 @@ function verifyChallenge(token: string, answer: number): boolean {
 
 
 export const getSignupChallenge = createServerFn({ method: "GET" }).handler(async () => {
+  // Rate-limit challenge generation: brute-force of 81 possible answers is trivial,
+  // so throttle how many challenges an IP can request per minute.
+  const ip = getClientIp(getRequest());
+  await checkAndRecordAttempt({
+    table: "signup_attempts",
+    ip,
+    windowMs: 60 * 1000, // 1 minute window
+    max: 10,
+    extraColumns: { username: "challenge" },
+    errorMessage: "Too many requests. Please wait a moment before trying again.",
+  });
   const a = randomInt(1, 10);
   const b = randomInt(1, 10);
   const expiresAt = Date.now() + CHALLENGE_TTL_MS;

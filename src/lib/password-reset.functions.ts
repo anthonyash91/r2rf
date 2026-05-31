@@ -41,15 +41,20 @@ async function findUserIdByUsername(username: string): Promise<string | null> {
 async function checkAndRecordResetAttempt(ip: string | null, username: string) {
   if (!ip) return;
   const since = new Date(Date.now() - RESET_WINDOW_MS).toISOString();
-  const { count } = await supabaseAdmin
-    .from("password_reset_attempts")
-    .select("id", { count: "exact", head: true })
-    .eq("ip_address", ip)
-    .gte("created_at", since);
-  if ((count ?? 0) >= RESET_MAX_PER_IP) {
-    throw new Error("Too many reset attempts. Please try again later.");
+  // Use an advisory lock inside the DB function to make the check+insert atomic,
+  // preventing concurrent requests from racing past the rate limit.
+  const { error } = await supabaseAdmin.rpc("check_and_record_reset_attempt" as any, {
+    p_ip: ip,
+    p_username: username.toLowerCase(),
+    p_since: since,
+    p_max: RESET_MAX_PER_IP,
+  });
+  if (error) {
+    if (error.message.includes("rate_limited")) {
+      throw new Error("Too many reset attempts. Please try again later.");
+    }
+    throw new Error(error.message);
   }
-  await supabaseAdmin.from("password_reset_attempts").insert({ ip_address: ip, username: username.toLowerCase() });
 }
 
 /**

@@ -22,8 +22,9 @@ type Props = {
 
 function extractStoragePath(url: string): string | null {
   try {
+    if (!SUPABASE_URL || !url) return null;
     const u = new URL(url);
-    if (!SUPABASE_URL || !u.href.startsWith(SUPABASE_URL)) return null;
+    if (!u.href.startsWith(SUPABASE_URL)) return null;
     const match = u.pathname.match(new RegExp(`/object/public/${BUCKET}/(.+)$`));
     return match ? decodeURIComponent(match[1]) : null;
   } catch {
