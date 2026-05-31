@@ -432,6 +432,12 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         const mediaPct = eng?.mediaProgressSeconds && eng?.mediaDurationSeconds && eng.mediaDurationSeconds > 0
           ? Math.min(100, Math.round((eng.mediaProgressSeconds / eng.mediaDurationSeconds) * 100))
           : null;
+        const isPdfItem = ((i.file_url && /\.pdf(\?|#|$)/i.test(i.file_url as string)) || (i.url && /\.pdf(\?|#|$)/i.test(i.url as string)));
+        const pdfEstSec = isPdfItem ? parseMinutes(i.duration) * 60 : 0;
+        const sessionSecs = eng?.sessionSeconds ?? 0;
+        const pdfProgressPct = !readSet.has(i.id) && isPdfItem && pdfEstSec > 0 && sessionSecs > 0
+          ? Math.min(100, Math.round((sessionSecs / (pdfEstSec * 0.95)) * 100))
+          : null;
         return {
           id: i.id,
           category_id: i.category_id,
@@ -443,8 +449,9 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
           file_url: i.file_url ?? null,
           read: readSet.has(i.id),
           read_at: readAtByItem.get(i.id as string) ?? null,
-          sessionSeconds: eng?.sessionSeconds ?? 0,
+          sessionSeconds: sessionSecs,
           mediaProgressPct: mediaPct,
+          pdfProgressPct,
           manualCompletionPct: eng?.manualCompletionPct ?? null,
         };
       }),
