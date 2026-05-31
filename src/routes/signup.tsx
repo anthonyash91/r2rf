@@ -486,7 +486,7 @@ function SignupPageContent() {
 
             <div className={cn("rounded-lg border border-border bg-[#fffdf8] px-6 pb-2", mode === "sign-up" ? "pt-6" : "pt-4")}>
             <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
-              {mode === "sign-up" && (
+              {mode === "sign-up" && !signupBlockReason && (
                 <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
                   Please sign up using your <strong>correct, real information</strong>. Accurate details ensure you can receive credit in the future for participating in this program.
                 </div>
@@ -537,21 +537,21 @@ function SignupPageContent() {
               </div>
 
               {mode === "sign-up" && signupBlockReason && (
-                <div className="py-4 space-y-2 text-center">
+                <div className="py-2 space-y-2">
                   {signupBlockReason === "no-facility" && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground text-center">
                       Signup is disabled for non-facility users. Contact the admin if you feel you need an account created.
                     </p>
                   )}
                   {signupBlockReason === "no-pin" && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground text-center">
                       A valid inmate PIN is required to sign up. Please use the link provided by your facility.
                     </p>
                   )}
                   {signupBlockReason === "pin-taken" && (
-                    <p className="text-sm text-muted-foreground">
-                      This inmate PIN is already registered at this facility. If you believe this is an error, please contact your facility.
-                    </p>
+                    <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
+                      {t("signup.pinAlreadyRegistered")}
+                    </div>
                   )}
                 </div>
               )}
