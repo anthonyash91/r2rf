@@ -115,9 +115,9 @@ export const getContentItemStats = createServerFn({ method: "POST" })
  * Scoped to a facility when facilityValue is provided.
  */
 /**
- * Reads pre-computed growth/retention/program-completion stats from nightly tables.
- * Scoped by facility when facilityValue is provided.
- * All heavy computation now runs in refresh_analytics_stats() — not in the request path.
+ * Growth, retention, and program completion stats.
+ * Retention + weekly growth: pre-computed nightly (acceptable staleness — daily metrics).
+ * Program completion: computed live from user_content_progress (must be current).
  */
 export const getGrowthStats = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -128,7 +128,27 @@ export const getGrowthStats = createServerFn({ method: "POST" })
     await assertAnyAdmin(context.userId);
     const facilityValue = data.facilityValue ?? null;
 
-    const [retentionRes, weeklyRes, programRes] = await Promise.all([
+    // Exclude staff from program completion counts
+    const { data: staffRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .in("role", ["admin", "contributor", "tester", "facilityUser"]);
+    const staffIds = new Set<string>((staffRoles ?? []).map((r: any) => r.user_id as string));
+
+    // Real user IDs scoped to facility if needed
+    let realUserIds: Set<string> | null = null;
+    if (facilityValue) {
+      const { data: profs } = await supabaseAdmin
+        .from("user_profiles")
+        .select("user_id")
+        .eq("facility", facilityValue)
+        .eq("is_synthetic", false);
+      realUserIds = new Set(
+        (profs ?? []).map((p: any) => p.user_id as string).filter((id) => !staffIds.has(id))
+      );
+    }
+
+    const [retentionRes, weeklyRes, catsRes, itemsRes, progressRes] = await Promise.all([
       (supabaseAdmin as any)
         .from("analytics_retention")
         .select("day7_rate, day30_rate, day60_rate, total_users")
@@ -138,12 +158,80 @@ export const getGrowthStats = createServerFn({ method: "POST" })
         .select("week_ending, signups, active_users")
         .is("facility_value", facilityValue)
         .order("week_ending", { ascending: true }),
-      (supabaseAdmin as any)
-        .from("analytics_program_completion")
-        .select("category_id, name, total_items, users_engaged, users_completed, completion_rate")
-        .is("facility_value", facilityValue)
-        .order("completion_rate", { ascending: false, nullsFirst: false }),
+      supabaseAdmin
+        .from("categories")
+        .select("id, name")
+        .eq("published", true),
+      supabaseAdmin
+        .from("content_items")
+        .select("id, category_id")
+        .eq("published", true),
+      // Live completions — user_content_progress is small enough to scan directly
+      (async () => {
+        const PAGE = 1000;
+        const all: any[] = [];
+        for (let from = 0; ; from += PAGE) {
+          let q = supabaseAdmin
+            .from("user_content_progress")
+            .select("user_id, content_item_id, category_id")
+            .range(from, from + PAGE - 1);
+          if (realUserIds !== null) {
+            if (realUserIds.size === 0) break;
+            q = (q as any).in("user_id", [...realUserIds]);
+          } else {
+            // Overall: exclude staff and synthetic
+            const { data: synthRows } = await supabaseAdmin
+              .from("user_profiles").select("user_id").eq("is_synthetic", true);
+            const syntheticIds = new Set((synthRows ?? []).map((r: any) => r.user_id as string));
+            const excludeAll = [...staffIds, ...syntheticIds, "00000000-0000-0000-0000-000000000000"];
+            if (excludeAll.length > 0) q = (q as any).not("user_id", "in", `(${excludeAll.join(",")})`);
+          }
+          const { data, error } = await q;
+          if (error || !data || data.length === 0) break;
+          all.push(...data);
+          if (data.length < PAGE) break;
+        }
+        return all;
+      })(),
     ]);
+
+    // Build category item sets and compute program completion live
+    const catItems = new Map<string, Set<string>>();
+    for (const item of (itemsRes.data ?? []) as any[]) {
+      const s = catItems.get(item.category_id) ?? new Set<string>();
+      s.add(item.id as string);
+      catItems.set(item.category_id as string, s);
+    }
+
+    // For each user-category pair: count distinct items completed
+    const userCatDone = new Map<string, Map<string, number>>();
+    for (const r of progressRes as any[]) {
+      const catId = r.category_id as string;
+      const userId = r.user_id as string;
+      if (!userCatDone.has(catId)) userCatDone.set(catId, new Map());
+      userCatDone.get(catId)!.set(userId, (userCatDone.get(catId)!.get(userId) ?? 0) + 1);
+    }
+
+    const programCompletion = (catsRes.data ?? []).map((cat: any) => {
+      const items = catItems.get(cat.id as string) ?? new Set();
+      const totalItems = items.size;
+      const userMap = userCatDone.get(cat.id as string) ?? new Map();
+      let usersEngaged = 0, usersCompleted = 0;
+      for (const itemsDone of userMap.values()) {
+        usersEngaged++;
+        if (itemsDone >= totalItems) usersCompleted++;
+      }
+      const rate = usersEngaged > 0 ? Math.round(usersCompleted / usersEngaged * 100) : null;
+      return {
+        categoryId: cat.id as string,
+        name: cat.name as string,
+        totalItems,
+        usersEngaged,
+        usersCompleted,
+        rate,
+      };
+    }).filter((p) => p.usersEngaged > 0)
+      .sort((a, b) => (b.rate ?? -1) - (a.rate ?? -1));
 
     const ret = retentionRes.data?.[0] ?? null;
 
@@ -158,14 +246,7 @@ export const getGrowthStats = createServerFn({ method: "POST" })
         signups: r.signups as number,
         activeUsers: r.active_users as number,
       })),
-      programCompletion: (programRes.data ?? []).map((r: any) => ({
-        categoryId: r.category_id as string,
-        name: r.name as string,
-        totalItems: r.total_items as number,
-        usersEngaged: r.users_engaged as number,
-        usersCompleted: r.users_completed as number,
-        rate: r.completion_rate as number | null,
-      })),
+      programCompletion,
       totalUsers: (ret?.total_users as number) ?? 0,
     };
   });
