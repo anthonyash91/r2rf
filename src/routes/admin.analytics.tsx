@@ -83,6 +83,7 @@ type AggregatedRow = {
   clicks: number;
   completionRate: number | null;
   totalSeconds: number;
+  depth: number | null;
   items: { item: ContentItem; clicks: number; openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }[];
 };
 
@@ -351,6 +352,8 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
     const itemStats: Record<string, { openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }> = d.itemStats ?? {};
     const catCompletionRate: Record<string, number | null> = d.catCompletionRate ?? {};
     const catTotalSeconds: Record<string, number> = d.catTotalSeconds ?? {};
+    const catDepth: Record<string, number | null> = d.catDepth ?? {};
+    const typeStats: Record<string, { itemCount: number; opens: number; completions: number; completionRate: number | null; totalSeconds: number }> = d.typeStats ?? {};
     const itemsByCategory = new Map<string, ContentItem[]>();
     for (const it of (d.items ?? []) as ContentItem[]) {
       const list = itemsByCategory.get(it.category_id) ?? [];
@@ -371,9 +374,9 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
           };
         })
         .sort((a, b) => b.clicks - a.clicks);
-      return { category: cat, views: catViews[cat.id] ?? 0, clicks: catClicks[cat.id] ?? 0, completionRate: catCompletionRate[cat.id] ?? null, totalSeconds: catTotalSeconds[cat.id] ?? 0, items };
+      return { category: cat, views: catViews[cat.id] ?? 0, clicks: catClicks[cat.id] ?? 0, completionRate: catCompletionRate[cat.id] ?? null, totalSeconds: catTotalSeconds[cat.id] ?? 0, depth: catDepth[cat.id] ?? null, items };
     });
-    return { rows, totalViews: d.totalViews ?? 0, totalClicks: d.totalClicks ?? 0, overallCompletionRate: d.overallCompletionRate ?? null };
+    return { rows, totalViews: d.totalViews ?? 0, totalClicks: d.totalClicks ?? 0, overallCompletionRate: d.overallCompletionRate ?? null, typeStats };
   }, [data]);
 
   const exportLabel =
@@ -474,6 +477,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
           </div>
           <CategoryList rows={aggregated.rows} />
           <MostLeastEngaged rows={aggregated.rows} />
+          <ContentTypeBreakdown typeStats={aggregated.typeStats} />
         </>
       )}
     </div>
@@ -481,11 +485,13 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
 }
 
 function exportUsageCsv(
-  aggregated: { rows: AggregatedRow[]; totalViews: number; totalClicks: number; overallCompletionRate?: number | null },
+  aggregated: { rows: AggregatedRow[]; totalViews: number; totalClicks: number; overallCompletionRate?: number | null; typeStats?: Record<string, { itemCount: number; opens: number; completions: number; completionRate: number | null; totalSeconds: number }> },
   label: string,
   summary: { hoursSpent: number; usersSignedUp: number; totalSeconds?: number },
 ) {
   const lines: string[] = [];
+
+  // Summary
   lines.push(["Overall usage"].map(csvEscape).join(","));
   lines.push(["Metric", "Value"].map(csvEscape).join(","));
   lines.push(["Visits", aggregated.totalViews].map(csvEscape).join(","));
@@ -494,8 +500,30 @@ function exportUsageCsv(
   lines.push(["Time spent", formatTimeSpent(summary.totalSeconds ?? summary.hoursSpent * 3600)].map(csvEscape).join(","));
   lines.push(["Users signed up", summary.usersSignedUp].map(csvEscape).join(","));
   lines.push("");
+
+  // Content type breakdown
+  const typeRows = Object.entries(aggregated.typeStats ?? {})
+    .filter(([, t]) => t.opens > 0 || t.completions > 0)
+    .sort((a, b) => (b[1].completionRate ?? -1) - (a[1].completionRate ?? -1));
+  if (typeRows.length > 0) {
+    lines.push(["Content type preference"].map(csvEscape).join(","));
+    lines.push(["Type", "Items", "Opens", "Completions", "Completion rate", "Time spent"].map(csvEscape).join(","));
+    for (const [type, t] of typeRows) {
+      lines.push([
+        csvEscape(type.charAt(0).toUpperCase() + type.slice(1)),
+        t.itemCount,
+        t.opens,
+        t.completions,
+        t.completionRate != null ? `${t.completionRate}%` : "",
+        t.totalSeconds > 0 ? formatTimeSpent(t.totalSeconds) : "",
+      ].join(","));
+    }
+    lines.push("");
+  }
+
+  // Per-category and per-item detail
   lines.push(
-    ["Category", "Category slug", "Item title", "Item type", "Added", "Visits", "Opens", "Completion rate", "Openers", "Completions", "Avg time spent"]
+    ["Category", "Category slug", "Item title", "Item type", "Added", "Visits", "Opens", "Completion rate", "Avg depth", "Openers", "Completions", "Drop-offs", "Avg time spent"]
       .map(csvEscape)
       .join(","),
   );
@@ -510,6 +538,8 @@ function exportUsageCsv(
         row.views,
         row.clicks,
         row.completionRate != null ? `${row.completionRate}%` : "",
+        row.depth != null ? row.depth : "",
+        "",
         "",
         "",
         row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : "",
@@ -526,8 +556,10 @@ function exportUsageCsv(
           "",
           clicks,
           completionRate != null ? `${completionRate}%` : "",
+          "",
           openCount || "",
           completeCount || "",
+          openCount > 0 ? openCount - completeCount : "",
           avgSessionSeconds ? formatTimeSpent(avgSessionSeconds) : "",
         ].join(","),
       );
@@ -1479,6 +1511,9 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           {row.completionRate != null && (
             <Stat position="middle" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion rate" value={row.completionRate} suffix="%" />
           )}
+          {row.depth != null && (
+            <Stat position="middle" icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="avg depth" value={row.depth} />
+          )}
           <Stat position="last" icon={<Clock className="h-3.5 w-3.5" />} label="time spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} />
         </div>
       </button>
@@ -1487,7 +1522,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           <p className="p-5 text-sm text-muted-foreground">No content items.</p>
         ) : (
           <ul className="divide-y divide-border">
-            {row.items.map(({ item, clicks, completionRate, avgSessionSeconds }) => (
+            {row.items.map(({ item, clicks, openCount, completeCount, completionRate, avgSessionSeconds }) => (
               <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] px-6 py-[19px]">
                 <Badge variant="type" type={item.type}>
                   {item.type}
@@ -1507,6 +1542,12 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                     <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
                       <BarChart3 className="h-3 w-3" />
                       {completionRate}%
+                    </span>
+                  )}
+                  {openCount > 0 && (
+                    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
+                      <Circle className="h-3 w-3" />
+                      {openCount - completeCount} drop-offs
                     </span>
                   )}
                   {avgSessionSeconds != null && avgSessionSeconds > 0 && (
@@ -1584,6 +1625,62 @@ function MostLeastEngaged({ rows }: { rows: AggregatedRow[] }) {
           </SectionCard>
         </div>
       )}
+    </div>
+  );
+}
+
+function ContentTypeBreakdown({
+  typeStats,
+}: {
+  typeStats: Record<string, { itemCount: number; opens: number; completions: number; completionRate: number | null; totalSeconds: number }>;
+}) {
+  const rows = Object.entries(typeStats)
+    .filter(([, t]) => t.opens > 0 || t.completions > 0)
+    .sort((a, b) => (b[1].completionRate ?? -1) - (a[1].completionRate ?? -1));
+
+  if (rows.length === 0) return null;
+
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  return (
+    <div className="mt-10">
+      <h3 className="font-display text-base font-semibold mb-3">Content type preference</h3>
+      <SectionCard padded={false} className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground font-medium">
+                <th className="text-left px-4 py-3">Type</th>
+                <th className="text-right px-4 py-3">Items</th>
+                <th className="text-right px-4 py-3">Opens</th>
+                <th className="text-right px-4 py-3">Completions</th>
+                <th className="text-right px-4 py-3">Completion rate</th>
+                <th className="text-right px-4 py-3">Time spent</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {rows.map(([type, t]) => (
+                <tr key={type} className="hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-3 font-medium">{capitalize(type)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{t.itemCount}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{t.opens}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{t.completions}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    {t.completionRate != null ? (
+                      <span className={t.completionRate >= 70 ? "text-[var(--color-accent)] font-medium" : t.completionRate >= 40 ? "" : "text-muted-foreground"}>
+                        {t.completionRate}%
+                      </span>
+                    ) : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                    {t.totalSeconds > 0 ? formatTimeSpent(t.totalSeconds) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
     </div>
   );
 }

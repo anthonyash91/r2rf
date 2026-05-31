@@ -283,14 +283,32 @@ export const getUsageReport = createServerFn({ method: "POST" })
     }
     const overallCompletionRate = aggOpens > 0 ? Math.round(aggCompletes / aggOpens * 100) : null;
 
-    // Per-category completion rates (only from items with tracked opens)
+    // Build lookup maps for per-category and per-type aggregation
+    const itemCatMap = new Map<string, string>();
+    const itemTypeMap = new Map<string, string>();
     const catItemMap: Record<string, string[]> = {};
     for (const it of filteredItems as any[]) {
+      itemCatMap.set(it.id as string, it.category_id as string);
+      itemTypeMap.set(it.id as string, ((it.type as string) ?? 'other').toLowerCase());
       if (!catItemMap[it.category_id]) catItemMap[it.category_id] = [];
       catItemMap[it.category_id].push(it.id as string);
     }
+
+    // Per-category completion rates, time, and depth
     const catCompletionRate: Record<string, number | null> = {};
     const catTotalSeconds: Record<string, number> = {};
+
+    // Category depth: average items completed per user in each category
+    const catUserCompletions: Record<string, Record<string, number>> = {};
+    for (const r of (progressRes?.data ?? []) as any[]) {
+      const id = r.content_item_id as string;
+      if (!visibleItemIds.has(id)) continue;
+      const catId = itemCatMap.get(id);
+      if (!catId) continue;
+      if (!catUserCompletions[catId]) catUserCompletions[catId] = {};
+      catUserCompletions[catId][r.user_id as string] = (catUserCompletions[catId][r.user_id as string] ?? 0) + 1;
+    }
+    const catDepth: Record<string, number | null> = {};
     for (const cat of filteredCategories as any[]) {
       let opens = 0, completes = 0, catSecs = 0;
       for (const itemId of catItemMap[cat.id] ?? []) {
@@ -300,6 +318,29 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
       catCompletionRate[cat.id] = opens > 0 ? Math.round(completes / opens * 100) : null;
       catTotalSeconds[cat.id] = catSecs;
+
+      const userMap = catUserCompletions[cat.id];
+      if (!userMap || Object.keys(userMap).length === 0) {
+        catDepth[cat.id] = null;
+      } else {
+        const counts = Object.values(userMap);
+        catDepth[cat.id] = Math.round((counts.reduce((a, b) => a + b, 0) / counts.length) * 10) / 10;
+      }
+    }
+
+    // Content type preference stats
+    const typeStatsRaw: Record<string, { itemCount: number; opens: number; completions: number; totalSeconds: number }> = {};
+    for (const itemId of visibleItemIds) {
+      const type = itemTypeMap.get(itemId) ?? 'other';
+      if (!typeStatsRaw[type]) typeStatsRaw[type] = { itemCount: 0, opens: 0, completions: 0, totalSeconds: 0 };
+      typeStatsRaw[type].itemCount += 1;
+      const s = itemStats[itemId];
+      if (s) { typeStatsRaw[type].opens += s.openCount; typeStatsRaw[type].completions += s.completeCount; }
+      typeStatsRaw[type].totalSeconds += itemTotalSeconds[itemId] ?? 0;
+    }
+    const typeStats: Record<string, { itemCount: number; opens: number; completions: number; completionRate: number | null; totalSeconds: number }> = {};
+    for (const [type, t] of Object.entries(typeStatsRaw)) {
+      typeStats[type] = { ...t, completionRate: t.opens > 0 ? Math.round(t.completions / t.opens * 100) : null };
     }
 
     return {
@@ -308,7 +349,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
       catViews, catClicks, itemClicks,
       totalViews, totalClicks,
       facilityUserCount, totalUsers, hoursSpent, totalSeconds,
-      itemStats, catCompletionRate, catTotalSeconds, overallCompletionRate,
+      itemStats, catCompletionRate, catTotalSeconds, catDepth, typeStats, overallCompletionRate,
     };
   });
 
