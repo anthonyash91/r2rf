@@ -490,7 +490,13 @@ function CategoryPage() {
                         setPdfViewer(payload);
                         openedPdfsRef.current.add(item.id);
                       }
-                      else if (mediaKind === "image") setImageViewer(payload);
+                      else if (mediaKind === "image") {
+                        setImageViewer(payload);
+                        // Opening an image = viewed — auto-mark immediately
+                        if (!readSet.has(item.id)) {
+                          toggleRead.mutate({ itemId: item.id, markRead: true });
+                        }
+                      }
                     };
 
                     const handleActivate = () => {
@@ -746,6 +752,29 @@ function CategoryPage() {
                                         </TooltipTrigger>
                                         <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
                                           {tipLabel}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  );
+                                }
+
+                                // ── Unread image: dimmed + tooltip (auto-marks the moment they open it) ──
+                                if (!isRead && mediaKind === "image") {
+                                  return (
+                                    <TooltipProvider delayDuration={100}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
+                                            className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
+                                          >
+                                            <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                            <span>{unreadLabel}</span>
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
+                                          View the image to mark it as seen
                                         </TooltipContent>
                                       </Tooltip>
                                     </TooltipProvider>
