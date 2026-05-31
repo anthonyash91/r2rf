@@ -26,7 +26,7 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
 import { withActionWord, parseMinutes } from "@/lib/duration";
-import { formatTimeSpent } from "@/lib/date-format";
+import { formatTimeSpent, fmtDateShort } from "@/lib/date-format";
 import { readStatusLabels } from "@/lib/read-status";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
@@ -217,6 +217,7 @@ function DashboardPage() {
       }
       const reads = new Map<string, number>();
       const readSet = new Set<string>();
+      const readAtMap = new Map<string, string>();
       const readDays = new Set<string>();
       for (const row of readRes.data ?? []) {
         // Only count reads for items the user can see
@@ -224,6 +225,7 @@ function DashboardPage() {
         reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
         readSet.add(row.content_item_id as string);
         if ((row as any).created_at) {
+          readAtMap.set(row.content_item_id as string, (row as any).created_at as string);
           const d = new Date((row as any).created_at as string);
           readDays.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
         }
@@ -245,7 +247,7 @@ function DashboardPage() {
           manualCompletionPct: r.manual_completion_pct as number | null,
         });
       }
-      return { totals, reads, itemsByCat, readSet, recentCats, newItemSet, totalSeconds, readDays, engagementMap };
+      return { totals, reads, itemsByCat, readSet, readAtMap, recentCats, newItemSet, totalSeconds, readDays, engagementMap };
     },
   });
 
@@ -651,6 +653,7 @@ function CategoryAccordion({
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const engagementMap = progress?.engagementMap ?? new Map();
+  const readAtMap = progress?.readAtMap ?? new Map<string, string>();
   return (
     <div className="flex flex-col [&>section]:rounded-none [&>section:first-child]:rounded-t-2xl [&>section:last-child]:rounded-b-2xl [&>section:not(:first-child)]:-mt-px">
       {categories.map((c) => {
@@ -666,6 +669,7 @@ function CategoryAccordion({
             category={c}
             items={items}
             readSet={readSet}
+            readAtMap={readAtMap}
             newItemSet={newItemSet}
             hasRecent={hasRecent}
             total={total}
@@ -688,6 +692,7 @@ function CategoryProgressSection({
   category,
   items,
   readSet,
+  readAtMap,
   newItemSet,
   hasRecent,
   total,
@@ -703,6 +708,7 @@ function CategoryProgressSection({
   category: Category;
   items: CatItem[];
   readSet: Set<string>;
+  readAtMap: Map<string, string>;
   newItemSet: Set<string>;
   hasRecent: boolean;
   total: number;
@@ -835,6 +841,7 @@ function CategoryProgressSection({
                               : labels.read
                           }
                           unreadLabel={labels.unread}
+                          readAt={isRead ? (fmtDateShort(readAtMap.get(it.id)) || null) : null}
                           className="ml-auto"
                         />
                       );

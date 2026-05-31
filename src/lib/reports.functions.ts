@@ -388,6 +388,12 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
       (progRes.data ?? []).map((r: any) => r.content_item_id as string),
     );
 
+    // Build read-date map: contentItemId → ISO date string of when item was marked read
+    const readAtByItem = new Map<string, string>();
+    for (const r of (progRes.data ?? []) as any[]) {
+      if (r.created_at) readAtByItem.set(r.content_item_id as string, r.created_at as string);
+    }
+
     // Build engagement map: contentItemId → { sessionSeconds, mediaProgressSeconds, mediaDurationSeconds, manualCompletionPct }
     const engagementByItem = new Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null; manualCompletionPct: number | null }>();
     for (const r of (engRes?.data ?? []) as any[]) {
@@ -436,6 +442,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
           url: i.url ?? null,
           file_url: i.file_url ?? null,
           read: readSet.has(i.id),
+          read_at: readAtByItem.get(i.id as string) ?? null,
           sessionSeconds: eng?.sessionSeconds ?? 0,
           mediaProgressPct: mediaPct,
           manualCompletionPct: eng?.manualCompletionPct ?? null,

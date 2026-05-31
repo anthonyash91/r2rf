@@ -10,6 +10,7 @@ import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
 import { withActionWord, parseMinutes } from "@/lib/duration";
+import { fmtDateShort } from "@/lib/date-format";
 import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Circle } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
@@ -231,14 +232,20 @@ function CategoryPage() {
     queryFn: async () => {
       const { data: rows, error } = await supabase
         .from("user_content_progress")
-        .select("content_item_id")
+        .select("content_item_id, created_at")
         .eq("user_id", user!.id)
         .eq("category_id", categoryId!);
       if (error) throw error;
-      return new Set((rows ?? []).map((r) => r.content_item_id as string));
+      const readSet = new Set((rows ?? []).map((r) => r.content_item_id as string));
+      const readAtMap = new Map<string, string>();
+      for (const r of rows ?? []) {
+        readAtMap.set(r.content_item_id as string, r.created_at as string);
+      }
+      return { readSet, readAtMap };
     },
   });
-  const readSet = progressQuery.data ?? new Set<string>();
+  const readSet = progressQuery.data?.readSet ?? new Set<string>();
+  const readAtMap = progressQuery.data?.readAtMap ?? new Map<string, string>();
 
   const seenQuery = useQuery({
     queryKey: ["content-seen", user?.id],
@@ -300,11 +307,17 @@ function CategoryPage() {
     onMutate: async (vars) => {
       const key = ["content-progress", user?.id, categoryId];
       await queryClient.cancelQueries({ queryKey: key });
-      const prev = queryClient.getQueryData<Set<string>>(key);
-      const next = new Set(prev ?? []);
-      if (vars.markRead) next.add(vars.itemId);
-      else next.delete(vars.itemId);
-      queryClient.setQueryData(key, next);
+      const prev = queryClient.getQueryData<{ readSet: Set<string>; readAtMap: Map<string, string> }>(key);
+      const nextReadSet = new Set(prev?.readSet ?? []);
+      const nextReadAtMap = new Map(prev?.readAtMap ?? []);
+      if (vars.markRead) {
+        nextReadSet.add(vars.itemId);
+        nextReadAtMap.set(vars.itemId, new Date().toISOString());
+      } else {
+        nextReadSet.delete(vars.itemId);
+        nextReadAtMap.delete(vars.itemId);
+      }
+      queryClient.setQueryData(key, { readSet: nextReadSet, readAtMap: nextReadAtMap });
       return { prev };
     },
     onError: (_err, _vars, ctx) => {
@@ -834,6 +847,7 @@ function CategoryPage() {
                                     readLabel={readLabel}
                                     unreadLabel={unreadLabel}
                                     unreadIcon="circle"
+                                    readAt={isRead ? (fmtDateShort(readAtMap.get(item.id)) || null) : null}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       e.preventDefault();
