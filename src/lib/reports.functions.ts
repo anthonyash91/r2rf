@@ -287,6 +287,24 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
       }
     }
 
+    // Fetch engagement tiers from pre-computed user_stats
+    const tierById = new Map<string, { tier: string | null; percentile: number | null }>();
+    if (ids.length > 0) {
+      const { data: statsRows } = await (supabaseAdmin as any)
+        .from("user_stats")
+        .select("user_id, facility_percentile")
+        .in("user_id", ids);
+      for (const r of (statsRows ?? []) as any[]) {
+        const pctVal: number | null = r.facility_percentile ?? null;
+        const tierVal = pctVal === null ? null
+          : pctVal >= 80 ? "Top Reader"
+          : pctVal >= 50 ? "Active Reader"
+          : pctVal >= 20 ? "Getting Started"
+          : "Just Joined";
+        tierById.set(r.user_id as string, { tier: tierVal, percentile: pctVal });
+      }
+    }
+
     return {
       users: profs.map((p: any) => ({
         user_id: p.user_id as string,
@@ -298,6 +316,8 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
         created_at: p.created_at as string,
         last_sign_in_at: lastSignInById.get(p.user_id as string) ?? null,
         last_login_date: lastLoginById.get(p.user_id as string) ?? null,
+        engagement_tier: tierById.get(p.user_id as string)?.tier ?? null,
+        facility_percentile: tierById.get(p.user_id as string)?.percentile ?? null,
       })),
     };
 
@@ -315,7 +335,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAnyAdmin(context.userId);
 
-    const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes, engRes] = await Promise.all([
+    const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes, engRes, statsRes] = await Promise.all([
       supabaseAdmin
         .from("user_profiles")
         .select("user_id, username, first_name, last_name, facility, created_at")
@@ -348,6 +368,11 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         .from("user_content_engagement")
         .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct")
         .eq("user_id", data.userId),
+      (supabaseAdmin as any)
+        .from("user_stats")
+        .select("facility_percentile, items_completed, items_started, total_session_seconds, updated_at")
+        .eq("user_id", data.userId)
+        .maybeSingle(),
     ]);
     if (profRes.error) throw new Error(profRes.error.message);
     if (catsRes.error) throw new Error(catsRes.error.message);
@@ -405,6 +430,16 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
       });
     }
     const totalSessionSeconds = Array.from(engagementByItem.values()).reduce((s, e) => s + e.sessionSeconds, 0);
+
+    // Engagement tier from pre-computed user_stats
+    const userStatsRow = statsRes?.data as any;
+    const facilityPercentile: number | null = userStatsRow?.facility_percentile ?? null;
+    const engagementTier = facilityPercentile === null ? null
+      : facilityPercentile >= 80 ? "Top Reader"
+      : facilityPercentile >= 50 ? "Active Reader"
+      : facilityPercentile >= 20 ? "Getting Started"
+      : "Just Joined";
+    const statsUpdatedAt: string | null = userStatsRow?.updated_at ?? null;
     const hoursSpent = Math.round((totalSessionSeconds / 3600) * 10) / 10;
 
     return {
@@ -463,6 +498,9 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
       logins: (loginsRes.data ?? []).map((r: any) => r.login_date as string),
       hoursSpent,
       totalSeconds: totalSessionSeconds,
+      engagementTier,
+      facilityPercentile,
+      statsUpdatedAt,
       eventCounts: {
         categoryViews: (eventsRes.data ?? []).filter(
           (e: any) => e.event_type === "category_view",

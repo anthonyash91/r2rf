@@ -519,6 +519,15 @@ function FacilityComparisonSection() {
             )}
           </p>
         </div>
+        {facilities.length > 0 && (
+          <button
+            type="button"
+            onClick={() => exportFacilityComparisonCsv(facilities)}
+            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted"
+          >
+            Export CSV
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -579,10 +588,42 @@ function FacilityComparisonSection() {
 /* ---------------- Facility Tab ---------------- */
 
 function FacilityReportTab({ preselected }: { preselected: { value: string; label: string } }) {
+  const fetch = useServerFn(getFacilityComparison);
+  const { data } = useQuery({
+    queryKey: ["facility-comparison"],
+    queryFn: () => fetch(),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const facilities = data?.facilities ?? [];
+  const rank = facilities.findIndex((f) => f.facilityValue === preselected.value) + 1;
+  const total = facilities.length;
+  const thisStats = facilities.find((f) => f.facilityValue === preselected.value);
+  const updatedAt = data?.updatedAt ? new Date(data.updatedAt).toLocaleDateString() : null;
+
   return (
-    <UsageReportView
-      scope={{ kind: "facility", facilityValue: preselected.value, facilityLabel: preselected.label }}
-    />
+    <div>
+      {rank > 0 && total > 1 && (
+        <div className="mb-6 rounded-lg border border-border bg-muted/30 px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Facility Ranking</p>
+            <p className="text-2xl font-bold tabular-nums">#{rank} <span className="text-sm font-normal text-muted-foreground">of {total} facilities</span></p>
+          </div>
+          {thisStats?.avgCompletionRate != null && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Avg Completion</p>
+              <p className="text-2xl font-bold tabular-nums">{thisStats.avgCompletionRate}%</p>
+            </div>
+          )}
+          {updatedAt && (
+            <p className="text-xs text-muted-foreground sm:ml-auto self-end sm:self-center italic">Updated daily · Last updated {updatedAt}</p>
+          )}
+        </div>
+      )}
+      <UsageReportView
+        scope={{ kind: "facility", facilityValue: preselected.value, facilityLabel: preselected.label }}
+      />
+    </div>
   );
 }
 
@@ -728,6 +769,9 @@ function UsersReportTab({
                               Signed up {fmtDate(u.created_at) || "—"}
                               {" · "}
                               Last login {lastLoginIso ? fmtDate(lastLoginIso) : "Never"}
+                              {(u as any).engagement_tier && (
+                                <> · <span className="text-[var(--color-accent)]">{(u as any).engagement_tier}</span></>
+                              )}
                             </p>
                           </div>
                           <button
@@ -762,20 +806,43 @@ function exportFacilityUsersCsv(
 ) {
   const lines: string[] = [];
   const headers = includeFacility
-    ? ["First name", "Last name", "Username", "Facility", "Joined", "Last login"]
-    : ["First name", "Last name", "Username", "Joined", "Last login"];
+    ? ["First name", "Last name", "Username", "Facility", "Joined", "Last login", "Engagement tier", "Facility percentile"]
+    : ["First name", "Last name", "Username", "Joined", "Last login", "Engagement tier", "Facility percentile"];
   lines.push(headers.map(csvEscape).join(","));
   for (const u of users) {
     const lastLogin = u.last_sign_in_at || u.last_login_date || "";
+    const tier = (u as any).engagement_tier ?? "";
+    const pct = (u as any).facility_percentile != null ? `${(u as any).facility_percentile}%` : "";
     const row = includeFacility
-      ? [u.first_name, u.last_name, u.username, u.facility ?? "", fmtDate(u.created_at), fmtDate(lastLogin)]
-      : [u.first_name, u.last_name, u.username, fmtDate(u.created_at), fmtDate(lastLogin)];
+      ? [u.first_name, u.last_name, u.username, u.facility ?? "", fmtDate(u.created_at), fmtDate(lastLogin), tier, pct]
+      : [u.first_name, u.last_name, u.username, fmtDate(u.created_at), fmtDate(lastLogin), tier, pct];
     lines.push(row.map(csvEscape).join(","));
   }
   downloadCsv(
     `users-${facilityLabel || "facility"}-${new Date().toISOString().slice(0, 10)}.csv`,
     lines,
   );
+}
+
+function exportFacilityComparisonCsv(
+  facilities: { facilityLabel: string; facilitySiteId: string | null; totalUsers: number; activeUsers7d: number; activeUsers30d: number; avgCompletionRate: number | null; itemsCompletedTotal: number; totalSessionSeconds: number }[],
+) {
+  const lines: string[] = [];
+  lines.push(["Facility", "Site ID", "Total users", "Active (7d)", "Active (30d)", "Avg completion %", "Items completed", "Time spent"].map(csvEscape).join(","));
+  for (const f of facilities) {
+    const row = [
+      f.facilityLabel,
+      f.facilitySiteId ?? "",
+      String(f.totalUsers),
+      String(f.activeUsers7d),
+      String(f.activeUsers30d),
+      f.avgCompletionRate != null ? `${f.avgCompletionRate}%` : "",
+      String(f.itemsCompletedTotal),
+      f.totalSessionSeconds > 0 ? formatTimeSpent(f.totalSessionSeconds) : "",
+    ];
+    lines.push(row.map(csvEscape).join(","));
+  }
+  downloadCsv(`facility-comparison-${new Date().toISOString().slice(0, 10)}.csv`, lines);
 }
 
 /* ---------------- User Progress View ---------------- */
@@ -953,12 +1020,34 @@ function UserProgressView({
               { icon: Flame, label: "Day streak", value: streak.toLocaleString() },
               { icon: Clock, label: "Last login", value: lastLogin ? fmtDateShort(lastLogin) : "Never" },
             ];
+            const tier = (data as any).engagementTier as string | null;
+            const pct = (data as any).facilityPercentile as number | null;
+            const statsUpdated = (data as any).statsUpdatedAt as string | null;
             return (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 mt-8 mb-8">
-                {stats.map((s) => (
-                  <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3 mt-8 mb-4">
+                  {stats.map((s) => (
+                    <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
+                  ))}
+                </div>
+                {tier && (
+                  <div className="mb-8 rounded-2xl border border-border bg-card px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+                    <div>
+                      <p className="text-sm font-medium">
+                        Engagement level:{" "}
+                        <span className="text-[var(--color-accent)] font-semibold">{tier}</span>
+                        {pct != null && (
+                          <span className="text-muted-foreground font-normal"> · top {Math.round(100 - pct)}% of facility readers</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Based on time spent · Updates daily
+                        {statsUpdated && <> · Last updated {new Date(statsUpdated).toLocaleDateString()}</>}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
             );
           })()}
 
@@ -1018,6 +1107,8 @@ function exportUserProgressCsv(
     }
   }
 
+  const tier = (data as any).engagementTier as string | null;
+  const pct = (data as any).facilityPercentile as number | null;
   lines.push(["Overall usage"].map(csvEscape).join(","));
   lines.push(["Metric", "Value"].map(csvEscape).join(","));
   lines.push(["Items completed", `${readItems} of ${totalItems}`].map(csvEscape).join(","));
@@ -1025,6 +1116,7 @@ function exportUserProgressCsv(
   lines.push(["Time spent", formatTimeSpent(totalSecondsForUser)].map(csvEscape).join(","));
   lines.push(["Day streak", streak].map(csvEscape).join(","));
   lines.push(["Last login", lastLogin ? fmtDateShort(lastLogin) : "Never"].map(csvEscape).join(","));
+  if (tier) lines.push(["Engagement tier", tier + (pct != null ? ` (top ${Math.round(100 - pct)}% of facility)` : "")].map(csvEscape).join(","));
   lines.push("");
   lines.push(
     ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on", "Progress", "Time Spent"]
