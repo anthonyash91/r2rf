@@ -499,8 +499,18 @@ function CategoryPage() {
                       }
                     };
 
+                    const isMeetingOrCall = item.type && (
+                      item.type.toLowerCase().includes("meeting") ||
+                      item.type.toLowerCase().includes("call")
+                    );
+                    const isExternalLink = !isMedia && !!item.url && !isMeetingOrCall;
+
                     const handleActivate = () => {
                       if (!canAccessAdmin && !isFacilityUser) trackContentClick(item.id, data.category.id);
+                      // External links: auto-mark as accessed the moment the link is clicked
+                      if (!isAdmin && !isFacilityUser && isExternalLink && !readSet.has(item.id) && user?.id) {
+                        toggleRead.mutate({ itemId: item.id, markRead: true });
+                      }
                       // Mark as seen so the "New" badge is suppressed on any engagement
                       if (user?.id && !readSet.has(item.id) && !seenSet.has(item.id)) {
                         Promise.resolve(
@@ -625,7 +635,10 @@ function CategoryPage() {
                           const isRead = readSet.has(item.id);
                           let readLabel = t("category.markedRead");
                           let unreadLabel = t("category.notRead");
-                          if (mediaKind === "video") {
+                          if (isMeetingOrCall) {
+                            readLabel = t("category.markedAttended");
+                            unreadLabel = t("category.notAttended");
+                          } else if (mediaKind === "video") {
                             readLabel = t("category.markedWatched");
                             unreadLabel = t("category.notWatched");
                           } else if (mediaKind === "audio") {
@@ -634,7 +647,7 @@ function CategoryPage() {
                           } else if (mediaKind === "image") {
                             readLabel = t("category.markedViewed");
                             unreadLabel = t("category.notViewed");
-                          } else if (!mediaKind && item.url) {
+                          } else if (isExternalLink) {
                             readLabel = t("category.markedClicked");
                             unreadLabel = t("category.notClicked");
                           }
@@ -781,7 +794,26 @@ function CategoryPage() {
                                   );
                                 }
 
-                                // ── All other types: standard read/unread badge ──
+                                // ── Unread external link: dimmed — clicking the card auto-marks ──
+                                if (!isRead && isExternalLink) {
+                                  return (
+                                    <TooltipProvider delayDuration={100}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 flex-shrink-0">
+                                            <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                            <span>{unreadLabel}</span>
+                                          </span>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
+                                          Click the link to access this resource
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  );
+                                }
+
+                                // ── All other types (worksheet, meeting/call, no-URL items): standard badge ──
                                 return (
                                   <ReadStatusBadge
                                     read={isRead}

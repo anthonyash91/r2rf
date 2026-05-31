@@ -68,6 +68,8 @@ const translations: Record<Language, Dict> = {
     "category.notListened": "Not listened to",
     "category.markedClicked": "Clicked",
     "category.notClicked": "Not clicked",
+    "category.markedAttended": "Attended",
+    "category.notAttended": "Not attended",
     "category.markedViewed": "Viewed",
     "category.notViewed": "Not viewed",
 
@@ -224,6 +226,8 @@ const translations: Record<Language, Dict> = {
     "category.notListened": "No escuchado",
     "category.markedClicked": "Clicado",
     "category.notClicked": "No clicado",
+    "category.markedAttended": "Asistido",
+    "category.notAttended": "No asistido",
     "category.markedViewed": "Visto",
     "category.notViewed": "No visto",
 
