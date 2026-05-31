@@ -337,6 +337,17 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
+      // URL parameter takes priority — supports both ?language=es and ?user=1234&language=es
+      // Also handles malformed ?user=1234?language=es (second ? treated as &)
+      const search = window.location.search.replace(/\?(?=.*=)/g, (m, o) => o === 0 ? m : "&");
+      const params = new URLSearchParams(search);
+      const urlLang = params.get("language") as Language | null;
+      if (urlLang === "en" || urlLang === "es") {
+        setLangState(urlLang);
+        localStorage.setItem(STORAGE_KEY, urlLang);
+        return;
+      }
+      // Fall back to localStorage
       const stored = localStorage.getItem(STORAGE_KEY) as Language | null;
       if (stored === "en" || stored === "es") setLangState(stored);
     } catch {}
