@@ -272,7 +272,7 @@ function AdminFacilitiesPage() {
                             <div className="flex items-center gap-3 min-w-0 flex-wrap">
                               <span className="text-sm font-medium truncate">{f.label}</span>
                               {f.siteId && (
-                                <code className="text-xs text-muted-foreground font-mono truncate">{f.siteId}</code>
+                                <code className="text-xs text-muted-foreground font-mono truncate leading-none self-center">{f.siteId}</code>
                               )}
                             </div>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
