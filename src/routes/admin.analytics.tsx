@@ -584,21 +584,17 @@ function FacilityComparisonSection() {
 
   return (
     <div className="mt-12">
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <div>
-          <h2 className="font-display text-xl font-semibold">Facility Comparison</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            All facilities ranked by average content completion rate.
-            {updatedAt && (
-              <span className="ml-1 italic">· Updated daily · Last updated {updatedAt}</span>
-            )}
-          </p>
-        </div>
+      <div className="flex items-start justify-between mb-4 flex-wrap gap-2">
+        <UserSectionHeader
+          title="Facility Comparison"
+          count={facilities.length}
+          description={`All facilities ranked by average content completion rate.${updatedAt ? ` · Updated daily · Last updated ${updatedAt}` : ""}`}
+        />
         {facilities.length > 0 && (
           <button
             type="button"
             onClick={() => exportFacilityComparisonCsv(facilities as FacilityRow[])}
-            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted"
+            className="rounded-md border border-input bg-background px-3 py-1.5 text-sm hover:bg-muted flex-shrink-0"
           >
             Export CSV
           </button>
@@ -1643,8 +1639,13 @@ function ContentTypeBreakdown({
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
   return (
-    <div className="mt-10">
-      <h3 className="font-display text-base font-semibold mb-3">Content type preference</h3>
+    <div className="mt-12">
+      <UserSectionHeader
+        className="mb-4"
+        title="Content type preference"
+        count={rows.length}
+        description="Opens, completions, and time spent broken down by content format, sorted by completion rate."
+      />
       <SectionCard padded={false} className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
