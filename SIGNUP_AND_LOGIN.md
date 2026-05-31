@@ -8,7 +8,7 @@ This document covers every security measure and feature in the user sign-up and 
 
 ### Access Requirement
 
-Sign-up is only available through a valid facility link (`/?site=facilityId&user=PIN`). Users who attempt to access the sign-up form without a facility link see only an error message — no input fields are shown. This applies to regular users only; admin, contributor, and facilityUser accounts are created through the admin panel.
+Sign-up is only available when the user accesses the website through the service on their device (i.e. via a valid facility URL containing `?site=facilityId&user=PIN`). Users who attempt to sign up without that context see only an error message — no input fields are shown. This applies to regular users only; admin, contributor, and facilityUser accounts are created through the admin panel.
 
 ### Input Validation (Server-Side)
 
@@ -108,6 +108,10 @@ When a user signs out, they are redirected back to the full original URL includi
 The "forgot password" flow uses security questions instead of email. When fetching questions for a username:
 - If the username does not exist, **fake stable question keys are returned** derived deterministically from the username — the response looks identical to a valid username response
 - This prevents an attacker from probing which usernames are registered
+
+### Facility + PIN Required
+
+Mirroring the sign-in rule, the password reset form requires both a facility and a PIN to be present in the current session before proceeding. When a user submits their username at Step 1, the client checks for a valid session. If either is missing, the same inline error shown at sign-in appears immediately and the server is never called.
 
 ### PIN + Facility Verification (Shared Device)
 
