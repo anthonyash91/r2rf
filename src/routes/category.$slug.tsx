@@ -361,8 +361,9 @@ function CategoryPage() {
   const activeItem = activeItemId ? data?.items.find((it) => it.id === activeItemId) : null;
   const activePdfEstimatedSeconds = (() => {
     if (!activeItem) return undefined;
-    const fileUrl = activeItem.file_url;
-    if (!fileUrl || !PDF_EXT.test(fileUrl)) return undefined;
+    // Uploaded files are saved to `url` (file_url is always null in the DB)
+    const pdfUrl = activeItem.file_url || activeItem.url;
+    if (!pdfUrl || !PDF_EXT.test(pdfUrl)) return undefined;
     const mins = parseMinutes(activeItem.duration);
     return mins > 0 ? mins * 60 : undefined;
   })();

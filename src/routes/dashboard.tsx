@@ -809,7 +809,7 @@ function CategoryProgressSection({
                       }
 
                       // PDF — time-based reading progress
-                      const isPdf = it.file_url && /\.pdf(\?|#|$)/i.test(it.file_url);
+                      const isPdf = (it.file_url && /\.pdf(\?|#|$)/i.test(it.file_url)) || (it.url && /\.pdf(\?|#|$)/i.test(it.url));
                       const pdfMins = isPdf ? parseMinutes(it.duration) : 0;
                       const pdfEstSec = pdfMins * 60;
                       const pdfPct = !isRead && isPdf && pdfEstSec > 0 && eng && eng.sessionSeconds > 0

@@ -958,7 +958,7 @@ function exportUserProgressCsv(
     );
     for (const it of items) {
       const isAV = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
-      const isPdf = (it as any).file_url && /\.pdf(\?|#|$)/i.test((it as any).file_url);
+      const isPdf = ((it as any).file_url && /\.pdf(\?|#|$)/i.test((it as any).file_url)) || ((it as any).url && /\.pdf(\?|#|$)/i.test((it as any).url));
       const pdfMins = isPdf ? parseMinutes(it.duration) : 0;
       const pdfEstSec = pdfMins * 60;
       const pdfPct = isPdf && pdfEstSec > 0 && (it as any).sessionSeconds > 0
@@ -1101,7 +1101,7 @@ function UserCategorySection({
                       }
 
                       // PDF — time-based reading progress
-                      const isPdf = item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url);
+                      const isPdf = (item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url)) || (item.url && /\.pdf(\?|#|$)/i.test(item.url));
                       const pdfMins = isPdf ? parseMinutes(item.duration) : 0;
                       const pdfEstSec = pdfMins * 60;
                       const pdfPct = !item.read && isPdf && pdfEstSec > 0 && (item.sessionSeconds || 0) > 0
