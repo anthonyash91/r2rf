@@ -495,14 +495,14 @@ function DashboardPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
                         {stats.map((s) => (
                           <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
                         ))}
                       </div>
 
                       {tierQuery.data?.tier && (
-                        <div className="mb-8 rounded-2xl border border-border bg-card px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+                        <div className="mb-6 rounded-2xl border border-border bg-card px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
                           <div>
                             <p className="text-sm font-medium text-foreground">
                               Your engagement level at your facility:{" "}
