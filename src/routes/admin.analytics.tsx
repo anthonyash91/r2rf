@@ -331,7 +331,7 @@ function InfoTooltip({ text }: { text: string }) {
       <TooltipTrigger asChild>
         <Info className="h-3 w-3 text-muted-foreground/50 cursor-help flex-shrink-0" />
       </TooltipTrigger>
-      <TooltipContent className="max-w-xs text-center">{text}</TooltipContent>
+      <TooltipContent className="max-w-xs px-3 py-2 text-center">{text}</TooltipContent>
     </Tooltip>
   );
 }
@@ -1566,27 +1566,47 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                   )}
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="inline-flex items-center gap-1.5 text-sm font-medium tabular-nums">
-                    <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
-                    {clicks.toLocaleString()}
-                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium tabular-nums cursor-default">
+                        <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
+                        {clicks.toLocaleString()}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs px-3 py-2">Opens — how many times this item was clicked in the selected period.</TooltipContent>
+                  </Tooltip>
                   {completionRate != null && (
-                    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
-                      <BarChart3 className="h-3 w-3" />
-                      {completionRate}%
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground cursor-default">
+                          <BarChart3 className="h-3 w-3" />
+                          {completionRate}%
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs px-3 py-2">Completion rate — percentage of openers who completed this item in the selected period.</TooltipContent>
+                    </Tooltip>
                   )}
                   {openCount > completeCount && (
-                    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
-                      <Circle className="h-3 w-3" />
-                      {openCount - completeCount} drop-off{openCount - completeCount === 1 ? "" : "s"}
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground cursor-default">
+                          <Circle className="h-3 w-3" />
+                          {openCount - completeCount} drop-off{openCount - completeCount === 1 ? "" : "s"}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs px-3 py-2">Drop-offs — users who opened this item but did not complete it.</TooltipContent>
+                    </Tooltip>
                   )}
                   {avgSessionSeconds != null && avgSessionSeconds > 0 && (
-                    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {formatTimeSpent(avgSessionSeconds)} avg
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground cursor-default">
+                          <Clock className="h-3 w-3" />
+                          {formatTimeSpent(avgSessionSeconds)} avg
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs px-3 py-2">Average time spent — mean session time per user who engaged with this item. All time.</TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               </li>
