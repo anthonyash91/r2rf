@@ -104,7 +104,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
         .from("user_profiles")
         .select("user_id", { count: "exact", head: true })
         .eq("is_synthetic", false)
-        .not("user_id", "in", [...facilityUserAccountIds, "00000000-0000-0000-0000-000000000000"]),
+        .not("user_id", "in", `(${[...facilityUserAccountIds, "00000000-0000-0000-0000-000000000000"].join(",")})`),
       (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
       (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
     ]);
@@ -194,7 +194,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
           "00000000-0000-0000-0000-000000000000",
         ];
         if (excludeAll.length > 0) {
-          openersQ = (openersQ as any).not("user_id", "in", excludeAll);
+          openersQ = (openersQ as any).not("user_id", "in", `(${excludeAll.join(",")})`);
         }
       }
       const { data } = await openersQ;
@@ -249,7 +249,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
           ...Array.from(staffUserIds), ...Array.from(syntheticIds),
           "00000000-0000-0000-0000-000000000000",
         ];
-        if (excludeAll.length > 0) q = q.not("user_id", "in", excludeAll);
+        if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
         const { data, error } = await q;
         if (error || !data || data.length === 0) break;
         all.push(...data); if (data.length < PAGE) break;
@@ -289,7 +289,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
           ...Array.from(staffUserIds), ...Array.from(syntheticIds),
           "00000000-0000-0000-0000-000000000000",
         ];
-        if (excludeAll.length > 0) q = q.not("user_id", "in", excludeAll);
+        if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
         const { data, error } = await q;
         if (error || !data || data.length === 0) break;
         all.push(...data); if (data.length < PAGE) break;

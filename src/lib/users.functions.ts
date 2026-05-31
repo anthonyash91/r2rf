@@ -16,10 +16,10 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 }
 
 /** Apply NOT IN with chunking so large exclusion lists don't exceed URL limits.
- *  Uses the native array form so PostgREST handles parameterization safely. */
+ *  Uses parenthesised string form — PostgREST requires not.in.(id1,id2,...) not array. */
 function applyNotIn(q: any, column: string, ids: string[]): any {
   for (const chunk of chunkArray(ids, 500)) {
-    q = q.not(column, "in", chunk);
+    q = q.not(column, "in", `(${chunk.join(",")})`);
   }
   return q;
 }
