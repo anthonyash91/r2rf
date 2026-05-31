@@ -348,10 +348,13 @@ function CategoryPage() {
     videoPlayer?.itemId ?? audioPlayer?.itemId ?? pdfViewer?.itemId ?? imageViewer?.itemId ?? null;
 
   const invalidateEngagement = () => {
-    queryClient.invalidateQueries({ queryKey: ["engagement", user?.id, categoryId] });
-    // Also mark the dashboard progress query stale so hours-spent refreshes
-    // the next time the user visits the dashboard.
-    queryClient.invalidateQueries({ queryKey: ["dashboard-progress"] });
+    // Delay slightly so the hook's write() cleanup has time to land in the DB
+    // before the refetch reads it back — without this, the refetch races the
+    // write and returns stale data, making progress not appear until refresh.
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ["engagement", user?.id, categoryId] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-progress"] });
+    }, 600);
   };
 
   // For PDF items: derive estimated reading time in seconds from the duration field
