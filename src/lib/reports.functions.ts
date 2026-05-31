@@ -167,7 +167,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
     // Real hours spent: sum actual session_seconds from user_content_engagement
     let engQ = (supabaseAdmin as any)
       .from("user_content_engagement")
-      .select("user_id, session_seconds");
+      .select("user_id, content_item_id, session_seconds");
     if (userIdFilter !== null) {
       if (userIdFilter.length === 0) {
         engQ = engQ.eq("user_id", "00000000-0000-0000-0000-000000000000");
@@ -235,8 +235,16 @@ export const getUsageReport = createServerFn({ method: "POST" })
     }
 
     let totalSeconds = 0;
+    const itemTotalSeconds: Record<string, number> = {};
+    const itemEngagerCount: Record<string, number> = {};
     for (const r of (engRes?.data ?? []) as any[]) {
-      totalSeconds += (r.session_seconds as number) || 0;
+      const secs = (r.session_seconds as number) || 0;
+      totalSeconds += secs;
+      if (r.content_item_id && secs > 0) {
+        const id = r.content_item_id as string;
+        itemTotalSeconds[id] = (itemTotalSeconds[id] ?? 0) + secs;
+        itemEngagerCount[id] = (itemEngagerCount[id] ?? 0) + 1;
+      }
     }
     const hoursSpent = Math.round((totalSeconds / 3600) * 10) / 10;
 
@@ -264,7 +272,10 @@ export const getUsageReport = createServerFn({ method: "POST" })
       // Without it we can't distinguish "100% of openers completed" from "completions with no open data".
       const openCount = Math.max(trackedOpens, completes);
       const completionRate = trackedOpens > 0 ? Math.round(completes / openCount * 100) : null;
-      itemStats[itemId] = { openCount, completeCount: completes, completionRate, avgSessionSeconds: null };
+      const avgSessionSeconds = itemTotalSeconds[itemId]
+        ? Math.round(itemTotalSeconds[itemId] / (itemEngagerCount[itemId] ?? 1))
+        : null;
+      itemStats[itemId] = { openCount, completeCount: completes, completionRate, avgSessionSeconds };
       if (trackedOpens > 0) {
         aggOpens += openCount;
         aggCompletes += completes;
@@ -279,13 +290,16 @@ export const getUsageReport = createServerFn({ method: "POST" })
       catItemMap[it.category_id].push(it.id as string);
     }
     const catCompletionRate: Record<string, number | null> = {};
+    const catTotalSeconds: Record<string, number> = {};
     for (const cat of filteredCategories as any[]) {
-      let opens = 0, completes = 0;
+      let opens = 0, completes = 0, catSecs = 0;
       for (const itemId of catItemMap[cat.id] ?? []) {
         const s = itemStats[itemId];
         if (s && s.completionRate !== null) { opens += s.openCount; completes += s.completeCount; }
+        catSecs += itemTotalSeconds[itemId] ?? 0;
       }
       catCompletionRate[cat.id] = opens > 0 ? Math.round(completes / opens * 100) : null;
+      catTotalSeconds[cat.id] = catSecs;
     }
 
     return {
@@ -294,7 +308,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
       catViews, catClicks, itemClicks,
       totalViews, totalClicks,
       facilityUserCount, totalUsers, hoursSpent, totalSeconds,
-      itemStats, catCompletionRate, overallCompletionRate,
+      itemStats, catCompletionRate, catTotalSeconds, overallCompletionRate,
     };
   });
 

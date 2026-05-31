@@ -82,6 +82,7 @@ type AggregatedRow = {
   views: number;
   clicks: number;
   completionRate: number | null;
+  totalSeconds: number;
   items: { item: ContentItem; clicks: number; openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }[];
 };
 
@@ -349,6 +350,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
     const itemClicks: Record<string, number> = d.itemClicks ?? {};
     const itemStats: Record<string, { openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }> = d.itemStats ?? {};
     const catCompletionRate: Record<string, number | null> = d.catCompletionRate ?? {};
+    const catTotalSeconds: Record<string, number> = d.catTotalSeconds ?? {};
     const itemsByCategory = new Map<string, ContentItem[]>();
     for (const it of (d.items ?? []) as ContentItem[]) {
       const list = itemsByCategory.get(it.category_id) ?? [];
@@ -369,7 +371,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
           };
         })
         .sort((a, b) => b.clicks - a.clicks);
-      return { category: cat, views: catViews[cat.id] ?? 0, clicks: catClicks[cat.id] ?? 0, completionRate: catCompletionRate[cat.id] ?? null, items };
+      return { category: cat, views: catViews[cat.id] ?? 0, clicks: catClicks[cat.id] ?? 0, completionRate: catCompletionRate[cat.id] ?? null, totalSeconds: catTotalSeconds[cat.id] ?? 0, items };
     });
     return { rows, totalViews: d.totalViews ?? 0, totalClicks: d.totalClicks ?? 0, overallCompletionRate: d.overallCompletionRate ?? null };
   }, [data]);
@@ -510,7 +512,7 @@ function exportUsageCsv(
         row.completionRate != null ? `${row.completionRate}%` : "",
         "",
         "",
-        "",
+        row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : "",
       ].join(","),
     );
     for (const { item, clicks, openCount, completeCount, completionRate, avgSessionSeconds } of row.items) {
@@ -1398,17 +1400,18 @@ function CategoryList({ rows }: { rows: AggregatedRow[] }) {
   );
 }
 
-function Stat({ icon, label, value, suffix, position }: { icon: React.ReactNode; label: string; value: number | null; suffix?: string; position?: "first" | "last" | "middle" }) {
+function Stat({ icon, label, value, suffix, position }: { icon: React.ReactNode; label: string; value: number | string | null; suffix?: string; position?: "first" | "last" | "middle" }) {
   const radius =
     position === "first"
       ? "rounded-l-[4px]"
       : position === "last"
         ? "rounded-r-[4px] -ml-px"
         : "-ml-px";
+  const display = value == null ? "—" : typeof value === "string" ? value : `${value.toLocaleString()}${suffix ?? ""}`;
   return (
     <span className={`inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium ${radius}`}>
       {icon}
-      <span className="tabular-nums">{value != null ? `${value.toLocaleString()}${suffix ?? ""}` : "—"}</span>
+      <span className="tabular-nums">{display}</span>
       <span className="text-muted-foreground">{label}</span>
     </span>
   );
@@ -1447,7 +1450,8 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
         </div>
         <div className="inline-flex flex-shrink-0">
           <Stat position="first" icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} />
-          <Stat position="last" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} />
+          <Stat position="middle" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} />
+          <Stat position="last" icon={<Clock className="h-3.5 w-3.5" />} label="time spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} />
         </div>
       </button>
       {open && (
@@ -1455,7 +1459,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           <p className="p-5 text-sm text-muted-foreground">No content items.</p>
         ) : (
           <ul className="divide-y divide-border">
-            {row.items.map(({ item, clicks, completionRate }) => (
+            {row.items.map(({ item, clicks, completionRate, avgSessionSeconds }) => (
               <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] px-6 py-[19px]">
                 <Badge variant="type" type={item.type}>
                   {item.type}
@@ -1475,6 +1479,12 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                     <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
                       <BarChart3 className="h-3 w-3" />
                       {completionRate}%
+                    </span>
+                  )}
+                  {avgSessionSeconds != null && avgSessionSeconds > 0 && (
+                    <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {formatTimeSpent(avgSessionSeconds)} avg
                     </span>
                   )}
                 </div>
