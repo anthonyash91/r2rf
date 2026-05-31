@@ -131,6 +131,14 @@ export const signupUser = createServerFn({ method: "POST" })
       errorMessage: "Too many signups from this network. Please try again later.",
     });
 
+    // Validate facility exists
+    const { data: facilityRow } = await supabaseAdmin
+      .from("facilities")
+      .select("value")
+      .eq("value", data.facility)
+      .maybeSingle();
+    if (!facilityRow) throw new Error("Invalid facility. Please select a valid facility.");
+
     // Username availability
     const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
     if (exists) throw new Error("That username is already taken.");

@@ -74,6 +74,7 @@ function AdminCategoriesContent() {
 
   const { data: categories = EMPTY_CATEGORIES, isLoading } = useQuery({
     queryKey: ["admin", "categories"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Category[]> => {
       const { data, error } = await supabase
         .from("categories")
@@ -87,6 +88,7 @@ function AdminCategoriesContent() {
 
   const { data: itemsByCategory = {} } = useQuery({
     queryKey: ["admin", "category-items"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Record<string, { id: string; title: string; published: boolean; sort_order: number }[]>> => {
       const { data, error } = await supabase
         .from("content_items")
@@ -106,6 +108,7 @@ function AdminCategoriesContent() {
 
   const { data: itemFacilityMap = {} } = useQuery({
     queryKey: ["admin", "item-facility-map"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Record<string, string[]>> => {
       const { data, error } = await (supabase as any)
         .from("content_item_facilities")
@@ -122,6 +125,7 @@ function AdminCategoriesContent() {
 
   const { data: facilityLabelList = [] } = useQuery({
     queryKey: ["admin", "facility-labels"],
+    staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data } = await supabase.from("facilities").select("value, label").order("label");
       return (data ?? []) as { value: string; label: string }[];
@@ -130,6 +134,7 @@ function AdminCategoriesContent() {
 
   const { data: categoryFacilityMap = {} } = useQuery({
     queryKey: ["admin", "category-facility-map"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Record<string, string[]>> => {
       const { data, error } = await (supabase as any)
         .from("category_facilities")
