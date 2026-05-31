@@ -63,7 +63,7 @@ function SignupPageContent() {
   const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
   const { isChecking: checkingSignIn, setIsChecking: setCheckingSignIn } = useAuthChecking();
-  const [facilityError, setFacilityError] = useState<string | null>(null);
+  const [facilityErrorKey, setFacilityErrorKey] = useState<string | null>(null);
   const [usernameStatus, setUsernameStatus] = useState<
     "idle" | "checking" | "available" | "taken" | "invalid"
   >("idle");
@@ -268,7 +268,7 @@ function SignupPageContent() {
             const pinMatch = !activeInmatePin || profile?.inmate_pin === activeInmatePin;
             if (!facilityMatch || !pinMatch) {
               await supabase.auth.signOut();
-              setFacilityError(t("signup.facilityMismatch"));
+              setFacilityErrorKey("signup.facilityMismatch");
               return; // don't show toast — inline error handles it
             }
           }
@@ -507,7 +507,7 @@ function SignupPageContent() {
                       maxLength={mode === "sign-up" ? 32 : 254}
                       pattern={mode === "sign-up" ? "[A-Za-z0-9_]{3,32}" : undefined}
                       value={username}
-                      onChange={(e) => { setUsername(e.target.value); setFacilityError(null); }} {...kbUsername}
+                      onChange={(e) => { setUsername(e.target.value); setFacilityErrorKey(null); }} {...kbUsername}
                       className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                       placeholder={mode === "sign-up" ? t("signup.usernamePlaceholder") : undefined}
                       autoComplete={mode === "sign-up" ? "username" : "username email"}
@@ -687,9 +687,9 @@ function SignupPageContent() {
                 </>
               )}
 
-              {facilityError && mode === "sign-in" && (
+              {facilityErrorKey && mode === "sign-in" && (
                 <div className="!mt-6 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
-                  {facilityError}
+                  {t(facilityErrorKey as any)}
                 </div>
               )}
 
