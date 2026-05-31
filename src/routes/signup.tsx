@@ -494,47 +494,50 @@ function SignupPageContent() {
 
 
 
-              <div>
-                <label className="text-sm font-medium">
-                  {mode === "sign-up" ? t("signup.username") : t("signup.usernameOrEmail")}
-                </label>
-                <input
-                  type="text"
-                  required
-                  minLength={3}
-                  maxLength={mode === "sign-up" ? 32 : 254}
-                  pattern={mode === "sign-up" ? "[A-Za-z0-9_]{3,32}" : undefined}
-                  value={username}
-                  onChange={(e) => { setUsername(e.target.value); setFacilityError(null); }} {...kbUsername}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder={mode === "sign-up" ? t("signup.usernamePlaceholder") : undefined}
-                  autoComplete={mode === "sign-up" ? "username" : "username email"}
-                />
-                {mode === "sign-up" && usernameStatus === "checking" && (
-                  <p className="mt-1 text-xs text-muted-foreground">{t("signup.usernameChecking")}</p>
-                )}
-                {mode === "sign-up" && usernameStatus === "available" && (
-                  <p className="mt-1 text-xs text-[var(--color-accent)]">{t("signup.usernameAvailable")}</p>
-                )}
-                {mode === "sign-up" && usernameStatus === "taken" && (
-                  <p className="mt-1 text-xs text-destructive">{t("signup.usernameTaken")}</p>
-                )}
-              </div>
+              {!(mode === "sign-up" && signupBlockReason === "pin-taken") && (
+                <>
+                  <div>
+                    <label className="text-sm font-medium">
+                      {mode === "sign-up" ? t("signup.username") : t("signup.usernameOrEmail")}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      minLength={3}
+                      maxLength={mode === "sign-up" ? 32 : 254}
+                      pattern={mode === "sign-up" ? "[A-Za-z0-9_]{3,32}" : undefined}
+                      value={username}
+                      onChange={(e) => { setUsername(e.target.value); setFacilityError(null); }} {...kbUsername}
+                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      placeholder={mode === "sign-up" ? t("signup.usernamePlaceholder") : undefined}
+                      autoComplete={mode === "sign-up" ? "username" : "username email"}
+                    />
+                    {mode === "sign-up" && usernameStatus === "checking" && (
+                      <p className="mt-1 text-xs text-muted-foreground">{t("signup.usernameChecking")}</p>
+                    )}
+                    {mode === "sign-up" && usernameStatus === "available" && (
+                      <p className="mt-1 text-xs text-[var(--color-accent)]">{t("signup.usernameAvailable")}</p>
+                    )}
+                    {mode === "sign-up" && usernameStatus === "taken" && (
+                      <p className="mt-1 text-xs text-destructive">{t("signup.usernameTaken")}</p>
+                    )}
+                  </div>
 
-
-              <div>
-                <label className="text-sm font-medium">{t("signup.password")}</label>
-                <PasswordInput
-                  required
-                  minLength={8}
-                  maxLength={72}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)} {...kbPassword}
-                  wrapperClassName="mt-1"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                />
-                {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
-              </div>
+                  <div>
+                    <label className="text-sm font-medium">{t("signup.password")}</label>
+                    <PasswordInput
+                      required
+                      minLength={8}
+                      maxLength={72}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)} {...kbPassword}
+                      wrapperClassName="mt-1"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                    {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
+                  </div>
+                </>
+              )}
 
               {mode === "sign-up" && signupBlockReason && (
                 <div className="py-2 space-y-2">
