@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
@@ -9,8 +9,16 @@ import { HomePageView } from "@/components/HomePageView";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
+import { useServerFn } from "@tanstack/react-start";
+import { setActiveFacilitySlug } from "@/lib/facility-context";
+import { setActiveInmatePin } from "@/lib/inmate-pin-context";
 
 export const Route = createFileRoute("/")({
+  validateSearch: z.object({
+    site: z.string().optional(),
+    user: z.string().optional(),
+    language: z.string().optional(),
+  }),
   head: () => ({
     meta: [
       { title: "Reentry to Recovery — Content Library" },
@@ -26,6 +34,7 @@ function Index() {
   const { user, isFacilityUser, rolesLoaded } = useAuth();
   const navigate = useNavigate();
   const fetchMyFacility = useServerFn(getMyFacilityValue);
+  const { site } = Route.useSearch();
 
   const { data: facilityData } = useQuery({
     queryKey: ["my-facility", user?.id],
@@ -47,8 +56,45 @@ function Index() {
 }
 
 function IndexContent() {
+  const { site, user: inmatePin } = Route.useSearch();
+
+  // Look up facility by ?site= param
+  const { data: siteFacility } = useQuery({
+    queryKey: ["facility-by-site-param", site ?? null],
+    enabled: !!site,
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("facilities")
+        .select("value, label, site_id")
+        .eq("site_id", site!)
+        .maybeSingle();
+      return data ?? null;
+    },
+  });
+
+  // Set active facility + inmate PIN contexts (same logic as /facility/$slug)
+  useEffect(() => {
+    if (!site) return;
+    if (!siteFacility) return;
+
+    const prevSlug = typeof window !== "undefined"
+      ? window.sessionStorage.getItem("active-facility-slug")
+      : null;
+
+    setActiveFacilitySlug(siteFacility.site_id as string);
+
+    if (inmatePin) {
+      setActiveInmatePin(inmatePin);
+    } else if (prevSlug !== null && prevSlug !== siteFacility.site_id) {
+      setActiveInmatePin(null);
+    }
+  }, [siteFacility, site, inmatePin]);
+
+  const facilityValue = siteFacility?.value as string | undefined;
+
   const { data: categories = [], isLoading } = useQuery({
-    queryKey: ["categories", "public"],
+    queryKey: ["categories", "public", facilityValue ?? "all"],
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<Category[]> => {
       const { data, error } = await supabase
@@ -78,8 +124,8 @@ function IndexContent() {
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <SiteMessageBanner kind="home" />
-      <SiteMessageBanner kind="facility" />
-      <HomePageView categories={categories} isLoading={isLoading} />
+      <SiteMessageBanner kind="facility" facilityValue={facilityValue} />
+      <HomePageView categories={categories} isLoading={isLoading} facilityContext={facilityValue} />
       <SiteFooter />
     </div>
   );
