@@ -614,9 +614,9 @@ function FacilityComparisonSection() {
                   <th className="text-left px-4 py-3">Users</th>
                   <th className="text-left px-4 py-3">Active (7d)</th>
                   <th className="text-left px-4 py-3">Active (30d)</th>
-                  <th className="text-left px-4 py-3">Avg Completion</th>
-                  <th className="text-left px-4 py-3">Items Completed</th>
-                  <th className="text-left px-4 py-3">Time Spent</th>
+                  <th className="text-left px-4 py-3">Avg completion</th>
+                  <th className="text-left px-4 py-3">Items completed</th>
+                  <th className="text-left px-4 py-3">Time spent</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
