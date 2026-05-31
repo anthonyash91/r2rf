@@ -284,11 +284,11 @@ function AdminFacilitiesPage() {
                                 <span className="inline-flex items-center gap-1.5">
                                   <Link2 className="h-3.5 w-3.5 shrink-0" />
                                   <Link
-                                    to="/facility/$slug"
-                                    params={{ slug: f.siteId }}
-                                    className="hover:text-foreground hover:underline"
+                                    to="/"
+                                    search={{ site: f.siteId }}
+                                    className="hover:text-foreground hover:underline font-mono"
                                   >
-                                    /facility/{f.siteId}
+                                    /?site={f.siteId}
                                   </Link>
                                 </span>
                               )}
