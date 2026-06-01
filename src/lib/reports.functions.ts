@@ -91,7 +91,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
       facilityUserCount = userIdFilter.length;
     }
 
-    const [catsRes, itemsRes, totalUsersRes, catFacRes, itemFacRes, ratingsRes] = await Promise.all([
+    const [catsRes, itemsRes, totalUsersRes, catFacRes, itemFacRes, ratingsRes, bookmarksRes] = await Promise.all([
       supabaseAdmin
         .from("categories")
         .select("id, name, slug, icon_name, icon_color, sort_order, published, created_at")
@@ -108,6 +108,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
       (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
       (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
       (supabaseAdmin as any).from("content_item_rating_totals").select("content_item_id, thumbs_up, thumbs_down"),
+      (supabaseAdmin as any).from("content_item_bookmark_totals").select("content_item_id, bookmark_count"),
     ]);
     if (catsRes.error) throw new Error(catsRes.error.message);
     if (itemsRes.error) throw new Error(itemsRes.error.message);
@@ -461,6 +462,11 @@ export const getUsageReport = createServerFn({ method: "POST" })
       itemRatings[r.content_item_id as string] = { thumbs_up: r.thumbs_up as number, thumbs_down: r.thumbs_down as number };
     }
 
+    const itemBookmarks: Record<string, number> = {};
+    for (const r of (bookmarksRes.data ?? []) as any[]) {
+      itemBookmarks[r.content_item_id as string] = r.bookmark_count as number;
+    }
+
     return {
       categories: filteredCategories,
       items: filteredItems,
@@ -468,7 +474,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
       totalViews, totalClicks,
       facilityUserCount, totalUsers, hoursSpent, totalSeconds,
       itemStats, catCompletionRate, catTotalSeconds, catDepth, typeStats, overallCompletionRate,
-      itemRatings,
+      itemRatings, itemBookmarks,
     };
   });
 
@@ -614,7 +620,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAnyAdmin(context.userId);
 
-    const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes, engRes, statsRes] = await Promise.all([
+    const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes, engRes, statsRes, userBookmarksRes, userRatingsRes] = await Promise.all([
       supabaseAdmin
         .from("user_profiles")
         .select("user_id, username, first_name, last_name, facility, created_at")
@@ -652,6 +658,14 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         .select("facility_percentile, items_completed, items_started, total_session_seconds, updated_at")
         .eq("user_id", data.userId)
         .maybeSingle(),
+      (supabaseAdmin as any)
+        .from("user_content_bookmarks")
+        .select("content_item_id")
+        .eq("user_id", data.userId),
+      (supabaseAdmin as any)
+        .from("user_content_ratings")
+        .select("content_item_id, rating")
+        .eq("user_id", data.userId),
     ]);
     if (profRes.error) throw new Error(profRes.error.message);
     if (catsRes.error) throw new Error(catsRes.error.message);
@@ -659,6 +673,9 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
     if (progRes.error) throw new Error(progRes.error.message);
     if (loginsRes.error) throw new Error(loginsRes.error.message);
     if (eventsRes.error) throw new Error(eventsRes.error.message);
+
+    const userBookmarkSet = new Set<string>((userBookmarksRes.data ?? []).map((r: any) => r.content_item_id as string));
+    const userRatingMap = new Map<string, 1 | -1>((userRatingsRes.data ?? []).map((r: any) => [r.content_item_id as string, r.rating as 1 | -1]));
 
     const { data: userInfo } = await supabaseAdmin.auth.admin.getUserById(data.userId);
     const email = userInfo?.user?.email ?? "";
@@ -767,6 +784,8 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
           mediaProgressPct: mediaPct,
           pdfProgressPct,
           manualCompletionPct: eng?.manualCompletionPct ?? null,
+          bookmarked: userBookmarkSet.has(i.id as string),
+          rating: userRatingMap.get(i.id as string) ?? null,
         };
       }),
       progress: (progRes.data ?? []).map((r: any) => ({

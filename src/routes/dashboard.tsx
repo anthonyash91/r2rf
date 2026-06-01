@@ -608,7 +608,7 @@ function DashboardPage() {
                         color={cat.icon_color}
                         size="sm"
                       />
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
                         <a
                           href={`/category/${cat.slug}#item-${item.id}`}
                           className="text-sm font-medium text-foreground hover:underline line-clamp-2 leading-tight"
@@ -627,7 +627,7 @@ function DashboardPage() {
                                 type="button"
                                 aria-label={t("bookmark.remove")}
                                 onClick={() => toggleBookmarkItem(item.id)}
-                                className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background h-[22.5px] px-1 transition-colors hover:bg-muted"
+                                className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
                               >
                                 <Bookmark
                                   className={`h-3.5 w-3.5 transition-colors ${isBookmarked ? "fill-[var(--color-accent)] text-[var(--color-accent)]" : "text-muted-foreground"}`}

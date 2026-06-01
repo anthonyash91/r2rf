@@ -1065,7 +1065,7 @@ function ItemEditor({
     },
   });
 
-  const typeOptions = Array.from(new Set([...CONTENT_TYPES, ...existingTypes, type].filter(Boolean)));
+  const typeOptions = Array.from(new Set([...CONTENT_TYPES, ...existingTypes, type].filter(Boolean))).sort((a, b) => a.localeCompare(b));
 
   const commitNewType = () => {
     const v = newType.trim();

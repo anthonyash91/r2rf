@@ -24,7 +24,7 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAnyAdmin(context.userId);
 
-    const [statsRes, facRes] = await Promise.all([
+    const [statsRes, facRes, bookmarksRes, ratingsRes] = await Promise.all([
       (supabaseAdmin as any)
         .from("facility_stats")
         .select("*")
@@ -33,6 +33,12 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
         .from("facilities")
         .select("value, label, site_id")
         .order("label", { ascending: true }),
+      (supabaseAdmin as any)
+        .from("user_content_bookmarks")
+        .select("user_id, user_profiles!inner(facility)"),
+      (supabaseAdmin as any)
+        .from("user_content_ratings")
+        .select("rating, user_profiles!inner(facility)"),
     ]);
 
     if (statsRes.error) throw new Error(statsRes.error.message);
@@ -40,6 +46,21 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
     const labelMap = new Map<string, { label: string; siteId: string | null }>(
       (facRes.data ?? []).map((f: any) => [f.value, { label: f.label, siteId: f.site_id }])
     );
+
+    const facilityBookmarks = new Map<string, number>();
+    for (const r of (bookmarksRes.data ?? []) as any[]) {
+      const facility = r.user_profiles?.facility as string | null;
+      if (facility) facilityBookmarks.set(facility, (facilityBookmarks.get(facility) ?? 0) + 1);
+    }
+
+    const facilityThumbsUp = new Map<string, number>();
+    const facilityThumbsDown = new Map<string, number>();
+    for (const r of (ratingsRes.data ?? []) as any[]) {
+      const facility = r.user_profiles?.facility as string | null;
+      if (!facility) continue;
+      if (r.rating === 1) facilityThumbsUp.set(facility, (facilityThumbsUp.get(facility) ?? 0) + 1);
+      if (r.rating === -1) facilityThumbsDown.set(facility, (facilityThumbsDown.get(facility) ?? 0) + 1);
+    }
 
     const rows = (statsRes.data ?? []).map((r: any) => ({
       facilityValue: r.facility_value as string,
@@ -52,6 +73,9 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
       totalSessionSeconds: r.total_session_seconds as number,
       itemsCompletedTotal: r.items_completed_total as number,
       updatedAt: r.updated_at as string,
+      totalBookmarks: facilityBookmarks.get(r.facility_value as string) ?? 0,
+      totalThumbsUp: facilityThumbsUp.get(r.facility_value as string) ?? 0,
+      totalThumbsDown: facilityThumbsDown.get(r.facility_value as string) ?? 0,
     }));
 
     const updatedAt = rows[0]?.updatedAt ?? null;

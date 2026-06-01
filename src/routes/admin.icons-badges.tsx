@@ -143,7 +143,7 @@ function AdminIconsBadgesPage() {
       return Array.from(new Set((data ?? []).map((r: { type: string }) => r.type).filter(Boolean))) as string[];
     },
   });
-  const allTypes = Array.from(new Set([...KNOWN_TYPES, ...dbTypes.map((t) => t.toLowerCase())]));
+  const allTypes = Array.from(new Set([...KNOWN_TYPES, ...dbTypes.map((t) => t.toLowerCase())])).sort((a, b) => a.localeCompare(b));
 
   const [draft, setDraft] = useState<BadgeStyles>(saved ?? DEFAULT_BADGE_STYLES);
   const [catDraft, setCatDraft] = useState<Record<string, string | null>>({});
@@ -439,7 +439,7 @@ function AdminIconsBadgesPage() {
           </Button>
         </div>
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {BADGE_VARIANTS.map((v) => {
+          {[...BADGE_VARIANTS].sort((a, b) => a.localeCompare(b)).map((v) => {
             const idx = draft.variants[v] ?? 0;
             const palette = PALETTES[idx];
             const dup = isDup(idx);

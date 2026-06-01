@@ -16,7 +16,7 @@ export function CircleProgress({
   return (
     <div className={`relative flex-shrink-0 ${className}`} style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e5e7eb" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} style={{ stroke: "color-mix(in oklab, var(--color-accent) 15%, transparent)" }} />
         <circle
           cx={size / 2}
           cy={size / 2}

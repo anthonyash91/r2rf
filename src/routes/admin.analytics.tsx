@@ -22,6 +22,7 @@ import {
   Info,
   ThumbsUp,
   ThumbsDown,
+  Bookmark,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -79,6 +80,9 @@ type FacilityRow = {
   totalSessionSeconds: number;
   itemsCompletedTotal: number;
   updatedAt: string;
+  totalBookmarks: number;
+  totalThumbsUp: number;
+  totalThumbsDown: number;
 };
 
 type AggregatedRow = {
@@ -88,7 +92,7 @@ type AggregatedRow = {
   completionRate: number | null;
   totalSeconds: number;
   depth: number | null;
-  items: { item: ContentItem; clicks: number; openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null; thumbsUp: number; thumbsDown: number }[];
+  items: { item: ContentItem; clicks: number; openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null; thumbsUp: number; thumbsDown: number; bookmarkCount: number }[];
 };
 
 
@@ -375,6 +379,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
     const itemClicks: Record<string, number> = d.itemClicks ?? {};
     const itemStats: Record<string, { openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }> = d.itemStats ?? {};
     const itemRatings: Record<string, { thumbs_up: number; thumbs_down: number }> = d.itemRatings ?? {};
+    const itemBookmarks: Record<string, number> = d.itemBookmarks ?? {};
     const catCompletionRate: Record<string, number | null> = d.catCompletionRate ?? {};
     const catTotalSeconds: Record<string, number> = d.catTotalSeconds ?? {};
     const catDepth: Record<string, number | null> = d.catDepth ?? {};
@@ -399,6 +404,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
             avgSessionSeconds: s?.avgSessionSeconds ?? null,
             thumbsUp: r?.thumbs_up ?? 0,
             thumbsDown: r?.thumbs_down ?? 0,
+            bookmarkCount: itemBookmarks[it.id] ?? 0,
           };
         })
         .sort((a, b) => b.clicks - a.clicks);
@@ -559,7 +565,7 @@ function exportUsageCsv(
 
   // Per-category and per-item detail
   lines.push(
-    ["Category", "Category slug", "Item title", "Item type", "Added", "Visits", "Opens", "Completion rate", "Avg depth", "Openers", "Completions", "Drop-offs", "Avg time spent", "Helpful", "Not helpful"]
+    ["Category", "Category slug", "Item title", "Item type", "Added", "Visits", "Opens", "Completion rate", "Avg depth", "Openers", "Completions", "Drop-offs", "Avg time spent", "Helpful", "Not helpful", "Bookmarks"]
       .map(csvEscape)
       .join(","),
   );
@@ -581,7 +587,7 @@ function exportUsageCsv(
         row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : "",
       ].join(","),
     );
-    for (const { item, clicks, openCount, completeCount, completionRate, avgSessionSeconds, thumbsUp, thumbsDown } of row.items) {
+    for (const { item, clicks, openCount, completeCount, completionRate, avgSessionSeconds, thumbsUp, thumbsDown, bookmarkCount } of row.items) {
       lines.push(
         [
           csvEscape(row.category.name),
@@ -599,6 +605,7 @@ function exportUsageCsv(
           avgSessionSeconds ? formatTimeSpent(avgSessionSeconds) : "",
           thumbsUp || "",
           thumbsDown || "",
+          bookmarkCount || "",
         ].join(","),
       );
     }
@@ -646,26 +653,29 @@ function FacilityComparisonSection() {
       ) : (
         <SectionCard padded={false} className="overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30 text-xs text-muted-foreground font-medium">
-                  <th className="text-left px-4 py-3">Facility</th>
-                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Users <InfoTooltip text="Total registered users at this facility." /></span></th>
-                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Active (7d) <InfoTooltip text="Users who engaged with at least one piece of content in the last 7 days." /></span></th>
-                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Active (30d) <InfoTooltip text="Users who engaged with at least one piece of content in the last 30 days." /></span></th>
-                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Participation <InfoTooltip text="Percentage of total registered users who were active in the last 30 days." /></span></th>
-                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Avg completion <InfoTooltip text="Average item completion rate across all content visible to this facility's users. Updated nightly." /></span></th>
-                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Items completed <InfoTooltip text="Total number of content items completed by all users at this facility." /></span></th>
-                  <th className="text-left px-4 py-3"><span className="inline-flex items-center gap-1">Time spent <InfoTooltip text="Total accumulated session time across all users at this facility." /></span></th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap">Facility</th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center gap-1">Users <InfoTooltip text="Total registered users at this facility." /></span></th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center gap-1">Active (7d) <InfoTooltip text="Users who engaged with at least one piece of content in the last 7 days." /></span></th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center gap-1">Active (30d) <InfoTooltip text="Users who engaged with at least one piece of content in the last 30 days." /></span></th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center gap-1">Participation <InfoTooltip text="Percentage of total registered users who were active in the last 30 days." /></span></th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center gap-1">Avg completion <InfoTooltip text="Average item completion rate across all content visible to this facility's users. Updated nightly." /></span></th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center gap-1">Items completed <InfoTooltip text="Total number of content items completed by all users at this facility." /></span></th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center gap-1">Time spent <InfoTooltip text="Total accumulated session time across all users at this facility." /></span></th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center gap-1">Bookmarks <InfoTooltip text="Total number of content items bookmarked by users at this facility." /></span></th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center gap-1">Helpful <InfoTooltip text="Total thumbs-up ratings given by users at this facility." /></span></th>
+                  <th className="text-left px-4 py-3 whitespace-nowrap"><span className="inline-flex items-center gap-1">Not helpful <InfoTooltip text="Total thumbs-down ratings given by users at this facility." /></span></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {(facilities as FacilityRow[]).map((f) => (
                   <tr key={f.facilityValue} className="hover:bg-muted/20 transition-colors">
-                    <td className="px-4 py-3 font-medium">
-                      {f.facilityLabel}
+                    <td className="px-4 py-3">
+                      <div className="font-medium whitespace-nowrap">{f.facilityLabel}</div>
                       {f.facilitySiteId && (
-                        <span className="ml-2 text-xs text-muted-foreground font-mono">{f.facilitySiteId}</span>
+                        <div className="text-xs text-muted-foreground font-mono mt-0.5">{f.facilitySiteId}</div>
                       )}
                     </td>
                     <td className="px-4 py-3 tabular-nums">{f.totalUsers}</td>
@@ -687,6 +697,9 @@ function FacilityComparisonSection() {
                     <td className="px-4 py-3 tabular-nums text-muted-foreground">
                       {f.totalSessionSeconds > 0 ? formatTimeSpent(f.totalSessionSeconds) : "—"}
                     </td>
+                    <td className="px-4 py-3 tabular-nums text-muted-foreground">{f.totalBookmarks || "—"}</td>
+                    <td className="px-4 py-3 tabular-nums text-muted-foreground">{f.totalThumbsUp || "—"}</td>
+                    <td className="px-4 py-3 tabular-nums text-muted-foreground">{f.totalThumbsDown || "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -943,7 +956,7 @@ function exportFacilityUsersCsv(
 
 function exportFacilityComparisonCsv(facilities: FacilityRow[]) {
   const lines: string[] = [];
-  lines.push(["Facility", "Site ID", "Total users", "Active (7d)", "Active (30d)", "Participation (30d)", "Avg completion %", "Items completed", "Time spent"].map(csvEscape).join(","));
+  lines.push(["Facility", "Site ID", "Total users", "Active (7d)", "Active (30d)", "Participation (30d)", "Avg completion %", "Items completed", "Time spent", "Bookmarks", "Helpful", "Not helpful"].map(csvEscape).join(","));
   for (const f of facilities) {
     const participation = f.totalUsers > 0 ? `${Math.round((f.activeUsers30d / f.totalUsers) * 100)}%` : "";
     const row = [
@@ -956,6 +969,9 @@ function exportFacilityComparisonCsv(facilities: FacilityRow[]) {
       f.avgCompletionRate != null ? `${f.avgCompletionRate}%` : "",
       String(f.itemsCompletedTotal),
       f.totalSessionSeconds > 0 ? formatTimeSpent(f.totalSessionSeconds) : "",
+      f.totalBookmarks || "",
+      f.totalThumbsUp || "",
+      f.totalThumbsDown || "",
     ];
     lines.push(row.map(csvEscape).join(","));
   }
@@ -1236,7 +1252,7 @@ function exportUserProgressCsv(
   if (tier) lines.push(["Engagement tier", tier + (pct != null ? ` (top ${Math.round(100 - pct)}% of facility)` : "")].map(csvEscape).join(","));
   lines.push("");
   lines.push(
-    ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on", "Progress", "Time Spent"]
+    ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on", "Progress", "Time Spent", "Bookmarked", "Rating"]
       .map(csvEscape)
       .join(","),
   );
@@ -1277,6 +1293,8 @@ function exportUserProgressCsv(
           csvEscape(it.read && (it as any).read_at ? fmtDateShort((it as any).read_at) : ""),
           progressStr,
           sessionSecs > 0 ? formatTimeSpent(sessionSecs) : "",
+          (it as any).bookmarked ? "Yes" : "",
+          (it as any).rating === 1 ? "Helpful" : (it as any).rating === -1 ? "Not helpful" : "",
         ].join(","),
       );
     }
@@ -1372,12 +1390,12 @@ function UserCategorySection({
                 </div>
               </div>
               <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-                <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium rounded-[4px] tabular-nums">
+                <span className="inline-flex items-center gap-1.5 border border-input bg-background px-2.5 py-1.5 text-xs font-medium rounded-[4px] tabular-nums">
                   <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
                   {g.read} of {g.total} read
                 </span>
                 {catTimeSeconds > 0 && (
-                  <span className="inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium rounded-[4px] tabular-nums">
+                  <span className="inline-flex items-center gap-1.5 border border-input bg-background px-2.5 py-1.5 text-xs font-medium rounded-[4px] tabular-nums">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                     {formatTimeSpent(catTimeSeconds)}
                   </span>
@@ -1405,50 +1423,67 @@ function UserCategorySection({
                         {withActionWord(item.duration, item.type)}
                       </span>
                     )}
-                    {(() => {
-                      // Video / Audio — playback progress
-                      const mediaPct: number | null = item.mediaProgressPct ?? null;
-                      const isAV = item.type && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("audio") || item.type.toLowerCase().includes("podcast"));
-                      if (!item.read && isAV && mediaPct !== null && mediaPct >= 5) {
-                        const watchedLabel = item.type.toLowerCase().includes("video")
-                          ? t("category.markedWatched").toLowerCase()
-                          : t("category.markedListened").toLowerCase();
-                        return (
-                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium ml-auto flex-shrink-0 overflow-hidden">
-                            <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
-                            <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
-                            <span className="relative">{mediaPct}% {watchedLabel}</span>
+                    <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                      {item.rating != null && (
+                        <span className="inline-flex items-center rounded-[4px] border border-input overflow-hidden">
+                          <span className={`inline-flex items-center justify-center px-2 py-1.5 ${item.rating === 1 ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-background text-muted-foreground"}`}>
+                            <ThumbsUp className={`h-3.5 w-3.5 ${item.rating === 1 ? "fill-[var(--color-accent)]" : ""}`} />
                           </span>
-                        );
-                      }
-
-                      // PDF — time-based reading progress (pre-calculated by getUserProgressReport)
-                      const isPdf = (item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url)) || (item.url && /\.pdf(\?|#|$)/i.test(item.url));
-                      const pdfPct: number | null = (item as any).pdfProgressPct ?? null;
-                      if (pdfPct !== null && pdfPct >= 1) {
-                        return (
-                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium ml-auto flex-shrink-0 overflow-hidden">
-                            <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
-                            <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
-                            <span className="relative">{pdfPct}% {t("category.markedRead").toLowerCase()}</span>
+                          <span className="w-px self-stretch bg-border" />
+                          <span className={`inline-flex items-center justify-center px-2 py-1.5 ${item.rating === -1 ? "bg-destructive/10 text-destructive" : "bg-background text-muted-foreground"}`}>
+                            <ThumbsDown className={`h-3.5 w-3.5 ${item.rating === -1 ? "fill-destructive" : ""}`} />
                           </span>
-                        );
-                      }
+                        </span>
+                      )}
+                      {item.bookmarked && (
+                        <span className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background px-2 py-1.5">
+                          <Bookmark className="h-3.5 w-3.5 fill-[var(--color-accent)] text-[var(--color-accent)]" />
+                        </span>
+                      )}
+                      {(() => {
+                        // Video / Audio — playback progress
+                        const mediaPct: number | null = item.mediaProgressPct ?? null;
+                        const isAV = item.type && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("audio") || item.type.toLowerCase().includes("podcast"));
+                        if (!item.read && isAV && mediaPct !== null && mediaPct >= 5) {
+                          const watchedLabel = item.type.toLowerCase().includes("video")
+                            ? t("category.markedWatched").toLowerCase()
+                            : t("category.markedListened").toLowerCase();
+                          return (
+                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
+                              <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
+                              <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
+                              <span className="relative">{mediaPct}% {watchedLabel}</span>
+                            </span>
+                          );
+                        }
 
-                      return (
-                        <ReadStatusBadge
-                          read={item.read}
-                          readLabel={
-                            item.read && isPdf && (item as any).manualCompletionPct != null
-                              ? `${labels.read} at ${(item as any).manualCompletionPct}%`
-                              : labels.read
-                          }
-                          unreadLabel={labels.unread}
-                          readAt={item.read_at ? fmtDateShort(item.read_at) : null}
-                          className="ml-auto"
-                        />
-                      );
-                    })()}
+                        // PDF — time-based reading progress (pre-calculated by getUserProgressReport)
+                        const isPdf = (item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url)) || (item.url && /\.pdf(\?|#|$)/i.test(item.url));
+                        const pdfPct: number | null = (item as any).pdfProgressPct ?? null;
+                        if (pdfPct !== null && pdfPct >= 1) {
+                          return (
+                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
+                              <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
+                              <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
+                              <span className="relative">{pdfPct}% {t("category.markedRead").toLowerCase()}</span>
+                            </span>
+                          );
+                        }
+
+                        return (
+                          <ReadStatusBadge
+                            read={item.read}
+                            readLabel={
+                              item.read && isPdf && (item as any).manualCompletionPct != null
+                                ? `${labels.read} at ${(item as any).manualCompletionPct}%`
+                                : labels.read
+                            }
+                            unreadLabel={labels.unread}
+                            readAt={item.read_at ? fmtDateShort(item.read_at) : null}
+                          />
+                        );
+                      })()}
+                    </div>
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-lg font-semibold text-foreground">{item.title}</p>
@@ -1573,7 +1608,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           <p className="p-5 text-sm text-muted-foreground">No content items.</p>
         ) : (
           <ul className="divide-y divide-border">
-            {row.items.map(({ item, clicks, openCount, completeCount, completionRate, avgSessionSeconds, thumbsUp, thumbsDown }) => (
+            {row.items.map(({ item, clicks, openCount, completeCount, completionRate, avgSessionSeconds, thumbsUp, thumbsDown, bookmarkCount }) => (
               <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] px-6 py-[19px]">
                 <Badge variant="type" type={item.type}>
                   {item.type}
@@ -1640,6 +1675,16 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs px-3 py-2">Helpful / Not helpful ratings from users.</TooltipContent>
+                    </Tooltip>
+                  )}
+                  {bookmarkCount > 0 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground cursor-default">
+                          <Bookmark className="h-3 w-3" />{bookmarkCount}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs px-3 py-2">Users who have bookmarked this item.</TooltipContent>
                     </Tooltip>
                   )}
                 </div>
