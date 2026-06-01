@@ -26,7 +26,8 @@ import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconB
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
-import { paletteStyle } from "@/lib/badge-styles";
+import { paletteStyle, nextUnusedIndex, paletteIndexOfColor, DEFAULT_BADGE_STYLES, BADGE_VARIANTS, type BadgeStyles } from "@/lib/badge-styles";
+import { badgeStylesQueryKey, BADGE_STYLES_KEY } from "@/hooks/use-badge-styles";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LabeledInput } from "@/components/FormField";
@@ -481,6 +482,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   const fetchFacilitiesList = useServerFn(listFacilities);
   const deleteOldFile = useServerFn(deleteStorageFile);
   const pendingDeletesRef = useRef<string[]>([]);
+  const pendingBadgeStylesRef = useRef<BadgeStyles | null>(null);
   const { data: facilitiesData } = useQuery({
     queryKey: ["facilities"],
     staleTime: 10 * 60 * 1000,
@@ -579,6 +581,15 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       setEditing(null);
       if (savedId) setPendingScrollId(savedId);
       invalidate();
+      qc.invalidateQueries({ queryKey: ["content-types"] });
+      const pendingStyles = pendingBadgeStylesRef.current;
+      if (pendingStyles) {
+        pendingBadgeStylesRef.current = null;
+        supabase
+          .from("site_settings")
+          .upsert({ key: BADGE_STYLES_KEY, value: pendingStyles as unknown as never, updated_at: new Date().toISOString() }, { onConflict: "key" })
+          .then(() => qc.invalidateQueries({ queryKey: [...badgeStylesQueryKey] }));
+      }
       // Fire-and-forget cleanup of old storage files now that the new URL is
       // safely persisted. A failed delete is non-fatal — just wastes storage.
       const toDelete = pendingDeletesRef.current.splice(0);
@@ -613,6 +624,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   const bulk = useBulkSelect();
   const { data: existingTypes = [] } = useQuery({
     queryKey: ["content-types"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase.from("content_items").select("type");
       if (error) throw error;
@@ -685,6 +697,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             busy={saveMut.isPending}
             categoryFacilities={categoryFacilities}
             onPendingDelete={(path) => { pendingDeletesRef.current.push(path); }}
+            onNewTypeBadgeStyle={(styles) => { pendingBadgeStylesRef.current = styles; }}
           />
         </div>
       )}
@@ -905,6 +918,7 @@ function ItemEditor({
   busy,
   categoryFacilities,
   onPendingDelete,
+  onNewTypeBadgeStyle,
 }: {
   item: ContentItem | null;
   categoryName: string;
@@ -913,11 +927,21 @@ function ItemEditor({
   busy: boolean;
   categoryFacilities: string[];
   onPendingDelete: (path: string) => void;
+  onNewTypeBadgeStyle?: (styles: BadgeStyles) => void;
 }) {
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
   const badgeStyles = useBadgeStyles();
   const facilityPs = paletteStyle(badgeStyles.variants["facility"] ?? 11);
+  const { data: categoryColors = [] } = useQuery({
+    queryKey: ["admin", "icons-badges", "categories"],
+    staleTime: 10 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("categories").select("id, icon_color");
+      if (error) throw error;
+      return (data ?? []) as { id: string; icon_color: string | null }[];
+    },
+  });
   const fetchFacilitiesList = useServerFn(listFacilities);
   const { data: facilitiesData } = useQuery({
     queryKey: ["facilities-list"],
@@ -1033,6 +1057,7 @@ function ItemEditor({
 
   const { data: existingTypes = [] } = useQuery({
     queryKey: ["content-types"],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase.from("content_items").select("type");
       if (error) throw error;
@@ -1045,9 +1070,36 @@ function ItemEditor({
   const commitNewType = () => {
     const v = newType.trim();
     if (!v) return;
+    const key = v.toLowerCase();
     setType(v);
     setAddingType(false);
     setNewType("");
+    qc.setQueryData<string[]>(["content-types"], (old = []) =>
+      Array.from(new Set([...old, v]))
+    );
+    // Assign a unique palette color using all currently-in-use indices across
+    // variants, all types, and category icon colors.
+    const currentStyles = qc.getQueryData<BadgeStyles>(badgeStylesQueryKey) ?? DEFAULT_BADGE_STYLES;
+    if ((currentStyles.types as Record<string, number>)[key] !== undefined) return;
+    const used = new Set<number>();
+    for (const k of BADGE_VARIANTS) {
+      const idx = currentStyles.variants[k];
+      if (idx !== undefined) used.add(idx);
+    }
+    for (const idx of Object.values(currentStyles.types as Record<string, number>)) {
+      if (idx !== undefined) used.add(idx);
+    }
+    for (const cat of categoryColors) {
+      const idx = paletteIndexOfColor(cat.icon_color);
+      if (idx >= 0) used.add(idx);
+    }
+    const newIdx = nextUnusedIndex(0, used);
+    const updatedStyles: BadgeStyles = {
+      ...currentStyles,
+      types: { ...currentStyles.types, [key]: newIdx } as any,
+    };
+    qc.setQueryData(badgeStylesQueryKey, updatedStyles);
+    onNewTypeBadgeStyle?.(updatedStyles);
   };
 
   const cancelNewType = () => {
@@ -1122,22 +1174,17 @@ function ItemEditor({
                   if (e.key === "Enter") { e.preventDefault(); commitNewType(); }
                   if (e.key === "Escape") { cancelNewType(); }
                 }}
+                onBlur={cancelNewType}
                 placeholder="New type name"
                 className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={commitNewType}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 Add
-              </button>
-              <button
-                type="button"
-                className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
-                onClick={cancelNewType}
-              >
-                Cancel
               </button>
             </div>
           ) : (

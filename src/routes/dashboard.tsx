@@ -21,6 +21,7 @@ import { clearMustResetPassword } from "@/lib/users.functions";
 import { getMyEngagementTier } from "@/lib/analytics-stats.functions";
 import { questionLabel } from "@/lib/security-questions";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
@@ -30,9 +31,11 @@ import { withActionWord, parseMinutes } from "@/lib/duration";
 import { weightedCompletionPct } from "@/lib/content-progress";
 import { formatTimeSpent, fmtDateShort } from "@/lib/date-format";
 import { readStatusLabels } from "@/lib/read-status";
+import { getMyBookmarkedItems } from "@/lib/bookmarks.functions";
+import { useBookmarks } from "@/hooks/use-bookmarks";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
@@ -43,7 +46,7 @@ import type { Category } from "@/lib/categories";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Reentry to Recovery" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
-    tab: search.tab === "account" ? "account" : undefined,
+    tab: search.tab === "account" ? "account" : search.tab === "saved" ? "saved" : undefined,
   }),
   beforeLoad: async ({ location }) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -269,6 +272,15 @@ function DashboardPage() {
 
 
 
+  const { bookmarkIds, toggle: toggleBookmarkItem } = useBookmarks();
+  const fetchBookmarkedItems = useServerFn(getMyBookmarkedItems);
+  const bookmarkedItemsQuery = useQuery({
+    queryKey: ["my-bookmarked-items", user?.id],
+    enabled: !!user?.id,
+    staleTime: 60 * 1000,
+    queryFn: () => fetchBookmarkedItems(),
+  });
+
   const [editing, setEditing] = useState(false);
   const [pending, setPending] = useState<SecurityAnswerInput[]>([]);
   const [busy, setBusy] = useState(false);
@@ -391,7 +403,7 @@ function DashboardPage() {
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
         <Tabs
           value={mustSetup ? "account" : undefined}
-          defaultValue={Route.useSearch().tab === "account" ? "account" : "categories"}
+          defaultValue={Route.useSearch().tab === "account" ? "account" : Route.useSearch().tab === "saved" ? "saved" : "categories"}
           className="mt-0"
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -423,6 +435,21 @@ function DashboardPage() {
                 className={`flex-1 sm:flex-none justify-center px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
               >
                 {t("dashboard.tabProgress")}
+              </TabsTrigger>
+              <TabsTrigger
+                value="saved"
+                disabled={mustSetup}
+                onClick={(e) => {
+                  if (mustSetup) { e.preventDefault(); toast.error(t("dashboard.lockedNav")); }
+                }}
+                className={`flex-1 sm:flex-none justify-center px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
+              >
+                {t("dashboard.tabSaved")}
+                {bookmarkIds.size > 0 && (
+                  <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)]/15 px-1 text-[10px] font-semibold text-[var(--color-accent)]">
+                    {bookmarkIds.size}
+                  </span>
+                )}
               </TabsTrigger>
               <TabsTrigger
                 value="account"
@@ -556,6 +583,74 @@ function DashboardPage() {
             )}
           </TabsContent>
 
+
+          <TabsContent value="saved" className="mt-6">
+            {bookmarkedItemsQuery.isLoading ? (
+              <p className="text-sm text-muted-foreground">{t("dashboard.loading")}</p>
+            ) : (bookmarkedItemsQuery.data?.items ?? []).length === 0 ? (
+              <div className="rounded-2xl border border-border bg-card p-10 flex flex-col items-center gap-3 text-center">
+                <Bookmark className="h-8 w-8 text-muted-foreground/40" />
+                <p className="font-medium text-foreground">{t("dashboard.savedEmpty")}</p>
+                <p className="text-sm text-muted-foreground max-w-xs">{t("dashboard.savedEmptyHint")}</p>
+              </div>
+            ) : (
+              <ul className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
+                {(bookmarkedItemsQuery.data?.items ?? []).map((row: any) => {
+                  const item = row.content_items;
+                  const cat = item.categories;
+                  const title = pickLang(lang, item.title, item.title_es) || item.title;
+                  const catName = pickLang(lang, cat.name, cat.name_es);
+                  const isBookmarked = bookmarkIds.has(item.id);
+                  return (
+                    <li key={item.id} className="flex items-center gap-4 p-5">
+                      <CategoryIcon
+                        name={cat.icon_name}
+                        color={cat.icon_color}
+                        size="sm"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <a
+                          href={`/category/${cat.slug}#item-${item.id}`}
+                          className="text-sm font-medium text-foreground hover:underline line-clamp-2 leading-tight"
+                        >
+                          {title}
+                        </a>
+                        <div>
+                          <span className="text-xs text-muted-foreground">{catName}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                aria-label={t("bookmark.remove")}
+                                onClick={() => toggleBookmarkItem(item.id)}
+                                className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background h-[22.5px] px-1 transition-colors hover:bg-muted"
+                              >
+                                <Bookmark
+                                  className={`h-3.5 w-3.5 transition-colors ${isBookmarked ? "fill-[var(--color-accent)] text-[var(--color-accent)]" : "text-muted-foreground"}`}
+                                />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              {t("bookmark.remove")}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        {item.type && (
+                          <Badge variant="type" type={item.type}>
+                            {translateType(lang, item.type)}
+                          </Badge>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </TabsContent>
 
           <TabsContent value="account" className="mt-6 space-y-6">
             <div className="rounded-2xl border border-border bg-card p-6">

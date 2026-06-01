@@ -12,7 +12,7 @@ import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { fmtDateShort } from "@/lib/date-format";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Circle } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Circle, Bookmark, ThumbsUp, ThumbsDown } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -28,6 +28,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { listFacilities } from "@/lib/facilities.functions";
 import { useContentEngagement, type EngagementRecord } from "@/hooks/use-content-engagement";
+import { useBookmarks } from "@/hooks/use-bookmarks";
+import { useRatings } from "@/hooks/use-ratings";
 
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
@@ -90,6 +92,8 @@ function CategoryPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
   const { isAdmin, canAccessAdmin, isFacilityUser, user } = useAuth();
+  const { bookmarkIds, toggle: toggleBookmark } = useBookmarks();
+  const { myRatings, rate } = useRatings();
   const queryClient = useQueryClient();
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
   const fetchFacilitiesList = useServerFn(listFacilities);
@@ -398,6 +402,28 @@ function CategoryPage() {
       : undefined,
   });
 
+  const visibleItemIds = useMemo(
+    () => (data?.items ?? []).map((i) => i.id as string),
+    [data?.items],
+  );
+
+  const { data: ratingTotals = {} } = useQuery({
+    queryKey: ["rating-totals", visibleItemIds.join(",")],
+    enabled: visibleItemIds.length > 0 && !!user,
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      const { data: rows } = await (supabase as any)
+        .from("content_item_rating_totals")
+        .select("content_item_id, thumbs_up, thumbs_down")
+        .in("content_item_id", visibleItemIds);
+      const map: Record<string, { thumbs_up: number; thumbs_down: number }> = {};
+      for (const r of (rows ?? []) as any[]) {
+        map[r.content_item_id] = { thumbs_up: r.thumbs_up, thumbs_down: r.thumbs_down };
+      }
+      return map;
+    },
+  });
+
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
@@ -640,6 +666,8 @@ function CategoryPage() {
                             {source && <p className="mt-2 text-xs text-muted-foreground/80">{t("category.source")} · {source}</p>}
                           </div>
                         </Wrapper>
+
+
                         {(isAdmin || isNew) && (
                           <div className="absolute top-3 right-3 mt-[7px] mr-[7px] flex items-center gap-1.5 flex-wrap justify-end z-10">
                             {isAdmin && isNew && (
@@ -681,8 +709,62 @@ function CategoryPage() {
                             readLabel = t("category.markedClicked");
                             unreadLabel = t("category.notClicked");
                           }
+                          const isBookmarked = bookmarkIds.has(item.id);
+                          const myRating = myRatings.get(item.id) ?? null;
                           return (
                             <div className="absolute top-6 right-6 flex items-center gap-1.5 justify-end z-10">
+                              {isRead && <div className="inline-flex items-center rounded-[4px] border border-input overflow-hidden">
+                                <TooltipProvider delayDuration={150}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        type="button"
+                                        aria-label={t("rating.helpful")}
+                                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); rate(item.id, myRating === 1 ? null : 1); }}
+                                        className={`inline-flex items-center justify-center px-2 py-1.5 transition-colors ${myRating === 1 ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                                      >
+                                        <ThumbsUp className={`h-3.5 w-3.5 ${myRating === 1 ? "fill-[var(--color-accent)]" : ""}`} />
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="text-xs">{t("rating.helpful")}</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <div className="w-px self-stretch bg-border" />
+                                <TooltipProvider delayDuration={150}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        type="button"
+                                        aria-label={t("rating.notHelpful")}
+                                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); rate(item.id, myRating === -1 ? null : -1); }}
+                                        className={`inline-flex items-center justify-center px-2 py-1.5 transition-colors ${myRating === -1 ? "bg-destructive/10 text-destructive" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                                      >
+                                        <ThumbsDown className={`h-3.5 w-3.5 ${myRating === -1 ? "fill-destructive" : ""}`} />
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="text-xs">{t("rating.notHelpful")}</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              </div>}
+                              <TooltipProvider delayDuration={150}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      aria-label={isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
+                                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleBookmark(item.id); }}
+                                      className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                                    >
+                                      <Bookmark
+                                        className={`h-3.5 w-3.5 transition-colors ${isBookmarked ? "fill-[var(--color-accent)] text-[var(--color-accent)]" : "text-muted-foreground"}`}
+                                      />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-xs">
+                                    {isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               {(() => {
                                 const eng = engagementMap.get(item.id);
 

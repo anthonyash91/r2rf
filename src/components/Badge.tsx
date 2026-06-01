@@ -118,7 +118,7 @@ type BadgeProps = {
 };
 
 const BASE =
-  "inline-flex items-center leading-none rounded-[4px] border px-2 py-0.5 text-[11px] font-medium flex-shrink-0";
+  "inline-flex items-center leading-none rounded-[4px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0";
 
 const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   new: Sparkles,
@@ -318,7 +318,7 @@ export function Badge({ variant, type, hideIcon, children, className, title, onC
       className={cn(BASE, "justify-center", !hideIcon && "gap-1", className)}
       style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
     >
-      {!hideIcon && Icon && <Icon className="h-3 w-3" strokeWidth={2} />}
+      {!hideIcon && Icon && <Icon className="h-3.5 w-3.5" strokeWidth={2} />}
       {children}
     </span>
   );

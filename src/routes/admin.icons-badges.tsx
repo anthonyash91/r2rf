@@ -41,6 +41,9 @@ import {
   KNOWN_TYPES,
   PALETTES,
   paletteStyle,
+  indexForType,
+  paletteIndexOfColor,
+  nextUnusedIndex,
   type BadgeStyles,
   type BadgeVariantKey,
   type KnownTypeKey,
@@ -78,7 +81,6 @@ const TYPE_LABELS: Record<KnownTypeKey, string> = {
   worksheet: "Worksheet",
   video: "Video",
   guide: "Guide",
-  meeting: "Meeting",
   audio: "Audio",
   pdf: "PDF",
   link: "Link",
@@ -95,19 +97,6 @@ type CategoryRow = {
   icon_color: string | null;
 };
 
-function paletteIndexOfColor(color: string | null | undefined): number {
-  if (!color) return -1;
-  return PALETTES.findIndex((p) => p.oklch === color);
-}
-
-function nextUnusedIndex(cur: number, used: Set<number>): number {
-  const n = PALETTES.length;
-  for (let step = 1; step <= n; step++) {
-    const candidate = (((cur + step) % n) + n) % n;
-    if (!used.has(candidate)) return candidate;
-  }
-  return (((cur + 1) % n) + n) % n;
-}
 
 /** Pick `count` palette indices, preferring those not in `excluded`, starting from offset. */
 function pickAvoiding(count: number, excluded: Set<number>, startOffset: number): number[] {
@@ -126,13 +115,6 @@ function pickAvoiding(count: number, excluded: Set<number>, startOffset: number)
 }
 
 /** Distribute palette indices across N items without repeats (until palette is exhausted). */
-function distributeUnique(count: number, startOffset = 0): number[] {
-  const n = PALETTES.length;
-  const out: number[] = [];
-  for (let i = 0; i < count; i++) out.push((startOffset + i) % n);
-  return out;
-}
-
 function AdminIconsBadgesPage() {
   const qc = useQueryClient();
 
@@ -152,6 +134,16 @@ function AdminIconsBadgesPage() {
       return (data ?? []) as CategoryRow[];
     },
   });
+
+  const { data: dbTypes = [] } = useQuery({
+    queryKey: ["content-types"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("content_items").select("type");
+      if (error) throw error;
+      return Array.from(new Set((data ?? []).map((r: { type: string }) => r.type).filter(Boolean))) as string[];
+    },
+  });
+  const allTypes = Array.from(new Set([...KNOWN_TYPES, ...dbTypes.map((t) => t.toLowerCase())]));
 
   const [draft, setDraft] = useState<BadgeStyles>(saved ?? DEFAULT_BADGE_STYLES);
   const [catDraft, setCatDraft] = useState<Record<string, string | null>>({});
@@ -173,6 +165,32 @@ function AdminIconsBadgesPage() {
       setCatIconDraft(iconMap);
     }
   }, [categories]);
+
+  useEffect(() => {
+    const newTypes = allTypes.filter(
+      (t) => (draft.types as Record<string, number>)[t] === undefined,
+    );
+    if (newTypes.length === 0) return;
+    setDraft((d) => {
+      const used = new Set<number>();
+      for (const idx of Object.values(d.types as Record<string, number>)) {
+        if (idx !== undefined) used.add(idx);
+      }
+      for (const k of BADGE_VARIANTS) {
+        const idx = d.variants[k];
+        if (idx !== undefined) used.add(idx);
+      }
+      const types = { ...(d.types as Record<string, number>) };
+      for (const t of newTypes) {
+        if (types[t] === undefined) {
+          const idx = nextUnusedIndex(0, used);
+          types[t] = idx;
+          used.add(idx);
+        }
+      }
+      return { ...d, types: types as any };
+    });
+  }, [allTypes.join(",")]);
 
   const originalCatMap = useMemo(() => {
     const m: Record<string, string | null> = {};
@@ -248,9 +266,9 @@ function AdminIconsBadgesPage() {
       if (skip?.kind === "variant" && skip.key === k) continue;
       out.push(d.variants[k] ?? DEFAULT_BADGE_STYLES.variants[k] ?? 0);
     }
-    for (const k of KNOWN_TYPES) {
+    for (const k of allTypes) {
       if (skip?.kind === "type" && skip.key === k) continue;
-      out.push(d.types[k] ?? DEFAULT_BADGE_STYLES.types[k] ?? 0);
+      out.push((d.types as Record<string, number>)[k] ?? (DEFAULT_BADGE_STYLES.types as Record<string, number>)[k] ?? indexForType(k, d));
     }
     for (const [id, v] of Object.entries(cd)) {
       if (skip?.kind === "category" && skip.key === id) continue;
@@ -296,9 +314,9 @@ function AdminIconsBadgesPage() {
   }
 
   // -------- Type cycling --------
-  function cycleType(key: KnownTypeKey) {
+  function cycleType(key: string) {
     setDraft((d) => {
-      const cur = d.types[key] ?? 0;
+      const cur = (d.types as any)[key] ?? 0;
       const used = new Set<number>(collectGlobalIndices(d, catDraft, { kind: "type", key }));
       return { ...d, types: { ...d.types, [key]: nextUnusedIndex(cur, used) } };
     });
@@ -306,15 +324,15 @@ function AdminIconsBadgesPage() {
   function regenerateAllTypes() {
     setDraft((d) => {
       const excluded = new Set<number>(collectGlobalIndices(d, catDraft));
-      for (const k of KNOWN_TYPES) excluded.delete(d.types[k] ?? 0);
+      for (const k of allTypes) excluded.delete((d.types as any)[k] ?? 0);
       const indices = pickAvoiding(
-        KNOWN_TYPES.length,
+        allTypes.length,
         excluded,
         Math.floor(Math.random() * PALETTES.length),
       );
-      const types: Partial<Record<KnownTypeKey, number>> = {};
-      KNOWN_TYPES.forEach((k, i) => (types[k] = indices[i]));
-      return { ...d, types };
+      const types: Record<string, number> = {};
+      allTypes.forEach((k, i) => (types[k] = indices[i]));
+      return { ...d, types: { ...d.types, ...types } };
     });
   }
 
@@ -326,10 +344,10 @@ function AdminIconsBadgesPage() {
       return { ...d, variantIcons: { ...(d.variantIcons ?? {}), [key]: next } };
     });
   }
-  function cycleTypeIcon(key: KnownTypeKey) {
+  function cycleTypeIcon(key: string) {
     setDraft((d) => {
       const cur = d.typeIcons?.[key] ?? null;
-      const next = pickRelevantIcon({ title: TYPE_LABELS[key], exclude: cur });
+      const next = pickRelevantIcon({ title: (TYPE_LABELS as Record<string, string>)[key] ?? key, exclude: cur });
       return { ...d, typeIcons: { ...(d.typeIcons ?? {}), [key]: next } };
     });
   }
@@ -380,7 +398,7 @@ function AdminIconsBadgesPage() {
 
   return (
     <div>
-      <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
         <PageHeader
           icon={Palette}
           title="Icons & Badges"
@@ -471,8 +489,8 @@ function AdminIconsBadgesPage() {
           </Button>
         </div>
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {KNOWN_TYPES.map((t) => {
-            const idx = draft.types[t] ?? 0;
+          {allTypes.map((t) => {
+            const idx = (draft.types as Record<string, number>)[t] ?? indexForType(t, draft);
             const palette = PALETTES[idx];
             const overrideIconName = draft.typeIcons?.[t];
             const Icon =
@@ -490,7 +508,7 @@ function AdminIconsBadgesPage() {
                     style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
                   >
                     <Icon className="h-3 w-3" strokeWidth={2} />
-                    {TYPE_LABELS[t]}
+                    <span className="capitalize">{(TYPE_LABELS as Record<string, string>)[t] ?? t}</span>
                   </span>
                   <div className="min-w-0">
                     <div className="text-xs text-muted-foreground truncate">

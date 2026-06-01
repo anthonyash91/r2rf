@@ -91,7 +91,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
       facilityUserCount = userIdFilter.length;
     }
 
-    const [catsRes, itemsRes, totalUsersRes, catFacRes, itemFacRes] = await Promise.all([
+    const [catsRes, itemsRes, totalUsersRes, catFacRes, itemFacRes, ratingsRes] = await Promise.all([
       supabaseAdmin
         .from("categories")
         .select("id, name, slug, icon_name, icon_color, sort_order, published, created_at")
@@ -107,6 +107,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
         .not("user_id", "in", `(${[...facilityUserAccountIds, "00000000-0000-0000-0000-000000000000"].join(",")})`),
       (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
       (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
+      (supabaseAdmin as any).from("content_item_rating_totals").select("content_item_id, thumbs_up, thumbs_down"),
     ]);
     if (catsRes.error) throw new Error(catsRes.error.message);
     if (itemsRes.error) throw new Error(itemsRes.error.message);
@@ -455,6 +456,11 @@ export const getUsageReport = createServerFn({ method: "POST" })
       typeStats[type] = { ...t, completionRate: t.opens > 0 ? Math.round(t.completions / t.opens * 100) : null };
     }
 
+    const itemRatings: Record<string, { thumbs_up: number; thumbs_down: number }> = {};
+    for (const r of (ratingsRes.data ?? []) as any[]) {
+      itemRatings[r.content_item_id as string] = { thumbs_up: r.thumbs_up as number, thumbs_down: r.thumbs_down as number };
+    }
+
     return {
       categories: filteredCategories,
       items: filteredItems,
@@ -462,6 +468,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
       totalViews, totalClicks,
       facilityUserCount, totalUsers, hoursSpent, totalSeconds,
       itemStats, catCompletionRate, catTotalSeconds, catDepth, typeStats, overallCompletionRate,
+      itemRatings,
     };
   });
 

@@ -47,6 +47,22 @@ const translations: Record<Language, Dict> = {
     "home.empty": "No categories yet.",
     "home.item": "Item",
     "home.items": "Items",
+    "home.searchPlaceholder": "Search resources…",
+    "home.searchResult": "{count} result for \"{query}\"",
+    "home.searchResults": "{count} results for \"{query}\"",
+    "home.searchNoResults": "No results found for \"{query}\"",
+    "home.searchIn": "in {category}",
+
+    "bookmark.save": "Save for later",
+    "bookmark.saved": "Saved",
+    "bookmark.remove": "Remove bookmark",
+
+    "rating.helpful": "Helpful",
+    "rating.notHelpful": "Not helpful",
+
+    "dashboard.tabSaved": "Saved",
+    "dashboard.savedEmpty": "No saved resources yet.",
+    "dashboard.savedEmptyHint": "Tap the bookmark icon on any resource to save it here.",
 
     "category.allCategories": "All categories",
     "category.notFound": "Category not found",
@@ -218,6 +234,22 @@ const translations: Record<Language, Dict> = {
     "home.empty": "Aún no hay categorías.",
     "home.item": "Recurso",
     "home.items": "Recursos",
+    "home.searchPlaceholder": "Buscar recursos…",
+    "home.searchResult": "{count} resultado para \"{query}\"",
+    "home.searchResults": "{count} resultados para \"{query}\"",
+    "home.searchNoResults": "No se encontraron resultados para \"{query}\"",
+    "home.searchIn": "en {category}",
+
+    "bookmark.save": "Guardar para después",
+    "bookmark.saved": "Guardado",
+    "bookmark.remove": "Quitar marcador",
+
+    "rating.helpful": "Útil",
+    "rating.notHelpful": "No útil",
+
+    "dashboard.tabSaved": "Guardados",
+    "dashboard.savedEmpty": "Aún no hay recursos guardados.",
+    "dashboard.savedEmptyHint": "Toca el ícono de marcador en cualquier recurso para guardarlo aquí.",
 
     "category.allCategories": "Todas las categorías",
     "category.notFound": "Categoría no encontrada",

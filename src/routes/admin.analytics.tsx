@@ -20,6 +20,8 @@ import {
   Flame,
   Trophy,
   Info,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -86,7 +88,7 @@ type AggregatedRow = {
   completionRate: number | null;
   totalSeconds: number;
   depth: number | null;
-  items: { item: ContentItem; clicks: number; openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }[];
+  items: { item: ContentItem; clicks: number; openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null; thumbsUp: number; thumbsDown: number }[];
 };
 
 
@@ -372,6 +374,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
     const catClicks: Record<string, number> = d.catClicks ?? {};
     const itemClicks: Record<string, number> = d.itemClicks ?? {};
     const itemStats: Record<string, { openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }> = d.itemStats ?? {};
+    const itemRatings: Record<string, { thumbs_up: number; thumbs_down: number }> = d.itemRatings ?? {};
     const catCompletionRate: Record<string, number | null> = d.catCompletionRate ?? {};
     const catTotalSeconds: Record<string, number> = d.catTotalSeconds ?? {};
     const catDepth: Record<string, number | null> = d.catDepth ?? {};
@@ -386,6 +389,7 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
       const items = (itemsByCategory.get(cat.id) ?? [])
         .map((it) => {
           const s = itemStats[it.id];
+          const r = itemRatings[it.id];
           return {
             item: it,
             clicks: itemClicks[it.id] ?? 0,
@@ -393,6 +397,8 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
             completeCount: s?.completeCount ?? 0,
             completionRate: s?.completionRate ?? null,
             avgSessionSeconds: s?.avgSessionSeconds ?? null,
+            thumbsUp: r?.thumbs_up ?? 0,
+            thumbsDown: r?.thumbs_down ?? 0,
           };
         })
         .sort((a, b) => b.clicks - a.clicks);
@@ -553,7 +559,7 @@ function exportUsageCsv(
 
   // Per-category and per-item detail
   lines.push(
-    ["Category", "Category slug", "Item title", "Item type", "Added", "Visits", "Opens", "Completion rate", "Avg depth", "Openers", "Completions", "Drop-offs", "Avg time spent"]
+    ["Category", "Category slug", "Item title", "Item type", "Added", "Visits", "Opens", "Completion rate", "Avg depth", "Openers", "Completions", "Drop-offs", "Avg time spent", "Helpful", "Not helpful"]
       .map(csvEscape)
       .join(","),
   );
@@ -575,7 +581,7 @@ function exportUsageCsv(
         row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : "",
       ].join(","),
     );
-    for (const { item, clicks, openCount, completeCount, completionRate, avgSessionSeconds } of row.items) {
+    for (const { item, clicks, openCount, completeCount, completionRate, avgSessionSeconds, thumbsUp, thumbsDown } of row.items) {
       lines.push(
         [
           csvEscape(row.category.name),
@@ -591,6 +597,8 @@ function exportUsageCsv(
           completeCount || "",
           openCount > 0 ? openCount - completeCount : "",
           avgSessionSeconds ? formatTimeSpent(avgSessionSeconds) : "",
+          thumbsUp || "",
+          thumbsDown || "",
         ].join(","),
       );
     }
@@ -1565,7 +1573,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           <p className="p-5 text-sm text-muted-foreground">No content items.</p>
         ) : (
           <ul className="divide-y divide-border">
-            {row.items.map(({ item, clicks, openCount, completeCount, completionRate, avgSessionSeconds }) => (
+            {row.items.map(({ item, clicks, openCount, completeCount, completionRate, avgSessionSeconds, thumbsUp, thumbsDown }) => (
               <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] px-6 py-[19px]">
                 <Badge variant="type" type={item.type}>
                   {item.type}
@@ -1617,6 +1625,21 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs px-3 py-2">Average time spent — mean session time per user who engaged with this item in the selected period.</TooltipContent>
+                    </Tooltip>
+                  )}
+                  {(thumbsUp > 0 || thumbsDown > 0) && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-2 text-xs tabular-nums text-muted-foreground cursor-default">
+                          <span className="inline-flex items-center gap-1">
+                            <ThumbsUp className="h-3 w-3" />{thumbsUp}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <ThumbsDown className="h-3 w-3" />{thumbsDown}
+                          </span>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs px-3 py-2">Helpful / Not helpful ratings from users.</TooltipContent>
                     </Tooltip>
                   )}
                 </div>

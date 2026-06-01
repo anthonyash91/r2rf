@@ -4,14 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
-import { useI18n, pickLang, type Language } from "@/lib/i18n";
+import { useI18n, pickLang, translateType, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
-import { Pencil } from "lucide-react";
+import { Pencil, Search, Bookmark } from "lucide-react";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ResponsiveBadgeGroup } from "@/components/ResponsiveBadgeGroup";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
+import { useBookmarks } from "@/hooks/use-bookmarks";
 
 type CategoryStats = { count: number; recentItemIds: Set<string> };
 
@@ -100,6 +102,94 @@ function useColumnCount() {
     return () => window.removeEventListener("resize", compute);
   }, []);
   return cols;
+}
+
+function SearchResults({
+  results,
+  isFetching,
+  query,
+  lang,
+  t,
+}: {
+  results: any[];
+  isFetching: boolean;
+  query: string;
+  lang: Language;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const { bookmarkIds, toggle, isLoggedIn } = useBookmarks();
+
+  if (isFetching && results.length === 0) {
+    return <p className="text-sm text-muted-foreground">{t("home.loading")}</p>;
+  }
+  if (results.length === 0) {
+    return <p className="text-sm text-muted-foreground">{t("home.searchNoResults", { query })}</p>;
+  }
+  return (
+    <div>
+      <p className="text-sm text-muted-foreground mb-5">
+        {t(results.length === 1 ? "home.searchResult" : "home.searchResults", { count: results.length, query })}
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {results.map((item: any) => {
+          const cat = item.categories;
+          const Icon = resolveCategoryIcon(cat.icon_name);
+          const color: string = cat.icon_color || "var(--color-accent)";
+          const catName: string = pickLang(lang, cat.name, cat.name_es);
+          const isBookmarked = bookmarkIds.has(item.id);
+          return (
+            <a
+              key={item.id}
+              href={`/category/${cat.slug}#item-${item.id}`}
+              className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-5 hover:-translate-y-0.5 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)] transition-all"
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border shrink-0"
+                  style={{
+                    backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
+                    borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
+                  }}
+                >
+                  <Icon className="h-3.5 w-3.5" style={{ color }} strokeWidth={1.75} />
+                </div>
+                <span className="text-xs text-muted-foreground truncate">{catName}</span>
+                <div className="ml-auto flex items-center gap-2 shrink-0">
+                  {isLoggedIn && (
+                    <TooltipProvider delayDuration={150}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label={isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(item.id); }}
+                            className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background h-[22.5px] px-1 transition-colors hover:bg-muted"
+                          >
+                            <Bookmark
+                              className={`h-3.5 w-3.5 transition-colors ${isBookmarked ? "fill-[var(--color-accent)] text-[var(--color-accent)]" : "text-muted-foreground"}`}
+                            />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          {isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {item.type && (
+                    <Badge variant="type" type={item.type}>
+                      {translateType(lang, item.type)}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <p className="text-sm font-medium text-foreground leading-snug line-clamp-2">{item.title}</p>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function MasonryCategories({ categories, lang, facilityContext }: { categories: Category[]; lang: Language; facilityContext?: string }) {
@@ -282,6 +372,79 @@ export function HomePageView({
   facilityContext?: string;
 }) {
   const { t, lang } = useI18n();
+  const { isAdmin, user } = useAuth();
+  const fetchFacilityValue = useServerFn(getMyFacilityValue);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { data: facilityData } = useQuery({
+    queryKey: ["my-facility", user?.id],
+    enabled: !!user?.id && !isAdmin,
+    staleTime: Infinity,
+    queryFn: () => fetchFacilityValue(),
+  });
+
+  const userFacility: string | null | undefined = facilityContext
+    ? facilityContext
+    : isAdmin
+      ? undefined
+      : (facilityData?.facility ?? null);
+
+  const visibleCategories = useMemo(() => {
+    return categories.filter((c) => {
+      const f = c.facilities ?? [];
+      if (f.length === 0) return true;
+      if (userFacility === undefined) return true;
+      if (!userFacility) return false;
+      return f.includes(userFacility);
+    });
+  }, [categories, userFacility]);
+
+  const visibleCategoryIds = useMemo(() => visibleCategories.map((c) => c.id), [visibleCategories]);
+  const facilityKey = userFacility === undefined ? "admin" : (userFacility ?? "anon");
+
+  const { data: searchResults = [], isFetching: searchFetching } = useQuery({
+    queryKey: ["home-search", debouncedQuery, [...visibleCategoryIds].sort().join(","), facilityKey],
+    enabled: debouncedQuery.length >= 2,
+    staleTime: 30 * 1000,
+    queryFn: async () => {
+      if (visibleCategoryIds.length === 0) return [];
+      const safe = debouncedQuery.replace(/%/g, "\\%").replace(/_/g, "\\_");
+      const { data, error } = await (supabase as any)
+        .from("content_items")
+        .select("id, title, description, type, category_id, categories!inner(id, name, name_es, slug, icon_name, icon_color)")
+        .eq("published", true)
+        .in("category_id", visibleCategoryIds)
+        .or(`title.ilike.%${safe}%,description.ilike.%${safe}%`)
+        .limit(30);
+      if (error) throw error;
+      const items = (data ?? []) as any[];
+      if (userFacility === undefined) return items;
+      const itemIds = items.map((r: any) => r.id as string);
+      if (itemIds.length === 0) return [];
+      const { data: cifData } = await (supabase as any)
+        .from("content_item_facilities")
+        .select("content_item_id, facility_value")
+        .in("content_item_id", itemIds);
+      const facilityMap: Record<string, string[]> = {};
+      for (const row of (cifData ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+        if (!facilityMap[row.content_item_id]) facilityMap[row.content_item_id] = [];
+        facilityMap[row.content_item_id].push(row.facility_value);
+      }
+      return items.filter((item: any) => {
+        const f = facilityMap[item.id] ?? [];
+        if (f.length === 0) return true;
+        if (!userFacility) return false;
+        return f.includes(userFacility);
+      });
+    },
+  });
 
   const { data: hero = DEFAULT_HERO } = useQuery({
     queryKey: ["site_settings", "home_hero"],
@@ -343,16 +506,38 @@ export function HomePageView({
 
       <main className="flex-1">
         <section className="mx-auto max-w-7xl px-6 py-20" id="categories">
-          <div className="flex items-end justify-between mb-8">
-            <h2 className="font-display text-2xl font-semibold">{t("home.categories")}</h2>
-            <span className="text-sm text-muted-foreground">
-              {isLoading ? t("home.loading") : t(categories.length === 1 ? "home.collection" : "home.collections", { count: categories.length })}
+          <div className="flex items-center justify-between mb-8 gap-4">
+            <h2 className="font-display text-2xl font-semibold shrink-0">{t("home.categories")}</h2>
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t("home.searchPlaceholder")}
+                className="w-full rounded-lg border border-input bg-background pl-9 pr-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring/50 focus:border-ring/50"
+              />
+            </div>
+            <span className="text-sm text-muted-foreground shrink-0">
+              {isLoading ? t("home.loading") : t(visibleCategories.length === 1 ? "home.collection" : "home.collections", { count: visibleCategories.length })}
             </span>
           </div>
 
-          <MasonryCategories categories={categories} lang={lang} facilityContext={facilityContext} />
-          {!isLoading && categories.length === 0 && (
-            <p className="text-muted-foreground">{t("home.empty")}</p>
+          {debouncedQuery.length >= 2 ? (
+            <SearchResults
+              results={searchResults}
+              isFetching={searchFetching}
+              query={debouncedQuery}
+              lang={lang}
+              t={t}
+            />
+          ) : (
+            <>
+              <MasonryCategories categories={categories} lang={lang} facilityContext={facilityContext} />
+              {!isLoading && visibleCategories.length === 0 && (
+                <p className="text-muted-foreground">{t("home.empty")}</p>
+              )}
+            </>
           )}
         </section>
 

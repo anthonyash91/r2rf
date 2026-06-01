@@ -142,7 +142,6 @@ export const KNOWN_TYPES = [
   "worksheet",
   "video",
   "guide",
-  "meeting",
   "audio",
   "pdf",
   "link",
@@ -175,10 +174,9 @@ export const DEFAULT_TYPE_INDEX: Record<KnownTypeKey, number> = {
   worksheet: 2,
   video: 3,
   guide: 4,
-  meeting: 5,
-  audio: 6,
-  pdf: 7,
-  link: 8,
+  audio: 5,
+  pdf: 6,
+  link: 7,
 };
 
 export const DEFAULT_CATEGORY_INDEX = 0; // emerald, matches --color-accent
@@ -214,6 +212,20 @@ export function mergeBadgeStyles(input: unknown): BadgeStyles {
 }
 
 // Hash for unknown content types so they still get a stable color.
+export function paletteIndexOfColor(color: string | null | undefined): number {
+  if (!color) return -1;
+  return PALETTES.findIndex((p) => p.oklch === color);
+}
+
+export function nextUnusedIndex(cur: number, used: Set<number>): number {
+  const n = PALETTES.length;
+  for (let step = 1; step <= n; step++) {
+    const candidate = (((cur + step) % n) + n) % n;
+    if (!used.has(candidate)) return candidate;
+  }
+  return cur % n;
+}
+
 function hashStr(s: string) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
