@@ -2,11 +2,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useI18n } from "@/lib/i18n";
 import { checkAndGrantAchievements } from "@/lib/achievements.functions";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 
 export function useAchievements() {
   const { user, isUser } = useAuth();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const checkFn = useServerFn(checkAndGrantAchievements);
 
@@ -21,8 +23,10 @@ export function useAchievements() {
         for (const key of result.newlyEarned) {
           const a = ACHIEVEMENTS.find((x) => x.key === key);
           if (a) {
-            toast.success(`🏆 Achievement unlocked: ${a.title}`, {
-              description: a.description,
+            const title = t(`achievement.${a.key}.title` as any);
+            const desc = t(`achievement.${a.key}.desc` as any);
+            toast.success(`🏆 ${t("achievement.toast" as any, { title })}`, {
+              description: desc,
               duration: 5000,
             });
           }

@@ -23,6 +23,11 @@ import {
   ThumbsUp,
   ThumbsDown,
   Bookmark,
+  Award,
+  Compass,
+  GraduationCap,
+  Medal,
+  BookOpen,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -52,6 +57,7 @@ import {
 } from "@/lib/reports.functions";
 import { listFacilityAdminUsers } from "@/lib/users.functions";
 import { getFacilityComparison, getGrowthStats } from "@/lib/analytics-stats.functions";
+import { ACHIEVEMENTS } from "@/lib/achievements";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 import { Pager } from "@/components/LoadMorePager";
 
@@ -1181,6 +1187,41 @@ function UserProgressView({
                   </div>
                 )}
               </>
+            );
+          })()}
+
+          {(() => {
+            const earned = (data as any).achievements as Record<string, string> | undefined ?? {};
+            const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+              BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
+            };
+            return (
+              <div className="mb-8 rounded-2xl border border-border bg-card p-5">
+                <p className="text-sm font-medium mb-3">Achievements</p>
+                <div className="flex flex-wrap gap-2">
+                  {ACHIEVEMENTS.map((a) => {
+                    const isEarned = !!earned[a.key];
+                    const Icon = ICON_MAP[a.icon] ?? Trophy;
+                    return (
+                      <Tooltip key={a.key}>
+                        <TooltipTrigger asChild>
+                          <span className={`inline-flex items-center justify-center h-9 w-9 rounded-full border cursor-default transition-all ${
+                            isEarned
+                              ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10"
+                              : "border-border bg-muted opacity-40"
+                          }`}>
+                            <Icon className={`h-4 w-4 ${isEarned ? "text-[var(--color-accent)]" : "text-muted-foreground"}`} />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
+                          <p className="font-semibold">{a.title}</p>
+                          <p>{a.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })()}
 

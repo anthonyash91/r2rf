@@ -34,7 +34,7 @@ import { readStatusLabels } from "@/lib/read-status";
 import { getMyBookmarkedItems } from "@/lib/bookmarks.functions";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useAchievements } from "@/hooks/use-achievements";
-import { ACHIEVEMENTS, ACHIEVEMENT_CATEGORY_LABELS } from "@/lib/achievements";
+import { ACHIEVEMENTS } from "@/lib/achievements";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
 import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, Award, Compass, GraduationCap, Medal, Lock } from "lucide-react";
@@ -48,7 +48,7 @@ import type { Category } from "@/lib/categories";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Reentry to Recovery" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
-    tab: search.tab === "account" ? "account" : search.tab === "saved" ? "saved" : undefined,
+    tab: search.tab === "account" ? "account" : search.tab === "saved" ? "saved" : search.tab === "achievements" ? "achievements" : undefined,
   }),
   beforeLoad: async ({ location }) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -406,7 +406,7 @@ function DashboardPage() {
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
         <Tabs
           value={mustSetup ? "account" : undefined}
-          defaultValue={Route.useSearch().tab === "account" ? "account" : Route.useSearch().tab === "saved" ? "saved" : "categories"}
+          defaultValue={Route.useSearch().tab === "account" ? "account" : Route.useSearch().tab === "saved" ? "saved" : Route.useSearch().tab === "achievements" ? "achievements" : "categories"}
           className="mt-0"
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -451,6 +451,21 @@ function DashboardPage() {
                 {bookmarkIds.size > 0 && (
                   <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)]/15 px-1 text-[10px] font-semibold text-[var(--color-accent)]">
                     {bookmarkIds.size}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="achievements"
+                disabled={mustSetup}
+                onClick={(e) => {
+                  if (mustSetup) { e.preventDefault(); toast.error(t("dashboard.lockedNav")); }
+                }}
+                className={`flex-1 sm:flex-none justify-center px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
+              >
+                {t("dashboard.tabAchievements")}
+                {Object.keys(earnedAchievements).length > 0 && (
+                  <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)]/15 px-1 text-[10px] font-semibold text-[var(--color-accent)]">
+                    {Object.keys(earnedAchievements).length}
                   </span>
                 )}
               </TabsTrigger>
@@ -574,69 +589,6 @@ function DashboardPage() {
                   );
                 })()}
 
-                {/* Achievements */}
-                {(() => {
-                  const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-                    BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
-                  };
-                  const categories = ["first_steps", "completion", "streaks", "time"] as const;
-                  const byCategory = Object.fromEntries(
-                    categories.map((cat) => [cat, ACHIEVEMENTS.filter((a) => a.category === cat)])
-                  );
-                  const earnedCount = ACHIEVEMENTS.filter((a) => !!earnedAchievements[a.key]).length;
-                  return (
-                    <div className="mt-8">
-                      <div className="flex items-center justify-between mb-4">
-                        <h2 className="font-display text-lg font-semibold">Achievements</h2>
-                        <span className="text-sm text-muted-foreground tabular-nums">{earnedCount} of {ACHIEVEMENTS.length}</span>
-                      </div>
-                      <div className="space-y-6">
-                        {categories.map((cat) => (
-                          <div key={cat}>
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">{ACHIEVEMENT_CATEGORY_LABELS[cat]}</p>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                              {byCategory[cat].map((a) => {
-                                const earned = !!earnedAchievements[a.key];
-                                const Icon = ICON_MAP[a.icon] ?? Trophy;
-                                const earnedAt = earnedAchievements[a.key];
-                                return (
-                                  <div
-                                    key={a.key}
-                                    className={`relative flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all ${
-                                      earned
-                                        ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5"
-                                        : "border-border bg-card opacity-40"
-                                    }`}
-                                  >
-                                    <div
-                                      className="flex h-10 w-10 items-center justify-center rounded-full"
-                                      style={earned ? {
-                                        background: "color-mix(in oklab, var(--color-accent) 15%, transparent)",
-                                      } : { background: "var(--muted)" }}
-                                    >
-                                      {earned
-                                        ? <Icon className="h-5 w-5 text-[var(--color-accent)]" />
-                                        : <Lock className="h-4 w-4 text-muted-foreground" />
-                                      }
-                                    </div>
-                                    <div>
-                                      <p className="text-xs font-semibold leading-tight">{a.title}</p>
-                                      <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">{a.description}</p>
-                                      {earnedAt && (
-                                        <p className="mt-1 text-[10px] text-[var(--color-accent)]">{new Date(earnedAt).toLocaleDateString()}</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-
                 <CategoryAccordion
                   categories={categoriesQuery.data ?? []}
                   progress={progressQuery.data}
@@ -716,6 +668,80 @@ function DashboardPage() {
                 })}
               </ul>
             )}
+          </TabsContent>
+
+          <TabsContent value="achievements" className="mt-6">
+            {(() => {
+              const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+                BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
+              };
+              const cats = ["first_steps", "completion", "streaks", "time"] as const;
+              const byCategory = Object.fromEntries(
+                cats.map((cat) => [cat, ACHIEVEMENTS.filter((a) => a.category === cat)])
+              );
+              const earnedCount = ACHIEVEMENTS.filter((a) => !!earnedAchievements[a.key]).length;
+              return (
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="font-display text-lg font-semibold">{t("dashboard.tabAchievements")}</h2>
+                    <span className="text-sm text-muted-foreground tabular-nums">
+                      {t("dashboard.achievementsCount", { earned: earnedCount, total: ACHIEVEMENTS.length })}
+                    </span>
+                  </div>
+                  <div className="space-y-6">
+                    {cats.map((cat) => (
+                      <div key={cat}>
+                        <p className="text-xs font-medium text-muted-foreground tracking-wide mb-2">
+                          {t(`achievement.category.${cat}` as any)}
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {byCategory[cat].map((a) => {
+                            const earned = !!earnedAchievements[a.key];
+                            const Icon = ICON_MAP[a.icon] ?? Trophy;
+                            const earnedAt = earnedAchievements[a.key];
+                            return (
+                              <div
+                                key={a.key}
+                                className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all ${
+                                  earned
+                                    ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5"
+                                    : "border-border bg-card opacity-40"
+                                }`}
+                              >
+                                <div
+                                  className="flex h-10 w-10 items-center justify-center rounded-full"
+                                  style={earned
+                                    ? { background: "color-mix(in oklab, var(--color-accent) 15%, transparent)" }
+                                    : { background: "var(--muted)" }}
+                                >
+                                  {earned
+                                    ? <Icon className="h-5 w-5 text-[var(--color-accent)]" />
+                                    : <Lock className="h-4 w-4 text-muted-foreground" />
+                                  }
+                                </div>
+                                <div>
+                                  <p className="text-xs font-semibold leading-tight">
+                                    {t(`achievement.${a.key}.title` as any)}
+                                  </p>
+                                  <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">
+                                    {t(`achievement.${a.key}.desc` as any)}
+                                  </p>
+                                  {earnedAt && (
+                                    <p className="mt-1 text-[10px] text-[var(--color-accent)]">
+                                      {new Date(earnedAt).toLocaleDateString()}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </TabsContent>
 
           <TabsContent value="account" className="mt-6 space-y-6">

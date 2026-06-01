@@ -620,7 +620,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAnyAdmin(context.userId);
 
-    const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes, engRes, statsRes, userBookmarksRes, userRatingsRes] = await Promise.all([
+    const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes, engRes, statsRes, userBookmarksRes, userRatingsRes, userAchievementsRes] = await Promise.all([
       supabaseAdmin
         .from("user_profiles")
         .select("user_id, username, first_name, last_name, facility, created_at")
@@ -666,6 +666,10 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         .from("user_content_ratings")
         .select("content_item_id, rating")
         .eq("user_id", data.userId),
+      (supabaseAdmin as any)
+        .from("user_achievements")
+        .select("achievement_key, earned_at")
+        .eq("user_id", data.userId),
     ]);
     if (profRes.error) throw new Error(profRes.error.message);
     if (catsRes.error) throw new Error(catsRes.error.message);
@@ -676,6 +680,10 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
 
     const userBookmarkSet = new Set<string>((userBookmarksRes.data ?? []).map((r: any) => r.content_item_id as string));
     const userRatingMap = new Map<string, 1 | -1>((userRatingsRes.data ?? []).map((r: any) => [r.content_item_id as string, r.rating as 1 | -1]));
+    const userAchievements: Record<string, string> = {};
+    for (const r of (userAchievementsRes.data ?? []) as any[]) {
+      userAchievements[r.achievement_key as string] = r.earned_at as string;
+    }
 
     const { data: userInfo } = await supabaseAdmin.auth.admin.getUserById(data.userId);
     const email = userInfo?.user?.email ?? "";
@@ -807,5 +815,6 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
           (e: any) => e.event_type === "content_click",
         ).length,
       },
+      achievements: userAchievements,
     };
   });

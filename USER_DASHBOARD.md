@@ -10,12 +10,13 @@ After signing in, users are taken to their dashboard automatically. The dashboar
 
 ---
 
-## Three Tabs
+## Four Tabs
 
-The dashboard has three sections accessible via tabs at the top:
+The dashboard has four sections accessible via tabs at the top:
 
 - **My Progress** — the primary view showing learning activity and content
 - **Saved** — bookmarked resources saved for later
+- **Achievements** — milestones earned across the learning journey
 - **My Account** — profile information and account security settings
 
 ---
@@ -108,8 +109,6 @@ Each content item in the expanded category view has a badge showing its current 
 
 **Bookmarks** — a bookmark icon appears alongside the read status and rating controls. Tapping it saves the item to the user's Saved tab. Tapping again removes the bookmark.
 
----
-
 ### Resume Position
 
 For video and audio content, the platform remembers exactly where the user left off. When they reopen the content, playback automatically resumes from their furthest point — they never have to find their place again.
@@ -118,37 +117,37 @@ For video and audio content, the platform remembers exactly where the user left 
 
 ---
 
-## Achievements
+## Achievements Tab
 
-The My Progress tab includes an Achievements section showing all 13 milestones a user can earn, organized into four categories.
+The Achievements tab shows all 13 milestones a user can earn, organized into four groups. All text is fully translated into English and Spanish.
 
-### Categories
+### Groups
 
-**First Steps**
-- **First Resource** — Complete your first content item
-- **Explorer** — Start your first program
+**First steps**
+- **First resource** — Complete your first content item
+- **Explorer** — Start your first category
 
 **Completion**
-- **10 / 25 / 50 / 100 Resources** — Complete that many content items
-- **Program Graduate** — Finish every item in a program
-- **5 Programs Finished** — Finish every item in 5 programs
+- **10 / 25 / 50 / 100 resources** — Complete that many content items
+- **Category graduate** — Finish every item in a category
+- **5 categories finished** — Finish every item in 5 categories
 
 **Streaks**
-- **7-Day Streak** — Log in 7 consecutive days
-- **30-Day Streak** — Log in 30 consecutive days
+- **7-day streak** — Log in 7 consecutive days
+- **30-day streak** — Log in 30 consecutive days
 
-**Time Spent**
-- **5 / 10 / 50 Hours In** — Accumulate that many hours of active learning
+**Time spent**
+- **5 / 10 / 50 hours in** — Accumulate that many hours of active learning
 
 ### Display
 
-All 13 achievements are always visible. Earned achievements are shown in full color with the date earned. Locked achievements are dimmed with a lock icon — users can see what they're working toward.
+All 13 achievements are always visible. Earned achievements are shown in full color with the icon and the date earned. Locked achievements are dimmed with a lock icon — users can see what they are working toward at all times.
 
-A count badge ("4 of 13") appears at the top of the section.
+A count badge (e.g. "4 of 13 earned") appears at the top of the tab.
 
 ### Toast Notifications
 
-When an achievement is unlocked — either by completing an item, accumulating time, or login streaks — a toast notification appears immediately with the achievement name and description. Achievements are checked in real time after each item completion.
+When an achievement is unlocked — after completing an item, accumulating time, or building a login streak — a toast notification appears immediately with the achievement name and description in the user's current language. Achievements are checked in real time after each item completion.
 
 ---
 

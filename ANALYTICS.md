@@ -78,15 +78,15 @@ Rings appear on the user dashboard (per category and overall) and on the categor
 
 ---
 
-### 6. Program Completion Rate
+### 6. Category Completion Rate
 
-Program completion goes beyond individual item completion. For each category (program), the platform tracks:
+Category completion goes beyond individual item completion. For each category, the platform tracks:
 
 - **Users who started**: opened at least one item in the category
 - **Users who completed**: finished every published item in the category
-- **Program completion rate**: completions / starters × 100
+- **Category completion rate**: completions / starters × 100
 
-This is a key outcome metric for grant reporting. Example: "43% of users who began the Substance Abuse Recovery program completed all 10 resources."
+This is a key outcome metric for grant reporting. Example: "43% of users who began the Substance Abuse Recovery category completed all 10 resources."
 
 This data is visible in the admin analytics page under the Program Completion section and in CSV exports.
 
@@ -94,12 +94,12 @@ This data is visible in the admin analytics page under the Program Completion se
 
 ### 7. Category Depth
 
-Category depth measures how far users go inside a program — not just whether they visited, but how many items they consumed on average.
+Category depth measures how far users go inside a category — not just whether they visited, but how many items they consumed on average.
 
 - **Avg depth**: average number of items completed per user who engaged with the category
-- A depth of 7.2 out of 10 items means users who enter the program typically complete 7 of 10 resources
+- A depth of 7.2 out of 10 items means users who enter the category typically complete 7 of 10 resources
 
-This reveals whether users explore the full catalog or drop off after a few items — useful for identifying which programs hold attention throughout.
+This reveals whether users explore the full catalog or drop off after a few items — useful for identifying which categories hold attention throughout.
 
 ---
 
@@ -116,7 +116,33 @@ Drop-off counts appear in the expanded item list in the admin usage report. Item
 
 ---
 
-### 9. Content Type Preference
+### 9. Bookmarks
+
+Users can bookmark any content item for later reference. The platform tracks:
+
+- **Per-item bookmark count** — how many users have saved each item, visible in the usage report UI and CSV
+- **Per-facility bookmark total** — total bookmarks across all items by users at a given facility, visible in the Facility Comparison table
+- **Per-user bookmark status** — whether a specific user has bookmarked each item, visible in individual user progress reports and CSV
+
+Bookmark counts are maintained by a database trigger in real time — no nightly job required.
+
+---
+
+### 10. Ratings (Helpful / Not Helpful)
+
+After completing a content item, users can rate it as Helpful (thumbs up) or Not Helpful (thumbs down). The platform tracks:
+
+- **Per-item rating totals** — thumbs-up and thumbs-down counts for each item, visible in the usage report UI and CSV
+- **Per-facility rating totals** — aggregate helpful/not-helpful counts for all users at each facility, visible in the Facility Comparison table
+- **Per-user rating** — whether a specific user rated an item and how, visible in individual user progress reports and CSV
+
+Ratings are anonymous — individual votes are not exposed to other users or to facility staff. Only aggregate counts are shown publicly and in reports.
+
+Rating totals are maintained by a database trigger (`SECURITY DEFINER`) in real time, ensuring O(1) reads regardless of the number of ratings.
+
+---
+
+### 11. Content Type Preference
 
 The platform aggregates engagement data by content format across all items:
 
@@ -132,7 +158,7 @@ This reveals which formats resonate with the population. Example: "Users complet
 
 ---
 
-### 10. User Engagement Tier
+### 12. User Engagement Tier
 
 Each user is ranked within their facility based on total time spent:
 
@@ -147,7 +173,7 @@ For facilities with 10+ users, the exact percentile is shown (e.g., "top 12% of 
 
 ---
 
-### 11. User Retention Rates
+### 13. User Retention Rates
 
 The platform calculates how many users return after signing up:
 
@@ -161,7 +187,7 @@ Example for a grant report: "68% of users returned to the platform within 7 days
 
 ---
 
-### 12. Growth Over Time
+### 14. Growth Over Time
 
 The platform tracks week-by-week growth across the last 12 weeks:
 
@@ -172,13 +198,13 @@ Both metrics are pre-computed nightly and shown as a visual bar chart in the adm
 
 ---
 
-### 13. Active User Counts (7-Day and 30-Day)
+### 15. Active User Counts (7-Day and 30-Day)
 
 For each facility, the platform tracks how many registered users were actively engaging in the last 7 days and last 30 days. These appear in the Facility Comparison table.
 
 ---
 
-### 14. Facility Participation Rate
+### 16. Facility Participation Rate
 
 For each facility, the platform computes:
 
@@ -188,7 +214,7 @@ This distinguishes between facilities where most registered users are actively l
 
 ---
 
-### 15. Facility Comparison
+### 17. Facility Comparison
 
 The admin analytics page includes a ranked comparison table of all facilities:
 
@@ -201,12 +227,15 @@ The admin analytics page includes a ranked comparison table of all facilities:
 | Avg completion | Average item completion rate across all content |
 | Items completed | Total items completed by facility users |
 | Time spent | Total accumulated session time |
+| Bookmarks | Total content items bookmarked by users at this facility |
+| Helpful | Total thumbs-up ratings given by users at this facility |
+| Not helpful | Total thumbs-down ratings given by users at this facility |
 
-This table is exportable as a CSV and is useful for identifying which facilities are thriving and which may need outreach or support.
+This table is horizontally scrollable and is exportable as a CSV. It is useful for identifying which facilities are thriving, which content is resonating, and which may need outreach or support.
 
 ---
 
-### 16. Most & Least Engaged Content
+### 18. Most & Least Engaged Content
 
 The admin analytics page automatically surfaces:
 
@@ -217,7 +246,7 @@ This is directly actionable: low-completion content can be improved, replaced, o
 
 ---
 
-### 17. Visit and Open Counts
+### 19. Visit and Open Counts
 
 The platform tracks:
 
@@ -228,7 +257,7 @@ These are time-range filterable (last 7 days, 30 days, 90 days, all time) and vi
 
 ---
 
-### 18. Individual User Progress Reports
+### 20. Individual User Progress Reports
 
 Administrators can pull a detailed report for any individual user showing:
 
@@ -237,14 +266,17 @@ Administrators can pull a detailed report for any individual user showing:
 - Day streak (consecutive login days)
 - Last login date
 - Engagement tier and facility percentile
+- **Achievements** — all 13 achievement badges displayed in a row; earned badges shown in accent color, unearned shown dimmed. Hovering any badge shows a tooltip with the achievement name and what it was earned for.
 - Per-category breakdown with weighted completion ring, time spent, and items read
-- Per-item detail: read status, date completed, progress percentage, time spent
+- Per-item detail: read status, date completed, progress percentage, time spent, whether the item was bookmarked, and the user's rating (Helpful / Not Helpful / none)
+
+The per-item rating and bookmark status are displayed inline with the read status badge in the UI, and are included in the CSV export.
 
 These reports are exportable as CSV and are suitable for inclusion in individual case notes or program documentation.
 
 ---
 
-### 19. Facility User Reports
+### 21. Facility User Reports
 
 When viewing a specific facility, administrators can see:
 
@@ -262,9 +294,9 @@ Every major analytics surface includes a CSV export:
 
 | Export | Contents |
 |---|---|
-| Usage report | Summary metrics, content type breakdown, per-category and per-item detail including completion rate, drop-offs, openers, completions, avg time spent |
-| Facility comparison | All facilities with users, active counts, participation rate, completion rate, time spent |
-| User progress | Full per-user report with per-category and per-item breakdown |
+| Usage report | Summary metrics, content type breakdown, per-category and per-item detail including completion rate, drop-offs, openers, completions, avg time spent, helpful ratings, not-helpful ratings, bookmark count |
+| Facility comparison | All facilities with users, active counts, participation rate, completion rate, time spent, total bookmarks, total helpful ratings, total not-helpful ratings |
+| User progress | Full per-user report with per-category and per-item breakdown including read status, progress percentage, time spent, bookmarked (Yes/blank), rating (Helpful / Not helpful / blank) |
 | Facility users | User list with signup date, last login, engagement tier, percentile |
 
 CSV exports are suitable for import into spreadsheet tools, grant reporting templates, or program management systems.

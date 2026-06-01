@@ -34,7 +34,7 @@ The content management home is the main workspace for building and maintaining t
 
 ### Categories
 
-- **View all categories** — a full list of every category (program) in the library, with their content items nested underneath
+- **View all categories** — a full list of every category in the library, with their content items nested underneath
 - **Reorder categories** — drag and drop to change the order categories appear on the public site
 - **Toggle published / draft** — categories in draft mode are hidden from users; published categories are live
 - **Add a new category** — opens the category editor (see below)
@@ -75,7 +75,7 @@ Each category has a dedicated editor page for managing its settings and all its 
 Each content item has its own form with:
 
 - **Title** (English and Spanish)
-- **Type** — Video, Audio, Podcast, PDF, Image, Link, Worksheet, Article, Guide, Resource, Meeting, Call
+- **Type** — Video, Audio, Podcast, PDF, Image, Link, Worksheet, Article, Guide, Resource, Information, or any custom type added by an admin. New types can be created directly from the type dropdown — type a name and press Enter or click Add. New types are automatically assigned a unique color in the Icons & Badges settings.
 - **URL** — external link or uploaded file URL
 - **File upload** — drag-and-drop or click to upload a file directly to Supabase Storage; the uploader shows real-time progress as the file uploads
 - **Duration** — estimated length (used for display and PDF reading time estimates)
@@ -161,7 +161,7 @@ Five top-level metrics for the selected time range (Last 7 days, 30 days, 90 day
 #### Category List
 Every category shown as an expandable accordion row. Each row shows:
 - Visits, opens, completion rate, avg depth (items completed per user), and time spent for that category
-- When expanded: each content item with its open count, completion rate, drop-off count, and average time spent
+- When expanded: each content item with its open count, completion rate, drop-off count, average time spent, helpful rating count, not-helpful rating count, and bookmark count
 
 #### Most & Least Engaged Content
 Automatically surfaces the top 5 and bottom 5 content items by completion rate (among items with sufficient data). Directly actionable for content improvement decisions.
@@ -169,8 +169,8 @@ Automatically surfaces the top 5 and bottom 5 content items by completion rate (
 #### Content Type Preference
 A table breaking down engagement by content format (Video, PDF, Worksheet, etc.) — opens, completions, completion rate, and time spent per type.
 
-#### Program Completion
-Per-category table showing how many users started each program versus how many completed every item in it.
+#### Category Completion
+Per-category table showing how many users started each category versus how many completed every item in it.
 
 #### User Retention
 Three cards showing 7-day, 30-day, and 60-day return rates — the percentage of users who came back after signing up.
@@ -179,7 +179,7 @@ Three cards showing 7-day, 30-day, and 60-day return rates — the percentage of
 A 12-week chart showing new signups and active users per week.
 
 #### Facility Comparison *(Admin/Contributor only)*
-All facilities ranked by average completion rate, showing users, active user counts, participation rate, items completed, and time spent. Exportable as CSV.
+All facilities ranked by average completion rate. Columns include users, active user counts, participation rate, items completed, time spent, total bookmarks, total helpful ratings, and total not-helpful ratings. The table scrolls horizontally and is exportable as CSV.
 
 ### By Facility Tab *(Admin/Contributor only)*
 
@@ -193,7 +193,7 @@ Select a facility (or all facilities) to see a list of registered users with sig
 - Time spent, day streak, last login
 - Engagement tier and facility percentile
 - Per-category breakdown with weighted completion ring and time spent
-- Per-item detail including read status, completion date, media progress percentage, and time spent
+- Per-item detail including read status, completion date, media progress percentage, time spent, whether the item was bookmarked, and the user's rating (Helpful / Not Helpful / none)
 
 All views are exportable as CSV, including a user progress CSV with full per-item detail.
 
@@ -284,10 +284,10 @@ A rich text editor for the platform's Privacy Policy page. The policy can be wri
 A visual design tool for customizing the appearance of the platform:
 
 - **Badge variants** — edit the colors and labels of status badges (New, Draft, etc.)
-- **Content type badges** — customize how each content type (Video, PDF, Worksheet, etc.) is labeled and colored
+- **Content type badges** — customize the color and icon for each content type. New custom types created in the content editor appear here automatically and are assigned a unique palette color that doesn't conflict with any existing badge or icon color across the entire app. Admins can cycle or regenerate any color and save changes globally.
 - **Category icons** — browse the full icon library and assign icons to categories; each icon can be individually colored
 
-Changes here affect how content appears across the entire platform.
+All sections are listed alphabetically. Changes here affect how content appears across the entire platform. Save Changes must be clicked to persist updates to the database.
 
 ---
 

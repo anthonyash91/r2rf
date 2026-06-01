@@ -11,15 +11,15 @@ export type Achievement = {
 export const ACHIEVEMENTS: Achievement[] = [
   // First steps
   { key: "first_item",    title: "First Resource",      description: "Complete your first content item",          icon: "BookOpen",      category: "first_steps" },
-  { key: "first_program", title: "Explorer",             description: "Start your first program",                  icon: "Compass",       category: "first_steps" },
+  { key: "first_program", title: "Explorer",             description: "Start your first category",                 icon: "Compass",       category: "first_steps" },
 
   // Completion milestones
   { key: "items_10",   title: "10 Resources",        description: "Complete 10 content items",                 icon: "CheckCircle2",  category: "completion" },
   { key: "items_25",   title: "25 Resources",        description: "Complete 25 content items",                 icon: "CheckCircle2",  category: "completion" },
   { key: "items_50",   title: "50 Resources",        description: "Complete 50 content items",                 icon: "Award",         category: "completion" },
   { key: "items_100",  title: "100 Resources",       description: "Complete 100 content items",                icon: "Trophy",        category: "completion" },
-  { key: "program_1",  title: "Program Graduate",    description: "Complete all items in a program",           icon: "GraduationCap", category: "completion" },
-  { key: "program_5",  title: "5 Programs Finished", description: "Complete all items in 5 programs",          icon: "Medal",         category: "completion" },
+  { key: "program_1",  title: "Category graduate",    description: "Complete all items in a category",          icon: "GraduationCap", category: "completion" },
+  { key: "program_5",  title: "5 categories finished", description: "Complete all items in 5 categories",       icon: "Medal",         category: "completion" },
 
   // Streaks
   { key: "streak_7",  title: "7-Day Streak",  description: "Log in 7 days in a row",  icon: "Flame", category: "streaks" },
