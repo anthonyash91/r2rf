@@ -379,11 +379,11 @@ function AdminCategoriesContent() {
                     const trTitle = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
                     return (
                       <BadgeGroup>
-                        <Badge variant="count" title="Content items in this category" className="tabular-nums">
+                        <Badge variant="count" size="sm" title="Content items in this category" className="tabular-nums">
                           {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
                         </Badge>
                         {(categoryFacilityMap[c.id]?.length ?? 0) > 0 && (
-                          <Badge variant="facility" title={`Facility: ${(categoryFacilityMap[c.id] ?? []).map((v) => facilityLabelMap[v] ?? v).join("; ")}`}>
+                          <Badge variant="facility" size="sm" title={`Facility: ${(categoryFacilityMap[c.id] ?? []).map((v) => facilityLabelMap[v] ?? v).join("; ")}`}>
                             {categoryFacilityMap[c.id]!.length === 1
                               ? (facilityLabelMap[categoryFacilityMap[c.id]![0]] ?? categoryFacilityMap[c.id]![0])
                               : `${categoryFacilityMap[c.id]!.length} facilities`}
@@ -392,14 +392,14 @@ function AdminCategoriesContent() {
                         {categoriesWithFacilityContent.has(c.id) && (() => {
                           const customCount = (itemsByCategory[c.id] ?? []).filter((item) => !!itemFacilityMap[item.id]?.length).length;
                           return (
-                            <Badge variant="custom-content" title="This category has facility-restricted content items">
+                            <Badge variant="custom-content" size="sm" title="This category has facility-restricted content items">
                               {customCount} Custom {customCount === 1 ? "item" : "items"}
                             </Badge>
                           );
                         })()}
-                        {!c.published && <Badge variant="draft">Draft</Badge>}
+                        {!c.published && <Badge variant="draft" size="sm">Draft</Badge>}
                         {s !== "complete" && (
-                          <Badge variant="translation" title={trTitle}>
+                          <Badge variant="translation" size="sm" title={trTitle}>
                             {trLabel}
                           </Badge>
                         )}

@@ -115,10 +115,16 @@ type BadgeProps = {
   className?: string;
   title?: string;
   onClick?: (e: React.MouseEvent<HTMLSpanElement>) => void;
+  /** "md" (default) matches the action badge height on user-facing pages.
+   *  "sm" matches the compact preview badge on the admin icons-badges page. */
+  size?: "sm" | "md";
 };
 
 const BASE =
   "inline-flex items-center leading-none rounded-[4px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0";
+
+const BASE_SM =
+  "inline-flex items-center leading-none rounded-[4px] border px-2 py-0.5 text-xs font-medium flex-shrink-0";
 
 const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   new: Sparkles,
@@ -290,7 +296,7 @@ export function iconForType(type: string | null | undefined): LucideIcon {
   return File;
 }
 
-export function Badge({ variant, type, hideIcon, children, className, title, onClick }: BadgeProps) {
+export function Badge({ variant, type, hideIcon, children, className, title, onClick, size = "md" }: BadgeProps) {
   const styles = useBadgeStyles();
 
   const idx =
@@ -311,14 +317,17 @@ export function Badge({ variant, type, hideIcon, children, className, title, onC
   }
 
 
+  const base = size === "sm" ? BASE_SM : BASE;
+  const iconSize = size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5";
+
   return (
     <span
       title={title}
       onClick={onClick}
-      className={cn(BASE, "justify-center", !hideIcon && "gap-1", className)}
+      className={cn(base, "justify-center", !hideIcon && "gap-1", className)}
       style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
     >
-      {!hideIcon && Icon && <Icon className="h-3.5 w-3.5" strokeWidth={2} />}
+      {!hideIcon && Icon && <Icon className={iconSize} strokeWidth={2} />}
       {children}
     </span>
   );

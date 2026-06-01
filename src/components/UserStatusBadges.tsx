@@ -39,14 +39,14 @@ export function UserStatusBadges({
   return (
     <BadgeGroup className={cn(className)}>
       {isTester ? (
-        <Badge variant="tester">Tester</Badge>
+        <Badge variant="tester" size="sm">Tester</Badge>
       ) : !hideFacilityBadge ? (
-        <Badge variant="facility">
+        <Badge variant="facility" size="sm">
           {facilityLabel || user.profile?.facility || ""}
         </Badge>
       ) : null}
-      {!isTester && isUser && <Badge variant="user">User</Badge>}
-      {isNew && !isTester && isUser && <Badge variant="new">New</Badge>}
+      {!isTester && isUser && <Badge variant="user" size="sm">User</Badge>}
+      {isNew && !isTester && isUser && <Badge variant="new" size="sm">New</Badge>}
       {children}
     </BadgeGroup>
   );

@@ -648,7 +648,7 @@ function AdminUsersPage() {
                     );
                   })()}
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:flex-nowrap gap-2 w-full sm:w-auto sm:flex-1 sm:max-w-md">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:flex-nowrap gap-2 w-full sm:w-64">
                   <div className="w-full sm:flex-1 sm:min-w-0">
                     <FacilityCombobox
                       value={facilityFilter === "all" ? "" : facilityFilter}
@@ -802,10 +802,13 @@ function UserItem({
           {isUsernameUser ? (
             <>
               {isRegularUser ? (
-                /* Regular users: match reports page layout */
-                <p className="font-medium truncate">
-                  {[user.profile!.first_name, user.profile!.last_name].filter(Boolean).join(" ") || user.profile!.username}
-                </p>
+                /* Regular users: name + status badges inline */
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-medium truncate">
+                    {[user.profile!.first_name, user.profile!.last_name].filter(Boolean).join(" ") || user.profile!.username}
+                  </span>
+                  <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} hideFacilityBadge={isRegularUser} />
+                </div>
               ) : (
                 <>
                   <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
@@ -827,11 +830,11 @@ function UserItem({
                       hideFacilityBadge={isRegularUser}
                       className="hidden sm:inline-flex"
                     >
-                      {showFacilityUserBadge && <Badge variant="facility-user">Facility User</Badge>}
+                      {showFacilityUserBadge && <Badge variant="facility-user" size="sm">Facility User</Badge>}
                       {showFacilityUserBadge && (
                         user.email_confirmed_at
-                          ? <Badge variant="verified">Verified</Badge>
-                          : <Badge variant="unverified">Unverified</Badge>
+                          ? <Badge variant="verified" size="sm">Verified</Badge>
+                          : <Badge variant="unverified" size="sm">Unverified</Badge>
                       )}
                     </UserStatusBadges>
                   </div>
@@ -872,14 +875,14 @@ function UserItem({
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
                 <BadgeGroup>
-                  {isAdmin && <Badge variant="admin">Admin</Badge>}
-                  {isContributor && <Badge variant="contributor">Contributor</Badge>}
-                  {isTester && <Badge variant="tester">Tester</Badge>}
-                  {showFacilityUserBadge && <Badge variant="facility-user">Facility User</Badge>}
+                  {isAdmin && <Badge variant="admin" size="sm">Admin</Badge>}
+                  {isContributor && <Badge variant="contributor" size="sm">Contributor</Badge>}
+                  {isTester && <Badge variant="tester" size="sm">Tester</Badge>}
+                  {showFacilityUserBadge && <Badge variant="facility-user" size="sm">Facility User</Badge>}
                   {user.email_confirmed_at ? (
-                    <Badge variant="verified">Verified</Badge>
+                    <Badge variant="verified" size="sm">Verified</Badge>
                   ) : (
-                    <Badge variant="unverified">Unverified</Badge>
+                    <Badge variant="unverified" size="sm">Unverified</Badge>
                   )}
                 </BadgeGroup>
               </div>
@@ -894,14 +897,14 @@ function UserItem({
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <BadgeGroup className="ml-1 hidden sm:inline-flex">
-                  {isAdmin && <Badge variant="admin">Admin</Badge>}
-                  {isContributor && <Badge variant="contributor">Contributor</Badge>}
-                  {isTester && <Badge variant="tester">Tester</Badge>}
-                  {showFacilityUserBadge && <Badge variant="facility-user">Facility User</Badge>}
+                  {isAdmin && <Badge variant="admin" size="sm">Admin</Badge>}
+                  {isContributor && <Badge variant="contributor" size="sm">Contributor</Badge>}
+                  {isTester && <Badge variant="tester" size="sm">Tester</Badge>}
+                  {showFacilityUserBadge && <Badge variant="facility-user" size="sm">Facility User</Badge>}
                   {user.email_confirmed_at ? (
-                    <Badge variant="verified">Verified</Badge>
+                    <Badge variant="verified" size="sm">Verified</Badge>
                   ) : (
-                    <Badge variant="unverified">Unverified</Badge>
+                    <Badge variant="unverified" size="sm">Unverified</Badge>
                   )}
                 </BadgeGroup>
               </div>

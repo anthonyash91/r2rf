@@ -775,10 +775,10 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                       const trTitle = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
                       return (
                         <BadgeGroup>
-                          <Badge variant="type" type={item.type}>{item.type}</Badge>
-                          {!item.published && <Badge variant="draft">Draft</Badge>}
+                          <Badge variant="type" type={item.type} size="sm">{item.type}</Badge>
+                          {!item.published && <Badge variant="draft" size="sm">Draft</Badge>}
                           {s !== "complete" && (
-                            <Badge variant="translation" title={trTitle}>
+                            <Badge variant="translation" size="sm" title={trTitle}>
                               {trLabel}
                             </Badge>
                           )}
@@ -1207,7 +1207,7 @@ function ItemEditor({
           {!addingType && typeOptions.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {typeOptions.map((t) => (
-                <Badge key={t} variant="type" type={t} className="gap-1">
+                <Badge key={t} variant="type" type={t} size="sm" className="gap-1">
                   {t}
                   <button
                     type="button"

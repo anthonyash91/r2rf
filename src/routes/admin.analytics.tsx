@@ -860,7 +860,7 @@ function UsersReportTab({
                               {u.last_sign_in_at && <>{" · "}Last sign-in {fmtDate(u.last_sign_in_at)}</>}
                             </p>
                           </div>
-                          <Badge variant={u.email_confirmed_at ? "verified" : "unverified"}>
+                          <Badge variant={u.email_confirmed_at ? "verified" : "unverified"} size="sm">
                             {u.email_confirmed_at ? "Verified" : "Unverified"}
                           </Badge>
                         </li>
@@ -1205,12 +1205,12 @@ function UserProgressView({
                     return (
                       <Tooltip key={a.key}>
                         <TooltipTrigger asChild>
-                          <span className={`inline-flex items-center justify-center h-9 w-9 rounded-full border cursor-default transition-all ${
+                          <span className={`inline-flex items-center justify-center h-12 w-12 rounded-full border cursor-default transition-all ${
                             isEarned
                               ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10"
                               : "border-border bg-muted opacity-40"
                           }`}>
-                            <Icon className={`h-4 w-4 ${isEarned ? "text-[var(--color-accent)]" : "text-muted-foreground"}`} />
+                            <Icon className={`h-5 w-5 ${isEarned ? "text-[var(--color-accent)]" : "text-muted-foreground"}`} />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
@@ -1292,6 +1292,21 @@ function exportUserProgressCsv(
   lines.push(["Last login", lastLogin ? fmtDateShort(lastLogin) : "Never"].map(csvEscape).join(","));
   if (tier) lines.push(["Engagement tier", tier + (pct != null ? ` (top ${Math.round(100 - pct)}% of facility)` : "")].map(csvEscape).join(","));
   lines.push("");
+
+  // Achievements
+  const earnedAchievements = (data as any).achievements as Record<string, string> | undefined ?? {};
+  const earnedList = ACHIEVEMENTS.filter((a) => !!earnedAchievements[a.key]);
+  lines.push(["Achievements"].map(csvEscape).join(","));
+  lines.push(["Achievement", "Description", "Earned on"].map(csvEscape).join(","));
+  if (earnedList.length === 0) {
+    lines.push(["No achievements earned yet", "", ""].map(csvEscape).join(","));
+  } else {
+    for (const a of earnedList) {
+      lines.push([a.title, a.description, fmtDateShort(earnedAchievements[a.key])].map(csvEscape).join(","));
+    }
+  }
+  lines.push("");
+
   lines.push(
     ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on", "Progress", "Time Spent", "Bookmarked", "Rating"]
       .map(csvEscape)
@@ -1466,20 +1481,34 @@ function UserCategorySection({
                     )}
                     <div className="ml-auto flex items-center gap-1.5 shrink-0">
                       {item.rating != null && (
-                        <span className="inline-flex items-center rounded-[4px] border border-input overflow-hidden">
-                          <span className={`inline-flex items-center justify-center px-2 py-1.5 ${item.rating === 1 ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-background text-muted-foreground"}`}>
-                            <ThumbsUp className={`h-3.5 w-3.5 ${item.rating === 1 ? "fill-[var(--color-accent)]" : ""}`} />
-                          </span>
-                          <span className="w-px self-stretch bg-border" />
-                          <span className={`inline-flex items-center justify-center px-2 py-1.5 ${item.rating === -1 ? "bg-destructive/10 text-destructive" : "bg-background text-muted-foreground"}`}>
-                            <ThumbsDown className={`h-3.5 w-3.5 ${item.rating === -1 ? "fill-destructive" : ""}`} />
-                          </span>
-                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center rounded-[4px] border border-input overflow-hidden cursor-default">
+                              <span className={`inline-flex items-center justify-center px-2 py-1.5 ${item.rating === 1 ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-background text-muted-foreground"}`}>
+                                <ThumbsUp className={`h-3.5 w-3.5 ${item.rating === 1 ? "fill-[var(--color-accent)]" : ""}`} />
+                              </span>
+                              <span className="w-px self-stretch bg-border" />
+                              <span className={`inline-flex items-center justify-center px-2 py-1.5 ${item.rating === -1 ? "bg-destructive/10 text-destructive" : "bg-background text-muted-foreground"}`}>
+                                <ThumbsDown className={`h-3.5 w-3.5 ${item.rating === -1 ? "fill-destructive" : ""}`} />
+                              </span>
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs max-w-[180px] text-center">
+                            {item.rating === 1 ? "This user rated this item as helpful" : "This user rated this item as not helpful"}
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                       {item.bookmarked && (
-                        <span className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background px-2 py-1.5">
-                          <Bookmark className="h-3.5 w-3.5 fill-[var(--color-accent)] text-[var(--color-accent)]" />
-                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background px-2 py-1.5 cursor-default">
+                              <Bookmark className="h-3.5 w-3.5 fill-[var(--color-accent)] text-[var(--color-accent)]" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            This user has bookmarked this item
+                          </TooltipContent>
+                        </Tooltip>
                       )}
                       {(() => {
                         // Video / Audio — playback progress
@@ -1651,7 +1680,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           <ul className="divide-y divide-border">
             {row.items.map(({ item, clicks, openCount, completeCount, completionRate, avgSessionSeconds, thumbsUp, thumbsDown, bookmarkCount }) => (
               <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] px-6 py-[19px]">
-                <Badge variant="type" type={item.type}>
+                <Badge variant="type" type={item.type} size="sm">
                   {item.type}
                 </Badge>
                 <div className="flex-1 min-w-0">
