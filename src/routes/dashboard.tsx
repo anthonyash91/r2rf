@@ -33,9 +33,11 @@ import { formatTimeSpent, fmtDateShort } from "@/lib/date-format";
 import { readStatusLabels } from "@/lib/read-status";
 import { getMyBookmarkedItems } from "@/lib/bookmarks.functions";
 import { useBookmarks } from "@/hooks/use-bookmarks";
+import { useAchievements } from "@/hooks/use-achievements";
+import { ACHIEVEMENTS, ACHIEVEMENT_CATEGORY_LABELS } from "@/lib/achievements";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, Award, Compass, GraduationCap, Medal, Lock } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
@@ -273,6 +275,7 @@ function DashboardPage() {
 
 
   const { bookmarkIds, toggle: toggleBookmarkItem } = useBookmarks();
+  const { earned: earnedAchievements } = useAchievements();
   const fetchBookmarkedItems = useServerFn(getMyBookmarkedItems);
   const bookmarkedItemsQuery = useQuery({
     queryKey: ["my-bookmarked-items", user?.id],
@@ -568,6 +571,69 @@ function DashboardPage() {
 
                       <h2 className="font-display text-lg font-semibold mb-3">{t("dashboard.categoryProgress")}</h2>
                     </>
+                  );
+                })()}
+
+                {/* Achievements */}
+                {(() => {
+                  const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+                    BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
+                  };
+                  const categories = ["first_steps", "completion", "streaks", "time"] as const;
+                  const byCategory = Object.fromEntries(
+                    categories.map((cat) => [cat, ACHIEVEMENTS.filter((a) => a.category === cat)])
+                  );
+                  const earnedCount = ACHIEVEMENTS.filter((a) => !!earnedAchievements[a.key]).length;
+                  return (
+                    <div className="mt-8">
+                      <div className="flex items-center justify-between mb-4">
+                        <h2 className="font-display text-lg font-semibold">Achievements</h2>
+                        <span className="text-sm text-muted-foreground tabular-nums">{earnedCount} of {ACHIEVEMENTS.length}</span>
+                      </div>
+                      <div className="space-y-6">
+                        {categories.map((cat) => (
+                          <div key={cat}>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">{ACHIEVEMENT_CATEGORY_LABELS[cat]}</p>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                              {byCategory[cat].map((a) => {
+                                const earned = !!earnedAchievements[a.key];
+                                const Icon = ICON_MAP[a.icon] ?? Trophy;
+                                const earnedAt = earnedAchievements[a.key];
+                                return (
+                                  <div
+                                    key={a.key}
+                                    className={`relative flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all ${
+                                      earned
+                                        ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5"
+                                        : "border-border bg-card opacity-40"
+                                    }`}
+                                  >
+                                    <div
+                                      className="flex h-10 w-10 items-center justify-center rounded-full"
+                                      style={earned ? {
+                                        background: "color-mix(in oklab, var(--color-accent) 15%, transparent)",
+                                      } : { background: "var(--muted)" }}
+                                    >
+                                      {earned
+                                        ? <Icon className="h-5 w-5 text-[var(--color-accent)]" />
+                                        : <Lock className="h-4 w-4 text-muted-foreground" />
+                                      }
+                                    </div>
+                                    <div>
+                                      <p className="text-xs font-semibold leading-tight">{a.title}</p>
+                                      <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">{a.description}</p>
+                                      {earnedAt && (
+                                        <p className="mt-1 text-[10px] text-[var(--color-accent)]">{new Date(earnedAt).toLocaleDateString()}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   );
                 })()}
 

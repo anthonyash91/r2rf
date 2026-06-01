@@ -30,6 +30,7 @@ import { listFacilities } from "@/lib/facilities.functions";
 import { useContentEngagement, type EngagementRecord } from "@/hooks/use-content-engagement";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useRatings } from "@/hooks/use-ratings";
+import { useAchievements } from "@/hooks/use-achievements";
 
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
@@ -94,6 +95,7 @@ function CategoryPage() {
   const { isAdmin, canAccessAdmin, isFacilityUser, user } = useAuth();
   const { bookmarkIds, toggle: toggleBookmark } = useBookmarks();
   const { myRatings, rate } = useRatings();
+  const { check: checkAchievements } = useAchievements();
   const queryClient = useQueryClient();
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
   const fetchFacilitiesList = useServerFn(listFacilities);
@@ -329,11 +331,12 @@ function CategoryPage() {
       if (ctx?.prev) queryClient.setQueryData(["content-progress", user?.id, categoryId], ctx.prev);
       toast.error(t("category.markReadError"));
     },
-    onSettled: () => {
+    onSettled: (_data, _err, vars) => {
       queryClient.invalidateQueries({ queryKey: ["content-progress", user?.id, categoryId] });
       queryClient.invalidateQueries({ queryKey: ["content-seen", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-progress", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["home-user-progress", user?.id] });
+      if (vars.markRead) checkAchievements();
     },
   });
 

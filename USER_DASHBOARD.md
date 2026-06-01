@@ -10,11 +10,12 @@ After signing in, users are taken to their dashboard automatically. The dashboar
 
 ---
 
-## Two Tabs
+## Three Tabs
 
-The dashboard has two sections accessible via tabs at the top:
+The dashboard has three sections accessible via tabs at the top:
 
 - **My Progress** — the primary view showing learning activity and content
+- **Saved** — bookmarked resources saved for later
 - **My Account** — profile information and account security settings
 
 ---
@@ -96,18 +97,71 @@ Each content item in the expanded category view has a badge showing its current 
 **Worksheet / Article / Guide / Resource**
 - "Mark as read" button — manually marked by the user
 
-**Meeting / Call**
-- "Attended" / "Not attended" — manually marked
+**Article / Guide / Resource / Information**
+- "Mark as read" button — manually marked by the user
 
 **New badge** — items added within the last 7 days that the user hasn't opened yet show a "New" badge. Once opened or engaged with, the badge disappears permanently.
 
 **Read date** — completed items show when they were read (e.g., "on May 15, 2026").
+
+**Ratings (Helpful / Not Helpful)** — once a user has completed a content item, a thumbs-up / thumbs-down pill appears alongside the read status badge. Tapping either thumb records the user's rating. Tapping the same thumb again removes the rating. Ratings are anonymous — no one can see who rated what, only the aggregate counts visible to admins.
+
+**Bookmarks** — a bookmark icon appears alongside the read status and rating controls. Tapping it saves the item to the user's Saved tab. Tapping again removes the bookmark.
 
 ---
 
 ### Resume Position
 
 For video and audio content, the platform remembers exactly where the user left off. When they reopen the content, playback automatically resumes from their furthest point — they never have to find their place again.
+
+---
+
+---
+
+## Achievements
+
+The My Progress tab includes an Achievements section showing all 13 milestones a user can earn, organized into four categories.
+
+### Categories
+
+**First Steps**
+- **First Resource** — Complete your first content item
+- **Explorer** — Start your first program
+
+**Completion**
+- **10 / 25 / 50 / 100 Resources** — Complete that many content items
+- **Program Graduate** — Finish every item in a program
+- **5 Programs Finished** — Finish every item in 5 programs
+
+**Streaks**
+- **7-Day Streak** — Log in 7 consecutive days
+- **30-Day Streak** — Log in 30 consecutive days
+
+**Time Spent**
+- **5 / 10 / 50 Hours In** — Accumulate that many hours of active learning
+
+### Display
+
+All 13 achievements are always visible. Earned achievements are shown in full color with the date earned. Locked achievements are dimmed with a lock icon — users can see what they're working toward.
+
+A count badge ("4 of 13") appears at the top of the section.
+
+### Toast Notifications
+
+When an achievement is unlocked — either by completing an item, accumulating time, or login streaks — a toast notification appears immediately with the achievement name and description. Achievements are checked in real time after each item completion.
+
+---
+
+## Saved Tab
+
+The Saved tab shows all content items the user has bookmarked across any category. Each saved item displays:
+
+- The category icon and category name
+- The content title (tapping navigates directly to that item on the category page)
+- The content type badge
+- A bookmark button to remove the item from Saved
+
+The Saved tab shows a count badge on the tab trigger when at least one item is saved. If no items are saved, an empty state prompts the user to use the bookmark icon on any resource to save it here.
 
 ---
 

@@ -42,6 +42,19 @@ The hero content is managed by the platform administrator and can be customized.
 
 ---
 
+## Search
+
+A search bar sits on the same line as the "Categories" heading. Typing two or more characters searches across all content item titles and descriptions within categories the user is permitted to see (facility-scoped). Results appear as a flat grid of cards replacing the category grid, each showing:
+
+- The category the item belongs to (icon + name)
+- The content type badge
+- The item title
+- A bookmark button (signed-in users only) — see Bookmarks below
+
+Clearing the search restores the normal category grid. Search is available to all visitors, signed in or not, though the bookmark action requires an account.
+
+---
+
 ## Category Grid
 
 The main content of the home page is a grid of **category cards** — each card represents a program or topic area (e.g., Substance Abuse Recovery, Employment Skills, Family & Parenting). The grid is responsive: 4 columns on large screens, 3 on medium, 2 on small, 1 on mobile.
@@ -107,9 +120,13 @@ When a user signs in, the main page gains additional features:
 | Feature | Not signed in | Signed in |
 |---|---|---|
 | Browse categories | ✓ | ✓ |
+| Search content | ✓ | ✓ |
 | See item counts | ✓ | ✓ |
 | See "New content" badges | ✓ | ✓ |
 | See progress bars on cards | — | ✓ |
+| Earn achievements | — | ✓ |
+| Bookmark resources | — | ✓ |
+| Rate resources (helpful / not helpful) | — | ✓ (after completing item) |
 | Access My Dashboard | — | ✓ |
 | Track content completion | — | ✓ |
 | See facility-specific messages | — | ✓ |
