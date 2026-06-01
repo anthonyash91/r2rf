@@ -10,6 +10,14 @@ This document covers every security measure and feature in the user sign-up and 
 
 Sign-up is only available when the user accesses the website through the service on their device (i.e. via a valid facility URL containing `?site=facilityId&user=PIN`). Users who attempt to sign up without that context see only an error message — no input fields are shown. This applies to regular users only; admin, contributor, and facilityUser accounts are created through the admin panel.
 
+### Disclosure and Informed Consent
+
+Before completing sign-up, users are presented with two consent elements:
+
+**Collapsible disclosure** — A "Before you sign up — tap to read" accordion displayed directly above the acknowledgment checkbox. Expanding it shows a plain-language summary of what data is collected (name, facility, PIN, progress, time spent, ratings, bookmarks, login dates), why it is collected (personal dashboard, program reporting, grant reporting), and who can see it. It includes links to the full Privacy Policy and Terms of Service that open in a new tab. The disclosure is in English and Spanish depending on the user's selected language. Viewing the disclosure is not enforced — users can submit without expanding it — but it is always visible before the checkbox.
+
+**Required acknowledgment checkbox** — A checkbox reading "I understand what information is collected and agree to the Terms of Service and Privacy Policy." The "Create account" button is disabled until this checkbox is checked. This ensures affirmative, intentional consent before any account is created. The checkbox resets to unchecked if the user switches to sign-in mode and back.
+
 ### Input Validation (Server-Side)
 
 All sign-up fields are validated server-side before any account is created:

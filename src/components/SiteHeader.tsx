@@ -105,9 +105,6 @@ export function SiteHeader() {
           <Link {...homeLinkProps} {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`} activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
             {t("nav.categories")}
           </Link>
-          <Link to="/privacy" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`} activeProps={{ className: "text-foreground" }}>
-            {t("nav.privacy")}
-          </Link>
           {canAccessAdmin && (
             <Link to="/admin" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`} activeProps={{ className: "text-foreground" }}>
               Admin
@@ -184,9 +181,6 @@ export function SiteHeader() {
             <Link {...homeLinkProps} {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`} activeOptions={{ exact: true }} activeProps={{ className: "text-foreground" }}>
               {t("nav.categories")}
             </Link>
-            <Link to="/privacy" {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`} activeProps={{ className: "text-foreground" }}>
-              {t("nav.privacy")}
-            </Link>
             {canAccessAdmin && (
               <Link to="/admin" {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`} activeProps={{ className: "text-foreground" }}>
                 Admin
@@ -230,7 +224,13 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-border/60 mt-0">
       <div className="mx-auto max-w-6xl px-6 py-10 text-sm text-muted-foreground flex flex-col sm:flex-row gap-3 justify-between">
-        <div>© {new Date().getFullYear()} Reentry to Recovery</div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span>© {new Date().getFullYear()} Reentry to Recovery</span>
+          <span aria-hidden>·</span>
+          <Link to="/privacy" className="hover:text-foreground transition-colors">{t("footer.privacy")}</Link>
+          <span aria-hidden>·</span>
+          <Link to="/terms" className="hover:text-foreground transition-colors">{t("footer.terms")}</Link>
+        </div>
         <div>{t("footer.crisis")} <span className="text-foreground font-medium">988</span>.</div>
       </div>
     </footer>

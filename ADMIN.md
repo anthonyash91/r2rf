@@ -273,7 +273,15 @@ Edit the hero section of the certificate program landing page — headline and s
 
 *Accessible to: Admin, Contributor, Facility User*
 
-A rich text editor for the platform's Privacy Policy page. The policy can be written in both English and Spanish. Changes are reflected immediately on the public `/privacy` page.
+A rich text editor for the platform's Privacy Policy page. The policy can be written in both English and Spanish. Changes are reflected immediately on the public `/privacy` page. An AI translate button auto-generates a Spanish translation from the English content.
+
+---
+
+## Terms of Service — `/admin/terms`
+
+*Accessible to: Admin, Contributor*
+
+A rich text editor for the platform's Terms of Service page. Identical in functionality to the Privacy Policy editor — supports English and Spanish, with AI-assisted translation. Changes are reflected immediately on the public `/terms` page.
 
 ---
 

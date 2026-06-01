@@ -182,25 +182,41 @@ export const getUsageReport = createServerFn({ method: "POST" })
         // Chunk large facility user lists to stay under URL length limits
         const chunks = chunkIds(userIdFilter);
         const chunkRows = await Promise.all(chunks.map(async (chunk) => {
-          let q = supabaseAdmin.from("analytics_events").select("user_id, content_id")
-            .eq("event_type", "content_click").not("user_id", "is", null);
-          if (sinceIso) q = (q as any).gte("created_at", sinceIso);
-          const { data } = await (q as any).in("user_id", chunk);
-          return data ?? [];
+          const PAGE = 1000; const rows: any[] = [];
+          for (let from = 0; ; from += PAGE) {
+            let q = supabaseAdmin.from("analytics_events").select("user_id, content_id")
+              .eq("event_type", "content_click").not("user_id", "is", null)
+              .range(from, from + PAGE - 1);
+            if (sinceIso) q = (q as any).gte("created_at", sinceIso);
+            const { data } = await (q as any).in("user_id", chunk);
+            if (!data?.length) break;
+            rows.push(...data);
+            if (data.length < PAGE) break;
+          }
+          return rows;
         }));
         return { precomputed: false, rows: chunkRows.flat() };
       } else {
+        // Overall + date filter: paginate to avoid the 1000-row default cap
         const excludeAll = [
           ...Array.from(staffUserIds),
           ...Array.from(syntheticIds),
           "00000000-0000-0000-0000-000000000000",
         ];
-        if (excludeAll.length > 0) {
-          openersQ = (openersQ as any).not("user_id", "in", `(${excludeAll.join(",")})`);
+        const PAGE = 1000; const allRows: any[] = [];
+        for (let from = 0; ; from += PAGE) {
+          let q = supabaseAdmin.from("analytics_events").select("user_id, content_id")
+            .eq("event_type", "content_click").not("user_id", "is", null)
+            .range(from, from + PAGE - 1);
+          if (sinceIso) q = (q as any).gte("created_at", sinceIso);
+          if (excludeAll.length > 0) q = (q as any).not("user_id", "in", `(${excludeAll.join(",")})`);
+          const { data } = await q;
+          if (!data?.length) break;
+          allRows.push(...data);
+          if (data.length < PAGE) break;
         }
+        return { precomputed: false, rows: allRows };
       }
-      const { data } = await openersQ;
-      return { precomputed: false, rows: data ?? [] };
     };
 
     // ── Query 3: time data from user_content_sessions ────────────────────────

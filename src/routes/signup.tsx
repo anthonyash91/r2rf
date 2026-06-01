@@ -22,7 +22,7 @@ import { questionLabel } from "@/lib/security-questions";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown, KeyRound, Lock, Loader2, LogIn, UserPlus } from "lucide-react";
+import { Check, ChevronsUpDown, KeyRound, Lock, Loader2, LogIn, UserPlus, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
@@ -52,6 +52,7 @@ function SignupPageContent() {
   const navigate = useNavigate();
   const { redirect: redirectTo } = Route.useSearch();
   const [mode, setMode] = useState<Mode>("sign-in");
+  const [disclosureChecked, setDisclosureChecked] = useState(false);
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -719,15 +720,47 @@ function SignupPageContent() {
               )}
 
               {(!signupBlockReason || mode !== "sign-up") && (
-                <div className="flex justify-end !mt-6">
-                  <button
-                    type="submit"
-                    disabled={busy || (mode === "sign-up" && (!challengeQuery.data || usernameStatus === "taken" || usernameStatus === "checking"))}
-                    className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                  >
-                    {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
-                  </button>
+                <div className="!mt-6 space-y-4">
+                  {mode === "sign-up" && (
+                    <details className="group rounded-md border border-border bg-muted/30">
+                      <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors list-none">
+                        {t("signup.disclosureHeading")}
+                        <ChevronDown className="h-3.5 w-3.5 flex-shrink-0 transition-transform group-open:rotate-180" />
+                      </summary>
+                      <div className="px-4 pb-4 pt-1">
+                        <p className="whitespace-pre-wrap text-xs text-muted-foreground leading-relaxed">
+                          {t("signup.disclosureBody")}
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-3 text-xs">
+                          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] hover:underline">{t("footer.privacy")}</a>
+                          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] hover:underline">{t("footer.terms")}</a>
+                        </div>
+                      </div>
+                    </details>
+                  )}
+                  {mode === "sign-up" && (
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={disclosureChecked}
+                        onChange={(e) => setDisclosureChecked(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-[var(--color-accent)] cursor-pointer"
+                      />
+                      <span className="text-xs text-muted-foreground leading-snug">
+                        {t("signup.disclosureCheckbox")}
+                      </span>
+                    </label>
+                  )}
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={busy || (mode === "sign-up" && (!challengeQuery.data || usernameStatus === "taken" || usernameStatus === "checking" || !disclosureChecked))}
+                      className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                    >
+                      {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
+                    </button>
+                  </div>
                 </div>
               )}
               {/* honeypot — anchored to top so it never adds layout space at the bottom */}
@@ -750,6 +783,7 @@ function SignupPageContent() {
               <button
                 onClick={() => {
                   setMode(mode === "sign-up" ? "sign-in" : "sign-up");
+                  setDisclosureChecked(false);
                   setAnswer("");
                 }}
                 className="text-sm text-muted-foreground hover:text-foreground text-left"

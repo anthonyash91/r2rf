@@ -10,7 +10,6 @@ The navigation bar appears at the top of every page. It contains:
 
 - **Reentry to Recovery logo / name** — clicking it always returns to the home page
 - **Categories** — link back to the main content library from any page
-- **Privacy Policy** — link to the platform's privacy policy
 - **My Dashboard** — link to the user's personal progress dashboard (only visible when signed in)
 - **Sign In / Sign Out** — sign in takes new or returning users to the signup/login flow; sign out ends the current session
 - **Language toggle (EN / ES)** — switches the entire interface between English and Spanish instantly, including all navigation labels, category names, descriptions, and content item text where translations have been provided
@@ -107,9 +106,12 @@ If a user arrives via a facility link with an inmate PIN in the URL (e.g., `?use
 
 The footer appears at the bottom of every page and includes:
 
-- The platform name and branding
-- A link to the Privacy Policy
-- Copyright information
+- **© [Year] Reentry to Recovery** — copyright notice
+- **Privacy** — link to the Privacy Policy page
+- **Terms of Service** — link to the Terms of Service page
+- **Crisis line** — "If you are in crisis, call or text 988"
+
+The Privacy and Terms of Service links are in the footer rather than the main navigation to keep the nav uncluttered while still making legal pages accessible from every page.
 
 ---
 

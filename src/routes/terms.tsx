@@ -1,47 +1,47 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Shield } from "lucide-react";
+import { FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang } from "@/lib/i18n";
 
-type PrivacyPolicy = {
+type TermsDoc = {
   title: string;
   title_es: string;
   content: string;
   content_es: string;
 };
 
-const DEFAULTS: PrivacyPolicy = {
-  title: "Privacy Policy",
-  title_es: "Política de Privacidad",
+const DEFAULTS: TermsDoc = {
+  title: "Terms of Service",
+  title_es: "Términos de Servicio",
   content: "",
   content_es: "",
 };
 
-export const Route = createFileRoute("/privacy")({
+export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy — Reentry to Recovery" },
-      { name: "description", content: "How we collect, use, and protect your information." },
+      { title: "Terms of Service — Reentry to Recovery" },
+      { name: "description", content: "Terms of Service for the Reentry to Recovery Content Library." },
     ],
   }),
-  component: PrivacyPage,
+  component: TermsPage,
 });
 
-function PrivacyPage() {
+function TermsPage() {
   const { lang, t } = useI18n();
   const { data, isLoading } = useQuery({
-    queryKey: ["site_settings", "privacy_policy"],
+    queryKey: ["site_settings", "terms_of_service"],
     staleTime: 10 * 60 * 1000,
-    queryFn: async (): Promise<PrivacyPolicy> => {
+    queryFn: async (): Promise<TermsDoc> => {
       const { data, error } = await supabase
         .from("site_settings")
         .select("value")
-        .eq("key", "privacy_policy")
+        .eq("key", "terms_of_service")
         .maybeSingle();
       if (error) throw error;
-      return { ...DEFAULTS, ...((data?.value as Partial<PrivacyPolicy>) ?? {}) };
+      return { ...DEFAULTS, ...((data?.value as Partial<TermsDoc>) ?? {}) };
     },
   });
 
@@ -53,7 +53,7 @@ function PrivacyPage() {
       <SiteHeader />
       <main className="flex-1 mx-auto w-full max-w-3xl px-6 py-16">
         <div className="flex items-center gap-3 mb-8">
-          <Shield className="h-7 w-7 text-[var(--color-accent)]" />
+          <FileText className="h-7 w-7 text-[var(--color-accent)]" />
           <h1 className="font-display text-3xl font-semibold">{title}</h1>
         </div>
         {isLoading ? (
@@ -65,8 +65,8 @@ function PrivacyPage() {
         ) : (
           <p className="text-muted-foreground">
             {lang === "es"
-              ? "La política de privacidad aún no está disponible."
-              : "The privacy policy is not available yet."}
+              ? "Los términos de servicio aún no están disponibles."
+              : "The Terms of Service are not available yet."}
           </p>
         )}
       </main>

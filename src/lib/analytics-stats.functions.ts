@@ -24,7 +24,7 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAnyAdmin(context.userId);
 
-    const [statsRes, facRes, bookmarksRes, ratingsRes] = await Promise.all([
+    const [statsRes, facRes, profilesRes, bookmarksRes, ratingsRes] = await Promise.all([
       (supabaseAdmin as any)
         .from("facility_stats")
         .select("*")
@@ -33,12 +33,17 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
         .from("facilities")
         .select("value, label, site_id")
         .order("label", { ascending: true }),
+      // Fetch user→facility map separately (no FK join available)
+      supabaseAdmin
+        .from("user_profiles")
+        .select("user_id, facility")
+        .eq("is_synthetic", false),
       (supabaseAdmin as any)
         .from("user_content_bookmarks")
-        .select("user_id, user_profiles!inner(facility)"),
+        .select("user_id"),
       (supabaseAdmin as any)
         .from("user_content_ratings")
-        .select("rating, user_profiles!inner(facility)"),
+        .select("user_id, rating"),
     ]);
 
     if (statsRes.error) throw new Error(statsRes.error.message);
@@ -47,16 +52,21 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
       (facRes.data ?? []).map((f: any) => [f.value, { label: f.label, siteId: f.site_id }])
     );
 
+    // user_id → facility lookup
+    const userFacilityMap = new Map<string, string>(
+      (profilesRes.data ?? []).map((p: any) => [p.user_id as string, p.facility as string])
+    );
+
     const facilityBookmarks = new Map<string, number>();
     for (const r of (bookmarksRes.data ?? []) as any[]) {
-      const facility = r.user_profiles?.facility as string | null;
+      const facility = userFacilityMap.get(r.user_id as string);
       if (facility) facilityBookmarks.set(facility, (facilityBookmarks.get(facility) ?? 0) + 1);
     }
 
     const facilityThumbsUp = new Map<string, number>();
     const facilityThumbsDown = new Map<string, number>();
     for (const r of (ratingsRes.data ?? []) as any[]) {
-      const facility = r.user_profiles?.facility as string | null;
+      const facility = userFacilityMap.get(r.user_id as string);
       if (!facility) continue;
       if (r.rating === 1) facilityThumbsUp.set(facility, (facilityThumbsUp.get(facility) ?? 0) + 1);
       if (r.rating === -1) facilityThumbsDown.set(facility, (facilityThumbsDown.get(facility) ?? 0) + 1);

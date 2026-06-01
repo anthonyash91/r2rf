@@ -4,16 +4,17 @@
  * Examples: "45 sec" | "3 min 12 sec" | "1 hr 23 min 45 sec"
  */
 export function formatTimeSpent(totalSeconds: number): string {
-  const s = Math.ceil(totalSeconds);
-  if (s <= 0) return "0 sec";
-  const hours = Math.floor(s / 3600);
+  const s = Math.floor(totalSeconds);
+  if (s <= 0) return "0 min";
+  if (s < 60) return "< 1 min";
+  const days    = Math.floor(s / 86400);
+  const hours   = Math.floor((s % 86400) / 3600);
   const minutes = Math.floor((s % 3600) / 60);
-  const seconds = s % 60;
   const parts: string[] = [];
-  if (hours > 0) parts.push(`${hours}h`);
+  if (days > 0)    parts.push(`${days}d`);
+  if (hours > 0)   parts.push(`${hours}h`);
   if (minutes > 0) parts.push(`${minutes}m`);
-  if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
-  return parts.join(" ");
+  return parts.join(" ") || "< 1 min";
 }
 
 export function fmtDate(iso?: string | null): string {

@@ -34,6 +34,7 @@ const links: NavLink[] = [
   { to: "/admin/home", label: "Home Header", icon: Home, adminOnly: true },
   { to: "/admin/messages", label: "Messages", icon: MessageSquare, adminOnly: true, facilityUserVisible: true },
   { to: "/admin/privacy", label: "Privacy Policy", icon: FileText, adminOnly: true },
+  { to: "/admin/terms", label: "Terms of Service", icon: FileText, adminOnly: true },
   { to: "/admin/icons-badges", label: "Icons & Badges", icon: Palette, adminOnly: true },
   { to: "/admin/certificate", label: "Certificate Footer", icon: Award, adminOnly: true },
   { to: "/admin/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true, facilityUserVisible: true },

@@ -39,6 +39,8 @@ const translations: Record<Language, Dict> = {
     "nav.language": "Español",
     "site.tagline": "Content library",
     "footer.crisis": "If you are in crisis, call or text",
+    "footer.privacy": "Privacy",
+    "footer.terms": "Terms of Service",
 
     "home.loading": "Loading…",
     "home.categories": "Categories",
@@ -193,6 +195,9 @@ const translations: Record<Language, Dict> = {
     "signup.noFacilityBlock": "Sign up is only available when you access the website through the service on your device.",
     "signup.wrongLinkBlock": "Looks like you're trying to login using the wrong link. Make sure you're accessing this website through the service on your device.",
     "signup.genericError": "Something went wrong.",
+    "signup.disclosureHeading": "Before you sign up — tap to read",
+    "signup.disclosureBody": "The Reentry to Recovery library is free and your participation is completely voluntary. Creating an account has no effect on your status or privileges at your facility.\n\nWhat we save about you:\n• Your name, username, and password (your password is encrypted — we cannot read it)\n• Your facility and inmate PIN — used to connect your account to your device\n• Two security questions and answers — used only if you need to reset your password\n• Which resources you open, how far you get, and when you complete them\n• How much time you actively spend on each resource\n• Ratings you give to resources (\"Helpful\" / \"Not Helpful\") — visible to your facility staff in your individual progress report\n• Resources you bookmark for later\n• The dates you log in\n\nWhy we save it:\n• To show you your personal progress dashboard\n• To let facility staff and our organization see how the program is being used\n• To report outcomes to the organizations that fund this program\n\nWe do not sell your information. We do not use advertising.",
+    "signup.disclosureCheckbox": "I understand what information is collected and agree to the Terms of Service and Privacy Policy.",
     "facility.pennington_sd": "Pennington, SD",
     "facility.campbell_ky": "Campbell, KY",
 
@@ -262,6 +267,8 @@ const translations: Record<Language, Dict> = {
     "nav.language": "English",
     "site.tagline": "Biblioteca de contenido",
     "footer.crisis": "Si está en crisis, llame o envíe un mensaje al",
+    "footer.privacy": "Privacidad",
+    "footer.terms": "Términos de servicio",
 
     "home.loading": "Cargando…",
     "home.categories": "Categorías",
@@ -416,6 +423,9 @@ const translations: Record<Language, Dict> = {
     "signup.noFacilityBlock": "El registro solo está disponible cuando accedes al sitio web a través del servicio en tu dispositivo.",
     "signup.wrongLinkBlock": "Parece que estás intentando iniciar sesión con el enlace incorrecto. Asegúrate de acceder a este sitio web a través del servicio en tu dispositivo.",
     "signup.genericError": "Algo salió mal.",
+    "signup.disclosureHeading": "Antes de registrarte — toca para leer",
+    "signup.disclosureBody": "La biblioteca Reentry to Recovery es gratuita y tu participación es completamente voluntaria. Crear una cuenta no afecta tu estatus ni tus privilegios en tu instalación.\n\nLo que guardamos sobre ti:\n• Tu nombre, nombre de usuario y contraseña (encriptada — no podemos leerla)\n• Tu instalación y PIN de recluso — para conectar tu cuenta a tu dispositivo\n• Dos preguntas de seguridad y respuestas — solo usadas si necesitas restablecer tu contraseña\n• Qué recursos abres, qué tan lejos llegas y cuándo los completas\n• Cuánto tiempo activo pasas en cada recurso\n• Calificaciones que das a los recursos (visibles al personal de tu instalación)\n• Recursos que guardas para después\n• Las fechas en que inicias sesión\n\nPor qué lo guardamos:\n• Para mostrarte tu tablero de progreso personal\n• Para que el personal de tu instalación vea cómo se usa el programa\n• Para reportar resultados a las organizaciones que financian este programa\n\nNo vendemos tu información. No usamos publicidad.",
+    "signup.disclosureCheckbox": "Entiendo qué información se recopila y acepto los Términos de Servicio y la Política de Privacidad.",
     "facility.pennington_sd": "Pennington, SD",
     "facility.campbell_ky": "Campbell, KY",
 

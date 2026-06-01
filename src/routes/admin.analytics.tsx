@@ -491,12 +491,19 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
               value={aggregated.overallCompletionRate != null ? `${aggregated.overallCompletionRate}%` : "—"}
               tooltip="Out of everyone who opened content in this period, how many actually finished it."
             />
-            <SummaryCard
-              icon={<Clock className="h-5 w-5" />}
-              label="Time spent"
-              value={formatTimeSpent((data as any)?.totalSeconds ?? ((data as any)?.hoursSpent ?? 0) * 3600)}
-              tooltip="Total time users actively spent engaging with content in the selected period, measured in real session time."
-            />
+            {(() => {
+              const timeVal = formatTimeSpent((data as any)?.totalSeconds ?? ((data as any)?.hoursSpent ?? 0) * 3600);
+              const timeSz = timeVal.length <= 4 ? "text-3xl" : "text-2xl";
+              return (
+                <SummaryCard
+                  icon={<Clock className="h-5 w-5" />}
+                  label="Time spent"
+                  value={timeVal}
+                  tooltip="Total time users actively spent engaging with content in the selected period, measured in real session time."
+                  valueClassName={timeSz}
+                />
+              );
+            })()}
             <SummaryCard
               icon={<Eye className="h-5 w-5" />}
               label={aggregated.totalViews === 1 ? "Visit" : "Visits"}
@@ -700,7 +707,7 @@ function FacilityComparisonSection() {
                       )}
                     </td>
                     <td className="px-4 py-3 tabular-nums">{f.itemsCompletedTotal}</td>
-                    <td className="px-4 py-3 tabular-nums text-muted-foreground">
+                    <td className="px-4 py-3 tabular-nums text-muted-foreground whitespace-nowrap">
                       {f.totalSessionSeconds > 0 ? formatTimeSpent(f.totalSessionSeconds) : "—"}
                     </td>
                     <td className="px-4 py-3 tabular-nums text-muted-foreground">{f.totalBookmarks || "—"}</td>
@@ -1572,7 +1579,7 @@ function UserCategorySection({
 
 /* ---------------- Shared subcomponents ---------------- */
 
-function SummaryCard({ icon, label, value, note, tooltip }: { icon: React.ReactNode; label: string; value: React.ReactNode; note?: string; tooltip?: string }) {
+function SummaryCard({ icon, label, value, note, tooltip, valueClassName }: { icon: React.ReactNode; label: string; value: React.ReactNode; note?: string; tooltip?: string; valueClassName?: string }) {
   return (
     <SectionCard as="div" padded={false} className="p-5">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1581,7 +1588,7 @@ function SummaryCard({ icon, label, value, note, tooltip }: { icon: React.ReactN
         {tooltip && <InfoTooltip text={tooltip} />}
         {note && <span className="ml-auto text-xs italic text-muted-foreground/70">{note}</span>}
       </div>
-      <p className="mt-2 font-display text-3xl font-semibold tabular-nums">{typeof value === "number" ? value.toLocaleString() : value}</p>
+      <p className={`mt-2 font-display font-semibold tabular-nums whitespace-nowrap ${valueClassName ?? "text-3xl"}`}>{typeof value === "number" ? value.toLocaleString() : value}</p>
     </SectionCard>
   );
 }
@@ -1781,11 +1788,13 @@ function MostLeastEngaged({ rows }: { rows: AggregatedRow[] }) {
   if (most.length === 0) return null;
 
   return (
-    <div className="mt-10 grid gap-6 sm:grid-cols-2">
-      <div>
-        <h3 className="font-display text-base font-semibold mb-3 flex items-center gap-2">
-          <Flame className="h-4 w-4 text-[var(--color-accent)]" /> Most engaged content
-        </h3>
+    <>
+      <div className="mt-12">
+        <UserSectionHeader
+          className="mb-4"
+          title="Most engaged content"
+          description="The 5 content items with the highest completion rate, among items opened by at least 3 users."
+        />
         <SectionCard padded={false} className="overflow-hidden">
           <ul className="divide-y divide-border">
             {most.map(({ item, completionRate, openCount, categoryName }) => (
@@ -1804,10 +1813,12 @@ function MostLeastEngaged({ rows }: { rows: AggregatedRow[] }) {
         </SectionCard>
       </div>
       {least.length > 0 && (
-        <div>
-          <h3 className="font-display text-base font-semibold mb-3 flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-muted-foreground" /> Least engaged content
-          </h3>
+        <div className="mt-12">
+          <UserSectionHeader
+            className="mb-4"
+            title="Least engaged content"
+            description="The 5 content items with the lowest completion rate, among items opened by at least 3 users."
+          />
           <SectionCard padded={false} className="overflow-hidden">
             <ul className="divide-y divide-border">
               {least.map(({ item, completionRate, openCount, categoryName }) => (
@@ -1826,7 +1837,7 @@ function MostLeastEngaged({ rows }: { rows: AggregatedRow[] }) {
           </SectionCard>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
