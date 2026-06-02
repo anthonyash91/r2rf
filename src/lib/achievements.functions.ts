@@ -23,7 +23,7 @@ export const checkAndGrantAchievements = createServerFn({ method: "POST" })
         .eq("user_id", userId),
       supabaseAdmin
         .from("content_items")
-        .select("id, category_id")
+        .select("id, category_id, exempt_from_progress")
         .eq("published", true),
       (supabaseAdmin as any)
         .from("user_achievements")
@@ -31,21 +31,29 @@ export const checkAndGrantAchievements = createServerFn({ method: "POST" })
         .eq("user_id", userId),
     ]);
 
-    // Items completed
-    const itemsCompleted = (progressRes.data ?? []).length;
+    // Build set of exempt item IDs so they're excluded from all achievement counts
+    const exemptItemIds = new Set<string>(
+      (allItemsRes.data ?? []).filter((r: any) => r.exempt_from_progress).map((r: any) => r.id as string),
+    );
+    const nonExemptProgress = (progressRes.data ?? []).filter((r: any) => !exemptItemIds.has(r.content_item_id as string));
 
-    // Categories started
-    const startedCatIds = new Set((progressRes.data ?? []).map((r: any) => r.category_id as string));
+    // Items completed (excluding exempt items)
+    const itemsCompleted = nonExemptProgress.length;
+
+    // Categories started (excluding exempt items)
+    const startedCatIds = new Set(nonExemptProgress.map((r: any) => r.category_id as string));
     const categoriesStarted = startedCatIds.size;
 
-    // Programs completed: user has read every published item in a category
+    // Programs completed: user has read every non-exempt published item in a category
     const completedByCat: Record<string, number> = {};
-    for (const r of (progressRes.data ?? []) as any[]) {
+    for (const r of nonExemptProgress) {
       completedByCat[r.category_id] = (completedByCat[r.category_id] ?? 0) + 1;
     }
     const totalByCat: Record<string, number> = {};
     for (const r of (allItemsRes.data ?? []) as any[]) {
-      totalByCat[r.category_id] = (totalByCat[r.category_id] ?? 0) + 1;
+      if (!r.exempt_from_progress) {
+        totalByCat[r.category_id] = (totalByCat[r.category_id] ?? 0) + 1;
+      }
     }
     const programsCompleted = Object.keys(completedByCat).filter(
       (catId) => totalByCat[catId] > 0 && completedByCat[catId] >= totalByCat[catId],

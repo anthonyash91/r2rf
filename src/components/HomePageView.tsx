@@ -15,26 +15,31 @@ import { ResponsiveBadgeGroup } from "@/components/ResponsiveBadgeGroup";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 
-type CategoryStats = { count: number; recentItemIds: Set<string> };
+type CategoryStats = { count: number; trackableCount: number; recentItemIds: Set<string> };
 
 function useUserProgress(userId: string | null, categoryIds: string[]) {
   return useQuery({
     queryKey: ["home-user-progress", userId, [...categoryIds].sort().join(",")],
     enabled: !!userId && categoryIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("user_content_progress")
-        .select("category_id, content_item_id")
+        .select("category_id, content_item_id, content_items(exempt_from_progress)")
         .eq("user_id", userId!)
         .in("category_id", categoryIds);
       if (error) throw error;
       const reads: Record<string, number> = {};
+      const trackableReads: Record<string, number> = {};
       const readSet = new Set<string>();
-      for (const row of data ?? []) {
+      for (const row of (data ?? []) as any[]) {
+        const isExempt = row.content_items?.exempt_from_progress ?? false;
         reads[row.category_id as string] = (reads[row.category_id as string] ?? 0) + 1;
+        if (!isExempt) {
+          trackableReads[row.category_id as string] = (trackableReads[row.category_id as string] ?? 0) + 1;
+        }
         readSet.add(row.content_item_id as string);
       }
-      return { reads, readSet };
+      return { reads, trackableReads, readSet };
     },
   });
 }
@@ -48,7 +53,7 @@ function useCategoryItemStats(categoryIds: string[], userFacility: string | null
     queryFn: async () => {
       const { data, error } = await supabase
         .from("content_items")
-        .select("id, category_id, created_at")
+        .select("id, category_id, created_at, exempt_from_progress")
         .eq("published", true)
         .in("category_id", categoryIds);
       if (error) throw error;
@@ -72,13 +77,14 @@ function useCategoryItemStats(categoryIds: string[], userFacility: string | null
 
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const stats: Record<string, CategoryStats> = {};
-      for (const row of (data ?? []) as { id: string; category_id: string; created_at: string }[]) {
+      for (const row of (data ?? []) as { id: string; category_id: string; created_at: string; exempt_from_progress?: boolean }[]) {
         const facilities = facilityMap[row.id] ?? [];
         if (facilities.length > 0) {
           if (!userFacility || !facilities.includes(userFacility)) continue;
         }
-        const s = stats[row.category_id] ?? { count: 0, recentItemIds: new Set<string>() };
+        const s = stats[row.category_id] ?? { count: 0, trackableCount: 0, recentItemIds: new Set<string>() };
         s.count += 1;
+        if (!row.exempt_from_progress) s.trackableCount += 1;
         if (new Date(row.created_at).getTime() >= cutoff) s.recentItemIds.add(row.id);
         stats[row.category_id] = s;
       }
@@ -224,6 +230,7 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
   const { data: stats = {} } = useCategoryItemStats(visibleCategories.map((c) => c.id), userFacility);
   const { data: progress } = useUserProgress(user?.id ?? null, visibleCategories.map((c) => c.id));
   const reads = progress?.reads ?? {};
+  const trackableReads = progress?.trackableReads ?? {};
   const readSet = progress?.readSet ?? new Set<string>();
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
   visibleCategories.forEach((c, i) => buckets[i % cols].push({ c, i }));
@@ -278,16 +285,16 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
 
 
 
-                  {user && !isAdmin && !isFacilityUser && count > 0 && (() => {
-                    const read = Math.min(reads[c.id] ?? 0, count);
-                    const pct = Math.round((read / count) * 100);
+                  {user && !isAdmin && !isFacilityUser && s.trackableCount > 0 && (() => {
+                    const read = Math.min(trackableReads[c.id] ?? 0, s.trackableCount);
+                    const pct = Math.round((read / s.trackableCount) * 100);
                     return (
                       <div className="mt-4 space-y-1.5">
                         <Progress value={pct} className="h-1.5" />
                         <p className="text-[11px] text-muted-foreground">
                           {t("dashboard.progressItems")
                             .replace("{done}", String(read))
-                            .replace("{total}", String(count))}
+                            .replace("{total}", String(s.trackableCount))}
                         </p>
                       </div>
                     );
@@ -408,6 +415,7 @@ export function HomePageView({
 
   const visibleCategoryIds = useMemo(() => visibleCategories.map((c) => c.id), [visibleCategories]);
   const facilityKey = userFacility === undefined ? "admin" : (userFacility ?? "anon");
+  const { data: stats = {} } = useCategoryItemStats(visibleCategoryIds, userFacility);
 
   const { data: searchResults = [], isFetching: searchFetching } = useQuery({
     queryKey: ["home-search", debouncedQuery, [...visibleCategoryIds].sort().join(","), facilityKey],
@@ -519,7 +527,11 @@ export function HomePageView({
               />
             </div>
             <span className="text-sm text-muted-foreground shrink-0">
-              {isLoading ? t("home.loading") : t(visibleCategories.length === 1 ? "home.collection" : "home.collections", { count: visibleCategories.length })}
+              {isLoading ? t("home.loading") : (() => {
+                const catCount = visibleCategories.length;
+                const itemCount = visibleCategories.reduce((sum, c) => sum + (stats[c.id]?.count ?? 0), 0);
+                return `${catCount} ${t(catCount === 1 ? "home.category" : "home.categories")} / ${itemCount} ${t(itemCount === 1 ? "home.item" : "home.items")}`;
+              })()}
             </span>
           </div>
 

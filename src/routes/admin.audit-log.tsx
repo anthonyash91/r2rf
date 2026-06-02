@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollText, UserPlus, UserMinus, KeyRound, ShieldCheck, ShieldOff, Trash2, HelpCircle, Filter } from "lucide-react";
-import { requireAdminBeforeLoad } from "@/lib/admin-guards";
+import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
 import { PageHeader } from "@/components/PageHeader";
 import { FilterField } from "@/components/FilterField";
 import { EmptyState } from "@/components/EmptyState";
@@ -15,7 +15,7 @@ import { listAuditLog } from "@/lib/admin-audit.functions";
 
 export const Route = createFileRoute("/admin/audit-log")({
   head: () => ({ meta: [{ title: "Audit Log — Admin" }] }),
-  beforeLoad: requireAdminBeforeLoad,
+  beforeLoad: requireStrictAdminBeforeLoad,
   component: AdminAuditLogPage,
 });
 

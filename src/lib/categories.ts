@@ -42,6 +42,7 @@ export type ContentItem = {
   file_name: string | null;
   sort_order: number;
   published: boolean;
+  exempt_from_progress?: boolean;
   title_es: string | null;
   description_es: string | null;
   source_es: string | null;

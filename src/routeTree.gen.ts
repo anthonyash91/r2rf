@@ -9,7 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SpanishRouteImport } from './routes/spanish'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -19,6 +19,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as FacilitySlugRouteImport } from './routes/facility.$slug'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminTermsRouteImport } from './routes/admin.terms'
 import { Route as AdminSeedRouteImport } from './routes/admin.seed'
 import { Route as AdminPrivacyRouteImport } from './routes/admin.privacy'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
@@ -30,13 +31,12 @@ import { Route as AdminErrorsRouteImport } from './routes/admin.errors'
 import { Route as AdminCertificateRouteImport } from './routes/admin.certificate'
 import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
-import { Route as ApiPublicSitePasskeyRouteImport } from './routes/api/public/site-passkey'
 import { Route as ApiPublicLogErrorRouteImport } from './routes/api/public/log-error'
 import { Route as AdminCategoryIdRouteImport } from './routes/admin.category.$id'
 
-const SpanishRoute = SpanishRouteImport.update({
-  id: '/spanish',
-  path: '/spanish',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -82,6 +82,11 @@ const CategorySlugRoute = CategorySlugRouteImport.update({
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTermsRoute = AdminTermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSeedRoute = AdminSeedRouteImport.update({
@@ -139,11 +144,6 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AdminRoute,
 } as any)
-const ApiPublicSitePasskeyRoute = ApiPublicSitePasskeyRouteImport.update({
-  id: '/api/public/site-passkey',
-  path: '/api/public/site-passkey',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicLogErrorRoute = ApiPublicLogErrorRouteImport.update({
   id: '/api/public/log-error',
   path: '/api/public/log-error',
@@ -161,7 +161,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/privacy': typeof PrivacyRoute
   '/signup': typeof SignupRoute
-  '/spanish': typeof SpanishRoute
+  '/terms': typeof TermsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/certificate': typeof AdminCertificateRoute
@@ -173,20 +173,20 @@ export interface FileRoutesByFullPath {
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
+  '/admin/terms': typeof AdminTermsRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/api/public/log-error': typeof ApiPublicLogErrorRoute
-  '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/privacy': typeof PrivacyRoute
   '/signup': typeof SignupRoute
-  '/spanish': typeof SpanishRoute
+  '/terms': typeof TermsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/certificate': typeof AdminCertificateRoute
@@ -198,13 +198,13 @@ export interface FileRoutesByTo {
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
+  '/admin/terms': typeof AdminTermsRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/api/public/log-error': typeof ApiPublicLogErrorRoute
-  '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -213,7 +213,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/privacy': typeof PrivacyRoute
   '/signup': typeof SignupRoute
-  '/spanish': typeof SpanishRoute
+  '/terms': typeof TermsRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/audit-log': typeof AdminAuditLogRoute
   '/admin/certificate': typeof AdminCertificateRoute
@@ -225,13 +225,13 @@ export interface FileRoutesById {
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
+  '/admin/terms': typeof AdminTermsRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/api/public/log-error': typeof ApiPublicLogErrorRoute
-  '/api/public/site-passkey': typeof ApiPublicSitePasskeyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -241,7 +241,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/privacy'
     | '/signup'
-    | '/spanish'
+    | '/terms'
     | '/admin/analytics'
     | '/admin/audit-log'
     | '/admin/certificate'
@@ -253,20 +253,20 @@ export interface FileRouteTypes {
     | '/admin/messages'
     | '/admin/privacy'
     | '/admin/seed'
+    | '/admin/terms'
     | '/admin/users'
     | '/category/$slug'
     | '/facility/$slug'
     | '/admin/'
     | '/admin/category/$id'
     | '/api/public/log-error'
-    | '/api/public/site-passkey'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/dashboard'
     | '/privacy'
     | '/signup'
-    | '/spanish'
+    | '/terms'
     | '/admin/analytics'
     | '/admin/audit-log'
     | '/admin/certificate'
@@ -278,13 +278,13 @@ export interface FileRouteTypes {
     | '/admin/messages'
     | '/admin/privacy'
     | '/admin/seed'
+    | '/admin/terms'
     | '/admin/users'
     | '/category/$slug'
     | '/facility/$slug'
     | '/admin'
     | '/admin/category/$id'
     | '/api/public/log-error'
-    | '/api/public/site-passkey'
   id:
     | '__root__'
     | '/'
@@ -292,7 +292,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/privacy'
     | '/signup'
-    | '/spanish'
+    | '/terms'
     | '/admin/analytics'
     | '/admin/audit-log'
     | '/admin/certificate'
@@ -304,13 +304,13 @@ export interface FileRouteTypes {
     | '/admin/messages'
     | '/admin/privacy'
     | '/admin/seed'
+    | '/admin/terms'
     | '/admin/users'
     | '/category/$slug'
     | '/facility/$slug'
     | '/admin/'
     | '/admin/category/$id'
     | '/api/public/log-error'
-    | '/api/public/site-passkey'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -319,20 +319,19 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   PrivacyRoute: typeof PrivacyRoute
   SignupRoute: typeof SignupRoute
-  SpanishRoute: typeof SpanishRoute
+  TermsRoute: typeof TermsRoute
   CategorySlugRoute: typeof CategorySlugRoute
   FacilitySlugRoute: typeof FacilitySlugRoute
   ApiPublicLogErrorRoute: typeof ApiPublicLogErrorRoute
-  ApiPublicSitePasskeyRoute: typeof ApiPublicSitePasskeyRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/spanish': {
-      id: '/spanish'
-      path: '/spanish'
-      fullPath: '/spanish'
-      preLoaderRoute: typeof SpanishRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -396,6 +395,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/terms': {
+      id: '/admin/terms'
+      path: '/terms'
+      fullPath: '/admin/terms'
+      preLoaderRoute: typeof AdminTermsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/seed': {
@@ -475,13 +481,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/api/public/site-passkey': {
-      id: '/api/public/site-passkey'
-      path: '/api/public/site-passkey'
-      fullPath: '/api/public/site-passkey'
-      preLoaderRoute: typeof ApiPublicSitePasskeyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/log-error': {
       id: '/api/public/log-error'
       path: '/api/public/log-error'
@@ -511,6 +510,7 @@ interface AdminRouteChildren {
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminPrivacyRoute: typeof AdminPrivacyRoute
   AdminSeedRoute: typeof AdminSeedRoute
+  AdminTermsRoute: typeof AdminTermsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminCategoryIdRoute: typeof AdminCategoryIdRoute
@@ -528,6 +528,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminMessagesRoute: AdminMessagesRoute,
   AdminPrivacyRoute: AdminPrivacyRoute,
   AdminSeedRoute: AdminSeedRoute,
+  AdminTermsRoute: AdminTermsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminCategoryIdRoute: AdminCategoryIdRoute,
@@ -541,11 +542,10 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   PrivacyRoute: PrivacyRoute,
   SignupRoute: SignupRoute,
-  SpanishRoute: SpanishRoute,
+  TermsRoute: TermsRoute,
   CategorySlugRoute: CategorySlugRoute,
   FacilitySlugRoute: FacilitySlugRoute,
   ApiPublicLogErrorRoute: ApiPublicLogErrorRoute,
-  ApiPublicSitePasskeyRoute: ApiPublicSitePasskeyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

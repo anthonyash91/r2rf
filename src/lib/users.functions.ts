@@ -49,7 +49,7 @@ async function assertCanManageUser(
     .from("user_roles")
     .select("role")
     .eq("user_id", callerId)
-    .in("role", ["admin", "contributor", "facilityUser"])
+    .in("role", ["admin", "facilityUser"])
     .maybeSingle();
   if (!roleRow) throw new Error("Forbidden: admin access required");
 
@@ -76,13 +76,13 @@ async function assertCanManageUser(
   }
 }
 
-/** Allows admin, contributor, and facilityUser — for read operations scoped to their facility. */
-async function assertAnyAdmin(userId: string) {
+/** User management access: admin and facilityUser only — contributors are content-only. */
+async function assertUserManagementAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
-    .in("role", ["admin", "contributor", "facilityUser"])
+    .in("role", ["admin", "facilityUser"])
     .maybeSingle();
   if (error || !data) throw new Error("Forbidden: admin access required");
 }
@@ -224,7 +224,7 @@ export const listFacilityAdminUsers = createServerFn({ method: "POST" })
     z.object({ facilityValue: z.string().optional() }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAnyAdmin(context.userId);
+    await assertUserManagementAdmin(context.userId);
     const { data: roleRows, error } = await supabaseAdmin
       .from("user_roles")
       .select("user_id")
@@ -261,7 +261,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAnyAdmin(context.userId);
+    await assertUserManagementAdmin(context.userId);
 
     // facilityUser callers are always scoped to their own facility regardless
     // of what the client passes — this is the server-side enforcement.
@@ -663,7 +663,7 @@ export const sendPasswordResetEmail = createServerFn({ method: "POST" })
     if (data.userId) {
       await assertCanManageUser(context.userId, data.userId, { allowFacilityUserTarget: true });
     } else {
-      await assertAnyAdmin(context.userId);
+      await assertUserManagementAdmin(context.userId);
     }
     const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email);
     if (error) throw new Error(error.message);
@@ -688,7 +688,7 @@ export const resendVerificationEmail = createServerFn({ method: "POST" })
     if (data.userId) {
       await assertCanManageUser(context.userId, data.userId, { allowFacilityUserTarget: true });
     } else {
-      await assertAnyAdmin(context.userId);
+      await assertUserManagementAdmin(context.userId);
     }
     const { error } = await supabaseAdmin.auth.resend({ type: "signup", email: data.email });
     if (error) throw new Error(error.message);

@@ -2,6 +2,8 @@
 
 This document describes every analytics and data tracking feature built into the platform. It is intended for grant writing, funding applications, and program reporting purposes.
 
+**Access:** Analytics are available to Admin and Facility User roles only. Contributors have no analytics access. Facility Users see data scoped to their assigned facility.
+
 ---
 
 ## What Gets Tracked
@@ -58,6 +60,9 @@ Each content item can be marked complete. The method depends on content type:
 | Worksheet | Manually marked by the user |
 | Meeting / Call | Manually marked as "Attended" |
 | Article / Guide / Resource | Manually marked by the user |
+| **Exempt (informational)** | User taps "Acknowledge" — recorded but **excluded from all analytics** |
+
+**Exempt items:** Content items can be marked "Exempt from tracking" in the admin editor. Exempt items appear in the category and user-facing pages but do not count toward any completion metrics, progress rings, monthly summaries, achievement milestones, or pre-computed statistics. See [USER_ROLES.md](USER_ROLES.md) for full details.
 
 Completion data is stored with a timestamp so the exact date each item was completed is available in reports and CSV exports.
 

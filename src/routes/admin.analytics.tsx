@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAdminBeforeLoad } from "@/lib/admin-guards";
+import { requireAnalyticsAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
@@ -28,6 +28,7 @@ import {
   GraduationCap,
   Medal,
   BookOpen,
+  RefreshCw,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -48,6 +49,8 @@ import { readStatusLabels } from "@/lib/read-status";
 import { withActionWord } from "@/lib/duration";
 import { fmtDate, fmtDateShort, formatTimeSpent } from "@/lib/date-format";
 import { csvEscape, downloadCsv } from "@/lib/csv-utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import { waitForNextPaint } from "@/lib/paint";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -56,19 +59,21 @@ import {
   getUserProgressReport,
 } from "@/lib/reports.functions";
 import { listFacilityAdminUsers } from "@/lib/users.functions";
-import { getFacilityComparison, getGrowthStats } from "@/lib/analytics-stats.functions";
+import { getFacilityComparison, getGrowthStats, triggerNightlyRefresh } from "@/lib/analytics-stats.functions";
+import { getAdminUserMonthlySummary } from "@/lib/monthly-summary.functions";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 import { Pager } from "@/components/LoadMorePager";
 
 export const Route = createFileRoute("/admin/analytics")({
-  beforeLoad: requireAdminBeforeLoad,
+  beforeLoad: requireAnalyticsAdminBeforeLoad,
   component: AdminReportsPage,
 });
 
-type RangeKey = "7d" | "30d" | "90d" | "all";
+type RangeKey = "7d" | "30d" | "90d" | "all" | "month";
 
 const RANGE_OPTIONS: { key: RangeKey; label: string; shortLabel: string }[] = [
+  { key: "month", label: "Last month", shortLabel: "month" },
   { key: "7d", label: "Last 7 days", shortLabel: "7 days" },
   { key: "30d", label: "Last 30 days", shortLabel: "30 days" },
   { key: "90d", label: "Last 90 days", shortLabel: "90 days" },
@@ -121,7 +126,7 @@ function AdminReportsPage() {
   const [userPickerOpen, setUserPickerOpen] = useState(false);
   const [userKey, setUserKey] = useState(0);
   const [selectedUserFacility, setSelectedUserFacility] = useState<{ value: string; label: string } | null>(null);
-  const [activeUser, setActiveUser] = useState<{ userId: string; name: string } | null>(null);
+  const [activeUser, setActiveUser] = useState<{ userId: string; name: string; pin?: string | null } | null>(null);
 
   const fetchFacilities = useServerFn(listAllFacilities);
   const facilitiesQuery = useQuery({
@@ -169,7 +174,8 @@ function AdminReportsPage() {
             title={headerTitle}
             description="Usage, facility, and per-user reports across the site."
           />
-          <TabsList className="h-auto p-2 gap-1 w-full lg:w-auto bg-muted/40 self-stretch lg:self-center">
+          <div className="flex items-center gap-2 self-stretch lg:self-center">
+            <TabsList className="h-auto p-2 gap-1 flex-1 lg:flex-none bg-muted/40 self-stretch lg:self-auto">
             <TabsTrigger value="overall" className="flex-1 lg:flex-none px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
               <BarChart3 className="h-3.5 w-3.5 mr-1.5" /> Overall
             </TabsTrigger>
@@ -298,6 +304,7 @@ function AdminReportsPage() {
               </Popover>
             )}
           </TabsList>
+          </div>
         </div>
 
 
@@ -357,8 +364,11 @@ type UsageScope =
 function UsageReportView({ scope }: { scope: UsageScope }) {
   const [range, setRange] = useState<RangeKey>("30d");
   const [isExporting, setIsExporting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const fetchReport = useServerFn(getUsageReport);
   const fetchGrowth = useServerFn(getGrowthStats);
+  const doRefresh = useServerFn(triggerNightlyRefresh);
+  const { isAdmin, isContributor } = useAuth();
 
   const facilityValue = scope.kind === "facility" ? scope.facilityValue : null;
 
@@ -424,56 +434,77 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
 
   return (
     <div>
-      <div className="flex flex-col gap-2 w-full sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2 flex-1 min-w-0">
-          {RANGE_OPTIONS.map((opt) => (
-            <button
-              key={opt.key}
-              onClick={() => setRange(opt.key)}
-              className={`inline-flex flex-1 sm:flex-none items-center justify-center rounded-md border px-4 py-2 text-sm text-center whitespace-normal sm:whitespace-nowrap transition-colors ${
-                range === opt.key
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "border-input bg-background hover:bg-muted"
-              }`}
-            >
-              {opt.key === "all" ? (
-                "All time"
-              ) : (
-                <>
-                  <span className="hidden sm:inline">Last&nbsp;</span>
-                  {opt.shortLabel}
-                </>
-              )}
-            </button>
-          ))}
+      <div className="flex flex-col gap-2 w-full sm:flex-row sm:items-center sm:justify-between">
+        <div className="w-full sm:w-40">
+          <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
+            <SelectTrigger className="w-full !h-[38px] shadow-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {RANGE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.key} value={opt.key}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <LoadingButton
-          variant="secondary"
-          onClick={async () => {
-            if (!aggregated) return;
-            setIsExporting(true);
-            try {
-              await waitForNextPaint();
-              exportUsageCsv(aggregated, exportLabel, {
-                hoursSpent: (data as any)?.hoursSpent ?? 0,
-                totalSeconds: (data as any)?.totalSeconds,
-                usersSignedUp:
-                  scope.kind === "facility"
-                    ? ((data as any)?.facilityUserCount ?? 0)
-                    : ((data as any)?.totalUsers ?? 0),
-              });
-            } finally {
-              setTimeout(() => setIsExporting(false), 0);
-            }
-          }}
-          disabled={!aggregated}
-          pending={isExporting}
-          pendingText="Exporting…"
-          icon={<Download className="h-4 w-4" />}
-          className="w-full sm:w-auto"
-        >
-          Export CSV
-        </LoadingButton>
+        <div className="flex gap-2 w-full sm:w-auto">
+          {(isAdmin || isContributor) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  disabled={isRefreshing}
+                  onClick={async () => {
+                    setIsRefreshing(true);
+                    try {
+                      await doRefresh();
+                      toast.success("Stats refreshed successfully.");
+                    } catch (e: any) {
+                      toast.error(e?.message ?? "Refresh failed.");
+                    } finally {
+                      setIsRefreshing(false);
+                    }
+                  }}
+                  className="inline-flex items-center justify-center rounded-md px-[11px] py-2 text-sm font-medium transition-colors bg-muted/40 text-muted-foreground hover:bg-muted/60 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">
+                Manually refresh all stats now
+              </TooltipContent>
+            </Tooltip>
+          )}
+          <LoadingButton
+            variant="secondary"
+            onClick={async () => {
+              if (!aggregated) return;
+              setIsExporting(true);
+              try {
+                await waitForNextPaint();
+                exportUsageCsv(aggregated, exportLabel, {
+                  hoursSpent: (data as any)?.hoursSpent ?? 0,
+                  totalSeconds: (data as any)?.totalSeconds,
+                  usersSignedUp:
+                    scope.kind === "facility"
+                      ? ((data as any)?.facilityUserCount ?? 0)
+                      : ((data as any)?.totalUsers ?? 0),
+                });
+              } finally {
+                setTimeout(() => setIsExporting(false), 0);
+              }
+            }}
+            disabled={!aggregated}
+            pending={isExporting}
+            pendingText="Exporting…"
+            icon={<Download className="h-4 w-4" />}
+            className="flex-1 sm:flex-none !shadow-none"
+          >
+            Export CSV
+          </LoadingButton>
+        </div>
       </div>
 
       {isLoading || !aggregated ? (
@@ -744,14 +775,14 @@ function FacilityReportTab({ preselected }: { preselected: { value: string; labe
   return (
     <div>
       {rank > 0 && total > 1 && (
-        <div className="mb-6 rounded-lg border border-border bg-muted/30 px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+        <div className="mb-8 rounded-lg border border-border bg-muted/30 px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Facility Ranking</p>
+            <p className="text-xs text-muted-foreground tracking-wide font-medium mb-1">Facility Ranking</p>
             <p className="text-2xl font-bold tabular-nums">#{rank} <span className="text-sm font-normal text-muted-foreground">of {total} facilities</span></p>
           </div>
           {thisStats?.avgCompletionRate != null && (
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">Avg Completion</p>
+              <p className="text-xs text-muted-foreground tracking-wide font-medium mb-1">Avg Completion</p>
               <p className="text-2xl font-bold tabular-nums">{thisStats.avgCompletionRate}%</p>
             </div>
           )}
@@ -775,8 +806,8 @@ function UsersReportTab({
   setActiveUser,
 }: {
   preselected: { value: string; label: string };
-  activeUser: { userId: string; name: string } | null;
-  setActiveUser: (u: { userId: string; name: string } | null) => void;
+  activeUser: { userId: string; name: string; pin?: string | null } | null;
+  setActiveUser: (u: { userId: string; name: string; pin?: string | null } | null) => void;
 }) {
   const fetchUsers = useServerFn(listFacilityUsers);
   const fetchFacilityStaff = useServerFn(listFacilityAdminUsers);
@@ -784,11 +815,13 @@ function UsersReportTab({
   const isAll = selected === "__all__";
   const [isExporting, setIsExporting] = useState(false);
   const [page, setPage] = useState(0);
+  useEffect(() => { setPage(0); }, [selected]);
 
   const usersQuery = useQuery({
-    queryKey: ["admin", "facility-users", selected],
+    queryKey: ["admin", "facility-users", selected, page],
     enabled: !!selected,
-    queryFn: () => fetchUsers({ data: { facilityValue: isAll ? "" : selected } }),
+    staleTime: 5 * 60 * 1000,
+    queryFn: () => fetchUsers({ data: { facilityValue: isAll ? "" : selected, page, pageSize: 10 } }),
   });
 
   // Fetch facilityUser accounts for this facility (only on specific facility view)
@@ -805,14 +838,16 @@ function UsersReportTab({
       <UserProgressView
         userId={activeUser.userId}
         userName={activeUser.name}
+        userPin={activeUser.pin}
         onBack={() => setActiveUser(null)}
       />
     );
   }
 
   const users = usersQuery.data?.users ?? [];
+  const totalUsers = usersQuery.data?.total ?? 0;
   const staff = staffQuery.data?.users ?? [];
-  const visibleUsers = isAll ? users.slice(page * 10, (page + 1) * 10) : users;
+  const visibleUsers = users;
   const isLoading = usersQuery.isLoading || (!isAll && staffQuery.isLoading);
 
   return (
@@ -824,10 +859,22 @@ function UsersReportTab({
             setIsExporting(true);
             try {
               await waitForNextPaint();
-              const exportUsers = isAll
-                ? (await fetchUsers({ data: { facilityValue: "", includeSynthetic: true } })).users ?? []
-                : users;
-              exportFacilityUsersCsv(exportUsers, selectedLabel, isAll);
+              // Fetch all pages in batches of 100 to avoid large response payloads
+              const EXPORT_PAGE = 100;
+              const allExportUsers: any[] = [];
+              for (let p = 0; ; p++) {
+                const result = await fetchUsers({
+                  data: {
+                    facilityValue: isAll ? "" : selected,
+                    includeSynthetic: isAll ? true : false,
+                    page: p,
+                    pageSize: EXPORT_PAGE,
+                  },
+                });
+                allExportUsers.push(...(result.users ?? []));
+                if (allExportUsers.length >= (result.total ?? 0)) break;
+              }
+              exportFacilityUsersCsv(allExportUsers, selectedLabel, isAll);
             } finally {
               setTimeout(() => setIsExporting(false), 0);
             }
@@ -892,13 +939,13 @@ function UsersReportTab({
               <>
                 <SectionCard padded={false} className={`overflow-hidden ${!isAll ? "" : "mt-8"}`}>
                   <ul className="divide-y divide-border">
-                    {visibleUsers.map((u) => {
+                    {(visibleUsers as any[]).map((u) => {
                       const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "—";
                       const meta: string[] = [];
                       if (u.username) meta.push(`@${u.username}`);
                       if ((u as any).inmate_pin) meta.push(`PIN: ${(u as any).inmate_pin}`);
                       if (isAll && (u as any).facility_label) meta.push((u as any).facility_label);
-                      const lastLoginIso = (u as any).last_sign_in_at || (u as any).last_login_date || null;
+                      const lastLoginIso = (u as any).last_login_date || null;
                       return (
                         <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 pb-6 sm:pb-4">
                           <div className="flex-1 min-w-0">
@@ -917,7 +964,7 @@ function UsersReportTab({
                           </div>
                           <button
                             type="button"
-                            onClick={() => setActiveUser({ userId: u.user_id, name })}
+                            onClick={() => setActiveUser({ userId: u.user_id, name, pin: (u as any).inmate_pin ?? null })}
                             className="rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted self-start sm:self-auto"
                           >
                             View report
@@ -927,9 +974,7 @@ function UsersReportTab({
                     })}
                   </ul>
                 </SectionCard>
-                {isAll && (
-                  <Pager page={page} total={users.length} pageSize={10} onPage={setPage} itemLabel="user" />
-                )}
+                <Pager page={page} total={totalUsers} pageSize={10} onPage={setPage} itemLabel="user" itemLabelPlural="users" />
               </>
             )}
           </div>
@@ -941,7 +986,7 @@ function UsersReportTab({
 
 
 function exportFacilityUsersCsv(
-  users: { user_id: string; username: string; first_name: string; last_name: string; email: string; created_at: string; facility?: string; last_sign_in_at?: string | null; last_login_date?: string | null }[],
+  users: { user_id: string; username: string; first_name: string; last_name: string; created_at: string; facility?: string; last_login_date?: string | null }[],
   facilityLabel: string,
   includeFacility = false,
 ) {
@@ -951,7 +996,7 @@ function exportFacilityUsersCsv(
     : ["First name", "Last name", "Username", "PIN", "Joined", "Last login", "Engagement tier", "Facility percentile"];
   lines.push(headers.map(csvEscape).join(","));
   for (const u of users) {
-    const lastLogin = u.last_sign_in_at || u.last_login_date || "";
+    const lastLogin = u.last_login_date || "";
     const tier = (u as any).engagement_tier ?? "";
     const pct = (u as any).facility_percentile != null ? `${(u as any).facility_percentile}%` : "";
     const pin = (u as any).inmate_pin ?? "";
@@ -996,14 +1041,24 @@ function exportFacilityComparisonCsv(facilities: FacilityRow[]) {
 function UserProgressView({
   userId,
   userName,
+  userPin,
   onBack,
 }: {
   userId: string;
   userName: string;
+  userPin?: string | null;
   onBack: () => void;
 }) {
   const fetchProgress = useServerFn(getUserProgressReport);
-  const [range, setRange] = useState<RangeKey>("all");
+  const fetchMonthlySummary = useServerFn(getAdminUserMonthlySummary);
+  const [range, setRange] = useState<RangeKey>("30d");
+
+  const monthlySummaryQuery = useQuery({
+    queryKey: ["admin", "user-monthly-summary", userId],
+    enabled: !!userId,
+    staleTime: 10 * 60 * 1000,
+    queryFn: () => fetchMonthlySummary({ data: { userId } }),
+  });
   const [isExporting, setIsExporting] = useState(false);
   const { data: rawData, isLoading } = useQuery({
     queryKey: ["admin", "user-progress", userId],
@@ -1050,8 +1105,9 @@ function UserProgressView({
     }
     return data.categories.map((c: any) => {
       const items = itemsByCat.get(c.id) ?? [];
-      const read = items.filter((i) => i.read).length;
-      return { category: c, items, total: items.length, read };
+      const trackable = items.filter((i: any) => !i.exempt_from_progress);
+      const read = trackable.filter((i: any) => i.read).length;
+      return { category: c, items, total: trackable.length, read };
     });
   }, [data]);
 
@@ -1065,29 +1121,24 @@ function UserProgressView({
         >
           <ArrowLeft className="h-4 w-4" /> Back to users
         </button>
-        <h2 className="font-display text-xl font-semibold flex-1 min-w-0 truncate">{userName}</h2>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <h2 className="font-display text-xl font-semibold truncate">{userName}</h2>
+          {userPin && <span className="text-muted-foreground font-normal text-lg shrink-0">({userPin})</span>}
+        </div>
         <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto mt-4 xl:mt-0">
-          <div className="flex flex-wrap gap-2 flex-1 xl:flex-initial">
-            {RANGE_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => setRange(opt.key)}
-                className={`inline-flex flex-1 sm:flex-none items-center justify-center rounded-md border px-4 py-2 text-sm text-center whitespace-normal sm:whitespace-nowrap transition-colors ${
-                  range === opt.key
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "border-input bg-background hover:bg-muted"
-                }`}
-              >
-                {opt.key === "all" ? (
-                  "All time"
-                ) : (
-                  <>
-                    <span className="hidden sm:inline">Last&nbsp;</span>
-                    {opt.shortLabel}
-                  </>
-                )}
-              </button>
-            ))}
+          <div className="flex-1 xl:flex-none xl:w-40">
+            <Select value={range} onValueChange={(v) => setRange(v as RangeKey)}>
+              <SelectTrigger className="w-full !h-[38px] shadow-none">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RANGE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.key} value={opt.key}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <LoadingButton
             variant="secondary"
@@ -1118,8 +1169,8 @@ function UserProgressView({
       ) : (
         <>
           {(() => {
-            const totalItems = data.items.length;
-            const readItems = data.items.filter((i: any) => i.read).length;
+            const totalItems = data.items.filter((i: any) => !i.exempt_from_progress).length;
+            const readItems = data.items.filter((i: any) => !i.exempt_from_progress && i.read).length;
             const totalSessionSeconds = (data as any).totalSeconds
               ?? data.items.reduce((acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0), 0);
             // categories completed
@@ -1198,6 +1249,77 @@ function UserProgressView({
           })()}
 
           {(() => {
+            const ms = monthlySummaryQuery.data;
+            if (!ms || (ms.itemsThisMonth === 0 && ms.secondsThisMonth === 0)) return null;
+            const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+            const monthName = MONTH_NAMES[ms.monthIndex];
+            const itemsDelta = ms.itemsThisMonth - ms.itemsLastMonth;
+            const timeDelta = ms.secondsThisMonth - ms.secondsLastMonth;
+            const deltaLabel = (n: number, formatted?: string) =>
+              n > 0 ? `↑ ${formatted ?? n} more than last month`
+              : n < 0 ? `↓ ${formatted ?? Math.abs(n)} fewer than last month`
+              : "Same as last month";
+            const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+              BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
+            };
+            const earnedThisMonth = ACHIEVEMENTS.filter((a) =>
+              (ms as any).achievementKeysThisMonth?.includes(a.key)
+            );
+            return (
+              <details className="group mb-8 rounded-2xl border border-border bg-card overflow-hidden">
+                <summary className="flex cursor-pointer items-center justify-between px-5 py-4 list-none hover:bg-muted/20 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm font-medium">{monthName} {ms.year}</p>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {ms.itemsThisMonth} items · {formatTimeSpent(ms.secondsThisMonth)}
+                      {ms.achievementsThisMonth > 0 && <> · {ms.achievementsThisMonth} achievements</>}
+                    </span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180 shrink-0" />
+                </summary>
+                <div className="px-5 pb-5 pt-1 border-t border-border/40">
+                  <div className={`grid gap-4 pt-4 ${earnedThisMonth.length > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
+                    <div>
+                      <p className="font-display text-2xl font-semibold tabular-nums">{ms.itemsThisMonth.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">items completed</p>
+                      <p className="text-xs mt-1 text-muted-foreground/70">{deltaLabel(itemsDelta)}</p>
+                    </div>
+                    <div>
+                      <p className="font-display text-2xl font-semibold tabular-nums">{formatTimeSpent(ms.secondsThisMonth)}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">time spent</p>
+                      <p className="text-xs mt-1 text-muted-foreground/70">{deltaLabel(timeDelta, formatTimeSpent(Math.abs(timeDelta)))}</p>
+                    </div>
+                    {earnedThisMonth.length > 0 && (
+                      <div>
+                        <div className="flex flex-wrap gap-1.5 mb-1.5">
+                          {earnedThisMonth.map((a) => {
+                            const Icon = ICON_MAP[a.icon] ?? Trophy;
+                            return (
+                              <Tooltip key={a.key}>
+                                <TooltipTrigger asChild>
+                                  <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 cursor-default">
+                                    <Icon className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs max-w-[180px] text-center">
+                                  <p className="font-semibold">{a.title}</p>
+                                  <p>{a.description}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          })}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">achievements</p>
+                        <p className="text-xs mt-1 text-muted-foreground/70">earned this month</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </details>
+            );
+          })()}
+
+          {(() => {
             const earned = (data as any).achievements as Record<string, string> | undefined ?? {};
             const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
               BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
@@ -1252,8 +1374,8 @@ function exportUserProgressCsv(
 
   // Summary metrics
   const itemsArr = data.items as any[];
-  const totalItems = itemsArr.length;
-  const readItems = itemsArr.filter((i) => i.read).length;
+  const totalItems = itemsArr.filter((i) => !i.exempt_from_progress).length;
+  const readItems = itemsArr.filter((i) => !i.exempt_from_progress && i.read).length;
   const totalSecondsForUser = (data as any).totalSeconds
     ?? itemsArr.reduce((acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0), 0);
   const itemsByCatForSummary = new Map<string, any[]>();
@@ -1327,10 +1449,11 @@ function exportUserProgressCsv(
   }
   for (const c of data.categories as any[]) {
     const items = itemsByCat.get(c.id) ?? [];
-    const read = items.filter((i) => i.read).length;
+    const trackable = items.filter((i: any) => !i.exempt_from_progress);
+    const read = trackable.filter((i: any) => i.read).length;
     const catSecs = items.reduce((sum: number, i: any) => sum + ((i.sessionSeconds as number) || 0), 0);
     lines.push(
-      [csvEscape(c.name), csvEscape(c.slug), `${read} of ${items.length} read`, "", "", "", "", "", catSecs > 0 ? formatTimeSpent(catSecs) : ""].join(","),
+      [csvEscape(c.name), csvEscape(c.slug), `${read} of ${trackable.length} read`, "", "", "", "", "", catSecs > 0 ? formatTimeSpent(catSecs) : ""].join(","),
     );
     for (const it of items) {
       const isAV = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
@@ -1432,14 +1555,15 @@ function UserCategorySection({
         className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-6 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-[#fffdf8]"} text-left hover:bg-muted/50 transition-colors`}
       >
         {(() => {
-          const weightedPct = g.total > 0 ? Math.round(
-            g.items.reduce((sum: number, item: any) => {
+          const trackableItems = g.items.filter((item: any) => !item.exempt_from_progress);
+          const weightedPct = trackableItems.length > 0 ? Math.round(
+            trackableItems.reduce((sum: number, item: any) => {
               if (item.read) return sum + 1;
               if (item.manualCompletionPct != null) return sum + item.manualCompletionPct / 100;
               if (item.mediaProgressPct != null && item.mediaProgressPct >= 5) return sum + Math.min(item.mediaProgressPct / 100, 0.95);
               if (item.pdfProgressPct != null && item.pdfProgressPct >= 1) return sum + Math.min(item.pdfProgressPct / 100, 0.95);
               return sum;
-            }, 0) / g.total * 100
+            }, 0) / trackableItems.length * 100
           ) : 0;
           const catTimeSeconds = g.items.reduce((sum: number, item: any) => sum + ((item.sessionSeconds as number) || 0), 0);
           return (
@@ -1486,7 +1610,8 @@ function UserCategorySection({
                         {withActionWord(item.duration, item.type)}
                       </span>
                     )}
-                    <div className="ml-auto flex items-center gap-1.5 shrink-0">
+                    <div className="ml-auto flex flex-col items-end gap-1 shrink-0">
+                      <div className="flex items-center gap-1.5">
                       {item.rating != null && (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -1518,6 +1643,21 @@ function UserCategorySection({
                         </Tooltip>
                       )}
                       {(() => {
+                        if ((item as any).exempt_from_progress) {
+                          return (
+                            <span className={`inline-flex items-center leading-none gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ${
+                              item.read
+                                ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+                                : "border-input bg-background text-foreground"
+                            }`}>
+                              {item.read
+                                ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
+                                : <Circle className="h-3.5 w-3.5 flex-shrink-0" />}
+                              {item.read ? t("category.acknowledged") : t("category.acknowledge")}
+                            </span>
+                          );
+                        }
+
                         // Video / Audio — playback progress
                         const mediaPct: number | null = item.mediaProgressPct ?? null;
                         const isAV = item.type && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("audio") || item.type.toLowerCase().includes("podcast"));
@@ -1560,10 +1700,28 @@ function UserCategorySection({
                           />
                         );
                       })()}
+                      </div>
+                      {(item as any).exempt_from_progress && (
+                        <p className="text-[10px] text-muted-foreground leading-tight">Doesn't count toward this user's progress</p>
+                      )}
                     </div>
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-lg font-semibold text-foreground">{item.title}</p>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <p className="truncate text-lg font-semibold text-foreground">{item.title}</p>
+                      {(item as any).exempt_from_progress && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="inline-flex flex-shrink-0 cursor-help text-muted-foreground">
+                              <Info className="h-4 w-4" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs px-3 py-2">
+                            Exempt from tracking — doesn't count toward this user's progress or completion stats.
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
                     {item.description && (
                       <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                     )}
@@ -1691,7 +1849,21 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                   {item.type}
                 </Badge>
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-bold">{item.title}</p>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <p className="truncate text-sm font-bold">{item.title}</p>
+                    {item.exempt_from_progress && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex flex-shrink-0 cursor-help text-muted-foreground">
+                            <Info className="h-3.5 w-3.5" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs px-3 py-2">
+                          Exempt from tracking — this item doesn't count toward user progress or completion rates.
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
                   {item.created_at && (
                     <p className="text-xs text-muted-foreground">Added {fmtDate(item.created_at)}</p>
                   )}
@@ -1787,57 +1959,54 @@ function MostLeastEngaged({ rows }: { rows: AggregatedRow[] }) {
   const least = byRate.filter((i) => i.completionRate != null).slice(-5).reverse();
   if (most.length === 0) return null;
 
+  const ItemList = ({ items, accent }: { items: typeof most; accent: boolean }) => (
+    <SectionCard padded={false} className="overflow-hidden">
+      <ul className="divide-y divide-border">
+        {items.map(({ item, completionRate, openCount, categoryName }) => (
+          <li key={item.id} className="flex items-center gap-3 px-4 py-3">
+            <div className="flex-1 min-w-0">
+              <p className="truncate text-sm font-medium">{item.title}</p>
+              <p className="text-xs text-muted-foreground truncate">{categoryName}</p>
+            </div>
+            <div className="flex flex-col items-end flex-shrink-0 gap-0.5">
+              <span className={`text-sm font-semibold tabular-nums ${accent ? "text-[var(--color-accent)]" : "text-muted-foreground"}`}>{completionRate}%</span>
+              <span className="text-xs text-muted-foreground tabular-nums">{openCount} openers</span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </SectionCard>
+  );
+
   return (
-    <>
-      <div className="mt-12">
-        <UserSectionHeader
-          className="mb-4"
-          title="Most engaged content"
-          description="The 5 content items with the highest completion rate, among items opened by at least 3 users."
-        />
-        <SectionCard padded={false} className="overflow-hidden">
-          <ul className="divide-y divide-border">
-            {most.map(({ item, completionRate, openCount, categoryName }) => (
-              <li key={item.id} className="flex items-center gap-3 px-4 py-3">
-                <div className="flex-1 min-w-0">
-                  <p className="truncate text-sm font-medium">{item.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">{categoryName}</p>
-                </div>
-                <div className="flex flex-col items-end flex-shrink-0 gap-0.5">
-                  <span className="text-sm font-semibold tabular-nums text-[var(--color-accent)]">{completionRate}%</span>
-                  <span className="text-xs text-muted-foreground tabular-nums">{openCount} openers</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </SectionCard>
-      </div>
-      {least.length > 0 && (
-        <div className="mt-12">
+    <div className="mt-12">
+      <Tabs defaultValue="most">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <UserSectionHeader
-            className="mb-4"
-            title="Least engaged content"
-            description="The 5 content items with the lowest completion rate, among items opened by at least 3 users."
+            title="Content engagement"
+            description="The 5 highest and lowest completion rates among items opened by at least 3 users."
           />
-          <SectionCard padded={false} className="overflow-hidden">
-            <ul className="divide-y divide-border">
-              {least.map(({ item, completionRate, openCount, categoryName }) => (
-                <li key={item.id} className="flex items-center gap-3 px-4 py-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm font-medium">{item.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{categoryName}</p>
-                  </div>
-                  <div className="flex flex-col items-end flex-shrink-0 gap-0.5">
-                    <span className="text-sm font-semibold tabular-nums text-muted-foreground">{completionRate}%</span>
-                    <span className="text-xs text-muted-foreground tabular-nums">{openCount} openers</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </SectionCard>
+          <TabsList className="h-auto p-1 gap-1 self-start sm:self-auto bg-muted/40">
+            <TabsTrigger value="most" className="px-4 py-1.5 text-sm data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
+              Most engaged
+            </TabsTrigger>
+            {least.length > 0 && (
+              <TabsTrigger value="least" className="px-4 py-1.5 text-sm data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
+                Least engaged
+              </TabsTrigger>
+            )}
+          </TabsList>
         </div>
-      )}
-    </>
+        <TabsContent value="most" className="mt-0">
+          <ItemList items={most} accent={true} />
+        </TabsContent>
+        {least.length > 0 && (
+          <TabsContent value="least" className="mt-0">
+            <ItemList items={least} accent={false} />
+          </TabsContent>
+        )}
+      </Tabs>
+    </div>
   );
 }
 

@@ -29,7 +29,7 @@ At the top of the My Progress tab is a large circular progress ring showing the 
 
 The ring uses **weighted progress** — it doesn't just count completed items. A video watched 50% of the way through contributes 50% toward the ring. A completed item contributes 100%. An unopened item contributes 0%. This gives a more honest picture of engagement than a simple completed/not-completed count.
 
-Below the ring is a summary line: **"X of Y items completed"** showing the raw count of fully completed items across all programs.
+Below the ring is a summary line: **"X of Y items completed"** showing the raw count of fully completed items. **Exempt items** (informational content) are excluded from both X and Y — they don't count toward or against completion.
 
 ---
 
@@ -64,10 +64,10 @@ This gives users a sense of where they stand relative to their peers at the same
 Below the stats is a list of every content category (program) the user has access to. Each category shows as a collapsible accordion row with:
 
 **In the header:**
-- A **circular progress ring** showing weighted completion for that category (same weighted logic as the overall ring)
+- A **circular progress ring** showing weighted completion for that category (same weighted logic as the overall ring; exempt items excluded)
 - The **category name**
 - A "New content added" badge if items have been added recently
-- **"X of Y items · Xm spent"** — items completed out of total available, and total time personally spent in that category
+- **"X of Y items · Xm spent"** — items completed out of total trackable items, and total time spent. Exempt items are excluded from the Y count.
 
 **When expanded:**
 - A list of every content item in that category
@@ -101,6 +101,12 @@ Each content item in the expanded category view has a badge showing its current 
 **Article / Guide / Resource / Information**
 - "Mark as read" button — manually marked by the user
 
+**Exempt (informational) items**
+- Show an "Acknowledge" button before the user has tapped it, and "Acknowledged" after
+- A small disclaimer reads "Doesn't count toward your progress" beneath the button
+- An info icon (ⓘ) next to the item title explains it is informational
+- Acknowledging an exempt item does not count toward any stats, rings, or achievements
+
 **New badge** — items added within the last 7 days that the user hasn't opened yet show a "New" badge. Once opened or engaged with, the badge disappears permanently.
 
 **Read date** — completed items show when they were read (e.g., "on May 15, 2026").
@@ -108,6 +114,20 @@ Each content item in the expanded category view has a badge showing its current 
 **Ratings (Helpful / Not Helpful)** — once a user has completed a content item, a thumbs-up / thumbs-down pill appears alongside the read status badge. Tapping either thumb records the user's rating. Tapping the same thumb again removes the rating. Ratings are anonymous — no one can see who rated what, only the aggregate counts visible to admins.
 
 **Bookmarks** — a bookmark icon appears alongside the read status and rating controls. Tapping it saves the item to the user's Saved tab. Tapping again removes the bookmark.
+
+**Rating and bookmark status on the dashboard** — the category accordion items on the dashboard also display the user's current rating (filled thumbs-up or thumbs-down) and bookmark status (filled bookmark icon) as read-only indicators. These are display-only on the dashboard; tapping them has no effect — use the category page to change ratings or bookmarks.
+
+### Monthly Summary
+
+A collapsible card appears below the category list showing a summary of the user's activity this calendar month:
+
+- **Items completed this month** — with a delta indicator showing how many more or fewer than last month (e.g., "+3 more than last month")
+- **Time spent this month** — real session time in hours and minutes, with a comparison to last month
+- **Achievements earned this month** — badge icons for any milestones earned this month, each with a tooltip showing the achievement name
+
+Exempt items are excluded from the monthly item count. The card shows a motivational message that rotates from a set of encouraging phrases. The card is collapsed by default and can be expanded to see the full detail.
+
+---
 
 ### Resume Position
 

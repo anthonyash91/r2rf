@@ -273,7 +273,7 @@ export const saveFacilityMessage = createServerFn({ method: "POST" })
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
-      .in("role", ["admin", "contributor", "facilityUser"])
+      .in("role", ["admin", "facilityUser"])
       .maybeSingle();
     if (!roleRow) throw new Error("Forbidden");
 

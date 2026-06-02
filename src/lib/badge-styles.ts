@@ -133,6 +133,7 @@ export const BADGE_VARIANTS = [
   "user",
   "facility",
   "facility-user",
+  "exempt",
 ] as const;
 export type BadgeVariantKey = (typeof BADGE_VARIANTS)[number];
 
@@ -166,6 +167,7 @@ export const DEFAULT_VARIANT_INDEX: Record<BadgeVariantKey, number> = {
   user: 6, // indigo
   facility: 11, // violet
   "facility-user": 3, // terracotta
+  "exempt": 27,        // periwinkle
 };
 
 export const DEFAULT_TYPE_INDEX: Record<KnownTypeKey, number> = {

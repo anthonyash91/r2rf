@@ -23,11 +23,12 @@ import {
   HeartHandshake,
   Shuffle,
   Check,
+  Info,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { requireAdminBeforeLoad } from "@/lib/admin-guards";
+import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
@@ -52,7 +53,7 @@ import { ICON_REGISTRY, pickRelevantIcon } from "@/lib/category-icons";
 import { badgeStylesQueryKey, fetchBadgeStyles, BADGE_STYLES_KEY } from "@/hooks/use-badge-styles";
 
 export const Route = createFileRoute("/admin/icons-badges")({
-  beforeLoad: requireAdminBeforeLoad,
+  beforeLoad: requireStrictAdminBeforeLoad,
   head: () => ({ meta: [{ title: "Icons & Badges — Admin" }] }),
   component: AdminIconsBadgesPage,
 });
@@ -73,6 +74,7 @@ const VARIANT_LABELS: Record<BadgeVariantKey, string> = {
   user: "User",
   facility: "Facility",
   "facility-user": "Facility User",
+  "exempt": "Exempt",
 };
 
 const TYPE_LABELS: Record<KnownTypeKey, string> = {
@@ -646,6 +648,7 @@ const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   user: User,
   facility: Building2,
   "facility-user": HeartHandshake,
+  "exempt": Info,
 };
 
 function BadgePreview({ variant, draft }: { variant: BadgeVariantKey; draft: BadgeStyles }) {

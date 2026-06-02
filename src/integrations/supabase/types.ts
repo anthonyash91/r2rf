@@ -53,6 +53,33 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_daily_counts: {
+        Row: {
+          category_id: string | null
+          content_id: string | null
+          count: number
+          event_type: string
+          facility_value: string
+          period_date: string
+        }
+        Insert: {
+          category_id?: string | null
+          content_id?: string | null
+          count?: number
+          event_type: string
+          facility_value?: string
+          period_date: string
+        }
+        Update: {
+          category_id?: string | null
+          content_id?: string | null
+          count?: number
+          event_type?: string
+          facility_value?: string
+          period_date?: string
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           category_id: string | null
@@ -94,6 +121,98 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      analytics_program_completion: {
+        Row: {
+          category_id: string | null
+          completion_rate: number | null
+          facility_value: string | null
+          name: string | null
+          total_items: number | null
+          updated_at: string | null
+          users_completed: number | null
+          users_engaged: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          completion_rate?: number | null
+          facility_value?: string | null
+          name?: string | null
+          total_items?: number | null
+          updated_at?: string | null
+          users_completed?: number | null
+          users_engaged?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          completion_rate?: number | null
+          facility_value?: string | null
+          name?: string | null
+          total_items?: number | null
+          updated_at?: string | null
+          users_completed?: number | null
+          users_engaged?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_program_completion_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics_retention: {
+        Row: {
+          day30_rate: number | null
+          day60_rate: number | null
+          day7_rate: number | null
+          facility_value: string | null
+          total_users: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          day30_rate?: number | null
+          day60_rate?: number | null
+          day7_rate?: number | null
+          facility_value?: string | null
+          total_users?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          day30_rate?: number | null
+          day60_rate?: number | null
+          day7_rate?: number | null
+          facility_value?: string | null
+          total_users?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      analytics_weekly_growth: {
+        Row: {
+          active_users: number | null
+          facility_value: string | null
+          signups: number | null
+          updated_at: string | null
+          week_ending: string | null
+        }
+        Insert: {
+          active_users?: number | null
+          facility_value?: string | null
+          signups?: number | null
+          updated_at?: string | null
+          week_ending?: string | null
+        }
+        Update: {
+          active_users?: number | null
+          facility_value?: string | null
+          signups?: number | null
+          updated_at?: string | null
+          week_ending?: string | null
+        }
+        Relationships: []
       }
       categories: {
         Row: {
@@ -152,6 +271,206 @@ export type Database = {
         }
         Relationships: []
       }
+      category_facilities: {
+        Row: {
+          category_id: string
+          facility_value: string
+        }
+        Insert: {
+          category_id: string
+          facility_value: string
+        }
+        Update: {
+          category_id?: string
+          facility_value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_facilities_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_item_bookmark_totals: {
+        Row: {
+          bookmark_count: number
+          content_item_id: string
+          updated_at: string
+        }
+        Insert: {
+          bookmark_count?: number
+          content_item_id: string
+          updated_at?: string
+        }
+        Update: {
+          bookmark_count?: number
+          content_item_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_item_bookmark_totals_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: true
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_item_facilities: {
+        Row: {
+          content_item_id: string
+          facility_value: string
+        }
+        Insert: {
+          content_item_id: string
+          facility_value: string
+        }
+        Update: {
+          content_item_id?: string
+          facility_value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_item_facilities_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_item_openers: {
+        Row: {
+          content_item_id: string
+          opener_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          content_item_id: string
+          opener_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          content_item_id?: string
+          opener_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_item_openers_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: true
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_item_rating_totals: {
+        Row: {
+          content_item_id: string
+          thumbs_down: number
+          thumbs_up: number
+          updated_at: string
+        }
+        Insert: {
+          content_item_id: string
+          thumbs_down?: number
+          thumbs_up?: number
+          updated_at?: string
+        }
+        Update: {
+          content_item_id?: string
+          thumbs_down?: number
+          thumbs_up?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_item_rating_totals_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: true
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_item_stats: {
+        Row: {
+          avg_media_progress_pct: number | null
+          avg_session_seconds: number | null
+          complete_count: number
+          completion_rate: number
+          content_item_id: string
+          drop_off_count: number
+          open_count: number
+          total_session_seconds: number | null
+          updated_at: string
+        }
+        Insert: {
+          avg_media_progress_pct?: number | null
+          avg_session_seconds?: number | null
+          complete_count?: number
+          completion_rate?: number
+          content_item_id: string
+          drop_off_count?: number
+          open_count?: number
+          total_session_seconds?: number | null
+          updated_at?: string
+        }
+        Update: {
+          avg_media_progress_pct?: number | null
+          avg_session_seconds?: number | null
+          complete_count?: number
+          completion_rate?: number
+          content_item_id?: string
+          drop_off_count?: number
+          open_count?: number
+          total_session_seconds?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_item_stats_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: true
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      content_item_time_totals: {
+        Row: {
+          content_item_id: string
+          engager_count: number | null
+          total_session_seconds: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          content_item_id: string
+          engager_count?: number | null
+          total_session_seconds?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          content_item_id?: string
+          engager_count?: number | null
+          total_session_seconds?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_item_time_totals_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: true
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_items: {
         Row: {
           category_id: string
@@ -159,6 +478,7 @@ export type Database = {
           description: string
           description_es: string | null
           duration: string
+          exempt_from_progress: boolean
           file_name: string | null
           file_name_es: string | null
           file_url: string | null
@@ -180,6 +500,7 @@ export type Database = {
           description?: string
           description_es?: string | null
           duration?: string
+          exempt_from_progress?: boolean
           file_name?: string | null
           file_name_es?: string | null
           file_url?: string | null
@@ -201,6 +522,7 @@ export type Database = {
           description?: string
           description_es?: string | null
           duration?: string
+          exempt_from_progress?: boolean
           file_name?: string | null
           file_name_es?: string | null
           file_url?: string | null
@@ -343,6 +665,7 @@ export type Database = {
           hidden: boolean
           id: string
           label: string
+          site_id: string | null
           sort_order: number
           updated_at: string
           value: string
@@ -352,6 +675,7 @@ export type Database = {
           hidden?: boolean
           id?: string
           label: string
+          site_id?: string | null
           sort_order?: number
           updated_at?: string
           value: string
@@ -361,11 +685,62 @@ export type Database = {
           hidden?: boolean
           id?: string
           label?: string
+          site_id?: string | null
           sort_order?: number
           updated_at?: string
           value?: string
         }
         Relationships: []
+      }
+      facility_stats: {
+        Row: {
+          active_users_30d: number
+          active_users_7d: number
+          avg_completion_rate: number | null
+          bookmark_count: number
+          facility_value: string
+          items_completed_total: number
+          thumbs_down_count: number
+          thumbs_up_count: number
+          total_session_seconds: number
+          total_users: number
+          updated_at: string
+        }
+        Insert: {
+          active_users_30d?: number
+          active_users_7d?: number
+          avg_completion_rate?: number | null
+          bookmark_count?: number
+          facility_value: string
+          items_completed_total?: number
+          thumbs_down_count?: number
+          thumbs_up_count?: number
+          total_session_seconds?: number
+          total_users?: number
+          updated_at?: string
+        }
+        Update: {
+          active_users_30d?: number
+          active_users_7d?: number
+          avg_completion_rate?: number | null
+          bookmark_count?: number
+          facility_value?: string
+          items_completed_total?: number
+          thumbs_down_count?: number
+          thumbs_up_count?: number
+          total_session_seconds?: number
+          total_users?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facility_stats_facility_value_fkey"
+            columns: ["facility_value"]
+            isOneToOne: true
+            referencedRelation: "facilities"
+            referencedColumns: ["value"]
+          },
+        ]
       }
       ip_allowlist: {
         Row: {
@@ -484,6 +859,97 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement_key: string
+          earned_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_key: string
+          earned_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_key?: string
+          earned_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_content_bookmarks: {
+        Row: {
+          content_item_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          content_item_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          content_item_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_content_bookmarks_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_content_engagement: {
+        Row: {
+          category_id: string
+          content_item_id: string
+          created_at: string
+          id: string
+          last_updated_at: string
+          manual_completion_pct: number | null
+          media_duration_seconds: number | null
+          media_progress_seconds: number | null
+          session_seconds: number
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          content_item_id: string
+          created_at?: string
+          id?: string
+          last_updated_at?: string
+          manual_completion_pct?: number | null
+          media_duration_seconds?: number | null
+          media_progress_seconds?: number | null
+          session_seconds?: number
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          content_item_id?: string
+          created_at?: string
+          id?: string
+          last_updated_at?: string
+          manual_completion_pct?: number | null
+          media_duration_seconds?: number | null
+          media_progress_seconds?: number | null
+          session_seconds?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_content_engagement_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_content_progress: {
         Row: {
           category_id: string
@@ -508,6 +974,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_content_ratings: {
+        Row: {
+          content_item_id: string
+          created_at: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content_item_id: string
+          created_at?: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content_item_id?: string
+          created_at?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_content_ratings_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_content_seen: {
         Row: {
           content_item_id: string
@@ -525,6 +1023,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_content_sessions: {
+        Row: {
+          category_id: string
+          content_item_id: string
+          id: string
+          recorded_at: string
+          session_seconds: number
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          content_item_id: string
+          id?: string
+          recorded_at?: string
+          session_seconds: number
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          content_item_id?: string
+          id?: string
+          recorded_at?: string
+          session_seconds?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_content_sessions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_content_sessions_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_dismissed_messages: {
         Row: {
@@ -579,6 +1119,7 @@ export type Database = {
           created_at: string
           facility: string
           first_name: string
+          inmate_pin: string | null
           is_synthetic: boolean
           last_name: string
           updated_at: string
@@ -589,6 +1130,7 @@ export type Database = {
           created_at?: string
           facility: string
           first_name?: string
+          inmate_pin?: string | null
           is_synthetic?: boolean
           last_name?: string
           updated_at?: string
@@ -599,6 +1141,7 @@ export type Database = {
           created_at?: string
           facility?: string
           first_name?: string
+          inmate_pin?: string | null
           is_synthetic?: boolean
           last_name?: string
           updated_at?: string
@@ -655,11 +1198,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_stats: {
+        Row: {
+          facility_percentile: number | null
+          facility_value: string | null
+          items_completed: number
+          items_started: number
+          total_session_seconds: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          facility_percentile?: number | null
+          facility_value?: string | null
+          items_completed?: number
+          items_started?: number
+          total_session_seconds?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          facility_percentile?: number | null
+          facility_value?: string | null
+          items_completed?: number
+          items_started?: number
+          total_session_seconds?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_and_record_reset_attempt: {
+        Args: {
+          p_ip: string
+          p_max: number
+          p_since: string
+          p_username: string
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -667,6 +1249,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      refresh_analytics_stats: { Args: never; Returns: undefined }
+      refresh_nightly: { Args: never; Returns: undefined }
       username_exists: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {

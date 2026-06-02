@@ -76,7 +76,7 @@ Shows how many content items are in the category (e.g., "8 items"). Only counts 
 If any items have been added to the category within the last 7 days and the user hasn't opened them yet, a "New content added" badge appears on the card. Once the user has opened those items, the badge disappears.
 
 **Progress bar** *(signed-in users only)*
-For users who are logged in, a thin progress bar appears at the bottom of each card showing how many items in that category they have completed (e.g., "3 of 8 items"). This updates as they work through the content.
+For users who are logged in, a thin progress bar appears at the bottom of each card showing how many items in that category they have completed (e.g., "3 of 8 items"). The denominator reflects only trackable items — exempt informational items are excluded. This updates as they work through the content.
 
 Clicking anywhere on a category card takes the user into that category's content page.
 

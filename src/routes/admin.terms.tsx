@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAdminBeforeLoad } from "@/lib/admin-guards";
+import { requireContentAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +27,7 @@ const DEFAULTS: TermsDoc = {
 const SETTINGS_KEY = "terms_of_service";
 
 export const Route = createFileRoute("/admin/terms")({
-  beforeLoad: requireAdminBeforeLoad,
+  beforeLoad: requireContentAdminBeforeLoad,
   component: AdminTermsPage,
 });
 

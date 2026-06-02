@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { requireAdminBeforeLoad } from "@/lib/admin-guards";
+import { requireUserManagementAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -50,7 +50,7 @@ import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
 
 export const Route = createFileRoute("/admin/users")({
-  beforeLoad: requireAdminBeforeLoad,
+  beforeLoad: requireUserManagementAdminBeforeLoad,
   component: AdminUsersPage,
 });
 

@@ -19,13 +19,9 @@ export async function requireContentAdminBeforeLoad({ location }: { location: { 
   }
 }
 
-export async function requireAdminBeforeLoad({ location }: { location: { href: string } }) {
-  // On the server (SSR / hard refresh) the Supabase client has no session cookie,
-  // so any check here would incorrectly redirect. The client runs this again
-  // immediately after hydration, which DOES have the session. Real security is
-  // enforced by requireSupabaseAuth middleware on every server function.
+/** Allows admin and facilityUser for user management pages — contributors are content-only. */
+export async function requireUserManagementAdminBeforeLoad({ location }: { location: { href: string } }) {
   if (typeof window === "undefined") return;
-
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) {
     throw redirect({ to: "/signup", search: { redirect: location.href } });
@@ -34,7 +30,43 @@ export async function requireAdminBeforeLoad({ location }: { location: { href: s
     .from("user_roles")
     .select("role")
     .eq("user_id", session.user.id)
-    .in("role", ["admin", "contributor", "facilityUser"])
+    .in("role", ["admin", "facilityUser"])
+    .maybeSingle();
+  if (!data) {
+    throw redirect({ to: "/" });
+  }
+}
+
+/** Allows admin and facilityUser for analytics and messages pages — contributors excluded. */
+export async function requireAnalyticsAdminBeforeLoad({ location }: { location: { href: string } }) {
+  if (typeof window === "undefined") return;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) {
+    throw redirect({ to: "/signup", search: { redirect: location.href } });
+  }
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", session.user.id)
+    .in("role", ["admin", "facilityUser"])
+    .maybeSingle();
+  if (!data) {
+    throw redirect({ to: "/" });
+  }
+}
+
+/** Admin only — for pages where all underlying functions are admin-only. */
+export async function requireStrictAdminBeforeLoad({ location }: { location: { href: string } }) {
+  if (typeof window === "undefined") return;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) {
+    throw redirect({ to: "/signup", search: { redirect: location.href } });
+  }
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", session.user.id)
+    .eq("role", "admin")
     .maybeSingle();
   if (!data) {
     throw redirect({ to: "/" });

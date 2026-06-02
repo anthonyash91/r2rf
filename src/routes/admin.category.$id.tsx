@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { requireContentAdminBeforeLoad } from "@/lib/admin-guards";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -81,6 +82,7 @@ function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "mis
 
 
 export const Route = createFileRoute("/admin/category/$id")({
+  beforeLoad: requireContentAdminBeforeLoad,
   validateSearch: (search: Record<string, unknown>) => ({
     edit: typeof search.edit === "string" ? search.edit : undefined,
   }),
@@ -541,7 +543,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       let savedId: string;
       if (itemValues.id) {
         const { id: itemId, ...rest } = itemValues;
-        const { error } = await supabase.from("content_items").update(rest).eq("id", itemId!);
+        const { error } = await (supabase as any).from("content_items").update(rest).eq("id", itemId!);
         if (error) throw error;
         savedId = itemId!;
       } else {
@@ -777,6 +779,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                         <BadgeGroup>
                           <Badge variant="type" type={item.type} size="sm">{item.type}</Badge>
                           {!item.published && <Badge variant="draft" size="sm">Draft</Badge>}
+                          {item.exempt_from_progress && <Badge variant="exempt" size="sm">Exempt</Badge>}
                           {s !== "complete" && (
                             <Badge variant="translation" size="sm" title={trTitle}>
                               {trLabel}
@@ -975,6 +978,7 @@ function ItemEditor({
   const [description, setDescription] = useState(item?.description ?? "");
   const [url, setUrl] = useState(item?.url ?? "");
   const [published, setPublished] = useState(item?.published ?? true);
+  const [exemptFromProgress, setExemptFromProgress] = useState(item?.exempt_from_progress ?? false);
   const [facilities, setFacilities] = useState<string[]>(item?.facilities ?? []);
   const [titleEs, setTitleEs] = useState(item?.title_es ?? "");
   const [descriptionEs, setDescriptionEs] = useState(item?.description_es ?? "");
@@ -1144,6 +1148,7 @@ function ItemEditor({
           file_url: null,
           file_name: null,
           published,
+          exempt_from_progress: exemptFromProgress,
           facilities,
           title_es: titleEs.trim() || null,
           description_es: descriptionEs.trim() || null,
@@ -1367,10 +1372,26 @@ function ItemEditor({
           className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
         />
       </label>
-      <label className="inline-flex items-center gap-2 text-sm">
-        <Checkbox checked={published} onCheckedChange={(v) => setPublished(Boolean(v))} />
-        Published
-      </label>
+      <div className="flex flex-col gap-2">
+        <label className="inline-flex items-center gap-2 text-sm">
+          <Checkbox checked={published} onCheckedChange={(v) => setPublished(Boolean(v))} />
+          Published
+        </label>
+        <div className="inline-flex items-center gap-2 text-sm">
+          <Checkbox checked={exemptFromProgress} onCheckedChange={(v) => setExemptFromProgress(Boolean(v))} />
+          <span>Exempt from tracking</span>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help flex-shrink-0" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs max-w-[240px] text-center">
+                Exempt items (e.g. "How to take this course") show an "Acknowledged" button but don't count toward user progress, completion rates, or monthly summaries.
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </div>
 
       <TranslationPanel
         open={showEs}

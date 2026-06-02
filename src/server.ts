@@ -2,8 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { getAllowedIps, getBlockedIps, getClientIp, getCustomHomeRestrictions, isIpRestrictionEnabled, renderBlockedPage } from "./lib/ip-allowlist";
-import { verifyPasskeyCookie } from "./lib/passkey-cookie";
+import { getAllowedIps, getClientIp, getCustomHomeRestrictions, isIpRestrictionEnabled, renderBlockedPage } from "./lib/ip-allowlist";
 import { logServerError } from "./lib/error-logger.server";
 
 type ServerEntry = {
@@ -127,21 +126,6 @@ export default {
       const ip = getClientIp(request);
       const pathname = new URL(request.url).pathname;
 
-      // Permanent blocklist always applies, even when IP restrictions are off.
-      let isBlocked = false;
-      try {
-        const blocked = await getBlockedIps();
-        isBlocked = !!ip && blocked.has(ip);
-      } catch (err) {
-        console.error("[ip-blocklist] check failed:", err);
-      }
-      if (isBlocked) {
-        return applySecurityHeaders(new Response(renderBlockedPage(ip, "permanent"), {
-          status: 403,
-          headers: { "content-type": "text/html; charset=utf-8" },
-        }));
-      }
-
       // Global kill switch: when disabled, skip all other IP-based restrictions.
       let restrictionsEnabled = true;
       try {
@@ -155,16 +139,6 @@ export default {
         return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response, request));
       }
 
-      // Allow the self-service passkey endpoint through the site allowlist
-      // so blocked visitors can request access with a shared passkey.
-      const isPasskeyEndpoint = pathname === "/api/public/site-passkey";
-      // A successful passkey unlock sets this cookie so the immediate reload
-      // works even if the new request lands on a different worker isolate
-      // (whose in-memory allowlist cache hasn't been invalidated yet) or
-      // before the freshly inserted row is visible.
-      const hasPasskeyCookie = await verifyPasskeyCookie(request.headers.get("cookie"), ip);
-
-
       let allowed = false;
       try {
         const allowlist = await getAllowedIps();
@@ -172,7 +146,7 @@ export default {
       } catch (err) {
         console.error("[ip-allowlist] check failed:", err);
       }
-      if (!allowed && !isPasskeyEndpoint && !hasPasskeyCookie) {
+      if (!allowed) {
         return applySecurityHeaders(new Response(renderBlockedPage(ip, "site"), {
           status: 403,
           headers: { "content-type": "text/html; charset=utf-8" },

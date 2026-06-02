@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AlertOctagon, Filter, Server, Monitor, Trash2 } from "lucide-react";
-import { requireAdminBeforeLoad } from "@/lib/admin-guards";
+import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
 import { PageHeader } from "@/components/PageHeader";
 import { FilterField } from "@/components/FilterField";
 import { EmptyState } from "@/components/EmptyState";
@@ -26,7 +26,7 @@ import {
 
 export const Route = createFileRoute("/admin/errors")({
   head: () => ({ meta: [{ title: "Errors — Admin" }] }),
-  beforeLoad: requireAdminBeforeLoad,
+  beforeLoad: requireStrictAdminBeforeLoad,
   component: AdminErrorsPage,
 });
 

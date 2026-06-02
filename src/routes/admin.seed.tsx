@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Sprout, Upload, CheckCircle2, AlertCircle } from "lucide-react";
 
-import { requireAdminBeforeLoad } from "@/lib/admin-guards";
+import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
@@ -13,7 +13,7 @@ import { Badge } from "@/components/Badge";
 import { defaultDurationForType } from "@/lib/duration";
 
 export const Route = createFileRoute("/admin/seed")({
-  beforeLoad: requireAdminBeforeLoad,
+  beforeLoad: requireStrictAdminBeforeLoad,
   component: AdminSeedPage,
 });
 

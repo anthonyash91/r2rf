@@ -97,6 +97,7 @@ import {
   HeartHandshake,
   Inbox,
   Blocks,
+  Info,
   type LucideIcon,
 } from "lucide-react";
 import { paletteStyle, indexForType, type BadgeVariantKey } from "@/lib/badge-styles";
@@ -142,6 +143,7 @@ const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   user: User,
   facility: Building2,
   "facility-user": HeartHandshake,
+  "exempt": Info,
 };
 
 const TYPE_ICONS: Record<string, LucideIcon> = {

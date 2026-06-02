@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAdminBeforeLoad } from "@/lib/admin-guards";
+import { requireAnalyticsAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -16,7 +16,7 @@ import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { listFacilities } from "@/lib/facilities.functions";
 
 export const Route = createFileRoute("/admin/messages")({
-  beforeLoad: requireAdminBeforeLoad,
+  beforeLoad: requireAnalyticsAdminBeforeLoad,
   component: AdminMessagesPage,
 });
 

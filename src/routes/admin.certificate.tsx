@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAdminBeforeLoad } from "@/lib/admin-guards";
+import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,7 @@ import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 
 export const Route = createFileRoute("/admin/certificate")({
-  beforeLoad: requireAdminBeforeLoad,
+  beforeLoad: requireStrictAdminBeforeLoad,
   component: AdminCertificatePage,
 });
 

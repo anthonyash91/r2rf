@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-type AttemptsTable = "signup_attempts" | "password_reset_attempts" | "ip_passkey_attempts";
+type AttemptsTable = "signup_attempts" | "password_reset_attempts";
 
 /**
  * Generic IP-based rate limiter backed by an attempts table.
@@ -36,5 +36,5 @@ export async function checkAndRecordAttempt(opts: {
     throw new Error(errorMessage ?? "Too many requests. Please try again later.");
   }
 
-  await supabaseAdmin.from(table).insert({ ip_address: ip, ...(extraColumns ?? {}) });
+  await (supabaseAdmin as any).from(table).insert({ ip_address: ip, ...(extraColumns ?? {}) });
 }

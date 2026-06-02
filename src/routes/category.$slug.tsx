@@ -12,7 +12,7 @@ import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { fmtDateShort } from "@/lib/date-format";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Circle, Bookmark, ThumbsUp, ThumbsDown } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -469,17 +469,18 @@ function CategoryPage() {
                         manualCompletionPct: r.manual_completion_pct,
                       }])
                     );
-                    const completedCount = visibleItems.filter((it) => readSet.has(it.id)).length;
+                    const trackableItems = visibleItems.filter((it) => !(it as any).exempt_from_progress);
+                    const completedCount = trackableItems.filter((it) => readSet.has(it.id)).length;
                     return (
                       <div className="mt-6 max-w-md space-y-1.5">
                         <Progress
-                          value={weightedCompletionPct(visibleItems, readSet, normEngMap)}
+                          value={weightedCompletionPct(trackableItems, readSet, normEngMap)}
                           className="h-2"
                         />
                         <p className="text-xs text-muted-foreground">
                           {t("dashboard.progressItems")
                             .replace("{done}", String(completedCount))
-                            .replace("{total}", String(visibleItems.length))}
+                            .replace("{total}", String(trackableItems.length))}
                         </p>
                       </div>
                     );
@@ -647,11 +648,27 @@ function CategoryPage() {
                               <h3 className="font-display text-lg font-semibold text-foreground leading-snug">
                                 {title}
                               </h3>
-                              {MediaIcon ? (
-                                <MediaIcon className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
-                              ) : item.url ? (
-                                <ExternalLink className="h-4 w-4 text-muted-foreground mt-1 flex-shrink-0" />
-                              ) : null}
+                              <div className="flex items-center gap-1 mt-1 flex-shrink-0">
+                                {(item as any).exempt_from_progress && !isAdmin && !isFacilityUser && (
+                                  <TooltipProvider delayDuration={150}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span className="inline-flex cursor-help text-muted-foreground">
+                                          <Info className="h-4 w-4" />
+                                        </span>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="text-xs max-w-[220px] text-center">
+                                        {t("category.exemptTooltip")}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                                {MediaIcon ? (
+                                  <MediaIcon className="h-4 w-4 text-muted-foreground" />
+                                ) : item.url ? (
+                                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                                ) : null}
+                              </div>
                             </div>
                             {description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{description}</p>}
                             {fileUrl && !isMedia && (
@@ -715,7 +732,8 @@ function CategoryPage() {
                           const isBookmarked = bookmarkIds.has(item.id);
                           const myRating = myRatings.get(item.id) ?? null;
                           return (
-                            <div className="absolute top-6 right-6 flex items-center gap-1.5 justify-end z-10">
+                            <div className="absolute top-6 right-6 flex flex-col items-end gap-1 z-10">
+                              <div className="flex items-center gap-1.5 justify-end">
                               {isRead && <div className="inline-flex items-center rounded-[4px] border border-input overflow-hidden">
                                 <TooltipProvider delayDuration={150}>
                                   <Tooltip>
@@ -770,6 +788,40 @@ function CategoryPage() {
                               </TooltipProvider>
                               {(() => {
                                 const eng = engagementMap.get(item.id);
+
+                                // ── Exempt items: "Acknowledged" button, no progress tracking ──
+                                if ((item as any).exempt_from_progress) {
+                                  const isAcknowledged = readSet.has(item.id);
+                                  return (
+                                    <TooltipProvider delayDuration={150}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              e.preventDefault();
+                                              if (!isAcknowledged) toggleRead.mutate({ itemId: item.id, markRead: true });
+                                            }}
+                                            className={`inline-flex items-center leading-none gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium transition-colors flex-shrink-0 ${
+                                              isAcknowledged
+                                                ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
+                                                : "border-input bg-background hover:bg-muted"
+                                            }`}
+                                          >
+                                            {isAcknowledged
+                                              ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
+                                              : <Circle className="h-3.5 w-3.5 flex-shrink-0" />}
+                                            <span>{isAcknowledged ? t("category.acknowledged") : t("category.acknowledge")}</span>
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="text-xs max-w-[220px] text-center">
+                                          {t("category.exemptDisclaimer")}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  );
+                                }
 
                                 // ── Video / Audio: progress fill based on playback position ──
                                 const mediaPct = !isRead && eng && (mediaKind === "video" || mediaKind === "audio") && eng.media_progress_seconds && eng.media_duration_seconds && eng.media_duration_seconds > 0
@@ -954,6 +1006,12 @@ function CategoryPage() {
                                   />
                                 );
                               })()}
+                              </div>
+                              {(item as any).exempt_from_progress && (
+                                <p className="text-[10px] text-muted-foreground leading-tight">
+                                  {t("category.exemptDisclaimer")}
+                                </p>
+                              )}
                             </div>
                           );
                         })()}

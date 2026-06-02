@@ -35,9 +35,10 @@ import { getMyBookmarkedItems } from "@/lib/bookmarks.functions";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useAchievements } from "@/hooks/use-achievements";
 import { ACHIEVEMENTS } from "@/lib/achievements";
+import { getMyMonthlySummary } from "@/lib/monthly-summary.functions";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, Award, Compass, GraduationCap, Medal, Lock } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
@@ -172,7 +173,7 @@ function DashboardPage() {
       const [itemsRes, readRes, seenRes, profileRes] = await Promise.all([
         supabase
           .from("content_items")
-          .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at, url, file_url")
+          .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at, url, file_url, exempt_from_progress")
           .eq("published", true)
           .in("category_id", categoryIds)
           .order("sort_order", { ascending: true }),
@@ -211,13 +212,14 @@ function DashboardPage() {
       }
 
       const seenSet = new Set<string>((seenRes.data ?? []).map((r: any) => r.content_item_id as string));
-      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; duration: string | null; created_at: string | null; url: string | null; file_url: string | null };
+      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; duration: string | null; created_at: string | null; url: string | null; file_url: string | null; exempt_from_progress?: boolean };
       const itemsByCat = new Map<string, CatItem[]>();
       const totals = new Map<string, number>();
       const recentCats = new Set<string>();
       const newItemSet = new Set<string>();
       const itemDuration = new Map<string, string | null>();
       const visibleItemIds = new Set<string>();
+      const exemptItemIds = new Set<string>();
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       for (const row of itemsRes.data ?? []) {
         // Filter by facility restriction
@@ -226,10 +228,14 @@ function DashboardPage() {
           if (!userFacility || !facilities.includes(userFacility)) continue;
         }
         visibleItemIds.add(row.id as string);
+        if ((row as any).exempt_from_progress) exemptItemIds.add(row.id as string);
         const list = itemsByCat.get(row.category_id as string) ?? [];
         list.push(row as CatItem);
         itemsByCat.set(row.category_id as string, list);
-        totals.set(row.category_id as string, (totals.get(row.category_id as string) ?? 0) + 1);
+        // Exclude exempt items from tracked totals
+        if (!(row as any).exempt_from_progress) {
+          totals.set(row.category_id as string, (totals.get(row.category_id as string) ?? 0) + 1);
+        }
         itemDuration.set(row.id as string, (row as any).duration ?? null);
         if (row.created_at && new Date(row.created_at as string).getTime() >= cutoff && !seenSet.has(row.id as string)) {
           recentCats.add(row.category_id as string);
@@ -241,8 +247,14 @@ function DashboardPage() {
       const readAtMap = new Map<string, string>();
       const readDays = new Set<string>();
       for (const row of readRes.data ?? []) {
-        // Only count reads for items the user can see
+        // Only count reads for items the user can see, excluding exempt items
         if (!visibleItemIds.has(row.content_item_id as string)) continue;
+        if (exemptItemIds.has(row.content_item_id as string)) {
+          // Still add to readSet so the "Acknowledged" badge shows correctly
+          readSet.add(row.content_item_id as string);
+          if ((row as any).created_at) readAtMap.set(row.content_item_id as string, (row as any).created_at as string);
+          continue;
+        }
         reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
         readSet.add(row.content_item_id as string);
         if ((row as any).created_at) {
@@ -268,13 +280,29 @@ function DashboardPage() {
           manualCompletionPct: r.manual_completion_pct as number | null,
         });
       }
-      return { totals, reads, itemsByCat, readSet, readAtMap, recentCats, newItemSet, totalSeconds, readDays, engagementMap };
+      const { data: ratingsData } = await (supabase as any)
+        .from("user_content_ratings")
+        .select("content_item_id, rating")
+        .eq("user_id", userId);
+      const ratingsMap = new Map<string, 1 | -1>();
+      for (const r of (ratingsData ?? []) as any[]) {
+        if (r.rating === 1 || r.rating === -1) ratingsMap.set(r.content_item_id as string, r.rating as 1 | -1);
+      }
+
+      return { totals, reads, itemsByCat, readSet, readAtMap, recentCats, newItemSet, totalSeconds, readDays, engagementMap, ratingsMap };
     },
   });
 
 
 
   const { bookmarkIds, toggle: toggleBookmarkItem } = useBookmarks();
+  const fetchMonthlySummary = useServerFn(getMyMonthlySummary);
+  const monthlySummaryQuery = useQuery({
+    queryKey: ["my-monthly-summary", user?.id],
+    enabled: !!user?.id && isUser,
+    staleTime: 10 * 60 * 1000,
+    queryFn: () => fetchMonthlySummary(),
+  });
   const { earned: earnedAchievements } = useAchievements();
   const fetchBookmarkedItems = useServerFn(getMyBookmarkedItems);
   const bookmarkedItemsQuery = useQuery({
@@ -501,7 +529,8 @@ function DashboardPage() {
                     if (t2 > 0 && r2 >= t2) completedCats += 1;
                   }
                   const allItems = (categoriesQuery.data ?? []).flatMap((c) => progressQuery.data?.itemsByCat.get(c.id) ?? []);
-                  const pctAll = weightedCompletionPct(allItems, progressQuery.data?.readSet ?? new Set(), progressQuery.data?.engagementMap ?? new Map());
+                  const allTrackableItems = allItems.filter((it) => !it.exempt_from_progress);
+                  const pctAll = weightedCompletionPct(allTrackableItems, progressQuery.data?.readSet ?? new Set(), progressQuery.data?.engagementMap ?? new Map());
                   const totalSeconds = progressQuery.data?.totalSeconds ?? 0;
                   // Day streak: count consecutive days the user has logged in, ending today or yesterday
                   const loginDays = loginsQuery.data ?? new Set<string>();
@@ -545,6 +574,100 @@ function DashboardPage() {
                           </p>
                         </div>
                       </div>
+
+                      {(() => {
+                        const ms = monthlySummaryQuery.data;
+                        if (!ms?.hasActivity) return null;
+                        const MONTH_NAMES_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+                        const MONTH_NAMES_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+                        const monthName = lang === "es" ? MONTH_NAMES_ES[ms.monthIndex] : MONTH_NAMES_EN[ms.monthIndex];
+                        const msgIdx = ms.dayOfMonth % 15;
+                        const message = t(`monthly.msg${msgIdx}` as any);
+                        const itemsDelta = ms.itemsThisMonth - ms.itemsLastMonth;
+                        const timeDelta = ms.secondsThisMonth - ms.secondsLastMonth;
+                        const itemsDeltaLabel = ms.itemsLastMonth === 0
+                          ? t("monthly.newThisMonth" as any)
+                          : itemsDelta > 0 ? t("monthly.more" as any, { n: itemsDelta })
+                          : itemsDelta < 0 ? t("monthly.fewer" as any, { n: Math.abs(itemsDelta) })
+                          : t("monthly.same" as any);
+                        const timeDeltaLabel = ms.secondsLastMonth === 0
+                          ? t("monthly.newThisMonth" as any)
+                          : timeDelta > 0 ? t("monthly.more" as any, { n: formatTimeSpent(timeDelta) })
+                          : timeDelta < 0 ? t("monthly.fewer" as any, { n: formatTimeSpent(Math.abs(timeDelta)) })
+                          : t("monthly.same" as any);
+                        return (
+                          <details className="group mb-6 rounded-2xl border border-border bg-card overflow-hidden">
+                            <summary className="flex cursor-pointer items-center justify-between px-5 py-4 sm:px-6 list-none hover:bg-muted/20 transition-colors">
+                              <div className="flex items-center gap-3">
+                                <p className="font-display text-sm font-semibold">{monthName} {ms.year}</p>
+                                <span className="text-xs text-muted-foreground tabular-nums">
+                                  {ms.itemsThisMonth} {t("monthly.items" as any)} · {formatTimeSpent(ms.secondsThisMonth)}
+                                  {(ms as any).achievementKeysThisMonth?.length > 0 && <> · {(ms as any).achievementKeysThisMonth.length} {t("monthly.achievements" as any)}</>}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 shrink-0">
+                                {ms.achievementsThisMonth > 0 && (
+                                  <span className="inline-flex items-center gap-1 text-xs text-[var(--color-accent)] font-medium">
+                                    <Trophy className="h-3.5 w-3.5" />
+                                    {ms.achievementsThisMonth}
+                                  </span>
+                                )}
+                                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
+                              </div>
+                            </summary>
+                            <div className="px-5 pb-5 sm:px-6 sm:pb-6 pt-1 border-t border-border/40">
+                              {(() => {
+                                const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+                                  BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
+                                };
+                                const earnedThisMonth = ACHIEVEMENTS.filter((a) => (ms as any).achievementKeysThisMonth?.includes(a.key));
+                                const hasAchievements = earnedThisMonth.length > 0;
+                                return (
+                                  <div className={`grid gap-4 mb-4 pt-4 ${hasAchievements ? "grid-cols-3" : "grid-cols-2"}`}>
+                                    <div>
+                                      <p className="font-display text-2xl font-semibold tabular-nums">{ms.itemsThisMonth.toLocaleString()}</p>
+                                      <p className="text-xs text-muted-foreground mt-0.5">{t("monthly.items" as any)}</p>
+                                      <p className="text-xs mt-1 text-muted-foreground/70">{itemsDeltaLabel}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-display text-2xl font-semibold tabular-nums">{formatTimeSpent(ms.secondsThisMonth)}</p>
+                                      <p className="text-xs text-muted-foreground mt-0.5">{t("monthly.timeSpent" as any)}</p>
+                                      <p className="text-xs mt-1 text-muted-foreground/70">{timeDeltaLabel}</p>
+                                    </div>
+                                    {hasAchievements && (
+                                      <div>
+                                        <div className="flex flex-wrap gap-1.5 mb-1.5">
+                                          {earnedThisMonth.map((a) => {
+                                            const Icon = ICON_MAP[a.icon] ?? Trophy;
+                                            return (
+                                              <TooltipProvider key={a.key} delayDuration={150}>
+                                                <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                    <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 cursor-default">
+                                                      <Icon className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+                                                    </div>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent side="top" className="text-xs max-w-[180px] text-center">
+                                                    <p className="font-semibold">{t(`achievement.${a.key}.title` as any)}</p>
+                                                    <p>{t(`achievement.${a.key}.desc` as any)}</p>
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              </TooltipProvider>
+                                            );
+                                          })}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-0.5">{t("monthly.achievements" as any)}</p>
+                                        <p className="text-xs mt-1 text-muted-foreground/70">{t("monthly.achievementsEarned" as any)}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                              <p className="text-xs text-muted-foreground/80 italic leading-relaxed border-t border-border/40 pt-3">{message}</p>
+                            </div>
+                          </details>
+                        );
+                      })()}
 
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
                         {stats.map((s) => (
@@ -595,6 +718,7 @@ function DashboardPage() {
                   isAdmin={isAdmin}
                   lang={lang}
                   t={t}
+                  bookmarkIds={bookmarkIds}
                 />
 
               </>
@@ -872,6 +996,7 @@ type CatItem = {
   duration?: string | null;
   url?: string | null;
   file_url?: string | null;
+  exempt_from_progress?: boolean;
 };
 
 function CategoryAccordion({
@@ -880,16 +1005,19 @@ function CategoryAccordion({
   isAdmin,
   lang,
   t,
+  bookmarkIds,
 }: {
   categories: Category[];
   progress: any;
   isAdmin: boolean;
   lang: "en" | "es";
   t: (key: string, vars?: Record<string, string | number>) => string;
+  bookmarkIds: Set<string>;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const engagementMap = progress?.engagementMap ?? new Map();
   const readAtMap = progress?.readAtMap ?? new Map<string, string>();
+  const ratingsMap: Map<string, 1 | -1> = progress?.ratingsMap ?? new Map();
   return (
     <div className="flex flex-col [&>section]:rounded-none [&>section:first-child]:rounded-t-2xl [&>section:last-child]:rounded-b-2xl [&>section:not(:first-child)]:-mt-px">
       {categories.map((c) => {
@@ -914,6 +1042,8 @@ function CategoryAccordion({
             lang={lang}
             t={t}
             engagementMap={engagementMap}
+            bookmarkIds={bookmarkIds}
+            ratingsMap={ratingsMap}
             isOpen={openId === c.id}
             dimmed={openId !== null && openId !== c.id}
             onToggle={() => setOpenId((cur) => (cur === c.id ? null : c.id))}
@@ -937,6 +1067,8 @@ function CategoryProgressSection({
   lang,
   t,
   engagementMap,
+  bookmarkIds,
+  ratingsMap,
   isOpen,
   dimmed,
   onToggle,
@@ -953,12 +1085,15 @@ function CategoryProgressSection({
   lang: "en" | "es";
   t: (key: string, vars?: Record<string, string | number>) => string;
   engagementMap: Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null; manualCompletionPct: number | null }>;
+  bookmarkIds: Set<string>;
+  ratingsMap: Map<string, 1 | -1>;
   isOpen: boolean;
   dimmed?: boolean;
   onToggle: () => void;
 }) {
   const open = isOpen;
-  const pct = weightedCompletionPct(items, readSet, engagementMap);
+  const trackableItems = items.filter((it) => !(it as any).exempt_from_progress);
+  const pct = weightedCompletionPct(trackableItems, readSet, engagementMap);
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
   const sectionRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
@@ -1036,71 +1171,124 @@ function CategoryProgressSection({
                     {!isAdmin && (() => {
                       const labels = readStatusLabels(t, it);
                       const eng = engagementMap.get(it.id);
+                      const isBookmarked = bookmarkIds.has(it.id);
+                      const myRating = ratingsMap.get(it.id) ?? null;
 
-                      // Video / Audio — playback progress
+                      // Determine action badge
+                      let actionBadge: React.ReactNode;
                       const isAV = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
                       const mediaPct = !isRead && isAV && eng?.mediaProgressSeconds && eng?.mediaDurationSeconds && eng.mediaDurationSeconds > 0
                         ? Math.min(100, Math.round((eng.mediaProgressSeconds / eng.mediaDurationSeconds) * 100))
                         : null;
-                      if (mediaPct !== null && mediaPct >= 5) {
-                        const watchedLabel = it.type.toLowerCase().includes("video")
-                          ? t("category.markedWatched").toLowerCase()
-                          : t("category.markedListened").toLowerCase();
-                        return (
-                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium ml-auto flex-shrink-0 overflow-hidden">
-                            <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
-                            <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
-                            <span className="relative">{mediaPct}% {watchedLabel}</span>
-                          </span>
-                        );
-                      }
-
-                      // PDF — time-based reading progress
                       const isPdf = (it.file_url && /\.pdf(\?|#|$)/i.test(it.file_url)) || (it.url && /\.pdf(\?|#|$)/i.test(it.url));
                       const pdfMins = isPdf ? parseMinutes(it.duration) : 0;
                       const pdfEstSec = pdfMins * 60;
                       const pdfPct = !isRead && isPdf && pdfEstSec > 0 && eng && eng.sessionSeconds > 0
                         ? Math.min(100, Math.round((eng.sessionSeconds / (pdfEstSec * 0.95)) * 100))
                         : null;
-                      if (pdfPct !== null && pdfPct >= 1) {
-                        return (
-                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium ml-auto flex-shrink-0 overflow-hidden">
+
+                      if (mediaPct !== null && mediaPct >= 5) {
+                        const watchedLabel = it.type.toLowerCase().includes("video")
+                          ? t("category.markedWatched").toLowerCase()
+                          : t("category.markedListened").toLowerCase();
+                        actionBadge = (
+                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
+                            <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
+                            <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
+                            <span className="relative">{mediaPct}% {watchedLabel}</span>
+                          </span>
+                        );
+                      } else if (pdfPct !== null && pdfPct >= 1) {
+                        actionBadge = (
+                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
                             <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
                             <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
                             <span className="relative">{pdfPct}% {t("category.markedRead").toLowerCase()}</span>
                           </span>
                         );
+                      } else if (it.exempt_from_progress) {
+                        actionBadge = (
+                          <span className={`inline-flex items-center leading-none gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ${
+                            isRead
+                              ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+                              : "border-input bg-background text-foreground"
+                          }`}>
+                            {isRead ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" /> : <Circle className="h-3.5 w-3.5 flex-shrink-0" />}
+                            {isRead ? t("category.acknowledged") : t("category.acknowledge")}
+                          </span>
+                        );
+                      } else {
+                        actionBadge = (
+                          <ReadStatusBadge
+                            read={isRead}
+                            readLabel={
+                              isRead && isPdf && eng?.manualCompletionPct != null
+                                ? `${labels.read} at ${eng.manualCompletionPct}%`
+                                : labels.read
+                            }
+                            unreadLabel={labels.unread}
+                            readAt={isRead ? (fmtDateShort(readAtMap.get(it.id)) || null) : null}
+                          />
+                        );
                       }
 
                       return (
-                        <ReadStatusBadge
-                          read={isRead}
-                          readLabel={
-                            isRead && isPdf && eng?.manualCompletionPct != null
-                              ? `${labels.read} at ${eng.manualCompletionPct}%`
-                              : labels.read
-                          }
-                          unreadLabel={labels.unread}
-                          readAt={isRead ? (fmtDateShort(readAtMap.get(it.id)) || null) : null}
-                          className="ml-auto"
-                        />
+                        <div className="ml-auto flex flex-col items-end gap-1 flex-shrink-0">
+                          <div className="flex items-center gap-1.5">
+                            {myRating !== null && (
+                              <span className={`inline-flex items-center justify-center rounded-[4px] border px-2 py-1.5 ${
+                                myRating === 1
+                                  ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+                                  : "border-destructive/30 bg-destructive/10 text-destructive"
+                              }`}>
+                                {myRating === 1
+                                  ? <ThumbsUp className="h-3.5 w-3.5 fill-[var(--color-accent)]" />
+                                  : <ThumbsDown className="h-3.5 w-3.5 fill-destructive" />}
+                              </span>
+                            )}
+                            {isBookmarked && (
+                              <span className="inline-flex items-center justify-center rounded-[4px] border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] px-2 py-1.5">
+                                <Bookmark className="h-3.5 w-3.5 fill-[var(--color-accent)]" />
+                              </span>
+                            )}
+                            {actionBadge}
+                          </div>
+                          {it.exempt_from_progress && (
+                            <p className="text-[10px] text-muted-foreground leading-tight">{t("category.exemptDisclaimer")}</p>
+                          )}
+                        </div>
                       );
                     })()}
 
                   </div>
 
                   <div className="min-w-0">
-                    <Link
-                      to="/category/$slug"
-                      params={{ slug: category.slug }}
-                      hash={`item-${it.id}`}
-                      className="block truncate text-lg font-semibold text-foreground hover:underline"
-                    >
-                      {pickLang(lang, it.title, it.title_es)}
-                    </Link>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Link
+                        to="/category/$slug"
+                        params={{ slug: category.slug }}
+                        hash={`item-${it.id}`}
+                        className="truncate text-lg font-semibold text-foreground hover:underline"
+                      >
+                        {pickLang(lang, it.title, it.title_es)}
+                      </Link>
+                      {(it as any).exempt_from_progress && (
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex flex-shrink-0 cursor-help text-muted-foreground">
+                                <Info className="h-4 w-4" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs max-w-[220px] text-center">
+                              {t("category.exemptTooltip")}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
                     {description && (
                       <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{description}</p>
-
                     )}
                   </div>
                 </li>

@@ -212,7 +212,7 @@ export const updateFacility = createServerFn({ method: "POST" })
         .eq("id", data.id);
       if (error) throw new Error(error.message);
     } else {
-      const patch: Record<string, unknown> = { label: data.label };
+      const patch: { label: string; site_id?: string | null } = { label: data.label };
       if (data.siteId === null) patch.site_id = null;
       const { error } = await supabaseAdmin.from("facilities").update(patch).eq("id", data.id);
       if (error) throw new Error(error.message);

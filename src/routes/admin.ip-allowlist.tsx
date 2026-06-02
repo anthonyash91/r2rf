@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireAdminBeforeLoad } from "@/lib/admin-guards";
+import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Trash2, Shield, Pencil, Ban, Power } from "lucide-react";
+import { Plus, Trash2, Shield, Pencil, Power } from "lucide-react";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
@@ -16,7 +16,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/admin/ip-allowlist")({
-  beforeLoad: requireAdminBeforeLoad,
+  beforeLoad: requireStrictAdminBeforeLoad,
   component: AdminIpAllowlistPage,
 });
 
@@ -44,107 +44,7 @@ function AdminIpAllowlistPage() {
       <div className="mt-8">
         <AllowlistSection />
       </div>
-
-      <div className="mt-8">
-        <BlockedSection />
-      </div>
     </div>
-  );
-}
-
-type BlockedRow = {
-  id: string;
-  ip_address: string;
-  failed_count: number;
-  blocked_at: string;
-  last_attempt_at: string;
-};
-
-function BlockedSection() {
-  const qc = useQueryClient();
-  const confirmDelete = useConfirmDelete();
-  const queryKey = ["admin", "ip_passkey_attempts", "blocked"] as const;
-
-  const { data: rows = [], isLoading } = useQuery({
-    queryKey,
-    queryFn: async (): Promise<BlockedRow[]> => {
-      const { data, error } = await supabase
-        .from("ip_passkey_attempts")
-        .select("id, ip_address, failed_count, blocked_at, last_attempt_at")
-        .not("blocked_at", "is", null)
-        .order("blocked_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as BlockedRow[];
-    },
-  });
-
-  const deleteMut = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ip_passkey_attempts").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("IP unblocked");
-      qc.invalidateQueries({ queryKey });
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-
-  return (
-    <section className="rounded-2xl border border-destructive/30 bg-card overflow-hidden">
-      <div className="p-6 border-b border-border">
-        <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-          <Ban className="h-5 w-5 text-destructive" /> Blocked IPs
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          IPs that failed the access passkey 5 or more times. They see a permanent block message and
-          cannot retry. Remove an entry below to unblock.
-        </p>
-      </div>
-      <div>
-        {isLoading ? (
-          <EmptyState>Loading…</EmptyState>
-        ) : rows.length === 0 ? (
-          <EmptyState>No blocked IPs.</EmptyState>
-        ) : (
-          <ul className="divide-y divide-border">
-            {rows.map((r) => (
-              <li key={r.id} className="py-6 md:py-5 pr-[24px] pl-[24px] flex flex-col md:flex-row md:items-center gap-5">
-                <div className="flex-1 min-w-0">
-                  <p className="font-mono text-sm">{r.ip_address}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {r.failed_count} failed attempt{r.failed_count === 1 ? "" : "s"} · blocked{" "}
-                    {new Date(r.blocked_at).toLocaleString()}
-                  </p>
-                </div>
-                <TooltipProvider delayDuration={150}>
-                  <div className="self-end md:self-auto">
-                    <IconButton
-                      aria-label="Unblock"
-                      tooltip="Unblock"
-                      pendingTooltip="Unblocking…"
-                      variant="destructive"
-                      icon={Trash2}
-                      pending={isMutationPendingFor(deleteMut, r.id)}
-                      onClick={async () => {
-                        await confirmDelete({
-                          title: `Unblock ${r.ip_address}?`,
-                          description:
-                            "This IP will be able to attempt the access passkey again. They will not be added to the allowlist.",
-                          confirmLabel: "Unblock",
-                          pendingLabel: "Unblocking",
-                          onConfirm: () => deleteMut.mutateAsync(r.id),
-                        });
-                      }}
-                    />
-                  </div>
-                </TooltipProvider>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </section>
   );
 }
 
@@ -514,8 +414,7 @@ function IpRestrictionToggle() {
           </div>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          When off, anyone can access any part of the site — the allowlist, blocklist, and per-page IP
-          rules below are bypassed. When on, restrictions apply as configured. Changes take effect within ~30 seconds.
+          When off, anyone can access any part of the site regardless of IP address. When on, only IPs on the allowlist can access the site. Changes take effect within ~30 seconds.
         </p>
       </div>
     </section>

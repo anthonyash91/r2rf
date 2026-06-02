@@ -3,18 +3,25 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-async function assertAnyAdmin(userId: string) {
+/** Analytics access: admin and facilityUser only — contributors excluded. */
+async function assertAnalyticsAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
-    .in("role", ["admin", "contributor", "facilityUser"])
+    .in("role", ["admin", "facilityUser"])
     .maybeSingle();
-  if (error || !data) throw new Error("Forbidden: admin access required");
+  if (error || !data) throw new Error("Forbidden: analytics admin access required");
 }
 
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+/** Strict admin-only — used for destructive/system operations like nightly refresh. */
+async function assertStrictAdmin(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
   if (error || !data) throw new Error("Forbidden: admin access required");
 }
 
@@ -22,9 +29,9 @@ async function assertAdmin(supabase: any, userId: string) {
 export const getFacilityComparison = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAnyAdmin(context.userId);
+    await assertAnalyticsAdmin(context.userId);
 
-    const [statsRes, facRes, profilesRes, bookmarksRes, ratingsRes] = await Promise.all([
+    const [statsRes, facRes] = await Promise.all([
       (supabaseAdmin as any)
         .from("facility_stats")
         .select("*")
@@ -33,17 +40,6 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
         .from("facilities")
         .select("value, label, site_id")
         .order("label", { ascending: true }),
-      // Fetch user→facility map separately (no FK join available)
-      supabaseAdmin
-        .from("user_profiles")
-        .select("user_id, facility")
-        .eq("is_synthetic", false),
-      (supabaseAdmin as any)
-        .from("user_content_bookmarks")
-        .select("user_id"),
-      (supabaseAdmin as any)
-        .from("user_content_ratings")
-        .select("user_id, rating"),
     ]);
 
     if (statsRes.error) throw new Error(statsRes.error.message);
@@ -51,26 +47,6 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
     const labelMap = new Map<string, { label: string; siteId: string | null }>(
       (facRes.data ?? []).map((f: any) => [f.value, { label: f.label, siteId: f.site_id }])
     );
-
-    // user_id → facility lookup
-    const userFacilityMap = new Map<string, string>(
-      (profilesRes.data ?? []).map((p: any) => [p.user_id as string, p.facility as string])
-    );
-
-    const facilityBookmarks = new Map<string, number>();
-    for (const r of (bookmarksRes.data ?? []) as any[]) {
-      const facility = userFacilityMap.get(r.user_id as string);
-      if (facility) facilityBookmarks.set(facility, (facilityBookmarks.get(facility) ?? 0) + 1);
-    }
-
-    const facilityThumbsUp = new Map<string, number>();
-    const facilityThumbsDown = new Map<string, number>();
-    for (const r of (ratingsRes.data ?? []) as any[]) {
-      const facility = userFacilityMap.get(r.user_id as string);
-      if (!facility) continue;
-      if (r.rating === 1) facilityThumbsUp.set(facility, (facilityThumbsUp.get(facility) ?? 0) + 1);
-      if (r.rating === -1) facilityThumbsDown.set(facility, (facilityThumbsDown.get(facility) ?? 0) + 1);
-    }
 
     const rows = (statsRes.data ?? []).map((r: any) => ({
       facilityValue: r.facility_value as string,
@@ -83,9 +59,9 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
       totalSessionSeconds: r.total_session_seconds as number,
       itemsCompletedTotal: r.items_completed_total as number,
       updatedAt: r.updated_at as string,
-      totalBookmarks: facilityBookmarks.get(r.facility_value as string) ?? 0,
-      totalThumbsUp: facilityThumbsUp.get(r.facility_value as string) ?? 0,
-      totalThumbsDown: facilityThumbsDown.get(r.facility_value as string) ?? 0,
+      totalBookmarks: (r.bookmark_count as number) ?? 0,
+      totalThumbsUp: (r.thumbs_up_count as number) ?? 0,
+      totalThumbsDown: (r.thumbs_down_count as number) ?? 0,
     }));
 
     const updatedAt = rows[0]?.updatedAt ?? null;
@@ -99,7 +75,7 @@ export const getContentItemStats = createServerFn({ method: "POST" })
     z.object({ categoryId: z.string().uuid().optional() }).parse(input ?? {}),
   )
   .handler(async ({ context, data }) => {
-    await assertAnyAdmin(context.userId);
+    await assertAnalyticsAdmin(context.userId);
 
     let q = (supabaseAdmin as any)
       .from("content_item_stats")
@@ -159,8 +135,27 @@ export const getGrowthStats = createServerFn({ method: "POST" })
     z.object({ facilityValue: z.string().nullable().optional() }).parse(input ?? {})
   )
   .handler(async ({ context, data }) => {
-    await assertAnyAdmin(context.userId);
-    const facilityValue = data.facilityValue ?? null;
+    await assertAnalyticsAdmin(context.userId);
+
+    // facilityUser callers are scoped to their own facility only
+    let facilityValue = data.facilityValue ?? null;
+    const { data: callerFacilityUserRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "facilityUser")
+      .maybeSingle();
+    if (callerFacilityUserRole) {
+      const { data: callerProf } = await supabaseAdmin
+        .from("user_profiles")
+        .select("facility")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      if (!callerProf?.facility) throw new Error("Forbidden: no facility assigned");
+      if (facilityValue && facilityValue !== callerProf.facility)
+        throw new Error("Forbidden: user is not in your facility");
+      facilityValue = callerProf.facility;
+    }
 
     // Exclude staff from program completion counts
     const { data: staffRoles } = await supabaseAdmin
@@ -291,7 +286,7 @@ export const getMyEngagementTier = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await (supabaseAdmin as any)
       .from("user_stats")
-      .select("facility_percentile, items_completed, items_started, total_session_seconds, updated_at")
+      .select("facility_value, facility_percentile, items_completed, items_started, total_session_seconds, updated_at")
       .eq("user_id", context.userId)
       .maybeSingle();
 
@@ -329,4 +324,15 @@ export const getMyEngagementTier = createServerFn({ method: "GET" })
       totalSessionSeconds: data.total_session_seconds as number,
       updatedAt: data.updated_at as string,
     };
+  });
+
+
+/** Manually trigger the nightly analytics refresh via db.rpc('refresh_nightly'). Admin only. */
+export const triggerNightlyRefresh = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertStrictAdmin(context.userId);
+    const { error } = await (supabaseAdmin as any).rpc("refresh_nightly");
+    if (error) throw new Error(error.message);
+    return { refreshedAt: new Date().toISOString() };
   });

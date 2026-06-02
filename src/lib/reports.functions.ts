@@ -11,27 +11,24 @@ function chunkIds(ids: string[], size = 500): string[][] {
   return out;
 }
 
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (error || !data) throw new Error("Forbidden: admin access required");
-}
-
-async function assertAnyAdmin(userId: string) {
+/** Analytics access: admin and facilityUser only — contributors excluded. */
+async function assertAnalyticsAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
-    .in("role", ["admin", "contributor", "facilityUser"])
+    .in("role", ["admin", "facilityUser"])
     .maybeSingle();
-  if (error || !data) throw new Error("Forbidden: admin access required");
+  if (error || !data) throw new Error("Forbidden: analytics admin access required");
 }
 
-const RangeSchema = z.enum(["7d", "30d", "90d", "all"]);
+const RangeSchema = z.enum(["7d", "30d", "90d", "all", "month"]);
 
 function sinceIsoFor(range: z.infer<typeof RangeSchema>): string | null {
+  if (range === "month") {
+    const n = new Date();
+    return new Date(n.getFullYear(), n.getMonth(), 1).toISOString();
+  }
   const days = range === "7d" ? 7 : range === "30d" ? 30 : range === "90d" ? 90 : null;
   if (days === null) return null;
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
@@ -52,9 +49,29 @@ export const getUsageReport = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAnyAdmin(context.userId);
+    await assertAnalyticsAdmin(context.userId);
+
+    // facilityUser callers are scoped to their own facility only
+    let facilityValue = data.facilityValue ?? null;
+    const { data: callerFacilityUserRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "facilityUser")
+      .maybeSingle();
+    if (callerFacilityUserRole) {
+      const { data: callerProf } = await supabaseAdmin
+        .from("user_profiles")
+        .select("facility")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      if (!callerProf?.facility) throw new Error("Forbidden: no facility assigned");
+      if (facilityValue && facilityValue !== callerProf.facility)
+        throw new Error("Forbidden: user is not in your facility");
+      facilityValue = callerProf.facility;
+    }
+
     const sinceIso = sinceIsoFor(data.range);
-    const facilityValue = data.facilityValue ?? null;
 
     // Always exclude synthetic (test) users from real-user metrics.
     const { data: synthRows, error: synthErr } = await supabaseAdmin
@@ -107,8 +124,8 @@ export const getUsageReport = createServerFn({ method: "POST" })
         .not("user_id", "in", `(${[...facilityUserAccountIds, "00000000-0000-0000-0000-000000000000"].join(",")})`),
       (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
       (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
-      (supabaseAdmin as any).from("content_item_rating_totals").select("content_item_id, thumbs_up, thumbs_down"),
-      (supabaseAdmin as any).from("content_item_bookmark_totals").select("content_item_id, bookmark_count"),
+      (supabaseAdmin as any).from("content_item_rating_totals").select("content_item_id, thumbs_up, thumbs_down").range(0, 4999),
+      (supabaseAdmin as any).from("content_item_bookmark_totals").select("content_item_id, bookmark_count").range(0, 4999),
     ]);
     if (catsRes.error) throw new Error(catsRes.error.message);
     if (itemsRes.error) throw new Error(itemsRes.error.message);
@@ -155,7 +172,8 @@ export const getUsageReport = createServerFn({ method: "POST" })
     // The trigger already excludes staff and synthetic users, so no user filter needed here.
     let dailyCountsQ = (supabaseAdmin as any)
       .from("analytics_daily_counts")
-      .select("event_type, category_id, content_id, count");
+      .select("event_type, category_id, content_id, count")
+      .range(0, 49999);
     if (sinceIso) dailyCountsQ = dailyCountsQ.gte("period_date", sinceIso.slice(0, 10));
     if (facilityValue) dailyCountsQ = dailyCountsQ.eq("facility_value", facilityValue);
 
@@ -166,7 +184,8 @@ export const getUsageReport = createServerFn({ method: "POST" })
       if (userIdFilter === null && !sinceIso) {
         const { data } = await (supabaseAdmin as any)
           .from("content_item_openers")
-          .select("content_item_id, opener_count");
+          .select("content_item_id, opener_count")
+          .range(0, 4999);
         return { precomputed: true, rows: data ?? [] };
       }
       if (userIdFilter !== null && userIdFilter.length === 0) {
@@ -231,7 +250,8 @@ export const getUsageReport = createServerFn({ method: "POST" })
       if (userIdFilter === null && !sinceIso) {
         const { data } = await (supabaseAdmin as any)
           .from("content_item_time_totals")
-          .select("content_item_id, total_session_seconds, engager_count");
+          .select("content_item_id, total_session_seconds, engager_count")
+          .range(0, 4999);
         return { precomputed: true, rows: data ?? [] };
       }
       if (userIdFilter !== null && userIdFilter.length === 0) {
@@ -276,6 +296,14 @@ export const getUsageReport = createServerFn({ method: "POST" })
     };
 
     // ── Query 4: user_content_progress for completions (paginated) ──────────
+    // Pre-fetch exempt item IDs so we can exclude them with a simple NOT IN filter.
+    // Avoids PostgREST embedded-resource filter syntax which fails in paginated queries.
+    const { data: exemptItemsData } = await (supabaseAdmin as any)
+      .from("content_items")
+      .select("id")
+      .eq("exempt_from_progress", true);
+    const exemptItemIds: string[] = (exemptItemsData ?? []).map((r: any) => r.id as string);
+
     const fetchAllProgress = async () => {
       if (userIdFilter !== null) {
         if (userIdFilter.length === 0) return [];
@@ -284,8 +312,10 @@ export const getUsageReport = createServerFn({ method: "POST" })
           const PAGE = 1000; const rows: any[] = [];
           for (let from = 0; ; from += PAGE) {
             let q = (supabaseAdmin as any).from("user_content_progress")
-              .select("content_item_id, user_id").in("user_id", chunk).range(from, from + PAGE - 1);
+              .select("content_item_id, user_id")
+              .in("user_id", chunk).range(from, from + PAGE - 1);
             if (sinceIso) q = q.gte("created_at", sinceIso);
+            if (exemptItemIds.length > 0) q = q.not("content_item_id", "in", `(${exemptItemIds.join(",")})`);
             const { data, error } = await q;
             if (error || !data || data.length === 0) break;
             rows.push(...data); if (data.length < PAGE) break;
@@ -303,6 +333,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
           .select("content_item_id, user_id")
           .range(from, from + PAGE - 1);
         if (sinceIso) q = q.gte("created_at", sinceIso);
+        if (exemptItemIds.length > 0) q = q.not("content_item_id", "in", `(${exemptItemIds.join(",")})`);
         const excludeAll = [
           ...Array.from(staffUserIds), ...Array.from(syntheticIds),
           "00000000-0000-0000-0000-000000000000",
@@ -505,65 +536,77 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
       .object({
         facilityValue: z.string().min(0).max(64).nullable().optional(),
         includeSynthetic: z.boolean().optional(),
+        /** 0-indexed page number. Default 0. */
+        page: z.number().int().min(0).optional(),
+        /** Rows per page. 0 = return all (for CSV export). Default 10. */
+        pageSize: z.number().int().min(0).optional(),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAnyAdmin(context.userId);
+    await assertAnalyticsAdmin(context.userId);
+
+    // facilityUser callers are scoped to their own facility only
+    const { data: callerFacilityUserRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "facilityUser")
+      .maybeSingle();
+    if (callerFacilityUserRole) {
+      const { data: callerProf } = await supabaseAdmin
+        .from("user_profiles")
+        .select("facility")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      if (!callerProf?.facility) throw new Error("Forbidden: no facility assigned");
+      if (data.facilityValue && data.facilityValue !== callerProf.facility)
+        throw new Error("Forbidden: user is not in your facility");
+      // Force facilityValue to caller's facility (ignore null/empty input)
+      data = { ...data, facilityValue: callerProf.facility };
+    }
 
     const facilityValue = data.facilityValue ?? "";
     const includeSynthetic = data.includeSynthetic ?? false;
+    const pageNum = data.page ?? 0;
+    const pageSize = data.pageSize ?? 10;
 
-    // Paginate to fetch ALL profiles (Supabase enforces a per-request row cap).
-    const PAGE_SIZE = 1000;
-    const allProfs: any[] = [];
-    for (let from = 0; ; from += PAGE_SIZE) {
-      let pq = supabaseAdmin
-        .from("user_profiles")
-        .select("user_id, username, first_name, last_name, facility, created_at, inmate_pin")
-        .order("created_at", { ascending: false })
-        .range(from, from + PAGE_SIZE - 1);
-      if (!includeSynthetic) pq = pq.eq("is_synthetic", false);
-      if (facilityValue) pq = pq.eq("facility", facilityValue);
-      const { data: page, error } = await pq;
-      if (error) throw new Error(error.message);
-      const rows = page ?? [];
-      allProfs.push(...rows);
-      if (rows.length < PAGE_SIZE) break;
-    }
-    // Exclude facilityUser role accounts — reports should only show regular users
+    // Get facilityUser IDs to exclude — do this first so we can exclude them from the count
     const { data: facilityUserRoles } = await supabaseAdmin
       .from("user_roles")
       .select("user_id")
       .eq("role", "facilityUser");
     const facilityUserIdSet = new Set((facilityUserRoles ?? []).map((r: any) => r.user_id as string));
-    const profs = allProfs.filter((p: any) => !facilityUserIdSet.has(p.user_id));
+    const excludeIds = [...facilityUserIdSet, "00000000-0000-0000-0000-000000000000"];
+
+    // Build base query filter helper
+    const buildQ = (select: string, head = false) => {
+      let q = (supabaseAdmin as any)
+        .from("user_profiles")
+        .select(select, head ? { count: "exact", head: true } : undefined)
+        .order("created_at", { ascending: false });
+      if (!includeSynthetic) q = q.eq("is_synthetic", false);
+      if (facilityValue) q = q.eq("facility", facilityValue);
+      if (excludeIds.length > 0) q = q.not("user_id", "in", `(${excludeIds.join(",")})`);
+      return q;
+    };
+
+    // Get total count efficiently without fetching rows
+    const { count: totalCount } = await buildQ("user_id", true);
+    const total = totalCount ?? 0;
+
+    // Fetch only the requested page
+    let profilesQ = buildQ("user_id, username, first_name, last_name, facility, created_at, inmate_pin");
+    if (pageSize > 0) {
+      profilesQ = profilesQ.range(pageNum * pageSize, (pageNum + 1) * pageSize - 1);
+    }
+    const { data: profileRows, error: profileErr } = await profilesQ;
+    if (profileErr) throw new Error(profileErr.message);
+    const profs = profileRows ?? [];
     const ids = profs.map((p: any) => p.user_id as string);
 
 
-    const emailById = new Map<string, string>();
-    const lastSignInById = new Map<string, string | null>();
-    if (ids.length > 0) {
-      const idSet = new Set(ids);
-      const AUTH_PAGE_SIZE = 1000;
-      for (let page = 1; ; page += 1) {
-        const { data: usersData, error: ue } = await supabaseAdmin.auth.admin.listUsers({
-          page,
-          perPage: AUTH_PAGE_SIZE,
-        });
-        if (ue) throw new Error(ue.message);
-        const authUsers = usersData.users ?? [];
-        for (const u of authUsers) {
-          if (idSet.has(u.id)) {
-            emailById.set(u.id, u.email ?? "");
-            lastSignInById.set(u.id, (u as any).last_sign_in_at ?? null);
-          }
-        }
-        if (authUsers.length < AUTH_PAGE_SIZE) break;
-      }
-    }
-
-    // Also fetch most recent user_logins date for each user as a fallback / more accurate "last login"
+    // Fetch most recent login date per user from user_logins (more accurate than auth last_sign_in_at)
     const lastLoginById = new Map<string, string | null>();
     if (ids.length > 0) {
       const { data: loginRows, error: le } = await supabaseAdmin
@@ -605,6 +648,7 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     }
 
     return {
+      total,
       users: profs.map((p: any) => ({
         user_id: p.user_id as string,
         username: (p.username as string) ?? "",
@@ -613,9 +657,7 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
         facility: (p.facility as string) ?? "",
         facility_label: facilityLabelMap.get(p.facility as string) ?? (p.facility as string) ?? "",
         inmate_pin: (p.inmate_pin as string) ?? null,
-        email: emailById.get(p.user_id as string) ?? "",
         created_at: p.created_at as string,
-        last_sign_in_at: lastSignInById.get(p.user_id as string) ?? null,
         last_login_date: lastLoginById.get(p.user_id as string) ?? null,
         engagement_tier: tierById.get(p.user_id as string)?.tier ?? null,
         facility_percentile: tierById.get(p.user_id as string)?.percentile ?? null,
@@ -634,7 +676,24 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
     z.object({ userId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAnyAdmin(context.userId);
+    await assertAnalyticsAdmin(context.userId);
+
+    // facilityUser callers may only view users within their own facility
+    const { data: callerFacilityUserRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "facilityUser")
+      .maybeSingle();
+    if (callerFacilityUserRole) {
+      const [{ data: callerProf }, { data: targetProf }] = await Promise.all([
+        supabaseAdmin.from("user_profiles").select("facility").eq("user_id", context.userId).maybeSingle(),
+        supabaseAdmin.from("user_profiles").select("facility").eq("user_id", data.userId).maybeSingle(),
+      ]);
+      if (!callerProf?.facility || callerProf.facility !== targetProf?.facility) {
+        throw new Error("Forbidden: user is not in your facility");
+      }
+    }
 
     const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes, engRes, statsRes, userBookmarksRes, userRatingsRes, userAchievementsRes] = await Promise.all([
       supabaseAdmin
@@ -648,7 +707,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         .order("sort_order", { ascending: true }),
       supabaseAdmin
         .from("content_items")
-        .select("id, category_id, title, description, type, duration, url, file_url, sort_order, published")
+        .select("id, category_id, title, description, type, duration, url, file_url, sort_order, published, exempt_from_progress")
         .eq("published", true)
         .order("sort_order", { ascending: true }),
       supabaseAdmin
@@ -810,6 +869,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
           manualCompletionPct: eng?.manualCompletionPct ?? null,
           bookmarked: userBookmarkSet.has(i.id as string),
           rating: userRatingMap.get(i.id as string) ?? null,
+          exempt_from_progress: (i.exempt_from_progress as boolean) ?? false,
         };
       }),
       progress: (progRes.data ?? []).map((r: any) => ({
