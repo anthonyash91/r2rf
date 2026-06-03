@@ -1481,7 +1481,7 @@ function TestingTab() {
                 onClick={() => toggleSection(section.num)}
                 className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/30 transition-colors"
               >
-                <CircleProgress value={sPct} size={28} stroke={3} className="shrink-0" />
+                <CircleProgress value={sPct} size={44} stroke={4} className="shrink-0" />
                 <span className="font-medium text-sm flex-1">
                   {section.num}. {section.title}
                 </span>
