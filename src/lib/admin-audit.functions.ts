@@ -71,8 +71,10 @@ export const listAuditLog = createServerFn({ method: "POST" })
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
-    // For facilityUser callers, collect user IDs at their facility and filter
-    // entries server-side — we never send cross-facility audit data to the client.
+    // For facilityUser callers, filter server-side after fetching. We cannot
+    // push the user-ID filter into the DB query because the log records
+    // reference actor+target, not a single facility field — both sides need
+    // to be checked. Filtering here ensures no cross-facility data leaks.
     let facilityUserIds: Set<string> | null = null;
     if (facilityScope) {
       const { data: profiles } = await supabaseAdmin
@@ -80,7 +82,7 @@ export const listAuditLog = createServerFn({ method: "POST" })
         .select("user_id")
         .eq("facility", facilityScope);
       facilityUserIds = new Set((profiles ?? []).map((p) => p.user_id as string));
-      // Always include the caller themselves
+      // Always include the caller so their own admin actions appear in the log.
       facilityUserIds.add(context.userId);
     }
 
@@ -139,7 +141,9 @@ export const listAuditLog = createServerFn({ method: "POST" })
       user_agent: r.user_agent,
     }));
 
-    // Client-side filter by free-text search (username/email/ip/details).
+    // Free-text search is done in JS rather than SQL because the searchable
+    // fields span actor+target identities and the JSONB details column —
+    // a full-text SQL OR across all of these would be significantly more complex.
     if (data.search) {
       const s = data.search.toLowerCase();
       entries = entries.filter((e) => {

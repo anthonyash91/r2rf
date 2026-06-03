@@ -43,7 +43,8 @@ export function SiteMessageBanner({
   const userId = session?.user?.id ?? null;
   const qc = useQueryClient();
 
-  // For facility kind without a prop, auto-detect the user's facility
+  // For facility banners without a prop, auto-detect from the user's profile.
+  // Admins and contributors see the globally scoped banner, not a facility one.
   const fetchFacility = useServerFn(getMyFacilityValue);
   const { data: facilityData } = useQuery({
     queryKey: ["my-facility", userId],
@@ -55,7 +56,8 @@ export function SiteMessageBanner({
     ? (facilityValueProp ?? facilityData?.facility ?? null)
     : null;
 
-  // Derive the site_settings key
+  // Build the site_settings lookup key. Facility banners use a per-facility key;
+  // other kinds use the fixed map above.
   const settingsKey = kind === "facility"
     ? (facilityValue ? `facility_message_${facilityValue}` : null)
     : KEY_FOR_KIND[kind as Exclude<SiteMessageKind, "facility">];
@@ -123,7 +125,10 @@ export function SiteMessageBanner({
 
   if (!settingsKey || !data || !data.message.trim()) return null;
 
+  // Use DB dismissal for logged-in users; sessionStorage for anonymous visitors.
   const dismissedAt = userId ? dbDismissedAt ?? null : anonDismissedAt;
+  // Re-show the banner if the message was updated after the user last dismissed it.
+  // Equality means "dismissed this exact version" — any newer updatedAt re-shows it.
   if (
     dismissedAt &&
     data.updatedAt &&
@@ -139,6 +144,8 @@ export function SiteMessageBanner({
 
   const onDismiss = async () => {
     if (userId) {
+      // Optimistically update the cache so the banner hides immediately,
+      // then persist to DB; if that fails, invalidate to re-fetch truth.
       qc.setQueryData(dismissalQueryKey, data.updatedAt);
       const { error } = await supabase
         .from("user_dismissed_messages")
@@ -148,6 +155,7 @@ export function SiteMessageBanner({
         );
       if (error) qc.invalidateQueries({ queryKey: dismissalQueryKey });
     } else if (typeof window !== "undefined") {
+      // Anonymous visitors: store in sessionStorage (clears on tab close).
       window.sessionStorage.setItem(sessionStorageKey(kind, facilityValue ?? undefined), data.updatedAt);
       setAnonDismissedAt(data.updatedAt);
     }

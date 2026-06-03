@@ -24,6 +24,8 @@ export function ReadStatusBadge({
       : "border-input bg-background text-foreground"
   } ${className}`;
 
+  // "circle" icon for interactive toggles (the user can click to mark read);
+  // "x" for static status displays where the badge is informational only.
   const UnreadIcon = unreadIcon === "circle" ? Circle : X;
 
   const content = read ? (
@@ -39,6 +41,8 @@ export function ReadStatusBadge({
     </>
   );
 
+  // Render as a clickable <button> when the parent supplies an onClick handler;
+  // otherwise render as a non-interactive <span>.
   if (onClick) {
     return (
       <button

@@ -43,11 +43,15 @@ function Index() {
 
   useEffect(() => {
     const slug = facilityData?.slug;
+    // Redirect facilityUser admins to their facility's home page so they see
+    // the scoped view. `replace: true` avoids a back-button loop back to "/".
     if (rolesLoaded && isFacilityUser && slug) {
       navigate({ to: "/facility/$slug", params: { slug }, replace: true });
     }
   }, [rolesLoaded, isFacilityUser, facilityData, navigate]);
 
+  // Render nothing while the redirect is pending to prevent a flash of the
+  // generic home page before the facilityUser is sent to their facility.
   if (isFacilityUser) return null;
 
   return <IndexContent />;

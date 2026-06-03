@@ -664,6 +664,9 @@ const ICON_KEYWORDS: Record<string, string[]> = {
   Umbrella: ["protection", "rain", "cover", "safety net", "insurance", "covered", "assistance"],
 };
 
+// Score an icon against a category title. Whole-word matches score higher
+// than substring matches so "car" in "care" doesn't beat "car" as a word.
+// Bonus when the icon name itself appears in the title.
 function scoreIconForTitle(iconName: string, title: string): number {
   const kws = ICON_KEYWORDS[iconName];
   if (!kws) return 0;
@@ -697,6 +700,8 @@ export function pickRelevantIcon(opts: {
     .filter((x) => x.s > 0)
     .sort((a, b) => b.s - a.s);
   if (scored.length) {
+    // When multiple icons tie, pick randomly among them so regenerating
+    // produces variety rather than always returning the same icon.
     const top = scored[0].s;
     const tied = scored.filter((x) => x.s === top).map((x) => x.n);
     return rand(tied);

@@ -13,8 +13,8 @@ export function actionWordForType(type: string | null | undefined): string {
   return "";
 }
 
-// Detect any verb already baked into a duration string so we don't
-// append a duplicate (e.g. "5 min read read").
+// Detect any action verb already present in the duration string so we don't
+// append a duplicate (e.g. "5 min read" → "5 min read read").
 const VERB_RE = /\b(read|watch|listen|complete|meeting|call|view)\b/i;
 
 export function withActionWord(duration: string | null | undefined, type: string | null | undefined): string {
@@ -30,6 +30,9 @@ export function withActionWord(duration: string | null | undefined, type: string
 
 // Sensible default duration string for a given content type, used when no
 // media file is available to probe (e.g. bulk seeding from JSON/CSV).
+// Parses a human-readable duration string into total minutes.
+// Handles mixed units: "1 hr 20 min" → 80, "45" → 45, "1.5 hours" → 90.
+// Defaults the unit to "min" when no unit suffix is present.
 export function parseMinutes(d?: string | null): number {
   if (!d) return 0;
   let total = 0;

@@ -7,6 +7,9 @@ import { SectionCard } from "@/components/SectionCard";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — Reentry to Recovery" }] }),
+  // beforeLoad runs once for the entire /admin subtree before any child route renders.
+  // Preloading roles here means child pages can read them from context without an
+  // extra network round-trip — though most rely on useAuth() from the session instead.
   beforeLoad: async ({ location }) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
@@ -32,6 +35,9 @@ function AdminLayout() {
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-10">
+        {/* Wait for both the Supabase session AND the roles fetch before deciding
+            which branch to show — avoids a flash of the "access required" card
+            for legitimate admins whose roles haven't loaded yet. */}
         {loading || !rolesLoaded || !user ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : !canAccessAdmin ? (

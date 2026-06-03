@@ -18,7 +18,8 @@ export function useBookmarks() {
 
   const toggle = async (contentItemId: string) => {
     if (!user?.id) return;
-    // Optimistic update
+    // Optimistic update: flip the local Set immediately so the bookmark icon
+    // responds without waiting for the server round-trip.
     const wasBookmarked = bookmarkIds.has(contentItemId);
     const next = new Set(bookmarkIds);
     if (wasBookmarked) next.delete(contentItemId);
@@ -27,10 +28,11 @@ export function useBookmarks() {
 
     try {
       await toggleFn({ data: { contentItemId } });
-      // Invalidate dashboard saved tab
+      // Invalidate the full bookmarked-items list so the dashboard "Saved" tab
+      // reflects the change (that query fetches full item data, not just ids).
       qc.invalidateQueries({ queryKey: ["my-bookmarked-items", user.id] });
     } catch {
-      // Revert on error
+      // Server write failed — revert to the pre-optimistic state.
       qc.setQueryData(["my-bookmark-ids", user.id], bookmarkIds);
     }
   };

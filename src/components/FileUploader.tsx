@@ -99,9 +99,9 @@ export function FileUploader({
 
       const { token, publicUrl } = await getUrl({ data: { path } });
 
-      // Construct the Supabase signed-upload endpoint directly so we can use
-      // XHR instead of the Supabase client — XHR exposes upload.onprogress,
-      // which fetch and the Supabase JS client do not.
+      // Build the Supabase signed-upload URL manually so we can use XHR.
+      // XHR exposes upload.onprogress for byte-level progress; fetch and the
+      // Supabase JS client provide no equivalent upload progress event.
       const uploadUrl =
         `${SUPABASE_URL}/storage/v1/object/upload/sign/${BUCKET}/${path}` +
         `?token=${encodeURIComponent(token)}`;
@@ -141,8 +141,8 @@ export function FileUploader({
         const uploadingLabel = typeName
           ? `${uploadProgress}% Uploading ${typeName}`
           : `${uploadProgress}% uploading…`;
-        // Text color: badge bg mixed against white so it renders as a visible
-        // light tint rather than a near-invisible transparent overlay
+        // Mix the badge color against white (not transparent) so the clipped
+        // "revealed" text layer reads as a visible light tint on the fill swatch.
         const uploadTextColor = `color-mix(in oklab, ${ps.color} 15%, white)`;
         return (
       <button
@@ -153,19 +153,20 @@ export function FileUploader({
       >
         {uploading ? (
           <>
-            {/* Fill: badge text color + badge border on leading edge */}
+            {/* Moving fill — badge background color with a border accent on its leading edge. */}
             <span
               className="absolute inset-y-0 left-0 pointer-events-none transition-[width] duration-150"
               style={{ width: `${uploadProgress}%`, backgroundColor: ps.color, borderRight: `2px solid ${ps.border}` }}
             />
 
-            {/* Base text layer — full badge color, visible in unfilled area */}
+            {/* Base text layer — badge-color text, fully visible in the unfilled region. */}
             <span className="relative z-10 flex items-center justify-center gap-2 w-full whitespace-nowrap tabular-nums" style={{ color: ps.color }}>
               <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
               {uploadingLabel}
             </span>
 
-            {/* Revealed text layer — same light tint, clipped to fill */}
+            {/* Revealed text layer — light-tint text clipped to the filled region, creating
+                a two-tone readout: dark text on fill, light text on background. */}
             <span
               className="absolute inset-0 z-20 flex items-center justify-center gap-2 pointer-events-none whitespace-nowrap tabular-nums transition-[clip-path] duration-150"
               style={{ clipPath: `inset(0 ${100 - uploadProgress}% 0 0)`, color: uploadTextColor }}

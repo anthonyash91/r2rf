@@ -22,17 +22,25 @@ function useUserProgress(userId: string | null, categoryIds: string[]) {
     queryKey: ["home-user-progress", userId, [...categoryIds].sort().join(",")],
     enabled: !!userId && categoryIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("user_content_progress")
-        .select("category_id, content_item_id, content_items(exempt_from_progress)")
-        .eq("user_id", userId!)
-        .in("category_id", categoryIds);
-      if (error) throw error;
+      const [progressRes, exemptRes] = await Promise.all([
+        supabase
+          .from("user_content_progress")
+          .select("category_id, content_item_id")
+          .eq("user_id", userId!)
+          .in("category_id", categoryIds),
+        supabase
+          .from("content_items")
+          .select("id")
+          .eq("exempt_from_progress", true)
+          .in("category_id", categoryIds),
+      ]);
+      if (progressRes.error) throw progressRes.error;
+      const exemptIds = new Set<string>((exemptRes.data ?? []).map((r: any) => r.id as string));
       const reads: Record<string, number> = {};
       const trackableReads: Record<string, number> = {};
       const readSet = new Set<string>();
-      for (const row of (data ?? []) as any[]) {
-        const isExempt = row.content_items?.exempt_from_progress ?? false;
+      for (const row of progressRes.data ?? []) {
+        const isExempt = exemptIds.has(row.content_item_id as string);
         reads[row.category_id as string] = (reads[row.category_id as string] ?? 0) + 1;
         if (!isExempt) {
           trackableReads[row.category_id as string] = (trackableReads[row.category_id as string] ?? 0) + 1;

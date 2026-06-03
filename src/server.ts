@@ -9,11 +9,15 @@ type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
 
+// Singleton promise so the server entry module is only imported once per
+// worker instance — repeated dynamic imports would resolve the same module
+// from the module cache but waste microtask overhead on every request.
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
+      // server-entry may export its handler as `default` or as the module itself.
       (m) => ((m as { default?: ServerEntry }).default ?? (m as unknown as ServerEntry)),
     );
   }
@@ -70,6 +74,10 @@ function brandedErrorResponse(): Response {
   );
 }
 
+// Detects the specific JSON shape that h3 emits when an uncaught in-handler
+// throw has been swallowed into a generic 500: {"unhandled":true,"message":"HTTPError"}.
+// We fingerprint on the exact key set so we don't false-positive on legitimate
+// JSON API error responses that happen to be 5xx.
 function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boolean {
   let payload: unknown;
   try {
@@ -126,11 +134,13 @@ export default {
       const ip = getClientIp(request);
       const pathname = new URL(request.url).pathname;
 
-      // Global kill switch: when disabled, skip all other IP-based restrictions.
+      // Global kill switch: when disabled, bypass all IP checks so admins
+      // can temporarily open the site without touching the allowlist.
       let restrictionsEnabled = true;
       try {
         restrictionsEnabled = await isIpRestrictionEnabled();
       } catch (err) {
+        // Fail safe: if the toggle check throws, keep restrictions enabled.
         console.error("[ip-restriction-toggle] check failed:", err);
       }
       if (!restrictionsEnabled) {
@@ -139,6 +149,8 @@ export default {
         return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response, request));
       }
 
+      // Fail closed: if the allowlist fetch throws or returns empty,
+      // `allowed` stays false and the request is blocked rather than let through.
       let allowed = false;
       try {
         const allowlist = await getAllowedIps();

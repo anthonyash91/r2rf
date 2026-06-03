@@ -301,8 +301,11 @@ Every major analytics surface includes a CSV export:
 |---|---|
 | Usage report | Summary metrics, content type breakdown, per-category and per-item detail including completion rate, drop-offs, openers, completions, avg time spent, helpful ratings, not-helpful ratings, bookmark count |
 | Facility comparison | All facilities with users, active counts, participation rate, completion rate, time spent, total bookmarks, total helpful ratings, total not-helpful ratings |
-| User progress | Full per-user report with per-category and per-item breakdown including read status, progress percentage, time spent, bookmarked (Yes/blank), rating (Helpful / Not helpful / blank) |
+| User progress | Full per-user report with per-category and per-item breakdown. Columns: Category, Item Title, Read, Read On, Progress, Time Spent, Bookmarked, Rating. Each category appears once as a summary row (showing aggregate read count and total time); individual item rows leave the category column blank to avoid repetition. |
 | Facility users | User list with signup date, last login, engagement tier, percentile |
+| **Bulk facility progress** | All users × all items for a facility in a single flat CSV — one row per user+item. Columns: First Name, Last Name, Username, PIN, Last Login, Items Completed, Time Spent (hrs), Category, Item Title, Completed, Completed On, Progress %, Time on Item (min), Bookmarked, Rating. Items are grouped by category in display order. User-level fields (name, PIN, totals) and the Category column are shown only on the first row of each user/category group — subsequent rows leave them blank to keep the sheet readable. Includes all published items visible to the facility — even items with no progress — so gaps in engagement are visible. |
+
+The bulk facility progress export is particularly useful for program reviews, parole board documentation, and grant reporting where an overview of an entire cohort's engagement is needed. Available to Admin and Facility User roles. Requires a specific facility to be selected — "all facilities" is not supported to keep file sizes manageable.
 
 CSV exports are suitable for import into spreadsheet tools, grant reporting templates, or program management systems.
 

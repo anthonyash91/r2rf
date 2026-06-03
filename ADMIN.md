@@ -167,18 +167,19 @@ Select a specific facility to view its usage report scoped to that facility's us
 
 ### Users Tab
 
-Select a facility to see registered users with signup date, last login, and engagement tier. Click any user to open their individual progress report showing:
+Select a facility to see registered users with signup date, last login, and engagement tier. Click any user to open their individual progress report showing sections in this order:
 
-- Total items and categories completed (exempt items excluded from counts)
-- Time spent, day streak, last login
-- Engagement tier and facility percentile
-- Monthly summary card (items and time this month vs. last month, achievements earned this month)
-- Per-category breakdown with weighted completion ring and time spent
-- Per-item detail including read/acknowledged status, completion date, media progress, time spent, bookmark status, and rating
+1. **Stat cards** — items completed, categories completed, time spent, day streak, last login
+2. **Monthly summary** — collapsible card showing items and time this month vs. last month, plus achievements earned this month
+3. **Engagement tier** — facility percentile ranking (shown only when a tier is available)
+4. **Achievements** — all 13 achievement badges; earned shown in accent color, unearned dimmed
+5. **Category list** — per-category breakdown with weighted completion ring and time spent; each category expands to show per-item detail including read/acknowledged status, completion date, media progress, time spent, bookmark status, and rating
 
 Exempt items appear in the per-item list with an "Acknowledge/Acknowledged" badge and a disclaimer noting they don't count toward this user's progress.
 
-All views exportable as CSV.
+All views exportable as CSV, including:
+- **Export CSV** — the user list with signup date, last login, and engagement tier
+- **Export All Progress (CSV)** — a flat CSV with one row per user × item, covering every published item visible to the facility for every user. Columns: First Name, Last Name, Username, PIN, Last Login, Items Completed, Time Spent, Category, Item Title, Completed, Completed On, Progress %, Time on Item, Bookmarked, Rating. Items are grouped by category; repeated user and category values are shown only once. Useful for program reviews, parole documentation, and grant reporting. Only available when a specific facility is selected, not in the "all facilities" view.
 
 #### Manual Refresh *(Admin only)*
 A refresh button triggers the nightly analytics job on demand. Only admins can trigger this.

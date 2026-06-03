@@ -88,6 +88,7 @@ export function LoadMorePager({
   if (total <= pager.initial) return null;
 
   const visible = Math.min(pager.visibleCount, total);
+  // remaining: items not yet shown. Controls whether "Show more / Show all" appear.
   const remaining = Math.max(0, total - visible);
   const plural = itemLabelPlural ?? `${itemLabel}s`;
   const noun = total === 1 ? itemLabel : plural;
@@ -108,6 +109,7 @@ export function LoadMorePager({
             </LoadingButton>
           </>
         )}
+        {/* Collapse only appears once more than the initial page has been revealed. */}
         {visible > pager.initial && (
           <LoadingButton variant="secondary" onClick={pager.collapse}>
             Collapse

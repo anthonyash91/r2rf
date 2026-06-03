@@ -26,9 +26,11 @@ export function isMutationPendingFor<V>(
   key?: string,
 ): boolean {
   if (!mutation.isPending) return false;
+  // No key: variables is a scalar (e.g. the id string passed directly to mutate()).
   if (key === undefined) {
     return mutation.variables === value;
   }
+  // key provided: variables is an object; check the specified property.
   const vars = mutation.variables as Record<string, unknown> | null | undefined;
   return vars?.[key] === value;
 }

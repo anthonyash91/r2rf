@@ -72,6 +72,9 @@ export const deleteAllErrorLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context.supabase, context.userId);
+    // `.gte("created_at", "1900-01-01")` is a no-op filter that satisfies
+    // Supabase's requirement that DELETE requests include at least one filter —
+    // it deletes all rows without requiring a true "delete all" escape hatch.
     const { error } = await supabaseAdmin
       .from("error_logs")
       .delete()

@@ -39,7 +39,6 @@ import { Button } from "@/components/ui/button";
 import {
   BADGE_VARIANTS,
   DEFAULT_BADGE_STYLES,
-  KNOWN_TYPES,
   PALETTES,
   paletteStyle,
   indexForType,
@@ -137,15 +136,19 @@ function AdminIconsBadgesPage() {
     },
   });
 
-  const { data: dbTypes = [] } = useQuery({
-    queryKey: ["content-types"],
+  const { data: dbTypes = [], error: typesError } = useQuery({
+    queryKey: ["admin", "icons-badges", "content-types"],
+    staleTime: 0,
     queryFn: async () => {
-      const { data, error } = await supabase.from("content_items").select("type");
-      if (error) throw error;
-      return Array.from(new Set((data ?? []).map((r: { type: string }) => r.type).filter(Boolean))) as string[];
+      const { data, error } = await (supabase as any)
+        .from("content_types")
+        .select("value")
+        .order("value");
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((r: { value: string }) => r.value.toLowerCase()) as string[];
     },
   });
-  const allTypes = Array.from(new Set([...KNOWN_TYPES, ...dbTypes.map((t) => t.toLowerCase())])).sort((a, b) => a.localeCompare(b));
+  const allTypes = [...dbTypes].sort((a, b) => a.localeCompare(b));
 
   const [draft, setDraft] = useState<BadgeStyles>(saved ?? DEFAULT_BADGE_STYLES);
   const [catDraft, setCatDraft] = useState<Record<string, string | null>>({});
@@ -169,11 +172,15 @@ function AdminIconsBadgesPage() {
   }, [categories]);
 
   useEffect(() => {
-    const newTypes = allTypes.filter(
-      (t) => (draft.types as Record<string, number>)[t] === undefined,
-    );
-    if (newTypes.length === 0) return;
+    if (allTypes.length === 0) return;
+    // Compute newTypes INSIDE the functional update so we always check against
+    // the latest settled state — not a stale closure from a concurrent setDraft(saved).
+    let assignedNewColors = false;
     setDraft((d) => {
+      const newTypes = allTypes.filter(
+        (t) => (d.types as Record<string, number>)[t] === undefined,
+      );
+      if (newTypes.length === 0) return d;
       const used = new Set<number>();
       for (const idx of Object.values(d.types as Record<string, number>)) {
         if (idx !== undefined) used.add(idx);
@@ -188,9 +195,20 @@ function AdminIconsBadgesPage() {
           const idx = nextUnusedIndex(0, used);
           types[t] = idx;
           used.add(idx);
+          assignedNewColors = true;
         }
       }
-      return { ...d, types: types as any };
+      if (!assignedNewColors) return d;
+      const next = { ...d, types: types as any };
+      // Persist immediately so the assigned colors survive page reloads
+      // without the user having to manually click Save Changes.
+      Promise.resolve(
+        supabase.from("site_settings").upsert(
+          { key: BADGE_STYLES_KEY, value: next as unknown as never, updated_at: new Date().toISOString() },
+          { onConflict: "key" },
+        )
+      ).then(() => qc.invalidateQueries({ queryKey: [...badgeStylesQueryKey] })).catch(() => {});
+      return next;
     });
   }, [allTypes.join(",")]);
 
@@ -490,6 +508,9 @@ function AdminIconsBadgesPage() {
             Regenerate All
           </Button>
         </div>
+        {typesError && (
+          <p className="mt-4 text-sm text-destructive">{(typesError as Error).message}</p>
+        )}
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {allTypes.map((t) => {
             const idx = (draft.types as Record<string, number>)[t] ?? indexForType(t, draft);

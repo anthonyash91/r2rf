@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { useI18n } from "@/lib/i18n";
 
+// scorePassword: awards 1 point each for ≥8 chars, ≥12 chars, mixed case,
+// a digit, and a symbol. Capped at 4 to match the four visual segments.
 export function scorePassword(pw: string): number {
   if (!pw) return 0;
   let score = 0;
@@ -12,6 +14,7 @@ export function scorePassword(pw: string): number {
   return Math.min(score, 4);
 }
 
+// Index 0 = empty (muted track); indices 1-4 map to score 1-4 (weak → strong).
 const COLORS = [
   "bg-muted",
   "bg-red-500",
@@ -34,6 +37,7 @@ export function PasswordStrengthMeter({ password }: { password: string }) {
   return (
     <div className="mt-2">
       <div className="flex gap-1">
+        {/* Four equal segments — filled up to `score` using the color for that score. */}
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}

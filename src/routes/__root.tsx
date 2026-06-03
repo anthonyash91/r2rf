@@ -17,7 +17,8 @@ import { installGlobalErrorReporter, reportError } from "@/lib/client-error-repo
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
-  // Preserve ?site= if the user arrived via a facility link
+  // Preserve ?site= so the "Go home" link keeps the user inside their facility's context
+  // rather than landing on the generic homepage.
   const activeSite = typeof window !== "undefined"
     ? window.sessionStorage.getItem("active-facility-slug")
     : null;
@@ -46,6 +47,8 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
+  // Report the error to the server-side error log in addition to the console.
+  // Effect runs on every new error so each distinct crash is recorded once.
   useEffect(() => { reportError(error, { kind: "react.errorBoundary" }); }, [error]);
   const router = useRouter();
 
@@ -123,6 +126,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // Install window.onerror + unhandledrejection listeners exactly once at app boot.
   useEffect(() => { installGlobalErrorReporter(); }, []);
 
   return (

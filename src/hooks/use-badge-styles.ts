@@ -19,6 +19,8 @@ export function useBadgeStyles(): BadgeStyles {
     queryKey: badgeStylesQueryKey,
     queryFn: fetchBadgeStyles,
     staleTime: 5 * 60 * 1000,
+    // placeholderData (not initialData) so defaults are shown while loading
+    // without being written into the cache — the real data replaces it once fetched.
     placeholderData: DEFAULT_BADGE_STYLES,
   });
   return data ?? DEFAULT_BADGE_STYLES;

@@ -599,6 +599,9 @@ function AdminCategoriesContent() {
             ) : filteredOrder.length === 0 ? (
               <EmptyState>No categories match your search.</EmptyState>
             ) : bulk.editMode || q ? (
+              // In edit mode OR during search, swap the SortableList for a plain
+              // <ul> so drag-and-drop is disabled. Reordering filtered results or
+              // while selecting rows would produce an inconsistent sort order.
               <ul className="divide-y divide-border">
                 {filteredOrder.map((c) => {
                   const selected = bulk.has(c.id);

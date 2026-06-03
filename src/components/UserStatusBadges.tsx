@@ -38,6 +38,8 @@ export function UserStatusBadges({
 
   return (
     <BadgeGroup className={cn(className)}>
+      {/* Tester badge takes the first slot exclusively — tester accounts don't
+          belong to a facility, so the facility badge is omitted for them. */}
       {isTester ? (
         <Badge variant="tester" size="sm">Tester</Badge>
       ) : !hideFacilityBadge ? (
@@ -46,6 +48,7 @@ export function UserStatusBadges({
         </Badge>
       ) : null}
       {!isTester && isUser && <Badge variant="user" size="sm">User</Badge>}
+      {/* New badge only makes sense for regular users — not for testers. */}
       {isNew && !isTester && isUser && <Badge variant="new" size="sm">New</Badge>}
       {children}
     </BadgeGroup>

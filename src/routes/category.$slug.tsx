@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useMemo, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
 
+// Lazy-load PdfViewer so pdfjs-dist (large) is only bundled for users who
+// actually open a PDF — it's not needed on the initial category page load.
 const PdfViewer = lazy(() => import("@/components/PdfViewer"));
 import { trackCategoryView, trackContentClick } from "@/lib/analytics";
 import { weightedCompletionPct } from "@/lib/content-progress";
@@ -125,6 +127,7 @@ function CategoryPage() {
   // button after the user has actually opened the viewer at least once.
   const openedPdfsRef = useRef(new Set<string>());
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [categoryComplete, setCategoryComplete] = useState(false);
   const [othersApi, setOthersApi] = useState<CarouselApi>();
   const [othersCurrent, setOthersCurrent] = useState(0);
   const [othersCount, setOthersCount] = useState(0);
@@ -320,6 +323,11 @@ function CategoryPage() {
       if (vars.markRead) {
         nextReadSet.add(vars.itemId);
         nextReadAtMap.set(vars.itemId, new Date().toISOString());
+        // Check if this item just completed the entire category
+        const trackable = visibleItems.filter((i) => !(i as any).exempt_from_progress);
+        if (trackable.length > 0 && trackable.every((i) => nextReadSet.has(i.id))) {
+          setTimeout(() => setCategoryComplete(true), 600);
+        }
       } else {
         nextReadSet.delete(vars.itemId);
         nextReadAtMap.delete(vars.itemId);
@@ -1143,6 +1151,44 @@ function CategoryPage() {
               alt={imageViewer.title}
               className="w-full h-auto max-h-[calc(100dvh-2rem)] object-contain bg-black"
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Category completion celebration */}
+      <Dialog open={categoryComplete} onOpenChange={(open) => { if (!open) setCategoryComplete(false); }}>
+        <DialogContent className="max-w-sm w-[calc(100vw-2rem)] text-center rounded-2xl border border-border bg-card p-8 shadow-xl">
+          <DialogTitle className="sr-only">
+            {t("category.completedHeadline").replace("{name}", pickLang(lang, data?.category?.name ?? "", data?.category?.name_es))}
+          </DialogTitle>
+          {data?.category && (
+            <>
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  <CategoryIcon
+                    name={data.category.icon_name}
+                    color={data.category.icon_color}
+                    size="lg"
+                  />
+                  <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-accent)] shadow-sm">
+                    <CheckCircle2 className="h-4 w-4 text-white" strokeWidth={2.5} />
+                  </span>
+                </div>
+              </div>
+              <h2 className="font-display text-2xl font-bold leading-tight">
+                {t("category.completedHeadline").replace("{name}", pickLang(lang, data.category.name, data.category.name_es))}
+              </h2>
+              <p className="mt-3 text-muted-foreground leading-relaxed">
+                {t("category.completedMessage")}
+              </p>
+              <button
+                type="button"
+                onClick={() => setCategoryComplete(false)}
+                className="mt-8 w-full rounded-xl bg-[var(--color-accent)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              >
+                {t("category.completedClose")}
+              </button>
+            </>
           )}
         </DialogContent>
       </Dialog>

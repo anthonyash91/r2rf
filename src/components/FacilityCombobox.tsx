@@ -36,6 +36,8 @@ export function FacilityCombobox({
 }) {
   const [open, setOpen] = useState(false);
   const sel = options.find((o) => o.value === value);
+  // When allowClear is on, an empty value means "All facilities" — show that label
+  // instead of the placeholder so the trigger never reads as "unset".
   const display = sel ? sel.label : (allowClear ? clearLabel : placeholder);
 
   return (
@@ -65,6 +67,7 @@ export function FacilityCombobox({
           <CommandList>
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
+              {/* "All facilities" clear item — checkmark shown when no facility is selected. */}
               {allowClear && (
                 <CommandItem
                   value={clearLabel}
@@ -85,6 +88,7 @@ export function FacilityCombobox({
                     setOpen(false);
                   }}
                 >
+                  {/* Checkmark is always rendered but hidden via opacity so column width stays stable. */}
                   <Check className={cn("mr-2 h-4 w-4", value === o.value ? "opacity-100" : "opacity-0")} />
                   <span className={cn(o.disabled && "text-muted-foreground")}>
                     {o.label}{o.suffix ? ` ${o.suffix}` : ""}

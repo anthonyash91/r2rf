@@ -226,12 +226,15 @@ function MessageEditor({
   });
 
   const [value, setValue] = useState<SiteMessage>(DEFAULTS);
+  // Sync form state when server data loads — the form starts from DEFAULTS
+  // and is overwritten once the query resolves so edits always start from truth.
   useEffect(() => {
     if (data) setValue(data);
   }, [data]);
 
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
   const [showEs, setShowEs] = useState(false);
+  // Auto-expand the Spanish section when the loaded message already has a translation.
   useEffect(() => {
     if (data?.message_es?.trim()) setShowEs(true);
   }, [data]);

@@ -113,9 +113,10 @@ function AdminUsersPage() {
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Snapshot the "last seen" timestamp at mount so newly-signed-up users stay
-  // highlighted for the duration of this visit. On unmount (or now), bump
-  // lastSeen so the AdminNav badge clears and these won't highlight next time.
+  // Capture the threshold at mount so it's stable for the whole visit — any
+  // user created after this instant will be highlighted as "New". The useEffect
+  // then bumps the stored value so on the next visit these users are no longer
+  // new and the AdminNav badge count resets.
   const newUsersSinceRef = useRef<string>(getLastSeenUsersAt());
   const isNewUser = (u: UserRow) =>
     u.created_at > newUsersSinceRef.current &&

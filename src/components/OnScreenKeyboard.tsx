@@ -98,6 +98,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     } else if (key === "SPACE") {
       target.setValue(cur + " ");
     } else if (key === "ENTER") {
+      // Submit the nearest ancestor form so the OSK works like a hardware keyboard.
       const form = el.closest("form");
       form?.requestSubmit();
       return;
@@ -110,8 +111,11 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     } else {
       const ch = layout === "letters" && shift ? key.toUpperCase() : key;
       target.setValue(cur + ch);
+      // Auto-release shift after one uppercase character (standard mobile behavior).
       if (shift) setShift(false);
     }
+    // Restore focus to the input after each keypress so controlled value updates
+    // don't steal focus away from the input element.
     requestAnimationFrame(() => el.focus());
   }
 
@@ -240,8 +244,8 @@ export function useKeyboardInput(value: string, onChange: (v: string) => void) {
     };
   }, [ctx]);
 
-  // On desktop, return only a ref — no inputMode override, no register
-  // handlers — so the field behaves like a normal native input.
+  // On desktop, return only the ref so the field behaves like a normal native
+  // input — no inputMode override that would suppress the system keyboard.
   if (!ctx?.isMobile) {
     return { ref: ref as React.RefObject<any> };
   }
@@ -258,6 +262,8 @@ export function useKeyboardInput(value: string, onChange: (v: string) => void) {
 
   return {
     ref: ref as React.RefObject<any>,
+    // `inputMode: "none"` suppresses the native virtual keyboard on mobile so
+    // the on-screen keyboard is the only input method for this field.
     inputMode: "none" as const,
     onFocus: doRegister,
     onClick: doRegister,

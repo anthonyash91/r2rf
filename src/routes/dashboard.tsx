@@ -38,7 +38,7 @@ import { ACHIEVEMENTS } from "@/lib/achievements";
 import { getMyMonthlySummary } from "@/lib/monthly-summary.functions";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
@@ -303,6 +303,25 @@ function DashboardPage() {
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchMonthlySummary(),
   });
+  const resumeQuery = useQuery({
+    queryKey: ["resume-item", user?.id],
+    enabled: !!user?.id && isUser,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("user_content_engagement")
+        .select("content_item_id, category_id, last_updated_at, session_seconds, media_progress_seconds, media_duration_seconds")
+        .eq("user_id", user!.id)
+        .order("last_updated_at", { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        content_item_id: string; category_id: string; last_updated_at: string;
+        session_seconds: number; media_progress_seconds: number | null; media_duration_seconds: number | null;
+      }>;
+    },
+  });
+
   const { earned: earnedAchievements } = useAchievements();
   const fetchBookmarkedItems = useServerFn(getMyBookmarkedItems);
   const bookmarkedItemsQuery = useQuery({
@@ -515,6 +534,74 @@ function DashboardPage() {
               <p className="text-sm text-muted-foreground">{t("home.empty")}</p>
             ) : (
               <>
+                {/* Resume card — most recently touched incomplete item */}
+                {(() => {
+                  if (!resumeQuery.data || !progressQuery.data) return null;
+                  const readSet = progressQuery.data.readSet;
+                  const itemsByCat = progressQuery.data.itemsByCat;
+                  for (const eng of resumeQuery.data) {
+                    if (readSet.has(eng.content_item_id)) continue;
+                    const catItems = itemsByCat.get(eng.category_id) ?? [];
+                    const item = catItems.find((i: any) => i.id === eng.content_item_id);
+                    if (!item || (item as any).exempt_from_progress) continue;
+                    const category = (categoriesQuery.data ?? []).find((c: any) => c.id === eng.category_id);
+                    if (!category) continue;
+                    const isAV = item.type && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("audio") || item.type.toLowerCase().includes("podcast"));
+                    const mediaPct = isAV && eng.media_progress_seconds && eng.media_duration_seconds && eng.media_duration_seconds > 0
+                      ? Math.min(99, Math.round((eng.media_progress_seconds / eng.media_duration_seconds) * 100))
+                      : null;
+                    const isPdf = item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url as string);
+                    const pdfMins = isPdf ? parseMinutes(item.duration) : 0;
+                    const sessionMins = Math.round((eng.session_seconds ?? 0) / 60);
+                    const color = (category as any).icon_color || "var(--color-accent)";
+                    return (
+                      <Link
+                        key={eng.content_item_id}
+                        to="/category/$slug"
+                        params={{ slug: (category as any).slug }}
+                        hash={`item-${eng.content_item_id}`}
+                        className="block mb-6 rounded-2xl border border-border bg-[#fffdf8] p-5 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)] transition-all group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <CategoryIcon
+                            name={(category as any).icon_name}
+                            color={(category as any).icon_color}
+                            size="lg"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-muted-foreground truncate">
+                              {pickLang(lang, (category as any).name, (category as any).name_es)}
+                            </p>
+                            <p className="font-semibold text-foreground truncate leading-snug">
+                              {pickLang(lang, item.title, (item as any).title_es)}
+                            </p>
+                            {mediaPct !== null && mediaPct >= 5 && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {mediaPct}% {item.type?.toLowerCase().includes("video") ? t("category.markedWatched").toLowerCase() : t("category.markedListened").toLowerCase()}
+                              </p>
+                            )}
+                            {isPdf && pdfMins > 0 && sessionMins > 0 && (
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {Math.min(sessionMins, pdfMins)} / {pdfMins} min
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex-shrink-0 flex items-center gap-4">
+                            <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">{t("dashboard.resumeLabel")}</span>
+                            <span
+                              className="flex items-center justify-center h-8 w-8 rounded-full transition-colors"
+                              style={{ backgroundColor: `color-mix(in oklab, ${color} 15%, transparent)`, color }}
+                            >
+                              <ArrowRight className="h-4 w-4" />
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  }
+                  return null;
+                })()}
+
                 {!isAdmin && (() => {
                   let totalAll = 0;
                   let readAll = 0;
@@ -573,6 +660,12 @@ function DashboardPage() {
                             {t("dashboard.overallSummary", { done: readAll.toLocaleString(), total: totalAll.toLocaleString() } as any)}
                           </p>
                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
+                        {stats.map((s) => (
+                          <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
+                        ))}
                       </div>
 
                       {(() => {
@@ -669,12 +762,6 @@ function DashboardPage() {
                         );
                       })()}
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
-                        {stats.map((s) => (
-                          <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
-                        ))}
-                      </div>
-
                       {tierQuery.data?.tier && (
                         <div className="mb-6 rounded-2xl border border-border bg-card px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
                           <div>
@@ -707,11 +794,11 @@ function DashboardPage() {
                         </div>
                       )}
 
-                      <h2 className="font-display text-lg font-semibold mb-3">{t("dashboard.categoryProgress")}</h2>
                     </>
                   );
                 })()}
 
+                <h2 className="font-display text-lg font-semibold mb-3">{t("dashboard.categoryProgress")}</h2>
                 <CategoryAccordion
                   categories={categoriesQuery.data ?? []}
                   progress={progressQuery.data}
@@ -1094,11 +1181,15 @@ function CategoryProgressSection({
   const open = isOpen;
   const trackableItems = items.filter((it) => !(it as any).exempt_from_progress);
   const pct = weightedCompletionPct(trackableItems, readSet, engagementMap);
+
   const tagline = pickLang(lang, category.tagline, category.tagline_es);
   const sectionRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (isOpen && sectionRef.current) {
       const el = sectionRef.current;
+      // rAF defers the scroll until after the expand animation has begun and
+      // the element has its updated layout — measuring getBoundingClientRect()
+      // synchronously would use the collapsed (zero-height) dimensions.
       requestAnimationFrame(() => {
         const top = el.getBoundingClientRect().top + window.scrollY - 96;
         window.scrollTo({ top, behavior: "smooth" });

@@ -289,18 +289,25 @@ const TYPE_KEYWORD_ICONS: Array<[RegExp, LucideIcon]> = [
 
 export function iconForType(type: string | null | undefined): LucideIcon {
   const raw = (type ?? "").trim();
+  // No type string provided — fall back to the generic file icon.
   if (!raw) return File;
   const key = raw.toLowerCase();
+  // Fast path: exact match against the curated TYPE_ICONS map.
   if (TYPE_ICONS[key]) return TYPE_ICONS[key];
+  // Keyword heuristics: scan TYPE_KEYWORD_ICONS in order; first regex match wins.
   for (const [re, Icon] of TYPE_KEYWORD_ICONS) {
     if (re.test(key)) return Icon;
   }
+  // Nothing matched — default to the generic file icon.
   return File;
 }
 
 export function Badge({ variant, type, hideIcon, children, className, title, onClick, size = "md" }: BadgeProps) {
   const styles = useBadgeStyles();
 
+  // Determine the palette index: "type" badges derive their index from the type
+  // string (with optional per-type override); all other variants use their stored
+  // palette index, defaulting to 0 if not yet configured.
   const idx =
     variant === "type"
       ? indexForType(type, styles)
@@ -308,6 +315,9 @@ export function Badge({ variant, type, hideIcon, children, className, title, onC
 
   const ps = paletteStyle(idx);
 
+  // Resolve the icon to render. "type" badges check for a per-type icon override
+  // saved in badge styles first, then fall through to the keyword heuristic.
+  // Variant badges use the VARIANT_ICONS map unless an override is configured.
   let Icon: LucideIcon | undefined;
   if (variant === "type") {
     const key = (type ?? "").trim().toLowerCase();
@@ -318,7 +328,7 @@ export function Badge({ variant, type, hideIcon, children, className, title, onC
     Icon = (overrideName && ICON_REGISTRY[overrideName]) || VARIANT_ICONS[variant];
   }
 
-
+  // Select the appropriate CSS class set and icon dimensions based on the size prop.
   const base = size === "sm" ? BASE_SM : BASE;
   const iconSize = size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5";
 

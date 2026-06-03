@@ -21,7 +21,8 @@ async function fetchTable(table: string): Promise<Set<string>> {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     console.error(`[ip-allowlist] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY (table=${table})`);
-    // Fail closed — without DB access we cannot verify any IP is allowed.
+    // Fail closed: return an empty set so no IP passes the allowlist check.
+    // This prevents a misconfigured server from accidentally granting open access.
     return new Set();
   }
   const res = await fetch(`${url}/rest/v1/${table}?select=ip_address`, {
@@ -40,6 +41,8 @@ async function fetchTable(table: string): Promise<Set<string>> {
 export async function getAllowedIps(): Promise<Set<string>> {
   const now = Date.now();
   if (siteCache && siteCache.expiresAt > now) return siteCache.ips;
+  // If a fetch is already in flight, attach to it rather than issuing a
+  // second concurrent request — important under high concurrency.
   if (siteInflight) return siteInflight;
   siteInflight = fetchTable("ip_allowlist")
     .then((ips) => {
@@ -138,6 +141,7 @@ export async function getCustomHomeRestrictions(): Promise<Map<string, Set<strin
 }
 
 export function getClientIp(request: Request): string | null {
+  // Priority: Cloudflare real-IP → standard proxy header (first entry) → NGINX.
   const cf = request.headers.get("cf-connecting-ip");
   if (cf) return cf.trim();
   const xff = request.headers.get("x-forwarded-for");

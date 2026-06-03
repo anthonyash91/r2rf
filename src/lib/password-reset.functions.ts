@@ -39,10 +39,10 @@ async function findUserIdByUsername(username: string): Promise<string | null> {
 }
 
 async function checkAndRecordResetAttempt(ip: string | null, username: string) {
-  if (!ip) return;
+  if (!ip) return; // No IP available — skip rate limiting rather than blocking everyone
   const since = new Date(Date.now() - RESET_WINDOW_MS).toISOString();
-  // Use an advisory lock inside the DB function to make the check+insert atomic,
-  // preventing concurrent requests from racing past the rate limit.
+  // The DB function uses an advisory lock so concurrent requests can't race
+  // past the rate limit by reading the count before either has inserted.
   const { error } = await supabaseAdmin.rpc("check_and_record_reset_attempt" as any, {
     p_ip: ip,
     p_username: username.toLowerCase(),
@@ -86,6 +86,9 @@ export const getResetQuestions = createServerFn({ method: "POST" })
     }
     const userId = await findUserIdByUsername(data.username);
 
+    // Deterministically derive two distinct fake question keys from the username.
+    // Using SHA-256 ensures the same username always returns the same pair,
+    // so timing/response analysis can't distinguish "user exists" from "user not found".
     const fakePair = (username: string) => {
       const hash = createHash("sha256").update(username).digest();
       const a = SECURITY_QUESTION_KEYS[hash[0] % SECURITY_QUESTION_KEYS.length];
@@ -132,6 +135,8 @@ export const resetPassword = createServerFn({ method: "POST" })
     const ip = getClientIp(getRequest());
     await checkAndRecordResetAttempt(ip, data.username);
 
+    // A single generic error for all failure modes (wrong user, wrong answers)
+    // prevents an attacker from knowing whether the username exists.
     const genericError = "Username or security answers are incorrect.";
     const userId = await findUserIdByUsername(data.username);
     if (!userId) throw new Error(genericError);

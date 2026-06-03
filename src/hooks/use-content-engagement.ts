@@ -89,7 +89,9 @@ export function useContentEngagement({
   const durationRef = useRef(0);
   const autoMarkedRef = useRef(false);
 
-  // Sync base values when a new item opens or when existing data arrives late
+  // Sync base values when a new item opens or when existing data arrives late.
+  // `sessionProgress` may be ahead of the DB if the user interacted and the
+  // flush hasn't landed yet — take the max to avoid seeking backward on reopen.
   useEffect(() => {
     if (!isActive || !contentItemId) return;
     baseSecondsRef.current = existing?.session_seconds ?? 0;
@@ -102,14 +104,16 @@ export function useContentEngagement({
     lastActivityRef.current = Date.now();
     autoMarkedRef.current = false;
 
-    // If the element is already loaded, seek immediately
+    // If the element is already loaded, seek immediately; otherwise the
+    // loadedmetadata handler below will seek once metadata is available.
     if (resumePos > 5) {
       if (videoEl && videoEl.readyState >= 1) videoEl.currentTime = resumePos;
       if (audioEl && audioEl.readyState >= 1) audioEl.currentTime = resumePos;
     }
   }, [contentItemId, isActive, existing, videoEl, audioEl]);
 
-  // Write combined record
+  // `write` upserts the cumulative record so every call is idempotent — if the
+  // network retries, the DB ends up with the same value rather than doubling.
   const write = useCallback(() => {
     if (!userId || !contentItemId || !categoryId) return;
     Promise.resolve(
@@ -120,6 +124,7 @@ export function useContentEngagement({
             user_id: userId,
             content_item_id: contentItemId,
             category_id: categoryId,
+            // Always send base + accumulated so any previous partial write is overwritten.
             session_seconds: baseSecondsRef.current + accSecondsRef.current,
             media_progress_seconds: furthestRef.current > 0 ? furthestRef.current : null,
             media_duration_seconds: durationRef.current > 0 ? durationRef.current : null,
@@ -130,7 +135,8 @@ export function useContentEngagement({
     ).catch(() => {});
   }, [userId, contentItemId, categoryId]);
 
-  // Activity listener
+  // Stamp `lastActivityRef` on any user interaction so the heartbeat can detect
+  // idle periods. `passive: true` avoids blocking the browser's scroll/touch pipeline.
   useEffect(() => {
     if (!isActive) return;
     const refresh = () => { lastActivityRef.current = Date.now(); };
@@ -267,6 +273,8 @@ export function useContentEngagement({
     };
   }, [audioEl, write, onAutoMarkRead, contentItemId]);
 
+  // Exposed so the UI can show a progress bar. Null when no media has been played
+  // (non-media content types) or before the player reports a duration.
   const mediaProgressPct =
     durationRef.current > 0 && furthestRef.current > 0
       ? Math.min(100, Math.round((furthestRef.current / durationRef.current) * 100))

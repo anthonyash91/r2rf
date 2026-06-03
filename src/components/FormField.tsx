@@ -34,6 +34,8 @@ export function LabeledInput({
   className,
   ...rest
 }: LabeledInputProps) {
+  // Derive a stable datalist id from the label so the <input list> attribute
+  // links correctly without needing an explicit id prop.
   const listId =
     suggestions && suggestions.length > 0
       ? `dl-${label.replace(/\s+/g, "-").toLowerCase()}`

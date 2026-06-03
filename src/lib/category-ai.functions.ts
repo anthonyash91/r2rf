@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import Anthropic from "@anthropic-ai/sdk";
 
 async function assertAdminOrContributor(supabase: any, userId: string) {
@@ -18,6 +19,8 @@ async function assertAdminOrContributor(supabase: any, userId: string) {
 
 const anthropic = new Anthropic();
 
+// Pulls the first text block from a Claude response; falls back to "{}"
+// so JSON.parse always succeeds even when the model returns no text block.
 function extractText(msg: Anthropic.Message): string {
   for (const block of msg.content) {
     if (block.type === "text") return block.text;
@@ -122,7 +125,8 @@ export const translateToSpanish = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    // Translation is available to facilityUsers (for facility messages) in addition to admin/contributor
+    // facilityUsers can translate their own facility banner messages, so
+    // translation needs to be accessible to them in addition to admin/contributor.
     const [adminRes, contribRes, facilityRes] = await Promise.all([
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "contributor" }),
@@ -178,4 +182,20 @@ export const translateToSpanish = createServerFn({ method: "POST" })
       console.error("translateToSpanish: empty result", { content: extractText(msg) });
     }
     return { fields: out };
+  });
+
+/**
+ * Delete a custom content type by reassigning all items using it to "Article".
+ * Uses supabaseAdmin to bypass RLS — the content_items UPDATE policy only allows
+ * admin role via the user-scoped client, which silently fails for contributors.
+ */
+export const deleteContentType = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ type: z.string().min(1).max(100) }).parse(input))
+  .handler(async ({ context, data }) => {
+    await assertAdminOrContributor(context.supabase, context.userId);
+    const { data: count, error } = await (supabaseAdmin as any)
+      .rpc("reassign_content_type", { old_type: data.type });
+    if (error) throw new Error(error.message);
+    return { ok: true, updated: count as number };
   });

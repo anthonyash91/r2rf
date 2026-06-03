@@ -64,7 +64,10 @@ export const checkAndGrantAchievements = createServerFn({ method: "POST" })
       (sum: number, r: any) => sum + ((r.session_seconds as number) || 0), 0,
     );
 
-    // Current login streak (consecutive days ending today or yesterday)
+    // Current login streak (consecutive days ending today or yesterday).
+    // startOffset=0: streak starts today. startOffset=1: the user logged in
+    // yesterday but not yet today — streak is still active. null: no recent
+    // login, so streak is 0 regardless of history.
     const loginDates = new Set((loginsRes.data ?? []).map((r: any) => r.login_date as string));
     let streak = 0;
     const today = new Date();

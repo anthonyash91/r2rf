@@ -38,6 +38,8 @@ export const ACHIEVEMENT_CATEGORY_LABELS: Record<AchievementCategory, string> = 
   time:        "Time Spent",
 };
 
+// CHECKS mirrors ACHIEVEMENTS but as a predicate map so checkAndGrantAchievements
+// can evaluate all conditions in one pass without duplicating the thresholds.
 export const CHECKS: Record<string, (s: { itemsCompleted: number; categoriesStarted: number; programsCompleted: number; totalSeconds: number; streak: number }) => boolean> = {
   first_item:    (s) => s.itemsCompleted >= 1,
   first_program: (s) => s.categoriesStarted >= 1,
@@ -49,6 +51,7 @@ export const CHECKS: Record<string, (s: { itemsCompleted: number; categoriesStar
   program_5:     (s) => s.programsCompleted >= 5,
   streak_7:      (s) => s.streak >= 7,
   streak_30:     (s) => s.streak >= 30,
+  // 5 hr = 18,000 s | 10 hr = 36,000 s | 50 hr = 180,000 s
   time_5h:       (s) => s.totalSeconds >= 18_000,
   time_10h:      (s) => s.totalSeconds >= 36_000,
   time_50h:      (s) => s.totalSeconds >= 180_000,

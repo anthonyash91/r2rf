@@ -34,6 +34,8 @@ export function useAuth() {
     const m = String(today.getMonth() + 1).padStart(2, "0");
     const d = String(today.getDate()).padStart(2, "0");
     const login_date = `${y}-${m}-${d}`;
+    // Session-storage gate prevents duplicate upserts when the auth listener fires
+    // multiple times in the same browser tab (e.g. token refresh events).
     const key = `login-logged:${userId}:${login_date}`;
     try {
       if (typeof window !== "undefined" && window.sessionStorage.getItem(key)) return;
@@ -53,9 +55,13 @@ export function useAuth() {
   }
 
   useEffect(() => {
+    // `onAuthStateChange` fires for every session event (sign-in, sign-out, token
+    // refresh). `getSession` below handles the initial page load separately.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       if (s?.user) {
+        // setTimeout(fn, 0) defers the Supabase DB call out of the auth listener
+        // callback to avoid a potential deadlock with the Supabase client internals.
         setTimeout(() => loadRoles(s.user.id), 0);
         setTimeout(() => logDailyLogin(s.user.id), 0);
       } else {
@@ -64,6 +70,9 @@ export function useAuth() {
       }
     });
 
+    // `getSession()` resolves synchronously from localStorage on the first render,
+    // before any auth state change event fires, ensuring nav renders correctly
+    // without a flash of the signed-out state.
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setLoading(false);
@@ -90,9 +99,11 @@ export function useAuth() {
     roles,
     isAdmin,
     isContributor,
+    // Testers are treated as regular users so they can browse content during QA.
     isUser: isUser || isTester,
     isTester,
     isFacilityUser,
+    // facilityUsers get admin access scoped to their facility's data.
     canAccessAdmin: isAdmin || isContributor || isFacilityUser,
     loading,
     rolesLoaded,

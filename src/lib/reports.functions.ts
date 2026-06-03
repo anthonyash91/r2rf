@@ -115,7 +115,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
         .order("sort_order", { ascending: true }),
       supabaseAdmin
         .from("content_items")
-        .select("id, category_id, title, type, duration, description, url, file_url, published, sort_order, created_at")
+        .select("id, category_id, title, type, duration, description, url, file_url, published, sort_order, created_at, exempt_from_progress")
         .order("sort_order", { ascending: true }),
       supabaseAdmin
         .from("user_profiles")
@@ -148,12 +148,13 @@ export const getUsageReport = createServerFn({ method: "POST" })
           return f.length === 0 || f.includes(facilityValue);
         })
       : (catsRes.data ?? []);
-    const filteredItems = facilityValue
+    const filteredItems = (facilityValue
       ? (itemsRes.data ?? []).filter((i: any) => {
           const f = itemFacMap[i.id] ?? [];
           return f.length === 0 || f.includes(facilityValue);
         })
-      : (itemsRes.data ?? []);
+      : (itemsRes.data ?? [])
+    ).filter((i: any) => !i.exempt_from_progress);
     const totalUsers = totalUsersRes.count ?? 0;
 
     // Early exit for facility reports with no users
@@ -892,5 +893,140 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         ).length,
       },
       achievements: userAchievements,
+    };
+  });
+
+/**
+ * Bulk facility progress export — all users × all items for a specific facility.
+ * Returns raw data for client-side CSV generation (one row per user+item).
+ * Requires a specific facilityValue — "all facilities" is not supported for
+ * performance reasons. FacilityUsers are scoped to their own facility.
+ */
+export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ facilityValue: z.string().min(1) }).parse(input))
+  .handler(async ({ context, data }) => {
+    await assertAnalyticsAdmin(context.userId);
+
+    // Enforce facility scope for facilityUser callers
+    let facilityValue = data.facilityValue;
+    const { data: callerRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "facilityUser")
+      .maybeSingle();
+    if (callerRole) {
+      const { data: callerProf } = await supabaseAdmin
+        .from("user_profiles")
+        .select("facility")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      if (!callerProf?.facility) throw new Error("Forbidden: no facility assigned");
+      if (facilityValue !== callerProf.facility) throw new Error("Forbidden: user is not in your facility");
+    }
+
+    // Staff IDs to exclude from the user list
+    const { data: staffRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .in("role", ["admin", "contributor", "tester", "facilityUser"]);
+    const staffIds = new Set<string>((staffRoles ?? []).map((r: any) => r.user_id as string));
+
+    // All regular users at this facility
+    const { data: profiles } = await supabaseAdmin
+      .from("user_profiles")
+      .select("user_id, username, first_name, last_name, inmate_pin")
+      .eq("facility", facilityValue)
+      .eq("is_synthetic", false)
+      .order("last_name", { ascending: true });
+    const facilityUsers = (profiles ?? []).filter((u: any) => !staffIds.has(u.user_id as string));
+    const userIds = facilityUsers.map((u: any) => u.user_id as string);
+
+    if (userIds.length === 0) {
+      return { users: [], categories: [], items: [], progress: [], engagement: [], bookmarks: [], ratings: [], logins: [], userStats: [] };
+    }
+
+    // Facility-visible categories and items
+    const [catFacRes, itemFacRes, catsRes] = await Promise.all([
+      (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value").range(0, 4999),
+      (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value").range(0, 4999),
+      supabaseAdmin.from("categories").select("id, name, slug, sort_order").eq("published", true).order("sort_order"),
+    ]);
+    const catFacMap: Record<string, string[]> = {};
+    for (const r of (catFacRes.data ?? []) as any[]) {
+      if (!catFacMap[r.category_id]) catFacMap[r.category_id] = [];
+      catFacMap[r.category_id].push(r.facility_value as string);
+    }
+    const itemFacMap: Record<string, string[]> = {};
+    for (const r of (itemFacRes.data ?? []) as any[]) {
+      if (!itemFacMap[r.content_item_id]) itemFacMap[r.content_item_id] = [];
+      itemFacMap[r.content_item_id].push(r.facility_value as string);
+    }
+    const visibleCats = (catsRes.data ?? []).filter((c: any) => {
+      const f = catFacMap[c.id] ?? [];
+      return f.length === 0 || f.includes(facilityValue);
+    });
+    const visibleCatIds = visibleCats.map((c: any) => c.id as string);
+
+    const itemsRes = await supabaseAdmin
+      .from("content_items")
+      .select("id, category_id, title, type, duration, url, file_url, exempt_from_progress, sort_order")
+      .eq("published", true)
+      .in("category_id", visibleCatIds)
+      .order("sort_order");
+    const visibleItems = (itemsRes.data ?? []).filter((i: any) => {
+      const f = itemFacMap[i.id] ?? [];
+      return f.length === 0 || f.includes(facilityValue);
+    });
+
+    // Fetch all per-user data in parallel, chunked to stay under URL limits
+    const chunks = chunkIds(userIds);
+
+    const fetchChunked = async (table: string, select: string): Promise<any[]> => {
+      const all: any[] = [];
+      for (const chunk of chunks) {
+        const { data } = await (supabaseAdmin as any)
+          .from(table)
+          .select(select)
+          .in("user_id", chunk)
+          .range(0, 9999);
+        all.push(...(data ?? []));
+      }
+      return all;
+    };
+
+    const [progress, engagement, bookmarks, ratings, logins, userStats] = await Promise.all([
+      fetchChunked("user_content_progress", "user_id, content_item_id, created_at"),
+      fetchChunked("user_content_engagement", "user_id, content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct"),
+      fetchChunked("user_content_bookmarks", "user_id, content_item_id"),
+      fetchChunked("user_content_ratings", "user_id, content_item_id, rating"),
+      (async () => {
+        // Last login per user — fetch all logins then deduplicate to most recent
+        const all: any[] = [];
+        for (const chunk of chunks) {
+          const { data } = await supabaseAdmin
+            .from("user_logins")
+            .select("user_id, login_date")
+            .in("user_id", chunk)
+            .order("login_date", { ascending: false })
+            .range(0, 9999);
+          all.push(...(data ?? []));
+        }
+        return all;
+      })(),
+      fetchChunked("user_stats", "user_id, items_completed, total_session_seconds, facility_percentile"),
+    ]);
+
+    return {
+      users: facilityUsers,
+      categories: visibleCats,
+      items: visibleItems,
+      progress,
+      engagement,
+      bookmarks,
+      ratings,
+      logins,
+      userStats,
     };
   });

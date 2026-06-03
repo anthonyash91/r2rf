@@ -64,6 +64,8 @@ export function FormDialog({
   contentClassName,
   children,
 }: FormDialogProps) {
+  // `body` is shared between the form and non-form render paths so the header,
+  // children, and footer are assembled once regardless of whether onSubmit is set.
   const body = (
     <>
       <DialogHeader>
@@ -102,6 +104,8 @@ export function FormDialog({
         className={cn(SIZE_CLASS[size], "pt-[18px]", contentClassName)}
         showClose={!hideClose}
       >
+        {/* Wrap in <form> when onSubmit is provided so submit buttons inside the
+            body fire the handler via native form submission. */}
         {onSubmit ? (
           <form onSubmit={onSubmit} className="space-y-4">
             {body}

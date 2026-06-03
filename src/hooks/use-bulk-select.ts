@@ -41,14 +41,19 @@ export function useBulkSelect() {
       setIsDeleting(true);
       try {
         const ok = await run(ids);
+        // Only exit edit mode on success; leave it open so the user can retry
+        // or make a different selection if the delete partially failed.
         if (ok) {
           setEditMode(false);
           setSelectedIds(new Set());
         }
       } finally {
+        // Always clear the spinner regardless of success or failure.
         setIsDeleting(false);
       }
     },
+    // Re-create when selectedIds changes so the snapshot captured by `ids`
+    // inside the callback is always current at the time of the click.
     [selectedIds],
   );
 

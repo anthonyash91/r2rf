@@ -8,6 +8,8 @@ export const attachSupabaseAuth = createMiddleware({ type: 'function' }).client(
   async ({ next }) => {
     const { data } = await supabase.auth.getSession()
     const token = data.session?.access_token
+    // Pass an empty headers object (not null) for unauthenticated callers so the
+    // server middleware can distinguish "no token" from a malformed request.
     return next({
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })

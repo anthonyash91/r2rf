@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 /** Allows only admin and contributor — blocks facilityUser from content-editing pages. */
 export async function requireContentAdminBeforeLoad({ location }: { location: { href: string } }) {
+  // Guards run on both client and server during SSR; skip on the server
+  // since auth state only exists in the browser session.
   if (typeof window === "undefined") return;
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) {

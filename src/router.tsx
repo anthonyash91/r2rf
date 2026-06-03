@@ -17,6 +17,9 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    // defaultPreloadStaleTime: 0 forces preloaded route data to always be
+    // considered stale so hovering a link re-fetches rather than reusing
+    // a potentially outdated cache entry.
     defaultPreloadStaleTime: 0,
   });
 

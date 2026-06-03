@@ -16,6 +16,8 @@ export const toggleBookmark = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ contentItemId: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
+    // Read the current state first so the toggle is idempotent — calling
+    // this twice quickly always lands in the correct final state.
     const { data: existing } = await (context.supabase as any)
       .from("user_content_bookmarks")
       .select("content_item_id")

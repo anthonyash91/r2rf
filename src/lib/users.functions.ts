@@ -15,8 +15,8 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return chunks;
 }
 
-/** Apply NOT IN with chunking so large exclusion lists don't exceed URL limits.
- *  Uses parenthesised string form — PostgREST requires not.in.(id1,id2,...) not array. */
+/** Apply NOT IN with chunking so large exclusion lists don't exceed PostgREST's URL length limit.
+ *  Chained NOT IN filters are AND-ed together, which is equivalent to one large NOT IN. */
 function applyNotIn(q: any, column: string, ids: string[]): any {
   for (const chunk of chunkArray(ids, 500)) {
     q = q.not(column, "in", `(${chunk.join(",")})`);
@@ -105,8 +105,9 @@ async function hydrateAuthFields(userIds: string[]): Promise<
     { email: string; created_at: string; last_sign_in_at: string | null; email_confirmed_at: string | null }
   >();
   if (userIds.length === 0) return map;
-  // Use listUsers() with pagination instead of one getUserById() per user.
-  // This is O(total_users / page_size) API calls instead of O(requested_users).
+  // Paginate listUsers() rather than calling getUserById() for each user.
+  // The Auth API doesn't expose a bulk-by-ID endpoint, so pagination is the
+  // only way to fetch multiple users without N separate round-trips.
   const idSet = new Set(userIds);
   const PER_PAGE = 1000;
   for (let page = 1; ; page++) {
@@ -300,7 +301,8 @@ export const listRegularUsers = createServerFn({ method: "POST" })
       q = q.eq("facility", facilityFilter);
     }
     if (data.search) {
-      // Strip all PostgREST operator characters and cap length to prevent injection
+      // Strip PostgREST operator characters before embedding in the query string.
+      // PostgREST ilike filters are not parameterised — sanitising prevents filter injection.
       const term = data.search.replace(/[^a-zA-Z0-9 _\-'.@]/g, "").trim().slice(0, 50).toLowerCase();
       if (term) {
         const pat = `%${term}%`;
@@ -434,8 +436,8 @@ export const createFacilityUser = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     const userId = created.user.id;
-    // Remove any auto-created roles (e.g. a trigger that inserts role "user" on signup)
-    // before assigning facilityUser so the account only ever has one role.
+    // Clear any auto-assigned roles (a DB trigger may insert "user" on auth.users insert)
+    // before assigning facilityUser so the single-role invariant is maintained.
     await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
     await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "facilityUser" });
     // Store facility in user_profiles so facility-scoped queries work
@@ -715,7 +717,9 @@ export const setUserRole = createServerFn({ method: "POST" })
     }
 
     if (data.enabled) {
-      // Enforce single-role: remove any other roles before assigning the new one
+      // Enforce single-role invariant: each user may only have one active role.
+      // Remove any other roles before upserting the new one so the assignment
+      // is atomic from the caller's perspective.
       const { error: delErr } = await supabaseAdmin
         .from("user_roles")
         .delete()

@@ -8,7 +8,7 @@ type DeleteConfirmOptions = {
   confirmLabel?: string;
   /** Defaults to "Deleting" (from ConfirmDialog). */
   pendingLabel?: string;
-  onConfirm: () => Promise<unknown> | unknown;
+  onConfirm?: () => Promise<unknown> | unknown;
 };
 
 /**

@@ -120,6 +120,8 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
     };
   });
 
+// Converts an arbitrary site ID string into a stable URL-safe slug used
+// as the facility's `value` PK — same characters as a URL path segment.
 function deriveValue(siteId: string): string {
   return siteId
     .toLowerCase()
@@ -168,6 +170,8 @@ export const addFacilities = createServerFn({ method: "POST" })
       const base = deriveValue(siteId);
       if (!base) continue;
       const labelKey = label.toLowerCase();
+      // Reject duplicates on value, label, OR siteId so a re-import of the
+      // same CSV doesn't create partial duplicates when some rows already exist.
       if (usedValues.has(base) || usedLabels.has(labelKey) || usedSiteIds.has(siteId)) {
         duplicates.push(label);
         continue;

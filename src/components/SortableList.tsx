@@ -21,6 +21,7 @@ export function SortableList<T extends { id: string }>({
 }) {
 
   const sensors = useSensors(
+    // 4px activation distance prevents accidental drags when the user intends a click.
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
@@ -28,6 +29,8 @@ export function SortableList<T extends { id: string }>({
   const handleDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
+    // Resolve indices by id rather than storing them in state so the lookup
+    // always reflects the current items array even after partial reorders.
     const oldIndex = items.findIndex((i) => i.id === active.id);
     const newIndex = items.findIndex((i) => i.id === over.id);
     if (oldIndex < 0 || newIndex < 0) return;

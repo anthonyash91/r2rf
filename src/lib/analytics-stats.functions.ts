@@ -301,8 +301,12 @@ export const getMyEngagementTier = createServerFn({ method: "GET" })
       .select("user_id", { count: "exact", head: true })
       .eq("facility_value", data.facility_value ?? "");
 
+    // Only show the numeric percentile once there are ≥10 users in the facility;
+    // below that threshold the number is too noisy to be meaningful.
     const usePercentile = (facilityUserCount ?? 0) >= 10;
 
+    // Tier thresholds: top 20% = Top Reader, 50–80th = Active Reader,
+    // 20–50th = Getting Started, below 20th = Just Joined.
     let tier: string;
     if (pct === null) {
       tier = "Getting Started";
@@ -318,6 +322,8 @@ export const getMyEngagementTier = createServerFn({ method: "GET" })
 
     return {
       tier,
+      // Suppress the numeric percentile for small facilities to avoid surfacing
+      // individually identifiable data (e.g. "you are the only reader here").
       percentile: usePercentile ? pct : null,
       itemsCompleted: data.items_completed as number,
       itemsStarted: data.items_started as number,

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CONTENT_TYPES, slugify, type Category, type ContentItem } from "@/lib/categories";
+import { slugify, type Category, type ContentItem } from "@/lib/categories";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { withActionWord } from "@/lib/duration";
@@ -626,14 +626,17 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   const bulk = useBulkSelect();
   const { data: existingTypes = [] } = useQuery({
     queryKey: ["content-types"],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     queryFn: async () => {
-      const { data, error } = await supabase.from("content_items").select("type");
+      const { data, error } = await (supabase as any)
+        .from("content_types")
+        .select("value")
+        .order("value");
       if (error) throw error;
-      return Array.from(new Set((data ?? []).map((r: { type: string }) => r.type).filter(Boolean)));
+      return (data ?? []).map((r: { value: string }) => r.value);
     },
   });
-  const bulkTypeOptions = Array.from(new Set([...CONTENT_TYPES, ...existingTypes])).sort((a, b) => a.localeCompare(b));
+  const bulkTypeOptions = [...existingTypes].sort((a, b) => a.localeCompare(b));
   const [searchQuery, setSearchQuery] = useState("");
   const deleteManyMut = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -693,6 +696,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         <div ref={editorRef} className="scroll-mt-24">
           <ItemEditor
             item={editing === "new" ? null : editing}
+            categoryId={categoryId}
             categoryName={categoryName}
             onCancel={() => setEditing(null)}
             onSave={(v) => saveMut.mutate(v)}
@@ -915,6 +919,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
 
 function ItemEditor({
   item,
+  categoryId,
   categoryName,
   onCancel,
   onSave,
@@ -924,6 +929,7 @@ function ItemEditor({
   onNewTypeBadgeStyle,
 }: {
   item: ContentItem | null;
+  categoryId: string;
   categoryName: string;
   onCancel: () => void;
   onSave: (v: Partial<ContentItem> & { id?: string }) => void;
@@ -1061,15 +1067,21 @@ function ItemEditor({
 
   const { data: existingTypes = [] } = useQuery({
     queryKey: ["content-types"],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     queryFn: async () => {
-      const { data, error } = await supabase.from("content_items").select("type");
+      const { data, error } = await (supabase as any)
+        .from("content_types")
+        .select("value")
+        .order("value");
       if (error) throw error;
-      return Array.from(new Set((data ?? []).map((r: { type: string }) => r.type).filter(Boolean)));
+      return (data ?? []).map((r: { value: string }) => r.value);
     },
   });
 
-  const typeOptions = Array.from(new Set([...CONTENT_TYPES, ...existingTypes, type].filter(Boolean))).sort((a, b) => a.localeCompare(b));
+  // Include the current item's type even if it's not in the list yet
+  // (e.g. a just-added type before the cache refreshes).
+  const typeOptions = Array.from(new Set([...existingTypes, type].filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b));
 
   const commitNewType = () => {
     const v = newType.trim();
@@ -1078,9 +1090,13 @@ function ItemEditor({
     setType(v);
     setAddingType(false);
     setNewType("");
+    // Optimistically add to cache, then persist to DB and confirm
     qc.setQueryData<string[]>(["content-types"], (old = []) =>
       Array.from(new Set([...old, v]))
     );
+    supabase.from("content_types" as any).insert({ value: v }).then(() => {
+      qc.invalidateQueries({ queryKey: ["content-types"] });
+    });
     // Assign a unique palette color using all currently-in-use indices across
     // variants, all types, and category icon colors.
     const currentStyles = qc.getQueryData<BadgeStyles>(badgeStylesQueryKey) ?? DEFAULT_BADGE_STYLES;
@@ -1103,6 +1119,12 @@ function ItemEditor({
       types: { ...currentStyles.types, [key]: newIdx } as any,
     };
     qc.setQueryData(badgeStylesQueryKey, updatedStyles);
+    // Save badge styles to DB immediately so any other page (e.g. icons & badges)
+    // reads the correct color without assigning a conflicting one.
+    (supabase as any).from("site_settings").upsert(
+      { key: BADGE_STYLES_KEY, value: updatedStyles as unknown as never, updated_at: new Date().toISOString() },
+      { onConflict: "key" },
+    ).then(() => qc.invalidateQueries({ queryKey: [...badgeStylesQueryKey] }));
     onNewTypeBadgeStyle?.(updatedStyles);
   };
 
@@ -1112,25 +1134,36 @@ function ItemEditor({
   };
 
   const deleteType = async (t: string) => {
-    await confirmDelete({
+    // Get confirmation without onConfirm — if we put the work inside onConfirm
+    // the dialog's catch block swallows errors silently.
+    const confirmed = await confirmDelete({
       title: `Delete type "${t}"?`,
       description: `Any items using this type will be changed to "Article".`,
-      onConfirm: async () => {
-        const { error } = await supabase
-          .from("content_items")
-          .update({ type: "Article" })
-          .eq("type", t);
-        if (error) {
-          toast.error(error.message);
-          throw error;
-        }
-        if (type === t) setType("Article");
-        toast.success(`Deleted type "${t}"`);
-        qc.invalidateQueries({ queryKey: ["content-types"] });
-        qc.invalidateQueries({ queryKey: ["admin", "category"] });
-        qc.invalidateQueries({ queryKey: ["category"] });
-      },
     });
+    if (!confirmed) return;
+
+    // RPC reassigns all items of this type to "Article" AND deletes the
+    // type from content_types — both in one SECURITY DEFINER call.
+    const { error: rpcError } = await (supabase as any)
+      .rpc("reassign_content_type", { old_type: t });
+    if (rpcError) {
+      toast.error(rpcError.message);
+      return;
+    }
+
+    if (type === t) setType("Article");
+    toast.success(`Deleted type "${t}"`);
+    qc.setQueryData<string[]>(["content-types"], (old = []) => old.filter((x) => x !== t));
+    qc.setQueryData(["admin", "category", categoryId], (old: any) => {
+      if (!old) return old;
+      return {
+        ...old,
+        items: (old.items ?? []).map((i: any) => i.type === t ? { ...i, type: "Article" } : i),
+      };
+    });
+    qc.invalidateQueries({ queryKey: ["content-types"] });
+    qc.invalidateQueries({ queryKey: ["admin", "category"] });
+    qc.invalidateQueries({ queryKey: ["category"] });
   };
 
   return (

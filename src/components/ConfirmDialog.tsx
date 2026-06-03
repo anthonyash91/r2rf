@@ -38,8 +38,11 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [opts, setOpts] = useState<ConfirmOptions>({});
   const [pending, setPending] = useState(false);
+  // resolverRef holds the Promise resolve fn so `confirm()` can return a boolean
+  // once the user clicks Confirm or Cancel — no extra state needed.
   const resolverRef = useRef<((v: boolean) => void) | null>(null);
 
+  // `confirm()` opens the dialog and returns a Promise that the caller awaits.
   const confirm = useCallback<ConfirmFn>((options) => {
     setOpts(options);
     setPending(false);
@@ -49,6 +52,8 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // `settle` is the single exit point: closes dialog, resolves the Promise,
+  // and nulls the ref so a stale resolver can't fire on a future dialog.
   const settle = (value: boolean) => {
     setOpen(false);
     setPending(false);
@@ -66,7 +71,8 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
       await opts.onConfirm();
       settle(true);
     } catch {
-      // Caller's mutation onError typically toasts the message.
+      // onConfirm threw — caller's mutation onError typically toasts the message.
+      // Resolve false so callers that await confirm() know not to proceed.
       settle(false);
     }
   };

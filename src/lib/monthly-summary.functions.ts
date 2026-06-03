@@ -14,6 +14,9 @@ async function assertAnalyticsAdmin(userId: string) {
   if (error || !data) throw new Error("Forbidden: analytics admin access required");
 }
 
+// Fetches exempt IDs as a plain array so we can use NOT IN syntax in
+// progress queries. PostgREST embedded-resource filters (content_items!inner)
+// don't work reliably in count-only queries, causing silent 0 results.
 async function fetchExemptItemIds(db: any): Promise<string[]> {
   const { data } = await db.from("content_items").select("id").eq("exempt_from_progress", true);
   return (data ?? []).map((r: any) => r.id as string);

@@ -43,6 +43,11 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       throw new Error('Unauthorized: No token provided');
     }
 
+    // Create a fresh per-request client scoped to the caller's token. This is
+    // what enforces RLS — every query runs as the authenticated user, not as
+    // the service role. `persistSession: false` and `autoRefreshToken: false`
+    // are required because server-side code has no session storage and tokens
+    // must not be silently refreshed outside the browser.
     const supabase = createClient<Database>(
       SUPABASE_URL!,
       SUPABASE_PUBLISHABLE_KEY!,
@@ -60,6 +65,7 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       }
     );
 
+    // Validate the token and extract claims (including `sub` = the user's UUID).
     const { data, error } = await supabase.auth.getClaims(token);
     if (error || !data?.claims) {
       throw new Error('Unauthorized: Invalid token');
@@ -69,6 +75,8 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       throw new Error('Unauthorized: No user ID found in token');
     }
 
+    // Downstream server functions receive the authenticated client, userId, and
+    // raw claims via context — no need to re-parse the token in each function.
     return next({
       context: {
         supabase,

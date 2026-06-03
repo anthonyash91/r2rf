@@ -20,7 +20,11 @@ function createSupabaseClient() {
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
+      // localStorage is only available in the browser; fall back to undefined
+      // during SSR so the client can still be constructed without crashing.
       storage: typeof window !== 'undefined' ? localStorage : undefined,
+      // Browser client persists and auto-refreshes the session so users stay
+      // signed in across page reloads without manual token management.
       persistSession: true,
       autoRefreshToken: true,
     }
@@ -29,8 +33,9 @@ function createSupabaseClient() {
 
 let _supabase: ReturnType<typeof createSupabaseClient> | undefined;
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// Lazy singleton via Proxy — same pattern as client.server.ts. Defers client
+// creation until first use so env vars are guaranteed to be available.
+// Import like: import { supabase } from "@/integrations/supabase/client";
 export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>, {
   get(_, prop, receiver) {
     if (!_supabase) _supabase = createSupabaseClient();

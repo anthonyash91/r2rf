@@ -12,13 +12,16 @@ export function useAchievements() {
   const qc = useQueryClient();
   const checkFn = useServerFn(checkAndGrantAchievements);
 
-  // On first call (or after staleTime), check for new achievements and cache the result.
+  // Runs on first render (and after staleTime expires). The server fn both checks
+  // for newly earned achievements and returns the full earned set in one call.
   const { data } = useQuery({
     queryKey: ["my-achievements", user?.id],
     enabled: !!user?.id && isUser,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       const result = await checkFn();
+      // Toast each newly-earned achievement individually so the user sees them
+      // one at a time rather than a single combined message.
       if (result.newlyEarned.length > 0) {
         for (const key of result.newlyEarned) {
           const a = ACHIEVEMENTS.find((x) => x.key === key);
@@ -36,10 +39,10 @@ export function useAchievements() {
     },
   });
 
-  // Call this after any action that might unlock achievements (e.g. marking an item complete).
+  // `check()` is called after actions that might unlock achievements (e.g. marking an item
+  // complete). Invalidating forces a fresh server-fn call on the next render.
   const check = async () => {
     if (!user?.id || !isUser) return;
-    // Force a fresh check by removing the cached data.
     await qc.invalidateQueries({ queryKey: ["my-achievements", user.id] });
   };
 

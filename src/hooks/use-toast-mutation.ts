@@ -43,6 +43,9 @@ export function useToastMutation<TData = unknown, TError = Error, TVariables = v
         if (msg) toast.success(msg);
       }
       if (invalidate) {
+        // Detect whether the caller passed a single QueryKey or an array of QueryKeys.
+        // A QueryKey is itself an array, so we check if the first element is also an
+        // array to distinguish `[["users"]]` (multiple keys) from `["users"]` (one key).
         const keys = Array.isArray(invalidate[0]) ? (invalidate as QueryKey[]) : [invalidate as QueryKey];
         await Promise.all(keys.map((k) => qc.invalidateQueries({ queryKey: k })));
       }
@@ -53,6 +56,7 @@ export function useToastMutation<TData = unknown, TError = Error, TVariables = v
         const msg =
           typeof errorMessage === "function"
             ? errorMessage(error)
+            // Fall through to the raw error message when no errorMessage override is provided.
             : errorMessage ?? (error as { message?: string })?.message ?? "Something went wrong";
         if (msg) toast.error(msg);
       }

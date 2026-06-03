@@ -25,6 +25,8 @@ export function setActiveFacilitySlug(slug: string | null) {
 
 function subscribe(cb: () => void) {
   if (typeof window === "undefined") return () => {};
+  // Custom event: same-tab writes via setActiveFacilitySlug.
+  // "storage" event: cross-tab synchronisation when another tab changes the value.
   window.addEventListener(EVENT_NAME, cb);
   window.addEventListener("storage", cb);
   return () => {
@@ -34,5 +36,7 @@ function subscribe(cb: () => void) {
 }
 
 export function useActiveFacilitySlug(): string | null {
+  // Third arg is the SSR snapshot — returns null on the server where
+  // sessionStorage is unavailable.
   return useSyncExternalStore(subscribe, read, () => null);
 }

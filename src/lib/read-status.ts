@@ -18,6 +18,8 @@ export function detectMediaFor(item: {
   url?: string | null;
   file_url?: string | null;
 }): MediaKind | null {
+  // file_url takes priority: an uploaded file is more authoritative than a
+  // linked URL, which may point to a landing page rather than the media itself.
   return detectMedia(item.file_url) ?? detectMedia(item.url);
 }
 

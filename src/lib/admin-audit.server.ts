@@ -26,6 +26,8 @@ function getRequestMeta(): { ip: string | null; userAgent: string | null } {
   try {
     const req = getRequest();
     if (!req?.headers) return { ip: null, userAgent: null };
+    // Header priority: Cloudflare → standard proxy → NGINX real-ip.
+    // x-forwarded-for is a comma-separated list; take the first (leftmost) entry.
     const ip =
       req.headers.get("cf-connecting-ip") ||
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||

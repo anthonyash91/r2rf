@@ -102,6 +102,7 @@ export const PALETTES: Palette[] = [
 ];
 
 export function paletteClasses(idx: number): string {
+  // Double-modulo handles negative indices from deletion/reorder operations.
   const p = PALETTES[((idx % PALETTES.length) + PALETTES.length) % PALETTES.length];
   return `border bg-[${p.oklch}]/15 text-[${p.oklch}] border-[${p.oklch}]/30`;
 }
@@ -201,6 +202,8 @@ export const DEFAULT_BADGE_STYLES: BadgeStyles = {
   typeIcons: {},
 };
 
+// Merges admin-configured overrides over the hardcoded defaults.
+// Any variant or type not configured keeps its default palette index.
 export function mergeBadgeStyles(input: unknown): BadgeStyles {
   const v = (input ?? {}) as Partial<BadgeStyles>;
   return {
@@ -237,6 +240,7 @@ function hashStr(s: string) {
 export function indexForType(type: string | null | undefined, styles: BadgeStyles): number {
   const key = (type ?? "").trim().toLowerCase();
   if (key in styles.types) return styles.types[key as KnownTypeKey] as number;
-  // Fall back to a hash across all palettes
+  // Unknown type — derive a stable palette index from the type string so
+  // new types always render the same color without requiring admin configuration.
   return hashStr(key) % PALETTES.length;
 }

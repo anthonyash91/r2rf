@@ -27,6 +27,9 @@ type IpRow = {
   created_at: string;
 };
 
+// Full IPv4 dotted-decimal validation. Each octet alternates from 250-255, 200-249,
+// 100-199, and 0-99/single-digit to keep all values within 0-255 without a simple
+// \d+ that would accept out-of-range values like 999.
 const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 
 function AdminIpAllowlistPage() {

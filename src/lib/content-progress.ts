@@ -47,6 +47,8 @@ export function itemProgressScore(
     eng.mediaDurationSeconds != null &&
     eng.mediaDurationSeconds > 0
   ) {
+    // Cap at 0.95 so the item doesn't show "almost done" until the user
+    // explicitly marks it read — the auto-mark fires at 95% media position.
     return Math.min(eng.mediaProgressSeconds / eng.mediaDurationSeconds, 0.95);
   }
 
@@ -55,6 +57,8 @@ export function itemProgressScore(
     (item.url && /\.pdf(\?|#|$)/i.test(item.url))
   );
   if (isPdf && eng.sessionSeconds > 0) {
+    // pdfEstSec * 0.95: the hook auto-marks at 95% of estimated reading time,
+    // so we normalise against that same threshold to keep scores consistent.
     const pdfEstSec = parseMinutes(item.duration) * 60;
     if (pdfEstSec > 0) return Math.min(eng.sessionSeconds / (pdfEstSec * 0.95), 0.95);
   }

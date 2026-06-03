@@ -29,6 +29,9 @@ export const Route = createFileRoute("/api/public/log-error")({
             .eq("ip_address", ip)
             .eq("source", "client")
             .gte("created_at", since);
+          // Silently drop the request (still 204) rather than 429 — returning
+          // 429 would reveal that rate limiting is active, which could help
+          // a caller craft a timing attack to enumerate the limit.
           if ((count ?? 0) >= MAX_PER_IP) {
             return new Response(null, { status: 204 });
           }
@@ -42,7 +45,8 @@ export const Route = createFileRoute("/api/public/log-error")({
           return new Response(null, { status: 204 });
         }
 
-        // Best-effort user attribution.
+        // Attribute to a user if the request includes a valid bearer token;
+        // missing or invalid tokens are silently ignored — this is a public endpoint.
         let userId: string | null = null;
         const auth = request.headers.get("authorization");
         if (auth?.startsWith("Bearer ")) {
@@ -71,6 +75,8 @@ export const Route = createFileRoute("/api/public/log-error")({
           console.error("[log-error] insert failed:", err);
         }
 
+        // Always respond 204 regardless of insert success — this is a fire-and-
+        // forget endpoint; callers must not branch on the response status.
         return new Response(null, { status: 204 });
       },
     },

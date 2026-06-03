@@ -38,7 +38,9 @@ export const rateItem = createServerFn({ method: "POST" })
       return { rated: false };
     }
 
-    // Check if a rating already exists for this user+item.
+    // Read before write: Supabase's PostgREST upsert on `user_id,content_item_id`
+    // would work, but an explicit update vs. insert lets us set `updated_at`
+    // only on changes, keeping the timestamp meaningful for analytics.
     const { data: existing } = await db
       .from("user_content_ratings")
       .select("rating")

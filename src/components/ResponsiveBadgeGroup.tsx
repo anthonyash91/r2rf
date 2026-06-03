@@ -31,6 +31,8 @@ export function ResponsiveBadgeGroup({
         setWrapped(false);
         return;
       }
+      // Compare every child's offsetTop to the first child's. If any differ,
+      // at least one badge has wrapped to a new line.
       const firstTop = kids[0].offsetTop;
       const isWrapped = kids.some((k) => k.offsetTop !== firstTop);
       setWrapped(isWrapped);
@@ -39,6 +41,8 @@ export function ResponsiveBadgeGroup({
     check();
     const ro = new ResizeObserver(check);
     ro.observe(el);
+    // Also observe the parent so a container width change triggers re-check
+    // even when this element's own size hasn't changed.
     if (el.parentElement) ro.observe(el.parentElement);
     return () => ro.disconnect();
   }, [items.length]);

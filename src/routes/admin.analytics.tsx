@@ -57,6 +57,7 @@ import {
   getUsageReport,
   listFacilityUsers,
   getUserProgressReport,
+  getBulkFacilityProgressReport,
 } from "@/lib/reports.functions";
 import { listFacilityAdminUsers } from "@/lib/users.functions";
 import { getFacilityComparison, getGrowthStats, triggerNightlyRefresh } from "@/lib/analytics-stats.functions";
@@ -129,6 +130,8 @@ function AdminReportsPage() {
   const [activeUser, setActiveUser] = useState<{ userId: string; name: string; pin?: string | null } | null>(null);
 
   const fetchFacilities = useServerFn(listAllFacilities);
+  // Defer the facilities fetch until the picker is actually opened — the list
+  // is only needed for the dropdown, so there's no reason to load it up front.
   const facilitiesQuery = useQuery({
     queryKey: ["facilities"],
     staleTime: 10 * 60 * 1000,
@@ -811,9 +814,11 @@ function UsersReportTab({
 }) {
   const fetchUsers = useServerFn(listFacilityUsers);
   const fetchFacilityStaff = useServerFn(listFacilityAdminUsers);
+  const fetchBulkProgress = useServerFn(getBulkFacilityProgressReport);
   const selected = preselected.value;
   const isAll = selected === "__all__";
   const [isExporting, setIsExporting] = useState(false);
+  const [isBulkExporting, setIsBulkExporting] = useState(false);
   const [page, setPage] = useState(0);
   useEffect(() => { setPage(0); }, [selected]);
 
@@ -887,6 +892,28 @@ function UsersReportTab({
         >
           Export CSV
         </LoadingButton>
+        {!isAll && (
+          <LoadingButton
+            variant="secondary"
+            onClick={async () => {
+              setIsBulkExporting(true);
+              try {
+                await waitForNextPaint();
+                const result = await fetchBulkProgress({ data: { facilityValue: selected } });
+                exportBulkFacilityProgressCsv(result, selectedLabel);
+              } finally {
+                setTimeout(() => setIsBulkExporting(false), 0);
+              }
+            }}
+            disabled={isLoading || users.length === 0}
+            pending={isBulkExporting}
+            pendingText="Exporting…"
+            icon={<Download className="h-4 w-4" />}
+            className="w-full sm:w-auto"
+          >
+            Export All Progress (CSV)
+          </LoadingButton>
+        )}
       </div>
 
       {isLoading ? (
@@ -1008,6 +1035,126 @@ function exportFacilityUsersCsv(
   }
   downloadCsv(
     `users-${facilityLabel || "facility"}-${new Date().toISOString().slice(0, 10)}.csv`,
+    lines,
+  );
+}
+
+function exportBulkFacilityProgressCsv(
+  data: Awaited<ReturnType<typeof getBulkFacilityProgressReport>>,
+  facilityLabel: string,
+) {
+  const { users, categories, items, progress, engagement, bookmarks, ratings, logins, userStats } = data as any;
+
+  // Build lookup maps
+  const progressSet = new Set<string>(); // "userId|itemId"
+  const progressDate = new Map<string, string>(); // "userId|itemId" → date
+  for (const r of progress as any[]) {
+    const key = `${r.user_id}|${r.content_item_id}`;
+    progressSet.add(key);
+    if (r.created_at && !progressDate.has(key)) progressDate.set(key, r.created_at);
+  }
+  const engMap = new Map<string, any>(); // "userId|itemId"
+  for (const r of engagement as any[]) engMap.set(`${r.user_id}|${r.content_item_id}`, r);
+  const bookmarkSet = new Set<string>();
+  for (const r of bookmarks as any[]) bookmarkSet.add(`${r.user_id}|${r.content_item_id}`);
+  const ratingMap = new Map<string, number>(); // "userId|itemId" → rating
+  for (const r of ratings as any[]) ratingMap.set(`${r.user_id}|${r.content_item_id}`, r.rating as number);
+  const lastLoginMap = new Map<string, string>(); // userId → most recent login_date
+  for (const r of logins as any[]) {
+    if (!lastLoginMap.has(r.user_id) || r.login_date > (lastLoginMap.get(r.user_id) ?? "")) {
+      lastLoginMap.set(r.user_id as string, r.login_date as string);
+    }
+  }
+  const statsMap = new Map<string, any>(); // userId
+  for (const r of userStats as any[]) statsMap.set(r.user_id as string, r);
+
+  // Group items by category_id, preserving sort_order from the server response.
+  const itemsByCategory = new Map<string, any[]>();
+  for (const item of items as any[]) {
+    const cid = item.category_id as string;
+    if (!itemsByCategory.has(cid)) itemsByCategory.set(cid, []);
+    itemsByCategory.get(cid)!.push(item);
+  }
+
+  const lines: string[] = [];
+  lines.push([
+    "First Name", "Last Name", "Username", "PIN",
+    "Last Login", "Items Completed", "Time Spent (hrs)",
+    "Category", "Item Title",
+    "Completed", "Completed On", "Progress %", "Time on Item (min)",
+    "Bookmarked", "Rating",
+  ].map(csvEscape).join(","));
+
+  // Track which user- and category-level values were shown on the previous row
+  // so we can blank them out when they repeat — keeps the sheet readable.
+  let prevUid = "";
+  let prevCatId = "";
+
+  for (const user of users as any[]) {
+    const uid = user.user_id as string;
+    const stats = statsMap.get(uid);
+    const itemsCompleted = stats?.items_completed ?? 0;
+    const totalSecs = stats?.total_session_seconds ?? 0;
+    const lastLogin = lastLoginMap.get(uid) ? fmtDate(lastLoginMap.get(uid)!) : "";
+    const hoursSpent = totalSecs > 0 ? (totalSecs / 3600).toFixed(1) : "0";
+
+    // Iterate categories in sort_order, then items within each category in sort_order.
+    for (const cat of categories as any[]) {
+      const catItems = itemsByCategory.get(cat.id as string) ?? [];
+      for (const item of catItems) {
+        const key = `${uid}|${item.id}`;
+        const eng = engMap.get(key);
+        const isRead = progressSet.has(key);
+        const readDate = progressDate.get(key) ? fmtDate(progressDate.get(key)!) : "";
+        const bookmarked = bookmarkSet.has(key) ? "Yes" : "";
+        const rating = ratingMap.get(key);
+        const ratingStr = rating === 1 ? "Helpful" : rating === -1 ? "Not helpful" : "";
+
+        // Progress %
+        const isAV = item.type && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("audio") || item.type.toLowerCase().includes("podcast"));
+        const isPdf = (item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url)) || (item.url && /\.pdf(\?|#|$)/i.test(item.url));
+        let progressPct = "";
+        if (isRead) {
+          progressPct = "100%";
+        } else if (eng) {
+          if (isAV && eng.media_progress_seconds && eng.media_duration_seconds > 0) {
+            progressPct = `${Math.min(100, Math.round((eng.media_progress_seconds / eng.media_duration_seconds) * 100))}%`;
+          } else if (isPdf && eng.manual_completion_pct != null) {
+            progressPct = `${eng.manual_completion_pct}%`;
+          }
+        }
+
+        // Time on item
+        const itemSecs = eng?.session_seconds ?? 0;
+        const timeOnItem = itemSecs > 0 ? (itemSecs / 60).toFixed(1) : "";
+
+        // User-level columns: blank when this is not the first row for this user.
+        const isNewUser = uid !== prevUid;
+        const isNewCat = isNewUser || cat.id !== prevCatId;
+
+        lines.push([
+          isNewUser ? (user.first_name ?? "") : "",
+          isNewUser ? (user.last_name ?? "") : "",
+          isNewUser ? (user.username ?? "") : "",
+          isNewUser ? (user.inmate_pin ?? "") : "",
+          isNewUser ? lastLogin : "",
+          isNewUser ? itemsCompleted : "",
+          isNewUser ? hoursSpent : "",
+          // Category column: blank for subsequent items within the same category.
+          isNewCat ? cat.name : "",
+          item.title,
+          isRead ? "Yes" : "No", readDate, progressPct, timeOnItem,
+          bookmarked, ratingStr,
+        ].map(csvEscape).join(","));
+
+        prevUid = uid;
+        prevCatId = cat.id;
+      }
+    }
+  }
+
+  downloadCsv(
+    `bulk-progress-${facilityLabel.toLowerCase().replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}.csv`,
     lines,
   );
 }
@@ -1217,34 +1364,12 @@ function UserProgressView({
               { icon: Flame, label: "Day streak", value: streak.toLocaleString() },
               { icon: Clock, label: "Last login", value: lastLogin ? fmtDateShort(lastLogin) : "Never" },
             ];
-            const tier = (data as any).engagementTier as string | null;
-            const pct = (data as any).facilityPercentile as number | null;
-            const statsUpdated = (data as any).statsUpdatedAt as string | null;
             return (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mt-8 mb-8">
-                  {stats.map((s) => (
-                    <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
-                  ))}
-                </div>
-                {tier && (
-                  <div className="mb-8 rounded-2xl border border-border bg-card px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
-                    <div>
-                      <p className="text-sm font-medium">
-                        Engagement level:{" "}
-                        <span className="text-[var(--color-accent)] font-semibold">{tier}</span>
-                        {pct != null && (
-                          <span className="text-muted-foreground font-normal"> · top {Math.round(100 - pct)}% of facility readers</span>
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Based on time spent · Updates daily
-                        {statsUpdated && <> · Last updated {new Date(statsUpdated).toLocaleDateString()}</>}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mt-8 mb-8">
+                {stats.map((s) => (
+                  <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
+                ))}
+              </div>
             );
           })()}
 
@@ -1316,6 +1441,30 @@ function UserProgressView({
                   </div>
                 </div>
               </details>
+            );
+          })()}
+
+          {(() => {
+            const tier = (data as any).engagementTier as string | null;
+            const pct = (data as any).facilityPercentile as number | null;
+            const statsUpdated = (data as any).statsUpdatedAt as string | null;
+            if (!tier) return null;
+            return (
+              <div className="mb-8 rounded-2xl border border-border bg-card px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <p className="text-sm font-medium">
+                    Engagement level:{" "}
+                    <span className="text-[var(--color-accent)] font-semibold">{tier}</span>
+                    {pct != null && (
+                      <span className="text-muted-foreground font-normal"> · top {Math.round(100 - pct)}% of facility readers</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Based on time spent · Updates daily
+                    {statsUpdated && <> · Last updated {new Date(statsUpdated).toLocaleDateString()}</>}
+                  </p>
+                </div>
+              </div>
             );
           })()}
 
@@ -1437,7 +1586,7 @@ function exportUserProgressCsv(
   lines.push("");
 
   lines.push(
-    ["Category", "Category slug", "Item title", "Item type", "Duration", "Read", "Read on", "Progress", "Time Spent", "Bookmarked", "Rating"]
+    ["Category", "Item title", "Read", "Read on", "Progress", "Time Spent", "Bookmarked", "Rating"]
       .map(csvEscape)
       .join(","),
   );
@@ -1452,8 +1601,10 @@ function exportUserProgressCsv(
     const trackable = items.filter((i: any) => !i.exempt_from_progress);
     const read = trackable.filter((i: any) => i.read).length;
     const catSecs = items.reduce((sum: number, i: any) => sum + ((i.sessionSeconds as number) || 0), 0);
+    // Category summary row: shows name, slug, aggregate read count, and total time.
+    // Item rows below it leave the category columns blank (show only once).
     lines.push(
-      [csvEscape(c.name), csvEscape(c.slug), `${read} of ${trackable.length} read`, "", "", "", "", "", catSecs > 0 ? formatTimeSpent(catSecs) : ""].join(","),
+      [csvEscape(c.name), `${read} of ${trackable.length} read`, "", "", "", catSecs > 0 ? formatTimeSpent(catSecs) : "", "", ""].join(","),
     );
     for (const it of items) {
       const isAV = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
@@ -1470,11 +1621,8 @@ function exportUserProgressCsv(
       const sessionSecs: number = (it as any).sessionSeconds || 0;
       lines.push(
         [
-          csvEscape(c.name),
-          csvEscape(c.slug),
+          "",
           csvEscape(it.title),
-          csvEscape(it.type),
-          csvEscape(it.duration ?? ""),
           it.read ? "Yes" : "No",
           csvEscape(it.read && (it as any).read_at ? fmtDateShort((it as any).read_at) : ""),
           progressStr,

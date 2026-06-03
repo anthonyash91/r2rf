@@ -91,7 +91,9 @@ function SignupPageContent() {
   const facilities = facilitiesQuery.data?.facilities ?? [];
   const activeFacilitySlug = useActiveFacilitySlug();
   const activeInmatePin = useActiveInmatePin();
-  // If the user arrived via a facility slug, that facility is forced
+  // When the user arrived via a facility-specific URL (/facility/$slug or ?site=),
+  // lock the facility picker to that facility — sign-ups are always PIN-gated and
+  // scoped to the facility whose device the user is signing up on.
   const lockedFacility = activeFacilitySlug
     ? (facilities.find((f) => f.siteId === activeFacilitySlug) ?? null)
     : null;
@@ -112,7 +114,11 @@ function SignupPageContent() {
     queryFn: () => checkPin({ data: { facilityValue: lockedFacility!.value, inmatePin: activeInmatePin! } }),
   });
 
-  // Signup disabled reasons (sign-in and reset modes are never blocked)
+  // Sign-up is only available from a facility device (enforced server-side too).
+  // Evaluate the block reason in priority order so the first applicable one wins:
+  //   1. No facility slug in URL → "no-facility" (wrong link / not a device)
+  //   2. Facility slug present but no PIN stored → "no-pin" (PIN not set yet)
+  //   3. PIN is already registered for this facility → "pin-taken"
   const facilitySlugActive = !!activeFacilitySlug;
   const signupBlockReason: "no-facility" | "no-pin" | "pin-taken" | null =
     mode !== "sign-up" ? null

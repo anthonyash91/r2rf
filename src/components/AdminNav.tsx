@@ -31,18 +31,19 @@ const links: NavLink[] = [
   { to: "/admin/facilities", label: "Facilities", icon: Building2, adminOnly: true },
   { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
   { to: "/admin/analytics", label: "Reports", icon: BarChart3, adminOnly: true, facilityUserVisible: true },
-  { to: "/admin/home", label: "Home Header", icon: Home, adminOnly: true },
+  { to: "/admin/home", label: "Header Hero", icon: Home, adminOnly: true },
   { to: "/admin/messages", label: "Messages", icon: MessageSquare, adminOnly: true, facilityUserVisible: true },
   { to: "/admin/privacy", label: "Privacy Policy", icon: FileText, adminOnly: true },
   { to: "/admin/terms", label: "Terms of Service", icon: FileText, adminOnly: true },
   { to: "/admin/icons-badges", label: "Icons & Badges", icon: Palette, adminOnly: true },
-  { to: "/admin/certificate", label: "Certificate Footer", icon: Award, adminOnly: true },
+  { to: "/admin/certificate", label: "Footer Hero", icon: Award, adminOnly: true },
   { to: "/admin/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true, facilityUserVisible: true },
   { to: "/admin/errors", label: "Errors", icon: AlertOctagon, adminOnly: true },
   { to: "/admin/seed", label: "Seed Content", icon: Sprout, adminOnly: true },
 ];
 
 function isLinkActive(l: NavLink, pathname: string) {
+  // Handles both exact matches (e.g. /admin) and prefix matches (e.g. /admin/category/123).
   return (
     (l.exact ? pathname === l.to : pathname === l.to || pathname.startsWith(l.to + "/")) ||
     (l.matchPrefixes?.some((p) => pathname === p || pathname.startsWith(p + "/")) ?? false)
@@ -57,6 +58,8 @@ export function AdminNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
 
+  // Filters the full link list down to what the current user is allowed to see:
+  // admins and contributors see everything, facilityUsers only see pages marked facilityUserVisible.
   const visible = links.filter((l) => {
     if (!l.adminOnly) return true;                          // always visible
     if (isAdmin || isContributor) return true;              // full admin access
@@ -64,6 +67,8 @@ export function AdminNav() {
     return false;
   });
 
+  // Polls for new user signups since the admin last visited and stores the count
+  // so it can be shown as a badge on the Users link.
   const lastSeen = useLastSeenUsersAt();
   const countFn = useServerFn(countNewUsers);
   const newUsersQuery = useQuery({
@@ -77,6 +82,8 @@ export function AdminNav() {
 
   const renderLabel = (l: NavLink) => {
     if (l.to !== "/admin/users" || newUsersCount <= 0) return l.label;
+    // Appends a pill badge to the Users link showing how many new users
+    // have signed up since the admin last visited that page.
     return (
       <>
         {l.label}
@@ -96,6 +103,8 @@ export function AdminNav() {
   const PADDING = 16; // p-2 on both sides = 16px total horizontal padding
 
   const recompute = () => {
+    // Reads pixel widths of all nav items from the hidden measurement row,
+    // then works out how many fit before the "More" button must appear.
     const container = containerRef.current;
     const measure = measureRef.current;
     if (!container || !measure) return;
@@ -127,11 +136,13 @@ export function AdminNav() {
     setVisibleCount(Math.max(0, count));
   };
 
+  // Re-runs recompute whenever the number of visible links changes (e.g. role switch).
   useLayoutEffect(() => {
     recompute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible.length, isAdmin]);
 
+  // Watches the nav container for resize events and recomputes overflow on every change.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -141,7 +152,8 @@ export function AdminNav() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Split, ensuring active overflow item is promoted into the visible row
+  // If the currently active page is in the overflow list, swap it into the
+  // visible row (displacing the last visible item) so the active link is always shown.
   let primary = visible.slice(0, visibleCount);
   let overflow = visible.slice(visibleCount);
   const activeInOverflow = overflow.find((l) => isLinkActive(l, pathname));
@@ -155,7 +167,7 @@ export function AdminNav() {
   return (
     <nav aria-label="Admin" className="mb-8">
       <div ref={containerRef} className="relative w-full overflow-hidden">
-        {/* Hidden measurement row */}
+        {/* Hidden measurement row — rendered off-screen to measure item widths without affecting layout */}
         <ul
           ref={measureRef}
           aria-hidden="true"
@@ -181,7 +193,7 @@ export function AdminNav() {
           </li>
         </ul>
 
-        {/* Visible row */}
+        {/* Visible row — renders only the links that fit; overflow links go into the More dropdown */}
         <ul className="flex w-full items-center justify-center gap-1 rounded-lg bg-muted/40 p-2 text-muted-foreground">
           {primary.map((l) => {
             const active = isLinkActive(l, pathname);

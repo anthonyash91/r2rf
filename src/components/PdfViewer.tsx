@@ -14,6 +14,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 function PdfLoading() {
   const { t } = useI18n();
   const [stillLoading, setStillLoading] = useState(false);
+  // After 5 seconds switch to a "still loading" message so users know
+  // the PDF hasn't stalled silently on a slow connection.
   useEffect(() => {
     const id = setTimeout(() => setStillLoading(true), 5000);
     return () => clearTimeout(id);
@@ -41,14 +43,18 @@ export default function PdfViewer({ url }: { url: string }) {
     if (!el) return;
     let frame = 0;
     const update = () => {
+      // Debounce via rAF: cancels the previous frame on rapid resize events so
+      // react-pdf only re-renders the page once the container size has settled.
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         const nextWidth = Math.floor(el.getBoundingClientRect().width);
+        // Bail if the width hasn't changed to avoid spurious re-renders.
         setWidth((currentWidth) => (currentWidth === nextWidth ? currentWidth : nextWidth));
       });
     };
     const ro = new ResizeObserver(update);
     ro.observe(el);
+    // Also listen on window + visualViewport for soft-keyboard resize events on mobile.
     window.addEventListener("resize", update);
     window.visualViewport?.addEventListener("resize", update);
     update();
@@ -60,10 +66,14 @@ export default function PdfViewer({ url }: { url: string }) {
     };
   }, []);
 
+  // Reset to page 1 whenever the PDF URL changes so navigation state doesn't
+  // carry over when the user switches to a different document.
   useEffect(() => {
     setPageNumber(1);
   }, [url]);
 
+  // Subtract 16px padding from the container width; guard against 0 until the
+  // ResizeObserver fires so react-pdf doesn't render at zero width.
   const pageWidth = width > 0 ? Math.max(width - 16, 1) : 0;
 
   return (

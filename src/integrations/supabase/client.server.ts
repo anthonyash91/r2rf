@@ -21,6 +21,8 @@ function createSupabaseAdminClient() {
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
+      // Server-side clients need no session storage; token refresh is irrelevant
+      // because the service role key never expires.
       storage: undefined,
       persistSession: false,
       autoRefreshToken: false,
@@ -30,8 +32,10 @@ function createSupabaseAdminClient() {
 
 let _supabaseAdmin: ReturnType<typeof createSupabaseAdminClient> | undefined;
 
-// Server-side Supabase client with service role - bypasses RLS
-// SECURITY: Only use this for trusted server-side operations, never expose to client code
+// Lazy singleton via Proxy: the admin client is not created until the first
+// property access. This avoids throwing at module-evaluation time when env
+// vars haven't been injected yet (e.g. during build or cold-start).
+// SECURITY: Only use this for trusted server-side operations, never expose to client code.
 // Import like: import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const supabaseAdmin = new Proxy({} as ReturnType<typeof createSupabaseAdminClient>, {
   get(_, prop, receiver) {

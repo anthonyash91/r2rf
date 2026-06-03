@@ -31,6 +31,8 @@ const translations: Record<Language, Dict> = {
     "dashboard.statHours": "Time Spent",
     "dashboard.statStreak": "Day Streak",
     "dashboard.categoryProgress": "Category Progress",
+    "dashboard.resumeLabel": "Pick Up Where You Left Off",
+    "dashboard.resumeContinue": "Continue",
     "dashboard.itemsCompleted": "{done} of {total} completed",
     "dashboard.lockedNav": "Please set up your security questions before leaving this page.",
     "dashboard.saving": "Saving…",
@@ -158,6 +160,9 @@ const translations: Record<Language, Dict> = {
     "category.exemptTooltip": "This item is informational and doesn't count toward your progress",
 
     "category.markReadError": "Couldn't update progress.",
+    "category.completedHeadline": "You completed {name}",
+    "category.completedMessage": "You put in the work. That's worth recognizing.",
+    "category.completedClose": "Keep going",
 
     "pdf.loading": "Loading PDF…",
     "pdf.stillLoading": "Still loading, please be patient…",
@@ -289,6 +294,8 @@ const translations: Record<Language, Dict> = {
     "dashboard.statHours": "Tiempo dedicado",
     "dashboard.statStreak": "Días seguidos",
     "dashboard.categoryProgress": "Progreso por categoría",
+    "dashboard.resumeLabel": "Continúa Donde Lo Dejaste",
+    "dashboard.resumeContinue": "Continuar",
     "dashboard.itemsCompleted": "{done} de {total} completados",
     "dashboard.lockedNav": "Por favor configure sus preguntas de seguridad antes de salir de esta página.",
     "dashboard.saving": "Guardando…",
@@ -416,6 +423,9 @@ const translations: Record<Language, Dict> = {
     "category.exemptTooltip": "Este elemento es informativo y no cuenta para tu progreso",
 
     "category.markReadError": "No se pudo actualizar el progreso.",
+    "category.completedHeadline": "Completaste {name}",
+    "category.completedMessage": "Hiciste el trabajo. Eso merece reconocimiento.",
+    "category.completedClose": "Sigue adelante",
 
     "pdf.loading": "Cargando PDF…",
     "pdf.stillLoading": "Aún cargando, por favor sea paciente…",
@@ -537,8 +547,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      // URL parameter takes priority — supports both ?language=es and ?user=1234&language=es
-      // Also handles malformed ?user=1234?language=es (second ? treated as &)
+      // URL parameter takes priority over localStorage.
+      // Fix malformed `?user=1234?language=es` (two `?` characters) by converting
+      // the second `?` to `&` so URLSearchParams can parse it correctly.
       const search = window.location.search.replace(/\?(?=.*=)/g, (m, o) => o === 0 ? m : "&");
       const params = new URLSearchParams(search);
       const urlLang = params.get("language") as Language | null;
@@ -547,7 +558,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEY, urlLang);
         return;
       }
-      // Fall back to localStorage
+      // Fall back to the last language the user chose, persisted in localStorage.
       const stored = localStorage.getItem(STORAGE_KEY) as Language | null;
       if (stored === "en" || stored === "es") setLangState(stored);
     } catch {}
@@ -561,6 +572,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   };
 
   const t = (key: string, vars?: Record<string, string | number>) => {
+    // Fallback chain: current language → English → the raw key itself.
+    // Using the key as a last resort keeps the UI functional even when
+    // a translation is missing rather than rendering an empty string.
     let s = translations[lang][key] ?? translations.en[key] ?? key;
     if (vars) {
       for (const [k, v] of Object.entries(vars)) {

@@ -32,6 +32,9 @@ function getSecret(): string {
   );
 }
 
+// HMAC-signed challenge token: encodes `a:b:expiresAt` + a SHA-256 HMAC
+// so the server can verify the token was issued by us and hasn't expired.
+// base64url encoding makes it safe to include in form fields.
 function signChallenge(a: number, b: number, expiresAt: number): string {
   const payload = `${a}:${b}:${expiresAt}`;
   const sig = createHmac("sha256", getSecret()).update(payload).digest("hex");
@@ -46,8 +49,10 @@ function verifyChallenge(token: string, answer: number): boolean {
     const [aStr, bStr, expStr, sig] = parts;
     const a = Number(aStr), b = Number(bStr), exp = Number(expStr);
     if (!Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(exp)) return false;
+    // Reject expired tokens — CHALLENGE_TTL_MS = 5 minutes from issue time.
     if (Date.now() > exp) return false;
     const expected = createHmac("sha256", getSecret()).update(`${a}:${b}:${exp}`).digest("hex");
+    // timingSafeEqual prevents timing attacks that could recover the HMAC secret.
     const sigBuf = Buffer.from(sig, "hex");
     const expBuf = Buffer.from(expected, "hex");
     if (sigBuf.length !== expBuf.length) return false;
@@ -131,11 +136,10 @@ export const signupUser = createServerFn({ method: "POST" })
       throw new Error("Captcha failed. Please try again.");
     }
 
-    // IP-based rate limiting intentionally removed: all inmates at a facility
-    // share the same external IP, so a per-IP limit would block an entire
-    // facility after a handful of sign-ups. The inmate PIN requirement already
-    // acts as the hard gate — a PIN can only be used once, so scripted account
-    // creation is impossible regardless of how many requests are made.
+    // IP-based rate limiting is intentionally omitted here. All inmates at a
+    // facility share the same external IP (facility NAT), so a per-IP limit
+    // would block an entire facility after a handful of sign-ups. The inmate
+    // PIN requirement is the real gate — each PIN can only register one account.
 
     // Validate facility exists
     const { data: facilityRow } = await supabaseAdmin
@@ -175,6 +179,7 @@ export const signupUser = createServerFn({ method: "POST" })
       });
     if (profErr) {
       console.error("[signup] user_profiles insert failed:", profErr.message);
+      // Roll back the auth user so the username + PIN can be retried.
       await supabaseAdmin.auth.admin.deleteUser(userId);
       throw new Error("Account creation failed. Please try again.");
     }
@@ -184,6 +189,7 @@ export const signupUser = createServerFn({ method: "POST" })
       .insert({ user_id: userId, role: "user" });
     if (roleErr) {
       console.error("[signup] user_roles insert failed:", roleErr.message);
+      // Roll back profile + auth user on each failure so no orphaned records remain.
       await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
       await supabaseAdmin.auth.admin.deleteUser(userId);
       throw new Error("Account creation failed. Please try again.");

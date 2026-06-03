@@ -34,10 +34,12 @@ export function SecurityQuestionsForm({ onChange, rows = 2 }: Props) {
     for (let i = 0; i < nextKeys.length; i++) {
       const k = nextKeys[i];
       const v = (nextAnswers[i] ?? "").trim();
+      // Skip rows that are incomplete (no key, answer too short) or duplicate questions.
       if (!k || v.length < 2) continue;
       if (seen.has(k)) continue;
       seen.add(k);
       out.push({ key: k, value: v });
+      // Stop after 2 valid answers — the DB schema stores exactly 2 security answers.
       if (out.length === 2) break;
     }
     onChange(out);
@@ -67,6 +69,8 @@ export function SecurityQuestionsForm({ onChange, rows = 2 }: Props) {
             answer={answers[i]}
             onQuestionChange={(v) => setKey(i, v)}
             onAnswerChange={(v) => setAnswer(i, v)}
+            // Pass the other rows' selected keys so each row's dropdown greys
+            // out already-chosen questions, preventing duplicates.
             disabledKeys={usedElsewhere}
             placeholder={t("security.yourAnswer")}
             chooseLabel={t("security.chooseQuestion")}
