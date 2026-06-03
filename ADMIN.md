@@ -297,6 +297,40 @@ A bulk content import tool for adding many content items at once via CSV. Suppor
 
 ---
 
+## Test Results — `/admin/test-results`
+
+*Accessible to: Admin only*
+
+A read-only dashboard showing QA test runs submitted by tester accounts.
+
+### Run List
+
+All runs across all testers are shown in a table with:
+- **Run label** — the name the tester gave the run (e.g. "Post-deploy June 3")
+- **Tester** — the tester's username
+- **Date** — when the run was created
+- **Status** — In progress or Completed
+- **Progress bar** — actioned tests / 248 total
+- **Results** — pass ✓ / fail ✗ / blocked ⊘ counts at a glance
+
+Click any row to open the full detail view for that run.
+
+### Run Detail View
+
+Shows all 248 tests organized by section. Each section is a collapsible accordion with a per-section pass/fail count. Within each section, each test shows:
+
+- Status icon and label
+- Test ID and title
+- Priority (Critical / High / Medium / Low)
+- Tester notes (if any)
+- **View screenshot** link (if the tester attached a failure screenshot)
+
+**Failures panel** — if any tests are marked Failed, they all appear in a highlighted summary at the top of the detail view, each showing the test ID, title, tester note, and a screenshot link. This gives the dev team an immediate triage view without scrolling.
+
+**Filter** — the status filter (All / Pass / Fail / Blocked / Skipped / Untested) applies across all section accordions, making it easy to see only failures or only untested items.
+
+---
+
 ## Role Summary by Page
 
 | Page | Admin | Contributor | Facility User |
@@ -316,9 +350,10 @@ A bulk content import tool for adding many content items at once via CSV. Suppor
 | Icons & Badges | ✓ | — | — |
 | IP Allowlist | ✓ | — | — |
 | Seed content | ✓ | — | — |
+| Test Results | ✓ | — | — |
 
 ---
 
 ## Tester Role
 
-Users with the **Tester** role have no admin panel access. They use the platform exactly like regular users. The key distinction is that tester activity is **excluded from all analytics reports and statistics**, so testing does not skew engagement data.
+Users with the **Tester** role have no admin panel access. Instead of the regular user dashboard they see a dedicated **QA Testing** page with an interactive 248-test checklist. Tester activity is **excluded from all analytics reports and statistics**, so testing does not skew engagement data. See [USER_ROLES.md](USER_ROLES.md) for the full tester feature description.

@@ -352,7 +352,7 @@ The admin panel (`/admin`) is accessible to admin, contributor, and facility use
 | Role | Who They Are | Admin Access |
 |---|---|---|
 | **Regular User** | Incarcerated individuals using the library | None |
-| **Tester** | QA accounts | None — excluded from all analytics |
+| **Tester** | QA accounts — see interactive test checklist on sign-in; excluded from all analytics | None (own QA interface only) |
 | **Contributor** | Content editors | Content editing only |
 | **Facility User** | Facility staff (counselors, administrators) | Analytics + user management for their own facility |
 | **Admin** | Platform administrators | Full unrestricted access |
@@ -670,6 +670,22 @@ Bulk import tool for adding many content items at once via CSV upload:
 
 ---
 
+## Test Results — `/admin/test-results`
+
+*Admin only*
+
+A read-only dashboard showing every QA test run submitted by tester accounts.
+
+**Run list** — table of all runs across all testers showing: run label, tester username, date, in-progress/completed status, a progress bar (actioned/248), and pass ✓ / fail ✗ / blocked ⊘ counts.
+
+**Run detail view** — click any run to open the full detail. 18 section accordions, each with a per-section progress ring and pass/fail counts. Each expanded section shows every test with its status icon, ID, title, priority, tester notes, and a **View screenshot** link if the tester attached one.
+
+**Failures panel** — when any tests are marked Failed, they surface at the very top of the detail view (highlighted in red) showing ID, title, notes, and screenshot link — giving the dev team an immediate triage list without scrolling through 248 items.
+
+**Status filter** — filter all sections simultaneously to show only failures, only untested items, etc.
+
+---
+
 ## Role Summary by Page
 
 | Page | Admin | Contributor | Facility User |
@@ -688,6 +704,7 @@ Bulk import tool for adding many content items at once via CSV upload:
 | Icons & Badges | ✓ | — | — |
 | IP Allowlist | ✓ | — | — |
 | Seed content | ✓ | — | — |
+| Test Results | ✓ | — | — |
 
 ---
 

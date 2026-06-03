@@ -42,7 +42,7 @@ Regular users are the primary audience — incarcerated individuals working thro
 
 ## Tester
 
-Tester accounts are for QA testing. They use the platform exactly like regular users — the same UI, the same features, the same experience.
+Tester accounts are dedicated QA accounts. Rather than seeing the regular user dashboard, testers see an entirely separate **QA Testing interface** — no progress rings, categories, achievements, bookmarks, or account settings.
 
 **The key distinction:** All tester activity is **excluded from every analytics calculation** at the database query level:
 - Not counted in completion rates, open counts, or drop-off rates
@@ -53,7 +53,20 @@ Tester accounts are for QA testing. They use the platform exactly like regular u
 
 Testers are marked with `is_synthetic = true` in the database and have the `tester` role in `user_roles` — both signals are used for exclusion throughout the system.
 
-**Admin panel access:** None.
+**QA Testing interface:**
+
+When a tester signs in they see the **QA Testing** page — a full interactive version of the 248-test QA checklist organized into 18 sections. Features:
+
+- **Test runs** — create labeled sessions (e.g. "Post-deploy June 3"); each run has independent state; old runs are preserved for comparison
+- **Per-test actions** — for each test, set a status (Pass / Fail / Blocked / Skipped / Untested), add freeform notes, and attach a failure screenshot (image upload stored in Supabase Storage)
+- **Section accordions** — 18 sections, each with a progress ring, pass/fail counts, and expandable item list
+- **Filters** — filter by status (All / Pass / Fail / Blocked / Skipped / Untested) and priority (All / Critical / High / Medium / Low)
+- **Failures panel** — all failed tests surface at the top of an active run for quick visibility
+- **Progress ring** — shows actioned/248 tests with a full status breakdown
+- **Complete / Reopen** — mark a run complete to lock it read-only; reopen to continue editing
+- Security question setup is not required for tester accounts
+
+**Admin panel access:** None. Tester results are visible to admins via `/admin/test-results`.
 
 ---
 

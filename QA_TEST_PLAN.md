@@ -1167,6 +1167,134 @@ Export the bulk progress CSV for a facility. Open it in a spreadsheet app. Verif
 
 ---
 
+## Section 19 — QA Testing Interface (Tester Dashboard)
+
+### 19.1 — Tester sign-in lands on QA Testing page only
+🔴 **Critical**
+Sign in as a tester account. Verify the page shows "QA Test Runs" as the heading with the test case count beneath it and a "New run" button. Verify there are no tabs for Progress, Saved, Achievements, or Account — the regular user dashboard is completely absent.
+
+### 19.2 — Create a new test run
+🔴 **Critical**
+Click "New run." Type a label (e.g. "Smoke test June 3"). Press Enter or click Create. Verify the run list view is replaced with the active run view showing the label, "In progress" status, a progress ring at 0%, and 0 tests actioned. All 18+ section accordions are visible collapsed.
+
+### 19.3 — Section accordion expands and shows all tests
+🟠 **High**
+Click on any section accordion. Verify it expands to show all tests in that section, each showing its ID, priority badge (with icon), title, description, status buttons (Pass/Fail/Blocked/Skipped/Untested), a notes field, and an "Attach screenshot" button.
+
+### 19.4 — Set a test status — Pass
+🔴 **Critical**
+Click the "Pass" status button on any test. Verify: the Pass button highlights in green; the status icon changes to a filled checkmark; the section's progress ring and the overall progress ring both update.
+
+### 19.5 — Set a test status — Fail
+🔴 **Critical**
+Click the "Fail" status button on a test. Verify: the Fail button highlights in red; the test row gets a red tint; the test immediately appears in the failures panel at the top of the run view.
+
+### 19.6 — Failures panel appears and lists all failures
+🟠 **High**
+Mark 3 different tests as Fail across different sections. Verify a red "N failures require attention" panel appears at the top of the active run view listing all 3 failed tests by ID, title, and any notes.
+
+### 19.7 — Add notes to a test
+🟠 **High**
+Click the notes field on any test. Type a note. Click outside the field. Reload the page and reopen the same test. Verify the note is still there.
+
+### 19.8 — Attach a screenshot to a failed test
+🟠 **High**
+Mark a test as Fail. Click "Attach screenshot." Select a PNG or JPG image. Verify a spinner appears briefly, then the button is replaced by a "View screenshot" link. Verify the link opens the image in a new tab. Verify the link persists after a page reload.
+
+### 19.9 — Remove an attached screenshot
+🟡 **Medium**
+After attaching a screenshot, click the × button next to the "View screenshot" link. Verify the link disappears and the "Attach screenshot" button returns. Reload and confirm the screenshot is gone.
+
+### 19.10 — Status filter shows only matching tests
+🟠 **High**
+Mark several tests as Pass and several as Fail. Click the "Fail" filter button. Verify only Fail-status tests are shown across all sections. Sections with no failures are hidden entirely. Switching to "Pass" shows only passed tests.
+
+### 19.11 — Priority filter shows only matching tests
+🟡 **Medium**
+Click the "Critical" priority filter. Verify only Critical-priority tests are shown across all sections. Switching back to "All priorities" restores all tests.
+
+### 19.12 — Mark run complete — locks editing
+🟠 **High**
+Click the "Mark complete" button. Verify: the button changes to "Reopen"; all status buttons disappear; notes fields become read-only; the "Attach screenshot" button disappears; run status shows "Completed."
+
+### 19.13 — Reopen a completed run
+🟡 **Medium**
+On a completed run, click "Reopen." Verify the status changes back to "In progress" and all editing controls (status buttons, notes, screenshot button) reappear.
+
+### 19.14 — Multiple runs are independent
+🟡 **Medium**
+Create two runs. In Run A, mark test 1.1 as Pass. In Run B, mark test 1.1 as Fail. Switch between runs and verify each shows its own independent results.
+
+### 19.15 — Delete a test run
+🟡 **Medium**
+From the run list, click the trash icon on a run. Verify it disappears from the list and does not appear on the admin Test Results page.
+
+### 19.16 — Progress ring and stats update in real time
+🟠 **High**
+Mark 5 tests as Pass and 2 as Fail. Verify the overall progress ring, the actioned count, and the status breakdown (passed/failed/blocked/skipped/untested) all update after each change.
+
+### 19.17 — Section progress ring shows correct completion
+🟡 **Medium**
+In a section with 10 tests, mark 3 as Pass and 2 as Fail. Verify the section ring shows 50% (5 of 10 actioned, regardless of pass/fail).
+
+### 19.18 — Results persist across page reloads
+🔴 **Critical**
+Set statuses, notes, and a screenshot on several tests. Close the browser tab entirely. Reopen the app and sign back in. Navigate back to the run. Verify all statuses, notes, and screenshot links are intact.
+
+---
+
+## Section 20 — Admin Test Results Page
+
+### 20.1 — Test Results page is admin-only
+🔴 **Critical**
+Sign in as a contributor, then as a Facility User. For each, navigate directly to /admin/test-results. Verify both are redirected away — neither sees any test run data.
+
+### 20.2 — All tester runs appear in the run list
+🟠 **High**
+Sign in as admin. Navigate to Admin → Test Results. Verify all runs from all tester accounts appear in the table with: run label, tester username, date, in-progress/completed status badge, progress bar, and pass/fail/blocked counts. Runs should be ordered newest first.
+
+### 20.3 — Clicking a run opens the detail view
+🟠 **High**
+Click on any run row in the table. Verify the run list is replaced by the detail view showing a "Back to all runs" button, the run label, tester username, date, the failures panel (if applicable), and all 18+ section accordions.
+
+### 20.4 — Section accordion shows correct test results
+🟠 **High**
+Expand a section that has a mix of passed, failed, and untested tests. Verify each test row shows the correct status icon, test ID, title, priority, and any tester notes. The section header shows correct pass ✓ and fail ✗ counts.
+
+### 20.5 — Screenshot link is visible in admin detail view
+🔴 **Critical**
+Find a test where the tester attached a screenshot (from 19.8). Expand that section in the admin detail view. Verify a "View screenshot" link with an external link icon appears below the test's notes. Clicking it opens the image in a new tab.
+
+### 20.6 — Screenshots appear in the failures panel
+🟠 **High**
+In the admin detail view for a run with failed tests that have screenshots, look at the red failures panel at the top. Verify each failed test in the panel shows its notes AND a "View screenshot" link that opens the correct image.
+
+### 20.7 — Failures panel is absent when no failures
+🟠 **High**
+Open the admin detail view for a run where all actioned tests are Pass, Blocked, or Skipped — none are Fail. Verify the red failures panel does not appear at all.
+
+### 20.8 — Status filter in admin detail view
+🟡 **Medium**
+In the admin detail view, click the "Fail" filter button. Verify only failed tests are shown across all sections. Sections with no failures are hidden. Clicking "All tests" restores all sections.
+
+### 20.9 — Back navigation returns to run list
+🟡 **Medium**
+From the admin detail view, click "Back to all runs." Verify the run list table reappears with all runs and no page reload occurred.
+
+### 20.10 — Completed runs appear correctly in the list
+🟡 **Medium**
+Ensure at least one run has been marked complete by a tester. Verify it shows a "Completed" badge (not "In progress") in the Status column of the admin run list.
+
+### 20.11 — Multiple testers' runs are all shown
+🟠 **High**
+With runs from two different tester accounts, navigate to the admin Test Results page. Verify runs from both testers appear, each showing the correct tester username.
+
+### 20.12 — Progress bar reflects actioned test count
+🟡 **Medium**
+On a run where 50 tests have been actioned, check the progress bar in the admin run list. Verify it is approximately 20% filled and the text shows the correct fraction. The admin detail view's overall summary ring confirms the same count.
+
+---
+
 ## Regression Checklist
 
 Run this checklist after any code deployment to confirm core flows still work:
@@ -1187,3 +1315,8 @@ Run this checklist after any code deployment to confirm core flows still work:
 - [ ] Language toggle switches the full UI to Spanish
 - [ ] IP allowlist blocks and unblocks correctly
 - [ ] Audit log records a password reset action
+- [ ] Tester sign-in shows QA Testing page (no regular dashboard)
+- [ ] Tester can create a run, set statuses, and add notes
+- [ ] Tester can attach and remove a screenshot on a failed test
+- [ ] Admin Test Results page lists all tester runs
+- [ ] Admin can open a run detail and see screenshot links
