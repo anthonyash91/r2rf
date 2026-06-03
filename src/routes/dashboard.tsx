@@ -1546,7 +1546,7 @@ function TestingTab() {
                               })()}
                             </div>
                             <p className="text-sm font-medium mb-1">{test.title}</p>
-                            <p className="text-xs text-muted-foreground leading-relaxed">{test.description}</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{test.description}</p>
                           </div>
                         </div>
 
