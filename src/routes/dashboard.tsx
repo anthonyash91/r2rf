@@ -1553,22 +1553,25 @@ function TestingTab() {
                         {/* Status buttons */}
                         {!isCompleted && (
                           <div className="flex flex-wrap gap-2 mt-4 ml-7">
-                            {(["pass", "fail", "blocked", "skipped", "untested"] as TestStatus[]).map((s) => (
-                              <button
-                                key={s}
-                                type="button"
-                                disabled={saving}
-                                onClick={() => handleSetStatus(test.id, s)}
-                                className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
-                                  status === s
-                                    ? STATUS_COLORS[s]
-                                    : "bg-background text-muted-foreground border-border hover:bg-muted"
-                                }`}
-                              >
-                                <span>{STATUS_ICONS[s]}</span>
-                                {STATUS_LABELS[s]}
-                              </button>
-                            ))}
+                            {(["pass", "fail", "blocked", "skipped", "untested"] as TestStatus[]).map((s) => {
+                              const SIcon = STATUS_ICON_COMPONENTS[s];
+                              return (
+                                <button
+                                  key={s}
+                                  type="button"
+                                  disabled={saving}
+                                  onClick={() => handleSetStatus(test.id, s)}
+                                  className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
+                                    status === s
+                                      ? STATUS_COLORS[s]
+                                      : "bg-background text-muted-foreground border-border hover:bg-muted"
+                                  }`}
+                                >
+                                  <SIcon className="h-3.5 w-3.5" />
+                                  {STATUS_LABELS[s]}
+                                </button>
+                              );
+                            })}
                           </div>
                         )}
 
