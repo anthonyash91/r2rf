@@ -327,7 +327,7 @@ function AdminUsersPage() {
             className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
           >
             <div className="font-medium">Tester</div>
-            <div className="text-xs text-muted-foreground">Behaves like a regular user. Username + password.</div>
+            <div className="text-xs text-muted-foreground">QA account. Browses the app like a regular user but is excluded from all analytics. Gets a Testing tab on their dashboard to work through the QA checklist.</div>
           </button>
         </div>
       </FormDialog>
