@@ -1283,13 +1283,13 @@ function TestingTab() {
               onChange={(e) => setNewLabel(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleCreateRun(); if (e.key === "Escape") { setCreating(false); setNewLabel(""); } }}
               placeholder="Run label (e.g. Post-deploy June 3)"
-              className="flex-1 rounded-[4px] border border-input bg-background px-4 py-2 text-sm"
+              className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
             <button
               type="button"
               onClick={handleCreateRun}
               disabled={!newLabel.trim()}
-              className="rounded-[4px] bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
               Create
             </button>
@@ -1333,7 +1333,7 @@ function TestingTab() {
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); handleDeleteRun(run.id); }}
-                    className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-[4px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -1428,7 +1428,7 @@ function TestingTab() {
             key={s}
             type="button"
             onClick={() => setFilterStatus(s)}
-            className={`inline-flex items-center gap-1.5 rounded-[4px] border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
               filterStatus === s
                 ? "bg-foreground text-background border-foreground"
                 : "bg-background text-muted-foreground border-border hover:bg-muted"
@@ -1443,7 +1443,7 @@ function TestingTab() {
             key={p}
             type="button"
             onClick={() => setFilterPriority(p)}
-            className={`inline-flex items-center rounded-[4px] border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
               filterPriority === p
                 ? "bg-foreground text-background border-foreground"
                 : "bg-background text-muted-foreground border-border hover:bg-muted"
@@ -1516,7 +1516,7 @@ function TestingTab() {
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2 mb-1">
                               <span className="text-xs font-mono text-muted-foreground">{test.id}</span>
-                              <span className={`text-[10px] font-semibold uppercase tracking-wide border rounded-[4px] px-1.5 py-0.5 ${
+                              <span className={`text-[10px] font-semibold uppercase tracking-wide border rounded-md px-1.5 py-0.5 ${
                                 test.priority === "critical" ? "text-red-600 bg-red-50 border-red-200" :
                                 test.priority === "high"     ? "text-orange-600 bg-orange-50 border-orange-200" :
                                 test.priority === "medium"   ? "text-yellow-600 bg-yellow-50 border-yellow-200" :
@@ -1537,7 +1537,7 @@ function TestingTab() {
                                 type="button"
                                 disabled={saving}
                                 onClick={() => handleSetStatus(test.id, s)}
-                                className={`inline-flex items-center gap-1.5 rounded-[4px] border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
+                                className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
                                   status === s
                                     ? STATUS_COLORS[s]
                                     : "bg-background text-muted-foreground border-border hover:bg-muted"
@@ -1559,7 +1559,7 @@ function TestingTab() {
                             readOnly={isCompleted}
                             onChange={(e) => setPendingNotes((prev) => ({ ...prev, [test.id]: e.target.value }))}
                             onBlur={() => { if (noteDirty) handleSaveNote(test.id); }}
-                            className={`w-full rounded-[4px] border px-3 py-2 text-xs resize-none transition-colors ${
+                            className={`w-full rounded-md border px-3 py-2 text-xs resize-none transition-colors ${
                               isCompleted
                                 ? "border-transparent bg-transparent text-muted-foreground cursor-default"
                                 : "border-input bg-background focus:outline-none focus:border-[var(--color-accent)]"
