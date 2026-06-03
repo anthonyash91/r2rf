@@ -79,7 +79,11 @@ function DashboardRoute() {
 // Splits tester accounts onto their own minimal page so they only see the QA
 // testing interface — no regular user dashboard content at all.
 function DashboardRouter() {
-  const { isTester } = useAuth();
+  const { isTester, rolesLoaded } = useAuth();
+  // Wait until roles are confirmed before rendering either view — prevents a
+  // brief flash of the regular user dashboard (or forced-reset dialog) while
+  // the roles fetch is still in flight on first load.
+  if (!rolesLoaded) return null;
   if (isTester) return <TesterDashboard />;
   return <DashboardPage />;
 }
@@ -1258,20 +1262,20 @@ function TestingTab() {
   if (!activeRunId) {
     return (
       <div>
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
             <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
               <ClipboardCheck className="h-7 w-7 text-[var(--color-accent)]" /> QA Test Runs
             </h1>
-            <button
-              type="button"
-              onClick={() => setCreating(true)}
-              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" /> New run
-            </button>
+            <p className="text-sm text-muted-foreground mt-1">{TOTAL_TESTS} test cases across {QA_SECTIONS.length} sections</p>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">{TOTAL_TESTS} test cases across {QA_SECTIONS.length} sections</p>
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="shrink-0 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" /> New run
+          </button>
         </div>
 
         {creating && (
