@@ -2030,7 +2030,7 @@ function CategoryProgressSection({
               const description = pickLang(lang, it.description, it.description_es);
               return (
                 <li key={it.id} className="flex flex-col gap-[10px] bg-[#fffdf8] p-6">
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex items-start gap-2 min-w-0">
                     <BadgeGroup className="shrink-0">
                       {newItemSet.has(it.id) && !isRead && (
                         <Badge variant="new">{t("category.newContent")}</Badge>
