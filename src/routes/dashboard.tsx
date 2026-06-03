@@ -1374,7 +1374,7 @@ function TestingTab() {
           <button
             type="button"
             onClick={handleReopen}
-            className="shrink-0 text-sm text-muted-foreground hover:text-foreground underline"
+            className="shrink-0 inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             Reopen
           </button>
