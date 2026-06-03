@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { useI18n, pickLang, translateType, type Language } from "@/lib/i18n";
 import { useAuth } from "@/hooks/use-auth";
-import { Pencil, Search, Bookmark } from "lucide-react";
+import { Pencil, Search, Bookmark, ArrowRight } from "lucide-react";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
@@ -257,6 +257,18 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
                 params={{ slug: c.slug }}
                 className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 pb-[28px] sm:pb-[36px] transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
               >
+                {/* Arrow circle — top-right corner, matches resume card color scheme */}
+                {(() => {
+                  const color = c.icon_color || "var(--color-accent)";
+                  return (
+                    <span
+                      className="absolute top-6 right-6 flex items-center justify-center h-8 w-8 rounded-full transition-colors"
+                      style={{ backgroundColor: `color-mix(in oklab, ${color} 15%, transparent)`, color }}
+                    >
+                      <ArrowRight className="h-4 w-4" />
+                    </span>
+                  );
+                })()}
                 <div className="flex">
                   {(() => {
                     const Icon = resolveCategoryIcon(c.icon_name);
