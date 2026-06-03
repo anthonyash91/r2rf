@@ -1631,77 +1631,95 @@ function TestingTab() {
                           </div>
                         )}
 
-                        {/* Notes field */}
-                        <div className="ml-7 mt-3">
-                          <textarea
-                            rows={status === "fail" ? 3 : 1}
-                            value={currentNote}
-                            placeholder={isCompleted ? "No notes" : "Add notes (required for failures)…"}
-                            readOnly={isCompleted}
-                            onChange={(e) => setPendingNotes((prev) => ({ ...prev, [test.id]: e.target.value }))}
-                            onBlur={() => { if (noteDirty) handleSaveNote(test.id); }}
-                            className={`w-full rounded-md border px-3 py-2 text-xs resize-none transition-colors ${
-                              isCompleted
-                                ? "border-transparent bg-transparent text-muted-foreground cursor-default"
-                                : "border-input bg-background focus:outline-none focus:border-[var(--color-accent)]"
-                            } ${!currentNote && !isCompleted ? "text-muted-foreground" : ""}`}
-                          />
-                          {noteDirty && !isCompleted && (
-                            <button
-                              type="button"
-                              onClick={() => handleSaveNote(test.id)}
-                              className="mt-1 text-xs text-[var(--color-accent)] hover:underline"
-                            >
-                              Save note
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Screenshot attachment — only renders when there is content to show */}
-                        {(result?.screenshot_url || (!isCompleted && (status === "fail" || status === "blocked" || status === "skipped"))) && (
-                        <div className="ml-7 mt-2">
-                          {result?.screenshot_url ? (
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={result.screenshot_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-                              >
-                                <ImagePlus className="h-3.5 w-3.5" />
-                                View screenshot
-                                <ExternalLink className="h-3 w-3 opacity-60" />
-                              </a>
-                              {!isCompleted && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveScreenshot(test.id)}
-                                  className="inline-flex items-center justify-center h-5 w-5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                                  title="Remove screenshot"
+                        {/* Notes + screenshot row */}
+                        {isCompleted ? (
+                          // Completed state: show notes only if they exist (bordered box),
+                          // and screenshot link if one was attached.
+                          (currentNote || result?.screenshot_url) ? (
+                            <div className="ml-7 mt-3 space-y-2">
+                              {currentNote && (
+                                <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground whitespace-pre-line">
+                                  {currentNote}
+                                </div>
+                              )}
+                              {result?.screenshot_url && (
+                                <a
+                                  href={result.screenshot_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
                                 >
-                                  <X className="h-3 w-3" />
-                                </button>
+                                  <ImagePlus className="h-3.5 w-3.5" />
+                                  View screenshot
+                                  <ExternalLink className="h-3 w-3 opacity-60" />
+                                </a>
                               )}
                             </div>
-                          ) : (
-                            <button
-                              type="button"
-                              disabled={uploadingTests.has(test.id)}
-                              onClick={() => {
-                                uploadTestIdRef.current = test.id;
-                                fileInputRef.current?.click();
-                              }}
-                              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md px-3 py-1.5 transition-colors disabled:opacity-60"
-                            >
-                              {uploadingTests.has(test.id) ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <ImagePlus className="h-3.5 w-3.5" />
-                              )}
-                              {uploadingTests.has(test.id) ? "Uploading…" : "Attach screenshot"}
-                            </button>
-                          )}
-                        </div>
+                          ) : null
+                        ) : (
+                          // Active state: textarea + bottom row (screenshot left, save note right)
+                          <div className="ml-7 mt-3">
+                            <textarea
+                              rows={status === "fail" ? 3 : 1}
+                              value={currentNote}
+                              placeholder="Add notes (required for failures)…"
+                              onChange={(e) => setPendingNotes((prev) => ({ ...prev, [test.id]: e.target.value }))}
+                              onBlur={() => { if (noteDirty) handleSaveNote(test.id); }}
+                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs resize-none focus:outline-none focus:border-[var(--color-accent)] transition-colors"
+                            />
+                            <div className="flex items-center justify-between gap-2 mt-2">
+                              {/* Left: screenshot button (only for fail/blocked/skipped) */}
+                              <div>
+                                {result?.screenshot_url ? (
+                                  <div className="flex items-center gap-2">
+                                    <a
+                                      href={result.screenshot_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                                    >
+                                      <ImagePlus className="h-3.5 w-3.5" />
+                                      View screenshot
+                                      <ExternalLink className="h-3 w-3 opacity-60" />
+                                    </a>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveScreenshot(test.id)}
+                                      className="inline-flex items-center justify-center h-5 w-5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                      title="Remove screenshot"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ) : (status === "fail" || status === "blocked" || status === "skipped") && (
+                                  <button
+                                    type="button"
+                                    disabled={uploadingTests.has(test.id)}
+                                    onClick={() => {
+                                      uploadTestIdRef.current = test.id;
+                                      fileInputRef.current?.click();
+                                    }}
+                                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md px-3 py-1.5 transition-colors disabled:opacity-60"
+                                  >
+                                    {uploadingTests.has(test.id) ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      <ImagePlus className="h-3.5 w-3.5" />
+                                    )}
+                                    {uploadingTests.has(test.id) ? "Uploading…" : "Attach screenshot"}
+                                  </button>
+                                )}
+                              </div>
+                              {/* Right: Save note — always visible */}
+                              <button
+                                type="button"
+                                onClick={() => handleSaveNote(test.id)}
+                                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                              >
+                                Save note
+                              </button>
+                            </div>
+                          </div>
                         )}
                       </div>
                     );
