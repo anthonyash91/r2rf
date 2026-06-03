@@ -1766,7 +1766,7 @@ function TestingTab() {
 
                         {/* Completed state: notes + screenshot (only if content exists) */}
                         {isCompleted && (currentNote || result?.screenshot_url) && (
-                          <div className="ml-7 mt-3 space-y-2">
+                          <div className="ml-7 mt-3">
                             {currentNote && (
                               <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground whitespace-pre-line">
                                 {currentNote}
@@ -1777,7 +1777,7 @@ function TestingTab() {
                                 href={result.screenshot_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                                className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
                               >
                                 <ImagePlus className="h-3.5 w-3.5" />
                                 View screenshot
