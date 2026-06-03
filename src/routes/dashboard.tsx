@@ -46,7 +46,7 @@ import {
 } from "@/lib/qa-test-plan";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight, ClipboardCheck, Plus, Trash2, CheckCircle, XCircle, MinusCircle, SkipForward, ChevronRight, AlertCircle, ChevronUp, Minus } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight, ClipboardCheck, Plus, Trash2, CheckCircle, XCircle, MinusCircle, SkipForward, ChevronRight, AlertCircle, ChevronUp, Minus, LayoutList, Layers } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
@@ -1427,35 +1427,44 @@ function TestingTab() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 my-6">
-        {(["all", "fail", "pass", "blocked", "skipped", "untested"] as const).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setFilterStatus(s)}
-            className={`inline-flex items-center leading-none gap-1.5 rounded-[4px] border px-2.5 py-[5px] text-xs font-medium transition-colors ${
-              filterStatus === s
-                ? "bg-foreground text-background border-foreground"
-                : "bg-background text-muted-foreground border-border hover:bg-muted"
-            }`}
-          >
-            {s === "all" ? "All" : STATUS_LABELS[s]}
-          </button>
-        ))}
+        {(["all", "fail", "pass", "blocked", "skipped", "untested"] as const).map((s) => {
+          const StatusIcon = s === "all" ? LayoutList : STATUS_ICON_COMPONENTS[s];
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setFilterStatus(s)}
+              className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                filterStatus === s
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-background text-muted-foreground border-border hover:bg-muted"
+              }`}
+            >
+              <StatusIcon className="h-3.5 w-3.5" />
+              {s === "all" ? "All" : STATUS_LABELS[s]}
+            </button>
+          );
+        })}
         <span className="mx-1 self-center text-border">|</span>
-        {(["all", "critical", "high", "medium", "low"] as const).map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => setFilterPriority(p)}
-            className={`inline-flex items-center leading-none rounded-[4px] border px-2.5 py-[5px] text-xs font-medium transition-colors ${
-              filterPriority === p
-                ? "bg-foreground text-background border-foreground"
-                : "bg-background text-muted-foreground border-border hover:bg-muted"
-            }`}
-          >
-            {p === "all" ? "All priorities" : PRIORITY_LABELS[p]}
-          </button>
-        ))}
+        {(["all", "critical", "high", "medium", "low"] as const).map((p) => {
+          const priorityIcons = { all: Layers, critical: AlertCircle, high: ChevronUp, medium: Minus, low: ChevronDown };
+          const PIcon = priorityIcons[p];
+          return (
+            <button
+              key={p}
+              type="button"
+              onClick={() => setFilterPriority(p)}
+              className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                filterPriority === p
+                  ? "bg-foreground text-background border-foreground"
+                  : "bg-background text-muted-foreground border-border hover:bg-muted"
+              }`}
+            >
+              <PIcon className="h-3.5 w-3.5" />
+              {p === "all" ? "All priorities" : PRIORITY_LABELS[p]}
+            </button>
+          );
+        })}
       </div>
 
       {/* Section accordions */}
