@@ -71,8 +71,37 @@ export const Route = createFileRoute("/dashboard")({
 function DashboardRoute() {
   return (
     <OnScreenKeyboardProvider>
-      <DashboardPage />
+      <DashboardRouter />
     </OnScreenKeyboardProvider>
+  );
+}
+
+// Splits tester accounts onto their own minimal page so they only see the QA
+// testing interface — no regular user dashboard content at all.
+function DashboardRouter() {
+  const { isTester } = useAuth();
+  if (isTester) return <TesterDashboard />;
+  return <DashboardPage />;
+}
+
+function TesterDashboard() {
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <SiteHeader />
+      <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
+        <div className="mb-8 flex items-center gap-3">
+          <ClipboardCheck className="h-7 w-7 text-[var(--color-accent)]" />
+          <div>
+            <h1 className="font-display text-2xl font-semibold">QA Testing</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Work through the test checklist to verify platform stability and security.
+            </p>
+          </div>
+        </div>
+        <TestingTab />
+      </main>
+      <SiteFooter />
+    </div>
   );
 }
 
