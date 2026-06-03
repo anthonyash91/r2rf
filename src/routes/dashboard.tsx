@@ -1461,7 +1461,7 @@ function TestingTab() {
               }`}
             >
               <PIcon className="h-3.5 w-3.5" />
-              {p === "all" ? "All priorities" : PRIORITY_LABELS[p]}
+              {p === "all" ? "All priorities" : p.charAt(0).toUpperCase() + p.slice(1)}
             </button>
           );
         })}
