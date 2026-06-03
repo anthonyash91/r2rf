@@ -260,11 +260,12 @@ function SignupPageContent() {
         if (authedUser) {
           const { data: roleRow } = await supabase.from("user_roles").select("role")
             .eq("user_id", authedUser.id)
-            .in("role", ["admin", "contributor", "facilityUser"])
+            .in("role", ["admin", "contributor", "facilityUser", "tester"])
             .maybeSingle();
 
           if (roleRow) {
-            // Privileged — clear session so nav/redirects don't carry facility params
+            // Privileged (or tester) — clear facility/PIN context so nav links
+            // don't send them through the shared-device URL flow.
             setActiveFacilitySlug(null);
             setActiveInmatePin(null);
           } else if (!lockedFacility || !activeInmatePin) {
