@@ -2134,7 +2134,7 @@ function CategoryProgressSection({
                             // Zero-height wrapper: disclaimer renders visually but doesn't
                             // contribute to the column's flex height, so the action column
                             // stays the same height as the type badge and both top-align naturally.
-                            <div className="h-0 overflow-visible flex items-end justify-end">
+                            <div className="h-0 overflow-visible flex items-start justify-end">
                               <p className="text-[10px] text-muted-foreground leading-tight">{t("category.exemptDisclaimer")}</p>
                             </div>
                           )}
