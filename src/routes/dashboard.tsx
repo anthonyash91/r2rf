@@ -38,7 +38,7 @@ import { ACHIEVEMENTS } from "@/lib/achievements";
 import { getMyMonthlySummary } from "@/lib/monthly-summary.functions";
 import {
   createTestRun, listMyTestRuns, getRunResults, upsertTestResult,
-  completeTestRun, reopenTestRun, deleteTestRun,
+  completeTestRun, reopenTestRun, deleteTestRun, getQaScreenshotUploadUrl,
 } from "@/lib/test-runs.functions";
 import {
   QA_TESTS, QA_SECTIONS, PRIORITY_LABELS, STATUS_LABELS, STATUS_ICONS, STATUS_COLORS,
@@ -46,7 +46,7 @@ import {
 } from "@/lib/qa-test-plan";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight, ClipboardCheck, Plus, Trash2, CheckCircle, XCircle, MinusCircle, SkipForward, ChevronRight, AlertCircle, ChevronUp, Minus, LayoutList, Layers } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight, ClipboardCheck, Plus, Trash2, CheckCircle, XCircle, MinusCircle, SkipForward, ChevronRight, AlertCircle, ChevronUp, Minus, LayoutList, Layers, ImagePlus, ExternalLink, X } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
@@ -1137,13 +1137,20 @@ const STATUS_ICON_COMPONENTS: Record<TestStatus, typeof CheckCircle> = {
 
 function TestingTab() {
   const qc = useQueryClient();
-  const createRunFn   = useServerFn(createTestRun);
-  const listRunsFn    = useServerFn(listMyTestRuns);
-  const getResultsFn  = useServerFn(getRunResults);
-  const upsertFn      = useServerFn(upsertTestResult);
-  const completeFn    = useServerFn(completeTestRun);
-  const reopenFn      = useServerFn(reopenTestRun);
-  const deleteRunFn   = useServerFn(deleteTestRun);
+  const createRunFn    = useServerFn(createTestRun);
+  const listRunsFn     = useServerFn(listMyTestRuns);
+  const getResultsFn   = useServerFn(getRunResults);
+  const upsertFn       = useServerFn(upsertTestResult);
+  const completeFn     = useServerFn(completeTestRun);
+  const reopenFn       = useServerFn(reopenTestRun);
+  const deleteRunFn    = useServerFn(deleteTestRun);
+  const getUploadUrlFn = useServerFn(getQaScreenshotUploadUrl);
+
+  // Single hidden file input shared across all test items.
+  // uploadTestIdRef tracks which test the next file-picker result belongs to.
+  const fileInputRef       = useRef<HTMLInputElement>(null);
+  const uploadTestIdRef    = useRef<string | null>(null);
+  const [uploadingTests, setUploadingTests] = useState<Set<string>>(new Set());
 
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [creating, setCreating]       = useState(false);
@@ -1164,10 +1171,10 @@ function TestingTab() {
     staleTime: 0,
   });
 
-  // resultMap: testId → { status, notes }
-  const resultMap = new Map<string, { status: TestStatus; notes: string | null }>();
+  // resultMap: testId → { status, notes, screenshot_url }
+  const resultMap = new Map<string, { status: TestStatus; notes: string | null; screenshot_url: string | null }>();
   for (const r of resultsQuery.data?.results ?? []) {
-    resultMap.set(r.test_id, { status: r.status as TestStatus, notes: r.notes ?? null });
+    resultMap.set(r.test_id, { status: r.status as TestStatus, notes: r.notes ?? null, screenshot_url: r.screenshot_url ?? null });
   }
 
   const activeRun = runs.find((r: any) => r.id === activeRunId);
@@ -1213,6 +1220,33 @@ function TestingTab() {
     } catch (e: any) {
       toast.error(e?.message ?? "Couldn't save note");
     }
+  }
+
+  async function handleScreenshotUpload(testId: string, file: File) {
+    if (!activeRunId) return;
+    setUploadingTests((prev) => new Set(prev).add(testId));
+    try {
+      const { signedUrl, publicUrl } = await getUploadUrlFn({ data: { runId: activeRunId, testId, fileName: file.name } });
+      const res = await fetch(signedUrl, { method: "PUT", headers: { "Content-Type": file.type || "image/png" }, body: file });
+      if (!res.ok) throw new Error("Upload failed");
+      const currentStatus = resultMap.get(testId)?.status ?? "untested";
+      const currentNotes  = pendingNotes[testId] ?? resultMap.get(testId)?.notes ?? undefined;
+      await upsertFn({ data: { runId: activeRunId, testId, status: currentStatus, notes: currentNotes, screenshotUrl: publicUrl } });
+      qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
+      toast.success("Screenshot attached");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Upload failed");
+    } finally {
+      setUploadingTests((prev) => { const next = new Set(prev); next.delete(testId); return next; });
+    }
+  }
+
+  async function handleRemoveScreenshot(testId: string) {
+    if (!activeRunId) return;
+    const currentStatus = resultMap.get(testId)?.status ?? "untested";
+    const currentNotes  = pendingNotes[testId] ?? resultMap.get(testId)?.notes ?? undefined;
+    await upsertFn({ data: { runId: activeRunId, testId, status: currentStatus, notes: currentNotes, screenshotUrl: null } });
+    qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
   }
 
   async function handleCreateRun() {
@@ -1354,6 +1388,19 @@ function TestingTab() {
   // ── Active run view ───────────────────────────────────────────────────
   return (
     <div>
+      {/* Hidden file input shared across all test items */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/gif,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          const testId = uploadTestIdRef.current;
+          if (file && testId) handleScreenshotUpload(testId, file);
+          e.target.value = "";
+        }}
+      />
       {/* Header */}
       <div className="flex items-start gap-4 mb-6">
         <button
@@ -1597,6 +1644,51 @@ function TestingTab() {
                               className="mt-1 text-xs text-[var(--color-accent)] hover:underline"
                             >
                               Save note
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Screenshot attachment */}
+                        <div className="ml-7 mt-2">
+                          {result?.screenshot_url ? (
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={result.screenshot_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-xs text-[var(--color-accent)] hover:underline"
+                              >
+                                <ImagePlus className="h-3.5 w-3.5" />
+                                View screenshot
+                                <ExternalLink className="h-3 w-3 opacity-60" />
+                              </a>
+                              {!isCompleted && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveScreenshot(test.id)}
+                                  className="inline-flex items-center justify-center h-5 w-5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                  title="Remove screenshot"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              )}
+                            </div>
+                          ) : !isCompleted && (
+                            <button
+                              type="button"
+                              disabled={uploadingTests.has(test.id)}
+                              onClick={() => {
+                                uploadTestIdRef.current = test.id;
+                                fileInputRef.current?.click();
+                              }}
+                              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md px-3 py-1.5 transition-colors disabled:opacity-60"
+                            >
+                              {uploadingTests.has(test.id) ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <ImagePlus className="h-3.5 w-3.5" />
+                              )}
+                              {uploadingTests.has(test.id) ? "Uploading…" : "Attach screenshot"}
                             </button>
                           )}
                         </div>

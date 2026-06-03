@@ -84,25 +84,27 @@ export const upsertTestResult = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
-        runId:  z.string().uuid(),
-        testId: z.string().min(1).max(20),
-        status: z.enum(["untested", "pass", "fail", "blocked", "skipped"]),
-        notes:  z.string().max(2000).optional(),
+        runId:         z.string().uuid(),
+        testId:        z.string().min(1).max(20),
+        status:        z.enum(["untested", "pass", "fail", "blocked", "skipped"]),
+        notes:         z.string().max(2000).optional(),
+        // Pass undefined to leave the existing screenshot_url unchanged;
+        // pass null to explicitly clear it; pass a URL string to set it.
+        screenshotUrl: z.string().url().nullable().optional(),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     await assertRunOwner(data.runId, context.userId);
-    const { error } = await db.from("test_run_results").upsert(
-      {
-        run_id:     data.runId,
-        test_id:    data.testId,
-        status:     data.status,
-        notes:      data.notes ?? null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "run_id,test_id" },
-    );
+    const payload: Record<string, unknown> = {
+      run_id:     data.runId,
+      test_id:    data.testId,
+      status:     data.status,
+      notes:      data.notes ?? null,
+      updated_at: new Date().toISOString(),
+    };
+    if (data.screenshotUrl !== undefined) payload.screenshot_url = data.screenshotUrl;
+    const { error } = await db.from("test_run_results").upsert(payload, { onConflict: "run_id,test_id" });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -206,4 +208,31 @@ export const getAdminRunDetail = createServerFn({ method: "POST" })
       .eq("run_id", data.runId);
     if (error) throw new Error(error.message);
     return { results: (results ?? []) as any[] };
+  });
+
+// Returns a signed upload URL for a QA failure screenshot stored in the
+// content-files bucket under qa-screenshots/. Only the run owner can upload.
+export const getQaScreenshotUploadUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      runId:    z.string().uuid(),
+      testId:   z.string().min(1).max(20),
+      fileName: z.string().min(1).max(255),
+    }).parse(input),
+  )
+  .handler(async ({ context, data }) => {
+    await assertRunOwner(data.runId, context.userId);
+    const ext = (data.fileName.split(".").pop() ?? "png").toLowerCase();
+    const allowed = new Set(["png", "jpg", "jpeg", "gif", "webp"]);
+    if (!allowed.has(ext)) throw new Error("Only image files are allowed (png, jpg, gif, webp)");
+    const path = `qa-screenshots/${data.runId}/${data.testId}/${Date.now()}.${ext}`;
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("content-files")
+      .createSignedUploadUrl(path);
+    if (error) throw new Error(error.message);
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from("content-files")
+      .getPublicUrl(path);
+    return { signedUrl: signed.signedUrl, publicUrl };
   });

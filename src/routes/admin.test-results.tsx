@@ -3,7 +3,7 @@ import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ClipboardCheck, ChevronDown, ChevronRight, CheckCircle2, XCircle, MinusCircle, SkipForward, Circle } from "lucide-react";
+import { ClipboardCheck, ChevronDown, ChevronRight, CheckCircle2, XCircle, MinusCircle, SkipForward, Circle, ImageIcon, ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
 import { EmptyState } from "@/components/EmptyState";
@@ -123,6 +123,18 @@ function RunDetailView({ runId, onBack }: { runId: string; onBack: () => void })
                   <span className="font-medium text-red-700">{t.id}</span>
                   <span className="text-red-600"> — {t.title}</span>
                   {res?.notes && <p className="mt-0.5 text-xs text-red-600/80 pl-8">{res.notes}</p>}
+                  {(res as any)?.screenshot_url && (
+                    <a
+                      href={(res as any).screenshot_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-0.5 pl-8 inline-flex items-center gap-1 text-xs text-red-700 hover:underline"
+                    >
+                      <ImageIcon className="h-3 w-3" />
+                      View screenshot
+                      <ExternalLink className="h-2.5 w-2.5 opacity-70" />
+                    </a>
+                  )}
                 </li>
               );
             })}
@@ -184,6 +196,18 @@ function RunDetailView({ runId, onBack }: { runId: string; onBack: () => void })
                             </div>
                             {res?.notes && (
                               <p className="mt-1 text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1">{res.notes}</p>
+                            )}
+                            {(res as any)?.screenshot_url && (
+                              <a
+                                href={(res as any).screenshot_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-1.5 inline-flex items-center gap-1.5 text-xs text-[var(--color-accent)] hover:underline"
+                              >
+                                <ImageIcon className="h-3.5 w-3.5" />
+                                View screenshot
+                                <ExternalLink className="h-3 w-3 opacity-60" />
+                              </a>
                             )}
                           </div>
                           <span className="text-xs text-muted-foreground shrink-0">{STATUS_LABELS[status]}</span>
