@@ -1657,7 +1657,8 @@ function TestingTab() {
                           )}
                         </div>
 
-                        {/* Screenshot attachment */}
+                        {/* Screenshot attachment — only renders when there is content to show */}
+                        {(result?.screenshot_url || (!isCompleted && (status === "fail" || status === "blocked" || status === "skipped"))) && (
                         <div className="ml-7 mt-2">
                           {result?.screenshot_url ? (
                             <div className="flex items-center gap-2">
@@ -1665,7 +1666,7 @@ function TestingTab() {
                                 href={result.screenshot_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-xs text-[var(--color-accent)] hover:underline"
+                                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
                               >
                                 <ImagePlus className="h-3.5 w-3.5" />
                                 View screenshot
@@ -1682,7 +1683,7 @@ function TestingTab() {
                                 </button>
                               )}
                             </div>
-                          ) : !isCompleted && (status === "fail" || status === "blocked" || status === "skipped") && (
+                          ) : (
                             <button
                               type="button"
                               disabled={uploadingTests.has(test.id)}
@@ -1690,7 +1691,7 @@ function TestingTab() {
                                 uploadTestIdRef.current = test.id;
                                 fileInputRef.current?.click();
                               }}
-                              className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-60"
+                              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md px-3 py-1.5 transition-colors disabled:opacity-60"
                             >
                               {uploadingTests.has(test.id) ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1701,6 +1702,7 @@ function TestingTab() {
                             </button>
                           )}
                         </div>
+                        )}
                       </div>
                     );
                   })}
