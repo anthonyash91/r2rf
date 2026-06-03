@@ -1260,9 +1260,9 @@ function TestingTab() {
       <div>
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl font-semibold flex items-center gap-2">
-              <ClipboardCheck className="h-5 w-5" /> QA Test Runs
-            </h2>
+            <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+              <ClipboardCheck className="h-7 w-7 text-[var(--color-accent)]" /> QA Test Runs
+            </h1>
             <button
               type="button"
               onClick={() => setCreating(true)}
