@@ -23,45 +23,79 @@ The dashboard has four sections accessible via tabs at the top:
 
 ## My Progress Tab
 
+Sections appear in this order:
+
+1. **Pick Up Where You Left Off** — resume card (shown only if applicable)
+2. **Overall Progress Ring** — weighted completion across all categories
+3. **Stat Cards** — four key metrics at a glance
+4. **Monthly Summary** — collapsible activity card for the current month
+5. **Engagement Level** — facility ranking (shown only when available)
+6. **Category Progress** — full category accordion list
+
+---
+
+### Pick Up Where You Left Off
+
+If the user has any started-but-not-completed content, a resume card appears at the very top of the My Progress tab. It shows:
+
+- An enlarged **category icon** for visual context
+- The **item title** and a brief progress note (e.g., percentage watched for video/audio, estimated minutes read for PDF)
+- The label **"Pick Up Where You Left Off"** with an arrow on the right side
+- Tapping the card navigates directly to that category page and scrolls to the item
+
+The card shows the single most recently engaged-with item. It disappears once all items in the library are completed. Video and audio items resume playback from exactly where the user stopped.
+
+---
+
 ### Overall Progress Ring
 
-At the top of the My Progress tab is a large circular progress ring showing the user's overall completion across every category they have access to.
+A large circular progress ring shows the user's overall completion across every category they have access to.
 
-The ring uses **weighted progress** — it doesn't just count completed items. A video watched 50% of the way through contributes 50% toward the ring. A completed item contributes 100%. An unopened item contributes 0%. This gives a more honest picture of engagement than a simple completed/not-completed count.
-
-Below the ring is a summary line: **"X of Y items completed"** showing the raw count of fully completed items. **Exempt items** (informational content) are excluded from both X and Y — they don't count toward or against completion.
+The ring uses **weighted progress** — a video watched 50% contributes 50%, a completed item 100%, an unopened item 0%. At 100% completion the ring fills solid and displays a checkmark icon instead of the percentage. Below the ring is a summary line: **"X of Y items completed"** showing fully completed items. **Exempt items** are excluded from both numbers.
 
 ---
 
 ### Stat Cards
 
-Four cards appear below the overall ring, each showing a key metric at a glance:
+Four cards appear below the ring:
 
 | Card | What It Shows |
 |---|---|
 | **Items Completed** | Total content items fully completed, out of all available items |
-| **Categories Completed** | Number of full programs (categories) finished, out of all available |
-| **Time Spent** | Total accumulated time actively engaging with content, measured in real session time |
-| **Day Streak** | Number of consecutive days the user has logged in |
+| **Categories Completed** | Number of full categories finished, out of all available |
+| **Time Spent** | Total accumulated real session time |
+| **Day Streak** | Number of consecutive days logged in |
+
+---
+
+### Monthly Summary
+
+A collapsible card below the stat cards shows activity for the current calendar month:
+
+- **Items completed this month** — with a delta label comparing to last month (e.g., "↑ 3 more than last month")
+- **Time spent this month** — real session time with a month-over-month comparison
+- **Achievements earned this month** — badge icons for milestones earned this month; hovering shows the achievement name and description
+
+A rotating motivational message appears at the bottom when expanded. The card is collapsed by default and only appears for months with at least some activity. Exempt items are excluded from the monthly item count.
 
 ---
 
 ### Engagement Level
 
-If the user's facility has enough active users to calculate rankings, an engagement level card appears below the stat cards. It shows:
+If the user's facility has enough active users (10+) to calculate meaningful rankings, an engagement level card appears:
 
 - **Tier label** — one of: Top Reader, Active Reader, Getting Started, or Just Joined
-- **Percentile** (for larger facilities) — e.g., "top 12% of readers at your facility"
+- **Percentile** — e.g., "top 12% of readers at your facility" (shown for facilities with 10+ users)
 - The number of items completed and items started
 - When the ranking was last updated (updates nightly)
 
-This gives users a sense of where they stand relative to their peers at the same facility, which can be motivating for continued engagement.
+This gives users context on where they stand relative to peers at the same facility.
 
 ---
 
 ### Category Progress
 
-Below the stats is a list of every content category (program) the user has access to. Each category shows as a collapsible accordion row with:
+A list of every content category the user has access to, each as a collapsible accordion row:
 
 **In the header:**
 - A **circular progress ring** showing weighted completion for that category (same weighted logic as the overall ring; exempt items excluded)
@@ -117,23 +151,21 @@ Each content item in the expanded category view has a badge showing its current 
 
 **Rating and bookmark status on the dashboard** — the category accordion items on the dashboard also display the user's current rating (filled thumbs-up or thumbs-down) and bookmark status (filled bookmark icon) as read-only indicators. These are display-only on the dashboard; tapping them has no effect — use the category page to change ratings or bookmarks.
 
-### Monthly Summary
+### Category Completion Celebration
 
-A collapsible card appears below the category list showing a summary of the user's activity this calendar month:
+When a user completes the final item in a category, a celebration modal automatically appears. It shows:
 
-- **Items completed this month** — with a delta indicator showing how many more or fewer than last month (e.g., "+3 more than last month")
-- **Time spent this month** — real session time in hours and minutes, with a comparison to last month
-- **Achievements earned this month** — badge icons for any milestones earned this month, each with a tooltip showing the achievement name
+- **"You completed [Category Name]"** — the category name is shown in the headline
+- A congratulatory message acknowledging their effort
+- A **"Keep going"** button to dismiss the modal
 
-Exempt items are excluded from the monthly item count. The card shows a motivational message that rotates from a set of encouraging phrases. The card is collapsed by default and can be expanded to see the full detail.
+The modal appears once per category completion and does not reappear. It is only shown on the dashboard — not on the category page itself.
 
 ---
 
 ### Resume Position
 
 For video and audio content, the platform remembers exactly where the user left off. When they reopen the content, playback automatically resumes from their furthest point — they never have to find their place again.
-
----
 
 ---
 

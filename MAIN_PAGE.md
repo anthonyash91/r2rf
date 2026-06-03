@@ -58,6 +58,8 @@ Clearing the search restores the normal category grid. Search is available to al
 
 The main content of the home page is a grid of **category cards** — each card represents a program or topic area (e.g., Substance Abuse Recovery, Employment Skills, Family & Parenting). The grid is responsive: 4 columns on large screens, 3 on medium, 2 on small, 1 on mobile.
 
+A summary line above the grid shows **"X Categories / Y Items"** — the total number of published categories and the total number of published content items visible to the current user. Both counts respect facility restrictions and update immediately when administrators add or remove content. The label is translated into Spanish when the language is set to ES.
+
 ### Each Category Card Shows:
 
 **Icon**
