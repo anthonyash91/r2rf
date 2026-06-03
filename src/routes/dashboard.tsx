@@ -1675,20 +1675,24 @@ function TestingTab() {
                           const notesOpen = openNotes.has(test.id) || !!currentNote || status === "fail" || status === "blocked";
                           return (
                             <>
-                              <div className="flex flex-wrap items-center gap-2 mt-4 ml-7">
-                                {(["pass", "fail", "blocked", "skipped", "untested"] as TestStatus[]).map((s) => {
+                              <div className="flex items-center mt-4 ml-7">
+                                {/* Status buttons as a connected pill matching the filter pills */}
+                                {(["pass", "fail", "blocked", "skipped", "untested"] as TestStatus[]).map((s, i, arr) => {
                                   const SIcon = STATUS_ICON_COMPONENTS[s];
+                                  const isFirst = i === 0;
+                                  const isLast = i === arr.length - 1;
                                   return (
                                     <button
                                       key={s}
                                       type="button"
                                       disabled={saving}
                                       onClick={() => handleSetStatus(test.id, s)}
-                                      className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
-                                        status === s
-                                          ? STATUS_COLORS[s]
-                                          : "bg-background text-muted-foreground border-border hover:bg-muted"
-                                      }`}
+                                      className={[
+                                        "inline-flex items-center gap-1.5 border px-3 py-2 text-xs font-medium transition-colors disabled:opacity-60",
+                                        isFirst ? "rounded-l-md" : "-ml-px rounded-l-none",
+                                        isLast  ? "rounded-r-md" : "rounded-r-none",
+                                        status === s ? `relative z-10 ${STATUS_COLORS[s]}` : "bg-background text-muted-foreground border-border hover:bg-muted",
+                                      ].join(" ")}
                                     >
                                       <SIcon className="h-3.5 w-3.5" />
                                       {STATUS_LABELS[s]}
