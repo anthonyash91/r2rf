@@ -1432,7 +1432,7 @@ function TestingTab() {
             key={s}
             type="button"
             onClick={() => setFilterStatus(s)}
-            className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`inline-flex items-center leading-none gap-1.5 rounded-[4px] border px-2.5 py-[5px] text-xs font-medium transition-colors ${
               filterStatus === s
                 ? "bg-foreground text-background border-foreground"
                 : "bg-background text-muted-foreground border-border hover:bg-muted"
@@ -1447,7 +1447,7 @@ function TestingTab() {
             key={p}
             type="button"
             onClick={() => setFilterPriority(p)}
-            className={`inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`inline-flex items-center leading-none rounded-[4px] border px-2.5 py-[5px] text-xs font-medium transition-colors ${
               filterPriority === p
                 ? "bg-foreground text-background border-foreground"
                 : "bg-background text-muted-foreground border-border hover:bg-muted"
@@ -1529,7 +1529,7 @@ function TestingTab() {
                                 }[test.priority];
                                 const PIcon = priorityConfig.icon;
                                 return (
-                                  <span className={`inline-flex items-center leading-none gap-1 rounded-[4px] border px-2 py-0.5 text-xs font-medium flex-shrink-0 ${priorityConfig.cls}`}>
+                                  <span className={`inline-flex items-center leading-none gap-1 rounded-[4px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 ${priorityConfig.cls}`}>
                                     <PIcon className="h-3 w-3" />
                                     {priorityConfig.label}
                                   </span>
