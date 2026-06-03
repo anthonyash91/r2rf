@@ -1422,7 +1422,7 @@ function TestingTab() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 my-5">
+      <div className="flex flex-wrap gap-2 my-6">
         {(["all", "fail", "pass", "blocked", "skipped", "untested"] as const).map((s) => (
           <button
             key={s}
