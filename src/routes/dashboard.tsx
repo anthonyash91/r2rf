@@ -1266,7 +1266,7 @@ function TestingTab() {
             <button
               type="button"
               onClick={() => setCreating(true)}
-              className="inline-flex items-center gap-2 rounded-[4px] bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               <Plus className="h-4 w-4" /> New run
             </button>
@@ -1378,7 +1378,7 @@ function TestingTab() {
           <button
             type="button"
             onClick={handleComplete}
-            className="shrink-0 inline-flex items-center gap-2 rounded-[4px] border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-100 transition-colors"
+            className="shrink-0 inline-flex items-center gap-2 rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-100 transition-colors"
           >
             <CheckCircle className="h-4 w-4" /> Mark complete
           </button>
