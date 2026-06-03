@@ -1186,6 +1186,7 @@ function TestingTab() {
   // ── Local optimistic state for note editing ─────────────────────────────
   const [pendingNotes, setPendingNotes] = useState<Record<string, string>>({});
   const [savedNotes, setSavedNotes] = useState<Set<string>>(new Set()); // briefly populated after a successful save
+  const [openNotes, setOpenNotes] = useState<Set<string>>(new Set()); // tracks which test items have the notes section expanded
   const [openSections, setOpenSections] = useState<Set<number>>(new Set());
   const [filterStatus, setFilterStatus] = useState<TestStatus | "all">("all");
   const [filterPriority, setFilterPriority] = useState<"all" | "critical" | "high" | "medium" | "low">("all");
@@ -1205,6 +1206,10 @@ function TestingTab() {
       const currentNotes = pendingNotes[testId] ?? resultMap.get(testId)?.notes ?? undefined;
       await upsertFn({ data: { runId: activeRunId, testId, status, notes: currentNotes } });
       qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
+      // Auto-expand the notes section for statuses that typically need an explanation.
+      if (status === "fail" || status === "blocked") {
+        setOpenNotes((prev) => new Set(prev).add(testId));
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Couldn't save result");
     } finally {
@@ -1610,125 +1615,140 @@ function TestingTab() {
                           </div>
                         </div>
 
-                        {/* Status buttons */}
-                        {!isCompleted && (
-                          <div className="flex flex-wrap gap-2 mt-4 ml-7">
-                            {(["pass", "fail", "blocked", "skipped", "untested"] as TestStatus[]).map((s) => {
-                              const SIcon = STATUS_ICON_COMPONENTS[s];
-                              return (
-                                <button
-                                  key={s}
-                                  type="button"
-                                  disabled={saving}
-                                  onClick={() => handleSetStatus(test.id, s)}
-                                  className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
-                                    status === s
-                                      ? STATUS_COLORS[s]
-                                      : "bg-background text-muted-foreground border-border hover:bg-muted"
-                                  }`}
-                                >
-                                  <SIcon className="h-3.5 w-3.5" />
-                                  {STATUS_LABELS[s]}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* Notes + screenshot row */}
-                        {isCompleted ? (
-                          // Completed state: show notes only if they exist (bordered box),
-                          // and screenshot link if one was attached.
-                          (currentNote || result?.screenshot_url) ? (
-                            <div className="ml-7 mt-3 space-y-2">
-                              {currentNote && (
-                                <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground whitespace-pre-line">
-                                  {currentNote}
-                                </div>
-                              )}
-                              {result?.screenshot_url && (
-                                <a
-                                  href={result.screenshot_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-                                >
-                                  <ImagePlus className="h-3.5 w-3.5" />
-                                  View screenshot
-                                  <ExternalLink className="h-3 w-3 opacity-60" />
-                                </a>
-                              )}
-                            </div>
-                          ) : null
-                        ) : (
-                          // Active state: textarea + bottom row (screenshot left, save note right)
-                          <div className="ml-7 mt-3">
-                            <textarea
-                              rows={status === "fail" ? 3 : 1}
-                              value={currentNote}
-                              placeholder="Add notes (required for failures)…"
-                              onChange={(e) => setPendingNotes((prev) => ({ ...prev, [test.id]: e.target.value }))}
-                              onBlur={() => { if (noteDirty) handleSaveNote(test.id); }}
-                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs resize-none focus:outline-none focus:border-[var(--color-accent)] transition-colors"
-                            />
-                            <div className="flex items-center justify-between gap-2 mt-2">
-                              {/* Left: screenshot button (only for fail/blocked/skipped) */}
-                              <div>
-                                {result?.screenshot_url ? (
-                                  <div className="flex items-center gap-2">
-                                    <a
-                                      href={result.screenshot_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-                                    >
-                                      <ImagePlus className="h-3.5 w-3.5" />
-                                      View screenshot
-                                      <ExternalLink className="h-3 w-3 opacity-60" />
-                                    </a>
+                        {/* Status buttons + Add note button on the same row */}
+                        {!isCompleted && (() => {
+                          // Notes section is open when: manually opened, already has content, or status requires explanation.
+                          const notesOpen = openNotes.has(test.id) || !!currentNote || status === "fail" || status === "blocked";
+                          return (
+                            <>
+                              <div className="flex flex-wrap items-center gap-2 mt-4 ml-7">
+                                {(["pass", "fail", "blocked", "skipped", "untested"] as TestStatus[]).map((s) => {
+                                  const SIcon = STATUS_ICON_COMPONENTS[s];
+                                  return (
                                     <button
+                                      key={s}
                                       type="button"
-                                      onClick={() => handleRemoveScreenshot(test.id)}
-                                      className="inline-flex items-center justify-center h-5 w-5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                                      title="Remove screenshot"
+                                      disabled={saving}
+                                      onClick={() => handleSetStatus(test.id, s)}
+                                      className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
+                                        status === s
+                                          ? STATUS_COLORS[s]
+                                          : "bg-background text-muted-foreground border-border hover:bg-muted"
+                                      }`}
                                     >
-                                      <X className="h-3 w-3" />
+                                      <SIcon className="h-3.5 w-3.5" />
+                                      {STATUS_LABELS[s]}
                                     </button>
-                                  </div>
-                                ) : (status === "fail" || status === "blocked" || status === "skipped") && (
+                                  );
+                                })}
+                                {/* Add note — only shown when the notes section is collapsed */}
+                                {!notesOpen && (
                                   <button
                                     type="button"
-                                    disabled={uploadingTests.has(test.id)}
-                                    onClick={() => {
-                                      uploadTestIdRef.current = test.id;
-                                      fileInputRef.current?.click();
-                                    }}
-                                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md px-3 py-1.5 transition-colors disabled:opacity-60"
+                                    onClick={() => setOpenNotes((prev) => new Set(prev).add(test.id))}
+                                    className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
                                   >
-                                    {uploadingTests.has(test.id) ? (
-                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                    ) : (
-                                      <ImagePlus className="h-3.5 w-3.5" />
-                                    )}
-                                    {uploadingTests.has(test.id) ? "Uploading…" : "Attach screenshot"}
+                                    <Minus className="h-3.5 w-3.5 rotate-90" />
+                                    Add note
                                   </button>
                                 )}
                               </div>
-                              {/* Right: Save note — always visible; briefly shows "Saved ✓" after a successful save */}
-                              <button
-                                type="button"
-                                onClick={() => handleSaveNote(test.id)}
-                                className={`inline-flex items-center gap-1.5 justify-center rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-                                  savedNotes.has(test.id)
-                                    ? "border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
-                                    : "border-input bg-background text-foreground hover:bg-muted"
-                                }`}
+
+                              {/* Notes textarea + action row — only shown when notesOpen */}
+                              {notesOpen && (
+                                <div className="ml-7 mt-3">
+                                  <textarea
+                                    rows={status === "fail" ? 3 : 1}
+                                    value={currentNote}
+                                    placeholder="Add notes (required for failures)…"
+                                    onChange={(e) => setPendingNotes((prev) => ({ ...prev, [test.id]: e.target.value }))}
+                                    onBlur={() => { if (noteDirty) handleSaveNote(test.id); }}
+                                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs resize-none focus:outline-none focus:border-[var(--color-accent)] transition-colors"
+                                  />
+                                  <div className="flex items-center justify-between gap-2 mt-2">
+                                    {/* Left: screenshot button (only for fail/blocked/skipped) */}
+                                    <div>
+                                      {result?.screenshot_url ? (
+                                        <div className="flex items-center gap-2">
+                                          <a
+                                            href={result.screenshot_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                                          >
+                                            <ImagePlus className="h-3.5 w-3.5" />
+                                            View screenshot
+                                            <ExternalLink className="h-3 w-3 opacity-60" />
+                                          </a>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRemoveScreenshot(test.id)}
+                                            className="inline-flex items-center justify-center h-5 w-5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                            title="Remove screenshot"
+                                          >
+                                            <X className="h-3 w-3" />
+                                          </button>
+                                        </div>
+                                      ) : (status === "fail" || status === "blocked" || status === "skipped") && (
+                                        <button
+                                          type="button"
+                                          disabled={uploadingTests.has(test.id)}
+                                          onClick={() => {
+                                            uploadTestIdRef.current = test.id;
+                                            fileInputRef.current?.click();
+                                          }}
+                                          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md px-3 py-1.5 transition-colors disabled:opacity-60"
+                                        >
+                                          {uploadingTests.has(test.id) ? (
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                          ) : (
+                                            <ImagePlus className="h-3.5 w-3.5" />
+                                          )}
+                                          {uploadingTests.has(test.id) ? "Uploading…" : "Attach screenshot"}
+                                        </button>
+                                      )}
+                                    </div>
+                                    {/* Right: Save note — always visible */}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSaveNote(test.id)}
+                                      className={`inline-flex items-center gap-1.5 justify-center rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                                        savedNotes.has(test.id)
+                                          ? "border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
+                                          : "border-input bg-background text-foreground hover:bg-muted"
+                                      }`}
+                                    >
+                                      {savedNotes.has(test.id) ? (
+                                        <><CheckCircle className="h-3.5 w-3.5" /> Saved</>
+                                      ) : "Save note"}
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+
+                        {/* Completed state: notes + screenshot (only if content exists) */}
+                        {isCompleted && (currentNote || result?.screenshot_url) && (
+                          <div className="ml-7 mt-3 space-y-2">
+                            {currentNote && (
+                              <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground whitespace-pre-line">
+                                {currentNote}
+                              </div>
+                            )}
+                            {result?.screenshot_url && (
+                              <a
+                                href={result.screenshot_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
                               >
-                                {savedNotes.has(test.id) ? (
-                                  <><CheckCircle className="h-3.5 w-3.5" /> Saved</>
-                                ) : "Save note"}
-                              </button>
-                            </div>
+                                <ImagePlus className="h-3.5 w-3.5" />
+                                View screenshot
+                                <ExternalLink className="h-3 w-3 opacity-60" />
+                              </a>
+                            )}
                           </div>
                         )}
                       </div>
