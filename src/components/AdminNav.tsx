@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
-import { LayoutGrid, Users, Shield, BarChart3, Home, Award, Building2, MessageSquare, ChevronDown, MoreHorizontal, Palette, Sprout, ScrollText, AlertOctagon, FileText } from "lucide-react";
+import { LayoutGrid, Users, Shield, BarChart3, Home, Award, Building2, MessageSquare, ChevronDown, MoreHorizontal, Palette, Sprout, ScrollText, AlertOctagon, FileText, ClipboardCheck } from "lucide-react";
 import { countNewUsers } from "@/lib/users.functions";
 import { useLastSeenUsersAt } from "@/lib/new-users-tracker";
 
@@ -40,6 +40,7 @@ const links: NavLink[] = [
   { to: "/admin/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true, facilityUserVisible: true },
   { to: "/admin/errors", label: "Errors", icon: AlertOctagon, adminOnly: true },
   { to: "/admin/seed", label: "Seed Content", icon: Sprout, adminOnly: true },
+  { to: "/admin/test-results", label: "Test Results", icon: ClipboardCheck, adminOnly: true },
 ];
 
 function isLinkActive(l: NavLink, pathname: string) {

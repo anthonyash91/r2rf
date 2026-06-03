@@ -19,6 +19,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as FacilitySlugRouteImport } from './routes/facility.$slug'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminTestResultsRouteImport } from './routes/admin.test-results'
 import { Route as AdminTermsRouteImport } from './routes/admin.terms'
 import { Route as AdminSeedRouteImport } from './routes/admin.seed'
 import { Route as AdminPrivacyRouteImport } from './routes/admin.privacy'
@@ -82,6 +83,11 @@ const CategorySlugRoute = CategorySlugRouteImport.update({
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTestResultsRoute = AdminTestResultsRouteImport.update({
+  id: '/test-results',
+  path: '/test-results',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminTermsRoute = AdminTermsRouteImport.update({
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
   '/admin/terms': typeof AdminTermsRoute
+  '/admin/test-results': typeof AdminTestResultsRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
   '/admin/terms': typeof AdminTermsRoute
+  '/admin/test-results': typeof AdminTestResultsRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
   '/admin/terms': typeof AdminTermsRoute
+  '/admin/test-results': typeof AdminTestResultsRoute
   '/admin/users': typeof AdminUsersRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/admin/privacy'
     | '/admin/seed'
     | '/admin/terms'
+    | '/admin/test-results'
     | '/admin/users'
     | '/category/$slug'
     | '/facility/$slug'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
     | '/admin/privacy'
     | '/admin/seed'
     | '/admin/terms'
+    | '/admin/test-results'
     | '/admin/users'
     | '/category/$slug'
     | '/facility/$slug'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/admin/privacy'
     | '/admin/seed'
     | '/admin/terms'
+    | '/admin/test-results'
     | '/admin/users'
     | '/category/$slug'
     | '/facility/$slug'
@@ -395,6 +407,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/test-results': {
+      id: '/admin/test-results'
+      path: '/test-results'
+      fullPath: '/admin/test-results'
+      preLoaderRoute: typeof AdminTestResultsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/terms': {
@@ -511,6 +530,7 @@ interface AdminRouteChildren {
   AdminPrivacyRoute: typeof AdminPrivacyRoute
   AdminSeedRoute: typeof AdminSeedRoute
   AdminTermsRoute: typeof AdminTermsRoute
+  AdminTestResultsRoute: typeof AdminTestResultsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
   AdminCategoryIdRoute: typeof AdminCategoryIdRoute
@@ -529,6 +549,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminPrivacyRoute: AdminPrivacyRoute,
   AdminSeedRoute: AdminSeedRoute,
   AdminTermsRoute: AdminTermsRoute,
+  AdminTestResultsRoute: AdminTestResultsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
   AdminCategoryIdRoute: AdminCategoryIdRoute,

@@ -36,9 +36,17 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useAchievements } from "@/hooks/use-achievements";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { getMyMonthlySummary } from "@/lib/monthly-summary.functions";
+import {
+  createTestRun, listMyTestRuns, getRunResults, upsertTestResult,
+  completeTestRun, reopenTestRun, deleteTestRun,
+} from "@/lib/test-runs.functions";
+import {
+  QA_TESTS, QA_SECTIONS, PRIORITY_LABELS, STATUS_LABELS, STATUS_ICONS, STATUS_COLORS,
+  type TestStatus,
+} from "@/lib/qa-test-plan";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight, ClipboardCheck, Plus, Trash2, CheckCircle, XCircle, MinusCircle, SkipForward, ChevronRight } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
@@ -49,7 +57,7 @@ import type { Category } from "@/lib/categories";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Reentry to Recovery" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
-    tab: search.tab === "account" ? "account" : search.tab === "saved" ? "saved" : search.tab === "achievements" ? "achievements" : undefined,
+    tab: search.tab === "account" ? "account" : search.tab === "saved" ? "saved" : search.tab === "achievements" ? "achievements" : search.tab === "testing" ? "testing" : undefined,
   }),
   beforeLoad: async ({ location }) => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -70,7 +78,7 @@ function DashboardRoute() {
 
 function DashboardPage() {
   const { t, lang } = useI18n();
-  const { user, isAdmin, isUser } = useAuth();
+  const { user, isAdmin, isUser, isTester } = useAuth();
   const queryClient = useQueryClient();
   const fetchProfile = useServerFn(getMyProfile);
   const fetchQuestions = useServerFn(getMySecurityQuestions);
@@ -522,6 +530,16 @@ function DashboardPage() {
               >
                 {t("dashboard.tabAccount")}
               </TabsTrigger>
+              {/* Testing tab — only visible to tester accounts */}
+              {isTester && (
+                <TabsTrigger
+                  value="testing"
+                  className="flex-1 sm:flex-none justify-center px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
+                >
+                  <ClipboardCheck className="h-3.5 w-3.5 mr-1.5" />
+                  Testing
+                </TabsTrigger>
+              )}
             </TabsList>
           </div>
 
@@ -1063,12 +1081,488 @@ function DashboardPage() {
               )}
             </div>
           </TabsContent>
+
+          {/* ── Testing Tab (tester role only) ─────────────────────────────── */}
+          {isTester && (
+            <TabsContent value="testing" className="mt-6">
+              <TestingTab />
+            </TabsContent>
+          )}
         </Tabs>
 
 
       </main>
 
       <SiteFooter />
+    </div>
+  );
+}
+
+// ── Testing Tab ────────────────────────────────────────────────────────────────
+
+const TOTAL_TESTS = QA_TESTS.length;
+
+const STATUS_ICON_COMPONENTS: Record<TestStatus, typeof CheckCircle> = {
+  pass:     CheckCircle,
+  fail:     XCircle,
+  blocked:  MinusCircle,
+  skipped:  SkipForward,
+  untested: Circle,
+};
+
+function TestingTab() {
+  const qc = useQueryClient();
+  const createRunFn   = useServerFn(createTestRun);
+  const listRunsFn    = useServerFn(listMyTestRuns);
+  const getResultsFn  = useServerFn(getRunResults);
+  const upsertFn      = useServerFn(upsertTestResult);
+  const completeFn    = useServerFn(completeTestRun);
+  const reopenFn      = useServerFn(reopenTestRun);
+  const deleteRunFn   = useServerFn(deleteTestRun);
+
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [creating, setCreating]       = useState(false);
+  const [newLabel, setNewLabel]       = useState("");
+  const [saving, setSaving]           = useState(false);
+
+  const runsQuery = useQuery({
+    queryKey: ["my-test-runs"],
+    queryFn:  () => listRunsFn(),
+    staleTime: 30_000,
+  });
+  const runs = runsQuery.data?.runs ?? [];
+
+  const resultsQuery = useQuery({
+    queryKey: ["my-test-run-results", activeRunId],
+    enabled:  !!activeRunId,
+    queryFn:  () => getResultsFn({ data: { runId: activeRunId! } }),
+    staleTime: 0,
+  });
+
+  // resultMap: testId → { status, notes }
+  const resultMap = new Map<string, { status: TestStatus; notes: string | null }>();
+  for (const r of resultsQuery.data?.results ?? []) {
+    resultMap.set(r.test_id, { status: r.status as TestStatus, notes: r.notes ?? null });
+  }
+
+  const activeRun = runs.find((r: any) => r.id === activeRunId);
+  const isCompleted = !!activeRun?.completed_at;
+
+  // ── Local optimistic state for note editing ─────────────────────────────
+  const [pendingNotes, setPendingNotes] = useState<Record<string, string>>({});
+  const [openSections, setOpenSections] = useState<Set<number>>(new Set());
+  const [filterStatus, setFilterStatus] = useState<TestStatus | "all">("all");
+  const [filterPriority, setFilterPriority] = useState<"all" | "critical" | "high" | "medium" | "low">("all");
+
+  function toggleSection(n: number) {
+    setOpenSections((prev) => {
+      const next = new Set(prev);
+      next.has(n) ? next.delete(n) : next.add(n);
+      return next;
+    });
+  }
+
+  async function handleSetStatus(testId: string, status: TestStatus) {
+    if (!activeRunId || isCompleted) return;
+    setSaving(true);
+    try {
+      const currentNotes = pendingNotes[testId] ?? resultMap.get(testId)?.notes ?? undefined;
+      await upsertFn({ data: { runId: activeRunId, testId, status, notes: currentNotes } });
+      qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't save result");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleSaveNote(testId: string) {
+    if (!activeRunId || isCompleted) return;
+    const notes = pendingNotes[testId];
+    if (notes === undefined) return;
+    const currentStatus = resultMap.get(testId)?.status ?? "untested";
+    try {
+      await upsertFn({ data: { runId: activeRunId, testId, status: currentStatus, notes } });
+      qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
+      setPendingNotes((prev) => { const next = { ...prev }; delete next[testId]; return next; });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't save note");
+    }
+  }
+
+  async function handleCreateRun() {
+    const label = newLabel.trim();
+    if (!label) return;
+    try {
+      const { run } = await createRunFn({ data: { label } });
+      await qc.invalidateQueries({ queryKey: ["my-test-runs"] });
+      setActiveRunId((run as any).id);
+      setCreating(false);
+      setNewLabel("");
+      setOpenSections(new Set());
+      setFilterStatus("all");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't create run");
+    }
+  }
+
+  async function handleComplete() {
+    if (!activeRunId) return;
+    await completeFn({ data: { runId: activeRunId } });
+    qc.invalidateQueries({ queryKey: ["my-test-runs"] });
+  }
+
+  async function handleReopen() {
+    if (!activeRunId) return;
+    await reopenFn({ data: { runId: activeRunId } });
+    qc.invalidateQueries({ queryKey: ["my-test-runs"] });
+  }
+
+  async function handleDeleteRun(runId: string) {
+    await deleteRunFn({ data: { runId } });
+    if (activeRunId === runId) setActiveRunId(null);
+    qc.invalidateQueries({ queryKey: ["my-test-runs"] });
+  }
+
+  // ── Stats for the active run ───────────────────────────────────────────
+  const passCount    = QA_TESTS.filter((t) => resultMap.get(t.id)?.status === "pass").length;
+  const failCount    = QA_TESTS.filter((t) => resultMap.get(t.id)?.status === "fail").length;
+  const blockedCount = QA_TESTS.filter((t) => resultMap.get(t.id)?.status === "blocked").length;
+  const skippedCount = QA_TESTS.filter((t) => resultMap.get(t.id)?.status === "skipped").length;
+  const actionedCount = passCount + failCount + blockedCount + skippedCount;
+  const progressPct = Math.round((actionedCount / TOTAL_TESTS) * 100);
+  const failures = QA_TESTS.filter((t) => resultMap.get(t.id)?.status === "fail");
+
+  // ── Run list view ─────────────────────────────────────────────────────
+  if (!activeRunId) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-display text-xl font-semibold flex items-center gap-2">
+              <ClipboardCheck className="h-5 w-5" /> QA Test Runs
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">{TOTAL_TESTS} test cases across {QA_SECTIONS.length} sections</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus className="h-4 w-4" /> New run
+          </button>
+        </div>
+
+        {creating && (
+          <div className="mb-6 rounded-2xl border border-border bg-card p-5 flex items-center gap-3">
+            <input
+              autoFocus
+              type="text"
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleCreateRun(); if (e.key === "Escape") { setCreating(false); setNewLabel(""); } }}
+              placeholder="Run label (e.g. Post-deploy June 3)"
+              className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={handleCreateRun}
+              disabled={!newLabel.trim()}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+            >
+              Create
+            </button>
+            <button
+              type="button"
+              onClick={() => { setCreating(false); setNewLabel(""); }}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {runsQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : runs.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border p-12 text-center">
+            <ClipboardCheck className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="font-medium">No test runs yet</p>
+            <p className="text-sm text-muted-foreground mt-1">Create a new run to start working through the QA checklist.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {runs.map((run: any) => {
+              const counts: Record<string, number> = {};
+              // We don't have counts in the list view — just show the run metadata
+              return (
+                <div
+                  key={run.id}
+                  className="rounded-2xl border border-border bg-card p-5 flex items-center gap-4 hover:bg-muted/20 cursor-pointer transition-colors"
+                  onClick={() => { setActiveRunId(run.id); setOpenSections(new Set()); setFilterStatus("all"); }}
+                >
+                  <ClipboardCheck className={`h-5 w-5 shrink-0 ${run.completed_at ? "text-green-600" : "text-[var(--color-accent)]"}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{run.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(run.created_at).toLocaleDateString()}
+                      {run.completed_at ? " · Completed" : " · In progress"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleDeleteRun(run.id); }}
+                    className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Active run view ───────────────────────────────────────────────────
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-start gap-4 mb-6">
+        <button
+          type="button"
+          onClick={() => setActiveRunId(null)}
+          className="mt-1 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
+        >
+          <ChevronRight className="h-4 w-4 rotate-180" /> All runs
+        </button>
+        <div className="flex-1 min-w-0">
+          <h2 className="font-display text-xl font-semibold truncate">{activeRun?.label}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {new Date(activeRun?.created_at).toLocaleDateString()}
+            {isCompleted ? " · Completed" : " · In progress"}
+          </p>
+        </div>
+        {isCompleted ? (
+          <button
+            type="button"
+            onClick={handleReopen}
+            className="shrink-0 text-sm text-muted-foreground hover:text-foreground underline"
+          >
+            Reopen
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleComplete}
+            className="shrink-0 inline-flex items-center gap-2 rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-100 transition-colors"
+          >
+            <CheckCircle className="h-4 w-4" /> Mark complete
+          </button>
+        )}
+      </div>
+
+      {/* Progress summary */}
+      <div className="rounded-2xl border border-border bg-card p-5 mb-6 flex items-center gap-5">
+        <CircleProgress value={progressPct} size={64} stroke={6} />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold mb-2">{actionedCount} of {TOTAL_TESTS} tests actioned</p>
+          <div className="flex flex-wrap gap-3 text-xs">
+            <span className="text-green-600 font-medium">{passCount} passed</span>
+            <span className="text-red-600 font-medium">{failCount} failed</span>
+            <span className="text-yellow-600 font-medium">{blockedCount} blocked</span>
+            <span className="text-muted-foreground">{skippedCount} skipped</span>
+            <span className="text-muted-foreground">{TOTAL_TESTS - actionedCount} untested</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Failures summary */}
+      {failures.length > 0 && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-5 mb-6">
+          <p className="text-sm font-semibold text-red-700 mb-3">
+            {failures.length} failure{failures.length !== 1 ? "s" : ""} require attention
+          </p>
+          <ul className="space-y-1.5">
+            {failures.map((t) => {
+              const notes = resultMap.get(t.id)?.notes;
+              return (
+                <li key={t.id} className="text-sm">
+                  <span className="font-medium text-red-700">{t.id}</span>
+                  <span className="text-red-600"> — {t.title}</span>
+                  {notes && <p className="text-xs text-red-600/80 mt-0.5 pl-8">{notes}</p>}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        {(["all", "fail", "pass", "blocked", "skipped", "untested"] as const).map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setFilterStatus(s)}
+            className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+              filterStatus === s
+                ? "bg-foreground text-background border-foreground"
+                : "bg-background text-muted-foreground border-border hover:bg-muted"
+            }`}
+          >
+            {s === "all" ? "All" : STATUS_LABELS[s]}
+          </button>
+        ))}
+        <span className="mx-1 self-center text-border">|</span>
+        {(["all", "critical", "high", "medium", "low"] as const).map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => setFilterPriority(p)}
+            className={`inline-flex items-center rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+              filterPriority === p
+                ? "bg-foreground text-background border-foreground"
+                : "bg-background text-muted-foreground border-border hover:bg-muted"
+            }`}
+          >
+            {p === "all" ? "All priorities" : PRIORITY_LABELS[p]}
+          </button>
+        ))}
+      </div>
+
+      {/* Section accordions */}
+      <div className="space-y-2">
+        {QA_SECTIONS.map((section) => {
+          const sectionTests = QA_TESTS.filter((t) => t.sectionNum === section.num);
+          const filtered = sectionTests.filter((t) => {
+            const statusMatch = filterStatus === "all" || (resultMap.get(t.id)?.status ?? "untested") === filterStatus;
+            const priorityMatch = filterPriority === "all" || t.priority === filterPriority;
+            return statusMatch && priorityMatch;
+          });
+          if (filtered.length === 0) return null;
+
+          const sPass    = sectionTests.filter((t) => resultMap.get(t.id)?.status === "pass").length;
+          const sFail    = sectionTests.filter((t) => resultMap.get(t.id)?.status === "fail").length;
+          const sActioned = sectionTests.filter((t) => {
+            const s = resultMap.get(t.id)?.status ?? "untested";
+            return s !== "untested";
+          }).length;
+          const sPct = Math.round((sActioned / sectionTests.length) * 100);
+          const isOpen = openSections.has(section.num);
+
+          return (
+            <div key={section.num} className="rounded-2xl border border-border bg-card overflow-hidden">
+              <button
+                type="button"
+                onClick={() => toggleSection(section.num)}
+                className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/30 transition-colors"
+              >
+                <CircleProgress value={sPct} size={28} stroke={3} className="shrink-0" />
+                <span className="font-medium text-sm flex-1">
+                  {section.num}. {section.title}
+                </span>
+                <div className="flex items-center gap-2 shrink-0 text-xs">
+                  {sPass > 0 && <span className="text-green-600 font-medium">{sPass}✓</span>}
+                  {sFail > 0 && <span className="text-red-600 font-medium">{sFail}✗</span>}
+                  <span className="text-muted-foreground">{sActioned}/{sectionTests.length}</span>
+                  {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                </div>
+              </button>
+
+              {isOpen && (
+                <div className="border-t border-border divide-y divide-border/60">
+                  {filtered.map((test) => {
+                    const result = resultMap.get(test.id);
+                    const status: TestStatus = result?.status ?? "untested";
+                    const currentNote = pendingNotes[test.id] ?? result?.notes ?? "";
+                    const noteDirty = pendingNotes[test.id] !== undefined && pendingNotes[test.id] !== (result?.notes ?? "");
+                    const StatusIcon = STATUS_ICON_COMPONENTS[status];
+
+                    return (
+                      <div key={test.id} className={`p-5 ${status === "fail" ? "bg-red-50/40" : ""}`}>
+                        {/* Test header */}
+                        <div className="flex items-start gap-3">
+                          <StatusIcon className={`h-4 w-4 mt-0.5 shrink-0 ${
+                            status === "pass"     ? "text-green-600" :
+                            status === "fail"     ? "text-red-600" :
+                            status === "blocked"  ? "text-yellow-600" :
+                            status === "skipped"  ? "text-muted-foreground" :
+                            "text-muted-foreground/30"
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                              <span className="text-xs font-mono text-muted-foreground">{test.id}</span>
+                              <span className={`text-[10px] font-semibold uppercase tracking-wide border rounded px-1.5 py-0.5 ${
+                                test.priority === "critical" ? "text-red-600 bg-red-50 border-red-200" :
+                                test.priority === "high"     ? "text-orange-600 bg-orange-50 border-orange-200" :
+                                test.priority === "medium"   ? "text-yellow-600 bg-yellow-50 border-yellow-200" :
+                                                               "text-green-600 bg-green-50 border-green-200"
+                              }`}>{test.priority}</span>
+                            </div>
+                            <p className="text-sm font-medium mb-1">{test.title}</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{test.description}</p>
+                          </div>
+                        </div>
+
+                        {/* Status buttons */}
+                        {!isCompleted && (
+                          <div className="flex flex-wrap gap-2 mt-4 ml-7">
+                            {(["pass", "fail", "blocked", "skipped", "untested"] as TestStatus[]).map((s) => (
+                              <button
+                                key={s}
+                                type="button"
+                                disabled={saving}
+                                onClick={() => handleSetStatus(test.id, s)}
+                                className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-60 ${
+                                  status === s
+                                    ? STATUS_COLORS[s]
+                                    : "bg-background text-muted-foreground border-border hover:bg-muted"
+                                }`}
+                              >
+                                <span>{STATUS_ICONS[s]}</span>
+                                {STATUS_LABELS[s]}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Notes field */}
+                        <div className="ml-7 mt-3">
+                          <textarea
+                            rows={status === "fail" ? 3 : 1}
+                            value={currentNote}
+                            placeholder={isCompleted ? "No notes" : "Add notes (required for failures)…"}
+                            readOnly={isCompleted}
+                            onChange={(e) => setPendingNotes((prev) => ({ ...prev, [test.id]: e.target.value }))}
+                            onBlur={() => { if (noteDirty) handleSaveNote(test.id); }}
+                            className={`w-full rounded-md border px-3 py-2 text-xs resize-none transition-colors ${
+                              isCompleted
+                                ? "border-transparent bg-transparent text-muted-foreground cursor-default"
+                                : "border-input bg-background focus:outline-none focus:border-[var(--color-accent)]"
+                            } ${!currentNote && !isCompleted ? "text-muted-foreground" : ""}`}
+                          />
+                          {noteDirty && !isCompleted && (
+                            <button
+                              type="button"
+                              onClick={() => handleSaveNote(test.id)}
+                              className="mt-1 text-xs text-[var(--color-accent)] hover:underline"
+                            >
+                              Save note
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
