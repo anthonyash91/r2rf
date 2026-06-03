@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Palette,
   RefreshCw,
@@ -24,6 +25,7 @@ import {
   Shuffle,
   Check,
   Info,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -50,6 +52,7 @@ import {
 } from "@/lib/badge-styles";
 import { ICON_REGISTRY, pickRelevantIcon } from "@/lib/category-icons";
 import { badgeStylesQueryKey, fetchBadgeStyles, BADGE_STYLES_KEY } from "@/hooks/use-badge-styles";
+import { translateToSpanish } from "@/lib/category-ai.functions";
 
 export const Route = createFileRoute("/admin/icons-badges")({
   beforeLoad: requireStrictAdminBeforeLoad,
@@ -118,6 +121,31 @@ function pickAvoiding(count: number, excluded: Set<number>, startOffset: number)
 /** Distribute palette indices across N items without repeats (until palette is exhausted). */
 function AdminIconsBadgesPage() {
   const qc = useQueryClient();
+  const translateFn = useServerFn(translateToSpanish);
+  const [translatingTypes, setTranslatingTypes] = useState<Set<string>>(new Set());
+
+  async function translateTypeName(typeKey: string) {
+    setTranslatingTypes((prev) => new Set(prev).add(typeKey));
+    try {
+      const result = await translateFn({
+        data: {
+          fields: { name: typeKey },
+          context: "Content type label for a learning content library. Keep it very short — 1 to 2 words.",
+        },
+      });
+      const translated = result.fields?.name?.trim();
+      if (translated) {
+        setDraft((prev) => ({
+          ...prev,
+          typeNamesEs: { ...(prev.typeNamesEs ?? {}), [typeKey]: translated },
+        }));
+      }
+    } catch {
+      toast.error("Translation failed");
+    } finally {
+      setTranslatingTypes((prev) => { const next = new Set(prev); next.delete(typeKey); return next; });
+    }
+  }
 
   const { data: saved } = useQuery({
     queryKey: badgeStylesQueryKey,
@@ -541,16 +569,29 @@ function AdminIconsBadgesPage() {
                   </div>
                 </div>
                 <div className="flex w-full @[26rem]:w-auto items-center gap-2">
-                  <input
-                    type="text"
-                    value={(draft.typeNamesEs as Record<string, string> | undefined)?.[t] ?? ""}
-                    onChange={(e) => setDraft((prev) => ({
-                      ...prev,
-                      typeNamesEs: { ...(prev.typeNamesEs ?? {}), [t]: e.target.value },
-                    }))}
-                    placeholder="Spanish name…"
-                    className="w-28 rounded-md border border-input bg-background px-3 py-2 text-xs"
-                  />
+                  <div className="relative w-28">
+                    <input
+                      type="text"
+                      value={(draft.typeNamesEs as Record<string, string> | undefined)?.[t] ?? ""}
+                      onChange={(e) => setDraft((prev) => ({
+                        ...prev,
+                        typeNamesEs: { ...(prev.typeNamesEs ?? {}), [t]: e.target.value },
+                      }))}
+                      placeholder="Spanish name…"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 pr-7 text-xs"
+                    />
+                    <button
+                      type="button"
+                      title="AI translate"
+                      disabled={translatingTypes.has(t)}
+                      onClick={() => translateTypeName(t)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+                    >
+                      {translatingTypes.has(t)
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <Languages className="h-3 w-3" />}
+                    </button>
+                  </div>
                   <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
                     <RefreshCw className="h-4 w-4" />
                     Color
