@@ -252,6 +252,7 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
             const s = stats[c.id] ?? { count: 0, recentItemIds: new Set<string>() };
             const count = s.count;
             const hasRecent = Array.from(s.recentItemIds).some((id) => !readSet.has(id));
+            const cardColor = c.icon_color || "var(--color-accent)";
             return (
             <div key={c.id} className="relative">
               <Link
@@ -260,34 +261,28 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
                 className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 pb-[28px] sm:pb-[36px] transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
               >
                 {/* Arrow circle — aligned to the top of the category icon, same border color scheme */}
-                {(() => {
-                  const color = c.icon_color || "var(--color-accent)";
-                  return (
-                    <span
-                      className="absolute top-4 right-4 flex items-center justify-center h-8 w-8 rounded-xl border transition-colors"
-                      style={{
-                        backgroundColor: `color-mix(in oklab, ${color} 15%, transparent)`,
-                        borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
-                        color,
-                      }}
-                    >
-                      <ArrowRight className="h-4 w-4 -rotate-45" />
-                    </span>
-                  );
-                })()}
+                <span
+                  className="absolute top-4 right-4 flex items-center justify-center h-8 w-8 rounded-[8px] border transition-colors"
+                  style={{
+                    backgroundColor: `color-mix(in oklab, ${cardColor} 15%, transparent)`,
+                    borderColor: `color-mix(in oklab, ${cardColor} 25%, transparent)`,
+                    color: cardColor,
+                  }}
+                >
+                  <ArrowRight className="h-4 w-4 -rotate-45" />
+                </span>
                 <div className="flex">
                   {(() => {
                     const Icon = resolveCategoryIcon(c.icon_name);
-                    const color = c.icon_color || "var(--color-accent)";
                     return (
                       <div
                         className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border"
                         style={{
-                          backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
-                          borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
+                          backgroundColor: `color-mix(in oklab, ${cardColor} 12%, transparent)`,
+                          borderColor: `color-mix(in oklab, ${cardColor} 25%, transparent)`,
                         }}
                       >
-                        <Icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color }} strokeWidth={1.75} />
+                        <Icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: cardColor }} strokeWidth={1.75} />
                       </div>
                     );
                   })()}
@@ -299,11 +294,19 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
                   <div className="mt-3">
                     <ResponsiveBadgeGroup>
-                      <Badge variant="count" className="rounded-sm">
+                      <Badge
+                        variant="count"
+                        className="rounded-[8px]"
+                        style={{
+                          color: cardColor,
+                          backgroundColor: `color-mix(in oklab, ${cardColor} 15%, transparent)`,
+                          borderColor: `color-mix(in oklab, ${cardColor} 25%, transparent)`,
+                        }}
+                      >
                         {count} {t(count === 1 ? "home.item" : "home.items")}
                       </Badge>
                       {hasRecent && (
-                        <Badge variant="new" className="rounded-sm">{t("category.newContentAdded")}</Badge>
+                        <Badge variant="new" className="rounded-[8px]">{t("category.newContentAdded")}</Badge>
                       )}
                     </ResponsiveBadgeGroup>
                   </div>

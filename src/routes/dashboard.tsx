@@ -635,8 +635,12 @@ function DashboardPage() {
                           <div className="flex-shrink-0 flex items-center gap-4">
                             <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">{t("dashboard.resumeLabel")}</span>
                             <span
-                              className="flex items-center justify-center h-8 w-8 rounded-full transition-colors"
-                              style={{ backgroundColor: `color-mix(in oklab, ${color} 15%, transparent)`, color }}
+                              className="flex items-center justify-center h-8 w-8 rounded-[8px] border transition-colors"
+                              style={{
+                                backgroundColor: `color-mix(in oklab, ${color} 15%, transparent)`,
+                                borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
+                                color,
+                              }}
                             >
                               <ArrowRight className="h-4 w-4" />
                             </span>
@@ -782,8 +786,15 @@ function DashboardPage() {
                                               <TooltipProvider key={a.key} delayDuration={150}>
                                                 <Tooltip>
                                                   <TooltipTrigger asChild>
-                                                    <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 cursor-default">
-                                                      <Icon className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+                                                    <div
+                                                      className="flex h-7 w-7 items-center justify-center rounded-md border cursor-default"
+                                                      style={{
+                                                        backgroundColor: "color-mix(in oklab, var(--color-accent) 12%, transparent)",
+                                                        borderColor: "color-mix(in oklab, var(--color-accent) 25%, transparent)",
+                                                        color: "var(--color-accent)",
+                                                      }}
+                                                    >
+                                                      <Icon className="h-3.5 w-3.5" />
                                                     </div>
                                                   </TooltipTrigger>
                                                   <TooltipContent side="top" className="text-xs max-w-[180px] text-center">
@@ -902,7 +913,7 @@ function DashboardPage() {
                                 type="button"
                                 aria-label={t("bookmark.remove")}
                                 onClick={() => toggleBookmarkItem(item.id)}
-                                className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                                className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
                               >
                                 <Bookmark
                                   className={`h-3.5 w-3.5 transition-colors ${isBookmarked ? "fill-[var(--color-accent)] text-[var(--color-accent)]" : "text-muted-foreground"}`}
@@ -915,7 +926,7 @@ function DashboardPage() {
                           </Tooltip>
                         </TooltipProvider>
                         {item.type && (
-                          <Badge variant="type" type={item.type}>
+                          <Badge variant="type" type={item.type} className="rounded-[8px]">
                             {translateType(lang, item.type, badgeStyles.typeNamesEs)}
                           </Badge>
                         )}
@@ -966,13 +977,20 @@ function DashboardPage() {
                                 }`}
                               >
                                 <div
-                                  className="flex h-10 w-10 items-center justify-center rounded-full"
+                                  className="flex h-10 w-10 items-center justify-center rounded-xl border"
                                   style={earned
-                                    ? { background: "color-mix(in oklab, var(--color-accent) 15%, transparent)" }
-                                    : { background: "var(--muted)" }}
+                                    ? {
+                                        backgroundColor: "color-mix(in oklab, var(--color-accent) 12%, transparent)",
+                                        borderColor: "color-mix(in oklab, var(--color-accent) 25%, transparent)",
+                                        color: "var(--color-accent)",
+                                      }
+                                    : {
+                                        backgroundColor: "var(--muted)",
+                                        borderColor: "var(--border)",
+                                      }}
                                 >
                                   {earned
-                                    ? <Icon className="h-5 w-5 text-[var(--color-accent)]" />
+                                    ? <Icon className="h-5 w-5" />
                                     : <Lock className="h-4 w-4 text-muted-foreground" />
                                   }
                                 </div>
@@ -1481,7 +1499,7 @@ function TestingTab() {
           <button
             type="button"
             onClick={handleComplete}
-            className="shrink-0 inline-flex items-center gap-2 rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-100 transition-colors"
+            className="shrink-0 inline-flex items-center gap-2 rounded-md border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-4 py-2 text-sm font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent)]/15 transition-colors"
           >
             <CheckCircle className="h-4 w-4" /> Mark complete
           </button>
@@ -1527,36 +1545,40 @@ function TestingTab() {
       {/* Filters — two connected pills; active state matches the badge color in the test list */}
       {(() => {
         const PRIORITY_ICONS = { all: Layers, critical: AlertCircle, high: ChevronUp, medium: Minus, low: ChevronDown } as const;
-        const DEFAULT_ACTIVE = "relative z-10 bg-foreground text-background border-foreground";
-        const renderPill = (buttons: { key: string; Icon: any; label: string; active: boolean; activeClass: string; onClick: () => void }[]) =>
-          buttons.map(({ key, Icon, label, active, activeClass, onClick }, i) => {
+        const DEFAULT_ACTIVE = "relative z-10 text-[var(--color-accent)] bg-[var(--color-accent)]/10 border-[var(--color-accent)]/30";
+        const DEFAULT_HOVER  = "hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 hover:border-[var(--color-accent)]/30";
+        const renderPill = (buttons: { key: string; Icon: any; label: string; active: boolean; activeClass: string; hoverClass: string; onClick: () => void }[]) =>
+          buttons.map(({ key, Icon, label, active, activeClass, hoverClass, onClick }, i) => {
             const isFirst = i === 0;
             const isLast = i === buttons.length - 1;
             return (
-              <button
+              <span
                 key={key}
-                type="button"
                 onClick={onClick}
                 className={[
-                  "inline-flex items-center gap-1.5 border px-3 py-2 text-xs font-medium transition-colors",
-                  isFirst ? "rounded-l-md" : "-ml-px rounded-l-none",
-                  isLast  ? "rounded-r-md" : "rounded-r-none",
-                  active ? `relative z-10 ${activeClass}` : "bg-background text-muted-foreground border-border hover:bg-muted",
-                ].join(" ")}
+                  "inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 cursor-pointer transition-colors",
+                  !isFirst && "-ml-px",
+                  isFirst && isLast ? "rounded-[8px]" : isFirst ? "rounded-l-[8px] rounded-r-none" : isLast ? "rounded-l-none rounded-r-[8px]" : "rounded-none",
+                  active ? `relative z-10 ${activeClass}` : `bg-background text-muted-foreground border-border ${hoverClass}`,
+                ].filter(Boolean).join(" ")}
               >
                 <Icon className="h-3.5 w-3.5" />
                 {label}
-              </button>
+              </span>
             );
           });
 
         const STATUS_ACTIVE: Record<string, string> = {
           all:      DEFAULT_ACTIVE,
-          pass:     "text-green-700 bg-green-50 border-green-300",
-          fail:     "text-red-700 bg-red-50 border-red-300",
-          blocked:  "text-yellow-700 bg-yellow-50 border-yellow-300",
-          skipped:  "text-muted-foreground bg-muted/60 border-border",
-          untested: "text-muted-foreground bg-muted border-border",
+          ...STATUS_COLORS,
+        };
+        const STATUS_HOVER: Record<string, string> = {
+          all:      DEFAULT_HOVER,
+          pass:     "hover:text-green-700 hover:bg-green-50 hover:border-green-300",
+          fail:     "hover:text-red-700 hover:bg-red-50 hover:border-red-300",
+          blocked:  "hover:text-yellow-700 hover:bg-yellow-50 hover:border-yellow-300",
+          skipped:  "hover:text-muted-foreground hover:bg-muted/60 hover:border-border",
+          untested: "hover:text-muted-foreground hover:bg-muted hover:border-border",
         };
         const PRIORITY_ACTIVE: Record<string, string> = {
           all:      DEFAULT_ACTIVE,
@@ -1564,6 +1586,13 @@ function TestingTab() {
           high:     "text-orange-600 bg-orange-50 border-orange-200",
           medium:   "text-yellow-600 bg-yellow-50 border-yellow-200",
           low:      "text-green-600 bg-green-50 border-green-200",
+        };
+        const PRIORITY_HOVER: Record<string, string> = {
+          all:      DEFAULT_HOVER,
+          critical: "hover:text-red-600 hover:bg-red-50 hover:border-red-200",
+          high:     "hover:text-orange-600 hover:bg-orange-50 hover:border-orange-200",
+          medium:   "hover:text-yellow-600 hover:bg-yellow-50 hover:border-yellow-200",
+          low:      "hover:text-green-600 hover:bg-green-50 hover:border-green-200",
         };
 
         return (
@@ -1575,6 +1604,7 @@ function TestingTab() {
                 label: s === "all" ? "All" : STATUS_LABELS[s],
                 active: filterStatus === s,
                 activeClass: STATUS_ACTIVE[s],
+                hoverClass: STATUS_HOVER[s],
                 onClick: () => setFilterStatus(s),
               })))}
             </div>
@@ -1586,6 +1616,7 @@ function TestingTab() {
                 label: p === "all" ? "All priorities" : p.charAt(0).toUpperCase() + p.slice(1),
                 active: filterPriority === p,
                 activeClass: PRIORITY_ACTIVE[p],
+                hoverClass: PRIORITY_HOVER[p],
                 onClick: () => setFilterPriority(p),
               })))}
             </div>
@@ -1623,25 +1654,27 @@ function TestingTab() {
                   : "opacity-100"
               } ${
                 isOpen
-                  ? "border-2 border-[var(--color-accent)]"
-                  : "border border-border bg-card"
+                  ? "border-2 border-[var(--color-accent)] bg-[#fffdf8]"
+                  : "border border-border bg-[#fffdf8]"
               }`}
             >
               <button
                 type="button"
                 onClick={() => toggleSection(section.num)}
-                className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/30 transition-colors"
+                className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${isOpen ? "bg-[#f7f5ed]" : "hover:bg-[#f7f5ed]"}`}
               >
-                <CircleProgress value={sPct} size={44} stroke={4} className="shrink-0" />
-                <span className="font-medium text-sm flex-1">
-                  {section.num}. {section.title}
-                </span>
-                <div className="flex items-center gap-2 shrink-0 text-xs">
-                  {sPass > 0 && <span className="text-green-600 font-medium">{sPass}✓</span>}
-                  {sFail > 0 && <span className="text-red-600 font-medium">{sFail}✗</span>}
-                  <span className="text-muted-foreground">{sActioned}/{sectionTests.length}</span>
-                  {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                <CircleProgress value={sPct} size={52} stroke={5} className="shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-display text-base sm:text-lg font-semibold truncate">
+                    {section.num}. {section.title}
+                  </h2>
+                  <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                    {sActioned} of {sectionTests.length} tests completed
+                    {sPass > 0 && <span className="text-green-600 font-medium"> · {sPass} passed</span>}
+                    {sFail > 0 && <span className="text-red-600 font-medium"> · {sFail} failed</span>}
+                  </p>
                 </div>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${isOpen ? "" : "-rotate-90"}`} />
               </button>
 
               {isOpen && (
@@ -1654,7 +1687,7 @@ function TestingTab() {
                     const StatusIcon = STATUS_ICON_COMPONENTS[status];
 
                     return (
-                      <div key={test.id} className={`p-5 ${status === "fail" ? "bg-red-50/40" : ""}`}>
+                      <div key={test.id} className="p-5" style={{ backgroundColor: status === "fail" ? "color-mix(in oklab, #fee2e2 40%, transparent)" : "#fffdf8" }}>
                         {/* Test header */}
                         <div className="flex items-start gap-3">
                           <StatusIcon className={`h-4 w-4 mt-0.5 shrink-0 ${
@@ -1676,8 +1709,8 @@ function TestingTab() {
                                 }[test.priority];
                                 const PIcon = priorityConfig.icon;
                                 return (
-                                  <span className={`inline-flex items-center leading-none gap-1 rounded-[4px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 ${priorityConfig.cls}`}>
-                                    <PIcon className="h-3 w-3" />
+                                  <span className={`inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] ${priorityConfig.cls}`}>
+                                    <PIcon className="h-3.5 w-3.5" />
                                     {priorityConfig.label}
                                   </span>
                                 );
@@ -1713,37 +1746,31 @@ function TestingTab() {
                                   const isFirst = i === 0;
                                   const isLast = i === arr.length - 1;
                                   return (
-                                    <button
+                                    <span
                                       key={s}
-                                      type="button"
-                                      disabled={saving}
-                                      onClick={() => handleSetStatus(test.id, s)}
+                                      onClick={() => { if (!saving) handleSetStatus(test.id, s); }}
                                       className={[
-                                        "inline-flex items-center gap-1.5 border px-3 py-2 text-xs font-medium transition-colors disabled:opacity-60",
-                                        isFirst ? "rounded-l-md" : "-ml-px rounded-l-none",
-                                        isLast  ? "rounded-r-md" : "rounded-r-none",
+                                        "inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 cursor-pointer transition-colors",
+                                        !isFirst && "-ml-px",
+                                        isFirst && isLast ? "rounded-[8px]" : isFirst ? "rounded-l-[8px] rounded-r-none" : isLast ? "rounded-l-none rounded-r-[8px]" : "rounded-none",
                                         status === s ? `relative z-10 ${STATUS_COLORS[s]}` : "bg-background text-muted-foreground border-border hover:bg-muted",
-                                      ].join(" ")}
+                                        saving ? "opacity-60 pointer-events-none" : "",
+                                      ].filter(Boolean).join(" ")}
                                     >
                                       <SIcon className="h-3.5 w-3.5" />
                                       {STATUS_LABELS[s]}
-                                    </button>
+                                    </span>
                                   );
                                 })}
                                 {/* Add note / Remove note — hidden for fail/blocked where notes are always expected */}
                                 {status !== "fail" && status !== "blocked" && (
-                                  <button
-                                    type="button"
+                                  <span
                                     onClick={() => notesOpen ? handleRemoveNote(test.id) : setOpenNotes((prev) => new Set(prev).add(test.id))}
-                                    className={`ml-auto inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-                                      notesOpen
-                                        ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                                        : "border-border text-muted-foreground hover:bg-muted"
-                                    }`}
+                                    className={`ml-auto inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] cursor-pointer transition-colors ${notesOpen ? "border-destructive/30 text-destructive hover:bg-destructive/10" : "border-border text-muted-foreground hover:bg-muted"}`}
                                   >
                                     {notesOpen ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
                                     {notesOpen ? "Remove note" : "Add note"}
-                                  </button>
+                                  </span>
                                 )}
                               </div>
 
@@ -1771,7 +1798,7 @@ function TestingTab() {
                                             href={result.screenshot_url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                                            className="inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] border-input bg-background text-foreground hover:bg-muted transition-colors"
                                           >
                                             <ImagePlus className="h-3.5 w-3.5" />
                                             View screenshot
@@ -1787,38 +1814,32 @@ function TestingTab() {
                                           </button>
                                         </div>
                                       ) : (status === "fail" || status === "blocked" || status === "skipped") && (
-                                        <button
-                                          type="button"
-                                          disabled={uploadingTests.has(test.id)}
+                                        <span
                                           onClick={() => {
+                                            if (uploadingTests.has(test.id)) return;
                                             uploadTestIdRef.current = test.id;
                                             fileInputRef.current?.click();
                                           }}
-                                          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md px-3 py-2 transition-colors disabled:opacity-60"
+                                          className={`inline-flex items-center border border-dashed px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] cursor-pointer transition-colors border-border text-muted-foreground hover:text-foreground ${uploadingTests.has(test.id) ? "opacity-60 pointer-events-none" : ""}`}
                                         >
-                                          {uploadingTests.has(test.id) ? (
-                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                          ) : (
-                                            <ImagePlus className="h-3.5 w-3.5" />
-                                          )}
+                                          {uploadingTests.has(test.id) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
                                           {uploadingTests.has(test.id) ? "Uploading…" : "Attach screenshot"}
-                                        </button>
+                                        </span>
                                       )}
                                     </div>
-                                    {/* Right: Save note — always visible */}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleSaveNote(test.id)}
-                                      className={`inline-flex items-center gap-1.5 justify-center rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
-                                        savedNotes.has(test.id)
-                                          ? "border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
-                                          : "border-input bg-background text-foreground hover:bg-muted"
+                                    {/* Right: Save note — disabled until text is entered */}
+                                    <span
+                                      onClick={() => { if (currentNote.trim()) handleSaveNote(test.id); }}
+                                      className={`inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] transition-colors ${
+                                        !currentNote.trim()
+                                          ? "border-input bg-background text-muted-foreground opacity-40 cursor-not-allowed"
+                                          : savedNotes.has(test.id)
+                                            ? "border-green-300 bg-green-50 text-green-700 hover:bg-green-100 cursor-pointer"
+                                            : "border-input bg-background text-foreground hover:bg-muted cursor-pointer"
                                       }`}
                                     >
-                                      {savedNotes.has(test.id) ? (
-                                        <><CheckCircle className="h-3.5 w-3.5" /> Saved</>
-                                      ) : "Save note"}
-                                    </button>
+                                      {savedNotes.has(test.id) ? <><CheckCircle className="h-3.5 w-3.5" /> Saved</> : "Save note"}
+                                    </span>
                                   </div>
                                 </div>
                               )}
@@ -1839,7 +1860,7 @@ function TestingTab() {
                                 href={result.screenshot_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                                className="inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] border-input bg-background text-foreground hover:bg-muted transition-colors"
                               >
                                 <ImagePlus className="h-3.5 w-3.5" />
                                 View screenshot
@@ -1967,6 +1988,7 @@ function CategoryProgressSection({
   onToggle: () => void;
 }) {
   const open = isOpen;
+  const badgeStyles = useBadgeStyles();
   const trackableItems = items.filter((it) => !(it as any).exempt_from_progress);
   const pct = weightedCompletionPct(trackableItems, readSet, engagementMap);
 
@@ -2016,7 +2038,7 @@ function CategoryProgressSection({
           ) : null}
         </div>
         {hasRecent && (
-          <Badge variant="new">{t("category.newContentAdded")}</Badge>
+          <Badge variant="new" className="rounded-[8px]">{t("category.newContentAdded")}</Badge>
         )}
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
       </button>
@@ -2033,9 +2055,9 @@ function CategoryProgressSection({
                   <div className="flex items-center gap-2 min-w-0">
                     <BadgeGroup className="shrink-0">
                       {newItemSet.has(it.id) && !isRead && (
-                        <Badge variant="new">{t("category.newContent")}</Badge>
+                        <Badge variant="new" className="rounded-[8px]">{t("category.newContent")}</Badge>
                       )}
-                      <Badge variant="type" type={it.type}>
+                      <Badge variant="type" type={it.type} className="rounded-[8px]">
                         {translateType(lang, it.type, badgeStyles.typeNamesEs)}
                       </Badge>
                     </BadgeGroup>
@@ -2069,7 +2091,7 @@ function CategoryProgressSection({
                           ? t("category.markedWatched").toLowerCase()
                           : t("category.markedListened").toLowerCase();
                         actionBadge = (
-                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
+                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
                             <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
                             <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
                             <span className="relative">{mediaPct}% {watchedLabel}</span>
@@ -2077,7 +2099,7 @@ function CategoryProgressSection({
                         );
                       } else if (pdfPct !== null && pdfPct >= 1) {
                         actionBadge = (
-                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
+                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
                             <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
                             <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
                             <span className="relative">{pdfPct}% {t("category.markedRead").toLowerCase()}</span>
@@ -2085,7 +2107,7 @@ function CategoryProgressSection({
                         );
                       } else if (it.exempt_from_progress) {
                         actionBadge = (
-                          <span className={`inline-flex items-center leading-none gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ${
+                          <span className={`inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ${
                             isRead
                               ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
                               : "border-input bg-background text-foreground"
@@ -2113,7 +2135,7 @@ function CategoryProgressSection({
                         <div className="ml-auto flex flex-col items-end gap-1 flex-shrink-0">
                           <div className="flex items-center gap-1.5">
                             {myRating !== null && (
-                              <span className={`inline-flex items-center justify-center rounded-[4px] border px-2 py-1.5 ${
+                              <span className={`inline-flex items-center justify-center rounded-[8px] border px-2 py-1.5 ${
                                 myRating === 1
                                   ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
                                   : "border-destructive/30 bg-destructive/10 text-destructive"
@@ -2124,7 +2146,7 @@ function CategoryProgressSection({
                               </span>
                             )}
                             {isBookmarked && (
-                              <span className="inline-flex items-center justify-center rounded-[4px] border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] px-2 py-1.5">
+                              <span className="inline-flex items-center justify-center rounded-[8px] border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] px-2 py-1.5">
                                 <Bookmark className="h-3.5 w-3.5 fill-[var(--color-accent)]" />
                               </span>
                             )}

@@ -1195,7 +1195,9 @@ Mark 3 different tests as Fail across different sections. Verify a red "N failur
 
 ### 19.7 — Add notes to a test
 🟠 **High**
-Click the notes field on any test. Type a note. Click outside the field. Reload the page and reopen the same test. Verify the note is still there.
+Open a test item. Click "Add note." Verify the notes textarea appears. Verify the "Save note" button is dimmed and non-interactive before any text is entered. Type a note — verify the button becomes active. Click "Save note." Verify it shows "Saved ✓." Reload the page, reopen the same test, and verify the note is still there.
+
+✅ Pass: Save note button is disabled (dimmed, cursor blocked) when the textarea is empty; becomes clickable once text is present; shows "Saved ✓" after saving; note persists after reload.
 
 ### 19.8 — Attach a screenshot to a failed test
 🟠 **High**

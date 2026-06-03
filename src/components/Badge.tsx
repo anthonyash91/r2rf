@@ -114,6 +114,7 @@ type BadgeProps = {
   hideIcon?: boolean;
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   title?: string;
   onClick?: (e: React.MouseEvent<HTMLSpanElement>) => void;
   /** "md" (default) matches the action badge height on user-facing pages.
@@ -302,7 +303,7 @@ export function iconForType(type: string | null | undefined): LucideIcon {
   return File;
 }
 
-export function Badge({ variant, type, hideIcon, children, className, title, onClick, size = "md" }: BadgeProps) {
+export function Badge({ variant, type, hideIcon, children, className, style, title, onClick, size = "md" }: BadgeProps) {
   const styles = useBadgeStyles();
 
   // Determine the palette index: "type" badges derive their index from the type
@@ -337,7 +338,7 @@ export function Badge({ variant, type, hideIcon, children, className, title, onC
       title={title}
       onClick={onClick}
       className={cn(base, "justify-center", !hideIcon && "gap-1", className)}
-      style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
+      style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border, ...style }}
     >
       {!hideIcon && Icon && <Icon className={iconSize} strokeWidth={2} />}
       {children}

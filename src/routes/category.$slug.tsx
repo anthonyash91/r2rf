@@ -634,9 +634,9 @@ function CategoryPage() {
                           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap">
                             <BadgeGroup>
                               {isNew && (
-                                <Badge variant="new">{t("category.newContent")}</Badge>
+                                <Badge variant="new" className="rounded-[8px]">{t("category.newContent")}</Badge>
                               )}
-                              <Badge variant="type" type={item.type}>
+                              <Badge variant="type" type={item.type} className="rounded-[8px]">
                                 {translateType(lang, item.type, badgeStyles.typeNamesEs)}
                               </Badge>
                               {isAdmin && (item.facilities?.length ?? 0) > 0 && (
@@ -744,7 +744,7 @@ function CategoryPage() {
                           return (
                             <div className="absolute top-6 right-6 flex flex-col items-end gap-1 z-10">
                               <div className="flex items-center gap-1.5 justify-end">
-                              {isRead && <div className="inline-flex items-center rounded-[4px] border border-input overflow-hidden">
+                              {isRead && <div className="inline-flex items-center rounded-[8px] border border-input overflow-hidden">
                                 <TooltipProvider delayDuration={150}>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
@@ -784,7 +784,7 @@ function CategoryPage() {
                                       type="button"
                                       aria-label={isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
                                       onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleBookmark(item.id); }}
-                                      className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                                      className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
                                     >
                                       <Bookmark
                                         className={`h-3.5 w-3.5 transition-colors ${isBookmarked ? "fill-[var(--color-accent)] text-[var(--color-accent)]" : "text-muted-foreground"}`}
@@ -813,7 +813,7 @@ function CategoryPage() {
                                               e.preventDefault();
                                               if (!isAcknowledged) toggleRead.mutate({ itemId: item.id, markRead: true });
                                             }}
-                                            className={`inline-flex items-center leading-none gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium transition-colors flex-shrink-0 ${
+                                            className={`inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium transition-colors flex-shrink-0 ${
                                               isAcknowledged
                                                 ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
                                                 : "border-input bg-background hover:bg-muted"
@@ -841,7 +841,7 @@ function CategoryPage() {
                                 if (mediaPct !== null && mediaPct >= 5) {
                                   // Display-only progress fill — no manual click; auto-mark fires at 95%
                                   return (
-                                    <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium overflow-hidden flex-shrink-0">
+                                    <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium overflow-hidden flex-shrink-0">
                                       <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
                                       <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
                                       <span className="relative text-foreground">
@@ -865,7 +865,7 @@ function CategoryPage() {
                                             <button
                                               type="button"
                                               onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
-                                              className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer"
+                                              className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer"
                                             >
                                               <Circle className="h-3.5 w-3.5 flex-shrink-0" />
                                               <span>{unreadLabel}</span>
@@ -905,7 +905,7 @@ function CategoryPage() {
                                           }
                                           toggleRead.mutate({ itemId: item.id, markRead: !isRead });
                                         }}
-                                        className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
+                                        className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
                                       >
                                         <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
                                         <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
@@ -944,7 +944,7 @@ function CategoryPage() {
                                           <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
-                                            className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
+                                            className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
                                           >
                                             <Circle className="h-3.5 w-3.5 flex-shrink-0" />
                                             <span>{unreadLabel}</span>
@@ -967,7 +967,7 @@ function CategoryPage() {
                                           <button
                                             type="button"
                                             onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
-                                            className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
+                                            className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
                                           >
                                             <Circle className="h-3.5 w-3.5 flex-shrink-0" />
                                             <span>{unreadLabel}</span>
@@ -987,7 +987,7 @@ function CategoryPage() {
                                     <TooltipProvider delayDuration={100}>
                                       <Tooltip>
                                         <TooltipTrigger asChild>
-                                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 flex-shrink-0">
+                                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 flex-shrink-0">
                                             <Circle className="h-3.5 w-3.5 flex-shrink-0" />
                                             <span>{unreadLabel}</span>
                                           </span>

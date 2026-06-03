@@ -115,7 +115,7 @@ function RunDetailView({ runId, onBack }: { runId: string; onBack: () => void })
               key={s}
               type="button"
               onClick={() => setFilterStatus(s)}
-              className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`appearance-none inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] transition-colors ${
                 filterStatus === s
                   ? "bg-foreground text-background border-foreground"
                   : "bg-background text-muted-foreground border-border hover:bg-muted"
@@ -146,7 +146,7 @@ function RunDetailView({ runId, onBack }: { runId: string; onBack: () => void })
                         href={(res as any).screenshot_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                        className="inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] border-input bg-background text-foreground hover:bg-muted transition-colors"
                       >
                         <ImagePlus className="h-3.5 w-3.5" />
                         View screenshot
@@ -224,7 +224,7 @@ function RunDetailView({ runId, onBack }: { runId: string; onBack: () => void })
                                   href={(res as any).screenshot_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                                  className="inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] border-input bg-background text-foreground hover:bg-muted transition-colors"
                                 >
                                   <ImagePlus className="h-3.5 w-3.5" />
                                   View screenshot

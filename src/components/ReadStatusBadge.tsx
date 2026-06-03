@@ -18,11 +18,17 @@ export function ReadStatusBadge({
   onClick?: (e: React.MouseEvent) => void;
   className?: string;
 }) {
-  const baseClass = `inline-flex items-center leading-none gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium ${
-    read
-      ? "border-[var(--color-accent)] bg-[var(--color-accent)] text-background"
-      : "border-input bg-background text-foreground"
+  const baseClass = `inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium ${
+    read ? "" : "border-input bg-background text-foreground"
   } ${className}`;
+
+  const readStyle = read
+    ? {
+        color: "var(--color-accent)",
+        backgroundColor: "color-mix(in oklab, var(--color-accent) 15%, transparent)",
+        borderColor: "color-mix(in oklab, var(--color-accent) 30%, transparent)",
+      }
+    : undefined;
 
   // "circle" icon for interactive toggles (the user can click to mark read);
   // "x" for static status displays where the badge is informational only.
@@ -49,11 +55,12 @@ export function ReadStatusBadge({
         type="button"
         onClick={onClick}
         className={`${baseClass} transition-colors cursor-pointer ${read ? "hover:opacity-90" : "hover:bg-muted"}`}
+        style={readStyle}
       >
         {content}
       </button>
     );
   }
 
-  return <span className={`${baseClass} flex-shrink-0`}>{content}</span>;
+  return <span className={`${baseClass} flex-shrink-0`} style={readStyle}>{content}</span>;
 }
