@@ -127,14 +127,18 @@ function AdminIconsBadgesPage() {
   async function translateTypeName(typeKey: string) {
     setTranslatingTypes((prev) => new Set(prev).add(typeKey));
     try {
+      // Send the capitalized English label so the AI understands it's a proper noun/label.
+      const capitalizedKey = typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
       const result = await translateFn({
         data: {
-          fields: { name: typeKey },
-          context: "Content type label for a learning content library. Keep it very short — 1 to 2 words.",
+          fields: { name: capitalizedKey },
+          context: "Content type label for a learning content library. Keep it very short — 1 to 2 words. Capitalize the first letter.",
         },
       });
-      const translated = result.fields?.name?.trim();
-      if (translated) {
+      const raw = result.fields?.name?.trim();
+      if (raw) {
+        // Ensure the first letter is always capitalized regardless of AI output.
+        const translated = raw.charAt(0).toUpperCase() + raw.slice(1);
         setDraft((prev) => ({
           ...prev,
           typeNamesEs: { ...(prev.typeNamesEs ?? {}), [typeKey]: translated },
