@@ -257,15 +257,19 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
                 params={{ slug: c.slug }}
                 className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 pb-[28px] sm:pb-[36px] transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
               >
-                {/* Arrow circle — top-right corner, matches resume card color scheme */}
+                {/* Arrow circle — aligned to the top of the category icon, same border color scheme */}
                 {(() => {
                   const color = c.icon_color || "var(--color-accent)";
                   return (
                     <span
-                      className="absolute top-6 right-6 flex items-center justify-center h-8 w-8 rounded-full transition-colors"
-                      style={{ backgroundColor: `color-mix(in oklab, ${color} 15%, transparent)`, color }}
+                      className="absolute top-8 sm:top-10 right-8 sm:right-10 flex items-center justify-center h-8 w-8 rounded-full border transition-colors"
+                      style={{
+                        backgroundColor: `color-mix(in oklab, ${color} 15%, transparent)`,
+                        borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
+                        color,
+                      }}
                     >
-                      <ArrowRight className="h-4 w-4" />
+                      <ArrowRight className="h-4 w-4 -rotate-45" />
                     </span>
                   );
                 })()}
