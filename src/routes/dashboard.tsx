@@ -1505,11 +1505,12 @@ function TestingTab() {
         </div>
       )}
 
-      {/* Filters — two separate connected pills: status and priority */}
+      {/* Filters — two connected pills; active state matches the badge color in the test list */}
       {(() => {
         const PRIORITY_ICONS = { all: Layers, critical: AlertCircle, high: ChevronUp, medium: Minus, low: ChevronDown } as const;
-        const renderPill = (buttons: { key: string; Icon: any; label: string; active: boolean; onClick: () => void }[]) =>
-          buttons.map(({ key, Icon, label, active, onClick }, i) => {
+        const DEFAULT_ACTIVE = "relative z-10 bg-foreground text-background border-foreground";
+        const renderPill = (buttons: { key: string; Icon: any; label: string; active: boolean; activeClass: string; onClick: () => void }[]) =>
+          buttons.map(({ key, Icon, label, active, activeClass, onClick }, i) => {
             const isFirst = i === 0;
             const isLast = i === buttons.length - 1;
             return (
@@ -1521,9 +1522,7 @@ function TestingTab() {
                   "inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-medium transition-colors",
                   isFirst ? "rounded-l-md" : "-ml-px rounded-l-none",
                   isLast  ? "rounded-r-md" : "rounded-r-none",
-                  active
-                    ? "relative z-10 bg-foreground text-background border-foreground"
-                    : "bg-background text-muted-foreground border-border hover:bg-muted",
+                  active ? `relative z-10 ${activeClass}` : "bg-background text-muted-foreground border-border hover:bg-muted",
                 ].join(" ")}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -1531,6 +1530,23 @@ function TestingTab() {
               </button>
             );
           });
+
+        const STATUS_ACTIVE: Record<string, string> = {
+          all:      DEFAULT_ACTIVE,
+          pass:     "text-green-700 bg-green-50 border-green-300",
+          fail:     "text-red-700 bg-red-50 border-red-300",
+          blocked:  "text-yellow-700 bg-yellow-50 border-yellow-300",
+          skipped:  "text-muted-foreground bg-muted/60 border-border",
+          untested: "text-muted-foreground bg-muted border-border",
+        };
+        const PRIORITY_ACTIVE: Record<string, string> = {
+          all:      DEFAULT_ACTIVE,
+          critical: "text-red-600 bg-red-50 border-red-200",
+          high:     "text-orange-600 bg-orange-50 border-orange-200",
+          medium:   "text-yellow-600 bg-yellow-50 border-yellow-200",
+          low:      "text-green-600 bg-green-50 border-green-200",
+        };
+
         return (
           <div className="flex items-center gap-3 my-6">
             <div className="flex items-center">
@@ -1539,6 +1555,7 @@ function TestingTab() {
                 Icon: s === "all" ? LayoutList : STATUS_ICON_COMPONENTS[s],
                 label: s === "all" ? "All" : STATUS_LABELS[s],
                 active: filterStatus === s,
+                activeClass: STATUS_ACTIVE[s],
                 onClick: () => setFilterStatus(s),
               })))}
             </div>
@@ -1549,6 +1566,7 @@ function TestingTab() {
                 Icon: PRIORITY_ICONS[p],
                 label: p === "all" ? "All priorities" : p.charAt(0).toUpperCase() + p.slice(1),
                 active: filterPriority === p,
+                activeClass: PRIORITY_ACTIVE[p],
                 onClick: () => setFilterPriority(p),
               })))}
             </div>
