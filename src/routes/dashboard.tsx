@@ -46,6 +46,7 @@ import {
 } from "@/lib/qa-test-plan";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight, ClipboardCheck, Plus, Trash2, CheckCircle, XCircle, MinusCircle, SkipForward, ChevronRight, AlertCircle, ChevronUp, Minus, LayoutList, Layers, ImagePlus, ExternalLink, X } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -1146,6 +1147,8 @@ function TestingTab() {
   const deleteRunFn    = useServerFn(deleteTestRun);
   const getUploadUrlFn = useServerFn(getQaScreenshotUploadUrl);
 
+  const confirmDelete = useConfirmDelete();
+
   // Single hidden file input shared across all test items.
   // uploadTestIdRef tracks which test the next file-picker result belongs to.
   const fileInputRef       = useRef<HTMLInputElement>(null);
@@ -1277,10 +1280,16 @@ function TestingTab() {
     qc.invalidateQueries({ queryKey: ["my-test-runs"] });
   }
 
-  async function handleDeleteRun(runId: string) {
-    await deleteRunFn({ data: { runId } });
-    if (activeRunId === runId) setActiveRunId(null);
-    qc.invalidateQueries({ queryKey: ["my-test-runs"] });
+  async function handleDeleteRun(runId: string, label: string) {
+    await confirmDelete({
+      title: `Delete "${label}"?`,
+      description: "This will permanently delete the test run and all its results, statuses, notes, and screenshots.",
+      onConfirm: async () => {
+        await deleteRunFn({ data: { runId } });
+        if (activeRunId === runId) setActiveRunId(null);
+        qc.invalidateQueries({ queryKey: ["my-test-runs"] });
+      },
+    });
   }
 
   // ── Stats for the active run ───────────────────────────────────────────
@@ -1334,7 +1343,7 @@ function TestingTab() {
             <button
               type="button"
               onClick={() => { setCreating(false); setNewLabel(""); }}
-              className="text-sm text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
             >
               Cancel
             </button>
@@ -1370,8 +1379,8 @@ function TestingTab() {
                   </div>
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); handleDeleteRun(run.id); }}
-                    className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                    onClick={(e) => { e.stopPropagation(); handleDeleteRun(run.id, run.label); }}
+                    className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -1673,7 +1682,7 @@ function TestingTab() {
                                 </button>
                               )}
                             </div>
-                          ) : !isCompleted && (
+                          ) : !isCompleted && (status === "fail" || status === "blocked" || status === "skipped") && (
                             <button
                               type="button"
                               disabled={uploadingTests.has(test.id)}
@@ -1681,7 +1690,7 @@ function TestingTab() {
                                 uploadTestIdRef.current = test.id;
                                 fileInputRef.current?.click();
                               }}
-                              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md px-3 py-1.5 transition-colors disabled:opacity-60"
+                              className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-60"
                             >
                               {uploadingTests.has(test.id) ? (
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
