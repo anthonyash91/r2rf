@@ -192,6 +192,8 @@ export type BadgeStyles = {
   variantIcons?: Partial<Record<BadgeVariantKey, string>>;
   /** Per-type icon name override (keyed by lowercased type string). */
   typeIcons?: Record<string, string>;
+  /** Spanish label overrides for each content type (keyed by lowercased type string). */
+  typeNamesEs?: Record<string, string>;
 };
 
 export const DEFAULT_BADGE_STYLES: BadgeStyles = {
@@ -200,6 +202,7 @@ export const DEFAULT_BADGE_STYLES: BadgeStyles = {
   categoryDefault: DEFAULT_CATEGORY_INDEX,
   variantIcons: {},
   typeIcons: {},
+  typeNamesEs: {},
 };
 
 // Merges admin-configured overrides over the hardcoded defaults.
@@ -213,6 +216,7 @@ export function mergeBadgeStyles(input: unknown): BadgeStyles {
       typeof v.categoryDefault === "number" ? v.categoryDefault : DEFAULT_CATEGORY_INDEX,
     variantIcons: { ...(v.variantIcons ?? {}) },
     typeIcons: { ...(v.typeIcons ?? {}) },
+    typeNamesEs: { ...(v.typeNamesEs ?? {}) },
   };
 }
 

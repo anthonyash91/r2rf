@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
 import { useI18n, pickLang, translateType, type Language } from "@/lib/i18n";
+import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { useAuth } from "@/hooks/use-auth";
 import { Pencil, Search, Bookmark, ArrowRight } from "lucide-react";
 import { resolveCategoryIcon } from "@/lib/category-icons";
@@ -132,6 +133,7 @@ function SearchResults({
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const { bookmarkIds, toggle, isLoggedIn } = useBookmarks();
+  const badgeStyles = useBadgeStyles();
 
   if (isFetching && results.length === 0) {
     return <p className="text-sm text-muted-foreground">{t("home.loading")}</p>;
@@ -192,7 +194,7 @@ function SearchResults({
                   )}
                   {item.type && (
                     <Badge variant="type" type={item.type}>
-                      {translateType(lang, item.type)}
+                      {translateType(lang, item.type, badgeStyles.typeNamesEs)}
                     </Badge>
                   )}
                 </div>

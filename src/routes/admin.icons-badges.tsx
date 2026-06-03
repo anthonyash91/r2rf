@@ -541,6 +541,16 @@ function AdminIconsBadgesPage() {
                   </div>
                 </div>
                 <div className="flex w-full @[26rem]:w-auto items-center gap-2">
+                  <input
+                    type="text"
+                    value={(draft.typeNamesEs as Record<string, string> | undefined)?.[t] ?? ""}
+                    onChange={(e) => setDraft((prev) => ({
+                      ...prev,
+                      typeNamesEs: { ...(prev.typeNamesEs ?? {}), [t]: e.target.value },
+                    }))}
+                    placeholder="Spanish name…"
+                    className="w-28 rounded-md border border-input bg-background px-2 py-1 text-xs"
+                  />
                   <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
                     <RefreshCw className="h-4 w-4" />
                     Color

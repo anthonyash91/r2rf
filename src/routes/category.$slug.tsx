@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
+import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { fmtDateShort } from "@/lib/date-format";
 import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info } from "lucide-react";
@@ -95,6 +96,7 @@ function CategoryPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
   const { isAdmin, canAccessAdmin, isFacilityUser, user } = useAuth();
+  const badgeStyles = useBadgeStyles();
   const { bookmarkIds, toggle: toggleBookmark } = useBookmarks();
   const { myRatings, rate } = useRatings();
   const { check: checkAchievements } = useAchievements();
@@ -526,7 +528,7 @@ function CategoryPage() {
                             <SelectContent>
                               <SelectItem value="all">All types</SelectItem>
                               {orderedKinds.map((k) => (
-                                <SelectItem key={k} value={k} className="capitalize">{translateType(lang, k)}</SelectItem>
+                                <SelectItem key={k} value={k} className="capitalize">{translateType(lang, k, badgeStyles.typeNamesEs)}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -635,7 +637,7 @@ function CategoryPage() {
                                 <Badge variant="new">{t("category.newContent")}</Badge>
                               )}
                               <Badge variant="type" type={item.type}>
-                                {translateType(lang, item.type)}
+                                {translateType(lang, item.type, badgeStyles.typeNamesEs)}
                               </Badge>
                               {isAdmin && (item.facilities?.length ?? 0) > 0 && (
                                 <FacilityBadge

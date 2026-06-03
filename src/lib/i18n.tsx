@@ -603,10 +603,15 @@ export function pickLang<T>(lang: Language, en: T, es: T | null | undefined): T 
   return en;
 }
 
-/** Content types are fully dynamic (admin-managed), so no built-in translations exist.
- *  The type name is whatever the admin set — return it as-is. */
-export function translateType(_lang: Language, type: string): string {
-  return type;
+/** Translate a content type label using admin-configured Spanish names.
+ *  Falls back to the original type string when no translation is set. */
+export function translateType(
+  lang: Language,
+  type: string,
+  typeNamesEs?: Record<string, string>,
+): string {
+  if (lang !== "es" || !type) return type;
+  return typeNamesEs?.[type.trim().toLowerCase()] ?? type;
 }
 
 /** Translate duration strings like "8 min read", "1 hr 20 min", "45 sec". */

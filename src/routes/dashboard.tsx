@@ -33,6 +33,7 @@ import { formatTimeSpent, fmtDateShort } from "@/lib/date-format";
 import { readStatusLabels } from "@/lib/read-status";
 import { getMyBookmarkedItems } from "@/lib/bookmarks.functions";
 import { useBookmarks } from "@/hooks/use-bookmarks";
+import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { useAchievements } from "@/hooks/use-achievements";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { getMyMonthlySummary } from "@/lib/monthly-summary.functions";
@@ -105,6 +106,7 @@ function DashboardPage() {
   const { t, lang } = useI18n();
   const { user, isAdmin, isUser, isTester } = useAuth();
   const queryClient = useQueryClient();
+  const badgeStyles = useBadgeStyles();
   const fetchProfile = useServerFn(getMyProfile);
   const fetchQuestions = useServerFn(getMySecurityQuestions);
   const submitUpdate = useServerFn(updateSecurityAnswers);
@@ -914,7 +916,7 @@ function DashboardPage() {
                         </TooltipProvider>
                         {item.type && (
                           <Badge variant="type" type={item.type}>
-                            {translateType(lang, item.type)}
+                            {translateType(lang, item.type, badgeStyles.typeNamesEs)}
                           </Badge>
                         )}
                       </div>
@@ -1998,14 +2000,9 @@ function CategoryProgressSection({
           <CategoryIcon name={category.icon_name} color={category.icon_color} size="md" />
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex flex-col-reverse items-start gap-2 sm:flex-row sm:items-center sm:flex-wrap min-w-0">
-            <h2 className="font-display text-base sm:text-lg font-semibold truncate max-w-full">
-              {pickLang(lang, category.name, category.name_es)}
-            </h2>
-            {hasRecent && (
-              <Badge variant="new">{t("category.newContentAdded")}</Badge>
-            )}
-          </div>
+          <h2 className="font-display text-base sm:text-lg font-semibold truncate max-w-full">
+            {pickLang(lang, category.name, category.name_es)}
+          </h2>
           {!isAdmin ? (
             <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
               {(() => {
@@ -2018,6 +2015,9 @@ function CategoryProgressSection({
             <p className="mt-0.5 text-xs text-muted-foreground truncate">{tagline}</p>
           ) : null}
         </div>
+        {hasRecent && (
+          <Badge variant="new">{t("category.newContentAdded")}</Badge>
+        )}
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
       </button>
       {open && (
@@ -2036,7 +2036,7 @@ function CategoryProgressSection({
                         <Badge variant="new">{t("category.newContent")}</Badge>
                       )}
                       <Badge variant="type" type={it.type}>
-                        {translateType(lang, it.type)}
+                        {translateType(lang, it.type, badgeStyles.typeNamesEs)}
                       </Badge>
                     </BadgeGroup>
                     {it.duration && (
