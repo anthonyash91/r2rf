@@ -1740,7 +1740,7 @@ function TestingTab() {
                                             href={result.screenshot_url}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                                            className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
                                           >
                                             <ImagePlus className="h-3.5 w-3.5" />
                                             View screenshot
@@ -1763,7 +1763,7 @@ function TestingTab() {
                                             uploadTestIdRef.current = test.id;
                                             fileInputRef.current?.click();
                                           }}
-                                          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md px-3 py-1.5 transition-colors disabled:opacity-60"
+                                          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-md px-3 py-2 transition-colors disabled:opacity-60"
                                         >
                                           {uploadingTests.has(test.id) ? (
                                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1778,7 +1778,7 @@ function TestingTab() {
                                     <button
                                       type="button"
                                       onClick={() => handleSaveNote(test.id)}
-                                      className={`inline-flex items-center gap-1.5 justify-center rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                                      className={`inline-flex items-center gap-1.5 justify-center rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
                                         savedNotes.has(test.id)
                                           ? "border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
                                           : "border-input bg-background text-foreground hover:bg-muted"
@@ -1808,7 +1808,7 @@ function TestingTab() {
                                 href={result.screenshot_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                                className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
                               >
                                 <ImagePlus className="h-3.5 w-3.5" />
                                 View screenshot
