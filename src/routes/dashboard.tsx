@@ -1668,19 +1668,21 @@ function TestingTab() {
                                     </button>
                                   );
                                 })}
-                                {/* Add note / Remove note — toggles the notes section */}
-                                <button
-                                  type="button"
-                                  onClick={() => notesOpen ? handleRemoveNote(test.id) : setOpenNotes((prev) => new Set(prev).add(test.id))}
-                                  className={`ml-auto inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-                                    notesOpen
-                                      ? "border-destructive/30 text-destructive hover:bg-destructive/10"
-                                      : "border-border text-muted-foreground hover:bg-muted"
-                                  }`}
-                                >
-                                  {notesOpen ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-                                  {notesOpen ? "Remove note" : "Add note"}
-                                </button>
+                                {/* Add note / Remove note — hidden for fail/blocked where notes are always expected */}
+                                {status !== "fail" && status !== "blocked" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => notesOpen ? handleRemoveNote(test.id) : setOpenNotes((prev) => new Set(prev).add(test.id))}
+                                    className={`ml-auto inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                                      notesOpen
+                                        ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                                        : "border-border text-muted-foreground hover:bg-muted"
+                                    }`}
+                                  >
+                                    {notesOpen ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                                    {notesOpen ? "Remove note" : "Add note"}
+                                  </button>
+                                )}
                               </div>
 
                               {/* Notes textarea + action row — only shown when notesOpen */}
