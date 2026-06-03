@@ -1718,7 +1718,7 @@ function TestingTab() {
 
                               {/* Notes textarea + action row — only shown when notesOpen */}
                               {notesOpen && (
-                                <div className="ml-7 mt-[22px]">
+                                <div className="ml-7 mt-[18px]">
                                   <textarea
                                     rows={3}
                                     value={currentNote}
@@ -1731,7 +1731,7 @@ function TestingTab() {
                                     onBlur={() => { if (noteDirty) handleSaveNote(test.id); }}
                                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs resize-none focus:outline-none focus:border-[var(--color-accent)] transition-colors"
                                   />
-                                  <div className="flex items-center justify-between gap-2 mt-[16px]">
+                                  <div className="flex items-center justify-between gap-2 mt-[12px]">
                                     {/* Left: screenshot button (only for fail/blocked/skipped) */}
                                     <div>
                                       {result?.screenshot_url ? (
