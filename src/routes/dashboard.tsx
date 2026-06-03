@@ -1542,6 +1542,7 @@ function TestingTab() {
                 onClick: () => setFilterStatus(s),
               })))}
             </div>
+            <span className="h-5 w-px bg-border shrink-0" />
             <div className="flex items-center">
               {renderPill((["all", "critical", "high", "medium", "low"] as const).map((p) => ({
                 key: `p-${p}`,
