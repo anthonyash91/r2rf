@@ -1550,7 +1550,7 @@ function TestingTab() {
         return (
           <div className="flex items-center gap-3 my-6">
             <div className="flex items-center">
-              {renderPill((["all", "fail", "pass", "blocked", "skipped", "untested"] as const).map((s) => ({
+              {renderPill((["all", "pass", "fail", "blocked", "skipped", "untested"] as const).map((s) => ({
                 key: `s-${s}`,
                 Icon: s === "all" ? LayoutList : STATUS_ICON_COMPONENTS[s],
                 label: s === "all" ? "All" : STATUS_LABELS[s],
