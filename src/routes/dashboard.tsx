@@ -1676,7 +1676,7 @@ function TestingTab() {
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveScreenshot(test.id)}
-                                  className="inline-flex items-center justify-center h-5 w-5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                                  className="inline-flex items-center justify-center self-stretch w-7 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                                   title="Remove screenshot"
                                 >
                                   <X className="h-3 w-3" />
