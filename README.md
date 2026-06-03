@@ -709,4 +709,17 @@ Bulk import tool for adding many content items at once via CSV upload:
 
 ---
 
-*For detailed analytics tracking documentation, see [ANALYTICS.md](ANALYTICS.md). For the full role and permission breakdown, see [USER_ROLES.md](USER_ROLES.md). For sign-up and login security details, see [SIGNUP_AND_LOGIN.md](SIGNUP_AND_LOGIN.md).*
+---
+
+## Additional Documentation
+
+| File | Description |
+|---|---|
+| [ANALYTICS.md](ANALYTICS.md) | Complete analytics and data tracking reference — every metric tracked, how it's measured, and what it means for grant reporting |
+| [USER_DASHBOARD.md](USER_DASHBOARD.md) | Full feature guide for the user-facing dashboard — all tabs, sections, badges, and behaviors |
+| [ADMIN.md](ADMIN.md) | Detailed admin panel feature guide — every page and action available to admin, contributor, and facility user accounts |
+| [USER_ROLES.md](USER_ROLES.md) | Full role and permission breakdown — what each role can do, where access is enforced, and how facility scoping works |
+| [MAIN_PAGE.md](MAIN_PAGE.md) | Feature guide for the public home page — category grid, search, banners, and signed-in vs. anonymous differences |
+| [SIGNUP_AND_LOGIN.md](SIGNUP_AND_LOGIN.md) | Security reference for the sign-up and login flow — captcha, PIN gating, rate limiting, and password reset |
+| [PRIVACY_POLICY.md](PRIVACY_POLICY.md) | Platform privacy policy |
+| [TERMS_OF_SERVICE.md](TERMS_OF_SERVICE.md) | Platform terms of service |
