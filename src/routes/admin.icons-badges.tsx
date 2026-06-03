@@ -549,7 +549,7 @@ function AdminIconsBadgesPage() {
                       typeNamesEs: { ...(prev.typeNamesEs ?? {}), [t]: e.target.value },
                     }))}
                     placeholder="Spanish name…"
-                    className="w-28 rounded-md border border-input bg-background px-2 py-1 text-xs"
+                    className="w-28 rounded-md border border-input bg-background px-3 py-2 text-xs"
                   />
                   <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
                     <RefreshCw className="h-4 w-4" />
