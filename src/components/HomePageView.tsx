@@ -12,7 +12,7 @@ import { resolveCategoryIcon } from "@/lib/category-icons";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { BadgeGroup } from "@/components/BadgeGroup";
+import { ResponsiveBadgeGroup } from "@/components/ResponsiveBadgeGroup";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 
@@ -298,14 +298,14 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
                   </h3>
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
                   <div className="mt-3">
-                    <BadgeGroup>
+                    <ResponsiveBadgeGroup>
                       <Badge variant="count">
                         {count} {t(count === 1 ? "home.item" : "home.items")}
                       </Badge>
                       {hasRecent && (
                         <Badge variant="new">{t("category.newContentAdded")}</Badge>
                       )}
-                    </BadgeGroup>
+                    </ResponsiveBadgeGroup>
                   </div>
 
 
