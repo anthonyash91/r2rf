@@ -1226,11 +1226,26 @@ function TestingTab() {
       await upsertFn({ data: { runId: activeRunId, testId, status: currentStatus, notes } });
       qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
       setPendingNotes((prev) => { const next = { ...prev }; delete next[testId]; return next; });
-      // Flash "Saved ✓" on the button for 2 seconds then revert.
+      // "Saved ✓" persists until the user types again (onChange clears it).
       setSavedNotes((prev) => new Set(prev).add(testId));
-      setTimeout(() => setSavedNotes((prev) => { const next = new Set(prev); next.delete(testId); return next; }), 2000);
     } catch (e: any) {
       toast.error(e?.message ?? "Couldn't save note");
+    }
+  }
+
+  async function handleRemoveNote(testId: string) {
+    if (!activeRunId || isCompleted) return;
+    // Clear local state immediately so the UI collapses.
+    setPendingNotes((prev) => { const next = { ...prev }; delete next[testId]; return next; });
+    setSavedNotes((prev) => { const next = new Set(prev); next.delete(testId); return next; });
+    setOpenNotes((prev) => { const next = new Set(prev); next.delete(testId); return next; });
+    // Persist the cleared note to the DB.
+    const currentStatus = resultMap.get(testId)?.status ?? "untested";
+    try {
+      await upsertFn({ data: { runId: activeRunId, testId, status: currentStatus, notes: "" } });
+      qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't remove note");
     }
   }
 
@@ -1611,7 +1626,19 @@ function TestingTab() {
                               })()}
                             </div>
                             <p className="text-sm font-medium mb-1">{test.title}</p>
-                            <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{test.description}</p>
+                            {(() => {
+                              // Split the description at the pass-criteria marker so we can
+                              // control the gap between steps and ✅ Pass independently.
+                              const parts = test.description.split('\n\n✅ Pass:');
+                              return parts.length === 2 ? (
+                                <>
+                                  <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{parts[0]}</p>
+                                  <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line mt-1.5">✅ Pass:{parts[1]}</p>
+                                </>
+                              ) : (
+                                <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{test.description}</p>
+                              );
+                            })()}
                           </div>
                         </div>
 
@@ -1641,31 +1668,37 @@ function TestingTab() {
                                     </button>
                                   );
                                 })}
-                                {/* Add note — only shown when the notes section is collapsed */}
-                                {!notesOpen && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setOpenNotes((prev) => new Set(prev).add(test.id))}
-                                    className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
-                                  >
-                                    <Minus className="h-3.5 w-3.5 rotate-90" />
-                                    Add note
-                                  </button>
-                                )}
+                                {/* Add note / Remove note — toggles the notes section */}
+                                <button
+                                  type="button"
+                                  onClick={() => notesOpen ? handleRemoveNote(test.id) : setOpenNotes((prev) => new Set(prev).add(test.id))}
+                                  className={`ml-auto inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                                    notesOpen
+                                      ? "border-destructive/30 text-destructive hover:bg-destructive/10"
+                                      : "border-border text-muted-foreground hover:bg-muted"
+                                  }`}
+                                >
+                                  {notesOpen ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                                  {notesOpen ? "Remove note" : "Add note"}
+                                </button>
                               </div>
 
                               {/* Notes textarea + action row — only shown when notesOpen */}
                               {notesOpen && (
                                 <div className="ml-7 mt-3">
                                   <textarea
-                                    rows={status === "fail" ? 3 : 1}
+                                    rows={3}
                                     value={currentNote}
                                     placeholder="Add notes (required for failures)…"
-                                    onChange={(e) => setPendingNotes((prev) => ({ ...prev, [test.id]: e.target.value }))}
+                                    onChange={(e) => {
+                                      setPendingNotes((prev) => ({ ...prev, [test.id]: e.target.value }));
+                                      // Typing resets the "Saved ✓" state back to "Save note".
+                                      setSavedNotes((prev) => { const next = new Set(prev); next.delete(test.id); return next; });
+                                    }}
                                     onBlur={() => { if (noteDirty) handleSaveNote(test.id); }}
                                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs resize-none focus:outline-none focus:border-[var(--color-accent)] transition-colors"
                                   />
-                                  <div className="flex items-center justify-between gap-2 mt-2">
+                                  <div className="flex items-center justify-between gap-2 mt-3">
                                     {/* Left: screenshot button (only for fail/blocked/skipped) */}
                                     <div>
                                       {result?.screenshot_url ? (
