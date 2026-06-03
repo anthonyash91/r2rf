@@ -1519,7 +1519,7 @@ function TestingTab() {
                 type="button"
                 onClick={onClick}
                 className={[
-                  "inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-medium transition-colors",
+                  "inline-flex items-center gap-1.5 border px-3 py-2 text-xs font-medium transition-colors",
                   isFirst ? "rounded-l-md" : "-ml-px rounded-l-none",
                   isLast  ? "rounded-r-md" : "rounded-r-none",
                   active ? `relative z-10 ${activeClass}` : "bg-background text-muted-foreground border-border hover:bg-muted",
