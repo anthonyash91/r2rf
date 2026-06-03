@@ -375,7 +375,8 @@ function DashboardPage() {
 
   const profile = data?.profile;
   const currentKeys = questionsQuery.data?.keys ?? [];
-  const mustSetup = !questionsQuery.isLoading && currentKeys.length < 2;
+  // Testers are QA accounts — never require security question setup.
+  const mustSetup = !isTester && !questionsQuery.isLoading && currentKeys.length < 2;
   const isEditing = editing || mustSetup;
 
   useEffect(() => {
