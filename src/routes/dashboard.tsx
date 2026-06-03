@@ -1185,6 +1185,7 @@ function TestingTab() {
 
   // ── Local optimistic state for note editing ─────────────────────────────
   const [pendingNotes, setPendingNotes] = useState<Record<string, string>>({});
+  const [savedNotes, setSavedNotes] = useState<Set<string>>(new Set()); // briefly populated after a successful save
   const [openSections, setOpenSections] = useState<Set<number>>(new Set());
   const [filterStatus, setFilterStatus] = useState<TestStatus | "all">("all");
   const [filterPriority, setFilterPriority] = useState<"all" | "critical" | "high" | "medium" | "low">("all");
@@ -1220,6 +1221,9 @@ function TestingTab() {
       await upsertFn({ data: { runId: activeRunId, testId, status: currentStatus, notes } });
       qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
       setPendingNotes((prev) => { const next = { ...prev }; delete next[testId]; return next; });
+      // Flash "Saved ✓" on the button for 2 seconds then revert.
+      setSavedNotes((prev) => new Set(prev).add(testId));
+      setTimeout(() => setSavedNotes((prev) => { const next = new Set(prev); next.delete(testId); return next; }), 2000);
     } catch (e: any) {
       toast.error(e?.message ?? "Couldn't save note");
     }
@@ -1710,13 +1714,19 @@ function TestingTab() {
                                   </button>
                                 )}
                               </div>
-                              {/* Right: Save note — always visible */}
+                              {/* Right: Save note — always visible; briefly shows "Saved ✓" after a successful save */}
                               <button
                                 type="button"
                                 onClick={() => handleSaveNote(test.id)}
-                                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                                className={`inline-flex items-center gap-1.5 justify-center rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                                  savedNotes.has(test.id)
+                                    ? "border-green-300 bg-green-50 text-green-700 hover:bg-green-100"
+                                    : "border-input bg-background text-foreground hover:bg-muted"
+                                }`}
                               >
-                                Save note
+                                {savedNotes.has(test.id) ? (
+                                  <><CheckCircle className="h-3.5 w-3.5" /> Saved</>
+                                ) : "Save note"}
                               </button>
                             </div>
                           </div>
