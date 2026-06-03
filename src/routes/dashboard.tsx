@@ -1505,49 +1505,52 @@ function TestingTab() {
         </div>
       )}
 
-      {/* Filters — single connected pill, same style as admin badge groups */}
+      {/* Filters — two separate connected pills: status and priority */}
       {(() => {
         const PRIORITY_ICONS = { all: Layers, critical: AlertCircle, high: ChevronUp, medium: Minus, low: ChevronDown } as const;
-        const buttons = [
-          ...( ["all", "fail", "pass", "blocked", "skipped", "untested"] as const ).map((s) => ({
-            key: `s-${s}`,
-            Icon: s === "all" ? LayoutList : STATUS_ICON_COMPONENTS[s],
-            label: s === "all" ? "All" : STATUS_LABELS[s],
-            active: filterStatus === s,
-            onClick: () => setFilterStatus(s),
-          })),
-          ...( ["all", "critical", "high", "medium", "low"] as const ).map((p) => ({
-            key: `p-${p}`,
-            Icon: PRIORITY_ICONS[p],
-            label: p === "all" ? "All priorities" : p.charAt(0).toUpperCase() + p.slice(1),
-            active: filterPriority === p,
-            onClick: () => setFilterPriority(p),
-          })),
-        ];
+        const renderPill = (buttons: { key: string; Icon: any; label: string; active: boolean; onClick: () => void }[]) =>
+          buttons.map(({ key, Icon, label, active, onClick }, i) => {
+            const isFirst = i === 0;
+            const isLast = i === buttons.length - 1;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={onClick}
+                className={[
+                  "inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-medium transition-colors",
+                  isFirst ? "rounded-l-md" : "-ml-px rounded-l-none",
+                  isLast  ? "rounded-r-md" : "rounded-r-none",
+                  active
+                    ? "relative z-10 bg-foreground text-background border-foreground"
+                    : "bg-background text-muted-foreground border-border hover:bg-muted",
+                ].join(" ")}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            );
+          });
         return (
-          <div className="flex items-center my-6">
-            {buttons.map(({ key, Icon, label, active, onClick }, i) => {
-              const isFirst = i === 0;
-              const isLast = i === buttons.length - 1;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={onClick}
-                  className={[
-                    "inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-medium transition-colors",
-                    isFirst ? "rounded-l-md" : "-ml-px rounded-l-none",
-                    isLast  ? "rounded-r-md" : "rounded-r-none",
-                    active
-                      ? "relative z-10 bg-foreground text-background border-foreground"
-                      : "bg-background text-muted-foreground border-border hover:bg-muted",
-                  ].join(" ")}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
-                </button>
-              );
-            })}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex items-center">
+              {renderPill((["all", "fail", "pass", "blocked", "skipped", "untested"] as const).map((s) => ({
+                key: `s-${s}`,
+                Icon: s === "all" ? LayoutList : STATUS_ICON_COMPONENTS[s],
+                label: s === "all" ? "All" : STATUS_LABELS[s],
+                active: filterStatus === s,
+                onClick: () => setFilterStatus(s),
+              })))}
+            </div>
+            <div className="flex items-center">
+              {renderPill((["all", "critical", "high", "medium", "low"] as const).map((p) => ({
+                key: `p-${p}`,
+                Icon: PRIORITY_ICONS[p],
+                label: p === "all" ? "All priorities" : p.charAt(0).toUpperCase() + p.slice(1),
+                active: filterPriority === p,
+                onClick: () => setFilterPriority(p),
+              })))}
+            </div>
           </div>
         );
       })()}
