@@ -264,7 +264,7 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
                   const color = c.icon_color || "var(--color-accent)";
                   return (
                     <span
-                      className="absolute top-4 right-4 flex items-center justify-center h-8 w-8 rounded-full border transition-colors"
+                      className="absolute top-4 right-4 flex items-center justify-center h-8 w-8 rounded-[4px] border transition-colors"
                       style={{
                         backgroundColor: `color-mix(in oklab, ${color} 15%, transparent)`,
                         borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,

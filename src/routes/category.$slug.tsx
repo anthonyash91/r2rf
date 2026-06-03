@@ -526,7 +526,7 @@ function CategoryPage() {
                               <SelectValue placeholder="Filter by type" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">All types</SelectItem>
+                              <SelectItem value="all">{t("home.allTypes")}</SelectItem>
                               {orderedKinds.map((k) => (
                                 <SelectItem key={k} value={k} className="capitalize">{translateType(lang, k, badgeStyles.typeNamesEs)}</SelectItem>
                               ))}
