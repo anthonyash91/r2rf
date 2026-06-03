@@ -317,17 +317,18 @@ Click any row to open the full detail view for that run.
 
 ### Run Detail View
 
-Shows all 248 tests organized by section. Each section is a collapsible accordion with a per-section pass/fail count. Within each section, each test shows:
+Shows all tests organized by section. Each section is a collapsible accordion with a per-section pass/fail count and progress ring. Within each section, each test shows:
 
 - Status icon and label
-- Test ID and title
-- Priority (Critical / High / Medium / Low)
-- Tester notes (if any)
-- **View screenshot** link (if the tester attached a failure screenshot)
+- Test ID, title, and priority badge (with icon)
+- Tester notes (if any) — shown in a muted bordered box
+- **View screenshot** button (if the tester attached a failure screenshot) — styled as a secondary button, opens the image in a new tab
 
-**Failures panel** — if any tests are marked Failed, they all appear in a highlighted summary at the top of the detail view, each showing the test ID, title, tester note, and a screenshot link. This gives the dev team an immediate triage view without scrolling.
+**Failures panel** — if any tests are marked Failed, they all appear in a highlighted summary at the top of the detail view, each showing the test ID, title, tester notes, and a screenshot button. This gives the dev team an immediate triage view without scrolling.
 
-**Filter** — the status filter (All / Pass / Fail / Blocked / Skipped / Untested) applies across all section accordions, making it easy to see only failures or only untested items.
+**Filter** — status and priority filter buttons (each with an icon, matching the tester dashboard) apply across all section accordions simultaneously, making it easy to isolate failures, blocked tests, or a specific priority level.
+
+**Progress ring** — the summary at the top of each run's detail view shows a 64px progress ring with pass/fail/blocked/skipped/untested breakdown, matching the tester's own run view.
 
 ---
 

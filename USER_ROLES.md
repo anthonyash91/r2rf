@@ -58,11 +58,13 @@ Testers are marked with `is_synthetic = true` in the database and have the `test
 When a tester signs in they see the **QA Testing** page — a full interactive version of the 248-test QA checklist organized into 18 sections. Features:
 
 - **Test runs** — create labeled sessions (e.g. "Post-deploy June 3"); each run has independent state; old runs are preserved for comparison
-- **Per-test actions** — for each test, set a status (Pass / Fail / Blocked / Skipped / Untested), add freeform notes, and attach a failure screenshot (image upload stored in Supabase Storage)
+- **Per-test status** — set each test to Pass / Fail / Blocked / Skipped / Untested using icon buttons on each test row
+- **Notes** — collapsed by default; an "Add note" button (+ icon) sits on the right of the status buttons row. Clicking it expands a textarea. For Fail and Blocked statuses, the notes section opens automatically since an explanation is expected. The "Add note" button becomes "Remove note" (− icon) when notes are open; clicking it clears the note and collapses the section. The "Save note" button shows "Saved ✓" after a successful save and reverts to "Save note" when you start typing again. Notes are not removable for Fail or Blocked — those statuses always keep the notes section open
+- **Screenshots** — an "Attach screenshot" button (dashed, image icon) appears below the notes field for Fail, Blocked, and Skipped tests. After upload it becomes a "View screenshot" button. Screenshots are stored in Supabase Storage and linked to the test result
 - **Section accordions** — 18 sections, each with a progress ring, pass/fail counts, and expandable item list
-- **Filters** — filter by status (All / Pass / Fail / Blocked / Skipped / Untested) and priority (All / Critical / High / Medium / Low)
-- **Failures panel** — all failed tests surface at the top of an active run for quick visibility
-- **Progress ring** — shows actioned/248 tests with a full status breakdown
+- **Filters** — filter by status (All / Pass / Fail / Blocked / Skipped / Untested) and priority (All / Critical / High / Medium / Low), each with a corresponding icon
+- **Failures panel** — all failed tests surface at the top of an active run with their notes and screenshot links for quick visibility
+- **Progress ring** — shows actioned/total tests with a full status breakdown (passed / failed / blocked / skipped / untested)
 - **Complete / Reopen** — mark a run complete to lock it read-only; reopen to continue editing
 - Security question setup is not required for tester accounts
 
