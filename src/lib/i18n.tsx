@@ -604,12 +604,16 @@ export function pickLang<T>(lang: Language, en: T, es: T | null | undefined): T 
 }
 
 const TYPE_ES: Record<string, string> = {
-  article: "Artículo",
-  video: "Video",
-  podcast: "Pódcast",
+  article:   "Artículo",
+  video:     "Video",
+  podcast:   "Pódcast",
   worksheet: "Hoja de trabajo",
-  meeting: "Reunión",
-  guide: "Guía",
+  meeting:   "Reunión",
+  guide:     "Guía",
+  audio:     "Audio",
+  pdf:       "PDF",
+  link:      "Enlace",
+  image:     "Imagen",
 };
 
 /** Translate a content type label (Article, Video, etc.) into the active language. */
