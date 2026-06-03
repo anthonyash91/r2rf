@@ -299,11 +299,11 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
                   <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
                   <div className="mt-3">
                     <ResponsiveBadgeGroup>
-                      <Badge variant="count" className="rounded-md">
+                      <Badge variant="count" className="rounded-sm">
                         {count} {t(count === 1 ? "home.item" : "home.items")}
                       </Badge>
                       {hasRecent && (
-                        <Badge variant="new" className="rounded-md">{t("category.newContentAdded")}</Badge>
+                        <Badge variant="new" className="rounded-sm">{t("category.newContentAdded")}</Badge>
                       )}
                     </ResponsiveBadgeGroup>
                   </div>
