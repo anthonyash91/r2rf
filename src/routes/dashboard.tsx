@@ -89,15 +89,6 @@ function TesterDashboard() {
     <div className="min-h-screen flex flex-col bg-background">
       <SiteHeader />
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
-        <div className="mb-8 flex items-center gap-3">
-          <ClipboardCheck className="h-7 w-7 text-[var(--color-accent)]" />
-          <div>
-            <h1 className="font-display text-2xl font-semibold">QA Testing</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Work through the test checklist to verify platform stability and security.
-            </p>
-          </div>
-        </div>
         <TestingTab />
       </main>
       <SiteFooter />
@@ -1267,20 +1258,20 @@ function TestingTab() {
   if (!activeRunId) {
     return (
       <div>
-        <div className="flex items-center justify-between mb-6">
-          <div>
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
             <h2 className="font-display text-xl font-semibold flex items-center gap-2">
               <ClipboardCheck className="h-5 w-5" /> QA Test Runs
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">{TOTAL_TESTS} test cases across {QA_SECTIONS.length} sections</p>
+            <button
+              type="button"
+              onClick={() => setCreating(true)}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" /> New run
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" /> New run
-          </button>
+          <p className="text-sm text-muted-foreground mt-1">{TOTAL_TESTS} test cases across {QA_SECTIONS.length} sections</p>
         </div>
 
         {creating && (
