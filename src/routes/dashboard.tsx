@@ -1687,7 +1687,7 @@ function TestingTab() {
 
                               {/* Notes textarea + action row — only shown when notesOpen */}
                               {notesOpen && (
-                                <div className="ml-7 mt-3">
+                                <div className="ml-7 mt-4">
                                   <textarea
                                     rows={3}
                                     value={currentNote}
