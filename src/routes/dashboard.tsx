@@ -1188,15 +1188,32 @@ function TestingTab() {
   const [savedNotes, setSavedNotes] = useState<Set<string>>(new Set()); // briefly populated after a successful save
   const [openNotes, setOpenNotes] = useState<Set<string>>(new Set()); // tracks which test items have the notes section expanded
   const [openSections, setOpenSections] = useState<Set<number>>(new Set());
+  const [focusedSection, setFocusedSection] = useState<number | null>(null);
   const [filterStatus, setFilterStatus] = useState<TestStatus | "all">("all");
   const [filterPriority, setFilterPriority] = useState<"all" | "critical" | "high" | "medium" | "low">("all");
 
+  const sectionRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+
   function toggleSection(n: number) {
+    const isCurrentlyOpen = openSections.has(n);
     setOpenSections((prev) => {
       const next = new Set(prev);
       next.has(n) ? next.delete(n) : next.add(n);
       return next;
     });
+    // When opening: focus this section (dims others) and scroll to it.
+    // When closing: clear focus if this was the focused section.
+    if (!isCurrentlyOpen) {
+      setFocusedSection(n);
+      requestAnimationFrame(() => {
+        const el = sectionRefs.current.get(n);
+        if (!el) return;
+        const top = el.getBoundingClientRect().top + window.scrollY - 96;
+        window.scrollTo({ top, behavior: "smooth" });
+      });
+    } else if (focusedSection === n) {
+      setFocusedSection(null);
+    }
   }
 
   async function handleSetStatus(testId: string, status: TestStatus) {
@@ -1574,8 +1591,8 @@ function TestingTab() {
         );
       })()}
 
-      {/* Section accordions */}
-      <div className="space-y-2">
+      {/* Section accordions — connected card list matching the dashboard category style */}
+      <div className="flex flex-col [&>div]:rounded-none [&>div:first-child]:rounded-t-2xl [&>div:last-child]:rounded-b-2xl [&>div:not(:first-child)]:-mt-px">
         {QA_SECTIONS.map((section) => {
           const sectionTests = QA_TESTS.filter((t) => t.sectionNum === section.num);
           const filtered = sectionTests.filter((t) => {
@@ -1595,7 +1612,19 @@ function TestingTab() {
           const isOpen = openSections.has(section.num);
 
           return (
-            <div key={section.num} className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div
+              key={section.num}
+              ref={(el) => { if (el) sectionRefs.current.set(section.num, el); else sectionRefs.current.delete(section.num); }}
+              className={`overflow-hidden scroll-mt-24 transition-all duration-200 ${
+                focusedSection !== null && focusedSection !== section.num
+                  ? "opacity-40"
+                  : "opacity-100"
+              } ${
+                isOpen
+                  ? "border-2 border-[var(--color-accent)]"
+                  : "border border-border bg-card"
+              }`}
+            >
               <button
                 type="button"
                 onClick={() => toggleSection(section.num)}
