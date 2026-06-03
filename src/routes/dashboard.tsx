@@ -1505,47 +1505,52 @@ function TestingTab() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2 my-6">
-        {(["all", "fail", "pass", "blocked", "skipped", "untested"] as const).map((s) => {
-          const StatusIcon = s === "all" ? LayoutList : STATUS_ICON_COMPONENTS[s];
-          return (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setFilterStatus(s)}
-              className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-                filterStatus === s
-                  ? "bg-foreground text-background border-foreground"
-                  : "bg-background text-muted-foreground border-border hover:bg-muted"
-              }`}
-            >
-              <StatusIcon className="h-3.5 w-3.5" />
-              {s === "all" ? "All" : STATUS_LABELS[s]}
-            </button>
-          );
-        })}
-        <span className="mx-1 self-center text-border">|</span>
-        {(["all", "critical", "high", "medium", "low"] as const).map((p) => {
-          const priorityIcons = { all: Layers, critical: AlertCircle, high: ChevronUp, medium: Minus, low: ChevronDown };
-          const PIcon = priorityIcons[p];
-          return (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setFilterPriority(p)}
-              className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-                filterPriority === p
-                  ? "bg-foreground text-background border-foreground"
-                  : "bg-background text-muted-foreground border-border hover:bg-muted"
-              }`}
-            >
-              <PIcon className="h-3.5 w-3.5" />
-              {p === "all" ? "All priorities" : p.charAt(0).toUpperCase() + p.slice(1)}
-            </button>
-          );
-        })}
-      </div>
+      {/* Filters — single connected pill, same style as admin badge groups */}
+      {(() => {
+        const PRIORITY_ICONS = { all: Layers, critical: AlertCircle, high: ChevronUp, medium: Minus, low: ChevronDown } as const;
+        const buttons = [
+          ...( ["all", "fail", "pass", "blocked", "skipped", "untested"] as const ).map((s) => ({
+            key: `s-${s}`,
+            Icon: s === "all" ? LayoutList : STATUS_ICON_COMPONENTS[s],
+            label: s === "all" ? "All" : STATUS_LABELS[s],
+            active: filterStatus === s,
+            onClick: () => setFilterStatus(s),
+          })),
+          ...( ["all", "critical", "high", "medium", "low"] as const ).map((p) => ({
+            key: `p-${p}`,
+            Icon: PRIORITY_ICONS[p],
+            label: p === "all" ? "All priorities" : p.charAt(0).toUpperCase() + p.slice(1),
+            active: filterPriority === p,
+            onClick: () => setFilterPriority(p),
+          })),
+        ];
+        return (
+          <div className="flex items-center my-6">
+            {buttons.map(({ key, Icon, label, active, onClick }, i) => {
+              const isFirst = i === 0;
+              const isLast = i === buttons.length - 1;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={onClick}
+                  className={[
+                    "inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-medium transition-colors",
+                    isFirst ? "rounded-l-md" : "-ml-px rounded-l-none",
+                    isLast  ? "rounded-r-md" : "rounded-r-none",
+                    active
+                      ? "relative z-10 bg-foreground text-background border-foreground"
+                      : "bg-background text-muted-foreground border-border hover:bg-muted",
+                  ].join(" ")}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Section accordions */}
       <div className="space-y-2">
