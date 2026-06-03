@@ -2031,23 +2031,19 @@ function CategoryProgressSection({
               return (
                 <li key={it.id} className="flex flex-col gap-[10px] bg-[#fffdf8] p-6">
                   <div className="flex items-center gap-2 min-w-0">
-                    {/* Badge + duration wrapped together so they center with each other,
-                        while the whole group self-starts at the top of the outer row. */}
-                    <div className="flex items-center gap-2 shrink-0 self-start">
-                      <BadgeGroup>
-                        {newItemSet.has(it.id) && !isRead && (
-                          <Badge variant="new">{t("category.newContent")}</Badge>
-                        )}
-                        <Badge variant="type" type={it.type}>
-                          {translateType(lang, it.type)}
-                        </Badge>
-                      </BadgeGroup>
-                      {it.duration && (
-                        <span className="text-xs text-muted-foreground truncate min-w-0">
-                          {translateDuration(lang, withActionWord(it.duration, it.type))}
-                        </span>
+                    <BadgeGroup className="shrink-0">
+                      {newItemSet.has(it.id) && !isRead && (
+                        <Badge variant="new">{t("category.newContent")}</Badge>
                       )}
-                    </div>
+                      <Badge variant="type" type={it.type}>
+                        {translateType(lang, it.type)}
+                      </Badge>
+                    </BadgeGroup>
+                    {it.duration && (
+                      <span className="text-xs text-muted-foreground truncate min-w-0">
+                        {translateDuration(lang, withActionWord(it.duration, it.type))}
+                      </span>
+                    )}
 
                     {!isAdmin && (() => {
                       const labels = readStatusLabels(t, it);
@@ -2114,7 +2110,7 @@ function CategoryProgressSection({
                       }
 
                       return (
-                        <div className="ml-auto flex flex-col items-end gap-1 flex-shrink-0 self-start">
+                        <div className="ml-auto flex flex-col items-end gap-1 flex-shrink-0">
                           <div className="flex items-center gap-1.5">
                             {myRating !== null && (
                               <span className={`inline-flex items-center justify-center rounded-[4px] border px-2 py-1.5 ${
