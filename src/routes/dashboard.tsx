@@ -46,7 +46,7 @@ import {
 } from "@/lib/qa-test-plan";
 
 import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
-import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight, ClipboardCheck, Plus, Trash2, CheckCircle, XCircle, MinusCircle, SkipForward, ChevronRight } from "lucide-react";
+import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight, ClipboardCheck, Plus, Trash2, CheckCircle, XCircle, MinusCircle, SkipForward, ChevronRight, AlertCircle, ChevronUp, Minus } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import type { Category } from "@/lib/categories";
@@ -1516,12 +1516,21 @@ function TestingTab() {
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2 mb-1">
                               <span className="text-xs font-mono text-muted-foreground">{test.id}</span>
-                              <span className={`text-[10px] font-semibold uppercase tracking-wide border rounded-md px-1.5 py-0.5 ${
-                                test.priority === "critical" ? "text-red-600 bg-red-50 border-red-200" :
-                                test.priority === "high"     ? "text-orange-600 bg-orange-50 border-orange-200" :
-                                test.priority === "medium"   ? "text-yellow-600 bg-yellow-50 border-yellow-200" :
-                                                               "text-green-600 bg-green-50 border-green-200"
-                              }`}>{test.priority}</span>
+                              {(() => {
+                                const priorityConfig = {
+                                  critical: { icon: AlertCircle, label: "Critical", cls: "text-red-600 bg-red-50 border-red-200" },
+                                  high:     { icon: ChevronUp,   label: "High",     cls: "text-orange-600 bg-orange-50 border-orange-200" },
+                                  medium:   { icon: Minus,        label: "Medium",   cls: "text-yellow-600 bg-yellow-50 border-yellow-200" },
+                                  low:      { icon: ChevronDown,  label: "Low",      cls: "text-green-600 bg-green-50 border-green-200" },
+                                }[test.priority];
+                                const PIcon = priorityConfig.icon;
+                                return (
+                                  <span className={`inline-flex items-center leading-none gap-1 rounded-[4px] border px-2 py-0.5 text-xs font-medium flex-shrink-0 ${priorityConfig.cls}`}>
+                                    <PIcon className="h-3 w-3" />
+                                    {priorityConfig.label}
+                                  </span>
+                                );
+                              })()}
                             </div>
                             <p className="text-sm font-medium mb-1">{test.title}</p>
                             <p className="text-xs text-muted-foreground leading-relaxed">{test.description}</p>
