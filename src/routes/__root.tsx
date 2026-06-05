@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
+import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { AuthCheckingProvider } from "@/lib/auth-checking-context";
 import { installGlobalErrorReporter, reportError } from "@/lib/client-error-reporter";
 import appCss from "../styles.css?url";
@@ -136,6 +137,7 @@ function RootComponent() {
         <ConfirmDialogProvider>
           <Outlet />
           <Toaster />
+          <RoleSwitcher />
         </ConfirmDialogProvider>
       </I18nProvider>
       </AuthCheckingProvider>

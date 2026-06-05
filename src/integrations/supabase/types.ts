@@ -766,36 +766,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ip_passkey_attempts: {
-        Row: {
-          blocked_at: string | null
-          created_at: string
-          failed_count: number
-          id: string
-          ip_address: string
-          last_attempt_at: string
-          updated_at: string
-        }
-        Insert: {
-          blocked_at?: string | null
-          created_at?: string
-          failed_count?: number
-          id?: string
-          ip_address: string
-          last_attempt_at?: string
-          updated_at?: string
-        }
-        Update: {
-          blocked_at?: string | null
-          created_at?: string
-          failed_count?: number
-          id?: string
-          ip_address?: string
-          last_attempt_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       password_reset_attempts: {
         Row: {
           created_at: string
@@ -1249,6 +1219,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      reassign_content_type: { Args: { old_type: string }; Returns: number }
       refresh_analytics_stats: { Args: never; Returns: undefined }
       refresh_nightly: { Args: never; Returns: undefined }
       username_exists: { Args: { _username: string }; Returns: boolean }

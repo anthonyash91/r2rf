@@ -51,7 +51,26 @@ Tester accounts are dedicated QA accounts. Rather than seeing the regular user d
 - Not included in engagement tier rankings
 - Not included in time totals
 
-Testers are marked with `is_synthetic = true` in the database and have the `tester` role in `user_roles` — both signals are used for exclusion throughout the system.
+Testers are marked with `is_synthetic = true` in the database and carry all five roles (`tester`, `user`, `admin`, `contributor`, `facilityUser`) in `user_roles`. The `is_synthetic` flag ensures they are excluded from all analytics regardless of which roles are active.
+
+**Role Switcher:**
+
+A floating **Role Switcher** (flask icon, bottom-left of every page) is visible only to tester accounts. It lets the tester simulate any role without creating additional accounts:
+
+| Simulated role | What the tester sees |
+|---|---|
+| Regular User | Normal user dashboard, no admin access |
+| Admin | Full admin panel |
+| Contributor | Content editing admin pages only |
+| Facility User | Analytics and user management scoped to CPC Sales facility |
+
+Switching role updates the UI immediately and navigates to the appropriate landing page. The selected role is persisted in `localStorage` so it survives page refreshes. The tester always remains excluded from analytics regardless of the simulated role.
+
+New tester accounts are automatically assigned to the **CPC Sales** facility (`S003007001`) so the Facility User simulation has real data to display. Existing tester accounts can be upgraded to the full role set via the **Upgrade to full role set** button (wrench icon) on the Admin → Users page.
+
+**Engagement debug panel:**
+
+While viewing content as a tester, a debug overlay (top-right corner) shows live engagement tracking data: idle timer countdown, hook active state, session seconds accumulated, base seconds from DB, total that will be saved, and media position for video/audio. This panel is only visible to tester accounts.
 
 **QA Testing interface:**
 
@@ -68,7 +87,13 @@ When a tester signs in they see the **QA Testing** page — a full interactive v
 - **Complete / Reopen** — mark a run complete to lock it read-only; reopen to continue editing
 - Security question setup is not required for tester accounts
 
-**Admin panel access:** None. Tester results are visible to admins via `/admin/test-results`.
+**Admin panel access:** Via Role Switcher only. Tester results are visible to admins via `/admin/test-results`.
+
+**"Are you still here?" idle prompt:**
+
+For static content items (articles, worksheets, PDFs, guides, links — not video or audio), the session timer stops after 90 seconds of no interaction (no scrolling, clicking, or typing). A centered modal appears over the content with a 20-second countdown asking "Are you still here?" Tapping **Yes, I'm still here** resets the timer and resumes tracking. If ignored, the modal dismisses and the timer stays paused until the next real interaction.
+
+After each confirmation the idle threshold progressively extends — 90 seconds → 3 minutes → 5 minutes (capped) — so engaged passive readers are interrupted less frequently over time. Video and audio items are unaffected; their time is tracked via media playback position regardless of interaction.
 
 ---
 

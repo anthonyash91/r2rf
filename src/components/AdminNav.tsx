@@ -195,7 +195,7 @@ export function AdminNav() {
         </ul>
 
         {/* Visible row — renders only the links that fit; overflow links go into the More dropdown */}
-        <ul className="flex w-full items-center justify-center gap-1 rounded-lg bg-muted/40 p-2 text-muted-foreground">
+        <ul className="flex w-full items-center justify-center gap-1 rounded-lg border border-border bg-muted/40 p-2 text-muted-foreground">
           {primary.map((l) => {
             const active = isLinkActive(l, pathname);
             const Icon = l.icon;

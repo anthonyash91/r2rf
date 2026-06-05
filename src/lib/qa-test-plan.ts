@@ -35,6 +35,8 @@ export const QA_SECTIONS: QASection[] = [
   { num: 18, title: "Performance & Stability" },
   { num: 19, title: "QA Testing Interface (Tester Dashboard)" },
   { num: 20, title: "Admin Test Results Page" },
+  { num: 21, title: "Tester Role Switcher" },
+  { num: 22, title: "Idle Detection & Are You Still Here Prompt" },
 ];
 
 export const QA_TESTS: QATest[] = [
@@ -633,6 +635,38 @@ export const QA_TESTS: QATest[] = [
     description: "If you have two tester accounts, create runs on both. Navigate to the admin Test Results page.\n\n✅ Pass: Runs from both testers appear in the list, each showing the correct tester username. There is no filtering by tester — admins see all runs from all testers." },
   { id: "20.12", sectionNum: 20, priority: "medium", title: "Progress bar reflects actioned test count",
     description: "On a run where 50 tests have been actioned (any status except Untested), check the progress bar in the admin run list.\n\n✅ Pass: The progress bar is approximately 20% filled (50/248). The text next to it shows '50/248.' Opening the detail view and the overall summary ring confirm the same count." },
+
+  // ── Section 21 — Tester Role Switcher ────────────────────────────────────
+  { id: "21.1", sectionNum: 21, priority: "critical", title: "Role Switcher visible only to testers",
+    description: "Sign in as a tester account. Verify a floating button with a flask icon appears in the bottom-left corner on every page. Sign in as a regular user, admin, or contributor and verify the switcher does NOT appear.\n\n✅ Pass: Role Switcher is visible for tester accounts on all pages and hidden for all other account types." },
+  { id: "21.2", sectionNum: 21, priority: "high", title: "Switching to Regular User role",
+    description: "As a tester, select 'Regular User' in the Role Switcher. Verify the page navigates to /dashboard and shows the standard user dashboard (progress ring, stat cards, category accordion). Verify no admin navigation is shown.\n\n✅ Pass: Regular user dashboard is shown. Admin panel links are not visible. Tester analytics remain excluded." },
+  { id: "21.3", sectionNum: 21, priority: "high", title: "Switching to Admin role",
+    description: "As a tester, select 'Admin' in the Role Switcher. Verify the page navigates to /admin and the full admin navigation is shown including Categories, Users, Analytics, Facilities, Icons & Badges, Audit Log, Errors, IP Allowlist, Seed, and Certificate.\n\n✅ Pass: Full admin panel is shown with all admin-only pages accessible." },
+  { id: "21.4", sectionNum: 21, priority: "high", title: "Switching to Contributor role",
+    description: "As a tester, select 'Contributor' in the Role Switcher. Verify the page navigates to /admin and only content-editing pages are shown (Categories, Privacy, Terms). Verify analytics, users, and other admin-only pages are not accessible.\n\n✅ Pass: Admin panel shows only contributor-accessible pages." },
+  { id: "21.5", sectionNum: 21, priority: "high", title: "Switching to Facility User role",
+    description: "As a tester, select 'Facility User' in the Role Switcher. Verify the page navigates to /admin/users and shows data scoped to the CPC Sales facility. Verify admin-only pages (Categories, Icons & Badges, etc.) are not accessible.\n\n✅ Pass: Facility-user-scoped admin panel is shown. Data is limited to CPC Sales." },
+  { id: "21.6", sectionNum: 21, priority: "medium", title: "Simulated role persists across page refreshes",
+    description: "Switch to any role other than Regular User. Hard-refresh the page (Cmd+Shift+R). Verify the same role is still active after the reload.\n\n✅ Pass: The simulated role is preserved in localStorage and restored correctly after a full page reload." },
+  { id: "21.7", sectionNum: 21, priority: "high", title: "Upgrade to full role set button",
+    description: "Sign in as admin. Navigate to Admin → Users → Test Users section. For an existing tester account, click the wrench icon (Upgrade to full role set) and confirm the dialog. Verify a success toast appears. Sign in as that tester and verify the Role Switcher works for all four role simulations.\n\n✅ Pass: Upgrade grants all five roles and sets the facility to CPC Sales. Role Switcher functions correctly for all simulations." },
+  { id: "21.8", sectionNum: 21, priority: "critical", title: "Tester analytics exclusion holds across all simulated roles",
+    description: "As a tester, simulate Admin role. Complete several content items. Check Admin → Analytics Overall tab. Verify the tester's completions do not appear in any totals. Repeat for Facility User simulation.\n\n✅ Pass: is_synthetic = true excludes all tester activity from analytics regardless of simulated role." },
+
+  // ── Section 22 — Idle Detection & "Are You Still Here?" Prompt ───────────
+  { id: "22.1", sectionNum: 22, priority: "high", title: "Idle prompt appears for static content",
+    description: "Sign in as a regular user. Open a PDF, article, or worksheet item. Do not scroll, click, or type for 90+ seconds. Verify a centered modal appears over the content with a dimmed background, the text 'Are you still here?', a 20-second countdown, and a 'Yes, I'm still here' button.\n\n✅ Pass: Modal appears after ~90 seconds of inactivity on static content. Background is dimmed. Countdown is visible." },
+  { id: "22.2", sectionNum: 22, priority: "high", title: "Confirming presence resumes the timer",
+    description: "When the idle modal appears, tap 'Yes, I'm still here' before the countdown reaches zero. Verify the modal dismisses, the content stays open, and the session timer resumes.\n\n✅ Pass: Modal dismisses on confirmation. Content item dialog remains open. Timer resumes counting." },
+  { id: "22.3", sectionNum: 22, priority: "high", title: "Ignoring the prompt pauses time tracking",
+    description: "When the idle prompt appears, do nothing for 20 seconds. Verify the modal auto-dismisses and the session timer remains paused until the next real scroll or click.\n\n✅ Pass: Modal auto-dismisses after 20 seconds. No session time is recorded during the idle window." },
+  { id: "22.4", sectionNum: 22, priority: "medium", title: "Progressive idle threshold extends after each confirmation",
+    description: "Open a static content item. Go idle to trigger the first prompt (90s). Confirm presence. Go idle again and verify the second prompt appears after ~3 minutes. Confirm again. Verify the third prompt appears after ~5 minutes and all subsequent prompts remain at 5 minutes.\n\n✅ Pass: Idle threshold progresses 90s → 3min → 5min (capped at 5 minutes)." },
+  { id: "22.5", sectionNum: 22, priority: "medium", title: "Video and audio items do not show the idle prompt",
+    description: "Open a video or audio content item. Leave it playing without interacting for 90+ seconds. Verify no idle prompt appears and media playback continues normally.\n\n✅ Pass: Idle prompt is not shown for video or audio items. Media position tracking is unaffected." },
+  { id: "22.6", sectionNum: 22, priority: "medium", title: "Engagement debug panel visible to testers only",
+    description: "Sign in as a tester and simulate Regular User role. Open a PDF item. Verify the debug overlay appears in the top-right corner showing idle countdown, hook active status, session seconds, base seconds, total will save, and item type. Verify the panel does NOT appear for non-tester accounts.\n\n✅ Pass: Debug panel shows real-time engagement data for tester accounts only." },
 ];
 
 // Helper: tests grouped by section

@@ -42,7 +42,7 @@
 }
 
 :root {
-  --radius: 0.75rem;
+  --radius: 0.5rem;
   /* Emerald Prestige */
   --background: oklch(0.985 0.012 95);            /* warm cream #f5f0e0 */
   --foreground: oklch(0.22 0.04 165);             /* deep emerald ink */

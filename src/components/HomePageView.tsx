@@ -7,7 +7,7 @@ import type { Category } from "@/lib/categories";
 import { useI18n, pickLang, translateType, type Language } from "@/lib/i18n";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { useAuth } from "@/hooks/use-auth";
-import { Pencil, Search, Bookmark, ArrowRight } from "lucide-react";
+import { Search, Bookmark, ArrowRight } from "lucide-react";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
@@ -179,7 +179,7 @@ function SearchResults({
                             type="button"
                             aria-label={isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(item.id); }}
-                            className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background h-[22.5px] px-1 transition-colors hover:bg-muted"
+                            className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 transition-colors hover:bg-muted"
                           >
                             <Bookmark
                               className={`h-3.5 w-3.5 transition-colors ${isBookmarked ? "fill-[var(--color-accent)] text-[var(--color-accent)]" : "text-muted-foreground"}`}
@@ -193,7 +193,7 @@ function SearchResults({
                     </TooltipProvider>
                   )}
                   {item.type && (
-                    <Badge variant="type" type={item.type}>
+                    <Badge variant="type" type={item.type} className="rounded-[8px]">
                       {translateType(lang, item.type, badgeStyles.typeNamesEs)}
                     </Badge>
                   )}
@@ -258,7 +258,7 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
               <Link
                 to="/category/$slug"
                 params={{ slug: c.slug }}
-                className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 pb-[28px] sm:pb-[36px] transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
+                className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 pb-[36px] sm:pb-[44px] transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
               >
                 {/* Arrow circle — aligned to the top of the category icon, same border color scheme */}
                 <span
@@ -276,13 +276,13 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
                     const Icon = resolveCategoryIcon(c.icon_name);
                     return (
                       <div
-                        className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl border"
+                        className="flex h-16 w-16 sm:h-18 sm:w-18 items-center justify-center rounded-xl border"
                         style={{
                           backgroundColor: `color-mix(in oklab, ${cardColor} 12%, transparent)`,
                           borderColor: `color-mix(in oklab, ${cardColor} 25%, transparent)`,
                         }}
                       >
-                        <Icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: cardColor }} strokeWidth={1.75} />
+                        <Icon className="h-7 w-7 sm:h-8 sm:w-8" style={{ color: cardColor }} strokeWidth={1.75} />
                       </div>
                     );
                   })()}
@@ -330,17 +330,6 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
                   })()}
                 </div>
               </Link>
-              {isAdmin && (
-                <Link
-                  to="/admin/category/$id"
-                  params={{ id: c.id }}
-                  title="Edit category"
-                  aria-label="Edit category"
-                  className="absolute bottom-3 right-3 z-10 inline-flex items-center justify-center rounded-md border border-input bg-background p-2 hover:bg-muted"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Link>
-              )}
             </div>
             );
           })}
@@ -529,7 +518,7 @@ export function HomePageView({
       <section className="border-b border-border/60">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-[4px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+            <div className="inline-flex items-center gap-1 rounded-[8px] border border-border bg-card px-2.5 py-[5px] text-xs font-medium text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
               {heroEyebrow}
             </div>
@@ -585,7 +574,7 @@ export function HomePageView({
         <section className="border-t border-border/60">
           <div className="mx-auto max-w-6xl px-6 py-20">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-[4px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+              <div className="inline-flex items-center gap-1 rounded-[8px] border border-border bg-card px-2.5 py-[5px] text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
                 {certEyebrow}
               </div>

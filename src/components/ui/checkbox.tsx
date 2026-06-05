@@ -11,7 +11,7 @@ const Checkbox = React.forwardRef<
   <CheckboxPrimitive.Root
     ref={ref}
     className={cn(
-      "group peer relative inline-grid place-content-center h-[18px] w-[18px] shrink-0 rounded-[5px]",
+      "group peer relative inline-grid place-content-center h-[18px] w-[18px] shrink-0 rounded-[8px]",
       "border-2 border-border bg-background transition-all duration-150 cursor-pointer",
       "hover:border-[var(--color-accent)] hover:bg-[color-mix(in_oklab,var(--color-accent)_8%,transparent)]",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",

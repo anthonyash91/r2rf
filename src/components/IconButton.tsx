@@ -13,7 +13,7 @@ const VARIANT_CLASSES: Record<Variant, string> = {
   default:
     "border-input bg-background hover:bg-muted text-foreground",
   destructive:
-    "border-destructive/30 text-destructive hover:bg-destructive/10",
+    "text-[oklch(0.55_0.15_25)] border-[color-mix(in_oklab,oklch(0.55_0.15_25)_25%,transparent)] bg-[color-mix(in_oklab,oklch(0.55_0.15_25)_12%,transparent)] hover:bg-[color-mix(in_oklab,oklch(0.55_0.15_25)_20%,transparent)]",
 };
 
 const BASE_CLASSES =

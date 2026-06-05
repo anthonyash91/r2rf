@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -9,8 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
  */
 const sessionProgress = new Map<string, number>();
 
-/** How long without activity before the timer stops counting. */
-const IDLE_MS = 90_000;
+/** Default idle threshold — overridden per-call via the idleMs param. */
+const DEFAULT_IDLE_MS = 90_000;
 /** Heartbeat interval — how often we check for activity. */
 const TICK_MS = 5_000;
 /** Seconds added per tick (must match TICK_MS). */
@@ -53,6 +53,10 @@ type Params = {
   pdfEstimatedSeconds?: number;
   /** Called when 95%+ of the media/PDF threshold has been reached. */
   onAutoMarkRead?: () => void;
+  /** Called once when the idle threshold is crossed (for static content only). */
+  onIdle?: () => void;
+  /** How many ms of inactivity before idle fires. Defaults to DEFAULT_IDLE_MS. */
+  idleMs?: number;
 };
 
 /**
@@ -72,11 +76,20 @@ export function useContentEngagement({
   audioEl,
   pdfEstimatedSeconds,
   onAutoMarkRead,
-}: Params): { mediaProgressPct: number | null } {
+  onIdle,
+  idleMs = DEFAULT_IDLE_MS,
+}: Params): { mediaProgressPct: number | null; resetIdle: () => void; _debug: { baseSeconds: React.RefObject<number>; accSeconds: React.RefObject<number>; furthestSeconds: React.RefObject<number>; durationSeconds: React.RefObject<number>; isIdle: React.RefObject<boolean>; idleMs: React.RefObject<number>; } } {
   // Timer state — all in refs so they never cause re-renders
   const lastActivityRef = useRef(Date.now());
   const accSecondsRef = useRef(0);
   const baseSecondsRef = useRef(0);
+  // Tracks whether onIdle has already fired for the current idle period so we
+  // don't spam the callback every tick while the user remains idle.
+  const firedIdleRef = useRef(false);
+  const onIdleRef = useRef(onIdle);
+  useEffect(() => { onIdleRef.current = onIdle; }, [onIdle]);
+  const idleMsRef = useRef(idleMs);
+  useEffect(() => { idleMsRef.current = idleMs; }, [idleMs]);
 
   // PDF: store estimated seconds in a ref so the timer effect stays stable
   const pdfEstimatedSecondsRef = useRef(pdfEstimatedSeconds ?? 0);
@@ -145,12 +158,24 @@ export function useContentEngagement({
     return () => events.forEach((e) => document.removeEventListener(e, refresh));
   }, [isActive]);
 
+  // Exposed so the parent can reset the idle state when the user confirms
+  // they're still present via the "Are you still here?" modal.
+  const resetIdle = useCallback(() => {
+    lastActivityRef.current = Date.now();
+    firedIdleRef.current = false;
+  }, []);
+
   // Heartbeat timer
   useEffect(() => {
     if (!isActive || !userId || !contentItemId) return;
     const interval = setInterval(() => {
-      const idle = Date.now() - lastActivityRef.current > IDLE_MS;
+      const idle = Date.now() - lastActivityRef.current > idleMsRef.current;
+      if (idle && !firedIdleRef.current) {
+        firedIdleRef.current = true;
+        onIdleRef.current?.();
+      }
       if (!idle) {
+        firedIdleRef.current = false;
         accSecondsRef.current += TICK_S;
         // PDF auto-mark: fire when cumulative active time reaches 95% of estimate
         const pdfThreshold = pdfEstimatedSecondsRef.current;
@@ -280,5 +305,17 @@ export function useContentEngagement({
       ? Math.min(100, Math.round((furthestRef.current / durationRef.current) * 100))
       : null;
 
-  return { mediaProgressPct };
+  return {
+    mediaProgressPct,
+    resetIdle,
+    // Debug-only — remove before ship
+    _debug: {
+      baseSeconds: baseSecondsRef,
+      accSeconds: accSecondsRef,
+      furthestSeconds: furthestRef,
+      durationSeconds: durationRef,
+      isIdle: firedIdleRef,
+      idleMs: idleMsRef,
+    },
+  };
 }

@@ -123,10 +123,10 @@ type BadgeProps = {
 };
 
 const BASE =
-  "inline-flex items-center leading-none rounded-[4px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0";
+  "inline-flex items-center leading-none rounded-[8px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0";
 
 const BASE_SM =
-  "inline-flex items-center leading-none rounded-[4px] border px-2 py-0.5 text-xs font-medium flex-shrink-0";
+  "inline-flex items-center leading-none rounded-[8px] border px-2 py-0.5 text-xs font-medium flex-shrink-0";
 
 const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   new: Sparkles,

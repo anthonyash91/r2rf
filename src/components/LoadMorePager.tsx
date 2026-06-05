@@ -28,6 +28,7 @@ export function Pager({
   onPage,
   itemLabel = "item",
   itemLabelPlural,
+  className = "",
 }: {
   page: number;
   total: number;
@@ -35,13 +36,14 @@ export function Pager({
   onPage: (page: number) => void;
   itemLabel?: string;
   itemLabelPlural?: string;
+  className?: string;
 }) {
   if (total <= pageSize) return null;
   const plural = itemLabelPlural ?? `${itemLabel}s`;
   const noun = total === 1 ? itemLabel : plural;
   const totalPages = Math.ceil(total / pageSize);
   return (
-    <div className="mt-3 flex items-center justify-between gap-3 flex-wrap text-sm">
+    <div className={`mt-8 flex items-center justify-between gap-3 flex-wrap text-sm ${className}`}>
       <span className="text-muted-foreground">
         Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, total)} of {total} {noun}
       </span>

@@ -90,7 +90,7 @@ const TYPE_LABELS: Record<KnownTypeKey, string> = {
   link: "Link",
 };
 
-const REGEN_BTN_CLASS = "px-3 py-2 text-xs shrink-0 flex-1 @[26rem]:flex-initial !shadow-none";
+const REGEN_BTN_CLASS = "cursor-pointer select-none inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] border-border bg-background text-foreground hover:bg-muted transition-colors shrink-0 flex-1 @[26rem]:flex-initial";
 const REGEN_ALL_BTN_CLASS = "px-4 py-2 text-sm w-full sm:w-auto !shadow-none";
 
 
@@ -493,7 +493,7 @@ function AdminIconsBadgesPage() {
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[...BADGE_VARIANTS].sort((a, b) => a.localeCompare(b)).map((v) => {
             const idx = draft.variants[v] ?? 0;
-            const palette = PALETTES[idx];
+            const palette = PALETTES[((idx % PALETTES.length) + PALETTES.length) % PALETTES.length];
             const dup = isDup(idx);
             return (
               <li
@@ -503,22 +503,23 @@ function AdminIconsBadgesPage() {
                 <div className="flex items-center gap-3 min-w-0">
                   <BadgePreview variant={v} draft={draft} />
                   <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">{VARIANT_LABELS[v]}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {palette.label}
-                      {dup && <span className="ml-1 text-amber-500">• duplicate</span>}
+                    <div className="text-sm font-medium truncate">
+                      {VARIANT_LABELS[v]}
+                      <span className="mx-1.5 text-muted-foreground">·</span>
+                      <span className="font-normal text-muted-foreground">{palette.label}</span>
+                      {dup && <span className="ml-1.5 text-amber-500">· duplicate</span>}
                     </div>
                   </div>
                 </div>
                 <div className="flex w-full @[26rem]:w-auto items-center gap-2">
-                  <Button variant="outline" onClick={() => cycleVariant(v)} className={REGEN_BTN_CLASS}>
-                    <RefreshCw className="h-4 w-4" />
+                  <span onClick={() => cycleVariant(v)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-3.5 w-3.5" />
                     Color
-                  </Button>
-                  <Button variant="outline" onClick={() => cycleVariantIcon(v)} className={REGEN_BTN_CLASS}>
-                    <RefreshCw className="h-4 w-4" />
+                  </span>
+                  <span onClick={() => cycleVariantIcon(v)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-3.5 w-3.5" />
                     Icon
-                  </Button>
+                  </span>
                 </div>
               </li>
             );
@@ -546,7 +547,7 @@ function AdminIconsBadgesPage() {
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           {allTypes.map((t) => {
             const idx = (draft.types as Record<string, number>)[t] ?? indexForType(t, draft);
-            const palette = PALETTES[idx];
+            const palette = PALETTES[((idx % PALETTES.length) + PALETTES.length) % PALETTES.length];
             const overrideIconName = draft.typeIcons?.[t];
             const Icon =
               (overrideIconName && ICON_REGISTRY[overrideIconName]) || iconForType(t);
@@ -559,10 +560,10 @@ function AdminIconsBadgesPage() {
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-xs font-medium"
+                    className="inline-flex items-center gap-1 rounded-[8px] border px-2.5 py-[5px] text-xs font-medium"
                     style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
                   >
-                    <Icon className="h-3 w-3" strokeWidth={2} />
+                    <Icon className="h-3.5 w-3.5" strokeWidth={2} />
                     <span className="capitalize">{(TYPE_LABELS as Record<string, string>)[t] ?? t}</span>
                   </span>
                   <div className="min-w-0">
@@ -573,37 +574,26 @@ function AdminIconsBadgesPage() {
                   </div>
                 </div>
                 <div className="flex w-full @[26rem]:w-auto items-center gap-2">
-                  <div className="relative w-28">
-                    <input
-                      type="text"
-                      value={(draft.typeNamesEs as Record<string, string> | undefined)?.[t] ?? ""}
-                      onChange={(e) => setDraft((prev) => ({
-                        ...prev,
-                        typeNamesEs: { ...(prev.typeNamesEs ?? {}), [t]: e.target.value },
-                      }))}
-                      placeholder="Spanish name…"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 pr-7 text-xs"
-                    />
-                    <button
-                      type="button"
-                      title="AI translate"
-                      disabled={translatingTypes.has(t)}
-                      onClick={() => translateTypeName(t)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
-                    >
-                      {translatingTypes.has(t)
-                        ? <Loader2 className="h-3 w-3 animate-spin" />
-                        : <Languages className="h-3 w-3" />}
-                    </button>
-                  </div>
-                  <Button variant="outline" onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
-                    <RefreshCw className="h-4 w-4" />
+                  <span
+                    title="AI translate to Spanish"
+                    onClick={() => { if (!translatingTypes.has(t)) translateTypeName(t); }}
+                    className={`cursor-pointer select-none inline-flex items-center justify-between gap-1 w-28 rounded-[8px] border border-input bg-background px-2.5 py-[5px] text-xs font-medium transition-colors hover:bg-muted ${translatingTypes.has(t) ? "opacity-40 pointer-events-none" : ""}`}
+                  >
+                    <span className={`truncate ${(draft.typeNamesEs as Record<string, string> | undefined)?.[t] ? "text-foreground" : "text-muted-foreground"}`}>
+                      {(draft.typeNamesEs as Record<string, string> | undefined)?.[t] || "Translate"}
+                    </span>
+                    {translatingTypes.has(t)
+                      ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                      : <Languages className="h-3.5 w-3.5 shrink-0" />}
+                  </span>
+                  <span onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-3.5 w-3.5" />
                     Color
-                  </Button>
-                  <Button variant="outline" onClick={() => cycleTypeIcon(t)} className={REGEN_BTN_CLASS}>
-                    <RefreshCw className="h-4 w-4" />
+                  </span>
+                  <span onClick={() => cycleTypeIcon(t)} className={REGEN_BTN_CLASS}>
+                    <RefreshCw className="h-3.5 w-3.5" />
                     Icon
-                  </Button>
+                  </span>
                 </div>
               </li>
             );
@@ -637,7 +627,7 @@ function AdminIconsBadgesPage() {
               const color = catDraft[c.id] ?? c.icon_color ?? null;
               const iconName = catIconDraft[c.id] ?? c.icon_name ?? null;
               const idx = paletteIndexOfColor(color);
-              const label = idx >= 0 ? PALETTES[idx].label : "Custom";
+              const label = idx >= 0 && idx < PALETTES.length ? PALETTES[idx].label : "Custom";
               const dup = idx >= 0 && isDup(idx);
               return (
                 <li
@@ -655,14 +645,14 @@ function AdminIconsBadgesPage() {
                     </div>
                   </div>
                   <div className="flex w-full @[26rem]:w-auto items-center gap-2">
-                    <Button variant="outline" onClick={() => cycleCategory(c.id)} className={REGEN_BTN_CLASS}>
-                      <RefreshCw className="h-4 w-4" />
+                    <span onClick={() => cycleCategory(c.id)} className={REGEN_BTN_CLASS}>
+                      <RefreshCw className="h-3.5 w-3.5" />
                       Color
-                    </Button>
-                    <Button variant="outline" onClick={() => cycleCategoryIconFor(c.id, c.name)} className={REGEN_BTN_CLASS}>
-                      <RefreshCw className="h-4 w-4" />
+                    </span>
+                    <span onClick={() => cycleCategoryIconFor(c.id, c.name)} className={REGEN_BTN_CLASS}>
+                      <RefreshCw className="h-3.5 w-3.5" />
                       Icon
-                    </Button>
+                    </span>
                   </div>
                 </li>
               );
@@ -687,7 +677,7 @@ function AdminIconsBadgesPage() {
               return (
                 <li
                   key={label}
-                  className={`rounded-md border px-2 py-1.5 text-xs flex items-center gap-2 ${used ? "" : "opacity-70"}`}
+                  className={`rounded-[8px] border px-2.5 py-[5px] text-xs flex items-center gap-2 ${used ? "" : "opacity-70"}`}
                   style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
                   title={used ? `Used ${count}×` : "Unused"}
                 >
@@ -734,10 +724,10 @@ function BadgePreview({ variant, draft }: { variant: BadgeVariantKey; draft: Bad
   const Icon = (overrideName && ICON_REGISTRY[overrideName]) || VARIANT_ICONS[variant];
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-xs font-medium"
+      className="inline-flex items-center gap-1 rounded-[8px] border px-2.5 py-[5px] text-xs font-medium"
       style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
     >
-      <Icon className="h-3 w-3" strokeWidth={2} />
+      <Icon className="h-3.5 w-3.5" strokeWidth={2} />
       {VARIANT_LABELS[variant]}
     </span>
   );

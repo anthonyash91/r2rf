@@ -38,14 +38,14 @@ const ACTION_OPTIONS: { value: ActionType; label: string }[] = [
   { value: "user.security_answers_change", label: "Security answers changed" },
 ];
 
-const ACTION_META: Record<ActionType, { label: string; icon: typeof UserPlus; tone: string }> = {
-  "user.create": { label: "User created", icon: UserPlus, tone: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40" },
-  "user.delete": { label: "User deleted", icon: Trash2, tone: "text-red-600 bg-red-50 dark:bg-red-950/40" },
-  "user.password_reset": { label: "Password reset", icon: KeyRound, tone: "text-amber-700 bg-amber-50 dark:bg-amber-950/40" },
-  "user.role_grant": { label: "Role granted", icon: ShieldCheck, tone: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40" },
-  "user.role_revoke": { label: "Role revoked", icon: ShieldOff, tone: "text-red-600 bg-red-50 dark:bg-red-950/40" },
-  "user.security_answers_clear": { label: "Security answers cleared", icon: UserMinus, tone: "text-amber-700 bg-amber-50 dark:bg-amber-950/40" },
-  "user.security_answers_change": { label: "Security answers changed", icon: HelpCircle, tone: "text-muted-foreground bg-muted" },
+const ACTION_META: Record<ActionType, { label: string; icon: typeof UserPlus; color: string }> = {
+  "user.create":                  { label: "User created",              icon: UserPlus,    color: "oklch(0.52 0.12 165)" },
+  "user.delete":                  { label: "User deleted",              icon: Trash2,      color: "oklch(0.55 0.15 25)"  },
+  "user.password_reset":          { label: "Password reset",            icon: KeyRound,    color: "oklch(0.60 0.12 80)"  },
+  "user.role_grant":              { label: "Role granted",              icon: ShieldCheck, color: "oklch(0.52 0.12 165)" },
+  "user.role_revoke":             { label: "Role revoked",              icon: ShieldOff,   color: "oklch(0.55 0.15 25)"  },
+  "user.security_answers_clear":  { label: "Security answers cleared",  icon: UserMinus,   color: "oklch(0.60 0.12 80)"  },
+  "user.security_answers_change": { label: "Security answers changed",  icon: HelpCircle,  color: "oklch(0.52 0.04 250)" },
 };
 
 function formatDate(s: string) {
@@ -219,7 +219,7 @@ function AdminAuditLogPage() {
                 const meta = ACTION_META[e.action as ActionType] ?? {
                   label: e.action,
                   icon: HelpCircle,
-                  tone: "text-muted-foreground bg-muted",
+                  color: "oklch(0.52 0.04 250)",
                 };
                 const Icon = meta.icon;
                 const detailText = describeDetails(e.action as ActionType, e.details);
@@ -227,8 +227,15 @@ function AdminAuditLogPage() {
                   <li key={e.id} className="p-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex items-start gap-3 min-w-0">
-                        <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${meta.tone}`}>
-                          <Icon className="h-4 w-4" />
+                        <span
+                          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
+                          style={{
+                            color: meta.color,
+                            backgroundColor: `color-mix(in oklab, ${meta.color} 12%, transparent)`,
+                            borderColor: `color-mix(in oklab, ${meta.color} 25%, transparent)`,
+                          }}
+                        >
+                          <Icon className="h-5 w-5" />
                         </span>
                         <div className="min-w-0 space-y-1">
                           <div className="text-sm">

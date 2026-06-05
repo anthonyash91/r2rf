@@ -1725,12 +1725,12 @@ function UserCategorySection({
                 </div>
               </div>
               <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-                <span className="inline-flex items-center gap-1.5 border border-input bg-background px-2.5 py-1.5 text-xs font-medium rounded-[4px] tabular-nums">
+                <span className="inline-flex items-center gap-1.5 border border-input bg-background px-2.5 py-1.5 text-xs font-medium rounded-[8px] tabular-nums">
                   <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
                   {g.read} of {g.total} read
                 </span>
                 {catTimeSeconds > 0 && (
-                  <span className="inline-flex items-center gap-1.5 border border-input bg-background px-2.5 py-1.5 text-xs font-medium rounded-[4px] tabular-nums">
+                  <span className="inline-flex items-center gap-1.5 border border-input bg-background px-2.5 py-1.5 text-xs font-medium rounded-[8px] tabular-nums">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                     {formatTimeSpent(catTimeSeconds)}
                   </span>
@@ -1763,7 +1763,7 @@ function UserCategorySection({
                       {item.rating != null && (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="inline-flex items-center rounded-[4px] border border-input overflow-hidden cursor-default">
+                            <span className="inline-flex items-center rounded-[8px] border border-input overflow-hidden cursor-default">
                               <span className={`inline-flex items-center justify-center px-2 py-1.5 ${item.rating === 1 ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-background text-muted-foreground"}`}>
                                 <ThumbsUp className={`h-3.5 w-3.5 ${item.rating === 1 ? "fill-[var(--color-accent)]" : ""}`} />
                               </span>
@@ -1781,7 +1781,7 @@ function UserCategorySection({
                       {item.bookmarked && (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="inline-flex items-center justify-center rounded-[4px] border border-input bg-background px-2 py-1.5 cursor-default">
+                            <span className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 cursor-default">
                               <Bookmark className="h-3.5 w-3.5 fill-[var(--color-accent)] text-[var(--color-accent)]" />
                             </span>
                           </TooltipTrigger>
@@ -1793,7 +1793,7 @@ function UserCategorySection({
                       {(() => {
                         if ((item as any).exempt_from_progress) {
                           return (
-                            <span className={`inline-flex items-center leading-none gap-1.5 rounded-[4px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ${
+                            <span className={`inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ${
                               item.read
                                 ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
                                 : "border-input bg-background text-foreground"
@@ -1814,7 +1814,7 @@ function UserCategorySection({
                             ? t("category.markedWatched").toLowerCase()
                             : t("category.markedListened").toLowerCase();
                           return (
-                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
+                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
                               <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
                               <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
                               <span className="relative">{mediaPct}% {watchedLabel}</span>
@@ -1827,7 +1827,7 @@ function UserCategorySection({
                         const pdfPct: number | null = (item as any).pdfProgressPct ?? null;
                         if (pdfPct !== null && pdfPct >= 1) {
                           return (
-                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[4px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
+                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
                               <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
                               <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
                               <span className="relative">{pdfPct}% {t("category.markedRead").toLowerCase()}</span>

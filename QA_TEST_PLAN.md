@@ -1297,6 +1297,100 @@ On a run where 50 tests have been actioned, check the progress bar in the admin 
 
 ---
 
+---
+
+## Section 21 — Tester Role Switcher
+
+### 21.1 — Role Switcher visible only to testers
+🔴 **Critical**
+Sign in as a tester account. Verify a floating button labeled with a flask icon and the current role appears in the bottom-left corner on every page (main site and admin). Sign in as a regular user, admin, or contributor — verify the switcher does NOT appear.
+
+✅ Pass: Role Switcher is visible for tester accounts on all pages. It does not appear for any other account type.
+
+### 21.2 — Switching to Regular User role
+🟠 **High**
+As a tester with the Role Switcher showing, select "Regular User." Verify the page navigates to `/dashboard` and the tester sees the standard user dashboard (progress ring, stat cards, category accordion). Verify no admin navigation is shown. Verify the tester is NOT counted in analytics (check admin Overall tab — tester completions should not appear).
+
+✅ Pass: Tester dashboard is replaced by the regular user dashboard. Admin panel links are not visible. Analytics remain unaffected.
+
+### 21.3 — Switching to Admin role
+🟠 **High**
+As a tester, select "Admin" in the Role Switcher. Verify the page navigates to `/admin` and the full admin navigation is shown (Categories, Users, Analytics, Facilities, Icons & Badges, Audit Log, Errors, IP Allowlist, Seed, Certificate). Verify admin-only actions (delete user, create facility, etc.) are accessible.
+
+✅ Pass: Full admin panel is shown with all admin-only pages accessible.
+
+### 21.4 — Switching to Contributor role
+🟠 **High**
+As a tester, select "Contributor" in the Role Switcher. Verify the page navigates to `/admin` and only content-editing pages are shown in the nav (Categories, Privacy, Terms). Verify analytics, users, and other admin-only pages are not accessible.
+
+✅ Pass: Admin panel shows only contributor-accessible pages.
+
+### 21.5 — Switching to Facility User role
+🟠 **High**
+As a tester, select "Facility User" in the Role Switcher. Verify the page navigates to `/admin/users` (facility users land on users, not categories). Verify the analytics and users pages show data scoped to the CPC Sales facility. Verify admin-only pages (Categories, Icons & Badges, etc.) are not accessible.
+
+✅ Pass: Admin panel shows only facility-user-accessible pages. Data is scoped to CPC Sales.
+
+### 21.6 — Simulated role persists across page refreshes
+🟡 **Medium**
+Switch to any role other than Regular User. Hard-refresh the page (Cmd+Shift+R). Verify the same role is still active after the reload and the appropriate view is shown.
+
+✅ Pass: The simulated role is preserved in localStorage and restored correctly after a full page reload.
+
+### 21.7 — Upgrade to full role set button
+🟠 **High**
+Sign in as admin. Navigate to Admin → Users → Test Users section. For an existing tester account that was created before the role switcher feature, click the wrench icon (Upgrade to full role set). Confirm the dialog explaining the action. Verify a success toast appears. Sign in as that tester and verify the Role Switcher now works for all four role simulations.
+
+✅ Pass: Upgrade grants all five roles and sets the facility to CPC Sales. Role Switcher functions correctly for all simulations after upgrade.
+
+### 21.8 — Tester analytics exclusion holds across all simulated roles
+🔴 **Critical**
+As a tester, simulate Admin role. Complete several content items. Check the Admin → Analytics Overall tab. Verify the tester's completions do not appear in any totals. Repeat for Facility User simulation — verify the tester's activity is not in the CPC Sales facility reports.
+
+✅ Pass: `is_synthetic = true` on the tester profile excludes all activity from analytics regardless of which role is being simulated.
+
+---
+
+## Section 22 — Idle Detection & "Are You Still Here?" Prompt
+
+### 22.1 — Idle prompt appears for static content
+🟠 **High**
+Sign in as a regular user (or tester simulating Regular User). Open a PDF, article, or worksheet item. Set it down and do not scroll, click, or type for 90+ seconds. Verify a centered modal appears over the content with a dimmed background, the text "Are you still here?", a countdown timer, and a "Yes, I'm still here" button.
+
+✅ Pass: Modal appears after ~90 seconds of inactivity on static content. Background is dimmed. Countdown from 20 seconds is visible.
+
+### 22.2 — Confirming presence resumes the timer
+🟠 **High**
+When the idle modal appears, tap "Yes, I'm still here" before the countdown reaches zero. Verify the modal dismisses and the session timer resumes (check the engagement debug panel if testing as a tester — the `this session` counter should continue incrementing).
+
+✅ Pass: Tapping the button dismisses the modal and the timer resumes. The content item dialog stays open.
+
+### 22.3 — Ignoring the prompt pauses time tracking
+🟠 **High**
+When the idle prompt appears, do nothing for 20 seconds. Verify the modal auto-dismisses. Verify the session timer remains paused until the next real scroll or click.
+
+✅ Pass: Modal auto-dismisses after 20 seconds. Timer stays paused. No session time is recorded during the idle window.
+
+### 22.4 — Progressive idle threshold extends after each confirmation
+🟡 **Medium**
+Open a static content item. Go idle to trigger the first prompt (90s). Confirm presence. Go idle again — verify the second prompt appears after ~3 minutes (not 90 seconds). Confirm again. Verify the third prompt appears after ~5 minutes. All subsequent prompts should remain at 5 minutes.
+
+✅ Pass: Idle threshold progresses 90s → 3min → 5min (capped). Each confirmation extends the next window.
+
+### 22.5 — Video and audio items do not show the idle prompt
+🟡 **Medium**
+Open a video or audio content item. Leave it playing without interacting for 90+ seconds. Verify no idle prompt appears. Verify the media playback position continues advancing and is saved correctly.
+
+✅ Pass: Idle prompt is not shown for video or audio items. Media position tracking is unaffected by the idle threshold.
+
+### 22.6 — Engagement debug panel (tester accounts only)
+🟡 **Medium**
+Sign in as a tester. Simulate Regular User role. Open a PDF item. Verify the debug overlay appears in the top-right corner showing: idle countdown, hook active status (✓ yes), idle fired indicator, base seconds, this session seconds, total will save, and item type. Verify the debug panel does NOT appear for non-tester accounts.
+
+✅ Pass: Debug panel shows real-time engagement data for tester accounts. Hidden for all other account types.
+
+---
+
 ## Regression Checklist
 
 Run this checklist after any code deployment to confirm core flows still work:
@@ -1322,3 +1416,10 @@ Run this checklist after any code deployment to confirm core flows still work:
 - [ ] Tester can attach and remove a screenshot on a failed test
 - [ ] Admin Test Results page lists all tester runs
 - [ ] Admin can open a run detail and see screenshot links
+- [ ] Role Switcher visible only for tester accounts
+- [ ] Tester simulating Admin sees full admin panel
+- [ ] Tester simulating Facility User sees CPC Sales scoped data
+- [ ] Tester analytics remain excluded in all simulated roles
+- [ ] Idle prompt appears after 90s of inactivity on static content
+- [ ] "Yes, I'm still here" dismisses modal and resumes timer
+- [ ] Video/audio items do not trigger the idle prompt

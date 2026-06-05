@@ -1441,7 +1441,7 @@ function TestingTab() {
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); handleDeleteRun(run.id, run.label); }}
-                    className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-xl border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors"
+                    className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-xl border transition-colors text-[oklch(0.55_0.15_25)] border-[color-mix(in_oklab,oklch(0.55_0.15_25)_25%,transparent)] bg-[color-mix(in_oklab,oklch(0.55_0.15_25)_12%,transparent)] hover:bg-[color-mix(in_oklab,oklch(0.55_0.15_25)_20%,transparent)]"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

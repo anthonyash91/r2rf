@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState, useMemo, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import { useServerFn } from "@tanstack/react-start";
 
 // Lazy-load PdfViewer so pdfjs-dist (large) is only bundled for users who
@@ -78,6 +79,35 @@ function isPdfUrl(url: string | null | undefined) {
 function isImageUrl(url: string | null | undefined) {
   return !!url && IMAGE_EXT.test(url);
 }
+function IdlePrompt({ countdown, onStillHere }: { countdown: number; onStillHere: () => void }) {
+  return (
+    <div className="absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-6">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-xl p-6 flex flex-col gap-4">
+        <div>
+          <p className="font-display text-base font-semibold text-foreground">Are you still here?</p>
+          <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+            Your session will stop tracking in <span className="font-semibold tabular-nums text-foreground">{countdown}s</span>. Tap or scroll any time to keep the timer running automatically without this prompt appearing.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onStillHere}
+          className="inline-flex items-center justify-center rounded-[8px] border px-4 py-2 text-sm font-medium transition-colors"
+          style={{
+            color: "var(--color-accent)",
+            backgroundColor: "color-mix(in oklab, var(--color-accent) 12%, transparent)",
+            borderColor: "color-mix(in oklab, var(--color-accent) 25%, transparent)",
+          }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "color-mix(in oklab, var(--color-accent) 20%, transparent)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "color-mix(in oklab, var(--color-accent) 12%, transparent)"; }}
+        >
+          Yes, I'm still here
+        </button>
+      </div>
+    </div>
+  );
+}
+
 type MediaKind = "video" | "audio" | "pdf" | "image";
 function detectMedia(url: string | null | undefined): MediaKind | null {
   if (isVideoUrl(url)) return "video";
@@ -95,7 +125,7 @@ export const Route = createFileRoute("/category/$slug")({
 function CategoryPage() {
   const { slug } = Route.useParams();
   const { t, lang } = useI18n();
-  const { isAdmin, canAccessAdmin, isFacilityUser, user } = useAuth();
+  const { isAdmin, canAccessAdmin, isFacilityUser, isTester, user } = useAuth();
   const badgeStyles = useBadgeStyles();
   const { bookmarkIds, toggle: toggleBookmark } = useBookmarks();
   const { myRatings, rate } = useRatings();
@@ -400,8 +430,42 @@ function CategoryPage() {
     return mins > 0 ? mins * 60 : undefined;
   })();
 
+  // DEBUG: live idle counter — remove before ship
+  const [debugIdleSecs, setDebugIdleSecs] = useState(0);
+  const debugLastActivityRef = useRef(Date.now());
+  useEffect(() => {
+    const reset = () => { debugLastActivityRef.current = Date.now(); setDebugIdleSecs(0); };
+    const events = ["touchstart","touchmove","click","keydown","scroll","mousemove"];
+    events.forEach((e) => document.addEventListener(e, reset, { passive: true }));
+    const t = setInterval(() => {
+      setDebugIdleSecs(Math.floor((Date.now() - debugLastActivityRef.current) / 1000));
+    }, 500);
+    return () => { clearInterval(t); events.forEach((e) => document.removeEventListener(e, reset)); };
+  }, []);
+
+  // Progressive idle thresholds (DEBUG — shortened for testing)
+  // Production: [90_000, 180_000, 300_000]  (90s → 3min → 5min cap)
+  // Production thresholds. For debug testing, temporarily replace with [10_000, 20_000, 30_000].
+  const IDLE_THRESHOLDS_MS = [90_000, 180_000, 300_000]; // 90s → 3min → 5min cap
+  const [idleConfirmCount, setIdleConfirmCount] = useState(0);
+  const currentIdleMs = IDLE_THRESHOLDS_MS[Math.min(idleConfirmCount, IDLE_THRESHOLDS_MS.length - 1)];
+
+  // "Are you still here?" idle prompt state
+  const [showIdlePrompt, setShowIdlePrompt] = useState(false);
+  const [idleCountdown, setIdleCountdown] = useState(20);
+  const idleCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearIdleCountdown = () => {
+    if (idleCountdownRef.current) {
+      clearInterval(idleCountdownRef.current);
+      idleCountdownRef.current = null;
+    }
+  };
+
   // Engagement tracking hook: timer (all types) + media progress (video/audio) + PDF auto-mark
-  useContentEngagement({
+  const isMediaItem = !!(videoEl || audioEl || videoPlayer || audioPlayer);
+  const { resetIdle, _debug: engDebug } = useContentEngagement({
+    idleMs: currentIdleMs,
     contentItemId: activeItemId,
     categoryId: categoryId ?? null,
     userId: user?.id ?? null,
@@ -413,7 +477,32 @@ function CategoryPage() {
     onAutoMarkRead: activeItemId
       ? () => toggleRead.mutate({ itemId: activeItemId, markRead: true })
       : undefined,
+    // Only show idle prompt for static content — video/audio use position tracking
+    onIdle: isMediaItem ? undefined : () => {
+      setIdleCountdown(20);
+      setShowIdlePrompt(true);
+      clearIdleCountdown();
+      idleCountdownRef.current = setInterval(() => {
+        setIdleCountdown((n) => {
+          if (n <= 1) {
+            clearIdleCountdown();
+            setShowIdlePrompt(false);
+            return 0;
+          }
+          return n - 1;
+        });
+      }, 1000);
+    },
   });
+
+  // Clean up countdown on unmount or when item closes
+  useEffect(() => {
+    if (!activeItemId) {
+      clearIdleCountdown();
+      setShowIdlePrompt(false);
+      setIdleConfirmCount(0);
+    }
+  }, [activeItemId]);
 
   const visibleItemIds = useMemo(
     () => (data?.items ?? []).map((i) => i.id as string),
@@ -1101,7 +1190,7 @@ function CategoryPage() {
       <SiteFooter />
 
       <Dialog open={!!videoPlayer} onOpenChange={(open) => { if (!open) { setVideoPlayer(null); setVideoEl(null); invalidateEngagement(); } }}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]" onInteractOutside={(e) => { if (showIdlePrompt) e.preventDefault(); }}>
           <DialogTitle className="sr-only">{videoPlayer?.title ?? "Video"}</DialogTitle>
           {videoPlayer && (
             <video
@@ -1117,7 +1206,7 @@ function CategoryPage() {
       </Dialog>
 
       <Dialog open={!!audioPlayer} onOpenChange={(open) => { if (!open) { setAudioPlayer(null); setAudioEl(null); invalidateEngagement(); } }}>
-        <DialogContent className="max-w-lg pt-[18px] max-h-[calc(100dvh-2rem)] overflow-auto">
+        <DialogContent className="max-w-lg pt-[18px] max-h-[calc(100dvh-2rem)] overflow-auto" onInteractOutside={(e) => { if (showIdlePrompt) e.preventDefault(); }}>
           <DialogTitle className="text-base font-semibold pr-8 break-words">{audioPlayer?.title ?? "Audio"}</DialogTitle>
           {audioPlayer && (
             <audio
@@ -1140,6 +1229,7 @@ function CategoryPage() {
               <PdfViewer key={pdfViewer.url} url={pdfViewer.url} />
             </Suspense>
           )}
+          {showIdlePrompt && <IdlePrompt countdown={idleCountdown} onStillHere={() => { clearIdleCountdown(); setShowIdlePrompt(false); setIdleConfirmCount((n) => n + 1); resetIdle(); }} />}
         </DialogContent>
       </Dialog>
 
@@ -1154,6 +1244,7 @@ function CategoryPage() {
               className="w-full h-auto max-h-[calc(100dvh-2rem)] object-contain bg-black"
             />
           )}
+          {showIdlePrompt && <IdlePrompt countdown={idleCountdown} onStillHere={() => { clearIdleCountdown(); setShowIdlePrompt(false); setIdleConfirmCount((n) => n + 1); resetIdle(); }} />}
         </DialogContent>
       </Dialog>
 
@@ -1194,6 +1285,33 @@ function CategoryPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* DEBUG — only shown for tester accounts */}
+      {isTester && createPortal(
+        <div className="fixed top-4 right-4 z-[200] rounded-md border border-border bg-card px-3 py-2 text-xs font-mono shadow-lg leading-loose w-64">
+          <div className="font-semibold text-foreground mb-1">⏱ Engagement Debug</div>
+          <div>idle: <span className={debugIdleSecs >= Math.floor(currentIdleMs / 1000) ? "text-red-600 font-bold" : "text-foreground"}>{debugIdleSecs}s</span> / {currentIdleMs / 1000}s trigger</div>
+          <div>hook active: {!!activeItemId && !isAdmin && !isFacilityUser ? <span className="text-green-600">✓ yes</span> : <span className="text-red-600">✗ no — open a PDF/image</span>}</div>
+          <div>idle fired: {engDebug.isIdle.current ? <span className="text-amber-600">yes</span> : "no"}</div>
+          <div>confirmations: {idleConfirmCount} → next: {IDLE_THRESHOLDS_MS[Math.min(idleConfirmCount, IDLE_THRESHOLDS_MS.length - 1)] / 1000}s {idleConfirmCount >= IDLE_THRESHOLDS_MS.length - 1 ? "(capped)" : ""}</div>
+          <div className="border-t border-border/40 mt-1 pt-1">
+            <div>base (DB): {engDebug.baseSeconds.current}s</div>
+            <div>this session: <span className="text-green-600 font-semibold">{engDebug.accSeconds.current}s</span></div>
+            <div>total (will save): <span className="font-semibold">{engDebug.baseSeconds.current + engDebug.accSeconds.current}s</span></div>
+          </div>
+          {engDebug.durationSeconds.current > 0 && (
+            <div className="border-t border-border/40 mt-1 pt-1">
+              <div>media pos: {Math.round(engDebug.furthestSeconds.current)}s / {Math.round(engDebug.durationSeconds.current)}s</div>
+              <div>media %: {Math.round((engDebug.furthestSeconds.current / engDebug.durationSeconds.current) * 100)}%</div>
+            </div>
+          )}
+          <div className="border-t border-border/40 mt-1 pt-1 text-muted-foreground">
+            item: {activeItemId ? (isMediaItem ? "media (no modal)" : "static ✓ modal") : "none"}
+          </div>
+        </div>,
+        document.body
+      )}
+
     </div>
   );
 }

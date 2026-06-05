@@ -345,7 +345,7 @@ function CategoryEditor({
                 {catFacilities.map((f) => {
                   const label = allFacilities.find((a) => a.value === f)?.label ?? f;
                   return (
-                    <span key={f} className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-[11px] font-medium" style={{ color: facilityPs.color, backgroundColor: facilityPs.bg, borderColor: facilityPs.border }}>
+                    <span key={f} className="inline-flex items-center gap-1 rounded-[8px] border px-2 py-0.5 text-[11px] font-medium" style={{ color: facilityPs.color, backgroundColor: facilityPs.bg, borderColor: facilityPs.border }}>
                       {label}
                       <button type="button" onClick={() => setCatFacilities((prev) => prev.filter((x) => x !== f))} className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10">
                         <X className="h-3 w-3" />
@@ -781,11 +781,11 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                       const trTitle = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
                       return (
                         <BadgeGroup>
-                          <Badge variant="type" type={item.type} size="sm">{item.type}</Badge>
-                          {!item.published && <Badge variant="draft" size="sm">Draft</Badge>}
-                          {item.exempt_from_progress && <Badge variant="exempt" size="sm">Exempt</Badge>}
+                          <Badge variant="type" type={item.type} className="rounded-[8px]">{item.type}</Badge>
+                          {!item.published && <Badge variant="draft" className="rounded-[8px]">Draft</Badge>}
+                          {item.exempt_from_progress && <Badge variant="exempt" className="rounded-[8px]">Exempt</Badge>}
                           {s !== "complete" && (
-                            <Badge variant="translation" size="sm" title={trTitle}>
+                            <Badge variant="translation" className="rounded-[8px]" title={trTitle}>
                               {trLabel}
                             </Badge>
                           )}
@@ -793,6 +793,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                             <FacilityBadge
                               facilities={item.facilities!}
                               facilityLabelMap={facilityLabelMap}
+                              className="rounded-[8px]"
                             />
                           )}
                         </BadgeGroup>
@@ -811,33 +812,36 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                   </div>
                 </div>
                 <TooltipProvider delayDuration={150}>
-                  <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
-                    <IconButton
-                      aria-label={item.published ? "Unpublish" : "Publish"}
-                      tooltip={item.published ? "Unpublish" : "Publish"}
-                      icon={item.published ? Eye : EyeOff}
-                      pending={togglePublish.isPending && (togglePublish.variables as any)?.id === item.id}
-                      onClick={() => togglePublish.mutate(item)}
-                    />
-                    <TooltipWrap tooltip="View on site">
-                      <Link
-                        to="/category/$slug"
-                        params={{ slug: categorySlug }}
-                        hash={`item-${item.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="View on site"
-                        className={iconButtonClassName()}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Link>
-                    </TooltipWrap>
-                    <IconButton
-                      aria-label="Edit"
-                      tooltip="Edit"
-                      icon={Pencil}
-                      onClick={() => setEditing(item)}
-                    />
+                  <div className="flex items-center shrink-0 self-end sm:self-auto gap-1.5">
+                    {/* Left connected group */}
+                    <div className="flex items-center [&>*:not(:first-child)]:-ml-px [&>:first-child]:rounded-r-none [&>:not(:first-child):not(:last-child)]:rounded-none [&>:last-child]:rounded-l-none">
+                      <IconButton
+                        aria-label={item.published ? "Unpublish" : "Publish"}
+                        tooltip={item.published ? "Unpublish" : "Publish"}
+                        icon={item.published ? Eye : EyeOff}
+                        pending={togglePublish.isPending && (togglePublish.variables as any)?.id === item.id}
+                        onClick={() => togglePublish.mutate(item)}
+                      />
+                      <TooltipWrap tooltip="View on site">
+                        <Link
+                          to="/category/$slug"
+                          params={{ slug: categorySlug }}
+                          hash={`item-${item.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="View on site"
+                          className={iconButtonClassName()}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                      </TooltipWrap>
+                      <IconButton
+                        aria-label="Edit"
+                        tooltip="Edit"
+                        icon={Pencil}
+                        onClick={() => setEditing(item)}
+                      />
+                    </div>
                     <div className="mx-1 h-6 w-px bg-border" aria-hidden />
                     <IconButton
                       aria-label="Delete"
@@ -1327,7 +1331,7 @@ function ItemEditor({
                 return (
                   <span
                     key={f}
-                    className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-[11px] font-medium"
+                    className="inline-flex items-center gap-1 rounded-[8px] border px-2 py-0.5 text-[11px] font-medium"
                     style={{ color: facilityPs.color, backgroundColor: facilityPs.bg, borderColor: facilityPs.border }}
                   >
                     {label}

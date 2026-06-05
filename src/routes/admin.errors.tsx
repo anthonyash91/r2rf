@@ -43,18 +43,20 @@ function formatDate(s: string) {
 function ErrorRow({ entry }: { entry: any }) {
   const [open, setOpen] = useState(false);
   const Icon = entry.source === "server" ? Server : Monitor;
-  const tone =
-    entry.source === "server"
-      ? "text-red-600 bg-red-50 dark:bg-red-950/40"
-      : "text-amber-700 bg-amber-50 dark:bg-amber-950/40";
+  const color = entry.source === "server" ? "oklch(0.55 0.15 25)" : "oklch(0.60 0.12 80)";
   return (
     <li className="p-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3 min-w-0">
           <span
-            className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${tone}`}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
+            style={{
+              color,
+              backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
+              borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
+            }}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-5 w-5" />
           </span>
           <div className="min-w-0 space-y-1 flex-1">
             <div className="text-sm break-words">

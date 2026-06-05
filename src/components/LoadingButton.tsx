@@ -13,7 +13,7 @@ const VARIANT_CLASSES: Record<ActionButtonVariant, string> = {
   secondary:
     "border border-input bg-background text-foreground hover:bg-muted disabled:opacity-60",
   destructive:
-    "bg-destructive text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60",
+    "border text-[oklch(0.55_0.15_25)] bg-[color-mix(in_oklab,oklch(0.55_0.15_25)_12%,transparent)] border-[color-mix(in_oklab,oklch(0.55_0.15_25)_25%,transparent)] hover:bg-[color-mix(in_oklab,oklch(0.55_0.15_25)_20%,transparent)] disabled:opacity-60",
   ghost:
     "text-foreground hover:bg-muted disabled:opacity-60",
 };

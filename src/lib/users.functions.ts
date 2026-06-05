@@ -6,7 +6,7 @@ import { recordAdminAudit } from "@/lib/admin-audit.server";
 
 
 
-type Role = "admin" | "contributor" | "tester" | "user";
+type Role = "admin" | "contributor" | "tester" | "user" | "facilityUser";
 
 /** Split an array into chunks to avoid Supabase URL length limits on large IN clauses. */
 function chunkArray<T>(arr: T[], size: number): T[][] {
@@ -473,11 +473,16 @@ export const createTesterUser = createServerFn({ method: "POST" })
           .toLowerCase()
           .regex(/^[a-z0-9_]{3,32}$/, "Username must be 3–32 chars, letters/numbers/underscore"),
         password: z.string().min(8).max(72),
+        // Intentionally omitted — facility is always set to TESTER_FACILITY below
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
+
+    // All tester accounts are assigned to CPC Sales for facilityUser role simulation.
+    // Update this value to match the exact facility slug in your facilities table.
+    const TESTER_FACILITY = "S003007001";
 
     const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
     if (exists) throw new Error("That username is already taken.");
@@ -496,7 +501,7 @@ export const createTesterUser = createServerFn({ method: "POST" })
     const { error: profErr } = await supabaseAdmin.from("user_profiles").insert({
       user_id: userId,
       username: data.username,
-      facility: "test_facility",
+      facility: TESTER_FACILITY,
       first_name: "",
       last_name: "",
       is_synthetic: true,
@@ -506,17 +511,51 @@ export const createTesterUser = createServerFn({ method: "POST" })
       throw new Error(profErr.message);
     }
 
+    // Grant all roles so the tester can simulate any role client-side.
+    // is_synthetic = true on the profile ensures they stay excluded from analytics.
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
       .insert([
         { user_id: userId, role: "tester" },
         { user_id: userId, role: "user" },
+        { user_id: userId, role: "admin" },
+        { user_id: userId, role: "contributor" },
+        { user_id: userId, role: "facilityUser" },
       ]);
     if (roleErr) {
       await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
       await supabaseAdmin.auth.admin.deleteUser(userId);
       throw new Error(roleErr.message);
     }
+
+    return { ok: true };
+  });
+
+/**
+ * Grants all roles to an existing tester account and sets their facility to CPC Sales.
+ * Safe to call multiple times — upsert skips existing rows.
+ */
+export const upgradeTesterRoles = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.supabase, context.userId);
+
+    const TESTER_FACILITY = "S003007001";
+    const allRoles: Role[] = ["tester", "user", "admin", "contributor", "facilityUser"];
+
+    await Promise.all(
+      allRoles.map((role) =>
+        supabaseAdmin
+          .from("user_roles")
+          .upsert({ user_id: data.userId, role }, { onConflict: "user_id,role" })
+      )
+    );
+
+    await supabaseAdmin
+      .from("user_profiles")
+      .update({ facility: TESTER_FACILITY })
+      .eq("user_id", data.userId);
 
     return { ok: true };
   });
@@ -561,10 +600,29 @@ export const deleteUser = createServerFn({ method: "POST" })
     if (data.userId === context.userId) {
       throw new Error("You cannot delete your own account.");
     }
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
+    // Explicitly delete from every user-related table before calling the auth
+    // API. Tables with ON DELETE CASCADE would handle themselves, but any table
+    // created without cascade (or with a missing migration) would block deletion.
+    // We delete sequentially where order matters (engagement before profiles)
+    // and in parallel where safe.
+    const db = supabaseAdmin as any;
+    await Promise.all([
+      supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId),
+      supabaseAdmin.from("user_security_answers").delete().eq("user_id", data.userId),
+      supabaseAdmin.from("user_content_bookmarks").delete().eq("user_id", data.userId),
+      supabaseAdmin.from("user_content_ratings").delete().eq("user_id", data.userId),
+      supabaseAdmin.from("user_achievements").delete().eq("user_id", data.userId),
+      db.from("user_content_engagement").delete().eq("user_id", data.userId),
+      db.from("user_content_progress").delete().eq("user_id", data.userId),
+      db.from("user_logins").delete().eq("user_id", data.userId),
+      db.from("user_dismissed_messages").delete().eq("user_id", data.userId),
+      db.from("user_signup_ips").delete().eq("user_id", data.userId),
+    ]);
+    // Delete profiles last — other tables may reference it.
+    await supabaseAdmin.from("user_profiles").delete().eq("user_id", data.userId);
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(`Failed to delete auth user: ${error.message}`);
     await recordAdminAudit({
       actorUserId: context.userId,
       action: "user.delete",
@@ -581,13 +639,26 @@ export const deleteUsers = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
     const targets = data.userIds.filter((id) => id !== context.userId);
+    const db = supabaseAdmin as any;
     let deleted = 0;
     const failed: { userId: string; message: string }[] = [];
     for (const userId of targets) {
       try {
-        await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+        await Promise.all([
+          supabaseAdmin.from("user_roles").delete().eq("user_id", userId),
+          supabaseAdmin.from("user_security_answers").delete().eq("user_id", userId),
+          supabaseAdmin.from("user_content_bookmarks").delete().eq("user_id", userId),
+          supabaseAdmin.from("user_content_ratings").delete().eq("user_id", userId),
+          supabaseAdmin.from("user_achievements").delete().eq("user_id", userId),
+          db.from("user_content_engagement").delete().eq("user_id", userId),
+          db.from("user_content_progress").delete().eq("user_id", userId),
+          db.from("user_logins").delete().eq("user_id", userId),
+          db.from("user_dismissed_messages").delete().eq("user_id", userId),
+          db.from("user_signup_ips").delete().eq("user_id", userId),
+        ]);
+        await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
         const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-        if (error) throw new Error(error.message);
+        if (error) throw new Error(`Failed to delete auth user: ${error.message}`);
         deleted++;
         await recordAdminAudit({
           actorUserId: context.userId,

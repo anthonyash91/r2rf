@@ -164,9 +164,9 @@ export function renderBlockedPage(
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>Access restricted</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>
   body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0b0b0c;color:#e8e8ea;padding:24px}
-  .card{max-width:480px;width:100%;text-align:center;background:#141416;border:1px solid #26262a;border-radius:16px;padding:40px}
+  .card{max-width:480px;width:100%;text-align:center;background:#141416;border:1px solid #26262a;border-radius:8px;padding:40px}
   h1{margin:0 0 12px;font-size:24px;font-weight:600}
   p{margin:8px 0;color:#a1a1aa;line-height:1.5}
-  code{background:#1f1f23;padding:2px 8px;border-radius:6px;color:#e8e8ea;font-size:13px}
+  code{background:#1f1f23;padding:2px 8px;border-radius:8px;color:#e8e8ea;font-size:13px}
   </style></head><body><div class="card"><h1>Access restricted</h1><p>${message}</p><p>Your IP: <code>${safeIp}</code></p></div></body></html>`;
 }

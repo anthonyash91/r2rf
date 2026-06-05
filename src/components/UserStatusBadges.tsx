@@ -41,15 +41,15 @@ export function UserStatusBadges({
       {/* Tester badge takes the first slot exclusively — tester accounts don't
           belong to a facility, so the facility badge is omitted for them. */}
       {isTester ? (
-        <Badge variant="tester" size="sm">Tester</Badge>
+        <Badge variant="tester" className="rounded-[8px]">Tester</Badge>
       ) : !hideFacilityBadge ? (
-        <Badge variant="facility" size="sm">
+        <Badge variant="facility" className="rounded-[8px]">
           {facilityLabel || user.profile?.facility || ""}
         </Badge>
       ) : null}
-      {!isTester && isUser && <Badge variant="user" size="sm">User</Badge>}
+      {!isTester && isUser && <Badge variant="user" className="rounded-[8px]">User</Badge>}
       {/* New badge only makes sense for regular users — not for testers. */}
-      {isNew && !isTester && isUser && <Badge variant="new" size="sm">New</Badge>}
+      {isNew && !isTester && isUser && <Badge variant="new" className="rounded-[8px]">New</Badge>}
       {children}
     </BadgeGroup>
   );

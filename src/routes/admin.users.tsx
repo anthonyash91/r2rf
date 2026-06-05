@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, HelpCircle, Loader2 } from "lucide-react";
+import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, HelpCircle, Loader2, Wrench } from "lucide-react";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { UserSectionHeader } from "@/components/UserSectionHeader";
@@ -31,6 +31,7 @@ import {
   setUserRole,
   createUser,
   createTesterUser,
+  upgradeTesterRoles,
   createFacilityUser,
   deleteUser,
   deleteUsers,
@@ -89,6 +90,7 @@ function AdminUsersPage() {
 
   const createFn = useServerFn(createUser);
   const createTesterFn = useServerFn(createTesterUser);
+  const upgradeTesterFn = useServerFn(upgradeTesterRoles);
   const createFacilityFn = useServerFn(createFacilityUser);
   const resendVerifyFn = useServerFn(resendVerificationEmail);
   const deleteFn = useServerFn(deleteUser);
@@ -206,6 +208,11 @@ function AdminUsersPage() {
   const pwMut = useToastMutation({
     mutationFn: (input: { userId: string; password: string }) => setPassword({ data: input }),
     successMessage: "Password updated",
+  });
+  const upgradeTesterMut = useToastMutation({
+    mutationFn: (input: { userId: string }) => upgradeTesterFn({ data: input }),
+    successMessage: "Roles upgraded — tester account now has full role set",
+    invalidate: usersKey,
   });
   const resetMut = useToastMutation({
     mutationFn: (input: { email: string; userId?: string }) => sendReset({ data: input }),
@@ -541,6 +548,17 @@ function AdminUsersPage() {
                 onConfirm: () => clearSecMut.mutateAsync({ userId: u.id }),
               });
             }}
+            onUpgradeTester={async () => {
+              const ok = await confirm({
+                title: "Upgrade tester to full role set?",
+                description: `This will grant ${u.profile?.username || u.email} the admin, contributor, facilityUser, user, and tester roles, and assign them to the CPC Sales facility. This allows them to simulate any role using the Role Switcher. It is safe to run multiple times.`,
+                confirmLabel: "Upgrade roles",
+                pendingLabel: "Upgrading",
+                onConfirm: () => upgradeTesterMut.mutateAsync({ userId: u.id }),
+              });
+              return ok;
+            }}
+            pendingUpgrade={upgradeTesterMut.isPending}
           />
         );
 
@@ -627,7 +645,9 @@ function AdminUsersPage() {
                 </div>
                 <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
                   {testerUsers.length ? (
-                    <ul className="divide-y divide-border">{testerUsers.map(renderItem)}</ul>
+                    <ul className="divide-y divide-border">
+                      {testerUsers.map((u) => renderItem(u))}
+                    </ul>
                   ) : (
                     <EmptyState size="sm">No tester users.</EmptyState>
                   )}
@@ -756,6 +776,8 @@ function UserItem({
   onToggleContributor,
   onDelete,
   onResetSecurity,
+  onUpgradeTester,
+  pendingUpgrade = false,
 }: {
   user: UserRow;
   isNew?: boolean;
@@ -783,6 +805,8 @@ function UserItem({
   onToggleContributor: (enabled: boolean) => void;
   onDelete: () => void;
   onResetSecurity: () => void;
+  onUpgradeTester?: () => void;
+  pendingUpgrade?: boolean;
 }) {
   const [editingEmail, setEditingEmail] = useState(false);
   const [emailDraft, setEmailDraft] = useState(user.email);
@@ -831,11 +855,11 @@ function UserItem({
                       hideFacilityBadge={isRegularUser}
                       className="hidden sm:inline-flex"
                     >
-                      {showFacilityUserBadge && <Badge variant="facility-user" size="sm">Facility User</Badge>}
+                      {showFacilityUserBadge && <Badge variant="facility-user" className="rounded-[8px]">Facility User</Badge>}
                       {showFacilityUserBadge && (
                         user.email_confirmed_at
-                          ? <Badge variant="verified" size="sm">Verified</Badge>
-                          : <Badge variant="unverified" size="sm">Unverified</Badge>
+                          ? <Badge variant="verified" className="rounded-[8px]">Verified</Badge>
+                          : <Badge variant="unverified" className="rounded-[8px]">Unverified</Badge>
                       )}
                     </UserStatusBadges>
                   </div>
@@ -876,14 +900,14 @@ function UserItem({
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
                 <BadgeGroup>
-                  {isAdmin && <Badge variant="admin" size="sm">Admin</Badge>}
-                  {isContributor && <Badge variant="contributor" size="sm">Contributor</Badge>}
-                  {isTester && <Badge variant="tester" size="sm">Tester</Badge>}
-                  {showFacilityUserBadge && <Badge variant="facility-user" size="sm">Facility User</Badge>}
+                  {isAdmin && <Badge variant="admin" className="rounded-[8px]">Admin</Badge>}
+                  {isContributor && <Badge variant="contributor" className="rounded-[8px]">Contributor</Badge>}
+                  {isTester && <Badge variant="tester" className="rounded-[8px]">Tester</Badge>}
+                  {showFacilityUserBadge && <Badge variant="facility-user" className="rounded-[8px]">Facility User</Badge>}
                   {user.email_confirmed_at ? (
-                    <Badge variant="verified" size="sm">Verified</Badge>
+                    <Badge variant="verified" className="rounded-[8px]">Verified</Badge>
                   ) : (
-                    <Badge variant="unverified" size="sm">Unverified</Badge>
+                    <Badge variant="unverified" className="rounded-[8px]">Unverified</Badge>
                   )}
                 </BadgeGroup>
               </div>
@@ -898,14 +922,14 @@ function UserItem({
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <BadgeGroup className="ml-1 hidden sm:inline-flex">
-                  {isAdmin && <Badge variant="admin" size="sm">Admin</Badge>}
-                  {isContributor && <Badge variant="contributor" size="sm">Contributor</Badge>}
-                  {isTester && <Badge variant="tester" size="sm">Tester</Badge>}
-                  {showFacilityUserBadge && <Badge variant="facility-user" size="sm">Facility User</Badge>}
+                  {isAdmin && <Badge variant="admin" className="rounded-[8px]">Admin</Badge>}
+                  {isContributor && <Badge variant="contributor" className="rounded-[8px]">Contributor</Badge>}
+                  {isTester && <Badge variant="tester" className="rounded-[8px]">Tester</Badge>}
+                  {showFacilityUserBadge && <Badge variant="facility-user" className="rounded-[8px]">Facility User</Badge>}
                   {user.email_confirmed_at ? (
-                    <Badge variant="verified" size="sm">Verified</Badge>
+                    <Badge variant="verified" className="rounded-[8px]">Verified</Badge>
                   ) : (
-                    <Badge variant="unverified" size="sm">Unverified</Badge>
+                    <Badge variant="unverified" className="rounded-[8px]">Unverified</Badge>
                   )}
                 </BadgeGroup>
               </div>
@@ -946,68 +970,74 @@ function UserItem({
 
         <TooltipProvider delayDuration={150}>
           <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0 self-end md:self-auto">
-            {!isUsernameUser && !user.email_confirmed_at && (
-              <IconButton
-                aria-label="Resend verification email"
-                tooltip="Resend verification email"
-                icon={Mail}
-                pending={pendingResendVerify}
-                onClick={onResendVerify}
-              />
-            )}
-            {!isUsernameUser && user.email_confirmed_at && (
-              <IconButton
-                aria-label="Send password reset email"
-                tooltip="Send reset email"
-                icon={Send}
-                pending={pendingReset}
-                onClick={onSendReset}
-              />
-            )}
-
-            {(!selfUserId || selfUserId === user.id) && (
-              <IconButton
-                aria-label="Set password"
-                tooltip="Set password"
-                icon={KeyRound}
-                pending={pendingPassword}
-                onClick={() => setPwOpen((v) => !v)}
-              />
-            )}
-
-            {isUsernameUser && (
-              <IconButton
-                aria-label="Reset security questions"
-                tooltip="Reset security questions"
-                icon={HelpCircle}
-                pending={pendingClearSec}
-                onClick={onResetSecurity}
-              />
-            )}
-
-
-
-            {!isUsernameUser && !hideRoleToggles && (
-              <>
+            {/* Left group — connected pill via CSS child selectors on the <button> elements */}
+            <div className="flex items-center [&>button:not(:first-child)]:-ml-px [&>button:first-child]:rounded-r-none [&>button:not(:first-child):not(:last-child)]:rounded-none [&>button:last-child]:rounded-l-none">
+              {!isUsernameUser && !user.email_confirmed_at && (
                 <IconButton
-                  aria-label={isAdmin ? "Revoke admin" : "Make admin"}
-                  tooltip={isAdmin ? "Revoke admin" : "Make admin"}
-                  variant={isAdmin ? "destructive" : "default"}
-                  icon={isAdmin ? ShieldOff : Shield}
-                  pending={pendingRole}
-                  onClick={() => onToggleAdmin(!isAdmin)}
+                  aria-label="Resend verification email"
+                  tooltip="Resend verification email"
+                  icon={Mail}
+                  pending={pendingResendVerify}
+                  onClick={onResendVerify}
                 />
-
+              )}
+              {!isUsernameUser && user.email_confirmed_at && (
                 <IconButton
-                  aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
-                  tooltip={isContributor ? "Revoke contributor" : "Make contributor"}
-                  variant={isContributor ? "destructive" : "default"}
-                  icon={isContributor ? ShieldOff : Shield}
-                  pending={pendingRole}
-                  onClick={() => onToggleContributor(!isContributor)}
+                  aria-label="Send password reset email"
+                  tooltip="Send reset email"
+                  icon={Send}
+                  pending={pendingReset}
+                  onClick={onSendReset}
                 />
-              </>
-            )}
+              )}
+              {(!selfUserId || selfUserId === user.id) && (
+                <IconButton
+                  aria-label="Set password"
+                  tooltip="Set password"
+                  icon={KeyRound}
+                  pending={pendingPassword}
+                  onClick={() => setPwOpen((v) => !v)}
+                />
+              )}
+              {isUsernameUser && (
+                <IconButton
+                  aria-label="Reset security questions"
+                  tooltip="Reset security questions"
+                  icon={HelpCircle}
+                  pending={pendingClearSec}
+                  onClick={onResetSecurity}
+                />
+              )}
+              {isTester && onUpgradeTester && (
+                <IconButton
+                  aria-label="Upgrade to full role set"
+                  tooltip="Upgrade to full role set (grants all roles + CPC Sales facility)"
+                  icon={Wrench}
+                  pending={pendingUpgrade}
+                  onClick={onUpgradeTester}
+                />
+              )}
+              {!isUsernameUser && !hideRoleToggles && (
+                <>
+                  <IconButton
+                    aria-label={isAdmin ? "Revoke admin" : "Make admin"}
+                    tooltip={isAdmin ? "Revoke admin" : "Make admin"}
+                    variant={isAdmin ? "destructive" : "default"}
+                    icon={isAdmin ? ShieldOff : Shield}
+                    pending={pendingRole}
+                    onClick={() => onToggleAdmin(!isAdmin)}
+                  />
+                  <IconButton
+                    aria-label={isContributor ? "Revoke contributor" : "Make contributor"}
+                    tooltip={isContributor ? "Revoke contributor" : "Make contributor"}
+                    variant={isContributor ? "destructive" : "default"}
+                    icon={isContributor ? ShieldOff : Shield}
+                    pending={pendingRole}
+                    onClick={() => onToggleContributor(!isContributor)}
+                  />
+                </>
+              )}
+            </div>
 
             {!hideDelete && <div className="mx-1 h-6 w-px bg-border" aria-hidden />}
 

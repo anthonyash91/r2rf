@@ -379,11 +379,11 @@ function AdminCategoriesContent() {
                     const trTitle = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
                     return (
                       <BadgeGroup>
-                        <Badge variant="count" size="sm" title="Content items in this category" className="tabular-nums">
+                        <Badge variant="count" title="Content items in this category" className="tabular-nums rounded-[8px]">
                           {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
                         </Badge>
                         {(categoryFacilityMap[c.id]?.length ?? 0) > 0 && (
-                          <Badge variant="facility" size="sm" title={`Facility: ${(categoryFacilityMap[c.id] ?? []).map((v) => facilityLabelMap[v] ?? v).join("; ")}`}>
+                          <Badge variant="facility" title={`Facility: ${(categoryFacilityMap[c.id] ?? []).map((v) => facilityLabelMap[v] ?? v).join("; ")}`} className="rounded-[8px]">
                             {categoryFacilityMap[c.id]!.length === 1
                               ? (facilityLabelMap[categoryFacilityMap[c.id]![0]] ?? categoryFacilityMap[c.id]![0])
                               : `${categoryFacilityMap[c.id]!.length} facilities`}
@@ -392,14 +392,14 @@ function AdminCategoriesContent() {
                         {categoriesWithFacilityContent.has(c.id) && (() => {
                           const customCount = (itemsByCategory[c.id] ?? []).filter((item) => !!itemFacilityMap[item.id]?.length).length;
                           return (
-                            <Badge variant="custom-content" size="sm" title="This category has facility-restricted content items">
+                            <Badge variant="custom-content" title="This category has facility-restricted content items" className="rounded-[8px]">
                               {customCount} Custom {customCount === 1 ? "item" : "items"}
                             </Badge>
                           );
                         })()}
-                        {!c.published && <Badge variant="draft" size="sm">Draft</Badge>}
+                        {!c.published && <Badge variant="draft" className="rounded-[8px]">Draft</Badge>}
                         {s !== "complete" && (
-                          <Badge variant="translation" size="sm" title={trTitle}>
+                          <Badge variant="translation" title={trTitle} className="rounded-[8px]">
                             {trLabel}
                           </Badge>
                         )}
@@ -513,54 +513,57 @@ function AdminCategoriesContent() {
             </div>
             <TooltipProvider delayDuration={150}>
               <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
-                <IconButton
-                  aria-label={c.published ? "Unpublish" : "Publish"}
-                  tooltip={c.published ? "Unpublish" : "Publish"}
-                  icon={
-                    togglePublish.isPending && (togglePublish.variables as any)?.id === c.id
-                      ? Eye // ignored, spinner shown
-                      : c.published
-                      ? Eye
-                      : EyeOff
-                  }
-                  pending={togglePublish.isPending && (togglePublish.variables as any)?.id === c.id}
-                  onClick={() => togglePublish.mutate(c)}
-                />
-                {c.published ? (
-                  <TooltipWrap tooltip="View on site">
+                {/* Left connected group */}
+                <div className="flex items-center [&>*:not(:first-child)]:-ml-px [&>:first-child]:rounded-r-none [&>:not(:first-child):not(:last-child)]:rounded-none [&>:last-child]:rounded-l-none">
+                  <IconButton
+                    aria-label={c.published ? "Unpublish" : "Publish"}
+                    tooltip={c.published ? "Unpublish" : "Publish"}
+                    icon={
+                      togglePublish.isPending && (togglePublish.variables as any)?.id === c.id
+                        ? Eye
+                        : c.published
+                        ? Eye
+                        : EyeOff
+                    }
+                    pending={togglePublish.isPending && (togglePublish.variables as any)?.id === c.id}
+                    onClick={() => togglePublish.mutate(c)}
+                  />
+                  {c.published ? (
+                    <TooltipWrap tooltip="View on site">
+                      <Link
+                        to="/category/$slug"
+                        params={{ slug: c.slug }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="View on site"
+                        className={iconButtonClassName()}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </TooltipWrap>
+                  ) : (
+                    <TooltipWrap tooltip="Unavailable while draft">
+                      <span
+                        aria-label="View on site (unavailable for drafts)"
+                        aria-disabled="true"
+                        className={iconButtonClassName("default", "opacity-50 cursor-not-allowed")}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </span>
+                    </TooltipWrap>
+                  )}
+                  <TooltipWrap tooltip="Edit">
                     <Link
-                      to="/category/$slug"
-                      params={{ slug: c.slug }}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label="View on site"
+                      to="/admin/category/$id"
+                      params={{ id: c.id }}
+                      search={{ edit: undefined }}
+                      aria-label="Edit"
                       className={iconButtonClassName()}
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      <Pencil className="h-4 w-4" />
                     </Link>
                   </TooltipWrap>
-                ) : (
-                  <TooltipWrap tooltip="Unavailable while draft">
-                    <span
-                      aria-label="View on site (unavailable for drafts)"
-                      aria-disabled="true"
-                      className={iconButtonClassName("default", "opacity-50 cursor-not-allowed")}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </span>
-                  </TooltipWrap>
-                )}
-                <TooltipWrap tooltip="Edit">
-                  <Link
-                    to="/admin/category/$id"
-                    params={{ id: c.id }}
-                    search={{ edit: undefined }}
-                    aria-label="Edit"
-                    className={iconButtonClassName()}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Link>
-                </TooltipWrap>
+                </div>
                 <div className="mx-1 h-6 w-px bg-border" aria-hidden />
                 <IconButton
                   aria-label="Delete"
@@ -792,7 +795,7 @@ function NewCategoryForm({
               {facilities.map((f) => {
                 const label = allFacilitiesForForm.find((a) => a.value === f)?.label ?? f;
                 return (
-                  <span key={f} className="inline-flex items-center gap-1 rounded-[4px] border px-2 py-0.5 text-[11px] font-medium" style={{ color: formFacilityPs.color, backgroundColor: formFacilityPs.bg, borderColor: formFacilityPs.border }}>
+                  <span key={f} className="inline-flex items-center gap-1 rounded-[8px] border px-2 py-0.5 text-[11px] font-medium" style={{ color: formFacilityPs.color, backgroundColor: formFacilityPs.bg, borderColor: formFacilityPs.border }}>
                     {label}
                     <button type="button" onClick={() => setFacilities((prev) => prev.filter((x) => x !== f))} className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10">
                       <X className="h-3 w-3" />

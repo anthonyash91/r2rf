@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ClipboardCheck, ChevronDown, ChevronRight,
-  CheckCircle, XCircle, MinusCircle, SkipForward, Circle,
+  CheckCircle, XCircle, MinusCircle, SkipForward, Circle, Clock,
   LayoutList, AlertCircle, ChevronUp, Minus,
   ImagePlus, ExternalLink,
 } from "lucide-react";
@@ -15,7 +15,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { CircleProgress } from "@/components/CircleProgress";
 import { fmtDate } from "@/lib/date-format";
 import { listAllTestRuns, getAdminRunDetail } from "@/lib/test-runs.functions";
-import { QA_TESTS, QA_SECTIONS, STATUS_LABELS, type TestStatus } from "@/lib/qa-test-plan";
+import { QA_TESTS, QA_SECTIONS, STATUS_LABELS, STATUS_COLORS, type TestStatus } from "@/lib/qa-test-plan";
 
 export const Route = createFileRoute("/admin/test-results")({
   // Admin-only — requireStrictAdminBeforeLoad redirects all non-admin roles.
@@ -34,13 +34,6 @@ const STATUS_ICON_COMPONENTS: Record<TestStatus, typeof CheckCircle> = {
   untested: Circle,
 };
 
-const STATUS_COLORS_ADMIN: Record<TestStatus, string> = {
-  pass:     "text-green-600",
-  fail:     "text-red-600",
-  blocked:  "text-yellow-600",
-  skipped:  "text-muted-foreground",
-  untested: "text-muted-foreground/40",
-};
 
 const PRIORITY_CONFIG = {
   critical: { icon: AlertCircle, label: "Critical", cls: "text-red-600 bg-red-50 border-red-200" },
@@ -204,14 +197,18 @@ function RunDetailView({ runId, onBack }: { runId: string; onBack: () => void })
                       const PIcon = pc.icon;
                       return (
                         <div key={test.id} className="flex items-start gap-3 px-5 py-3 border-b border-border/50 last:border-0">
-                          <StatusIcon className={`h-4 w-4 mt-0.5 shrink-0 ${STATUS_COLORS_ADMIN[status]}`} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-xs font-mono text-muted-foreground">{test.id}</span>
                               <span className="text-sm font-medium">{test.title}</span>
-                              {/* Priority badge — icons and style match the tester dashboard */}
-                              <span className={`inline-flex items-center leading-none gap-1 rounded-[4px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 ${pc.cls}`}>
-                                <PIcon className="h-3 w-3" />
+                              {/* Status badge */}
+                              <span className={`inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] ${STATUS_COLORS[status]}`}>
+                                <StatusIcon className="h-3.5 w-3.5" />
+                                {STATUS_LABELS[status]}
+                              </span>
+                              {/* Priority badge */}
+                              <span className={`inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] ${pc.cls}`}>
+                                <PIcon className="h-3.5 w-3.5" />
                                 {pc.label}
                               </span>
                             </div>
@@ -319,12 +316,14 @@ function AdminTestResultsPage() {
                         <td className="px-5 py-4 text-muted-foreground">{run.testerUsername}</td>
                         <td className="px-5 py-4 text-muted-foreground">{fmtDate(run.created_at)}</td>
                         <td className="px-5 py-4">
-                          <span className={`inline-flex items-center rounded-[4px] border px-2 py-0.5 text-xs font-medium ${
+                          <span className={`inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] ${
                             run.completed_at
                               ? "border-green-200 bg-green-50 text-green-700"
                               : "border-blue-200 bg-blue-50 text-blue-700"
                           }`}>
-                            {run.completed_at ? "Completed" : "In progress"}
+                            {run.completed_at
+                              ? <><CheckCircle className="h-3.5 w-3.5" /> Completed</>
+                              : <><Clock className="h-3.5 w-3.5" /> In progress</>}
                           </span>
                         </td>
                         <td className="px-5 py-4">
@@ -336,10 +335,11 @@ function AdminTestResultsPage() {
                           </div>
                         </td>
                         <td className="px-5 py-4">
-                          <div className="flex items-center gap-2 text-xs">
-                            {(counts.pass ?? 0) > 0    && <span className="text-green-600 font-medium">{counts.pass}✓</span>}
-                            {(counts.fail ?? 0) > 0    && <span className="text-red-600 font-medium">{counts.fail}✗</span>}
-                            {(counts.blocked ?? 0) > 0 && <span className="text-yellow-600 font-medium">{counts.blocked}⊘</span>}
+                          <div className="flex items-center gap-1.5">
+                            {(counts.pass ?? 0) > 0    && <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl border text-xs font-semibold tabular-nums" style={{ color: "oklch(0.52 0.12 165)", backgroundColor: "color-mix(in oklab, oklch(0.52 0.12 165) 12%, transparent)", borderColor: "color-mix(in oklab, oklch(0.52 0.12 165) 25%, transparent)" }}>{counts.pass}</span>}
+                            {(counts.fail ?? 0) > 0    && <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl border text-xs font-semibold tabular-nums" style={{ color: "oklch(0.55 0.15 25)", backgroundColor: "color-mix(in oklab, oklch(0.55 0.15 25) 12%, transparent)", borderColor: "color-mix(in oklab, oklch(0.55 0.15 25) 25%, transparent)" }}>{counts.fail}</span>}
+                            {(counts.blocked ?? 0) > 0 && <span className="inline-flex items-center justify-center h-9 w-9 rounded-xl border text-xs font-semibold tabular-nums" style={{ color: "oklch(0.60 0.12 80)", backgroundColor: "color-mix(in oklab, oklch(0.60 0.12 80) 12%, transparent)", borderColor: "color-mix(in oklab, oklch(0.60 0.12 80) 25%, transparent)" }}>{counts.blocked}</span>}
+                            {!(counts.pass ?? 0) && !(counts.fail ?? 0) && !(counts.blocked ?? 0) && <span className="text-xs text-muted-foreground">—</span>}
                           </div>
                         </td>
                       </tr>
