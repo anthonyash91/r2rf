@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { getCachedUserId } from "@/hooks/use-auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Megaphone, X } from "lucide-react";
@@ -28,6 +29,22 @@ function sessionStorageKey(kind: SiteMessageKind, facilityValue?: string) {
 
 function messageKindForDismissal(kind: SiteMessageKind, facilityValue?: string) {
   return kind === "facility" && facilityValue ? `facility_${facilityValue}` : kind;
+}
+
+function dismissalCacheKey(dismissalKind: string, userId: string) {
+  return `banner_dismissed:${dismissalKind}:${userId}`;
+}
+
+function readDismissalCache(dismissalKind: string, userId: string): string | null {
+  try { return sessionStorage.getItem(dismissalCacheKey(dismissalKind, userId)); } catch { return null; }
+}
+
+function writeDismissalCache(dismissalKind: string, userId: string, value: string) {
+  try { sessionStorage.setItem(dismissalCacheKey(dismissalKind, userId), value); } catch { /* ignore */ }
+}
+
+function clearDismissalCache(dismissalKind: string, userId: string) {
+  try { sessionStorage.removeItem(dismissalCacheKey(dismissalKind, userId)); } catch { /* ignore */ }
 }
 
 export function SiteMessageBanner({
@@ -87,6 +104,15 @@ export function SiteMessageBanner({
 
   const dismissalKind = messageKindForDismissal(kind, facilityValue ?? undefined);
   const dismissalQueryKey = ["site_message_dismissal", dismissalKind, userId] as const;
+
+  // Read dismissal from sessionStorage synchronously — no flash on mount or navigation.
+  // getCachedUserId() reads the user ID set by useAuth.loadRoles without waiting for
+  // the async session to resolve, so the cache lookup works on the very first render.
+  const [cachedDismissedAt] = useState<string | null>(() => {
+    const uid = getCachedUserId();
+    return uid ? readDismissalCache(dismissalKind, uid) : null;
+  });
+
   const { data: dbDismissedAt } = useQuery({
     queryKey: dismissalQueryKey,
     enabled: !!userId && !!settingsKey,
@@ -98,15 +124,19 @@ export function SiteMessageBanner({
         .eq("message_kind", dismissalKind)
         .maybeSingle();
       if (error) throw error;
-      return data?.dismissed_version ? String(data.dismissed_version) : null;
+      const val = data?.dismissed_version ? String(data.dismissed_version) : null;
+      // Update cache so next mount/navigation is instant.
+      if (val) writeDismissalCache(dismissalKind, userId!, val);
+      else clearDismissalCache(dismissalKind, userId!);
+      return val;
     },
   });
 
-  const [anonDismissedAt, setAnonDismissedAt] = useState<string | null>(null);
-  useEffect(() => {
-    if (typeof window === "undefined" || userId) return;
-    setAnonDismissedAt(window.sessionStorage.getItem(sessionStorageKey(kind, facilityValue ?? undefined)));
-  }, [kind, facilityValue, userId, data?.updatedAt]);
+  // Anonymous: read sessionStorage synchronously (not in useEffect) to avoid flash.
+  const [anonDismissedAt] = useState<string | null>(() => {
+    if (typeof window === "undefined" || userId) return null;
+    return window.sessionStorage.getItem(sessionStorageKey(kind, facilityValue ?? undefined));
+  });
 
   // ALL hooks must be called before any conditional returns — Rules of Hooks
   const badgeStyles = useBadgeStyles();
@@ -125,8 +155,10 @@ export function SiteMessageBanner({
 
   if (!settingsKey || !data || !data.message.trim()) return null;
 
-  // Use DB dismissal for logged-in users; sessionStorage for anonymous visitors.
-  const dismissedAt = userId ? dbDismissedAt ?? null : anonDismissedAt;
+  // Use the real userId OR the cached one (written by loadRoles before session resolves)
+  // so we pick the logged-in path even when userId is still null on first render.
+  const effectiveUserId = userId || getCachedUserId();
+  const dismissedAt = effectiveUserId ? (dbDismissedAt ?? cachedDismissedAt) : anonDismissedAt;
   // Re-show the banner if the message was updated after the user last dismissed it.
   // Equality means "dismissed this exact version" — any newer updatedAt re-shows it.
   if (
@@ -147,6 +179,7 @@ export function SiteMessageBanner({
       // Optimistically update the cache so the banner hides immediately,
       // then persist to DB; if that fails, invalidate to re-fetch truth.
       qc.setQueryData(dismissalQueryKey, data.updatedAt);
+      writeDismissalCache(dismissalKind, userId, data.updatedAt);
       const { error } = await supabase
         .from("user_dismissed_messages")
         .upsert(
@@ -157,7 +190,6 @@ export function SiteMessageBanner({
     } else if (typeof window !== "undefined") {
       // Anonymous visitors: store in sessionStorage (clears on tab close).
       window.sessionStorage.setItem(sessionStorageKey(kind, facilityValue ?? undefined), data.updatedAt);
-      setAnonDismissedAt(data.updatedAt);
     }
   };
 

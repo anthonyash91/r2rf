@@ -352,7 +352,7 @@ The admin panel (`/admin`) is accessible to admin, contributor, and facility use
 | Role | Who They Are | Admin Access |
 |---|---|---|
 | **Regular User** | Incarcerated individuals using the library | None |
-| **Tester** | QA accounts — see interactive test checklist on sign-in; excluded from all analytics | None (own QA interface only) |
+| **Tester** | QA accounts with a role switcher to simulate any account type. Lands on the regular user dashboard with an embedded Testing tab for QA runs. Excluded from analytics by default; can enable analytics tracking via the Role Switcher to appear in facility-scoped reports for testing. | None (user dashboard + Testing tab only) |
 | **Contributor** | Content editors | Content editing only |
 | **Facility User** | Facility staff (counselors, administrators) | Analytics + user management for their own facility |
 | **Admin** | Platform administrators | Full unrestricted access |
@@ -465,7 +465,7 @@ The analytics page has three tabs: **Overall**, **By Facility**, and **Users**.
 
 **Exempt items** — items flagged "exempt from tracking" are excluded from every metric: progress rings, completion rates, monthly summaries, achievement counts, and all pre-computed nightly statistics.
 
-**Excluded from analytics:** Admin accounts, contributor accounts, tester accounts, facility user accounts, synthetic/test profiles.
+**Excluded from analytics:** Admin accounts, contributor accounts, facility user accounts, and synthetic/test profiles. Tester accounts are excluded by default (`is_synthetic = true`); when a tester enables analytics tracking via the Role Switcher toggle, their engagement appears in facility-scoped reports only — not in the Overall tab. This lets testers verify facility report behavior without permanently polluting global stats.
 
 ---
 

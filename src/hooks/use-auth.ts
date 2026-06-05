@@ -7,14 +7,39 @@ export type AppRole = "admin" | "contributor" | "user" | "tester" | "facilityUse
 export type SimulatedRole = "user" | "admin" | "contributor" | "facilityUser";
 
 // ── Module-level simulated role state ──────────────────────────────────────
-// Shared across all useAuth() instances. When a tester switches their view,
-// every component that calls useAuth() re-renders automatically.
 const SIM_KEY = "tester_sim_role";
+const ROLES_CACHE_KEY = "auth_roles_cache";
+const USER_ID_CACHE_KEY = "auth_current_user_id";
 
 let _simulatedRole: SimulatedRole | null = null;
 try {
   _simulatedRole = (localStorage.getItem(SIM_KEY) as SimulatedRole) ?? null;
 } catch { /* SSR / no window */ }
+
+// Read roles from sessionStorage synchronously — eliminates the blank flash
+// between page load and the first async DB roles fetch completing.
+function readCachedRoles(): AppRole[] {
+  try {
+    const raw = sessionStorage.getItem(ROLES_CACHE_KEY);
+    return raw ? (JSON.parse(raw) as AppRole[]) : [];
+  } catch { return []; }
+}
+
+function writeCachedRoles(roles: AppRole[]) {
+  try { sessionStorage.setItem(ROLES_CACHE_KEY, JSON.stringify(roles)); } catch { /* ignore */ }
+}
+
+function clearCachedRoles() {
+  try {
+    sessionStorage.removeItem(ROLES_CACHE_KEY);
+    sessionStorage.removeItem(USER_ID_CACHE_KEY);
+  } catch { /* ignore */ }
+}
+
+/** Read the logged-in user's ID synchronously from sessionStorage. */
+export function getCachedUserId(): string | null {
+  try { return sessionStorage.getItem(USER_ID_CACHE_KEY); } catch { return null; }
+}
 
 const _listeners = new Set<() => void>();
 
@@ -33,11 +58,15 @@ export function getSimulatedRole(): SimulatedRole | null {
 
 // ── Hook ────────────────────────────────────────────────────────────────────
 export function useAuth() {
+  // Initialize roles from sessionStorage cache so the first render already
+  // has the correct roles — no blank/loading flash between navigation and
+  // the async DB fetch completing.
   const [session, setSession] = useState<Session | null>(null);
-  const [roles, setRoles] = useState<AppRole[]>([]);
+  const [roles, setRoles] = useState<AppRole[]>(() => readCachedRoles());
   const [loading, setLoading] = useState(true);
-  const [rolesLoaded, setRolesLoaded] = useState(false);
-  // Force re-render when the simulated role changes globally.
+  // If we have cached roles the user is effectively "loaded" — the background
+  // fetch will refresh them but there's no UX gap to hide.
+  const [rolesLoaded, setRolesLoaded] = useState(() => readCachedRoles().length > 0);
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
   useEffect(() => {
@@ -54,8 +83,17 @@ export function useAuth() {
         const userRoles = ((data ?? []).map((r: any) => r.role)) as AppRole[];
         setRoles(userRoles);
         setRolesLoaded(true);
+        writeCachedRoles(userRoles);
+        try { sessionStorage.setItem(USER_ID_CACHE_KEY, userId); } catch { /* ignore */ }
         if (userRoles.includes("admin") || userRoles.includes("contributor")) {
           setActiveFacilitySlug(null);
+        }
+        // If this user is not a tester, erase any leftover simulation key so
+        // it can never grant elevated access to a non-tester account.
+        if (!userRoles.includes("tester")) {
+          try { localStorage.removeItem(SIM_KEY); } catch { /* ignore */ }
+          _simulatedRole = null;
+          _listeners.forEach((fn) => fn());
         }
       });
   }
@@ -87,6 +125,8 @@ export function useAuth() {
         setTimeout(() => loadRoles(s.user.id), 0);
         setTimeout(() => logDailyLogin(s.user.id), 0);
       } else {
+        // Sign-out: clear cache and reset to empty so the next user starts clean.
+        clearCachedRoles();
         setRoles([]);
         setRolesLoaded(true);
       }
@@ -99,6 +139,7 @@ export function useAuth() {
         loadRoles(s.user.id);
         logDailyLogin(s.user.id);
       } else {
+        clearCachedRoles();
         setRolesLoaded(true);
       }
     });
@@ -106,17 +147,20 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // ── Effective roles ────────────────────────────────────────────────────
-  // Testers with a simulated role active: present as if they only hold that
-  // role (plus tester, which is always retained). All other accounts are
-  // unaffected — _simulatedRole only activates for tester accounts.
   const isTester = roles.includes("tester");
   const sim = isTester ? _simulatedRole : null;
 
-  const isAdmin       = sim ? sim === "admin"       : roles.includes("admin");
-  const isContributor = sim ? sim === "contributor" : roles.includes("contributor");
-  const isUser        = sim ? sim === "user"        : roles.includes("user");
-  const isFacilityUser = sim ? sim === "facilityUser" : roles.includes("facilityUser");
+  const isAdmin        = sim ? sim === "admin"        : (!isTester && roles.includes("admin"));
+  const isContributor  = sim ? sim === "contributor"  : (!isTester && roles.includes("contributor"));
+  const isUser         = sim ? sim === "user"         : (!isTester && roles.includes("user"));
+  const isFacilityUser = sim ? sim === "facilityUser" : (!isTester && roles.includes("facilityUser"));
+
+  const simFromStorage = _simulatedRole;
+  const storageGrantsAdmin = isTester && !!session?.user && (
+    simFromStorage === "admin" ||
+    simFromStorage === "contributor" ||
+    simFromStorage === "facilityUser"
+  );
 
   return {
     session,
@@ -127,7 +171,7 @@ export function useAuth() {
     isUser: isUser || (!sim && isTester),
     isTester,
     isFacilityUser,
-    canAccessAdmin: isAdmin || isContributor || isFacilityUser,
+    canAccessAdmin: isAdmin || isContributor || isFacilityUser || storageGrantsAdmin,
     simulatedRole: sim,
     loading,
     rolesLoaded,

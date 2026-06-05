@@ -5,13 +5,34 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /** Analytics access: admin and facilityUser only — contributors excluded. */
 async function assertAnalyticsAdmin(userId: string) {
-  const { data, error } = await supabaseAdmin
+  const { data } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
-    .in("role", ["admin", "facilityUser"])
+    .in("role", ["admin", "facilityUser"]);
+  if (!data || data.length === 0) throw new Error("Forbidden: analytics admin access required");
+}
+
+/**
+ * Returns whether the caller should be facility-scoped.
+ * Callers with admin role are never scoped — they see all facilities.
+ */
+async function isFacilityScoped(userId: string): Promise<{ scoped: boolean; facility: string | null }> {
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .in("role", ["admin", "facilityUser"]);
+  const hasAdmin = (roles ?? []).some((r: any) => r.role === "admin");
+  if (hasAdmin) return { scoped: false, facility: null };
+  const hasFacilityUser = (roles ?? []).some((r: any) => r.role === "facilityUser");
+  if (!hasFacilityUser) return { scoped: false, facility: null };
+  const { data: prof } = await supabaseAdmin
+    .from("user_profiles")
+    .select("facility")
+    .eq("user_id", userId)
     .maybeSingle();
-  if (error || !data) throw new Error("Forbidden: analytics admin access required");
+  return { scoped: true, facility: prof?.facility ?? null };
 }
 
 /** Strict admin-only — used for destructive/system operations like nightly refresh. */
@@ -137,24 +158,14 @@ export const getGrowthStats = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAnalyticsAdmin(context.userId);
 
-    // facilityUser callers are scoped to their own facility only
+    // facilityUser callers are scoped to their own facility only (admins see all)
     let facilityValue = data.facilityValue ?? null;
-    const { data: callerFacilityUserRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "facilityUser")
-      .maybeSingle();
-    if (callerFacilityUserRole) {
-      const { data: callerProf } = await supabaseAdmin
-        .from("user_profiles")
-        .select("facility")
-        .eq("user_id", context.userId)
-        .maybeSingle();
-      if (!callerProf?.facility) throw new Error("Forbidden: no facility assigned");
-      if (facilityValue && facilityValue !== callerProf.facility)
+    const { scoped, facility: callerFacility } = await isFacilityScoped(context.userId);
+    if (scoped) {
+      if (!callerFacility) throw new Error("Forbidden: no facility assigned");
+      if (facilityValue && facilityValue !== callerFacility)
         throw new Error("Forbidden: user is not in your facility");
-      facilityValue = callerProf.facility;
+      facilityValue = callerFacility;
     }
 
     // Exclude staff from program completion counts
@@ -341,4 +352,125 @@ export const triggerNightlyRefresh = createServerFn({ method: "POST" })
     const { error } = await (supabaseAdmin as any).rpc("refresh_nightly");
     if (error) throw new Error(error.message);
     return { refreshedAt: new Date().toISOString() };
+  });
+
+/**
+ * Clears all analytics data for a given facility and rebuilds pre-computed stats.
+ * Used by testers to reset CPC Sales analytics to a clean state before testing.
+ */
+async function assertTesterOrAdmin(userId: string) {
+  const { data } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .in("role", ["admin", "tester"]);
+  if (!data || data.length === 0) throw new Error("Forbidden: tester or admin access required");
+}
+
+export const resetFacilityAnalytics = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ facilityValue: z.string().min(1) }).parse(input))
+  .handler(async ({ context, data }) => {
+    await assertTesterOrAdmin(context.userId);
+
+    const { facilityValue } = data;
+
+    // Get all user IDs in this facility
+    const { data: profiles } = await supabaseAdmin
+      .from("user_profiles")
+      .select("user_id")
+      .eq("facility", facilityValue);
+    const userIds = (profiles ?? []).map((p: any) => p.user_id as string);
+
+    const db = supabaseAdmin as any;
+
+    // Snapshot which content items these users rated/bookmarked BEFORE deletion
+    // so we can recalculate the global totals tables afterward.
+    let affectedRatingItemIds: string[] = [];
+    let affectedBookmarkItemIds: string[] = [];
+    if (userIds.length > 0) {
+      const [ratingItems, bookmarkItems] = await Promise.all([
+        db.from("user_content_ratings").select("content_item_id").in("user_id", userIds),
+        db.from("user_content_bookmarks").select("content_item_id").in("user_id", userIds),
+      ]);
+      affectedRatingItemIds = [...new Set<string>((ratingItems.data ?? []).map((r: any) => r.content_item_id as string))];
+      affectedBookmarkItemIds = [...new Set<string>((bookmarkItems.data ?? []).map((r: any) => r.content_item_id as string))];
+    }
+
+    if (userIds.length > 0) {
+      // Clear all raw activity data for these users
+      await Promise.all([
+        supabaseAdmin.from("user_content_progress").delete().in("user_id", userIds),
+        db.from("user_content_engagement").delete().in("user_id", userIds),
+        db.from("user_content_sessions").delete().in("user_id", userIds),
+        db.from("user_content_ratings").delete().in("user_id", userIds),
+        db.from("user_content_bookmarks").delete().in("user_id", userIds),
+        supabaseAdmin.from("user_achievements").delete().in("user_id", userIds),
+        db.from("user_logins").delete().in("user_id", userIds),
+        db.from("analytics_events").delete().in("user_id", userIds),
+      ]);
+
+      // Clear pre-computed stats rows for this facility's users
+      await db.from("user_stats").delete().in("user_id", userIds);
+    }
+
+    // Recalculate rating and bookmark totals for affected items.
+    // These tables are trigger-maintained but triggers can silently fail under
+    // certain RLS configurations. We use DELETE + INSERT (not upsert) so the
+    // service role write is unambiguous and doesn't depend on conflict resolution.
+    if (affectedRatingItemIds.length > 0) {
+      const { data: remaining } = await db
+        .from("user_content_ratings")
+        .select("content_item_id, rating")
+        .in("content_item_id", affectedRatingItemIds);
+
+      // Delete existing totals rows for affected items, then re-insert with correct counts.
+      await db.from("content_item_rating_totals").delete().in("content_item_id", affectedRatingItemIds);
+
+      const toInsert = affectedRatingItemIds
+        .map((id) => {
+          const rows = ((remaining ?? []) as any[]).filter((r: any) => r.content_item_id === id);
+          return {
+            content_item_id: id,
+            thumbs_up: rows.filter((r: any) => r.rating === 1).length,
+            thumbs_down: rows.filter((r: any) => r.rating === -1).length,
+          };
+        })
+        .filter((r) => r.thumbs_up > 0 || r.thumbs_down > 0);
+
+      if (toInsert.length > 0) {
+        await db.from("content_item_rating_totals").insert(toInsert);
+      }
+    }
+
+    if (affectedBookmarkItemIds.length > 0) {
+      const { data: remaining } = await db
+        .from("user_content_bookmarks")
+        .select("content_item_id")
+        .in("content_item_id", affectedBookmarkItemIds);
+
+      await db.from("content_item_bookmark_totals").delete().in("content_item_id", affectedBookmarkItemIds);
+
+      const toInsert = affectedBookmarkItemIds
+        .map((id) => ({
+          content_item_id: id,
+          bookmark_count: ((remaining ?? []) as any[]).filter((r: any) => r.content_item_id === id).length,
+        }))
+        .filter((r) => r.bookmark_count > 0);
+
+      if (toInsert.length > 0) {
+        await db.from("content_item_bookmark_totals").insert(toInsert);
+      }
+    }
+
+    // Clear all facility-level and event-count pre-computed stats for this facility
+    await Promise.all([
+      db.from("facility_stats").delete().eq("facility_value", facilityValue),
+      db.from("analytics_daily_counts").delete().eq("facility_value", facilityValue),
+    ]);
+
+    // Rebuild all pre-computed stats from the now-clean raw data
+    await (supabaseAdmin as any).rpc("refresh_nightly");
+
+    return { ok: true, clearedUsers: userIds.length, facility: facilityValue };
   });

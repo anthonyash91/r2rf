@@ -807,9 +807,11 @@ In the Users tab, select "All facilities" (the unscoped view). Verify the "Expor
 🟡 **Medium**
 Sign in as admin. Click the "Refresh" button in the analytics header. Verify a success toast appears and the refresh timestamp updates. Sign in as a Facility User. Verify the refresh button is not visible.
 
-### 10.17 — Tester data excluded from analytics
+### 10.17 — Tester data excluded from analytics (tracking off)
 🔴 **Critical**
-Sign in as a tester. Complete several items and spend 10+ minutes in content. Sign in as admin. Verify the tester's completions and time do NOT appear in the Overall analytics totals or any facility's usage report.
+With analytics tracking OFF (default — is_synthetic=true in Role Switcher): Sign in as a tester. Complete several items and spend 10+ minutes in content. Sign in as admin. Verify the tester's completions and time do NOT appear in the Overall analytics totals or the CPC Sales facility usage report.
+
+Note: When the tester enables analytics tracking via the Role Switcher (is_synthetic=false), their engagement intentionally appears in the CPC Sales facility report only — this allows QA testing of the facility analytics. It does not appear in the Overall tab regardless.
 
 ### 10.18 — Facility User analytics are facility-scoped server-side
 🔴 **Critical**
@@ -1169,9 +1171,9 @@ Export the bulk progress CSV for a facility. Open it in a spreadsheet app. Verif
 
 ## Section 19 — QA Testing Interface (Tester Dashboard)
 
-### 19.1 — Tester sign-in lands on QA Testing page only
+### 19.1 — Tester sign-in lands on regular dashboard with Testing tab
 🔴 **Critical**
-Sign in as a tester account. Verify the page shows "QA Test Runs" as the heading with the test case count beneath it and a "New run" button. Verify there are no tabs for Progress, Saved, Achievements, or Account — the regular user dashboard is completely absent.
+Sign in as a tester account. Verify the regular user dashboard loads (progress ring, stat cards, category accordion). Verify a "Testing" tab appears alongside the standard dashboard tabs (My Progress, Saved, Achievements, My Account). Click the Testing tab and verify it shows "QA Test Runs" with a "New run" button. Verify the Role Switcher floating button is visible in the bottom-left corner.
 
 ### 19.2 — Create a new test run
 🔴 **Critical**
@@ -1309,9 +1311,9 @@ Sign in as a tester account. Verify a floating button labeled with a flask icon 
 
 ### 21.2 — Switching to Regular User role
 🟠 **High**
-As a tester with the Role Switcher showing, select "Regular User." Verify the page navigates to `/dashboard` and the tester sees the standard user dashboard (progress ring, stat cards, category accordion). Verify no admin navigation is shown. Verify the tester is NOT counted in analytics (check admin Overall tab — tester completions should not appear).
+As a tester with the Role Switcher showing, select "Regular User." Verify the page navigates to `/dashboard` and shows the standard user dashboard (progress ring, stat cards, category accordion, Testing tab). Verify no admin navigation is shown. Note: testers always see the regular user dashboard by default — this simulation simply makes it explicit.
 
-✅ Pass: Tester dashboard is replaced by the regular user dashboard. Admin panel links are not visible. Analytics remain unaffected.
+✅ Pass: Regular user dashboard is shown with the Testing tab visible. Admin panel links are not visible.
 
 ### 21.3 — Switching to Admin role
 🟠 **High**
@@ -1343,11 +1345,13 @@ Sign in as admin. Navigate to Admin → Users → Test Users section. For an exi
 
 ✅ Pass: Upgrade grants all five roles and sets the facility to CPC Sales. Role Switcher functions correctly for all simulations after upgrade.
 
-### 21.8 — Tester analytics exclusion holds across all simulated roles
+### 21.8 — Tester analytics exclusion (tracking off) holds across all simulated roles
 🔴 **Critical**
-As a tester, simulate Admin role. Complete several content items. Check the Admin → Analytics Overall tab. Verify the tester's completions do not appear in any totals. Repeat for Facility User simulation — verify the tester's activity is not in the CPC Sales facility reports.
+With analytics tracking OFF (is_synthetic=true, the default): As a tester, simulate Admin role. Complete several items. Check Admin → Analytics Overall tab — verify the tester's completions do not appear. Check the CPC Sales facility report — verify no tester data appears there either. Repeat for Facility User simulation.
 
-✅ Pass: `is_synthetic = true` on the tester profile excludes all activity from analytics regardless of which role is being simulated.
+Then enable analytics tracking via the Role Switcher toggle (is_synthetic=false). Complete a few items. Verify the activity NOW appears in the CPC Sales facility report (by design, for QA testing), but does NOT appear in the Overall tab.
+
+✅ Pass: With tracking off, tester activity is absent from all analytics. With tracking on, tester activity appears in the CPC Sales facility report only — never in the Overall tab.
 
 ---
 
@@ -1411,7 +1415,7 @@ Run this checklist after any code deployment to confirm core flows still work:
 - [ ] Language toggle switches the full UI to Spanish
 - [ ] IP allowlist blocks and unblocks correctly
 - [ ] Audit log records a password reset action
-- [ ] Tester sign-in shows QA Testing page (no regular dashboard)
+- [ ] Tester sign-in shows regular user dashboard with Testing tab embedded
 - [ ] Tester can create a run, set statuses, and add notes
 - [ ] Tester can attach and remove a screenshot on a failed test
 - [ ] Admin Test Results page lists all tester runs

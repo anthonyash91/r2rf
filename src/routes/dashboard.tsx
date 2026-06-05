@@ -81,25 +81,10 @@ function DashboardRoute() {
 // Splits tester accounts onto their own minimal page so they only see the QA
 // testing interface — no regular user dashboard content at all.
 function DashboardRouter() {
-  const { isTester, rolesLoaded } = useAuth();
-  // Wait until roles are confirmed before rendering either view — prevents a
-  // brief flash of the regular user dashboard (or forced-reset dialog) while
-  // the roles fetch is still in flight on first load.
-  if (!rolesLoaded) return null;
-  if (isTester) return <TesterDashboard />;
-  return <DashboardPage />;
-}
+  const { rolesLoaded } = useAuth();
 
-function TesterDashboard() {
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <SiteHeader />
-      <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
-        <TestingTab />
-      </main>
-      <SiteFooter />
-    </div>
-  );
+  if (!rolesLoaded) return null;
+  return <DashboardPage />;
 }
 
 function DashboardPage() {
@@ -428,6 +413,11 @@ function DashboardPage() {
     }
     setBusy(true);
     try {
+      // Ensure the session token is fresh before the server call — a recent
+      // password reset / refreshSession() can briefly leave getSession() null,
+      // which causes attachSupabaseAuth to send an empty Authorization header.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) await supabase.auth.refreshSession();
       await submitUpdate({ data: { answers: pending.slice(0, 2) } });
       toast.success(t("security.updateSuccess"));
       setEditing(false);
@@ -508,7 +498,7 @@ function DashboardPage() {
               })()}
               <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
             </div>
-            <TabsList className="h-auto p-2 gap-1 w-full sm:w-auto self-stretch sm:self-center bg-muted/40">
+            <TabsList className="h-auto p-2 gap-1 w-full sm:w-auto self-stretch sm:self-center bg-muted/40 border border-border rounded-lg">
               <TabsTrigger
                 value="categories"
                 disabled={mustSetup}
@@ -2016,11 +2006,7 @@ function CategoryProgressSection({
         style={open ? { backgroundColor: "#f7f5ec" } : undefined}
         className={`w-full flex items-center gap-4 p-6 ${open ? "border-b border-border" : ""} text-left hover:bg-muted/40 transition-colors`}
       >
-        {!isAdmin ? (
-          <CircleProgress value={pct} size={52} stroke={5} />
-        ) : (
-          <CategoryIcon name={category.icon_name} color={category.icon_color} size="md" />
-        )}
+        <CircleProgress value={pct} size={52} stroke={5} />
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-base sm:text-lg font-semibold truncate max-w-full">
             {pickLang(lang, category.name, category.name_es)}

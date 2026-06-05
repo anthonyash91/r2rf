@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireAnalyticsAdminBeforeLoad } from "@/lib/admin-guards";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   BarChart3,
@@ -60,7 +61,7 @@ import {
   getBulkFacilityProgressReport,
 } from "@/lib/reports.functions";
 import { listFacilityAdminUsers } from "@/lib/users.functions";
-import { getFacilityComparison, getGrowthStats, triggerNightlyRefresh } from "@/lib/analytics-stats.functions";
+import { getFacilityComparison, getGrowthStats, triggerNightlyRefresh, resetFacilityAnalytics } from "@/lib/analytics-stats.functions";
 import { getAdminUserMonthlySummary } from "@/lib/monthly-summary.functions";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
@@ -365,13 +366,17 @@ type UsageScope =
   | { kind: "facility"; facilityValue: string; facilityLabel: string };
 
 function UsageReportView({ scope }: { scope: UsageScope }) {
+  const { isTester, isAdmin, isContributor } = useAuth();
+  const qc = useQueryClient();
   const [range, setRange] = useState<RangeKey>("30d");
   const [isExporting, setIsExporting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const doResetFacility = useServerFn(resetFacilityAnalytics);
+  const confirm = useConfirm();
   const fetchReport = useServerFn(getUsageReport);
   const fetchGrowth = useServerFn(getGrowthStats);
   const doRefresh = useServerFn(triggerNightlyRefresh);
-  const { isAdmin, isContributor } = useAuth();
 
   const facilityValue = scope.kind === "facility" ? scope.facilityValue : null;
 
@@ -454,31 +459,65 @@ function UsageReportView({ scope }: { scope: UsageScope }) {
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           {(isAdmin || isContributor) && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  disabled={isRefreshing}
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    disabled={isRefreshing}
+                    onClick={async () => {
+                      setIsRefreshing(true);
+                      try {
+                        await doRefresh();
+                        toast.success("Stats refreshed successfully.");
+                      } catch (e: any) {
+                        toast.error(e?.message ?? "Refresh failed.");
+                      } finally {
+                        setIsRefreshing(false);
+                      }
+                    }}
+                    className="inline-flex items-center justify-center rounded-md px-[11px] py-2 text-sm font-medium transition-colors bg-muted/40 text-muted-foreground hover:bg-muted/60 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  Manually refresh all stats now
+                </TooltipContent>
+              </Tooltip>
+              {isTester && (
+                <LoadingButton
+                  variant="secondary"
+                  pending={isResetting}
+                  pendingText="Resetting…"
+                  icon={<RefreshCw className="h-4 w-4" />}
+                  className="flex-1 sm:flex-none !shadow-none"
                   onClick={async () => {
-                    setIsRefreshing(true);
-                    try {
-                      await doRefresh();
-                      toast.success("Stats refreshed successfully.");
-                    } catch (e: any) {
-                      toast.error(e?.message ?? "Refresh failed.");
-                    } finally {
-                      setIsRefreshing(false);
-                    }
+                    await confirm({
+                      title: "Reset CPC Sales analytics?",
+                      description: "This permanently deletes all completions, engagement time, logins, achievements, and pre-computed stats for every user in the CPC Sales facility. Run this before a QA test session to start from a clean baseline. This cannot be undone.",
+                      confirmLabel: "Reset analytics",
+                      destructive: true,
+                      pendingLabel: "Resetting",
+                      onConfirm: async () => {
+                        setIsResetting(true);
+                        try {
+                          const result = await doResetFacility({ data: { facilityValue: "s003007001" } });
+                          await qc.invalidateQueries();
+                          toast.success(`CPC Sales analytics reset — cleared data for ${(result as any).clearedUsers} users.`);
+                        } catch (err: any) {
+                          toast.error(`Reset failed: ${err?.message ?? "Unknown error"}`);
+                        } finally {
+                          setIsResetting(false);
+                        }
+                      },
+                    });
                   }}
-                  className="inline-flex items-center justify-center rounded-md px-[11px] py-2 text-sm font-medium transition-colors bg-muted/40 text-muted-foreground hover:bg-muted/60 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                Manually refresh all stats now
-              </TooltipContent>
-            </Tooltip>
+                  Reset CPC Sales
+                </LoadingButton>
+              )}
+            </>
           )}
           <LoadingButton
             variant="secondary"
@@ -941,7 +980,7 @@ function UsersReportTab({
                               {u.last_sign_in_at && <>{" · "}Last sign-in {fmtDate(u.last_sign_in_at)}</>}
                             </p>
                           </div>
-                          <Badge variant={u.email_confirmed_at ? "verified" : "unverified"} size="sm">
+                          <Badge variant={u.email_confirmed_at ? "verified" : "unverified"}>
                             {u.email_confirmed_at ? "Verified" : "Unverified"}
                           </Badge>
                         </li>
@@ -1724,13 +1763,13 @@ function UserCategorySection({
                   <p className="text-xs text-muted-foreground truncate">/{g.category.slug}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-                <span className="inline-flex items-center gap-1.5 border border-input bg-background px-2.5 py-1.5 text-xs font-medium rounded-[8px] tabular-nums">
+              <div className="flex items-center self-start sm:self-auto [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
+                <span className="inline-flex items-center gap-1 rounded-[8px] border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums">
                   <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
                   {g.read} of {g.total} read
                 </span>
                 {catTimeSeconds > 0 && (
-                  <span className="inline-flex items-center gap-1.5 border border-input bg-background px-2.5 py-1.5 text-xs font-medium rounded-[8px] tabular-nums">
+                  <span className="inline-flex items-center gap-1 rounded-[8px] border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                     {formatTimeSpent(catTimeSeconds)}
                   </span>
@@ -1750,7 +1789,7 @@ function UserCategorySection({
               return (
                 <li key={item.id} className="flex flex-col gap-[10px] bg-[#fffdf8] p-6">
                   <div className="flex items-center gap-2 min-w-0">
-                    <Badge variant="type" type={item.type}>
+                    <Badge variant="type" type={item.type} className="rounded-[8px]">
                       {item.type}
                     </Badge>
                     {item.duration && (
@@ -1919,16 +1958,10 @@ function CategoryList({ rows }: { rows: AggregatedRow[] }) {
   );
 }
 
-function Stat({ icon, label, value, suffix, position, tooltip }: { icon: React.ReactNode; label: string; value: number | string | null; suffix?: string; position?: "first" | "last" | "middle"; tooltip?: string }) {
-  const radius =
-    position === "first"
-      ? "rounded-l-[4px]"
-      : position === "last"
-        ? "rounded-r-[4px] -ml-px"
-        : "-ml-px";
+function Stat({ icon, label, value, suffix, tooltip }: { icon: React.ReactNode; label: string; value: number | string | null; suffix?: string; tooltip?: string }) {
   const display = value == null ? "—" : typeof value === "string" ? value : `${value.toLocaleString()}${suffix ?? ""}`;
   const inner = (
-    <span className={`inline-flex items-center gap-1.5 border border-border bg-background px-3 py-1 text-xs font-medium ${radius}${tooltip ? " cursor-default" : ""}`}>
+    <span className={`inline-flex items-center gap-1 rounded-[8px] border border-border bg-background px-2.5 py-[5px] text-xs font-medium${tooltip ? " cursor-default" : ""}`}>
       {icon}
       <span className="tabular-nums">{display}</span>
       <span className="text-muted-foreground">{label}</span>
@@ -1965,8 +1998,8 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
       >
         <div className="flex items-center gap-3 min-w-0">
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
-          <CategoryIcon name={row.category.icon_name} color={row.category.icon_color} size="sm" />
-          <div className="min-w-0">
+          <CategoryIcon name={row.category.icon_name} color={row.category.icon_color} size="md" />
+          <div className="min-w-0 flex flex-col justify-center">
             <h2 className="font-display text-lg font-semibold truncate">{row.category.name}</h2>
             <p className="text-xs text-muted-foreground truncate">
               /{row.category.slug}
@@ -1974,16 +2007,16 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
             </p>
           </div>
         </div>
-        <div className="inline-flex flex-shrink-0">
-          <Stat position="first" icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} tooltip="How many times this category page was viewed in the selected period." />
-          <Stat position="middle" icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} tooltip="How many times content items in this category were opened in the selected period." />
+        <div className="inline-flex flex-shrink-0 [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:not(:first-child):not(:last-child)]:rounded-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
+          <Stat icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} tooltip="How many times this category page was viewed in the selected period." />
+          <Stat icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} tooltip="How many times content items in this category were opened in the selected period." />
           {row.completionRate != null && (
-            <Stat position="middle" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate} suffix="%" tooltip="Of everyone who opened content in this category, how many finished it." />
+            <Stat icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate} suffix="%" tooltip="Of everyone who opened content in this category, how many finished it." />
           )}
           {row.depth != null && (
-            <Stat position="middle" icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="depth" value={row.depth} tooltip="Average number of items completed per user who engaged with this category in the selected period." />
+            <Stat icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="depth" value={row.depth} tooltip="Average number of items completed per user who engaged with this category in the selected period." />
           )}
-          <Stat position="last" icon={<Clock className="h-3.5 w-3.5" />} label="spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} tooltip="Total time all users spent on content in this category in the selected period." />
+          <Stat icon={<Clock className="h-3.5 w-3.5" />} label="spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} tooltip="Total time all users spent on content in this category in the selected period." />
         </div>
       </button>
       {open && (
@@ -1993,7 +2026,7 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
           <ul className="divide-y divide-border">
             {row.items.map(({ item, clicks, openCount, completeCount, completionRate, avgSessionSeconds, thumbsUp, thumbsDown, bookmarkCount }) => (
               <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] px-6 py-[19px]">
-                <Badge variant="type" type={item.type} size="sm">
+                <Badge variant="type" type={item.type} className="rounded-[8px]">
                   {item.type}
                 </Badge>
                 <div className="flex-1 min-w-0">
@@ -2016,10 +2049,10 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                     <p className="text-xs text-muted-foreground">Added {fmtDate(item.created_at)}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="flex items-center flex-shrink-0 flex-wrap justify-end [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:not(:first-child):not(:last-child)]:rounded-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="inline-flex items-center gap-1.5 text-sm font-medium tabular-nums cursor-default">
+                      <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
                         <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
                         {clicks.toLocaleString()}
                       </span>
@@ -2029,8 +2062,8 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                   {completionRate != null && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground cursor-default">
-                          <BarChart3 className="h-3 w-3" />
+                        <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
+                          <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
                           {completionRate}%
                         </span>
                       </TooltipTrigger>
@@ -2040,8 +2073,8 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                   {openCount > completeCount && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground cursor-default">
-                          <Circle className="h-3 w-3" />
+                        <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
+                          <Circle className="h-3.5 w-3.5 text-muted-foreground" />
                           {openCount - completeCount} drop-off{openCount - completeCount === 1 ? "" : "s"}
                         </span>
                       </TooltipTrigger>
@@ -2051,8 +2084,8 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                   {avgSessionSeconds != null && avgSessionSeconds > 0 && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground cursor-default">
-                          <Clock className="h-3 w-3" />
+                        <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
+                          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                           {formatTimeSpent(avgSessionSeconds)} avg
                         </span>
                       </TooltipTrigger>
@@ -2062,12 +2095,12 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                   {(thumbsUp > 0 || thumbsDown > 0) && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-2 text-xs tabular-nums text-muted-foreground cursor-default">
+                        <span className="inline-flex items-center gap-1.5 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
                           <span className="inline-flex items-center gap-1">
-                            <ThumbsUp className="h-3 w-3" />{thumbsUp}
+                            <ThumbsUp className="h-3.5 w-3.5 text-muted-foreground" />{thumbsUp}
                           </span>
                           <span className="inline-flex items-center gap-1">
-                            <ThumbsDown className="h-3 w-3" />{thumbsDown}
+                            <ThumbsDown className="h-3.5 w-3.5 text-muted-foreground" />{thumbsDown}
                           </span>
                         </span>
                       </TooltipTrigger>
@@ -2077,8 +2110,8 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
                   {bookmarkCount > 0 && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1 text-xs tabular-nums text-muted-foreground cursor-default">
-                          <Bookmark className="h-3 w-3" />{bookmarkCount}
+                        <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
+                          <Bookmark className="h-3.5 w-3.5 text-muted-foreground" />{bookmarkCount}
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-xs px-3 py-2">Users who have bookmarked this item.</TooltipContent>
@@ -2134,12 +2167,12 @@ function MostLeastEngaged({ rows }: { rows: AggregatedRow[] }) {
             title="Content engagement"
             description="The 5 highest and lowest completion rates among items opened by at least 3 users."
           />
-          <TabsList className="h-auto p-1 gap-1 self-start sm:self-auto bg-muted/40">
-            <TabsTrigger value="most" className="px-4 py-1.5 text-sm data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
+          <TabsList className="h-auto p-2 gap-1 self-start sm:self-auto bg-muted/40 border border-border rounded-lg">
+            <TabsTrigger value="most" className="px-4 py-2 text-sm data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
               Most engaged
             </TabsTrigger>
             {least.length > 0 && (
-              <TabsTrigger value="least" className="px-4 py-1.5 text-sm data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
+              <TabsTrigger value="least" className="px-4 py-2 text-sm data-[state=active]:shadow-none hover:bg-background hover:text-foreground">
                 Least engaged
               </TabsTrigger>
             )}

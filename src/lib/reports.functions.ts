@@ -13,13 +13,35 @@ function chunkIds(ids: string[], size = 500): string[][] {
 
 /** Analytics access: admin and facilityUser only — contributors excluded. */
 async function assertAnalyticsAdmin(userId: string) {
-  const { data, error } = await supabaseAdmin
+  const { data } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
-    .in("role", ["admin", "facilityUser"])
+    .in("role", ["admin", "facilityUser"]);
+  if (!data || data.length === 0) throw new Error("Forbidden: analytics admin access required");
+}
+
+/**
+ * Returns true if the caller should be scoped to their own facility.
+ * Callers with the admin role are never scoped — they see all facilities.
+ * This handles tester accounts that hold both admin and facilityUser roles.
+ */
+async function isFacilityScoped(userId: string): Promise<{ scoped: boolean; facility: string | null }> {
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .in("role", ["admin", "facilityUser"]);
+  const hasAdmin = (roles ?? []).some((r: any) => r.role === "admin");
+  if (hasAdmin) return { scoped: false, facility: null };
+  const hasFacilityUser = (roles ?? []).some((r: any) => r.role === "facilityUser");
+  if (!hasFacilityUser) return { scoped: false, facility: null };
+  const { data: prof } = await supabaseAdmin
+    .from("user_profiles")
+    .select("facility")
+    .eq("user_id", userId)
     .maybeSingle();
-  if (error || !data) throw new Error("Forbidden: analytics admin access required");
+  return { scoped: true, facility: prof?.facility ?? null };
 }
 
 const RangeSchema = z.enum(["7d", "30d", "90d", "all", "month"]);
@@ -51,24 +73,14 @@ export const getUsageReport = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAnalyticsAdmin(context.userId);
 
-    // facilityUser callers are scoped to their own facility only
+    // facilityUser callers are scoped to their own facility only (admins see all)
     let facilityValue = data.facilityValue ?? null;
-    const { data: callerFacilityUserRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "facilityUser")
-      .maybeSingle();
-    if (callerFacilityUserRole) {
-      const { data: callerProf } = await supabaseAdmin
-        .from("user_profiles")
-        .select("facility")
-        .eq("user_id", context.userId)
-        .maybeSingle();
-      if (!callerProf?.facility) throw new Error("Forbidden: no facility assigned");
-      if (facilityValue && facilityValue !== callerProf.facility)
+    const { scoped, facility: callerFacility } = await isFacilityScoped(context.userId);
+    if (scoped) {
+      if (!callerFacility) throw new Error("Forbidden: no facility assigned");
+      if (facilityValue && facilityValue !== callerFacility)
         throw new Error("Forbidden: user is not in your facility");
-      facilityValue = callerProf.facility;
+      facilityValue = callerFacility;
     }
 
     const sinceIso = sinceIsoFor(data.range);
@@ -92,6 +104,12 @@ export const getUsageReport = createServerFn({ method: "POST" })
     const staffUserIds = new Set<string>(
       (staffRoles ?? []).map((r: any) => r.user_id as string)
     );
+    // Testers may have the facilityUser role for admin access, but when their
+    // is_synthetic flag is false (analytics tracking on), their engagement should
+    // count in the facility report just like a regular user's would.
+    const testerIds = new Set<string>(
+      (staffRoles ?? []).filter((r: any) => r.role === "tester").map((r: any) => r.user_id as string)
+    );
 
     let userIdFilter: string[] | null = null;
     let facilityUserCount = 0;
@@ -104,7 +122,9 @@ export const getUsageReport = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
       userIdFilter = (profs ?? [])
         .map((p: any) => p.user_id as string)
-        .filter((id) => !facilityUserAccountIds.has(id));
+        // Exclude facilityUser accounts (facility staff), but not testers — testers
+        // bypass this exclusion when is_synthetic=false so they can QA facility reports.
+        .filter((id) => !facilityUserAccountIds.has(id) || testerIds.has(id));
       facilityUserCount = userIdFilter.length;
     }
 
@@ -124,8 +144,19 @@ export const getUsageReport = createServerFn({ method: "POST" })
         .not("user_id", "in", `(${[...facilityUserAccountIds, "00000000-0000-0000-0000-000000000000"].join(",")})`),
       (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
       (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
-      (supabaseAdmin as any).from("content_item_rating_totals").select("content_item_id, thumbs_up, thumbs_down").range(0, 4999),
-      (supabaseAdmin as any).from("content_item_bookmark_totals").select("content_item_id, bookmark_count").range(0, 4999),
+      // Ratings: scope to facility users when a facility is selected (same as every
+      // other metric); use global pre-computed totals only for the overall view.
+      userIdFilter !== null
+        ? userIdFilter.length > 0
+          ? (supabaseAdmin as any).from("user_content_ratings").select("content_item_id, rating").in("user_id", userIdFilter)
+          : Promise.resolve({ data: [] as any[] })
+        : (supabaseAdmin as any).from("content_item_rating_totals").select("content_item_id, thumbs_up, thumbs_down").range(0, 4999),
+      // Bookmarks: same scoping logic
+      userIdFilter !== null
+        ? userIdFilter.length > 0
+          ? (supabaseAdmin as any).from("user_content_bookmarks").select("content_item_id").in("user_id", userIdFilter)
+          : Promise.resolve({ data: [] as any[] })
+        : (supabaseAdmin as any).from("content_item_bookmark_totals").select("content_item_id, bookmark_count").range(0, 4999),
     ]);
     if (catsRes.error) throw new Error(catsRes.error.message);
     if (itemsRes.error) throw new Error(itemsRes.error.message);
@@ -505,14 +536,31 @@ export const getUsageReport = createServerFn({ method: "POST" })
       typeStats[type] = { ...t, completionRate: t.opens > 0 ? Math.round(t.completions / t.opens * 100) : null };
     }
 
+    // Aggregate ratings — shape differs: raw rows (facility) vs pre-aggregated (overall)
     const itemRatings: Record<string, { thumbs_up: number; thumbs_down: number }> = {};
-    for (const r of (ratingsRes.data ?? []) as any[]) {
-      itemRatings[r.content_item_id as string] = { thumbs_up: r.thumbs_up as number, thumbs_down: r.thumbs_down as number };
+    if (userIdFilter !== null) {
+      for (const r of (ratingsRes.data ?? []) as any[]) {
+        const e = itemRatings[r.content_item_id] ?? { thumbs_up: 0, thumbs_down: 0 };
+        if ((r.rating as number) === 1) e.thumbs_up++;
+        else if ((r.rating as number) === -1) e.thumbs_down++;
+        itemRatings[r.content_item_id] = e;
+      }
+    } else {
+      for (const r of (ratingsRes.data ?? []) as any[]) {
+        itemRatings[r.content_item_id as string] = { thumbs_up: r.thumbs_up as number, thumbs_down: r.thumbs_down as number };
+      }
     }
 
+    // Aggregate bookmarks — same shape split
     const itemBookmarks: Record<string, number> = {};
-    for (const r of (bookmarksRes.data ?? []) as any[]) {
-      itemBookmarks[r.content_item_id as string] = r.bookmark_count as number;
+    if (userIdFilter !== null) {
+      for (const r of (bookmarksRes.data ?? []) as any[]) {
+        itemBookmarks[r.content_item_id] = (itemBookmarks[r.content_item_id] ?? 0) + 1;
+      }
+    } else {
+      for (const r of (bookmarksRes.data ?? []) as any[]) {
+        itemBookmarks[r.content_item_id as string] = r.bookmark_count as number;
+      }
     }
 
     return {
@@ -548,23 +596,12 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     await assertAnalyticsAdmin(context.userId);
 
     // facilityUser callers are scoped to their own facility only
-    const { data: callerFacilityUserRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "facilityUser")
-      .maybeSingle();
-    if (callerFacilityUserRole) {
-      const { data: callerProf } = await supabaseAdmin
-        .from("user_profiles")
-        .select("facility")
-        .eq("user_id", context.userId)
-        .maybeSingle();
-      if (!callerProf?.facility) throw new Error("Forbidden: no facility assigned");
-      if (data.facilityValue && data.facilityValue !== callerProf.facility)
+    const { scoped: scoped2, facility: callerFacility2 } = await isFacilityScoped(context.userId);
+    if (scoped2) {
+      if (!callerFacility2) throw new Error("Forbidden: no facility assigned");
+      if (data.facilityValue && data.facilityValue !== callerFacility2)
         throw new Error("Forbidden: user is not in your facility");
-      // Force facilityValue to caller's facility (ignore null/empty input)
-      data = { ...data, facilityValue: callerProf.facility };
+      data = { ...data, facilityValue: callerFacility2 };
     }
 
     const facilityValue = data.facilityValue ?? "";
@@ -679,19 +716,11 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAnalyticsAdmin(context.userId);
 
-    // facilityUser callers may only view users within their own facility
-    const { data: callerFacilityUserRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "facilityUser")
-      .maybeSingle();
-    if (callerFacilityUserRole) {
-      const [{ data: callerProf }, { data: targetProf }] = await Promise.all([
-        supabaseAdmin.from("user_profiles").select("facility").eq("user_id", context.userId).maybeSingle(),
-        supabaseAdmin.from("user_profiles").select("facility").eq("user_id", data.userId).maybeSingle(),
-      ]);
-      if (!callerProf?.facility || callerProf.facility !== targetProf?.facility) {
+    // facilityUser callers may only view users within their own facility (admins see all)
+    const { scoped: scoped3, facility: callerFacility3 } = await isFacilityScoped(context.userId);
+    if (scoped3) {
+      const { data: targetProf } = await supabaseAdmin.from("user_profiles").select("facility").eq("user_id", data.userId).maybeSingle();
+      if (!callerFacility3 || callerFacility3 !== targetProf?.facility) {
         throw new Error("Forbidden: user is not in your facility");
       }
     }
@@ -908,22 +937,12 @@ export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAnalyticsAdmin(context.userId);
 
-    // Enforce facility scope for facilityUser callers
+    // Enforce facility scope for facilityUser callers (admins see all)
     let facilityValue = data.facilityValue;
-    const { data: callerRole } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "facilityUser")
-      .maybeSingle();
-    if (callerRole) {
-      const { data: callerProf } = await supabaseAdmin
-        .from("user_profiles")
-        .select("facility")
-        .eq("user_id", context.userId)
-        .maybeSingle();
-      if (!callerProf?.facility) throw new Error("Forbidden: no facility assigned");
-      if (facilityValue !== callerProf.facility) throw new Error("Forbidden: user is not in your facility");
+    const { scoped: scoped4, facility: callerFacility4 } = await isFacilityScoped(context.userId);
+    if (scoped4) {
+      if (!callerFacility4) throw new Error("Forbidden: no facility assigned");
+      if (facilityValue !== callerFacility4) throw new Error("Forbidden: user is not in your facility");
     }
 
     // Staff IDs to exclude from the user list
