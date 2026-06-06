@@ -1206,24 +1206,31 @@ function TestingTab() {
 
   function toggleSection(n: number) {
     const isCurrentlyOpen = openSections.has(n);
-    setOpenSections((prev) => {
-      const next = new Set(prev);
-      next.has(n) ? next.delete(n) : next.add(n);
-      return next;
-    });
-    // When opening: focus this section (dims others) and scroll to it.
-    // When closing: clear focus if this was the focused section.
-    if (!isCurrentlyOpen) {
+    if (isCurrentlyOpen) {
+      // Close this section; clear focus
+      setOpenSections((prev) => { const next = new Set(prev); next.delete(n); return next; });
+      if (focusedSection === n) setFocusedSection(null);
+    } else {
+      // Accordion: close all others, open only this one, focus and scroll
+      setOpenSections(new Set([n]));
       setFocusedSection(n);
       requestAnimationFrame(() => {
         const el = sectionRefs.current.get(n);
         if (!el) return;
-        const top = el.getBoundingClientRect().top + window.scrollY - 96;
-        window.scrollTo({ top, behavior: "smooth" });
+        window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 96, behavior: "smooth" });
       });
-    } else if (focusedSection === n) {
-      setFocusedSection(null);
     }
+  }
+
+  function jumpToSection(n: number) {
+    // Accordion: close all others, open only this section, focus and scroll
+    setOpenSections(new Set([n]));
+    setFocusedSection(n);
+    requestAnimationFrame(() => {
+      const el = sectionRefs.current.get(n);
+      if (!el) return;
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 96, behavior: "smooth" });
+    });
   }
 
   async function handleSetStatus(testId: string, status: TestStatus) {
@@ -1515,19 +1522,21 @@ function TestingTab() {
       {failures.length > 0 && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-5 mb-6">
           <p className="text-sm font-semibold text-red-700 mb-3">
-            {failures.length} failure{failures.length !== 1 ? "s" : ""} require attention
+            {failures.length} failure{failures.length !== 1 ? "s" : ""} {failures.length !== 1 ? "require" : "requires"} attention
           </p>
           <ul className="space-y-1.5">
-            {failures.map((t) => {
-              const notes = resultMap.get(t.id)?.notes;
-              return (
-                <li key={t.id} className="text-sm">
+            {failures.map((t) => (
+              <li key={t.id}>
+                <button
+                  type="button"
+                  onClick={() => jumpToSection(t.sectionNum)}
+                  className="text-sm text-left hover:underline"
+                >
                   <span className="font-medium text-red-700">{t.id}</span>
                   <span className="text-red-600"> — {t.title}</span>
-                  {notes && <p className="text-xs text-red-600/80 mt-0.5 pl-8">{notes}</p>}
-                </li>
-              );
-            })}
+                </button>
+              </li>
+            ))}
           </ul>
         </div>
       )}
@@ -1690,33 +1699,31 @@ function TestingTab() {
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap items-center gap-2 mb-1">
                               <span className="text-xs font-mono text-muted-foreground">{test.id}</span>
-                              {(() => {
-                                const priorityConfig = {
-                                  critical: { icon: AlertCircle, label: "Critical", cls: "text-red-600 bg-red-50 border-red-200" },
-                                  high:     { icon: ChevronUp,   label: "High",     cls: "text-orange-600 bg-orange-50 border-orange-200" },
-                                  medium:   { icon: Minus,        label: "Medium",   cls: "text-yellow-600 bg-yellow-50 border-yellow-200" },
-                                  low:      { icon: ChevronDown,  label: "Low",      cls: "text-green-600 bg-green-50 border-green-200" },
-                                }[test.priority];
-                                const PIcon = priorityConfig.icon;
-                                return (
-                                  <span className={`inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] ${priorityConfig.cls}`}>
-                                    <PIcon className="h-3.5 w-3.5" />
-                                    {priorityConfig.label}
-                                  </span>
-                                );
-                              })()}
-                              {test.roles && test.roles.length > 0 && (
-                                <div className="inline-flex items-center [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:not(:first-child):not(:last-child)]:rounded-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
-                                  {test.roles.map((role) => (
-                                    <span key={role} className="inline-flex items-center gap-1 rounded-[8px] border border-border bg-background px-2 py-[3px] text-xs text-muted-foreground">
-                                      <UserIcon className="h-3 w-3 shrink-0" />
-                                      {role}
+                              <div className="inline-flex items-center [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:not(:first-child):not(:last-child)]:rounded-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
+                                {(() => {
+                                  const priorityConfig = {
+                                    critical: { icon: AlertCircle, label: "Critical", cls: "text-red-600 bg-red-50 border-red-200" },
+                                    high:     { icon: ChevronUp,   label: "High",     cls: "text-orange-600 bg-orange-50 border-orange-200" },
+                                    medium:   { icon: Minus,        label: "Medium",   cls: "text-yellow-600 bg-yellow-50 border-yellow-200" },
+                                    low:      { icon: ChevronDown,  label: "Low",      cls: "text-green-600 bg-green-50 border-green-200" },
+                                  }[test.priority];
+                                  const PIcon = priorityConfig.icon;
+                                  return (
+                                    <span className={`inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] ${priorityConfig.cls}`}>
+                                      <PIcon className="h-3.5 w-3.5" />
+                                      {priorityConfig.label}
                                     </span>
-                                  ))}
-                                </div>
-                              )}
+                                  );
+                                })()}
+                                {test.roles && test.roles.map((role) => (
+                                  <span key={role} className="inline-flex items-center gap-1 rounded-[8px] border border-border bg-background px-2.5 py-[5px] text-xs font-medium text-muted-foreground">
+                                    <UserIcon className="h-3.5 w-3.5 shrink-0" />
+                                    {role}
+                                  </span>
+                                ))}
+                              </div>
                             </div>
-                            <p className="text-sm font-medium mb-1">{test.title}</p>
+                            <p className="text-sm font-medium mt-2 mb-1">{test.title}</p>
                             {(() => {
                               // Split the description at the pass-criteria marker so we can
                               // control the gap between steps and ✅ Pass independently.

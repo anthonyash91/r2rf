@@ -1432,7 +1432,7 @@ Click "New run." Type a label (e.g. "Smoke test June 3"). Press Enter or click C
 ### 19.3 — Section accordion expands and shows all tests
 🟠 **High**
  **Role:** Regular User
-Click on any section accordion. Verify it expands to show all tests in that section, each showing its ID, priority badge (with icon), title, description, status buttons (Pass/Fail/Blocked/Skipped/Untested), a notes field, and an "Attach screenshot" button.
+Click on any section accordion. Verify it expands to show all tests in that section, each showing its ID, a connected badge pill (priority badge + role badge(s)), title, description, status buttons (Pass/Fail/Blocked/Skipped/Untested), a notes field, and an "Attach screenshot" button.
 
 ### 19.4 — Set a test status — Pass
 🔴 **Critical**
@@ -1533,7 +1533,7 @@ Click on any run row in the table. Verify the run list is replaced by the detail
 ### 20.4 — Section accordion shows correct test results
 🟠 **High**
  **Role:** Admin
-Expand a section that has a mix of passed, failed, and untested tests. Verify each test row shows the correct status icon, test ID, title, priority, and any tester notes. The section header shows correct pass ✓ and fail ✗ counts.
+Expand a section that has a mix of passed, failed, and untested tests. Verify each test row shows the correct status icon, test ID, a connected badge pill (priority → status → role badge(s)), title, description, and any tester notes displayed in a bordered input-style box. The section header shows correct pass ✓ and fail ✗ counts.
 
 ### 20.5 — Screenshot link is visible in admin detail view
 🔴 **Critical**

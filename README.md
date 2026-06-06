@@ -678,7 +678,7 @@ A read-only dashboard showing every QA test run submitted by tester accounts.
 
 **Run list** — table of all runs across all testers showing: run label, tester username, date, in-progress/completed status, a progress bar (actioned/248), and pass ✓ / fail ✗ / blocked ⊘ counts.
 
-**Run detail view** — click any run to open the full detail. A 64px progress ring shows the overall pass rate at a glance. Section accordions each show a per-section pass/fail count. Expanded sections show each test with its status icon, ID, title, priority badge (with icon), tester notes in a muted bordered box, and a **View screenshot** button if the tester attached one.
+**Run detail view** — click any run to open the full detail. A 64px progress ring shows the overall pass rate at a glance. Section accordions each show a per-section pass/fail count. Expanded sections show each test with its status icon, ID, a connected badge pill (priority → status → role badges), title, description, tester notes in a bordered input-style box, and a **View screenshot** button if the tester attached one.
 
 **Failures panel** — when any tests are marked Failed, they surface at the very top of the detail view (highlighted in red) showing ID, title, notes, and a screenshot button — giving the dev team an immediate triage list without scrolling.
 
