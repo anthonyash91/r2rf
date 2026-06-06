@@ -1705,6 +1705,16 @@ function TestingTab() {
                                   </span>
                                 );
                               })()}
+                              {test.roles && test.roles.length > 0 && (
+                                <div className="inline-flex items-center [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:not(:first-child):not(:last-child)]:rounded-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
+                                  {test.roles.map((role) => (
+                                    <span key={role} className="inline-flex items-center gap-1 rounded-[8px] border border-border bg-background px-2 py-[3px] text-xs text-muted-foreground">
+                                      <UserIcon className="h-3 w-3 shrink-0" />
+                                      {role}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                             <p className="text-sm font-medium mb-1">{test.title}</p>
                             {(() => {
