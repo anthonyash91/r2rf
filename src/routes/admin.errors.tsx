@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AlertOctagon, Filter, Server, Monitor, Trash2 } from "lucide-react";
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
+import { capFirst } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
 import { FilterField } from "@/components/FilterField";
 import { EmptyState } from "@/components/EmptyState";
@@ -65,7 +66,7 @@ function ErrorRow({ entry }: { entry: any }) {
             <p className="text-xs text-muted-foreground">
               <span className="uppercase tracking-wide">{entry.source}</span>
               {entry.route && <>{" · "}{entry.route}</>}
-              {entry.username && <>{" · "}{entry.username}</>}
+              {entry.username && <>{" · "}{capFirst(entry.username)}</>}
               {entry.ip_address && <>{" · "}{entry.ip_address}</>}
             </p>
             {(entry.stack || (entry.context && Object.keys(entry.context).length > 0)) && (

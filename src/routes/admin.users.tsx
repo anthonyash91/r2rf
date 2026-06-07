@@ -18,6 +18,7 @@ import { Pager } from "@/components/LoadMorePager";
 import { useToastMutation } from "@/hooks/use-toast-mutation";
 import { rowPending } from "@/hooks/use-row-pending";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
+import { capFirst, displayName } from "@/lib/utils";
 
 import {
   listAdminUsers,
@@ -179,9 +180,10 @@ function AdminUsersPage() {
   });
 
   const isLoading = (!isFacilityUser && (adminQuery.isLoading || testerQuery.isLoading)) || facilityAdminQuery.isLoading || regularQuery.isLoading;
-  const adminUsers: UserRow[] = adminQuery.data?.users ?? [];
+  const isTester = (u: UserRow) => u.roles.includes("tester");
+  const adminUsers: UserRow[] = (adminQuery.data?.users ?? []).filter((u) => !isTester(u));
   const testerUsers: UserRow[] = testerQuery.data?.users ?? [];
-  const facilityAdminUsers: UserRow[] = facilityAdminQuery.data?.users ?? [];
+  const facilityAdminUsers: UserRow[] = (facilityAdminQuery.data?.users ?? []).filter((u) => !isTester(u));
   const regularUsers: UserRow[] = regularQuery.data?.users ?? [];
   const regularTotal = regularQuery.data?.total ?? 0;
   const totalUsers = (isFacilityUser ? 0 : adminUsers.length + testerUsers.length) + facilityAdminUsers.length + regularTotal;
@@ -830,40 +832,34 @@ function UserItem({
                 /* Regular users: name + status badges inline */
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-medium truncate">
-                    {[user.profile!.first_name, user.profile!.last_name].filter(Boolean).join(" ") || user.profile!.username}
+                    {displayName(user.profile!.first_name, user.profile!.last_name, user.profile!.username)}
                   </span>
                   <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} hideFacilityBadge={isRegularUser} />
                 </div>
               ) : (
-                <>
-                  <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
-                    <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} hideFacilityBadge={isRegularUser} />
-                  </div>
-                  <div className="flex items-center gap-2 flex-nowrap min-w-0">
-                    <span className="font-mono text-sm truncate">
-                      {showFacilityUserBadge ? user.email : user.profile!.username}
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <span className="font-mono text-sm truncate">
+                    {showFacilityUserBadge ? user.email : capFirst(user.profile!.username)}
+                  </span>
+                  {(user.profile!.first_name || user.profile!.last_name) && (
+                    <span className="text-sm text-muted-foreground truncate">
+                      {[capFirst(user.profile!.first_name), capFirst(user.profile!.last_name)].filter(Boolean).join(" ")}
                     </span>
-                    {(user.profile!.first_name || user.profile!.last_name) && (
-                      <span className="text-sm text-muted-foreground truncate">
-                        {`${user.profile!.first_name} ${user.profile!.last_name}`.trim()}
-                      </span>
+                  )}
+                  <UserStatusBadges
+                    user={user}
+                    facilityLabel={facilityLabel}
+                    isNew={isNew}
+                    hideFacilityBadge={isRegularUser}
+                  >
+                    {showFacilityUserBadge && <Badge variant="facility-user" className="rounded-[8px]">Facility User</Badge>}
+                    {showFacilityUserBadge && (
+                      user.email_confirmed_at
+                        ? <Badge variant="verified" className="rounded-[8px]">Verified</Badge>
+                        : <Badge variant="unverified" className="rounded-[8px]">Unverified</Badge>
                     )}
-                    <UserStatusBadges
-                      user={user}
-                      facilityLabel={facilityLabel}
-                      isNew={isNew}
-                      hideFacilityBadge={isRegularUser}
-                      className="hidden sm:inline-flex"
-                    >
-                      {showFacilityUserBadge && <Badge variant="facility-user" className="rounded-[8px]">Facility User</Badge>}
-                      {showFacilityUserBadge && (
-                        user.email_confirmed_at
-                          ? <Badge variant="verified" className="rounded-[8px]">Verified</Badge>
-                          : <Badge variant="unverified" className="rounded-[8px]">Unverified</Badge>
-                      )}
-                    </UserStatusBadges>
-                  </div>
-                </>
+                  </UserStatusBadges>
+                </div>
               )}
             </>
           ) : editingEmail ? (
@@ -938,7 +934,7 @@ function UserItem({
           {isRegularUser ? (
             <>
               <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                @{user.profile!.username}
+                @{capFirst(user.profile!.username)}
                 {user.profile?.inmatePin && <> · PIN: {user.profile.inmatePin}</>}
                 {facilityLabel && <> · {facilityLabel}</>}
               </p>

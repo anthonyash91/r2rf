@@ -155,7 +155,7 @@ Present on every page:
 
 # 2. User Dashboard
 
-The user dashboard (`/dashboard`) is the personal progress center for regular users. It has four tabs.
+The user dashboard (`/dashboard`) is the personal progress center for regular users. It has four tabs, each with an icon: **My Progress** (book), **Saved** (bookmark), **Achievements** (trophy), and **My Account** (user). Tester accounts see a fifth **Testing** tab (clipboard). On narrow screens where not all tabs fit, a **More** dropdown appears — the active tab always stays visible in the primary row.
 
 ---
 
@@ -239,9 +239,9 @@ A list of every category the user can access, each as a collapsible accordion ro
 
 **Header row shows:**
 - **Circular progress ring** — weighted category completion (same logic as the overall ring; exempt items excluded)
-- **Category name**
-- **"New content" badge** — if items were recently added that the user hasn't opened
-- **"X of Y items · Xm spent"** — completed items, total trackable items, and time spent
+- **Category name** — on wider screens, a "New content" badge sits inline beside the name
+- **Completion + time pills** — connected horizontal control on desktop; stacks vertically with the New badge on mobile, all right-aligned
+- The action/bookmark/rating badges on expanded items occupy a right-side column that never overlaps the type badge or duration on the left
 
 **When expanded, each item shows:**
 
@@ -352,7 +352,7 @@ The admin panel (`/admin`) is accessible to admin, contributor, and facility use
 | Role | Who They Are | Admin Access |
 |---|---|---|
 | **Regular User** | Incarcerated individuals using the library | None |
-| **Tester** | QA accounts with a role switcher to simulate any account type. Lands on the regular user dashboard with an embedded Testing tab for QA runs. Excluded from analytics by default; can enable analytics tracking via the Role Switcher to appear in facility-scoped reports for testing. | None (user dashboard + Testing tab only) |
+| **Tester** | QA accounts with a role switcher to simulate any account type. Lands on the regular user dashboard with an embedded Testing tab for QA runs. Excluded from analytics by default; can enable analytics tracking via the Role Switcher to appear in facility-scoped reports for testing. The Role Switcher is a fixed bottom-left widget with a solid background, always visible above page content and footer. | None (user dashboard + Testing tab only) |
 | **Contributor** | Content editors | Content editing only |
 | **Facility User** | Facility staff (counselors, administrators) | Analytics + user management for their own facility |
 | **Admin** | Platform administrators | Full unrestricted access |
@@ -682,7 +682,7 @@ A read-only dashboard showing every QA test run submitted by tester accounts.
 
 **Failures panel** — when any tests are marked Failed, they surface at the very top of the detail view (highlighted in red) showing ID, title, notes, and a screenshot button — giving the dev team an immediate triage list without scrolling.
 
-**Filters** — status and priority filter buttons (with icons, matching the tester dashboard) apply across all section accordions simultaneously.
+**Filters** — status and priority controls apply across all section accordions simultaneously. On screens ≥1024px wide these render as connected icon+label pill groups; on narrower screens they become two Select dropdowns to prevent overflow.
 
 ---
 

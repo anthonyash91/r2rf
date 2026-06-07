@@ -122,7 +122,7 @@ function AdminTermsPage() {
 
             {showEs ? (
               <div className="space-y-4 rounded-lg border border-dashed border-border bg-muted/20 p-4">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <div className="flex flex-row items-start justify-between gap-2">
                   <div>
                     <h3 className="text-sm font-semibold">Spanish translation</h3>
                     <p className="text-xs text-muted-foreground">

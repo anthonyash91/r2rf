@@ -1,7 +1,7 @@
 import { createFileRoute, redirect, Link, useBlocker } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { setSecurityLock } from "@/lib/security-lock";
 import { toast } from "sonner";
 import { Badge } from "@/components/Badge";
@@ -36,6 +36,7 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { useAchievements } from "@/hooks/use-achievements";
 import { ACHIEVEMENTS } from "@/lib/achievements";
+import { capFirst } from "@/lib/utils";
 import { getMyMonthlySummary } from "@/lib/monthly-summary.functions";
 import {
   createTestRun, listMyTestRuns, getRunResults, upsertTestResult,
@@ -50,7 +51,9 @@ import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/Se
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight, ClipboardCheck, Plus, Trash2, CheckCircle, XCircle, MinusCircle, SkipForward, ChevronRight, AlertCircle, ChevronUp, Minus, LayoutList, Layers, ImagePlus, ExternalLink, X } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Category } from "@/lib/categories";
 
 
@@ -430,6 +433,112 @@ function DashboardPage() {
     }
   }
 
+  // ── Tab overflow nav (mirrors AdminNav logic) ──────────────────────────
+  const { tab: searchTab } = Route.useSearch();
+  const [activeTab, setActiveTab] = useState<string>(searchTab ?? "categories");
+  const effectiveTab = mustSetup ? "account" : activeTab;
+
+  const tabContainerRef = useRef<HTMLDivElement | null>(null);
+  const tabMeasureRef = useRef<HTMLUListElement | null>(null);
+  const [visibleTabCount, setVisibleTabCount] = useState(5);
+
+  const TAB_NAV_CLS = "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors";
+
+  const tabItems: Array<{ value: string; label: React.ReactNode; disabled?: boolean }> = [
+    {
+      value: "categories",
+      disabled: mustSetup,
+      label: <><BookOpen className="h-3.5 w-3.5" />{t("dashboard.tabProgress")}</>,
+    },
+    {
+      value: "saved",
+      disabled: mustSetup,
+      label: (
+        <>
+          <Bookmark className="h-3.5 w-3.5" />
+          {t("dashboard.tabSaved")}
+          {bookmarkIds.size > 0 && (
+            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)]/15 px-1 text-[10px] font-semibold text-[var(--color-accent)]">
+              {bookmarkIds.size}
+            </span>
+          )}
+        </>
+      ),
+    },
+    {
+      value: "achievements",
+      disabled: mustSetup,
+      label: (
+        <>
+          <Trophy className="h-3.5 w-3.5" />
+          {t("dashboard.tabAchievements")}
+          {Object.keys(earnedAchievements).length > 0 && (
+            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)]/15 px-1 text-[10px] font-semibold text-[var(--color-accent)]">
+              {Object.keys(earnedAchievements).length}
+            </span>
+          )}
+        </>
+      ),
+    },
+    { value: "account", label: <><UserIcon className="h-3.5 w-3.5" />{t("dashboard.tabAccount")}</> },
+    ...(isTester ? [{ value: "testing", label: <><ClipboardCheck className="h-3.5 w-3.5" />Testing</> }] : []),
+  ];
+
+  const recomputeTabs = () => {
+    const container = tabContainerRef.current;
+    const measure = tabMeasureRef.current;
+    if (!container || !measure) return;
+    const itemEls = Array.from(measure.querySelectorAll<HTMLElement>("[data-tab-measure]"));
+    const moreEl = measure.querySelector<HTMLElement>("[data-more-tab-measure]");
+    if (!itemEls.length || !moreEl) return;
+    const itemWidths = itemEls.map((el) => el.getBoundingClientRect().width);
+    const moreWidth = moreEl.getBoundingClientRect().width;
+    const available = container.clientWidth - 16;
+    const totalAll = itemWidths.reduce((sum, w, i) => sum + w + (i > 0 ? 4 : 0), 0);
+    if (totalAll <= available) { setVisibleTabCount(itemWidths.length); return; }
+    let used = moreWidth;
+    let count = 0;
+    for (let i = 0; i < itemWidths.length; i++) {
+      const next = used + itemWidths[i] + 4;
+      if (next > available) break;
+      used = next;
+      count++;
+    }
+    const activeIdx = tabItems.findIndex((tab) => tab.value === effectiveTab);
+    if (activeIdx >= count && count > 0) {
+      const activeWidth = itemWidths[activeIdx] ?? 0;
+      const replacedWidth = itemWidths[count - 1] ?? 0;
+      if (activeWidth > replacedWidth && used - replacedWidth + activeWidth > available) {
+        count = Math.max(0, count - 1);
+      }
+    }
+    setVisibleTabCount(Math.max(0, count));
+  };
+
+  useLayoutEffect(() => {
+    recomputeTabs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabItems.length, effectiveTab]);
+
+  useEffect(() => {
+    const container = tabContainerRef.current;
+    if (!container) return;
+    const ro = new ResizeObserver(() => recomputeTabs());
+    ro.observe(container);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  let primaryTabs = tabItems.slice(0, visibleTabCount);
+  let overflowTabs = tabItems.slice(visibleTabCount);
+  const activeTabInOverflow = overflowTabs.find((tab) => tab.value === effectiveTab);
+  if (activeTabInOverflow && primaryTabs.length > 0) {
+    const displaced = primaryTabs[primaryTabs.length - 1];
+    primaryTabs = [...primaryTabs.slice(0, -1), activeTabInOverflow];
+    overflowTabs = overflowTabs.map((tab) => (tab === activeTabInOverflow ? displaced : tab));
+  }
+  const overflowTabActive = overflowTabs.some((tab) => tab.value === effectiveTab);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Dialog open={mustResetPassword && !resetDone} onOpenChange={() => { /* non-dismissible */ }}>
@@ -477,11 +586,7 @@ function DashboardPage() {
       <SiteMessageBanner kind="home" />
       <SiteMessageBanner kind="facility" facilityValue={userFacility ?? undefined} />
       <main className="flex-1 mx-auto w-full max-w-6xl px-6 py-12">
-        <Tabs
-          value={mustSetup ? "account" : undefined}
-          defaultValue={Route.useSearch().tab === "account" ? "account" : Route.useSearch().tab === "saved" ? "saved" : Route.useSearch().tab === "achievements" ? "achievements" : "categories"}
-          className="mt-0"
-        >
+        <Tabs value={effectiveTab} className="mt-0">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               {(() => {
@@ -498,67 +603,67 @@ function DashboardPage() {
               })()}
               <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
             </div>
-            <TabsList className="h-auto p-2 gap-1 w-full sm:w-auto self-stretch sm:self-center bg-muted/40 border border-border rounded-lg">
-              <TabsTrigger
-                value="categories"
-                disabled={mustSetup}
-                onClick={(e) => {
-                  if (mustSetup) {
-                    e.preventDefault();
-                    toast.error(t("dashboard.lockedNav"));
-                  }
-                }}
-                className={`flex-1 sm:flex-none justify-center px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
-              >
-                {t("dashboard.tabProgress")}
-              </TabsTrigger>
-              <TabsTrigger
-                value="saved"
-                disabled={mustSetup}
-                onClick={(e) => {
-                  if (mustSetup) { e.preventDefault(); toast.error(t("dashboard.lockedNav")); }
-                }}
-                className={`flex-1 sm:flex-none justify-center px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
-              >
-                {t("dashboard.tabSaved")}
-                {bookmarkIds.size > 0 && (
-                  <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)]/15 px-1 text-[10px] font-semibold text-[var(--color-accent)]">
-                    {bookmarkIds.size}
-                  </span>
+            <div ref={tabContainerRef} className="relative w-full sm:w-auto overflow-hidden self-stretch sm:self-center">
+              {/* Hidden measurement row — renders off-screen to measure item widths */}
+              <ul ref={tabMeasureRef} aria-hidden="true" className="invisible pointer-events-none absolute inset-0 flex items-center gap-1 p-2">
+                {tabItems.map((tab) => (
+                  <li key={tab.value} data-tab-measure className="shrink-0">
+                    <span className={TAB_NAV_CLS}>{tab.label}</span>
+                  </li>
+                ))}
+                <li data-more-tab-measure className="shrink-0">
+                  <span className={TAB_NAV_CLS}>More <ChevronDown className="h-3.5 w-3.5 opacity-60" /></span>
+                </li>
+              </ul>
+              {/* Visible tab row */}
+              <ul className="flex w-full items-center justify-center gap-1 rounded-lg border border-border bg-muted/40 p-2 text-muted-foreground">
+                {primaryTabs.map((tab) => (
+                  <li key={tab.value} className="shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => tab.disabled ? toast.error(t("dashboard.lockedNav")) : setActiveTab(tab.value)}
+                      className={[
+                        TAB_NAV_CLS,
+                        effectiveTab === tab.value
+                          ? "bg-background text-foreground shadow-sm"
+                          : tab.disabled
+                            ? "opacity-40 cursor-not-allowed"
+                            : "hover:bg-background hover:text-foreground",
+                      ].join(" ")}
+                    >
+                      {tab.label}
+                    </button>
+                  </li>
+                ))}
+                {overflowTabs.length > 0 && (
+                  <li className="shrink-0">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        className={[
+                          TAB_NAV_CLS,
+                          "outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 data-[state=open]:bg-background data-[state=open]:text-foreground",
+                          overflowTabActive ? "bg-background text-foreground shadow-sm" : "hover:bg-background hover:text-foreground",
+                        ].join(" ")}
+                      >
+                        More
+                        <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {overflowTabs.map((tab) => (
+                          <DropdownMenuItem
+                            key={tab.value}
+                            onSelect={() => tab.disabled ? toast.error(t("dashboard.lockedNav")) : setActiveTab(tab.value)}
+                            className={`cursor-pointer ${effectiveTab === tab.value ? "bg-muted" : ""}`}
+                          >
+                            {tab.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </li>
                 )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="achievements"
-                disabled={mustSetup}
-                onClick={(e) => {
-                  if (mustSetup) { e.preventDefault(); toast.error(t("dashboard.lockedNav")); }
-                }}
-                className={`flex-1 sm:flex-none justify-center px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground ${mustSetup ? "opacity-40 cursor-not-allowed" : ""}`}
-              >
-                {t("dashboard.tabAchievements")}
-                {Object.keys(earnedAchievements).length > 0 && (
-                  <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)]/15 px-1 text-[10px] font-semibold text-[var(--color-accent)]">
-                    {Object.keys(earnedAchievements).length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="account"
-                className="flex-1 sm:flex-none justify-center px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
-              >
-                {t("dashboard.tabAccount")}
-              </TabsTrigger>
-              {/* Testing tab — only visible to tester accounts */}
-              {isTester && (
-                <TabsTrigger
-                  value="testing"
-                  className="flex-1 sm:flex-none justify-center px-4 py-2 data-[state=active]:shadow-none hover:bg-background hover:text-foreground"
-                >
-                  <ClipboardCheck className="h-3.5 w-3.5 mr-1.5" />
-                  Testing
-                </TabsTrigger>
-              )}
-            </TabsList>
+              </ul>
+            </div>
           </div>
 
 
@@ -1024,7 +1129,7 @@ function DashboardPage() {
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                       <UserIcon className="h-3.5 w-3.5" /> {t("signup.username")}
                     </dt>
-                    <dd className="mt-1 font-medium">{profile.username}</dd>
+                    <dd className="mt-1 font-medium">{capFirst(profile.username)}</dd>
                   </div>
                   {((profile as any).first_name || (profile as any).last_name) && (
                     <div>
@@ -1595,31 +1700,60 @@ function TestingTab() {
         };
 
         return (
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex items-center">
-              {renderPill((["all", "pass", "fail", "blocked", "skipped", "untested"] as const).map((s) => ({
-                key: `s-${s}`,
-                Icon: s === "all" ? LayoutList : STATUS_ICON_COMPONENTS[s],
-                label: s === "all" ? "All" : STATUS_LABELS[s],
-                active: filterStatus === s,
-                activeClass: STATUS_ACTIVE[s],
-                hoverClass: STATUS_HOVER[s],
-                onClick: () => setFilterStatus(s),
-              })))}
+          <>
+            <div className="flex items-center gap-3 my-6 lg:hidden">
+              <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as TestStatus | "all")}>
+                <SelectTrigger className="flex-1 min-w-0 shadow-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="pass">Passed</SelectItem>
+                  <SelectItem value="fail">Failed</SelectItem>
+                  <SelectItem value="blocked">Blocked</SelectItem>
+                  <SelectItem value="skipped">Skipped</SelectItem>
+                  <SelectItem value="untested">Untested</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterPriority} onValueChange={(v) => setFilterPriority(v as typeof filterPriority)}>
+                <SelectTrigger className="flex-1 min-w-0 shadow-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All priorities</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <span className="h-5 w-px bg-border shrink-0" />
-            <div className="flex items-center">
-              {renderPill((["all", "critical", "high", "medium", "low"] as const).map((p) => ({
-                key: `p-${p}`,
-                Icon: PRIORITY_ICONS[p],
-                label: p === "all" ? "All priorities" : p.charAt(0).toUpperCase() + p.slice(1),
-                active: filterPriority === p,
-                activeClass: PRIORITY_ACTIVE[p],
-                hoverClass: PRIORITY_HOVER[p],
-                onClick: () => setFilterPriority(p),
-              })))}
+            <div className="hidden lg:flex items-center gap-3 my-6">
+              <div className="flex items-center">
+                {renderPill((["all", "pass", "fail", "blocked", "skipped", "untested"] as const).map((s) => ({
+                  key: `s-${s}`,
+                  Icon: s === "all" ? LayoutList : STATUS_ICON_COMPONENTS[s],
+                  label: s === "all" ? "All" : STATUS_LABELS[s],
+                  active: filterStatus === s,
+                  activeClass: STATUS_ACTIVE[s],
+                  hoverClass: STATUS_HOVER[s],
+                  onClick: () => setFilterStatus(s),
+                })))}
+              </div>
+              <span className="h-5 w-px bg-border shrink-0" />
+              <div className="flex items-center">
+                {renderPill((["all", "critical", "high", "medium", "low"] as const).map((p) => ({
+                  key: `p-${p}`,
+                  Icon: PRIORITY_ICONS[p],
+                  label: p === "all" ? "All priorities" : p.charAt(0).toUpperCase() + p.slice(1),
+                  active: filterPriority === p,
+                  activeClass: PRIORITY_ACTIVE[p],
+                  hoverClass: PRIORITY_HOVER[p],
+                  onClick: () => setFilterPriority(p),
+                })))}
+              </div>
             </div>
-          </div>
+          </>
         );
       })()}
 
@@ -2025,24 +2159,45 @@ function CategoryProgressSection({
       >
         <CircleProgress value={pct} size={52} stroke={5} />
         <div className="min-w-0 flex-1">
-          <h2 className="font-display text-base sm:text-lg font-semibold truncate max-w-full">
-            {pickLang(lang, category.name, category.name_es)}
-          </h2>
-          {!isAdmin ? (
-            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-              {(() => {
-                const catSecs = items.reduce((sum, it) => sum + (engagementMap.get(it.id)?.sessionSeconds ?? 0), 0);
-                const completedText = t("dashboard.itemsCompleted", { done: read.toLocaleString(), total: total.toLocaleString() } as any);
-                return catSecs > 0 ? `${completedText} · ${formatTimeSpent(catSecs)} spent` : completedText;
-              })()}
-            </p>
-          ) : tagline ? (
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="font-display text-base sm:text-lg font-semibold truncate">
+              {pickLang(lang, category.name, category.name_es)}
+            </h2>
+            {/* "New" badge next to title on larger screens */}
+            {hasRecent && (
+              <Badge variant="new" className="rounded-[8px] hidden sm:inline-flex shrink-0">
+                {t("category.newContentAdded")}
+              </Badge>
+            )}
+          </div>
+          {isAdmin && tagline && (
             <p className="mt-0.5 text-xs text-muted-foreground truncate">{tagline}</p>
-          ) : null}
+          )}
         </div>
-        {hasRecent && (
-          <Badge variant="new" className="rounded-[8px]">{t("category.newContentAdded")}</Badge>
-        )}
+        {!isAdmin && (() => {
+          const catSecs = items.reduce((sum, it) => sum + (engagementMap.get(it.id)?.sessionSeconds ?? 0), 0);
+          return (
+            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 sm:gap-0 flex-shrink-0">
+              <span className={[
+                "inline-flex items-center gap-1 border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums",
+                catSecs > 0 ? "rounded-[8px] sm:rounded-l-[8px] sm:rounded-r-none" : "rounded-[8px]",
+              ].join(" ")}>
+                <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+                {t("dashboard.itemsCompleted", { done: read.toLocaleString(), total: total.toLocaleString() } as any)}
+              </span>
+              {catSecs > 0 && (
+                <span className="inline-flex items-center gap-1 border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums rounded-[8px] sm:-ml-px sm:rounded-l-none sm:rounded-r-[8px]">
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                  {formatTimeSpent(catSecs)}
+                </span>
+              )}
+              {/* "New" badge stacks in the right column on small screens only */}
+              {hasRecent && (
+                <Badge variant="new" className="rounded-[8px] sm:hidden">{t("category.newContentAdded")}</Badge>
+              )}
+            </div>
+          );
+        })()}
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
       </button>
       {open && (
@@ -2055,20 +2210,22 @@ function CategoryProgressSection({
               const description = pickLang(lang, it.description, it.description_es);
               return (
                 <li key={it.id} className="flex flex-col gap-[10px] bg-[#fffdf8] p-6">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <BadgeGroup className="shrink-0">
-                      {newItemSet.has(it.id) && !isRead && (
-                        <Badge variant="new" className="rounded-[8px]">{t("category.newContent")}</Badge>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <BadgeGroup className="shrink-0">
+                        {newItemSet.has(it.id) && !isRead && (
+                          <Badge variant="new" className="rounded-[8px]">{t("category.newContent")}</Badge>
+                        )}
+                        <Badge variant="type" type={it.type} className="rounded-[8px]">
+                          {translateType(lang, it.type, badgeStyles.typeNamesEs)}
+                        </Badge>
+                      </BadgeGroup>
+                      {it.duration && (
+                        <span className="text-xs text-muted-foreground truncate min-w-0">
+                          {translateDuration(lang, withActionWord(it.duration, it.type))}
+                        </span>
                       )}
-                      <Badge variant="type" type={it.type} className="rounded-[8px]">
-                        {translateType(lang, it.type, badgeStyles.typeNamesEs)}
-                      </Badge>
-                    </BadgeGroup>
-                    {it.duration && (
-                      <span className="text-xs text-muted-foreground truncate min-w-0">
-                        {translateDuration(lang, withActionWord(it.duration, it.type))}
-                      </span>
-                    )}
+                    </div>
 
                     {!isAdmin && (() => {
                       const labels = readStatusLabels(t, it);
@@ -2135,7 +2292,7 @@ function CategoryProgressSection({
                       }
 
                       return (
-                        <div className="ml-auto flex flex-col items-end gap-1 flex-shrink-0">
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
                           <div className="flex items-center gap-1.5">
                             {myRating !== null && (
                               <span className={`inline-flex items-center justify-center rounded-[8px] border px-2 py-1.5 ${

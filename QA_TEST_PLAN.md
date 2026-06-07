@@ -1283,6 +1283,55 @@ Open a PDF on a mobile screen. Verify the PDF viewer fills the available width w
  **Role:** Regular User
 On mobile, expand a category accordion on the dashboard. Verify each item's action badge and bookmark/rating controls are large enough to tap accurately without accidentally triggering adjacent elements.
 
+### 16.10 — Dashboard tab nav: overflow to "More" dropdown
+🟡 **Medium**
+ **Role:** Regular User
+Resize the browser to a narrow width (below ~500px) so all dashboard tabs cannot fit in one row. Verify a "More" button appears at the end of the tab row. Tap "More". Verify the overflow tabs appear in a dropdown. Select a tab from the dropdown. Verify the correct content loads and the active tab is always visible in the primary row (it swaps into view automatically).
+
+✅ Pass: Tabs that don't fit are hidden behind "More". Selecting from the dropdown navigates to that tab. The active tab is always visible in the primary row, never hidden in the dropdown.
+
+### 16.11 — Dashboard tab icons visible at all sizes
+🟢 **Low**
+ **Role:** Regular User
+At all screen sizes, verify each dashboard tab shows an icon alongside its label: My Progress (book), Saved (bookmark), Achievements (trophy), My Account (user), Testing (clipboard, testers only).
+
+✅ Pass: Icons appear at both desktop and mobile widths. In the "More" dropdown, the label text is legible.
+
+### 16.12 — Category accordion header: responsive badge layout
+🟡 **Medium**
+ **Role:** Regular User
+On a desktop-width screen (≥640px), expand the dashboard category list. Verify the "New content added" badge sits inline to the right of the category name. Verify the completion count and time pills are horizontally connected (sharing a border, correct rounded corners on each end). Resize to mobile (<640px). Verify all three badge groups (completion count, time spent, New content) stack vertically on the right side of the accordion header.
+
+✅ Pass: Large screens: New badge is inline with title; completion + time are connected pills. Small screens: all three badges stack vertically on the right; each pill has full rounded corners.
+
+### 16.13 — Category page: action badges don't collide with type badge
+🟡 **Medium**
+ **Role:** Regular User
+On a phone-width screen (375px), open any category page. Scroll through the content list. Verify that for each item, the action badge (read/watched/progress), bookmark button, and ratings buttons do not overlap with the type badge ("Video", "PDF", etc.) or the duration text.
+
+✅ Pass: Type badge and duration sit in their own left column. Action/bookmark/rating controls sit in a separate right column. No overlap occurs at any screen width.
+
+### 16.14 — Dashboard content list: action badges don't collide with type badge
+🟡 **Medium**
+ **Role:** Regular User
+On a phone-width screen, open the dashboard and expand a category accordion. Verify the type badge and duration text do not overlap with the read/bookmark/rating badges for each item.
+
+✅ Pass: The type badge area takes only the space it needs on the left. The action badges sit flush to the right. Neither side overflows into the other.
+
+### 16.15 — QA filter dropdowns appear on narrow admin/tester screens
+🟡 **Medium**
+ **Role:** Admin, Regular User (Tester)
+Resize the browser to below 1024px wide. Navigate to the admin Test Results detail view (or the tester dashboard Testing tab). Verify the status and priority filter pills are replaced by two dropdown menus. Select "Failed" from the status dropdown. Verify only failed tests are shown. Switch back to "All statuses". Verify all tests return.
+
+✅ Pass: Below 1024px, two Select dropdowns replace the connected pill rows. Filtering via dropdown works identically to the pill buttons.
+
+### 16.16 — Role Switcher always visible above footer
+🟢 **Low**
+ **Role:** Regular User (Tester)
+Sign in as a tester. Scroll to the very bottom of any page so the footer is visible. Verify the Role Switcher button in the bottom-left corner is fully visible and not obscured by the footer text.
+
+✅ Pass: The Role Switcher button has a solid background and appears above the footer content. No footer text bleeds through the button.
+
 ---
 
 ## Section 17 — Security & Edge Cases
@@ -1719,3 +1768,7 @@ Run this checklist after any code deployment to confirm core flows still work:
 - [ ] Idle prompt appears after 90s of inactivity on static content
 - [ ] "Yes, I'm still here" dismisses modal and resumes timer
 - [ ] Video/audio items do not trigger the idle prompt
+- [ ] Dashboard tab nav shows "More" dropdown when tabs don't fit on narrow screens
+- [ ] Action/bookmark/rating badges do not collide with type badge on mobile (category page and dashboard)
+- [ ] Category accordion header shows connected pills on desktop and stacked badges on mobile
+- [ ] Role Switcher button is visible above footer at bottom of page

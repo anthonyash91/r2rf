@@ -778,7 +778,7 @@ function NewCategoryForm({
             className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
         </Field>
-        <div className="relative">
+        <div className="sm:relative">
           <span className="text-sm font-medium">Facilities</span>
           <div className="mt-1">
             <FacilityCombobox
@@ -791,11 +791,11 @@ function NewCategoryForm({
             />
           </div>
           {facilities.length > 0 && (
-            <div className="absolute top-full inset-x-0 pt-2 flex flex-wrap gap-1.5 z-10">
+            <div className="mt-2 flex flex-wrap gap-1.5 sm:absolute sm:top-full sm:inset-x-0 sm:mt-0 sm:pt-2 sm:z-10">
               {facilities.map((f) => {
                 const label = allFacilitiesForForm.find((a) => a.value === f)?.label ?? f;
                 return (
-                  <span key={f} className="inline-flex items-center gap-1 rounded-[8px] border px-2 py-0.5 text-[11px] font-medium" style={{ color: formFacilityPs.color, backgroundColor: formFacilityPs.bg, borderColor: formFacilityPs.border }}>
+                  <span key={f} className="inline-flex items-center gap-1 leading-none rounded-[8px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0" style={{ color: formFacilityPs.color, backgroundColor: formFacilityPs.bg, borderColor: formFacilityPs.border }}>
                     {label}
                     <button type="button" onClick={() => setFacilities((prev) => prev.filter((x) => x !== f))} className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10">
                       <X className="h-3 w-3" />

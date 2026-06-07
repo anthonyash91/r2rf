@@ -314,7 +314,7 @@ function CategoryEditor({
         <div className="grid sm:grid-cols-3 gap-4 items-start">
           <LabeledInput label="Name" value={name} onChange={setName} />
           <LabeledInput label="Slug" value={slug} onChange={(v) => setSlug(slugify(v))} />
-          <div className="relative" id="facilities-section">
+          <div id="facilities-section" className="sm:relative">
             <span className="inline-flex items-center gap-1.5 text-sm font-medium">
               Facilities
               <TooltipProvider delayDuration={150}>
@@ -341,11 +341,11 @@ function CategoryEditor({
               />
             </div>
             {catFacilities.length > 0 && (
-              <div className="absolute top-full inset-x-0 pt-2 flex flex-wrap gap-1.5 z-10">
+              <div className="mt-2 flex flex-wrap gap-1.5 sm:absolute sm:top-full sm:inset-x-0 sm:mt-0 sm:pt-2 sm:z-10">
                 {catFacilities.map((f) => {
                   const label = allFacilities.find((a) => a.value === f)?.label ?? f;
                   return (
-                    <span key={f} className="inline-flex items-center gap-1 rounded-[8px] border px-2 py-0.5 text-[11px] font-medium" style={{ color: facilityPs.color, backgroundColor: facilityPs.bg, borderColor: facilityPs.border }}>
+                    <span key={f} className="inline-flex items-center gap-1 leading-none rounded-[8px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0" style={{ color: facilityPs.color, backgroundColor: facilityPs.bg, borderColor: facilityPs.border }}>
                       {label}
                       <button type="button" onClick={() => setCatFacilities((prev) => prev.filter((x) => x !== f))} className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10">
                         <X className="h-3 w-3" />
@@ -774,37 +774,30 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             return (
               <div data-item-id={item.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 p-6 pl-3 pb-6 sm:pb-5 transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
                 <div className="flex-1 min-w-0 flex flex-col gap-4">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {(() => {
-                      const s = itemTranslationStatus(item);
-                      const trLabel = s === "missing" ? "Needs ES" : "Partially translated";
-                      const trTitle = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
-                      return (
-                        <BadgeGroup>
-                          <Badge variant="type" type={item.type} className="rounded-[8px]">{item.type}</Badge>
-                          {!item.published && <Badge variant="draft" className="rounded-[8px]">Draft</Badge>}
-                          {item.exempt_from_progress && <Badge variant="exempt" className="rounded-[8px]">Exempt</Badge>}
-                          {s !== "complete" && (
-                            <Badge variant="translation" className="rounded-[8px]" title={trTitle}>
-                              {trLabel}
-                            </Badge>
-                          )}
-                          {(item.facilities?.length ?? 0) > 0 && (
-                            <FacilityBadge
-                              facilities={item.facilities!}
-                              facilityLabelMap={facilityLabelMap}
-                              className="rounded-[8px]"
-                            />
-                          )}
-                        </BadgeGroup>
-                      );
-                    })()}
-                    {item.duration && (
-                      <span className="text-xs text-muted-foreground">
-                        {translateDuration(lang, withActionWord(item.duration, item.type))}
-                      </span>
-                    )}
-                  </div>
+                  {(() => {
+                    const s = itemTranslationStatus(item);
+                    const trLabel = s === "missing" ? "Needs ES" : "Partially translated";
+                    const trTitle = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
+                    return (
+                      <BadgeGroup trailing={item.duration ? translateDuration(lang, withActionWord(item.duration, item.type)) : undefined}>
+                        <Badge variant="type" type={item.type} className="rounded-[8px]">{item.type}</Badge>
+                        {!item.published && <Badge variant="draft" className="rounded-[8px]">Draft</Badge>}
+                        {item.exempt_from_progress && <Badge variant="exempt" className="rounded-[8px]">Exempt</Badge>}
+                        {s !== "complete" && (
+                          <Badge variant="translation" className="rounded-[8px]" title={trTitle}>
+                            {trLabel}
+                          </Badge>
+                        )}
+                        {(item.facilities?.length ?? 0) > 0 && (
+                          <FacilityBadge
+                            facilities={item.facilities!}
+                            facilityLabelMap={facilityLabelMap}
+                            className="rounded-[8px]"
+                          />
+                        )}
+                      </BadgeGroup>
+                    );
+                  })()}
                   <div className="min-w-0">
                     <h3 className="font-display text-lg font-semibold text-foreground leading-snug truncate">{item.title}</h3>
                     {item.description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed line-clamp-2">{item.description}</p>}
@@ -1249,7 +1242,7 @@ function ItemEditor({
           {!addingType && typeOptions.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1">
               {typeOptions.map((t) => (
-                <Badge key={t} variant="type" type={t} size="sm" className="gap-1">
+                <Badge key={t} variant="type" type={t} className="gap-1">
                   {t}
                   <button
                     type="button"
@@ -1331,7 +1324,7 @@ function ItemEditor({
                 return (
                   <span
                     key={f}
-                    className="inline-flex items-center gap-1 rounded-[8px] border px-2 py-0.5 text-[11px] font-medium"
+                    className="inline-flex items-center gap-1 leading-none rounded-[8px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0"
                     style={{ color: facilityPs.color, backgroundColor: facilityPs.bg, borderColor: facilityPs.border }}
                   >
                     {label}

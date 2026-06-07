@@ -9,6 +9,7 @@ import {
   LayoutList, Layers, AlertCircle, ChevronUp, Minus,
   ImagePlus, ExternalLink, User as UserIcon,
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
 import { EmptyState } from "@/components/EmptyState";
@@ -16,6 +17,7 @@ import { CircleProgress } from "@/components/CircleProgress";
 import { fmtDate } from "@/lib/date-format";
 import { listAllTestRuns, getAdminRunDetail } from "@/lib/test-runs.functions";
 import { QA_TESTS, QA_SECTIONS, STATUS_LABELS, STATUS_COLORS, type TestStatus } from "@/lib/qa-test-plan";
+import { capFirst } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/test-results")({
   // Admin-only — requireStrictAdminBeforeLoad redirects all non-admin roles.
@@ -183,8 +185,35 @@ function RunDetailView({ runId }: { runId: string }) {
         </div>
       )}
 
-      {/* Filter pills — connected groups matching the tester dashboard */}
-      <div className="flex items-center gap-3 my-6">
+      {/* Filter row: dropdowns on mobile, connected pills on desktop */}
+      <div className="flex items-center gap-3 my-6 lg:hidden">
+        <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as TestStatus | "all")}>
+          <SelectTrigger className="flex-1 min-w-0 shadow-none">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="pass">Passed</SelectItem>
+            <SelectItem value="fail">Failed</SelectItem>
+            <SelectItem value="blocked">Blocked</SelectItem>
+            <SelectItem value="skipped">Skipped</SelectItem>
+            <SelectItem value="untested">Untested</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterPriority} onValueChange={(v) => setFilterPriority(v as typeof filterPriority)}>
+          <SelectTrigger className="flex-1 min-w-0 shadow-none">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All priorities</SelectItem>
+            <SelectItem value="critical">Critical</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="low">Low</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="hidden lg:flex items-center gap-3 my-6">
         <div className="flex items-center">
           {renderPill((["all", "pass", "fail", "blocked", "skipped", "untested"] as const).map((s) => ({
             key: `s-${s}`,
@@ -373,7 +402,7 @@ function AdminTestResultsPage() {
             <div className="flex-1 min-w-0">
               <p className="font-display text-lg font-semibold truncate">{selectedRun?.label ?? "Run"}</p>
               <p className="text-sm text-muted-foreground mt-0.5">
-                {selectedRun?.testerUsername} · {fmtDate(selectedRun?.created_at)}
+                {capFirst(selectedRun?.testerUsername)} · {fmtDate(selectedRun?.created_at)}
                 {selectedRun?.completed_at ? " · Completed" : " · In progress"}
               </p>
             </div>
@@ -393,7 +422,49 @@ function AdminTestResultsPage() {
           )}
           {!isLoading && runs.length > 0 && (
             <SectionCard padded={false}>
-              <table className="w-full text-sm">
+              {/* Mobile card list */}
+              <ul className="md:hidden divide-y divide-border">
+                {runs.map((run: any) => {
+                  const counts: Record<string, number> = run.statusCounts ?? {};
+                  const actioned = (counts.pass ?? 0) + (counts.fail ?? 0) + (counts.blocked ?? 0) + (counts.skipped ?? 0);
+                  const pct = Math.round((actioned / TOTAL_TESTS) * 100);
+                  return (
+                    <li
+                      key={run.id}
+                      className="flex flex-col gap-3 px-5 py-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                      onClick={() => setSelectedRunId(run.id)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="font-medium leading-snug">{run.label}</span>
+                        <span className={`inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] ${
+                          run.completed_at
+                            ? "border-green-200 bg-green-50 text-green-700"
+                            : "border-blue-200 bg-blue-50 text-blue-700"
+                        }`}>
+                          {run.completed_at
+                            ? <><CheckCircle className="h-3.5 w-3.5" /> Completed</>
+                            : <><Clock className="h-3.5 w-3.5" /> In progress</>}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{capFirst(run.testerUsername)} · {fmtDate(run.created_at)}</p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div className="h-full bg-[var(--color-accent)] rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">{actioned}/{TOTAL_TESTS}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {(counts.pass ?? 0) > 0    && <span className="inline-flex items-center justify-center h-8 w-8 rounded-xl border text-xs font-semibold tabular-nums" style={{ color: "oklch(0.52 0.12 165)", backgroundColor: "color-mix(in oklab, oklch(0.52 0.12 165) 12%, transparent)", borderColor: "color-mix(in oklab, oklch(0.52 0.12 165) 25%, transparent)" }}>{counts.pass}</span>}
+                        {(counts.fail ?? 0) > 0    && <span className="inline-flex items-center justify-center h-8 w-8 rounded-xl border text-xs font-semibold tabular-nums" style={{ color: "oklch(0.55 0.15 25)", backgroundColor: "color-mix(in oklab, oklch(0.55 0.15 25) 12%, transparent)", borderColor: "color-mix(in oklab, oklch(0.55 0.15 25) 25%, transparent)" }}>{counts.fail}</span>}
+                        {(counts.blocked ?? 0) > 0 && <span className="inline-flex items-center justify-center h-8 w-8 rounded-xl border text-xs font-semibold tabular-nums" style={{ color: "oklch(0.60 0.12 80)", backgroundColor: "color-mix(in oklab, oklch(0.60 0.12 80) 12%, transparent)", borderColor: "color-mix(in oklab, oklch(0.60 0.12 80) 25%, transparent)" }}>{counts.blocked}</span>}
+                        {!(counts.pass ?? 0) && !(counts.fail ?? 0) && !(counts.blocked ?? 0) && <span className="text-xs text-muted-foreground">—</span>}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+              {/* Desktop table */}
+              <table className="hidden md:table w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left">
                     <th className="px-5 py-3 font-medium text-muted-foreground">Run label</th>
@@ -416,7 +487,7 @@ function AdminTestResultsPage() {
                         onClick={() => setSelectedRunId(run.id)}
                       >
                         <td className="px-5 py-4 font-medium">{run.label}</td>
-                        <td className="px-5 py-4 text-muted-foreground">{run.testerUsername}</td>
+                        <td className="px-5 py-4 text-muted-foreground">{capFirst(run.testerUsername)}</td>
                         <td className="px-5 py-4 text-muted-foreground">{fmtDate(run.created_at)}</td>
                         <td className="px-5 py-4">
                           <span className={`inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] ${

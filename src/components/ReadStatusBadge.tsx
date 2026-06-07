@@ -25,7 +25,7 @@ export function ReadStatusBadge({
   const readStyle = read
     ? {
         color: "var(--color-accent)",
-        backgroundColor: "color-mix(in oklab, var(--color-accent) 15%, transparent)",
+        backgroundColor: "color-mix(in oklab, var(--color-accent) 10%, transparent)",
         borderColor: "color-mix(in oklab, var(--color-accent) 30%, transparent)",
       }
     : undefined;

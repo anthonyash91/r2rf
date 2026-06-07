@@ -311,11 +311,11 @@ function AdminSeedPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold">Preview</h2>
-              <Badge variant="count" size="sm">
+              <Badge variant="count">
                 {validCount} valid
               </Badge>
               {errorCount > 0 && (
-                <Badge variant="draft" size="sm">{errorCount} with errors</Badge>
+                <Badge variant="draft">{errorCount} with errors</Badge>
               )}
             </div>
             <LoadingButton

@@ -10,14 +10,17 @@ After signing in, users are taken to their dashboard automatically. The dashboar
 
 ---
 
-## Four Tabs
+## Navigation Tabs
 
-The dashboard has four sections accessible via tabs at the top:
+The dashboard has four sections accessible via a tab bar at the top of the page. Each tab shows an icon alongside its label.
 
-- **My Progress** — the primary view showing learning activity and content
-- **Saved** — bookmarked resources saved for later
-- **Achievements** — milestones earned across the learning journey
-- **My Account** — profile information and account security settings
+- **My Progress** (book icon) — the primary view showing learning activity and content
+- **Saved** (bookmark icon) — bookmarked resources saved for later
+- **Achievements** (trophy icon) — milestones earned across the learning journey
+- **My Account** (user icon) — profile information and account security settings
+- **Testing** (clipboard icon) — visible only to tester accounts; opens the QA testing interface
+
+**Responsive tab overflow:** On narrow screens where all tabs cannot fit in one row, a **More** button appears at the end of the tab bar. Tapping it opens a dropdown with the hidden tabs. The currently active tab is always visible in the primary row — it swaps into view automatically if it would otherwise be hidden in the overflow menu.
 
 ---
 
@@ -99,13 +102,13 @@ A list of every content category the user has access to, each as a collapsible a
 
 **In the header:**
 - A **circular progress ring** showing weighted completion for that category (same weighted logic as the overall ring; exempt items excluded)
-- The **category name**
-- A "New content added" badge if items have been added recently
-- **"X of Y items · Xm spent"** — items completed out of total trackable items, and total time spent. Exempt items are excluded from the Y count.
+- The **category name** — on larger screens (≥640px), a "New content added" badge appears inline to the right of the name when recent items exist
+- **Completion and time pills** — on larger screens these are connected as a single horizontal control (joined border, rounded ends). On smaller screens all badge groups stack vertically on the right side of the header.
+- On smaller screens, the "New content added" badge moves into the right column and stacks below the completion pills
 
 **When expanded:**
 - A list of every content item in that category
-- Each item shows its type (Video, PDF, Worksheet, etc.), estimated duration, and an action badge
+- Each item shows its type badge (Video, PDF, Worksheet, etc.) and estimated duration on the left, and action/bookmark/rating badges on the right — these two groups never overlap, even on narrow mobile screens
 
 ---
 
@@ -144,6 +147,8 @@ Each content item in the expanded category view has a badge showing its current 
 **New badge** — items added within the last 7 days that the user hasn't opened yet show a "New" badge. Once opened or engaged with, the badge disappears permanently.
 
 **Read date** — completed items show when they were read (e.g., "on May 15, 2026").
+
+**Completed badge color** — when a content item is marked complete (watched, read, listened, etc.), the action badge uses the same accent tint background and border as the bookmark badge, providing a consistent visual language for positive completion states.
 
 **Ratings (Helpful / Not Helpful)** — once a user has completed a content item, a thumbs-up / thumbs-down pill appears alongside the read status badge. Tapping either thumb records the user's rating. Tapping the same thumb again removes the rating. Ratings are anonymous — no one can see who rated what, only the aggregate counts visible to admins.
 

@@ -11,6 +11,10 @@ export const Route = createFileRoute("/admin")({
   // Preloading roles here means child pages can read them from context without an
   // extra network round-trip — though most rely on useAuth() from the session instead.
   beforeLoad: async ({ location }) => {
+    // Skip on the server — localStorage is unavailable during SSR, so
+    // getSession() always returns null there. The component-level useAuth()
+    // hook handles the real auth check on the client.
+    if (typeof window === "undefined") return {};
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       throw redirect({ to: "/signup", search: { redirect: location.href } });

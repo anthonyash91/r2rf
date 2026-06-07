@@ -134,14 +134,28 @@ export function AdminNav() {
       used = next;
       count++;
     }
+
+    // If the active link is in overflow it will be swapped with the last primary item.
+    // If the active link is wider than the item it replaces the row would overflow —
+    // reduce count by one so the swap fits without clipping.
+    const activeIdx = visible.findIndex((l) => isLinkActive(l, pathname));
+    if (activeIdx >= count && count > 0) {
+      const activeWidth = itemWidths[activeIdx] ?? 0;
+      const replacedWidth = itemWidths[count - 1] ?? 0;
+      if (activeWidth > replacedWidth) {
+        const adjustedUsed = used - replacedWidth + activeWidth;
+        if (adjustedUsed > available) count = Math.max(0, count - 1);
+      }
+    }
+
     setVisibleCount(Math.max(0, count));
   };
 
-  // Re-runs recompute whenever the number of visible links changes (e.g. role switch).
+  // Re-runs recompute whenever the number of visible links or the active page changes.
   useLayoutEffect(() => {
     recompute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible.length, isAdmin]);
+  }, [visible.length, isAdmin, pathname]);
 
   // Watches the nav container for resize events and recomputes overflow on every change.
   useEffect(() => {

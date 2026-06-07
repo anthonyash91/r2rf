@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireAnalyticsAdminBeforeLoad } from "@/lib/admin-guards";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useConfirm } from "@/components/ConfirmDialog";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
@@ -64,6 +64,7 @@ import { listFacilityAdminUsers } from "@/lib/users.functions";
 import { getFacilityComparison, getGrowthStats, triggerNightlyRefresh, resetFacilityAnalytics } from "@/lib/analytics-stats.functions";
 import { getAdminUserMonthlySummary } from "@/lib/monthly-summary.functions";
 import { ACHIEVEMENTS } from "@/lib/achievements";
+import { capFirst } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 import { Pager } from "@/components/LoadMorePager";
 
@@ -969,7 +970,7 @@ function UsersReportTab({
                 ) : (
                   <ul className="divide-y divide-border">
                     {staff.map((u) => {
-                      const name = [u.profile?.first_name, u.profile?.last_name].filter(Boolean).join(" ") || u.email || "—";
+                      const name = [u.profile?.first_name, u.profile?.last_name].filter(Boolean).map(capFirst).join(" ") || u.email || "—";
                       return (
                         <li key={u.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 pb-6 sm:pb-4">
                           <div className="flex-1 min-w-0">
@@ -1006,9 +1007,9 @@ function UsersReportTab({
                 <SectionCard padded={false} className={`overflow-hidden ${!isAll ? "" : "mt-8"}`}>
                   <ul className="divide-y divide-border">
                     {(visibleUsers as any[]).map((u) => {
-                      const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.username || "—";
+                      const name = [u.first_name, u.last_name].filter(Boolean).map(capFirst).join(" ") || capFirst(u.username) || "—";
                       const meta: string[] = [];
-                      if (u.username) meta.push(`@${u.username}`);
+                      if (u.username) meta.push(`@${capFirst(u.username)}`);
                       if ((u as any).inmate_pin) meta.push(`PIN: ${(u as any).inmate_pin}`);
                       if (isAll && (u as any).facility_label) meta.push((u as any).facility_label);
                       const lastLoginIso = (u as any).last_login_date || null;
@@ -1739,7 +1740,7 @@ function UserCategorySection({
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-6 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-[#fffdf8]"} text-left hover:bg-muted/50 transition-colors`}
+        className={`w-full flex flex-row items-center justify-between gap-3 p-6 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-[#fffdf8]"} text-left hover:bg-muted/50 transition-colors`}
       >
         {(() => {
           const trackableItems = g.items.filter((item: any) => !item.exempt_from_progress);
@@ -1755,7 +1756,7 @@ function UserCategorySection({
           const catTimeSeconds = g.items.reduce((sum: number, item: any) => sum + ((item.sessionSeconds as number) || 0), 0);
           return (
             <>
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
                 <CircleProgress value={weightedPct} size={52} stroke={5} />
                 <div className="min-w-0">
@@ -1763,10 +1764,10 @@ function UserCategorySection({
                   <p className="text-xs text-muted-foreground truncate">/{g.category.slug}</p>
                 </div>
               </div>
-              <div className="flex items-center self-start sm:self-auto [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
+              <div className="flex items-center flex-shrink-0 [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
                 <span className="inline-flex items-center gap-1 rounded-[8px] border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums">
                   <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
-                  {g.read} of {g.total} read
+                  {g.read} of {g.total} completed
                 </span>
                 {catTimeSeconds > 0 && (
                   <span className="inline-flex items-center gap-1 rounded-[8px] border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums">
@@ -1976,6 +1977,26 @@ function Stat({ icon, label, value, suffix, tooltip }: { icon: React.ReactNode; 
   );
 }
 
+function StatGridCell({ icon, label, value, suffix, tooltip, className }: { icon: React.ReactNode; label: string; value: number | string | null; suffix?: string; tooltip?: string; className?: string }) {
+  const display = value == null ? "—" : typeof value === "string" ? value : `${value.toLocaleString()}${suffix ?? ""}`;
+  const inner = (
+    <div className={`flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2.5 ${className ?? ""}`}>
+      <span className="text-muted-foreground shrink-0">{icon}</span>
+      <div>
+        <p className="text-sm font-semibold tabular-nums leading-tight">{display}</p>
+        <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">{label}</p>
+      </div>
+    </div>
+  );
+  if (!tooltip) return inner;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{inner}</TooltipTrigger>
+      <TooltipContent className="max-w-xs px-3 py-2">{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow; isOpen: boolean; dimmed?: boolean; onToggle: () => void }) {
   const open = isOpen;
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -1990,133 +2011,187 @@ function CategorySection({ row, isOpen, dimmed, onToggle }: { row: AggregatedRow
   }, [isOpen]);
   return (
     <SectionCard ref={sectionRef as any} padded={false} className={`scroll-mt-24 overflow-hidden bg-[#fffdf8] transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "!border-2 !border-[var(--color-accent)]" : ""}`}>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        className={`w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-6 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-[#fffdf8]"} text-left hover:bg-muted/50 transition-colors`}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
-          <CategoryIcon name={row.category.icon_name} color={row.category.icon_color} size="md" />
-          <div className="min-w-0 flex flex-col justify-center">
-            <h2 className="font-display text-lg font-semibold truncate">{row.category.name}</h2>
-            <p className="text-xs text-muted-foreground truncate">
-              /{row.category.slug}
-              {row.category.created_at && <> · Added {fmtDate(row.category.created_at)}</>}
-            </p>
+      {/* @container wrapper — children use @lg: based on this div's width */}
+      <div className="@container">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          className={`w-full flex flex-col @[800px]:flex-row @[800px]:items-center @[800px]:justify-between gap-3 p-6 ${open ? "border-b border-border bg-[#f7f5ec]" : "bg-[#fffdf8]"} text-left hover:bg-muted/50 transition-colors`}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
+            <CategoryIcon name={row.category.icon_name} color={row.category.icon_color} size="md" />
+            <div className="min-w-0 flex flex-col justify-center">
+              <h2 className="font-display text-lg font-semibold truncate">{row.category.name}</h2>
+              <p className="text-xs text-muted-foreground truncate">
+                /{row.category.slug}
+                {row.category.created_at && <> · Added {fmtDate(row.category.created_at)}</>}
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="inline-flex flex-shrink-0 [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:not(:first-child):not(:last-child)]:rounded-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
-          <Stat icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} tooltip="How many times this category page was viewed in the selected period." />
-          <Stat icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} tooltip="How many times content items in this category were opened in the selected period." />
-          {row.completionRate != null && (
-            <Stat icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate} suffix="%" tooltip="Of everyone who opened content in this category, how many finished it." />
-          )}
-          {row.depth != null && (
-            <Stat icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="depth" value={row.depth} tooltip="Average number of items completed per user who engaged with this category in the selected period." />
-          )}
-          <Stat icon={<Clock className="h-3.5 w-3.5" />} label="spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} tooltip="Total time all users spent on content in this category in the selected period." />
-        </div>
-      </button>
+          {/* Compact grid: shown when container is narrower than @lg */}
+          <div className="@[800px]:hidden grid grid-cols-2 gap-2 w-full mt-2">
+            <StatGridCell icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} tooltip="How many times this category page was viewed in the selected period." />
+            <StatGridCell icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} tooltip="How many times content items in this category were opened in the selected period." />
+            {(() => {
+              const hasBoth = row.completionRate != null && row.depth != null;
+              return (
+                <>
+                  {row.completionRate != null && (
+                    <StatGridCell icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate} suffix="%" tooltip="Of everyone who opened content in this category, how many finished it." className={!hasBoth ? "col-span-2" : ""} />
+                  )}
+                  {row.depth != null && (
+                    <StatGridCell icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="depth" value={row.depth} tooltip="Average number of items completed per user who engaged with this category in the selected period." className={!hasBoth ? "col-span-2" : ""} />
+                  )}
+                </>
+              );
+            })()}
+            <StatGridCell icon={<Clock className="h-3.5 w-3.5" />} label="time spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} tooltip="Total time all users spent on content in this category in the selected period." className="col-span-2" />
+          </div>
+          {/* Connected pill: shown when container is @lg+ — never wraps */}
+          <div className="hidden @[800px]:inline-flex flex-nowrap flex-shrink-0 [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:not(:first-child):not(:last-child)]:rounded-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
+            <Stat icon={<Eye className="h-3.5 w-3.5" />} label={row.views === 1 ? "visit" : "visits"} value={row.views} tooltip="How many times this category page was viewed in the selected period." />
+            <Stat icon={<MousePointerClick className="h-3.5 w-3.5" />} label={row.clicks === 1 ? "open" : "opens"} value={row.clicks} tooltip="How many times content items in this category were opened in the selected period." />
+            {row.completionRate != null && (
+              <Stat icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={row.completionRate} suffix="%" tooltip="Of everyone who opened content in this category, how many finished it." />
+            )}
+            {row.depth != null && (
+              <Stat icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="depth" value={row.depth} tooltip="Average number of items completed per user who engaged with this category in the selected period." />
+            )}
+            <Stat icon={<Clock className="h-3.5 w-3.5" />} label="spent" value={row.totalSeconds > 0 ? formatTimeSpent(row.totalSeconds) : null} tooltip="Total time all users spent on content in this category in the selected period." />
+          </div>
+        </button>
+      </div>
       {open && (
         row.items.length === 0 ? (
           <p className="p-5 text-sm text-muted-foreground">No content items.</p>
         ) : (
           <ul className="divide-y divide-border">
             {row.items.map(({ item, clicks, openCount, completeCount, completionRate, avgSessionSeconds, thumbsUp, thumbsDown, bookmarkCount }) => (
-              <li key={item.id} className="flex items-center gap-3 bg-[#fffdf8] px-6 py-[19px]">
-                <Badge variant="type" type={item.type} className="rounded-[8px]">
-                  {item.type}
-                </Badge>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <p className="truncate text-sm font-bold">{item.title}</p>
-                    {item.exempt_from_progress && (
+              <li key={item.id} className="@container bg-[#fffdf8]">
+                <div className="flex flex-col @[700px]:flex-row @[700px]:items-center gap-3 px-6 py-[19px]">
+                  {/* Badge + title — always visible */}
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Badge variant="type" type={item.type} className="rounded-[8px] flex-shrink-0">
+                      {item.type}
+                    </Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="truncate text-sm font-bold">{item.title}</p>
+                        {item.exempt_from_progress && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex flex-shrink-0 cursor-help text-muted-foreground">
+                                <Info className="h-3.5 w-3.5" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs px-3 py-2">
+                              Exempt from tracking — this item doesn't count toward user progress or completion rates.
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                      {item.created_at && (
+                        <p className="text-xs text-muted-foreground">Added {fmtDate(item.created_at)}</p>
+                      )}
+                    </div>
+                  </div>
+                  {/* Wide: connected pill — never wraps */}
+                  <div className="hidden @[700px]:flex items-center flex-shrink-0 flex-nowrap [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:not(:first-child):not(:last-child)]:rounded-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
+                          <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
+                          {clicks.toLocaleString()}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs px-3 py-2">Opens — how many times this item was clicked in the selected period.</TooltipContent>
+                    </Tooltip>
+                    {completionRate != null && (
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="inline-flex flex-shrink-0 cursor-help text-muted-foreground">
-                            <Info className="h-3.5 w-3.5" />
+                          <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
+                            <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
+                            {completionRate}%
                           </span>
                         </TooltipTrigger>
-                        <TooltipContent className="max-w-xs px-3 py-2">
-                          Exempt from tracking — this item doesn't count toward user progress or completion rates.
-                        </TooltipContent>
+                        <TooltipContent className="max-w-xs px-3 py-2">Of everyone who opened this item, how many finished it.</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {openCount > completeCount && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
+                            <Circle className="h-3.5 w-3.5 text-muted-foreground" />
+                            {openCount - completeCount} drop-off{openCount - completeCount === 1 ? "" : "s"}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs px-3 py-2">Drop-offs — users who opened this item but did not complete it.</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {avgSessionSeconds != null && avgSessionSeconds > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                            {formatTimeSpent(avgSessionSeconds)} avg
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs px-3 py-2">Average time spent — mean session time per user who engaged with this item in the selected period.</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {(thumbsUp > 0 || thumbsDown > 0) && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center gap-1.5 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
+                            <span className="inline-flex items-center gap-1">
+                              <ThumbsUp className="h-3.5 w-3.5 text-muted-foreground" />{thumbsUp}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <ThumbsDown className="h-3.5 w-3.5 text-muted-foreground" />{thumbsDown}
+                            </span>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs px-3 py-2">Helpful / Not helpful ratings from users.</TooltipContent>
+                      </Tooltip>
+                    )}
+                    {bookmarkCount > 0 && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
+                            <Bookmark className="h-3.5 w-3.5 text-muted-foreground" />{bookmarkCount}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs px-3 py-2">Users who have bookmarked this item.</TooltipContent>
                       </Tooltip>
                     )}
                   </div>
-                  {item.created_at && (
-                    <p className="text-xs text-muted-foreground">Added {fmtDate(item.created_at)}</p>
-                  )}
-                </div>
-                <div className="flex items-center flex-shrink-0 flex-wrap justify-end [&>span:not(:first-child)]:-ml-px [&>span:first-child]:rounded-r-none [&>span:not(:first-child):not(:last-child)]:rounded-none [&>span:last-child]:rounded-l-none [&>span:only-child]:rounded-[8px]">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
-                        <MousePointerClick className="h-3.5 w-3.5 text-muted-foreground" />
-                        {clicks.toLocaleString()}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs px-3 py-2">Opens — how many times this item was clicked in the selected period.</TooltipContent>
-                  </Tooltip>
-                  {completionRate != null && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
-                          <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
-                          {completionRate}%
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs px-3 py-2">Of everyone who opened this item, how many finished it.</TooltipContent>
-                    </Tooltip>
-                  )}
-                  {openCount > completeCount && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
-                          <Circle className="h-3.5 w-3.5 text-muted-foreground" />
-                          {openCount - completeCount} drop-off{openCount - completeCount === 1 ? "" : "s"}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs px-3 py-2">Drop-offs — users who opened this item but did not complete it.</TooltipContent>
-                    </Tooltip>
-                  )}
-                  {avgSessionSeconds != null && avgSessionSeconds > 0 && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
-                          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                          {formatTimeSpent(avgSessionSeconds)} avg
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs px-3 py-2">Average time spent — mean session time per user who engaged with this item in the selected period.</TooltipContent>
-                    </Tooltip>
-                  )}
-                  {(thumbsUp > 0 || thumbsDown > 0) && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1.5 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
-                          <span className="inline-flex items-center gap-1">
-                            <ThumbsUp className="h-3.5 w-3.5 text-muted-foreground" />{thumbsUp}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <ThumbsDown className="h-3.5 w-3.5 text-muted-foreground" />{thumbsDown}
-                          </span>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs px-3 py-2">Helpful / Not helpful ratings from users.</TooltipContent>
-                    </Tooltip>
-                  )}
-                  {bookmarkCount > 0 && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
-                          <Bookmark className="h-3.5 w-3.5 text-muted-foreground" />{bookmarkCount}
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs px-3 py-2">Users who have bookmarked this item.</TooltipContent>
-                    </Tooltip>
-                  )}
+                  {/* Narrow: 2-column stat grid */}
+                  {(() => {
+                    const hasRatings = thumbsUp > 0 || thumbsDown > 0;
+                    const conditionals = [completionRate != null, openCount > completeCount, avgSessionSeconds != null && avgSessionSeconds > 0, hasRatings, bookmarkCount > 0];
+                    const totalVisible = 1 + conditionals.filter(Boolean).length;
+                    const lastSpan2 = totalVisible % 2 !== 0;
+                    let idx = 0;
+                    const cells = [
+                      <StatGridCell key="opens" icon={<MousePointerClick className="h-3.5 w-3.5" />} label="opens" value={clicks} tooltip="How many times this item was clicked in the selected period." />,
+                      completionRate != null && <StatGridCell key="comp" icon={<BarChart3 className="h-3.5 w-3.5" />} label="completion" value={completionRate} suffix="%" tooltip="Of everyone who opened this item, how many finished it." />,
+                      openCount > completeCount && <StatGridCell key="drop" icon={<Circle className="h-3.5 w-3.5" />} label="drop-offs" value={openCount - completeCount} tooltip="Users who opened this item but did not complete it." />,
+                      avgSessionSeconds != null && avgSessionSeconds > 0 && <StatGridCell key="time" icon={<Clock className="h-3.5 w-3.5" />} label="avg time" value={formatTimeSpent(avgSessionSeconds)} tooltip="Mean session time per user who engaged with this item." />,
+                      hasRatings && <StatGridCell key="ratings" icon={<ThumbsUp className="h-3.5 w-3.5" />} label="ratings" value={`${thumbsUp} / ${thumbsDown}`} tooltip="Helpful / Not helpful ratings from users." />,
+                      bookmarkCount > 0 && <StatGridCell key="bk" icon={<Bookmark className="h-3.5 w-3.5" />} label="bookmarks" value={bookmarkCount} tooltip="Users who have bookmarked this item." />,
+                    ].filter(Boolean) as React.ReactElement[];
+                    return (
+                      <div className="@[700px]:hidden grid grid-cols-2 gap-2">
+                        {cells.map((cell, i) =>
+                          lastSpan2 && i === cells.length - 1
+                            ? React.cloneElement(cell, { className: "col-span-2" })
+                            : cell
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </li>
             ))}

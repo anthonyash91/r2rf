@@ -45,15 +45,16 @@ async function assertCanManageUser(
   targetUserId: string,
   { allowFacilityUserTarget = false }: { allowFacilityUserTarget?: boolean } = {},
 ) {
-  const { data: roleRow } = await supabaseAdmin
+  const { data: roleRows } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", callerId)
-    .in("role", ["admin", "facilityUser"])
-    .maybeSingle();
-  if (!roleRow) throw new Error("Forbidden: admin access required");
+    .in("role", ["admin", "facilityUser"]);
+  if (!roleRows || roleRows.length === 0) throw new Error("Forbidden: admin access required");
+  // Prefer admin over facilityUser — if caller holds both, treat as admin (no facility scoping).
+  const effectiveRole = roleRows.some((r: any) => r.role === "admin") ? "admin" : "facilityUser";
 
-  if (roleRow.role === "facilityUser") {
+  if (effectiveRole === "facilityUser") {
     if (callerId === targetUserId) return; // always allowed to manage self
 
     // Fetch caller's facility, target's facility, and (when needed) target's role
@@ -78,13 +79,12 @@ async function assertCanManageUser(
 
 /** User management access: admin and facilityUser only — contributors are content-only. */
 async function assertUserManagementAdmin(userId: string) {
-  const { data, error } = await supabaseAdmin
+  const { data } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
-    .in("role", ["admin", "facilityUser"])
-    .maybeSingle();
-  if (error || !data) throw new Error("Forbidden: admin access required");
+    .in("role", ["admin", "facilityUser"]);
+  if (!data || data.length === 0) throw new Error("Forbidden: admin access required");
 }
 
 type ListedUser = {
@@ -266,14 +266,16 @@ export const listRegularUsers = createServerFn({ method: "POST" })
 
     // facilityUser callers are always scoped to their own facility regardless
     // of what the client passes — this is the server-side enforcement.
+    // If the caller also has admin role, treat them as admin (no facility scoping).
     let facilityFilter = data.facility;
-    const { data: callerRoleRow } = await supabaseAdmin
+    const { data: callerRoles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
-      .eq("role", "facilityUser")
-      .maybeSingle();
-    if (callerRoleRow) {
+      .in("role", ["admin", "facilityUser"]);
+    const callerIsAdmin = (callerRoles ?? []).some((r: any) => r.role === "admin");
+    const callerIsFacilityOnly = !callerIsAdmin && (callerRoles ?? []).some((r: any) => r.role === "facilityUser");
+    if (callerIsFacilityOnly) {
       const { data: callerProfile } = await supabaseAdmin
         .from("user_profiles")
         .select("facility")
@@ -482,7 +484,7 @@ export const createTesterUser = createServerFn({ method: "POST" })
 
     // All tester accounts are assigned to CPC Sales for facilityUser role simulation.
     // Update this value to match the exact facility slug in your facilities table.
-    const TESTER_FACILITY = "S003007001";
+    const TESTER_FACILITY = "s003007001";
 
     const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
     if (exists) throw new Error("That username is already taken.");
@@ -532,6 +534,31 @@ export const createTesterUser = createServerFn({ method: "POST" })
   });
 
 /**
+ * Toggles analytics tracking for a tester account by flipping is_synthetic.
+ * is_synthetic = false → activity shows in analytics.
+ * is_synthetic = true  → excluded from all analytics (default).
+ */
+export const setTesterAnalyticsTracking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ enable: z.boolean() }).parse(input))
+  .handler(async ({ context, data }) => {
+    // Only the tester themselves can toggle their own tracking
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "tester")
+      .maybeSingle();
+    if (!roleRow) throw new Error("Only tester accounts can toggle analytics tracking");
+    const { error } = await supabaseAdmin
+      .from("user_profiles")
+      .update({ is_synthetic: !data.enable })
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true, tracking: data.enable };
+  });
+
+/**
  * Grants all roles to an existing tester account and sets their facility to CPC Sales.
  * Safe to call multiple times — upsert skips existing rows.
  */
@@ -541,7 +568,7 @@ export const upgradeTesterRoles = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    const TESTER_FACILITY = "S003007001";
+    const TESTER_FACILITY = "s003007001";
     const allRoles: Role[] = ["tester", "user", "admin", "contributor", "facilityUser"];
 
     await Promise.all(

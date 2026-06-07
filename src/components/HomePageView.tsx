@@ -258,7 +258,7 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
               <Link
                 to="/category/$slug"
                 params={{ slug: c.slug }}
-                className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 pb-[36px] sm:pb-[44px] transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
+                className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
               >
                 {/* Arrow circle — aligned to the top of the category icon, same border color scheme */}
                 <span

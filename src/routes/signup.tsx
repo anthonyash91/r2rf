@@ -157,7 +157,9 @@ function SignupPageContent() {
       .eq("user_id", user.id)
       .then(({ data }) => {
         const roles = (data ?? []).map((r: any) => r.role as string);
-        const goesAdmin = roles.includes("admin") || roles.includes("contributor") || roles.includes("facilityUser");
+        const isTester = roles.includes("tester");
+        // Testers always go to /dashboard (their QA interface) regardless of other roles
+        const goesAdmin = !isTester && (roles.includes("admin") || roles.includes("contributor") || roles.includes("facilityUser"));
         if (redirectTo) {
           // Always honour an explicit redirect param (e.g. from requireAdminBeforeLoad)
           navigate({ to: redirectTo as any });
@@ -258,10 +260,10 @@ function SignupPageContent() {
         // - Regular users via facility link → verify facility + PIN match
         const { data: { user: authedUser } } = await supabase.auth.getUser();
         if (authedUser) {
-          const { data: roleRow } = await supabase.from("user_roles").select("role")
+          const { data: roleRows } = await supabase.from("user_roles").select("role")
             .eq("user_id", authedUser.id)
-            .in("role", ["admin", "contributor", "facilityUser", "tester"])
-            .maybeSingle();
+            .in("role", ["admin", "contributor", "facilityUser", "tester"]);
+          const roleRow = (roleRows ?? []).length > 0 ? roleRows![0] : null;
 
           if (roleRow) {
             // Privileged (or tester) — clear facility/PIN context so nav links

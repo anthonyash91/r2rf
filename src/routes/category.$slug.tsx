@@ -16,7 +16,7 @@ import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n"
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { fmtDateShort } from "@/lib/date-format";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Pencil, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -705,7 +705,7 @@ function CategoryPage() {
                     const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 && !readSet.has(item.id) && !seenSet.has(item.id) && !engagementMap.has(item.id);
 
                     return (
-                      <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24">
+                      <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24 flex items-stretch hover:bg-[var(--color-secondary)]/60 transition-colors">
                         {highlightedId === item.id && (
                           <span
                             aria-hidden
@@ -718,7 +718,7 @@ function CategoryPage() {
 
                         <Wrapper
                           {...wrapperProps}
-                          className="w-full text-left flex flex-col gap-4 p-6 pb-[20px] hover:bg-[var(--color-secondary)]/60 transition-colors cursor-pointer"
+                          className="flex-1 min-w-0 text-left flex flex-col gap-4 p-6 pb-[20px] cursor-pointer"
                         >
                           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap">
                             <BadgeGroup>
@@ -787,27 +787,6 @@ function CategoryPage() {
                         </Wrapper>
 
 
-                        {(isAdmin || isNew) && (
-                          <div className="absolute top-3 right-3 mt-[7px] mr-[7px] flex items-center gap-1.5 flex-wrap justify-end z-10">
-                            {isAdmin && isNew && (
-                              <Badge variant="new" className="hidden">{t("category.newContent")}</Badge>
-                            )}
-
-                            {isAdmin && (
-                              <Link
-                                to="/admin/category/$id"
-                                params={{ id: data.category.id }}
-                                search={{ edit: item.id }}
-                                title="Edit content"
-                                aria-label="Edit content"
-                                onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center justify-center rounded-md border border-input bg-background p-2 hover:bg-muted"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Link>
-                            )}
-                          </div>
-                        )}
                         {user && !isAdmin && !isFacilityUser && (() => {
                           const isRead = readSet.has(item.id);
                           let readLabel = t("category.markedRead");
@@ -831,7 +810,7 @@ function CategoryPage() {
                           const isBookmarked = bookmarkIds.has(item.id);
                           const myRating = myRatings.get(item.id) ?? null;
                           return (
-                            <div className="absolute top-6 right-6 flex flex-col items-end gap-1 z-10">
+                            <div className="flex flex-col items-end justify-start gap-1 flex-shrink-0 pr-6 pt-6 pb-5">
                               <div className="flex items-center gap-1.5 justify-end">
                               {isRead && <div className="inline-flex items-center rounded-[8px] border border-input overflow-hidden">
                                 <TooltipProvider delayDuration={150}>
@@ -1271,13 +1250,13 @@ function CategoryPage() {
               <h2 className="font-display text-2xl font-bold leading-tight">
                 {t("category.completedHeadline").replace("{name}", pickLang(lang, data.category.name, data.category.name_es))}
               </h2>
-              <p className="mt-3 text-muted-foreground leading-relaxed">
+              <p className="mt-1 text-muted-foreground leading-relaxed">
                 {t("category.completedMessage")}
               </p>
               <button
                 type="button"
                 onClick={() => setCategoryComplete(false)}
-                className="mt-8 w-full rounded-xl bg-[var(--color-accent)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                className="mt-3 w-full rounded-xl bg-[var(--color-accent)] px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
               >
                 {t("category.completedClose")}
               </button>

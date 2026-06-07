@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,6 +16,7 @@ import { useAuthChecking } from "@/lib/auth-checking-context";
 export function SiteHeader() {
   const { isChecking } = useAuthChecking();
   const authRaw = useAuth();
+  const navigate = useNavigate();
   // While post-auth check is in flight, treat user as not yet authenticated
   // so nav links don't flicker to signed-in state before the check completes.
   const { user, canAccessAdmin, isUser, isAdmin, isContributor, isFacilityUser } = isChecking
@@ -72,15 +73,17 @@ export function SiteHeader() {
   // Admins only follow URL slug (not persisted), so they aren't globally stuck to a facility
   const activeFacility = facilityRouteSlug || userFacilitySlug || (isAdminUser ? null : persistedFacilitySlug);
 
-  // Sign out uses a hard redirect rather than navigate() to avoid a race between
-  // the router re-evaluating the current route's beforeLoad guard (which redirects
-  // to /signup when no session is found) and the in-flight navigate() call.
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    // Restore full facility URL including PIN so the next sign-in is still PIN-gated
-    const pinParam = persistedPin ? `&user=${persistedPin}` : "";
-    const dest = activeFacility ? `/?site=${activeFacility}${pinParam}` : "/";
-    window.location.href = dest;
+    // Client-side navigation for all cases — no full page reload, no flash.
+    // The home page has no auth beforeLoad guard so there's no redirect race.
+    if (activeFacility) {
+      const search: Record<string, string> = { site: activeFacility };
+      if (persistedPin) search.user = persistedPin;
+      navigate({ to: "/", search } as any);
+    } else {
+      navigate({ to: "/" });
+    }
   };
 
   const homeLinkProps = activeFacility
