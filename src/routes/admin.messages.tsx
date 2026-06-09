@@ -47,7 +47,7 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
       const result: { value: string; message: string }[] = [];
       for (const row of data ?? []) {
         const text = ((row.value as any)?.message as string | undefined)?.trim();
-        if (text) result.push({ value: (row.key as string).replace("facility_message_", ""), message: text });
+        if (text) result.push({ value: (row.key as string).replace(/^facility_message_/, ""), message: text });
       }
       return result;
     },

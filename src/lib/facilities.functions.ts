@@ -75,7 +75,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
       const val = (row as any).value as { enabled?: boolean; message?: string } | null;
       const text = val?.message?.trim();
       if (text) {
-        const facilityValue = ((row as any).key as string).replace("facility_message_", "");
+        const facilityValue = ((row as any).key as string).replace(/^facility_message_/, "");
         facilityMessageMap.set(facilityValue, text);
       }
     }
