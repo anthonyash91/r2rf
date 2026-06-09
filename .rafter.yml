@@ -1,0 +1,27 @@
+false_positives:
+  # R-E98AA: scanner flags type="text" inputs as potential email fields.
+  # None of these are email inputs. The codebase uses username-based auth;
+  # actual email fields already use type="email". Flagged inputs are:
+  # search boxes, icon keyword fields, page-title editors, username/name/
+  # security-answer fields, admin-created credential fields (intentionally
+  # type="text" so admins can see the password they're setting), test-run
+  # label inputs, and the anti-bot honeypot field.
+  - rule_id: R-E98AA
+    paths:
+      - src/components/BulkActionBar.tsx
+      - src/components/SecurityQuestionsForm.tsx
+      - src/routes/admin.category.$id.tsx
+      - src/routes/admin.index.tsx
+      - src/routes/admin.privacy.tsx
+      - src/routes/admin.terms.tsx
+      - src/routes/admin.users.tsx
+      - src/routes/dashboard.tsx
+      - src/routes/signup.tsx
+
+  # R-6D5E2: package-lock.json:5439 is flatted@3.4.2, not i18next@3.4.2.
+  # i18next has zero occurrences in bun.lock and package-lock.json.
+  # Scanner matched the version string "3.4.2" and misidentified the package.
+  # package-lock.json is a stale artifact; the project uses bun.
+  - rule_id: R-6D5E2
+    paths:
+      - package-lock.json
