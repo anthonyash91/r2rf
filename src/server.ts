@@ -6,7 +6,7 @@ import { getAllowedIps, getClientIp, getCustomHomeRestrictions, isIpRestrictionE
 import { logServerError } from "./lib/error-logger.server";
 
 type ServerEntry = {
-  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
+  fetch: (request: Request) => Promise<Response> | Response;
 };
 
 // Singleton promise so the server entry module is only imported once per
@@ -131,7 +131,7 @@ async function normalizeCatastrophicSsrResponse(response: Response, request: Req
 }
 
 export default {
-  async fetch(request: Request, env: unknown, ctx: unknown) {
+  async fetch(request: Request) {
     try {
       const ip = getClientIp(request);
       const pathname = new URL(request.url).pathname;
@@ -147,7 +147,7 @@ export default {
       }
       if (!restrictionsEnabled) {
         const handler = await getServerEntry();
-        const response = await handler.fetch(request, env, ctx);
+        const response = await handler.fetch(request);
         return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response, request));
       }
 
@@ -189,7 +189,7 @@ export default {
         }
       }
       const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
+      const response = await handler.fetch(request);
       return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response, request));
     } catch (error) {
       console.error(error);

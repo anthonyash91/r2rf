@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: reentry-to-recovery
+    runtime: node
+    buildCommand: bun install --frozen-lockfile && bun run build
+    startCommand: node server-start.mjs
+    envVars:
+      # Build-time: embedded into the client bundle by Vite
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      # Runtime: read by server-side code via process.env
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
