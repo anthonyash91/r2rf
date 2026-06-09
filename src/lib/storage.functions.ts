@@ -100,6 +100,20 @@ export const estimatePdfDuration = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdminOrContributor(context.supabase, context.userId);
+
+    // SSRF guard: only allow HTTPS fetches to the configured Supabase storage
+    // hostname. This prevents the server from being used as a proxy to reach
+    // internal services, cloud metadata endpoints (169.254.169.254), or
+    // arbitrary external hosts.
+    const parsedUrl = new URL(data.url);
+    if (parsedUrl.protocol !== "https:") {
+      throw new Error("Only HTTPS URLs are supported for PDF duration estimation.");
+    }
+    const projectHost = new URL(process.env.SUPABASE_URL!).hostname;
+    if (parsedUrl.hostname !== projectHost) {
+      throw new Error("PDF URL must point to this project's storage.");
+    }
+
     try {
       // Fetch the PDF bytes server-side
       const res = await fetch(data.url);

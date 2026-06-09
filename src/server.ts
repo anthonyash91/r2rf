@@ -31,6 +31,7 @@ async function getServerEntry(): Promise<ServerEntry> {
 const SECURITY_HEADERS: Record<string, string> = {
   "strict-transport-security": "max-age=63072000; includeSubDomains; preload",
   "x-content-type-options": "nosniff",
+  "x-frame-options": "SAMEORIGIN",
   "referrer-policy": "strict-origin-when-cross-origin",
   "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
   "cross-origin-opener-policy": "same-origin",
@@ -43,8 +44,9 @@ const SECURITY_HEADERS: Record<string, string> = {
     "object-src 'none'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data: https:",
+    // unsafe-inline retained pending nonce migration; unsafe-eval removed.
     "style-src 'self' 'unsafe-inline' https:",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
+    "script-src 'self' 'unsafe-inline' https:",
     "connect-src 'self' https: wss:",
     "media-src 'self' https: blob:",
     "worker-src 'self' blob:",

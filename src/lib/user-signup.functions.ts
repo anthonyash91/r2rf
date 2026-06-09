@@ -6,7 +6,6 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
 import { hashAnswer } from "./security-hash.server";
-import { checkAndRecordAttempt } from "./rate-limit.server";
 import { getClientIp } from "./ip-allowlist";
 
 const SIGNUP_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -67,19 +66,24 @@ function verifyChallenge(token: string, answer: number): boolean {
 
 
 export const getSignupChallenge = createServerFn({ method: "GET" }).handler(async () => {
-  // Rate-limit challenge generation: brute-force of 81 possible answers is trivial,
-  // so throttle how many challenges an IP can request per minute.
+  // Rate-limit challenge generation using an advisory-lock RPC so concurrent
+  // requests from the same IP cannot race past the limit (fixes check-then-insert race).
   const ip = getClientIp(getRequest());
-  await checkAndRecordAttempt({
-    table: "signup_attempts",
-    ip,
-    windowMs: 60 * 1000, // 1 minute window
-    max: 10,
-    extraColumns: { username: "challenge" },
-    errorMessage: "Too many requests. Please wait a moment before trying again.",
-  });
-  const a = randomInt(1, 10);
-  const b = randomInt(1, 10);
+  if (ip) {
+    const since = new Date(Date.now() - 60_000).toISOString();
+    const { error } = await (supabaseAdmin as any).rpc(
+      "check_and_record_signup_challenge_attempt",
+      { p_ip: ip, p_since: since, p_max: 10 },
+    );
+    if (error) {
+      if (error.message.includes("rate_limited")) {
+        throw new Error("Too many requests. Please wait a moment before trying again.");
+      }
+      throw new Error(error.message);
+    }
+  }
+  const a = randomInt(1, 100);
+  const b = randomInt(1, 100);
   const expiresAt = Date.now() + CHALLENGE_TTL_MS;
   return { a, b, token: signChallenge(a, b, expiresAt) };
 });
@@ -152,6 +156,18 @@ export const signupUser = createServerFn({ method: "POST" })
     // Username availability
     const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
     if (exists) throw new Error("That username is already taken.");
+
+    // Server-side PIN uniqueness check — guards the race condition where two
+    // concurrent submissions with the same PIN both pass the client preflight.
+    if (data.inmatePin) {
+      const { data: pinTaken } = await supabaseAdmin
+        .from("user_profiles")
+        .select("user_id")
+        .eq("facility", data.facility)
+        .eq("inmate_pin", data.inmatePin)
+        .maybeSingle();
+      if (pinTaken) throw new Error("That PIN is already registered at this facility.");
+    }
 
     const email = syntheticEmailLocal(data.username);
 

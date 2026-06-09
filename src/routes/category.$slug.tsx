@@ -430,23 +430,8 @@ function CategoryPage() {
     return mins > 0 ? mins * 60 : undefined;
   })();
 
-  // DEBUG: live idle counter — remove before ship
-  const [debugIdleSecs, setDebugIdleSecs] = useState(0);
-  const debugLastActivityRef = useRef(Date.now());
-  useEffect(() => {
-    const reset = () => { debugLastActivityRef.current = Date.now(); setDebugIdleSecs(0); };
-    const events = ["touchstart","touchmove","click","keydown","scroll","mousemove"];
-    events.forEach((e) => document.addEventListener(e, reset, { passive: true }));
-    const t = setInterval(() => {
-      setDebugIdleSecs(Math.floor((Date.now() - debugLastActivityRef.current) / 1000));
-    }, 500);
-    return () => { clearInterval(t); events.forEach((e) => document.removeEventListener(e, reset)); };
-  }, []);
-
-  // Progressive idle thresholds (DEBUG — shortened for testing)
-  // Production: [90_000, 180_000, 300_000]  (90s → 3min → 5min cap)
-  // Production thresholds. For debug testing, temporarily replace with [10_000, 20_000, 30_000].
-  const IDLE_THRESHOLDS_MS = [90_000, 180_000, 300_000]; // 90s → 3min → 5min cap
+  // Progressive idle thresholds: 90s → 3min → 5min cap
+  const IDLE_THRESHOLDS_MS = [90_000, 180_000, 300_000];
   const [idleConfirmCount, setIdleConfirmCount] = useState(0);
   const currentIdleMs = IDLE_THRESHOLDS_MS[Math.min(idleConfirmCount, IDLE_THRESHOLDS_MS.length - 1)];
 
@@ -464,7 +449,7 @@ function CategoryPage() {
 
   // Engagement tracking hook: timer (all types) + media progress (video/audio) + PDF auto-mark
   const isMediaItem = !!(videoEl || audioEl || videoPlayer || audioPlayer);
-  const { resetIdle, _debug: engDebug } = useContentEngagement({
+  const { resetIdle } = useContentEngagement({
     idleMs: currentIdleMs,
     contentItemId: activeItemId,
     categoryId: categoryId ?? null,
@@ -1265,31 +1250,6 @@ function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      {/* DEBUG — only shown for tester accounts */}
-      {isTester && createPortal(
-        <div className="fixed top-4 right-4 z-[200] rounded-md border border-border bg-card px-3 py-2 text-xs font-mono shadow-lg leading-loose w-64">
-          <div className="font-semibold text-foreground mb-1">⏱ Engagement Debug</div>
-          <div>idle: <span className={debugIdleSecs >= Math.floor(currentIdleMs / 1000) ? "text-red-600 font-bold" : "text-foreground"}>{debugIdleSecs}s</span> / {currentIdleMs / 1000}s trigger</div>
-          <div>hook active: {!!activeItemId && !isAdmin && !isFacilityUser ? <span className="text-green-600">✓ yes</span> : <span className="text-red-600">✗ no — open a PDF/image</span>}</div>
-          <div>idle fired: {engDebug.isIdle.current ? <span className="text-amber-600">yes</span> : "no"}</div>
-          <div>confirmations: {idleConfirmCount} → next: {IDLE_THRESHOLDS_MS[Math.min(idleConfirmCount, IDLE_THRESHOLDS_MS.length - 1)] / 1000}s {idleConfirmCount >= IDLE_THRESHOLDS_MS.length - 1 ? "(capped)" : ""}</div>
-          <div className="border-t border-border/40 mt-1 pt-1">
-            <div>base (DB): {engDebug.baseSeconds.current}s</div>
-            <div>this session: <span className="text-green-600 font-semibold">{engDebug.accSeconds.current}s</span></div>
-            <div>total (will save): <span className="font-semibold">{engDebug.baseSeconds.current + engDebug.accSeconds.current}s</span></div>
-          </div>
-          {engDebug.durationSeconds.current > 0 && (
-            <div className="border-t border-border/40 mt-1 pt-1">
-              <div>media pos: {Math.round(engDebug.furthestSeconds.current)}s / {Math.round(engDebug.durationSeconds.current)}s</div>
-              <div>media %: {Math.round((engDebug.furthestSeconds.current / engDebug.durationSeconds.current) * 100)}%</div>
-            </div>
-          )}
-          <div className="border-t border-border/40 mt-1 pt-1 text-muted-foreground">
-            item: {activeItemId ? (isMediaItem ? "media (no modal)" : "static ✓ modal") : "none"}
-          </div>
-        </div>,
-        document.body
-      )}
 
     </div>
   );

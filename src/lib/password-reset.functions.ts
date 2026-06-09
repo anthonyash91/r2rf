@@ -182,14 +182,28 @@ export const updateSecurityAnswers = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ answers: answersSchema }).parse(input))
   .handler(async ({ data, context }) => {
     const userId = context.userId;
-    await supabaseAdmin.from("user_security_answers").delete().eq("user_id", userId);
+    const newKeys = data.answers.map((a) => a.key);
     const rows = data.answers.map((a) => ({
       user_id: userId,
       question_key: a.key,
       answer_hash: hashAnswer(a.value),
     }));
-    const { error } = await supabaseAdmin.from("user_security_answers").insert(rows);
-    if (error) throw new Error(error.message);
+
+    // Insert new answers first. If this fails the user retains their existing
+    // answers — no lockout risk. Only delete old answers after the insert succeeds.
+    const { error: insErr } = await supabaseAdmin
+      .from("user_security_answers")
+      .insert(rows);
+    if (insErr) throw new Error(insErr.message);
+
+    // Remove any rows whose question_key is NOT among the newly inserted keys
+    // (i.e. the previous answers that are being replaced).
+    await supabaseAdmin
+      .from("user_security_answers")
+      .delete()
+      .eq("user_id", userId)
+      .not("question_key", "in", `(${newKeys.join(",")})`);
+
     return { ok: true as const };
   });
 

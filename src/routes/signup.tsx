@@ -160,9 +160,15 @@ function SignupPageContent() {
         const isTester = roles.includes("tester");
         // Testers always go to /dashboard (their QA interface) regardless of other roles
         const goesAdmin = !isTester && (roles.includes("admin") || roles.includes("contributor") || roles.includes("facilityUser"));
-        if (redirectTo) {
-          // Always honour an explicit redirect param (e.g. from requireAdminBeforeLoad)
-          navigate({ to: redirectTo as any });
+        // Validate redirect is a same-origin relative path to prevent open-redirect phishing.
+        const safeRedirect =
+          typeof redirectTo === "string" &&
+          redirectTo.startsWith("/") &&
+          !redirectTo.startsWith("//")
+            ? redirectTo
+            : undefined;
+        if (safeRedirect) {
+          navigate({ to: safeRedirect as any });
         } else if (goesAdmin) {
           navigate({ to: "/admin" });
         } else if (mode === "sign-up") {
