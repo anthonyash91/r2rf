@@ -870,7 +870,7 @@ function NewCategoryForm({
 
           <div className="flex flex-col gap-2 flex-1 min-w-0">
             <input
-              type="text"
+              type="search"
               value={iconKeywords}
               onChange={(e) => setIconKeywords(e.target.value)}
               placeholder="Optional keywords for a better result (e.g. coffee, gym, books)"

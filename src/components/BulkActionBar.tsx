@@ -82,7 +82,7 @@ export function BulkActionBar({
           <div className="relative sm:w-56 sm:flex-1 lg:flex-none min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
-              type="text"
+              type="search"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
               placeholder={searchPlaceholder ?? `Search ${noun.plural}…`}

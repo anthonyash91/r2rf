@@ -1,7 +1,15 @@
-ignore:
-  # R-E98AA: all 21 flagged inputs are non-email fields — search boxes,
-  # usernames, names, security answers, admin credential fields (intentional
-  # plaintext so admins can see the password they're setting), page-title
-  # editors, test-run labels, and the anti-bot honeypot. Actual email fields
-  # already use type="email" (admin.users.tsx:354, :439, :869). Fully traced.
-  - R-E98AA
+suppress:
+  # R-E98AA: remaining type="text" inputs are not email fields.
+  # Confirmed by tracing all 18 remaining locations:
+  #   - admin.users.tsx: 4 admin credential fields (intentional plaintext
+  #     so admins can read the password they're setting for another account)
+  #     + 1 username field
+  #   - signup.tsx: username, security question answers, first/last name,
+  #     username-or-email sign-in field (accepts both formats), honeypot
+  #   - admin.privacy/terms.tsx: 4 page-title editors
+  #   - dashboard.tsx: QA test-run label input
+  #   - SecurityQuestionsForm.tsx: security answer text field
+  # The 3 search inputs (BulkActionBar, admin.category, admin.index) have
+  # been fixed at source to type="search". Actual email fields already
+  # use type="email" (admin.users.tsx:354, :439, :869).
+  - id: R-E98AA
