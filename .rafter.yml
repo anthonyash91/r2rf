@@ -1,15 +1,7 @@
-false_positives:
-  # R-E98AA: scanner flags type="text" inputs as potential email fields.
-  # None are email inputs — search boxes, usernames, names, security answers,
-  # admin credential fields (intentional plaintext so admins can see the
-  # password they're setting), page-title editors, test-run labels, and the
-  # anti-bot honeypot. Actual email fields already use type="email"
-  # (admin.users.tsx:354, :439, :869). Traced all 21 locations; none are
-  # email sinks.
-  - rule_id: R-E98AA
-
-  # R-6D5E2: package-lock.json:5439 is flatted@3.4.2, not i18next@3.4.2.
-  # i18next is absent from bun.lock and package-lock.json entirely.
-  # Scanner matched the version string "3.4.2" and misidentified the package.
-  # package-lock.json is a stale npm artifact; the project uses bun.
-  - rule_id: R-6D5E2
+ignore:
+  # R-E98AA: all 21 flagged inputs are non-email fields — search boxes,
+  # usernames, names, security answers, admin credential fields (intentional
+  # plaintext so admins can see the password they're setting), page-title
+  # editors, test-run labels, and the anti-bot honeypot. Actual email fields
+  # already use type="email" (admin.users.tsx:354, :439, :869). Fully traced.
+  - R-E98AA
