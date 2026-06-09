@@ -14,7 +14,7 @@ export function detectMedia(url: string | null | undefined): MediaKind | null {
   return null;
 }
 
-export function detectMediaFor(item: {
+function detectMediaFor(item: {
   url?: string | null;
   file_url?: string | null;
 }): MediaKind | null {

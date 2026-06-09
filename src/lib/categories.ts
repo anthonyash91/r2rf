@@ -1,12 +1,5 @@
 export type ContentType = "Article" | "Video" | "Podcast" | "Worksheet" | "Guide";
 
-export const CONTENT_TYPES: ContentType[] = [
-  "Article",
-  "Video",
-  "Podcast",
-  "Worksheet",
-  "Guide",
-];
 
 export type HomePageMode = "default" | "custom";
 

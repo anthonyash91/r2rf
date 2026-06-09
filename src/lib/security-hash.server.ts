@@ -34,5 +34,3 @@ export function verifyAnswer(answer: string, stored: string): boolean {
   }
 }
 
-// Re-export so existing imports keep working.
-export { randomBytes };

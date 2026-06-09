@@ -1,13 +1,13 @@
 import { parseMinutes } from "@/lib/duration";
 
-export type ProgressEngagement = {
+type ProgressEngagement = {
   sessionSeconds: number;
   mediaProgressSeconds: number | null;
   mediaDurationSeconds: number | null;
   manualCompletionPct: number | null;
 };
 
-export type ProgressItem = {
+type ProgressItem = {
   id: string;
   type?: string | null;
   duration?: string | null;
@@ -23,7 +23,7 @@ export type ProgressItem = {
  * - PDF in progress → sessionSeconds / estimatedSeconds (capped at 0.95)
  * - No engagement → 0
  */
-export function itemProgressScore(
+function itemProgressScore(
   item: ProgressItem,
   readSet: Set<string>,
   engagementMap: Map<string, ProgressEngagement>,

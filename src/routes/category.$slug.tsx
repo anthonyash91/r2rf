@@ -9,6 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 const PdfViewer = lazy(() => import("@/components/PdfViewer"));
 import { trackCategoryView, trackContentClick } from "@/lib/analytics";
 import { weightedCompletionPct } from "@/lib/content-progress";
+import { detectMedia, type MediaKind } from "@/lib/read-status";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
@@ -36,10 +37,7 @@ import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useRatings } from "@/hooks/use-ratings";
 import { useAchievements } from "@/hooks/use-achievements";
 
-const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
-const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
 const PDF_EXT = /\.pdf(\?|#|$)/i;
-const IMAGE_EXT = /\.(png|jpe?g|gif|webp|avif|svg|bmp|heic|heif)(\?|#|$)/i;
 function FacilityBadge({ facilities, facilityLabelMap, className }: {
   facilities: string[];
   facilityLabelMap: Record<string, string>;
@@ -67,18 +65,7 @@ function FacilityBadge({ facilities, facilityLabelMap, className }: {
   );
 }
 
-function isVideoUrl(url: string | null | undefined) {
-  return !!url && VIDEO_EXT.test(url);
-}
-function isAudioUrl(url: string | null | undefined) {
-  return !!url && AUDIO_EXT.test(url);
-}
-function isPdfUrl(url: string | null | undefined) {
-  return !!url && PDF_EXT.test(url);
-}
-function isImageUrl(url: string | null | undefined) {
-  return !!url && IMAGE_EXT.test(url);
-}
+
 function IdlePrompt({ countdown, onStillHere }: { countdown: number; onStillHere: () => void }) {
   return (
     <div className="absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-6">
@@ -106,15 +93,6 @@ function IdlePrompt({ countdown, onStillHere }: { countdown: number; onStillHere
       </div>
     </div>
   );
-}
-
-type MediaKind = "video" | "audio" | "pdf" | "image";
-function detectMedia(url: string | null | undefined): MediaKind | null {
-  if (isVideoUrl(url)) return "video";
-  if (isAudioUrl(url)) return "audio";
-  if (isPdfUrl(url)) return "pdf";
-  if (isImageUrl(url)) return "image";
-  return null;
 }
 
 
