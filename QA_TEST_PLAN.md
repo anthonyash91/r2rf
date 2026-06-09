@@ -1702,7 +1702,7 @@ Sign in as a regular user (or tester simulating Regular User). Open a PDF, artic
 ### 22.2 — Confirming presence resumes the timer
 🟠 **High**
  **Role:** Regular User
-When the idle modal appears, tap "Yes, I'm still here" before the countdown reaches zero. Verify the modal dismisses and the session timer resumes (check the engagement debug panel if testing as a tester — the `this session` counter should continue incrementing).
+When the idle modal appears, tap "Yes, I'm still here" before the countdown reaches zero. Verify the modal dismisses and the session timer resumes.
 
 ✅ Pass: Tapping the button dismisses the modal and the timer resumes. The content item dialog stays open.
 
@@ -1727,12 +1727,85 @@ Open a video or audio content item. Leave it playing without interacting for 90+
 
 ✅ Pass: Idle prompt is not shown for video or audio items. Media position tracking is unaffected by the idle threshold.
 
-### 22.6 — Engagement debug panel (tester accounts only)
+### 22.6 — Engagement debug panel not present in production
 🟡 **Medium**
  **Role:** Regular User
-Sign in as a tester. Simulate Regular User role. Open a PDF item. Verify the debug overlay appears in the top-right corner showing: idle countdown, hook active status (✓ yes), idle fired indicator, base seconds, this session seconds, total will save, and item type. Verify the debug panel does NOT appear for non-tester accounts.
+Open any PDF or article item as any account type. Verify no debug overlay appears in the top-right corner. Open DevTools → Elements and search for "Engagement Debug" — confirm the element is absent from the DOM entirely.
 
-✅ Pass: Debug panel shows real-time engagement data for tester accounts. Hidden for all other account types.
+✅ Pass: The engagement debug overlay is not rendered for any account type. No debug timer state is visible in the React DevTools profiler.
+
+---
+
+## Section 23 — Security Hardening Verification
+
+These tests verify the pre-launch audit fixes from the `ca5eccc` commit. Run them once after applying the `20260609000001_atomic_signup_challenge_rate_limit.sql` migration.
+
+### 23.1 — Open redirect is blocked on post-login redirect
+🟠 **High**
+ **Role:** Signed Out
+Navigate to `/signup?redirect=https://evil.com`. Sign in with valid credentials. Verify you land on `/dashboard` (or the role-appropriate default), **not** `https://evil.com`. Repeat with `/signup?redirect=//evil.com` — same result. Then test `/signup?redirect=/admin` — verify you **do** navigate to `/admin` (valid relative paths must still work).
+
+✅ Pass: External URLs in the redirect param are silently ignored. Same-origin relative paths beginning with `/` still work as expected.
+
+### 23.2 — Signup challenge rate limiter is enforced
+🟠 **High**
+ **Role:** Signed Out
+Open the sign-up page. In browser DevTools → Network, watch for the challenge request. Rapidly refresh the page (or call the challenge endpoint directly) more than 10 times within one minute from the same IP. Verify the 11th request returns a "Too many requests" error.
+
+✅ Pass: After 10 challenge requests in 60 seconds, the endpoint returns an error message. Earlier requests succeed normally. The limit resets after 60 seconds.
+
+### 23.3 — Math captcha answer space is 1–100
+🟢 **Low**
+ **Role:** Signed Out
+Open the sign-up page. Inspect the challenge response in DevTools → Network (the GET challenge request). Verify that the `a` and `b` values are in the range 1–100 (not 1–9). Reload several times and confirm the range is consistently 1–100. Entering the correct sum (a + b) still passes. Entering a wrong answer still shows "Captcha failed."
+
+✅ Pass: Both challenge numbers are between 1 and 100 inclusive. Correct answers are accepted; wrong answers are rejected.
+
+### 23.4 — Duplicate PIN is rejected at the server
+🟠 **High**
+ **Role:** Signed Out
+This test requires two browser tabs or two devices. Both must use the same valid `?site=` and `?user=PIN` URL simultaneously. Start the sign-up form in both tabs at the same time and submit within seconds of each other (same facility, same PIN, different usernames). Verify that only one account is created — the second receives an error ("That PIN is already registered at this facility").
+
+✅ Pass: Only one account is created for the shared PIN. The second submission receives a clear error. No orphaned accounts appear in the admin Users page.
+
+### 23.5 — PDF duration estimator rejects non-storage URLs
+🟠 **High**
+ **Role:** Admin
+Sign in as admin. Open a content item editor and upload any PDF to trigger the duration estimator. Then, using the browser DevTools console, manually call the estimatePdfDuration server function with a non-Supabase URL:
+```js
+// Open any category editor page first, then paste in console:
+fetch('/_server/estimatePdfDuration', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` },
+  body: JSON.stringify({ url: 'https://google.com/test.pdf' })
+}).then(r => r.text()).then(console.log)
+```
+Verify the response is an error ("PDF URL must point to this project's storage"), not a successful fetch. Also try `http://169.254.169.254/` — verify it fails with "Only HTTPS URLs are supported."
+
+✅ Pass: Non-Supabase HTTPS URLs and any HTTP URLs are rejected with a clear error. The real Supabase storage URL (from an actual upload) still works and returns a duration.
+
+### 23.6 — `unsafe-eval` is absent from Content-Security-Policy
+🟠 **High**
+ **Role:** Signed Out
+Load any page. Open DevTools → Network → click the document response → Headers tab. Find the `content-security-policy` header. Verify that `unsafe-eval` does **not** appear in the `script-src` directive. Verify the app still works: charts render, toasts appear, forms submit normally.
+
+✅ Pass: `unsafe-eval` is not in `script-src`. All UI functionality works without it.
+
+### 23.7 — Security answer update preserves existing answers on failure
+🟡 **Medium**
+ **Role:** Regular User
+Sign in and navigate to Dashboard → My Account. Note which two security questions are currently set. Update the security questions to two different questions with valid answers. Verify the update succeeds and the new questions are reflected. Then verify (by attempting a password reset) that the new answers work.
+
+For the failure scenario: this requires temporarily causing a DB error on the insert. Skip if not testable in production. The key invariant is: if the insert of new answers fails for any reason, the old answers must still be present and functional.
+
+✅ Pass: On success, new questions/answers are saved and old ones removed. Old answers are not accessible after a successful update.
+
+### 23.8 — X-Frame-Options header is present
+🟢 **Low**
+ **Role:** Signed Out
+Load any page. Open DevTools → Network → click the document response → Headers tab. Verify that the `x-frame-options` header is present with the value `SAMEORIGIN`. Verify that `frame-ancestors 'self'` also appears in the `content-security-policy` header (belt-and-suspenders protection).
+
+✅ Pass: Both `x-frame-options: SAMEORIGIN` and `frame-ancestors 'self'` are present in every page response.
 
 ---
 
@@ -1772,3 +1845,10 @@ Run this checklist after any code deployment to confirm core flows still work:
 - [ ] Action/bookmark/rating badges do not collide with type badge on mobile (category page and dashboard)
 - [ ] Category accordion header shows connected pills on desktop and stacked badges on mobile
 - [ ] Role Switcher button is visible above footer at bottom of page
+- [ ] Post-login ?redirect= with external URL lands on dashboard (not external site)
+- [ ] Signup challenge rate limiter blocks >10 requests per minute per IP
+- [ ] Duplicate PIN at same facility is rejected server-side on signup
+- [ ] PDF duration estimator rejects non-Supabase and HTTP URLs
+- [ ] content-security-policy header does not contain unsafe-eval
+- [ ] x-frame-options: SAMEORIGIN is present on every page response
+- [ ] Updating security questions preserves old answers until new insert succeeds
