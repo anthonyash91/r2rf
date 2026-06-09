@@ -1727,12 +1727,15 @@ Open a video or audio content item. Leave it playing without interacting for 90+
 
 ✅ Pass: Idle prompt is not shown for video or audio items. Media position tracking is unaffected by the idle threshold.
 
-### 22.6 — Engagement debug panel not present in production
+### 22.6 — Engagement debug panel visible only to testers
 🟡 **Medium**
- **Role:** Regular User
-Open any PDF or article item as any account type. Verify no debug overlay appears in the top-right corner. Open DevTools → Elements and search for "Engagement Debug" — confirm the element is absent from the DOM entirely.
+ **Role:** Regular User, Tester
 
-✅ Pass: The engagement debug overlay is not rendered for any account type. No debug timer state is visible in the React DevTools profiler.
+**Part A (regular user):** Sign in as a regular user. Open any PDF or article item. Verify no debug overlay appears in the top-right corner. Open DevTools → Elements and search for "Engagement Debug" — confirm the element is absent from the DOM entirely.
+
+**Part B (tester):** Sign in as a tester. Open any PDF or article item. Verify the "⏱ Engagement Debug" overlay appears in the top-right corner. Verify it shows idle time countdown, hook active status, base/session/total seconds, and (for media items) media position and percentage.
+
+✅ Pass: The debug overlay is absent for regular users and all other non-tester account types. It is visible and functional for tester accounts only. No debug timer runs in the browser for non-tester accounts.
 
 ---
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -78,7 +78,7 @@ export function useContentEngagement({
   onAutoMarkRead,
   onIdle,
   idleMs = DEFAULT_IDLE_MS,
-}: Params): { mediaProgressPct: number | null; resetIdle: () => void } {
+}: Params): { mediaProgressPct: number | null; resetIdle: () => void; _debug: { baseSeconds: React.RefObject<number>; accSeconds: React.RefObject<number>; furthestSeconds: React.RefObject<number>; durationSeconds: React.RefObject<number>; isIdle: React.RefObject<boolean>; idleMs: React.RefObject<number> } } {
   // Timer state — all in refs so they never cause re-renders
   const lastActivityRef = useRef(Date.now());
   const accSecondsRef = useRef(0);
@@ -305,5 +305,16 @@ export function useContentEngagement({
       ? Math.min(100, Math.round((furthestRef.current / durationRef.current) * 100))
       : null;
 
-  return { mediaProgressPct, resetIdle };
+  return {
+    mediaProgressPct,
+    resetIdle,
+    _debug: {
+      baseSeconds: baseSecondsRef,
+      accSeconds: accSecondsRef,
+      furthestSeconds: furthestRef,
+      durationSeconds: durationRef,
+      isIdle: firedIdleRef,
+      idleMs: idleMsRef,
+    },
+  };
 }
