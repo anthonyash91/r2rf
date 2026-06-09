@@ -2,7 +2,7 @@ services:
   - type: web
     name: reentry-to-recovery
     runtime: node
-    buildCommand: bun install --frozen-lockfile && bun run build
+    buildCommand: bun install && bun run build
     startCommand: node server-start.mjs
     envVars:
       # Build-time: embedded into the client bundle by Vite
