@@ -290,13 +290,15 @@ export const saveFacilityMessage = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    // Allow admin, contributor, or facilityUser writing their own facility key
-    const { data: roleRow } = await supabaseAdmin
+    // Allow admin or facilityUser writing their own facility key.
+    // Use select (not maybeSingle) — tester accounts have both roles simultaneously.
+    const { data: roleRows } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
-      .in("role", ["admin", "facilityUser"])
-      .maybeSingle();
+      .in("role", ["admin", "facilityUser"]);
+    // Prefer admin so testers (who hold both) are treated as admin.
+    const roleRow = roleRows?.find((r) => r.role === "admin") ?? roleRows?.[0] ?? null;
     if (!roleRow) throw new Error("Forbidden");
 
     // facilityUser: verify the key matches their own facility

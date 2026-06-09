@@ -8,6 +8,10 @@ import { recordAdminAudit } from "@/lib/admin-audit.server";
 
 type Role = "admin" | "contributor" | "tester" | "user" | "facilityUser";
 
+// The facility slug assigned to all tester accounts. Override via TESTER_FACILITY env var
+// when deploying to an environment that uses a different facility slug.
+const TESTER_FACILITY = process.env.TESTER_FACILITY ?? "s003007001";
+
 /** Split an array into chunks to avoid Supabase URL length limits on large IN clauses. */
 function chunkArray<T>(arr: T[], size: number): T[][] {
   const chunks: T[][] = [];
@@ -64,7 +68,7 @@ async function assertCanManageUser(
       supabaseAdmin.from("user_profiles").select("facility").eq("user_id", targetUserId).maybeSingle().then((r) => r.data),
       allowFacilityUserTarget
         ? Promise.resolve(null)
-        : supabaseAdmin.from("user_roles").select("role").eq("user_id", targetUserId).maybeSingle().then((r) => r.data),
+        : supabaseAdmin.from("user_roles").select("role").eq("user_id", targetUserId).eq("role", "facilityUser").maybeSingle().then((r) => r.data),
     ]);
 
     if (!callerProf?.facility || callerProf.facility !== targetProf?.facility) {
@@ -438,18 +442,24 @@ export const createFacilityUser = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     const userId = created.user.id;
-    // Clear any auto-assigned roles (a DB trigger may insert "user" on auth.users insert)
-    // before assigning facilityUser so the single-role invariant is maintained.
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
-    await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "facilityUser" });
-    // Store facility in user_profiles so facility-scoped queries work
-    await supabaseAdmin.from("user_profiles").insert({
-      user_id: userId,
-      username: data.email.split("@")[0].slice(0, 32).replace(/[^a-z0-9_]/gi, "_").toLowerCase(),
-      facility: data.facilityValue,
-      first_name: "",
-      last_name: "",
-    });
+    try {
+      // Clear any auto-assigned roles (a DB trigger may insert "user" on auth.users insert)
+      // before assigning facilityUser so the single-role invariant is maintained.
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+      await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "facilityUser" });
+      // Store facility in user_profiles so facility-scoped queries work
+      const { error: profErr } = await supabaseAdmin.from("user_profiles").insert({
+        user_id: userId,
+        username: data.email.split("@")[0].slice(0, 32).replace(/[^a-z0-9_]/gi, "_").toLowerCase(),
+        facility: data.facilityValue,
+        first_name: "",
+        last_name: "",
+      });
+      if (profErr) throw new Error(profErr.message);
+    } catch (err) {
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+      throw err;
+    }
     // Send verification email
     const { error: resendErr } = await supabaseAdmin.auth.resend({ type: "signup", email: data.email });
     if (resendErr) console.warn("createFacilityUser: resend failed", resendErr.message);
@@ -481,10 +491,6 @@ export const createTesterUser = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
-
-    // All tester accounts are assigned to CPC Sales for facilityUser role simulation.
-    // Update this value to match the exact facility slug in your facilities table.
-    const TESTER_FACILITY = "s003007001";
 
     const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
     if (exists) throw new Error("That username is already taken.");
@@ -568,7 +574,6 @@ export const upgradeTesterRoles = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    const TESTER_FACILITY = "s003007001";
     const allRoles: Role[] = ["tester", "user", "admin", "contributor", "facilityUser"];
 
     await Promise.all(

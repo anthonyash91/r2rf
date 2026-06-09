@@ -1812,6 +1812,70 @@ Load any page. Open DevTools → Network → click the document response → Hea
 
 ---
 
+## Section 24 — Post-Launch Audit Fixes
+
+These tests verify the "Recommended Fixes After Launch" items from the security audit.
+
+### 24.1 — TESTER_FACILITY is env-var-driven
+🟢 **Low**
+ **Role:** Admin
+
+In the Render dashboard (or `.env` locally), verify `TESTER_FACILITY` is set. Create a new tester account via Admin → Users → Add Tester. Sign in as that tester and simulate Facility User role via the Role Switcher. Check that the facility shown is the one matching `TESTER_FACILITY`.
+
+✅ Pass: The tester's facility matches the env var value (default `s003007001` / CPC Sales). Changing the env var and redeploying uses the new value without a code change.
+
+---
+
+### 24.2 — Facility user creation rolls back on failure
+🟡 **Medium**
+ **Role:** Admin
+
+This test requires a way to trigger a profile-insert failure (e.g., temporarily break the `user_profiles` table constraint in a staging environment, or review the rollback code path directly). Verify that if the `user_profiles` insert fails after the auth user is created, the auth user is deleted rather than left as a zombie account.
+
+✅ Pass: No orphaned auth users exist in Supabase Auth after a failed `createFacilityUser` call. The error is surfaced to the admin UI.
+
+---
+
+### 24.3 — IP allowlist serves stale cache on DB error
+🟡 **Medium**
+ **Role:** Signed Out
+
+With a valid session established (server has cached the allowlist), temporarily revoke or rotate `SUPABASE_SERVICE_ROLE_KEY` to simulate a DB fetch failure. Send a request to the server. Verify the server logs show "Using stale cache after fetch error" and that the request is handled using the previously cached allowlist (not blocked with an empty allowlist error).
+
+✅ Pass: Server continues to serve requests using stale IP allowlist data during a DB outage. First-startup with no cache and no DB still fails closed.
+
+---
+
+### 24.4 — Tester role simulation works across all admin actions
+🟡 **Medium**
+ **Role:** Tester
+
+Sign in as a tester. Use the Role Switcher to simulate Facility User. Navigate to Admin → Users (facility-scoped view). Verify no PGRST116 error occurs. Open a PDF item as Regular User. Verify engagement tracking works normally. Use the Role Switcher to switch back to Admin — verify the full admin panel loads.
+
+✅ Pass: No "multiple rows returned" errors for tester accounts in any role simulation. All four role simulations (Regular User, Admin, Contributor, Facility User) work without errors.
+
+---
+
+### 24.5 — sessionProgress Map does not grow unboundedly
+🟢 **Low**
+ **Role:** Regular User
+
+Open a large number of different content items in one session (or verify in code that `SESSION_PROGRESS_MAX = 500`). Confirm that opening the 501st unique item evicts the oldest entry rather than growing the map indefinitely.
+
+✅ Pass: Map size stays at or below 500 entries. No memory growth observed in long sessions with many items.
+
+---
+
+### 24.6 — Generic rate limiter removed (dead code)
+🟢 **Low**
+ **Role:** Admin
+
+Verify that `src/lib/rate-limit.server.ts` no longer exists in the codebase. Verify that the signup challenge and password reset paths still use their advisory-lock RPCs (`check_and_record_signup_challenge_attempt` and `check_and_record_reset_attempt`).
+
+✅ Pass: `rate-limit.server.ts` is absent. Rate limiting on both signup challenge and password reset continues to function correctly via Postgres advisory-lock RPCs.
+
+---
+
 ## Regression Checklist
 
 Run this checklist after any code deployment to confirm core flows still work:
@@ -1855,3 +1919,7 @@ Run this checklist after any code deployment to confirm core flows still work:
 - [ ] content-security-policy header does not contain unsafe-eval
 - [ ] x-frame-options: SAMEORIGIN is present on every page response
 - [ ] Updating security questions preserves old answers until new insert succeeds
+- [ ] Tester role simulation (all four roles) works without PGRST116 errors
+- [ ] IP allowlist serves stale cache on DB error (not empty allowlist)
+- [ ] createFacilityUser rolls back auth user on profile-insert failure
+- [ ] Generic rate-limit.server.ts file is absent from the codebase

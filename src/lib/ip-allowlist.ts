@@ -20,9 +20,8 @@ async function fetchTable(table: string): Promise<Set<string>> {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
+    // Config error — not transient. Fail closed; do not use stale cache.
     console.error(`[ip-allowlist] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY (table=${table})`);
-    // Fail closed: return an empty set so no IP passes the allowlist check.
-    // This prevents a misconfigured server from accidentally granting open access.
     return new Set();
   }
   const res = await fetch(`${url}/rest/v1/${table}?select=ip_address`, {
@@ -30,8 +29,8 @@ async function fetchTable(table: string): Promise<Set<string>> {
   });
   if (!res.ok) {
     console.error(`[ip-allowlist] Fetch failed for ${table}:`, res.status, await res.text());
-    // Fail closed on DB error.
-    return new Set();
+    // Throw so callers can fall back to stale cache rather than blocking everyone.
+    throw new Error(`ip-allowlist fetch failed: ${table}`);
   }
   const rows = (await res.json()) as Array<{ ip_address: string }>;
   return new Set(rows.map((r) => r.ip_address.trim()));
@@ -48,6 +47,12 @@ export async function getAllowedIps(): Promise<Set<string>> {
     .then((ips) => {
       siteCache = { ips, expiresAt: Date.now() + CACHE_TTL_MS };
       return ips;
+    })
+    .catch((err) => {
+      console.error("[ip-allowlist] Using stale cache after fetch error:", err.message);
+      // Serve stale cache on transient DB error to avoid blocking everyone.
+      // If there is no cache at all (first startup), fail closed.
+      return siteCache?.ips ?? new Set<string>();
     })
     .finally(() => {
       siteInflight = null;
@@ -105,19 +110,20 @@ export async function isIpRestrictionEnabled(): Promise<boolean> {
 async function fetchCustomHomeRestrictions(): Promise<Map<string, Set<string>>> {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const map = new Map<string, Set<string>>();
   if (!url || !key) {
+    // Config error — not transient. Do not use stale cache.
     console.error("[ip-allowlist] Missing SUPABASE_URL/SERVICE_ROLE_KEY for custom-home restrictions");
-    return map;
+    return new Map();
   }
   const res = await fetch(`${url}/rest/v1/custom_home_pages?select=slug,allowed_ips`, {
     headers: { apikey: key, Authorization: `Bearer ${key}` },
   });
   if (!res.ok) {
     console.error("[ip-allowlist] Fetch custom_home_pages failed:", res.status, await res.text());
-    return map;
+    throw new Error("ip-allowlist fetch failed: custom_home_pages");
   }
   const rows = (await res.json()) as Array<{ slug: string; allowed_ips: string[] | null }>;
+  const map = new Map<string, Set<string>>();
   for (const row of rows) {
     const ips = (row.allowed_ips ?? []).map((s) => s.trim()).filter(Boolean);
     if (ips.length > 0) map.set(row.slug, new Set(ips));
@@ -133,6 +139,10 @@ export async function getCustomHomeRestrictions(): Promise<Map<string, Set<strin
     .then((restrictions) => {
       customHomeCache = { restrictions, expiresAt: Date.now() + CACHE_TTL_MS };
       return restrictions;
+    })
+    .catch((err) => {
+      console.error("[ip-allowlist] Using stale custom-home cache after fetch error:", err.message);
+      return customHomeCache?.restrictions ?? new Map<string, Set<string>>();
     })
     .finally(() => {
       customHomeInflight = null;

@@ -1,6 +1,6 @@
 export type TestPriority = "critical" | "high" | "medium" | "low";
 export type TestStatus   = "untested" | "pass" | "fail" | "blocked" | "skipped";
-export type TestRole     = "Signed Out" | "Regular User" | "Admin" | "Contributor" | "Facility User";
+export type TestRole     = "Signed Out" | "Regular User" | "Admin" | "Contributor" | "Facility User" | "Tester";
 
 export type QASection = {
   num: number;
@@ -702,6 +702,20 @@ export const QA_TESTS: QATest[] = [
     description: "Sign in as a regular user. Navigate to Dashboard → My Account. Note the two current security questions. Update them to two new different questions with valid answers. Verify the update succeeds and confirm the new answers work by attempting a password reset. For the data-safety invariant: the implementation inserts new answers before deleting old ones — if insert fails, old answers remain intact.\n\n✅ Pass: New questions and answers are saved successfully. A password reset using the new answers succeeds. The old answers no longer work after a successful update." },
   { id: "23.8", sectionNum: 23, priority: "low", roles: ["Signed Out"], title: "X-Frame-Options header prevents clickjacking",
     description: "Load any page. Open DevTools → Network → click the page document response → Headers tab. Verify: (1) x-frame-options header is present with value SAMEORIGIN, (2) content-security-policy header contains 'frame-ancestors \\'self\\''. Optionally: create a local HTML file with <iframe src='https://yourdomain.com'></iframe> and open it in a browser — the iframe should be blocked with a console error.\n\n✅ Pass: Both x-frame-options: SAMEORIGIN and frame-ancestors 'self' are present. The site cannot be embedded in an iframe from an external origin." },
+
+  // ── Section 24 — Post-Launch Audit Fixes ──────────────────────────────────
+  { id: "24.1", sectionNum: 24, priority: "low", roles: ["Admin"], title: "TESTER_FACILITY is env-var-driven",
+    description: "In the Render dashboard (or .env locally), verify TESTER_FACILITY is set. Create a new tester account via Admin → Users → Add Tester. Sign in as that tester and simulate Facility User via the Role Switcher. Verify the facility shown matches the TESTER_FACILITY value.\n\n✅ Pass: Tester facility matches the env var. Changing it and redeploying uses the new value without a code change." },
+  { id: "24.2", sectionNum: 24, priority: "medium", roles: ["Admin"], title: "Facility user creation rolls back on profile-insert failure",
+    description: "Review the createFacilityUser server function to confirm that if user_profiles insert fails after the auth user is created, supabaseAdmin.auth.admin.deleteUser(userId) is called before rethrowing. In a staging environment, verify no orphaned auth users exist after a simulated profile-insert failure.\n\n✅ Pass: No orphaned auth users remain after a failed createFacilityUser call. The error is surfaced to the admin UI." },
+  { id: "24.3", sectionNum: 24, priority: "medium", roles: ["Signed Out"], title: "IP allowlist serves stale cache on DB error",
+    description: "With a valid session established (server has cached the allowlist), simulate a DB fetch failure (e.g. revoke the service role key temporarily). Send a request. Verify the server logs 'Using stale cache after fetch error' and continues handling requests. Verify first-startup with no cache still fails closed.\n\n✅ Pass: Stale cache is served on transient DB errors. No-cache + DB error still blocks all IPs." },
+  { id: "24.4", sectionNum: 24, priority: "medium", roles: ["Tester"], title: "Tester role simulation works without PGRST116 errors",
+    description: "Sign in as a tester (5 roles: tester, admin, contributor, user, facilityUser). Use the Role Switcher to cycle through all four simulations: Regular User, Admin, Contributor, Facility User. In each simulation, perform role-specific actions (view content, admin panel, facility user view). Verify no 'multiple rows returned' (PGRST116) errors appear in the browser console or server logs.\n\n✅ Pass: All four role simulations work without errors. Multi-role queries no longer use maybeSingle() without a role filter." },
+  { id: "24.5", sectionNum: 24, priority: "low", roles: ["Regular User"], title: "sessionProgress Map is bounded at 500 entries",
+    description: "Review src/hooks/use-content-engagement.ts to confirm SESSION_PROGRESS_MAX = 500 and setSessionProgress evicts the oldest entry when the limit is reached. In a long browser session, open many unique content items — verify the map does not grow past 500 entries (check via browser DevTools memory profiler if needed).\n\n✅ Pass: Map size stays ≤ 500. No unbounded memory growth in long sessions with many content items." },
+  { id: "24.6", sectionNum: 24, priority: "low", roles: ["Admin"], title: "Generic rate limiter dead code is removed",
+    description: "Verify that src/lib/rate-limit.server.ts no longer exists. Verify that signup challenge and password reset still enforce rate limits via their advisory-lock RPCs (check_and_record_signup_challenge_attempt and check_and_record_reset_attempt).\n\n✅ Pass: rate-limit.server.ts is absent. Both rate-limited endpoints continue to work correctly." },
 ];
 
 // Helper: tests grouped by section

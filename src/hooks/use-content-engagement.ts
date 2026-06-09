@@ -7,7 +7,15 @@ import { supabase } from "@/integrations/supabase/client";
  * where invalidateQueries fires at the same time as the flush write — the
  * read can complete before the write, returning stale data on resume.
  */
+const SESSION_PROGRESS_MAX = 500;
 const sessionProgress = new Map<string, number>();
+
+function setSessionProgress(id: string, value: number) {
+  if (!sessionProgress.has(id) && sessionProgress.size >= SESSION_PROGRESS_MAX) {
+    sessionProgress.delete(sessionProgress.keys().next().value!);
+  }
+  sessionProgress.set(id, value);
+}
 
 /** Default idle threshold — overridden per-call via the idleMs param. */
 const DEFAULT_IDLE_MS = 90_000;
@@ -233,7 +241,7 @@ export function useContentEngagement({
       lastSample = t;
       if (el.duration) durationRef.current = el.duration;
       furthestRef.current = Math.max(furthestRef.current, t);
-      if (contentItemId) sessionProgress.set(contentItemId, furthestRef.current);
+      if (contentItemId) setSessionProgress(contentItemId, furthestRef.current);
       if (
         !autoMarkedRef.current &&
         el.duration > 0 &&
@@ -275,7 +283,7 @@ export function useContentEngagement({
       lastSample = t;
       if (el.duration) durationRef.current = el.duration;
       furthestRef.current = Math.max(furthestRef.current, t);
-      if (contentItemId) sessionProgress.set(contentItemId, furthestRef.current);
+      if (contentItemId) setSessionProgress(contentItemId, furthestRef.current);
       if (
         !autoMarkedRef.current &&
         el.duration > 0 &&
