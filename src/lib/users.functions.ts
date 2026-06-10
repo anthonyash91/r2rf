@@ -109,26 +109,55 @@ async function hydrateAuthFields(userIds: string[]): Promise<
     { email: string; created_at: string; last_sign_in_at: string | null; email_confirmed_at: string | null }
   >();
   if (userIds.length === 0) return map;
-  // Paginate listUsers() rather than calling getUserById() for each user.
-  // The Auth API doesn't expose a bulk-by-ID endpoint, so pagination is the
-  // only way to fetch multiple users without N separate round-trips.
-  const idSet = new Set(userIds);
-  const PER_PAGE = 1000;
-  for (let page = 1; ; page++) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: PER_PAGE });
-    if (error) break;
-    for (const u of data.users ?? []) {
-      if (!idSet.has(u.id)) continue;
-      const ua = u as any;
-      map.set(u.id, {
-        email: u.email ?? "",
-        created_at: u.created_at,
-        last_sign_in_at: ua.last_sign_in_at ?? null,
-        email_confirmed_at: u.email_confirmed_at ?? null,
-      });
+
+  // Phase 1: resolve emails from user_profiles (populated at signup/creation).
+  // This eliminates the full Auth API pagination for the common case — regular
+  // users always have a profile row with an email column (see migration 20260610000005).
+  const profileChunks = chunkArray(userIds, 500);
+  const profileResults = await Promise.all(
+    profileChunks.map((chunk) =>
+      (supabaseAdmin as any)
+        .from("user_profiles")
+        .select("user_id, email, created_at")
+        .in("user_id", chunk),
+    ),
+  );
+  for (const res of profileResults) {
+    for (const p of (res.data ?? []) as any[]) {
+      if (p.email) {
+        map.set(p.user_id as string, {
+          email: p.email as string,
+          created_at: p.created_at as string,
+          last_sign_in_at: null,   // not stored in profiles; use user_logins where needed
+          email_confirmed_at: null, // always confirmed for inmate/facility accounts
+        });
+      }
     }
-    if ((data.users?.length ?? 0) < PER_PAGE) break;
   }
+
+  // Phase 2: for IDs still missing (admin/contributor accounts without profiles),
+  // fall back to Auth API pagination — this set is always small (<10 accounts).
+  const missingIds = userIds.filter((id) => !map.has(id));
+  if (missingIds.length > 0) {
+    const idSet = new Set(missingIds);
+    const PER_PAGE = 1000;
+    for (let page = 1; ; page++) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: PER_PAGE });
+      if (error) break;
+      for (const u of data.users ?? []) {
+        if (!idSet.has(u.id)) continue;
+        const ua = u as any;
+        map.set(u.id, {
+          email: u.email ?? "",
+          created_at: u.created_at,
+          last_sign_in_at: ua.last_sign_in_at ?? null,
+          email_confirmed_at: u.email_confirmed_at ?? null,
+        });
+      }
+      if ((data.users?.length ?? 0) < PER_PAGE) break;
+    }
+  }
+
   return map;
 }
 
@@ -448,12 +477,13 @@ export const createFacilityUser = createServerFn({ method: "POST" })
       await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
       await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "facilityUser" });
       // Store facility in user_profiles so facility-scoped queries work
-      const { error: profErr } = await supabaseAdmin.from("user_profiles").insert({
+      const { error: profErr } = await (supabaseAdmin as any).from("user_profiles").insert({
         user_id: userId,
         username: data.email.split("@")[0].slice(0, 32).replace(/[^a-z0-9_]/gi, "_").toLowerCase(),
         facility: data.facilityValue,
         first_name: "",
         last_name: "",
+        email: data.email,
       });
       if (profErr) throw new Error(profErr.message);
     } catch (err) {
@@ -506,13 +536,14 @@ export const createTesterUser = createServerFn({ method: "POST" })
     if (error || !created?.user) throw new Error(error?.message ?? "Failed to create tester");
     const userId = created.user.id;
 
-    const { error: profErr } = await supabaseAdmin.from("user_profiles").insert({
+    const { error: profErr } = await (supabaseAdmin as any).from("user_profiles").insert({
       user_id: userId,
       username: data.username,
       facility: TESTER_FACILITY,
       first_name: "",
       last_name: "",
       is_synthetic: true,
+      email,
     });
     if (profErr) {
       await supabaseAdmin.auth.admin.deleteUser(userId);
@@ -748,6 +779,11 @@ export const updateUserEmail = createServerFn({ method: "POST" })
       email_confirm: true,
     });
     if (error) throw new Error(error.message);
+    // Keep user_profiles.email in sync so hydrateAuthFields doesn't need Auth API pagination
+    await (supabaseAdmin as any)
+      .from("user_profiles")
+      .update({ email: data.email })
+      .eq("user_id", data.userId);
     return { ok: true };
   });
 

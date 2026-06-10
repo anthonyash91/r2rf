@@ -203,6 +203,7 @@ export const signupUser = createServerFn({ method: "POST" })
         facility: data.facility,
         first_name: data.firstName,
         last_name: data.lastName,
+        email,
         // Store HMAC for secure lookup. Plaintext retained during migration window;
         // run migrate-pin-hashes.mjs then clear inmate_pin column when all records
         // have an HMAC.
