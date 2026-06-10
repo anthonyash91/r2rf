@@ -46,15 +46,16 @@ export const generateCategoryCopy = createServerFn({ method: "POST" })
       system: [
         {
           type: "text",
-          text: 'You write concise, polished copy for a content library\'s categories. Always respond with strict JSON: {"tagline": string, "description": string}. The tagline is a short punchy line (max ~10 words). The description is 1–2 sentences (max ~240 chars). No quotes, no markdown.',
+          // User-supplied data is kept in the user turn below, never inline here,
+          // so injected instructions are treated as data rather than commands.
+          text: 'You write concise, polished copy for a content library\'s categories. The user will provide a category name. Always respond with strict JSON: {"tagline": string, "description": string}. The tagline is a short punchy line (max ~10 words). The description is 1–2 sentences (max ~240 chars). No quotes, no markdown.',
           cache_control: { type: "ephemeral" },
         },
       ],
       messages: [
-        {
-          role: "user",
-          content: `Category name: "${data.name}". Generate a tagline and description.`,
-        },
+        { role: "user", content: "Generate a tagline and description for this category name:" },
+        { role: "assistant", content: "Understood. Please provide the category name." },
+        { role: "user", content: data.name.slice(0, 300) },
       ],
     }).catch((err) => {
       if (err instanceof Anthropic.RateLimitError) throw new Error("Rate limit reached. Try again in a moment.");
@@ -93,14 +94,19 @@ export const generateContentDescription = createServerFn({ method: "POST" })
       system: [
         {
           type: "text",
-          text: 'You write concise, polished descriptions for items in a content library. Always respond with strict JSON: {"description": string}. The description is 1–2 sentences (max ~240 chars) summarizing what the item is about. No quotes, no markdown.',
+          // User-supplied title and context are in the user turn, not the system prompt.
+          text: 'You write concise, polished descriptions for items in a content library. The user will provide an item title and optional context. Always respond with strict JSON: {"description": string}. The description is 1–2 sentences (max ~240 chars) summarizing what the item is about. No quotes, no markdown.',
           cache_control: { type: "ephemeral" },
         },
       ],
       messages: [
         {
           role: "user",
-          content: `Item title: "${data.title}". ${context} Generate a description.`,
+          content: [
+            { type: "text", text: "Generate a description for this content item." },
+            { type: "text", text: `Title: ${data.title.slice(0, 300)}` },
+            ...(context ? [{ type: "text" as const, text: context.slice(0, 300) }] : []),
+          ],
         },
       ],
     }).catch((err) => {
@@ -147,14 +153,20 @@ export const translateToSpanish = createServerFn({ method: "POST" })
       system: [
         {
           type: "text",
-          text: 'You are a professional translator. Translate the given English text values into natural, polished Latin American Spanish. Preserve tone, punctuation, capitalization style, and approximate length. Do not translate proper nouns, brand names, or URLs. Respond with strict JSON of the form {"fields": { <sameKey>: <spanishTranslation>, ... }} using the exact same keys you received. No markdown, no commentary.',
+          // User-supplied context and field values are in separate user turns so
+          // injected instructions are treated as data, not commands.
+          text: 'You are a professional translator. Translate English text values into natural, polished Latin American Spanish. Preserve tone, punctuation, capitalization style, and approximate length. Do not translate proper nouns, brand names, or URLs. Respond with strict JSON of the form {"fields": { <sameKey>: <spanishTranslation>, ... }} using the exact same keys you received. No markdown, no commentary.',
           cache_control: { type: "ephemeral" },
         },
       ],
       messages: [
         {
           role: "user",
-          content: `${data.context ? `Context: ${data.context}\n` : ""}Translate each value to Spanish. Keep the keys identical:\n${JSON.stringify(payload)}`,
+          content: [
+            { type: "text", text: "Translate each value to Spanish. Keep the keys identical." },
+            ...(data.context ? [{ type: "text" as const, text: `Context (for tone reference only): ${data.context.slice(0, 500)}` }] : []),
+            { type: "text", text: JSON.stringify(payload) },
+          ],
         },
       ],
     }).catch((err) => {
