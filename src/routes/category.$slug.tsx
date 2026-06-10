@@ -160,7 +160,7 @@ function CategoryPage() {
     queryFn: async () => {
       const { data: cat, error: e1 } = await supabase
         .from("categories")
-        .select("*")
+        .select("id, slug, name, tagline, description, icon_url, icon_name, icon_color, sort_order, published, home_page_mode, name_es, tagline_es, description_es")
         .eq("slug", slug)
         .eq("published", true)
         .maybeSingle();
@@ -168,14 +168,14 @@ function CategoryPage() {
       if (!cat) throw notFound();
       const { data: items, error: e2 } = await supabase
         .from("content_items")
-        .select("*")
+        .select("id, category_id, title, title_es, type, source, source_es, duration, description, description_es, url, file_url, file_url_es, file_name, file_name_es, sort_order, published, exempt_from_progress")
         .eq("category_id", cat.id)
         .eq("published", true)
         .order("sort_order", { ascending: true });
       if (e2) throw e2;
       const { data: others, error: e3 } = await supabase
         .from("categories")
-        .select("*")
+        .select("id, slug, name, tagline, description, icon_url, icon_name, icon_color, sort_order, published, home_page_mode, name_es, tagline_es, description_es")
         .eq("published", true)
         .neq("id", cat.id)
         .order("sort_order", { ascending: true });

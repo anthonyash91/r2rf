@@ -107,11 +107,15 @@ export const listAuditLog = createServerFn({ method: "POST" })
       }
     }
 
-    // Resolve auth emails for any ids missing a profile (e.g. seed admins).
+    // Resolve auth emails via a single paginated listUsers() call rather than
+    // one getUserById() per ID (which would be N sequential round-trips).
     const emailMap = new Map<string, string | null>();
-    for (const id of idList) {
-      const { data: u } = await supabaseAdmin.auth.admin.getUserById(id);
-      emailMap.set(id, u?.user?.email ?? null);
+    if (idList.length > 0) {
+      const idSet = new Set(idList);
+      const { data: authData } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      for (const u of authData?.users ?? []) {
+        if (idSet.has(u.id)) emailMap.set(u.id, u.email ?? null);
+      }
     }
 
     const scoped = facilityUserIds

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { requireContentAdminBeforeLoad } from "@/lib/admin-guards";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +20,9 @@ import { FileUploader } from "@/components/FileUploader";
 import { deleteStorageFile, estimatePdfDuration } from "@/lib/storage.functions";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
-import { SortableList } from "@/components/SortableList";
+const SortableList = lazy(() =>
+  import("@/components/SortableList").then((m) => ({ default: m.SortableList }))
+);
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
@@ -896,13 +898,15 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             );
           }
           return (
-            <SortableList
-              className="divide-y divide-border"
-              dragHandleClassName="pl-5"
-              items={order}
-              onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
-              renderItem={(item) => renderItemRow(item)}
-            />
+            <Suspense fallback={null}>
+              <SortableList
+                className="divide-y divide-border"
+                dragHandleClassName="pl-5"
+                items={order}
+                onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
+                renderItem={(item) => renderItemRow(item)}
+              />
+            </Suspense>
 
           );
         })()}

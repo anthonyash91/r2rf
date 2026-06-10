@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Checkbox } from "@/components/ui/checkbox";
-import React, { useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +28,9 @@ function categoryTranslationStatus(c: Category): "complete" | "partial" | "missi
   if (translated < required.length) return "partial";
   return "complete";
 }
-import { SortableList } from "@/components/SortableList";
+const SortableList = lazy(() =>
+  import("@/components/SortableList").then((m) => ({ default: m.SortableList }))
+);
 
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
@@ -634,12 +636,14 @@ function AdminCategoriesContent() {
                 })}
               </ul>
             ) : (
-              <SortableList
-                className="divide-y divide-border"
-                items={order}
-                onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
-                renderItem={(c) => renderCategoryRow(c)}
-              />
+              <Suspense fallback={null}>
+                <SortableList
+                  className="divide-y divide-border"
+                  items={order}
+                  onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
+                  renderItem={(c) => renderCategoryRow(c)}
+                />
+              </Suspense>
             )}
           </div>
         );

@@ -17,10 +17,10 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    // defaultPreloadStaleTime: 0 forces preloaded route data to always be
-    // considered stale so hovering a link re-fetches rather than reusing
-    // a potentially outdated cache entry.
-    defaultPreloadStaleTime: 0,
+    // 30s preload window: data preloaded on hover is reused if the user
+    // navigates within 30 seconds, avoiding redundant refetches on quick
+    // back-and-forth navigation while still feeling fresh.
+    defaultPreloadStaleTime: 30_000,
   });
 
   return router;

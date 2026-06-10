@@ -32,4 +32,16 @@ export default defineConfig({
       "@tanstack/react-query",
     ],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Function form: only chunks modules that are actually resolved (not
+        // external). The server build marks Radix as external so the function
+        // simply returns undefined for those — no error.
+        manualChunks(id) {
+          if (id.includes("node_modules/@radix-ui/")) return "vendor-radix";
+        },
+      },
+    },
+  },
 });
