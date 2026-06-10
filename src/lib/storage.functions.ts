@@ -19,8 +19,23 @@ const MAX_SIZES: Record<string, number> = {
   jpg: 20, jpeg: 20, png: 20, gif: 20, webp: 20,
 }; // MB
 
-function validateUploadPath(path: string) {
-  const ext = path.split(".").pop()?.toLowerCase() ?? "";
+function validateUploadPath(path: string): string {
+  // Normalize slashes and collapse any . / .. segments to prevent path traversal.
+  const normalized = path
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter((seg) => seg !== "" && seg !== "." && seg !== "..")
+    .join("/");
+
+  if (normalized !== path.replace(/^\//, "")) {
+    throw new Error("Invalid path: path traversal sequences are not allowed.");
+  }
+  // Enforce that all files live under the uploads/ prefix so callers cannot
+  // target arbitrary bucket paths (e.g. a sibling bucket or private prefix).
+  if (!normalized.startsWith("uploads/")) {
+    throw new Error("Files must be stored under the uploads/ prefix.");
+  }
+  const ext = normalized.split(".").pop()?.toLowerCase() ?? "";
   if (!ALLOWED_EXTENSIONS.has(ext)) {
     throw new Error(`File type .${ext} is not allowed. Permitted: ${[...ALLOWED_EXTENSIONS].join(", ")}`);
   }
@@ -74,6 +89,7 @@ export const deleteStorageFile = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdminOrContributor(context.supabase, context.userId);
+    validateUploadPath(data.path); // same sanitization — rejects traversal and non-uploads/ paths
 
     const { error } = await supabaseAdmin.storage
       .from(BUCKET)

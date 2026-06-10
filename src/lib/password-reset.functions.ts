@@ -6,7 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getClientIp } from "./ip-allowlist";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
-import { hashAnswer, verifyAnswer } from "./security-hash.server";
+import { hashAnswer, verifyAnswer, verifyPin } from "./security-hash.server";
 
 
 const USER_EMAIL_DOMAIN = "users.local";
@@ -71,17 +71,20 @@ export const getResetQuestions = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data }) => {
-    // Rate-limit username probing per IP using the existing attempts table.
+    // Rate-limit username probing per IP using an advisory-lock RPC so concurrent
+    // requests from the same IP cannot race past the limit (fixes check-then-insert race).
     const ip = getClientIp(getRequest());
     if (ip) {
       const since = new Date(Date.now() - RESET_WINDOW_MS).toISOString();
-      const { count } = await supabaseAdmin
-        .from("password_reset_attempts")
-        .select("id", { count: "exact", head: true })
-        .eq("ip_address", ip)
-        .gte("created_at", since);
-      if ((count ?? 0) >= QUESTION_PROBE_MAX_PER_IP) {
-        throw new Error("Too many requests. Please try again later.");
+      const { error: probeErr } = await supabaseAdmin.rpc(
+        "check_and_record_question_probe" as any,
+        { p_ip: ip, p_since: since, p_max: QUESTION_PROBE_MAX_PER_IP },
+      );
+      if (probeErr) {
+        if (probeErr.message.includes("rate_limited")) {
+          throw new Error("Too many requests. Please try again later.");
+        }
+        throw new Error(probeErr.message);
       }
     }
     const userId = await findUserIdByUsername(data.username);
@@ -105,10 +108,14 @@ export const getResetQuestions = createServerFn({ method: "POST" })
     if (data.inmatePin) {
       const { data: profile } = await (supabaseAdmin as any)
         .from("user_profiles")
-        .select("inmate_pin, facility")
+        .select("inmate_pin, inmate_pin_hmac, facility")
         .eq("user_id", userId)
         .maybeSingle();
-      const pinMatch = profile?.inmate_pin === data.inmatePin;
+      // Prefer HMAC comparison (timing-safe). Fall back to plaintext === during
+      // the migration window when the HMAC column hasn't been populated yet.
+      const pinMatch = profile?.inmate_pin_hmac
+        ? verifyPin(data.inmatePin, profile.inmate_pin_hmac)
+        : profile?.inmate_pin === data.inmatePin;
       const facilityMatch = !data.facilityValue || profile?.facility === data.facilityValue;
       if (!pinMatch || !facilityMatch) return fakePair(data.username);
     }

@@ -5,7 +5,7 @@ import { createHmac, timingSafeEqual, randomInt } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
-import { hashAnswer } from "./security-hash.server";
+import { hashAnswer, hashPin, verifyPin } from "./security-hash.server";
 import { getClientIp } from "./ip-allowlist";
 
 const SIGNUP_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -97,13 +97,23 @@ export const checkInmatePin = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data }) => {
-    const { data: existing } = await supabaseAdmin
+    const pinHmac = hashPin(data.inmatePin);
+    // Check HMAC column first (new records). Fall back to plaintext during migration window.
+    const { data: byHmac } = await supabaseAdmin
+      .from("user_profiles" as any)
+      .select("user_id")
+      .eq("facility", data.facilityValue)
+      .eq("inmate_pin_hmac", pinHmac)
+      .maybeSingle();
+    if (byHmac) return { available: false };
+    const { data: byPlaintext } = await supabaseAdmin
       .from("user_profiles")
       .select("user_id")
       .eq("facility", data.facilityValue)
       .eq("inmate_pin", data.inmatePin)
+      .is("inmate_pin_hmac", null)
       .maybeSingle();
-    return { available: !existing };
+    return { available: !byPlaintext };
   });
 
 export const signupUser = createServerFn({ method: "POST" })
@@ -160,13 +170,15 @@ export const signupUser = createServerFn({ method: "POST" })
     // Server-side PIN uniqueness check — guards the race condition where two
     // concurrent submissions with the same PIN both pass the client preflight.
     if (data.inmatePin) {
-      const { data: pinTaken } = await supabaseAdmin
-        .from("user_profiles")
-        .select("user_id")
-        .eq("facility", data.facility)
-        .eq("inmate_pin", data.inmatePin)
-        .maybeSingle();
-      if (pinTaken) throw new Error("That PIN is already registered at this facility.");
+      const pinHmac = hashPin(data.inmatePin);
+      const [{ data: byHmac }, { data: byPlaintext }] = await Promise.all([
+        supabaseAdmin.from("user_profiles" as any).select("user_id")
+          .eq("facility", data.facility).eq("inmate_pin_hmac", pinHmac).maybeSingle(),
+        supabaseAdmin.from("user_profiles").select("user_id")
+          .eq("facility", data.facility).eq("inmate_pin", data.inmatePin)
+          .is("inmate_pin_hmac", null).maybeSingle(),
+      ]);
+      if (byHmac || byPlaintext) throw new Error("That PIN is already registered at this facility.");
     }
 
     const email = syntheticEmailLocal(data.username);
@@ -184,14 +196,18 @@ export const signupUser = createServerFn({ method: "POST" })
     const userId = created.user.id;
 
     const { error: profErr } = await supabaseAdmin
-      .from("user_profiles")
+      .from("user_profiles" as any)
       .insert({
         user_id: userId,
         username: data.username,
         facility: data.facility,
         first_name: data.firstName,
         last_name: data.lastName,
+        // Store HMAC for secure lookup. Plaintext retained during migration window;
+        // run migrate-pin-hashes.mjs then clear inmate_pin column when all records
+        // have an HMAC.
         inmate_pin: data.inmatePin ?? null,
+        inmate_pin_hmac: data.inmatePin ? hashPin(data.inmatePin) : null,
       });
     if (profErr) {
       console.error("[signup] user_profiles insert failed:", profErr.message);
@@ -241,7 +257,7 @@ export const getMyProfile = createServerFn({ method: "GET" }).handler(async () =
   if (!userRes?.user) return { profile: null };
   const { data: profile } = await supabaseAdmin
     .from("user_profiles")
-    .select("username, facility, created_at, first_name, last_name, inmate_pin")
+    .select("username, facility, created_at, first_name, last_name")
     .eq("user_id", userRes.user.id)
     .maybeSingle();
   return {

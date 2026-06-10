@@ -19,3 +19,7 @@ services:
         sync: false
       - key: TESTER_FACILITY
         sync: false
+      # Set to the header Render guarantees is the real client IP (not client-forgeable).
+      # Check Render docs for your plan tier. Leave unset to use x-forwarded-for leftmost entry.
+      - key: TRUSTED_IP_HEADER
+        sync: false

@@ -150,10 +150,27 @@ export async function getCustomHomeRestrictions(): Promise<Map<string, Set<strin
   return customHomeInflight;
 }
 
+/**
+ * Returns the real client IP from the request.
+ *
+ * SECURITY — header trust model:
+ * On Render, the proxy sets `x-forwarded-for` with the real client IP as the
+ * FIRST (leftmost) entry. Render strips client-supplied `x-forwarded-for` values
+ * before appending its own, so the leftmost entry is authoritative.
+ * Set TRUSTED_IP_HEADER to override which header is read (e.g. "x-real-ip" if
+ * your infrastructure guarantees that header is not client-forgeable).
+ * WARNING: if this server is ever placed behind a CDN/proxy that does NOT strip
+ * client-supplied XFF headers, the leftmost entry becomes attacker-controlled.
+ * Verify your proxy's XFF behaviour before changing this function.
+ */
 export function getClientIp(request: Request): string | null {
-  // Priority: Cloudflare real-IP → standard proxy header (first entry) → NGINX.
-  const cf = request.headers.get("cf-connecting-ip");
-  if (cf) return cf.trim();
+  const trustedHeader = process.env.TRUSTED_IP_HEADER;
+  if (trustedHeader) {
+    const val = request.headers.get(trustedHeader);
+    if (val) return val.split(",")[0]?.trim() ?? null;
+  }
+  // Default fallback chain for Render (no TRUSTED_IP_HEADER set):
+  // x-forwarded-for leftmost entry is the real client IP on Render's infrastructure.
   const xff = request.headers.get("x-forwarded-for");
   if (xff) return xff.split(",")[0]?.trim() ?? null;
   const real = request.headers.get("x-real-ip");

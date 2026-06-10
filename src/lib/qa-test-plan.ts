@@ -716,6 +716,18 @@ export const QA_TESTS: QATest[] = [
     description: "Review src/hooks/use-content-engagement.ts to confirm SESSION_PROGRESS_MAX = 500 and setSessionProgress evicts the oldest entry when the limit is reached. In a long browser session, open many unique content items — verify the map does not grow past 500 entries (check via browser DevTools memory profiler if needed).\n\n✅ Pass: Map size stays ≤ 500. No unbounded memory growth in long sessions with many content items." },
   { id: "24.6", sectionNum: 24, priority: "low", roles: ["Admin"], title: "Generic rate limiter dead code is removed",
     description: "Verify that src/lib/rate-limit.server.ts no longer exists. Verify that signup challenge and password reset still enforce rate limits via their advisory-lock RPCs (check_and_record_signup_challenge_attempt and check_and_record_reset_attempt).\n\n✅ Pass: rate-limit.server.ts is absent. Both rate-limited endpoints continue to work correctly." },
+
+  // ── Section 25 — Security Audit Fixes (Pre-Launch) ────────────────────────
+  { id: "25.1", sectionNum: 25, priority: "high", roles: ["Signed Out"], title: "New sign-ups store HMAC for inmate PIN",
+    description: "Create a new user account via the sign-up flow with a known inmate PIN. In Supabase Table Editor → user_profiles, find the new row. Verify inmate_pin_hmac is populated (a 64-character hex string). Verify sign-in and password-reset still work for that user.\n\n✅ Pass: inmate_pin_hmac is set for all new sign-ups. Password-reset PIN comparison uses the HMAC. Plaintext inmate_pin is retained during migration window." },
+  { id: "25.2", sectionNum: 25, priority: "high", roles: ["Regular User"], title: "PIN excluded from getMyProfile response",
+    description: "Sign in as a regular user. Open DevTools → Network. Find the getMyProfile server function call. Inspect the response JSON. Verify inmate_pin is NOT present in the profile object.\n\n✅ Pass: getMyProfile response contains username, facility, first_name, last_name, created_at, email — no inmate_pin field." },
+  { id: "25.3", sectionNum: 25, priority: "high", roles: ["Admin"], title: "Storage path traversal blocked",
+    description: "Sign in as admin. Call the getSignedUploadUrl endpoint with path '../../secret.pdf'. Verify an error is returned about traversal or invalid prefix. Also try 'other-prefix/file.pdf' (missing uploads/ prefix) and verify it is rejected. Confirm 'uploads/valid-file.pdf' succeeds.\n\n✅ Pass: Paths with ../ segments or missing uploads/ prefix are rejected. Valid uploads/ paths succeed." },
+  { id: "25.4", sectionNum: 25, priority: "medium", roles: ["Signed Out"], title: "Question-probe rate limit is race-safe",
+    description: "Review src/lib/password-reset.functions.ts to confirm getResetQuestions calls the check_and_record_question_probe RPC. Verify the RPC exists in Supabase → Database → Functions. Functional test: probe the forgot-password form more than 30 times from the same IP within an hour and verify the 31st attempt returns 'Too many requests.'\n\n✅ Pass: Advisory-lock RPC is used. Rate limit fires at 30 probes." },
+  { id: "25.5", sectionNum: 25, priority: "medium", roles: ["Admin"], title: "Trusted IP header is configurable",
+    description: "Verify TRUSTED_IP_HEADER is documented in render.yaml. Review Render docs to confirm which header is the authoritative real client IP and that client-supplied x-forwarded-for values are stripped by the Render proxy.\n\n✅ Pass: TRUSTED_IP_HEADER env var is documented. getClientIp() uses it when set, falls back to x-forwarded-for leftmost entry otherwise." },
 ];
 
 // Helper: tests grouped by section

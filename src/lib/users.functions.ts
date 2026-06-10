@@ -313,7 +313,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
       if (term) {
         const pat = `%${term}%`;
         q = q.or(
-          `username.ilike.${pat},first_name.ilike.${pat},last_name.ilike.${pat},inmate_pin.ilike.${pat}`,
+          `username.ilike.${pat},first_name.ilike.${pat},last_name.ilike.${pat}`,
         );
       }
     }

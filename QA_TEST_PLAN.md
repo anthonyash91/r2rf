@@ -1876,6 +1876,76 @@ Verify that `src/lib/rate-limit.server.ts` no longer exists in the codebase. Ver
 
 ---
 
+## Section 25 — Security Audit Fixes (Pre-Launch)
+
+These tests cover the four high/medium severity findings fixed before launch.
+**Before running:** apply both SQL migrations in Supabase dashboard → SQL editor:
+- `20260610000001_inmate_pin_hmac.sql`
+- `20260610000002_atomic_question_probe_rate_limit.sql`
+Then run `node migrate-pin-hashes.mjs` to back-fill HMACs for existing records.
+
+### 25.1 — New sign-ups store HMAC for inmate PIN
+🔴 **High**
+ **Role:** Signed Out
+
+Create a new user account via the sign-up flow with a known inmate PIN. In Supabase Table Editor → `user_profiles`, find the new row. Verify `inmate_pin_hmac` is populated (a 64-character hex string). Verify the sign-in and password-reset flows still work for that user.
+
+✅ Pass: `inmate_pin_hmac` is set for all new sign-ups. Inmate PIN comparison in the password-reset flow uses the HMAC. The plaintext `inmate_pin` column is retained during the migration window and cleared after `migrate-pin-hashes.mjs` runs.
+
+---
+
+### 25.2 — PIN is excluded from user's own profile response
+🔴 **High**
+ **Role:** Regular User
+
+Sign in as a regular user. Open browser DevTools → Network. Find the `getMyProfile` server function call. Inspect the response JSON. Verify `inmate_pin` is NOT present in the profile object returned.
+
+✅ Pass: The `getMyProfile` response contains `username`, `facility`, `first_name`, `last_name`, `created_at`, and `email` — no `inmate_pin` field.
+
+---
+
+### 25.3 — Storage path traversal is blocked
+🔴 **High**
+ **Role:** Admin
+
+Sign in as admin. Open browser DevTools → Console. Call the upload URL endpoint with a traversal path:
+```js
+fetch("/_server/getSignedUploadUrl", {
+  method: "POST",
+  headers: { "content-type": "application/json", "Authorization": "Bearer YOUR_TOKEN" },
+  body: JSON.stringify({ path: "../../secret.pdf" })
+}).then(r => r.text()).then(console.log)
+```
+Verify the response contains an error about path traversal or invalid prefix.
+
+Also try `path: "other-prefix/file.pdf"` (missing `uploads/` prefix) and verify it is rejected.
+
+✅ Pass: Paths containing `..` segments or missing the `uploads/` prefix return an error. Paths like `uploads/valid-file.pdf` succeed.
+
+---
+
+### 25.4 — Question-probe rate limit is race-safe
+🟡 **Medium**
+ **Role:** Signed Out
+
+Review `src/lib/password-reset.functions.ts` to confirm `getResetQuestions` calls `check_and_record_question_probe` RPC (not the racy count-then-check pattern). Verify the RPC exists in Supabase → Database → Functions.
+
+Functional test: Enter a non-existent username on the "Forgot password?" form more than 30 times within an hour from the same IP. Verify the 31st attempt returns "Too many requests."
+
+✅ Pass: The RPC is used (advisory lock prevents race). The rate limit fires correctly after 30 probes.
+
+---
+
+### 25.5 — Trusted IP header is configurable
+🟡 **Medium**
+ **Role:** Admin (infra verification)
+
+In Render dashboard → Environment → verify `TRUSTED_IP_HEADER` is documented (can be left unset to use the default `x-forwarded-for` leftmost-entry behavior, which Render guarantees is the real client IP). Review the Render docs for your plan to confirm `x-forwarded-for` leftmost entry is the authoritative client IP and that Render strips client-supplied XFF values.
+
+✅ Pass: The `TRUSTED_IP_HEADER` env var is documented in `render.yaml`. The `getClientIp()` function uses it when set, falls back to `x-forwarded-for` leftmost entry otherwise.
+
+---
+
 ## Regression Checklist
 
 Run this checklist after any code deployment to confirm core flows still work:

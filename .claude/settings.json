@@ -397,7 +397,8 @@
       "Bash(grep -n \"read-status\\\\|detectMedia\\\\|MediaKind\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx)",
       "Bash(grep -n \"^import.*read-status\\\\|^import.*@/lib/read\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx)",
       "Bash(grep -n \"isVideoUrl\\\\|isAudioUrl\\\\|isPdfUrl\\\\|isImageUrl\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx)",
-      "Bash(grep -n \"VIDEO_EXT\\\\|AUDIO_EXT\\\\|PDF_EXT\\\\|IMAGE_EXT\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -20)"
+      "Bash(grep -n \"VIDEO_EXT\\\\|AUDIO_EXT\\\\|PDF_EXT\\\\|IMAGE_EXT\" /Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes/category.\\\\$slug.tsx | head -20)",
+      "Bash(npm audit *)"
     ],
     "additionalDirectories": [
       "/Users/anthony/Desktop/reentry-to-recovery-content-library/src/routes",
