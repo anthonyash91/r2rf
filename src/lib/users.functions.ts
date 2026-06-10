@@ -671,38 +671,60 @@ export const deleteUsers = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
     const targets = data.userIds.filter((id) => id !== context.userId);
+    if (targets.length === 0) {
+      return { deleted: 0, failed: [], skippedSelf: data.userIds.length };
+    }
     const db = supabaseAdmin as any;
-    let deleted = 0;
+
+    // One bulk DELETE per table across all targets — replaces the O(N) sequential loop.
+    // Supabase sends DELETE bodies as JSON so 500 UUIDs is well within payload limits.
+    await Promise.all([
+      supabaseAdmin.from("user_roles").delete().in("user_id", targets),
+      supabaseAdmin.from("user_security_answers").delete().in("user_id", targets),
+      supabaseAdmin.from("user_content_bookmarks").delete().in("user_id", targets),
+      supabaseAdmin.from("user_content_ratings").delete().in("user_id", targets),
+      supabaseAdmin.from("user_achievements").delete().in("user_id", targets),
+      db.from("user_content_engagement").delete().in("user_id", targets),
+      db.from("user_content_progress").delete().in("user_id", targets),
+      db.from("user_logins").delete().in("user_id", targets),
+      db.from("user_dismissed_messages").delete().in("user_id", targets),
+      db.from("user_signup_ips").delete().in("user_id", targets),
+    ]);
+    // Profiles last — other tables may reference it
+    await supabaseAdmin.from("user_profiles").delete().in("user_id", targets);
+
+    // Auth API has no bulk endpoint; run deletes in parallel and collect results
+    const authResults = await Promise.allSettled(
+      targets.map((userId) => supabaseAdmin.auth.admin.deleteUser(userId)),
+    );
+
     const failed: { userId: string; message: string }[] = [];
-    for (const userId of targets) {
-      try {
-        await Promise.all([
-          supabaseAdmin.from("user_roles").delete().eq("user_id", userId),
-          supabaseAdmin.from("user_security_answers").delete().eq("user_id", userId),
-          supabaseAdmin.from("user_content_bookmarks").delete().eq("user_id", userId),
-          supabaseAdmin.from("user_content_ratings").delete().eq("user_id", userId),
-          supabaseAdmin.from("user_achievements").delete().eq("user_id", userId),
-          db.from("user_content_engagement").delete().eq("user_id", userId),
-          db.from("user_content_progress").delete().eq("user_id", userId),
-          db.from("user_logins").delete().eq("user_id", userId),
-          db.from("user_dismissed_messages").delete().eq("user_id", userId),
-          db.from("user_signup_ips").delete().eq("user_id", userId),
-        ]);
-        await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
-        const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-        if (error) throw new Error(`Failed to delete auth user: ${error.message}`);
-        deleted++;
-        await recordAdminAudit({
+    const succeededIds: string[] = [];
+    for (let i = 0; i < targets.length; i++) {
+      const result = authResults[i];
+      const userId = targets[i];
+      if (result.status === "rejected") {
+        failed.push({ userId, message: (result.reason as any)?.message ?? "Unknown error" });
+      } else if (result.value.error) {
+        failed.push({ userId, message: `Auth delete failed: ${result.value.error.message}` });
+      } else {
+        succeededIds.push(userId);
+      }
+    }
+
+    // Record audit for each successfully deleted user in parallel
+    await Promise.all(
+      succeededIds.map((userId) =>
+        recordAdminAudit({
           actorUserId: context.userId,
           action: "user.delete",
           targetUserId: userId,
           details: { bulk: true },
-        });
-      } catch (e: any) {
-        failed.push({ userId, message: e?.message ?? "unknown error" });
-      }
-    }
-    return { deleted, failed, skippedSelf: data.userIds.length - targets.length };
+        }),
+      ),
+    );
+
+    return { deleted: succeededIds.length, failed, skippedSelf: data.userIds.length - targets.length };
   });
 
 

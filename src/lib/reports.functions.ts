@@ -1004,13 +1004,18 @@ export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
 
     const fetchChunked = async (table: string, select: string): Promise<any[]> => {
       const all: any[] = [];
+      const PAGE = 1000;
       for (const chunk of chunks) {
-        const { data } = await (supabaseAdmin as any)
-          .from(table)
-          .select(select)
-          .in("user_id", chunk)
-          .range(0, 9999);
-        all.push(...(data ?? []));
+        for (let from = 0; ; from += PAGE) {
+          const { data, error } = await (supabaseAdmin as any)
+            .from(table)
+            .select(select)
+            .in("user_id", chunk)
+            .range(from, from + PAGE - 1);
+          if (error || !data?.length) break;
+          all.push(...data);
+          if (data.length < PAGE) break;
+        }
       }
       return all;
     };
@@ -1023,14 +1028,19 @@ export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
       (async () => {
         // Last login per user — fetch all logins then deduplicate to most recent
         const all: any[] = [];
+        const PAGE = 1000;
         for (const chunk of chunks) {
-          const { data } = await supabaseAdmin
-            .from("user_logins")
-            .select("user_id, login_date")
-            .in("user_id", chunk)
-            .order("login_date", { ascending: false })
-            .range(0, 9999);
-          all.push(...(data ?? []));
+          for (let from = 0; ; from += PAGE) {
+            const { data, error } = await supabaseAdmin
+              .from("user_logins")
+              .select("user_id, login_date")
+              .in("user_id", chunk)
+              .order("login_date", { ascending: false })
+              .range(from, from + PAGE - 1);
+            if (error || !data?.length) break;
+            all.push(...data);
+            if (data.length < PAGE) break;
+          }
         }
         return all;
       })(),
