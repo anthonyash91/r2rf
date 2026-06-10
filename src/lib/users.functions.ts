@@ -19,14 +19,6 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return chunks;
 }
 
-/** Apply NOT IN with chunking so large exclusion lists don't exceed PostgREST's URL length limit.
- *  Chained NOT IN filters are AND-ed together, which is equivalent to one large NOT IN. */
-function applyNotIn(q: any, column: string, ids: string[]): any {
-  for (const chunk of chunkArray(ids, 500)) {
-    q = q.not(column, "in", `(${chunk.join(",")})`);
-  }
-  return q;
-}
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.rpc("has_role", {
@@ -317,21 +309,14 @@ export const listRegularUsers = createServerFn({ method: "POST" })
       facilityFilter = callerProfile?.facility ?? "";
     }
 
-    // Exclude any user with a privileged, tester, or facilityUser role.
-    const { data: privilegedRows, error: privErr } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id")
-      .in("role", ["admin", "contributor", "tester", "facilityUser"]);
-    if (privErr) throw new Error(privErr.message);
-    const excludeIds = Array.from(new Set((privilegedRows ?? []).map((r) => r.user_id)));
-
+    // Use is_staff index instead of fetching all privileged role IDs and building
+    // a NOT IN exclusion list — eliminates one full user_roles table scan per page load.
     let q = (supabaseAdmin as any)
       .from("user_profiles")
-      .select("user_id, username, facility, first_name, last_name, inmate_pin, created_at", { count: "exact" });
+      .select("user_id, username, facility, first_name, last_name, inmate_pin, created_at", { count: "exact" })
+      .eq("is_staff", false)
+      .eq("is_synthetic", false);
 
-    if (excludeIds.length) {
-      q = applyNotIn(q, "user_id", excludeIds);
-    }
     if (facilityFilter) {
       q = q.eq("facility", facilityFilter);
     }
@@ -382,22 +367,12 @@ export const countNewUsers = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ since: z.string().min(1) }).parse(input))
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
-    // Exclude admin/contributor accounts and any synthetic test users.
-    const { data: privilegedRoles, error: rolesErr } = await supabaseAdmin
-      .from("user_roles")
-      .select("user_id")
-      .in("role", ["admin", "contributor", "tester"]);
-    if (rolesErr) throw new Error(rolesErr.message);
-    let q = supabaseAdmin
+    const { count, error } = await (supabaseAdmin as any)
       .from("user_profiles")
       .select("user_id", { count: "exact", head: true })
       .gt("created_at", data.since)
-      .eq("is_synthetic", false);
-    const excludeIds = Array.from(new Set((privilegedRoles ?? []).map((r) => r.user_id)));
-    if (excludeIds.length) {
-      q = applyNotIn(q, "user_id", excludeIds);
-    }
-    const { count, error } = await q;
+      .eq("is_synthetic", false)
+      .eq("is_staff", false);
     if (error) throw new Error(error.message);
     return { count: count ?? 0 };
   });
@@ -484,6 +459,7 @@ export const createFacilityUser = createServerFn({ method: "POST" })
         first_name: "",
         last_name: "",
         email: data.email,
+        is_staff: true,
       });
       if (profErr) throw new Error(profErr.message);
     } catch (err) {
@@ -543,6 +519,7 @@ export const createTesterUser = createServerFn({ method: "POST" })
       first_name: "",
       last_name: "",
       is_synthetic: true,
+      is_staff: true,
       email,
     });
     if (profErr) {
@@ -895,6 +872,11 @@ export const setUserRole = createServerFn({ method: "POST" })
           { onConflict: "user_id,role", ignoreDuplicates: true },
         );
       if (error) throw new Error(error.message);
+      // Sync is_staff — all roles handled by setUserRole are privileged
+      await (supabaseAdmin as any)
+        .from("user_profiles")
+        .update({ is_staff: true })
+        .eq("user_id", data.userId);
     } else {
       const { error } = await supabaseAdmin
         .from("user_roles")
@@ -902,6 +884,11 @@ export const setUserRole = createServerFn({ method: "POST" })
         .eq("user_id", data.userId)
         .eq("role", data.role);
       if (error) throw new Error(error.message);
+      // Single-role invariant means the user now has no privileged roles — clear is_staff
+      await (supabaseAdmin as any)
+        .from("user_profiles")
+        .update({ is_staff: false })
+        .eq("user_id", data.userId);
     }
 
     await recordAdminAudit({
