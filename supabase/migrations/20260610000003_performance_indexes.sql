@@ -7,5 +7,6 @@ CREATE INDEX IF NOT EXISTS user_content_engagement_user_category_idx
   ON public.user_content_engagement (user_id, category_id);
 
 -- user_content_sessions: queried in analytics for per-user session history.
+-- Note: the column is recorded_at, not created_at.
 CREATE INDEX IF NOT EXISTS user_content_sessions_user_category_idx
-  ON public.user_content_sessions (user_id, category_id, created_at DESC);
+  ON public.user_content_sessions (user_id, category_id, recorded_at DESC);
