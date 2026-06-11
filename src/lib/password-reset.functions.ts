@@ -108,14 +108,12 @@ export const getResetQuestions = createServerFn({ method: "POST" })
     if (data.inmatePin) {
       const { data: profile } = await (supabaseAdmin as any)
         .from("user_profiles")
-        .select("inmate_pin, inmate_pin_hmac, facility")
+        .select("inmate_pin_hmac, facility")
         .eq("user_id", userId)
         .maybeSingle();
-      // Prefer HMAC comparison (timing-safe). Fall back to plaintext === during
-      // the migration window when the HMAC column hasn't been populated yet.
       const pinMatch = profile?.inmate_pin_hmac
         ? verifyPin(data.inmatePin, profile.inmate_pin_hmac)
-        : profile?.inmate_pin === data.inmatePin;
+        : false;
       const facilityMatch = !data.facilityValue || profile?.facility === data.facilityValue;
       if (!pinMatch || !facilityMatch) return fakePair(data.username);
     }

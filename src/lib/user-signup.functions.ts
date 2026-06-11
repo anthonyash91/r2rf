@@ -98,22 +98,13 @@ export const checkInmatePin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const pinHmac = hashPin(data.inmatePin);
-    // Check HMAC column first (new records). Fall back to plaintext during migration window.
     const { data: byHmac } = await supabaseAdmin
       .from("user_profiles" as any)
       .select("user_id")
       .eq("facility", data.facilityValue)
       .eq("inmate_pin_hmac", pinHmac)
       .maybeSingle();
-    if (byHmac) return { available: false };
-    const { data: byPlaintext } = await supabaseAdmin
-      .from("user_profiles")
-      .select("user_id")
-      .eq("facility", data.facilityValue)
-      .eq("inmate_pin", data.inmatePin)
-      .is("inmate_pin_hmac", null)
-      .maybeSingle();
-    return { available: !byPlaintext };
+    return { available: !byHmac };
   });
 
 export const signupUser = createServerFn({ method: "POST" })
@@ -171,14 +162,10 @@ export const signupUser = createServerFn({ method: "POST" })
     // concurrent submissions with the same PIN both pass the client preflight.
     if (data.inmatePin) {
       const pinHmac = hashPin(data.inmatePin);
-      const [{ data: byHmac }, { data: byPlaintext }] = await Promise.all([
-        supabaseAdmin.from("user_profiles" as any).select("user_id")
-          .eq("facility", data.facility).eq("inmate_pin_hmac", pinHmac).maybeSingle(),
-        supabaseAdmin.from("user_profiles").select("user_id")
-          .eq("facility", data.facility).eq("inmate_pin", data.inmatePin)
-          .is("inmate_pin_hmac", null).maybeSingle(),
-      ]);
-      if (byHmac || byPlaintext) throw new Error("That PIN is already registered at this facility.");
+      const { data: byHmac } = await supabaseAdmin
+        .from("user_profiles" as any).select("user_id")
+        .eq("facility", data.facility).eq("inmate_pin_hmac", pinHmac).maybeSingle();
+      if (byHmac) throw new Error("That PIN is already registered at this facility.");
     }
 
     const email = syntheticEmailLocal(data.username);
@@ -204,10 +191,6 @@ export const signupUser = createServerFn({ method: "POST" })
         first_name: data.firstName,
         last_name: data.lastName,
         email,
-        // Store HMAC for secure lookup. Plaintext retained during migration window;
-        // run migrate-pin-hashes.mjs then clear inmate_pin column when all records
-        // have an HMAC.
-        inmate_pin: data.inmatePin ?? null,
         inmate_pin_hmac: data.inmatePin ? hashPin(data.inmatePin) : null,
       });
     if (profErr) {
