@@ -2,8 +2,9 @@ services:
   - type: web
     name: reentry-to-recovery
     runtime: node
-    buildCommand: bun install && bun run build
+    buildCommand: bun install --frozen-lockfile && bun run build
     startCommand: node server-start.mjs
+    healthCheckPath: /api/health
     envVars:
       # Build-time: embedded into the client bundle by Vite
       - key: VITE_SUPABASE_URL

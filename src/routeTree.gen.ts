@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as FacilitySlugRouteImport } from './routes/facility.$slug'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTestResultsRouteImport } from './routes/admin.test-results'
 import { Route as AdminTermsRouteImport } from './routes/admin.terms'
@@ -78,6 +79,11 @@ const FacilitySlugRoute = FacilitySlugRouteImport.update({
 const CategorySlugRoute = CategorySlugRouteImport.update({
   id: '/category/$slug',
   path: '/category/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/admin/terms': typeof AdminTermsRoute
   '/admin/test-results': typeof AdminTestResultsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/admin/terms': typeof AdminTermsRoute
   '/admin/test-results': typeof AdminTestResultsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin': typeof AdminIndexRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/admin/terms': typeof AdminTermsRoute
   '/admin/test-results': typeof AdminTestResultsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/health': typeof ApiHealthRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -265,6 +274,7 @@ export interface FileRouteTypes {
     | '/admin/terms'
     | '/admin/test-results'
     | '/admin/users'
+    | '/api/health'
     | '/category/$slug'
     | '/facility/$slug'
     | '/admin/'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/admin/terms'
     | '/admin/test-results'
     | '/admin/users'
+    | '/api/health'
     | '/category/$slug'
     | '/facility/$slug'
     | '/admin'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/admin/terms'
     | '/admin/test-results'
     | '/admin/users'
+    | '/api/health'
     | '/category/$slug'
     | '/facility/$slug'
     | '/admin/'
@@ -332,6 +344,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   CategorySlugRoute: typeof CategorySlugRoute
   FacilitySlugRoute: typeof FacilitySlugRoute
   ApiPublicLogErrorRoute: typeof ApiPublicLogErrorRoute
@@ -400,6 +413,13 @@ declare module '@tanstack/react-router' {
       path: '/category/$slug'
       fullPath: '/category/$slug'
       preLoaderRoute: typeof CategorySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/users': {
@@ -564,6 +584,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
+  ApiHealthRoute: ApiHealthRoute,
   CategorySlugRoute: CategorySlugRoute,
   FacilitySlugRoute: FacilitySlugRoute,
   ApiPublicLogErrorRoute: ApiPublicLogErrorRoute,
