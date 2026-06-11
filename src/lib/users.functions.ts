@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { recordAdminAudit } from "@/lib/admin-audit.server";
+import { assertAdmin } from "@/lib/server-auth";
 
 
 
@@ -17,15 +18,6 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   const chunks: T[][] = [];
   for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
   return chunks;
-}
-
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (error || !data) throw new Error("Forbidden: admin access required");
 }
 
 /**
@@ -159,7 +151,7 @@ async function fetchRolesAndProfiles(userIds: string[]) {
   const chunks = chunkArray(userIds, CHUNK);
   const [roleChunks, profileChunks] = await Promise.all([
     Promise.all(chunks.map((c) => supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", c))),
-    Promise.all(chunks.map((c) => (supabaseAdmin as any).from("user_profiles").select("user_id, username, facility, first_name, last_name, inmate_pin").in("user_id", c))),
+    Promise.all(chunks.map((c) => (supabaseAdmin as any).from("user_profiles").select("user_id, username, facility, first_name, last_name").in("user_id", c))),
   ]);
   const roleRows = roleChunks.flatMap((r) => r.data ?? []);
   const profileRows = profileChunks.flatMap((r) => r.data ?? []);
@@ -176,7 +168,7 @@ async function fetchRolesAndProfiles(userIds: string[]) {
       facility: p.facility,
       first_name: (p as any).first_name ?? "",
       last_name: (p as any).last_name ?? "",
-      inmatePin: (p as any).inmate_pin ?? null,
+      inmatePin: null,
     });
   }
   return { rolesByUser, profileByUser };
@@ -211,7 +203,7 @@ async function buildListedUsers(userIds: string[]): Promise<ListedUser[]> {
 export const listAdminUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { data: roleRows, error } = await supabaseAdmin
       .from("user_roles")
       .select("user_id")
@@ -229,7 +221,7 @@ export const listAdminUsers = createServerFn({ method: "GET" })
 export const listTesterUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { data: roleRows, error } = await supabaseAdmin
       .from("user_roles")
       .select("user_id")
@@ -279,7 +271,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
-        limit: z.number().int().min(1).max(10000).default(10),
+        limit: z.number().int().min(1).max(500).default(10),
         offset: z.number().int().min(0).default(0),
         search: z.string().trim().max(50).optional().default(""),
         facility: z.string().trim().max(100).optional().default(""),
@@ -313,7 +305,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
     // a NOT IN exclusion list — eliminates one full user_roles table scan per page load.
     let q = (supabaseAdmin as any)
       .from("user_profiles")
-      .select("user_id, username, facility, first_name, last_name, inmate_pin, created_at", { count: "exact" })
+      .select("user_id, username, facility, first_name, last_name, created_at", { count: "exact" })
       .eq("is_staff", false)
       .eq("is_synthetic", false);
 
@@ -354,7 +346,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
           facility: p.facility,
           first_name: (p as any).first_name ?? "",
           last_name: (p as any).last_name ?? "",
-          inmatePin: (p as any).inmate_pin ?? null,
+          inmatePin: null,
         },
       };
     });
@@ -366,7 +358,7 @@ export const countNewUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ since: z.string().min(1) }).parse(input))
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { count, error } = await (supabaseAdmin as any)
       .from("user_profiles")
       .select("user_id", { count: "exact", head: true })
@@ -389,7 +381,7 @@ export const createUser = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     // Create with email_confirm:false so the user must verify via email.
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
@@ -437,7 +429,7 @@ export const createFacilityUser = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
@@ -496,7 +488,7 @@ export const createTesterUser = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
 
     const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
     if (exists) throw new Error("That username is already taken.");
@@ -580,7 +572,7 @@ export const upgradeTesterRoles = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
 
     const allRoles: Role[] = ["tester", "user", "admin", "contributor", "facilityUser"];
 
@@ -636,7 +628,7 @@ export const deleteUser = createServerFn({ method: "POST" })
     z.object({ userId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     if (data.userId === context.userId) {
       throw new Error("You cannot delete your own account.");
     }
@@ -677,7 +669,7 @@ export const deleteUsers = createServerFn({ method: "POST" })
     z.object({ userIds: z.array(z.string().uuid()).min(1).max(500) }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const targets = data.userIds.filter((id) => id !== context.userId);
     if (targets.length === 0) {
       return { deleted: 0, failed: [], skippedSelf: data.userIds.length };
@@ -750,7 +742,7 @@ export const updateUserEmail = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       email: data.email,
       email_confirm: true,
@@ -847,7 +839,7 @@ export const setUserRole = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
 
     // Prevent self-demotion to avoid lockout
     if (data.userId === context.userId && !data.enabled) {

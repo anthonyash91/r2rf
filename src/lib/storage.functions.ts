@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assertAdminOrContributor } from "@/lib/server-auth";
 
 const BUCKET = "content-files";
 
@@ -42,15 +43,6 @@ function validateUploadPath(path: string): string {
   return ext;
 }
 
-async function assertAdminOrContributor(supabase: any, userId: string) {
-  const [adminRes, contribRes] = await Promise.all([
-    supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
-    supabase.rpc("has_role", { _user_id: userId, _role: "contributor" }),
-  ]);
-  if (!adminRes.data && !contribRes.data) {
-    throw new Error("Forbidden: admin or contributor access required");
-  }
-}
 
 /**
  * Returns a signed upload URL and the resulting public URL for a given storage path.
@@ -63,7 +55,7 @@ export const getSignedUploadUrl = createServerFn({ method: "POST" })
     z.object({ path: z.string().min(1).max(500) }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdminOrContributor(context.supabase, context.userId);
+    await assertAdminOrContributor(context.userId);
     validateUploadPath(data.path);
 
     const { data: signed, error } = await supabaseAdmin.storage
@@ -88,7 +80,7 @@ export const deleteStorageFile = createServerFn({ method: "POST" })
     z.object({ path: z.string().min(1).max(500) }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdminOrContributor(context.supabase, context.userId);
+    await assertAdminOrContributor(context.userId);
     validateUploadPath(data.path); // same sanitization — rejects traversal and non-uploads/ paths
 
     const { error } = await supabaseAdmin.storage
@@ -115,7 +107,7 @@ export const estimatePdfDuration = createServerFn({ method: "POST" })
     z.object({ url: z.string().url().max(2000) }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdminOrContributor(context.supabase, context.userId);
+    await assertAdminOrContributor(context.userId);
 
     // SSRF guard: only allow HTTPS fetches to the configured Supabase storage
     // hostname. This prevents the server from being used as a proxy to reach

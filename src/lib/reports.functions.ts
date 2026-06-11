@@ -3,45 +3,13 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { parseMinutes } from "@/lib/duration";
+import { assertAnalyticsAdmin, isFacilityScoped } from "@/lib/server-auth";
 
 /** Chunk a large ID array so each slice stays under Supabase's URL length limit. */
 function chunkIds(ids: string[], size = 500): string[][] {
   const out: string[][] = [];
   for (let i = 0; i < ids.length; i += size) out.push(ids.slice(i, i + size));
   return out;
-}
-
-/** Analytics access: admin and facilityUser only — contributors excluded. */
-async function assertAnalyticsAdmin(userId: string) {
-  const { data } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .in("role", ["admin", "facilityUser"]);
-  if (!data || data.length === 0) throw new Error("Forbidden: analytics admin access required");
-}
-
-/**
- * Returns true if the caller should be scoped to their own facility.
- * Callers with the admin role are never scoped — they see all facilities.
- * This handles tester accounts that hold both admin and facilityUser roles.
- */
-async function isFacilityScoped(userId: string): Promise<{ scoped: boolean; facility: string | null }> {
-  const { data: roles } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .in("role", ["admin", "facilityUser"]);
-  const hasAdmin = (roles ?? []).some((r: any) => r.role === "admin");
-  if (hasAdmin) return { scoped: false, facility: null };
-  const hasFacilityUser = (roles ?? []).some((r: any) => r.role === "facilityUser");
-  if (!hasFacilityUser) return { scoped: false, facility: null };
-  const { data: prof } = await supabaseAdmin
-    .from("user_profiles")
-    .select("facility")
-    .eq("user_id", userId)
-    .maybeSingle();
-  return { scoped: true, facility: prof?.facility ?? null };
 }
 
 const RangeSchema = z.enum(["7d", "30d", "90d", "all", "month"]);
@@ -634,7 +602,7 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     const total = totalCount ?? 0;
 
     // Fetch only the requested page
-    let profilesQ = buildQ("user_id, username, first_name, last_name, facility, created_at, inmate_pin");
+    let profilesQ = buildQ("user_id, username, first_name, last_name, facility, created_at");
     if (pageSize > 0) {
       profilesQ = profilesQ.range(pageNum * pageSize, (pageNum + 1) * pageSize - 1);
     }
@@ -694,7 +662,6 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
         last_name: (p.last_name as string) ?? "",
         facility: (p.facility as string) ?? "",
         facility_label: facilityLabelMap.get(p.facility as string) ?? (p.facility as string) ?? "",
-        inmate_pin: (p.inmate_pin as string) ?? null,
         created_at: p.created_at as string,
         last_login_date: lastLoginById.get(p.user_id as string) ?? null,
         engagement_tier: tierById.get(p.user_id as string)?.tier ?? null,
@@ -725,7 +692,7 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
       }
     }
 
-    const [profRes, catsRes, itemsRes, progRes, loginsRes, eventsRes, catFacRes, itemFacRes, engRes, statsRes, userBookmarksRes, userRatingsRes, userAchievementsRes] = await Promise.all([
+    const [profRes, catsRes, itemsRes, progRes, loginsRes, catViewsRes, contentClicksRes, catFacRes, itemFacRes, engRes, statsRes, userBookmarksRes, userRatingsRes, userAchievementsRes] = await Promise.all([
       supabaseAdmin
         .from("user_profiles")
         .select("user_id, username, first_name, last_name, facility, created_at")
@@ -750,8 +717,14 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         .eq("user_id", data.userId),
       supabaseAdmin
         .from("analytics_events")
-        .select("event_type, created_at")
-        .eq("user_id", data.userId),
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", data.userId)
+        .eq("event_type", "category_view"),
+      supabaseAdmin
+        .from("analytics_events")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", data.userId)
+        .eq("event_type", "content_click"),
       (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
       (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
       (supabaseAdmin as any)
@@ -781,7 +754,8 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
     if (itemsRes.error) throw new Error(itemsRes.error.message);
     if (progRes.error) throw new Error(progRes.error.message);
     if (loginsRes.error) throw new Error(loginsRes.error.message);
-    if (eventsRes.error) throw new Error(eventsRes.error.message);
+    if (catViewsRes.error) throw new Error(catViewsRes.error.message);
+    if (contentClicksRes.error) throw new Error(contentClicksRes.error.message);
 
     const userBookmarkSet = new Set<string>((userBookmarksRes.data ?? []).map((r: any) => r.content_item_id as string));
     const userRatingMap = new Map<string, 1 | -1>((userRatingsRes.data ?? []).map((r: any) => [r.content_item_id as string, r.rating as 1 | -1]));
@@ -914,12 +888,8 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
       facilityPercentile,
       statsUpdatedAt,
       eventCounts: {
-        categoryViews: (eventsRes.data ?? []).filter(
-          (e: any) => e.event_type === "category_view",
-        ).length,
-        contentClicks: (eventsRes.data ?? []).filter(
-          (e: any) => e.event_type === "content_click",
-        ).length,
+        categoryViews: catViewsRes.count ?? 0,
+        contentClicks: contentClicksRes.count ?? 0,
       },
       achievements: userAchievements,
     };
@@ -955,7 +925,7 @@ export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
     // All regular users at this facility
     const { data: profiles } = await supabaseAdmin
       .from("user_profiles")
-      .select("user_id, username, first_name, last_name, inmate_pin")
+      .select("user_id, username, first_name, last_name")
       .eq("facility", facilityValue)
       .eq("is_synthetic", false)
       .order("last_name", { ascending: true });

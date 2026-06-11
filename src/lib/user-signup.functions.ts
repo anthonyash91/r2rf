@@ -11,8 +11,24 @@ import { getClientIp } from "./ip-allowlist";
 const SIGNUP_WINDOW_MS = 24 * 60 * 60 * 1000;
 const SIGNUP_MAX_PER_IP = 5;
 
+// In-process rate limiter for checkInmatePin: 20 checks per minute per IP.
+// Prevents automated PIN-availability scanning without impacting normal signup flow.
+const PIN_CHECK_WINDOW_MS = 60_000;
+const PIN_CHECK_MAX_PER_IP = 20;
+type IpBucket = { count: number; windowStart: number };
+const pinCheckBuckets = new Map<string, IpBucket>();
 
-
+function isPinCheckRateLimited(ip: string): boolean {
+  const now = Date.now();
+  let bucket = pinCheckBuckets.get(ip);
+  if (!bucket || now - bucket.windowStart > PIN_CHECK_WINDOW_MS) {
+    bucket = { count: 0, windowStart: now };
+    pinCheckBuckets.set(ip, bucket);
+  }
+  if (bucket.count >= PIN_CHECK_MAX_PER_IP) return true;
+  bucket.count++;
+  return false;
+}
 
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
 const USER_EMAIL_DOMAIN = "users.local";
@@ -97,6 +113,10 @@ export const checkInmatePin = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data }) => {
+    const ip = getClientIp(getRequest());
+    if (ip && isPinCheckRateLimited(ip)) {
+      throw new Error("Too many requests. Please wait a moment before trying again.");
+    }
     const pinHmac = hashPin(data.inmatePin);
     const { data: byHmac } = await supabaseAdmin
       .from("user_profiles" as any)

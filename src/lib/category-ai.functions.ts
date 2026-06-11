@@ -1,20 +1,29 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAdminOrContributor } from "@/lib/server-auth";
 import Anthropic from "@anthropic-ai/sdk";
 
-async function assertAdminOrContributor(supabase: any, userId: string) {
-  const [adminRes, contribRes] = await Promise.all([
-    supabase.rpc("has_role", { _user_id: userId, _role: "admin" }),
-    supabase.rpc("has_role", { _user_id: userId, _role: "contributor" }),
-  ]);
-  if (adminRes.error && contribRes.error) {
-    throw new Error("Forbidden: role check failed");
+// Shared in-process rate limiter for all AI generation calls: 60 per hour per user.
+// Prevents a single authenticated user from running up unbounded Anthropic API costs.
+const AI_WINDOW_MS = 60 * 60_000;
+const AI_MAX_PER_USER = 60;
+type AiBucket = { count: number; windowStart: number };
+const aiBuckets = new Map<string, AiBucket>();
+
+function assertAiRateLimit(userId: string): void {
+  const now = Date.now();
+  let bucket = aiBuckets.get(userId);
+  if (!bucket || now - bucket.windowStart > AI_WINDOW_MS) {
+    bucket = { count: 0, windowStart: now };
+    aiBuckets.set(userId, bucket);
   }
-  if (!adminRes.data && !contribRes.data) {
-    throw new Error("Forbidden: admin or contributor access required");
+  if (bucket.count >= AI_MAX_PER_USER) {
+    throw new Error("AI generation rate limit reached. Please wait before generating more content.");
   }
+  bucket.count++;
 }
+
 
 const anthropic = new Anthropic();
 
@@ -37,7 +46,8 @@ export const generateCategoryCopy = createServerFn({ method: "POST" })
     z.object({ name: z.string().min(1).max(200) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdminOrContributor(context.supabase, context.userId);
+    await assertAdminOrContributor(context.userId);
+    assertAiRateLimit(context.userId);
     checkApiKey();
 
     const msg = await anthropic.messages.create({
@@ -80,7 +90,8 @@ export const generateContentDescription = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context: ctx }) => {
-    await assertAdminOrContributor(ctx.supabase, ctx.userId);
+    await assertAdminOrContributor(ctx.userId);
+    assertAiRateLimit(ctx.userId);
     checkApiKey();
 
     const context = [
@@ -140,6 +151,7 @@ export const translateToSpanish = createServerFn({ method: "POST" })
     if (!adminRes.data && !contribRes.data && !facilityRes.data) {
       throw new Error("Forbidden: admin, contributor, or facility user access required");
     }
+    assertAiRateLimit(context.userId);
     checkApiKey();
 
     const entries = Object.entries(data.fields).filter(([, v]) => v && v.trim());

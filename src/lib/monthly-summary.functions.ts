@@ -2,17 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-/** Analytics access: admin and facilityUser only — contributors excluded. */
-async function assertAnalyticsAdmin(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .in("role", ["admin", "facilityUser"])
-    .maybeSingle();
-  if (error || !data) throw new Error("Forbidden: analytics admin access required");
-}
+import { assertAnalyticsAdmin } from "@/lib/server-auth";
 
 // Fetches exempt IDs as a plain array so we can use NOT IN syntax in
 // progress queries. PostgREST embedded-resource filters (content_items!inner)

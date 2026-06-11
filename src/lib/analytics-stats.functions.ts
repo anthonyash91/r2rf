@@ -2,38 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-/** Analytics access: admin and facilityUser only — contributors excluded. */
-async function assertAnalyticsAdmin(userId: string) {
-  const { data } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .in("role", ["admin", "facilityUser"]);
-  if (!data || data.length === 0) throw new Error("Forbidden: analytics admin access required");
-}
-
-/**
- * Returns whether the caller should be facility-scoped.
- * Callers with admin role are never scoped — they see all facilities.
- */
-async function isFacilityScoped(userId: string): Promise<{ scoped: boolean; facility: string | null }> {
-  const { data: roles } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .in("role", ["admin", "facilityUser"]);
-  const hasAdmin = (roles ?? []).some((r: any) => r.role === "admin");
-  if (hasAdmin) return { scoped: false, facility: null };
-  const hasFacilityUser = (roles ?? []).some((r: any) => r.role === "facilityUser");
-  if (!hasFacilityUser) return { scoped: false, facility: null };
-  const { data: prof } = await supabaseAdmin
-    .from("user_profiles")
-    .select("facility")
-    .eq("user_id", userId)
-    .maybeSingle();
-  return { scoped: true, facility: prof?.facility ?? null };
-}
+import { assertAnalyticsAdmin, isFacilityScoped } from "@/lib/server-auth";
 
 /** Strict admin-only — used for destructive/system operations like nightly refresh. */
 async function assertStrictAdmin(userId: string) {

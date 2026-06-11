@@ -75,7 +75,7 @@ export const QA_TESTS: QATest[] = [
   { id: "1.15", sectionNum: 1, priority: "medium", roles: ["Signed Out"], title: "Facility is pre-selected from URL",
     description: "Navigate to /?site=validSiteId&user=newPin. Open the sign-up page. Look at the facility selector.\n\n✅ Pass: The facility associated with the ?site= ID is pre-selected and the selector is disabled — the user cannot change it to a different facility. The correct facility name is displayed." },
   { id: "1.16", sectionNum: 1, priority: "medium", roles: ["Signed Out"], title: "PIN is pre-filled and hidden",
-    description: "Navigate to the sign-up page via a URL with ?user=123456. Look at the sign-up form for a PIN field.\n\n✅ Pass: No visible PIN input field exists on the form. The PIN is read from the URL silently. After completing sign-up, the user's profile shows inmate_pin = 123456 (verify in admin → Users)." },
+    description: "Navigate to the sign-up page via a URL with ?user=123456. Look at the sign-up form for a PIN field.\n\n✅ Pass: No visible PIN input field exists on the form. The PIN is read from the URL silently. After completing sign-up, the user's profile shows inmate_pin_hmac is populated in user_profiles (verify in Supabase Table Editor)." },
 
   // ── Section 2 — Sign-In Flow ─────────────────────────────────────────────
   { id: "2.1",  sectionNum: 2, priority: "critical", roles: ["Regular User"], title: "Successful sign-in (correct facility + PIN)",
@@ -719,7 +719,7 @@ export const QA_TESTS: QATest[] = [
 
   // ── Section 25 — Security Audit Fixes (Pre-Launch) ────────────────────────
   { id: "25.1", sectionNum: 25, priority: "high", roles: ["Signed Out"], title: "New sign-ups store HMAC for inmate PIN",
-    description: "Create a new user account via the sign-up flow with a known inmate PIN. In Supabase Table Editor → user_profiles, find the new row. Verify inmate_pin_hmac is populated (a 64-character hex string). Verify sign-in and password-reset still work for that user.\n\n✅ Pass: inmate_pin_hmac is set for all new sign-ups. Password-reset PIN comparison uses the HMAC. Plaintext inmate_pin is retained during migration window." },
+    description: "Create a new user account via the sign-up flow with a known inmate PIN. In Supabase Table Editor → user_profiles, find the new row. Verify inmate_pin_hmac is populated (a 64-character hex string). Verify sign-in and password-reset still work for that user.\n\n✅ Pass: inmate_pin_hmac is set for all new sign-ups. Password-reset PIN comparison uses the HMAC. The plaintext inmate_pin column no longer exists." },
   { id: "25.2", sectionNum: 25, priority: "high", roles: ["Regular User"], title: "PIN excluded from getMyProfile response",
     description: "Sign in as a regular user. Open DevTools → Network. Find the getMyProfile server function call. Inspect the response JSON. Verify inmate_pin is NOT present in the profile object.\n\n✅ Pass: getMyProfile response contains username, facility, first_name, last_name, created_at, email — no inmate_pin field." },
   { id: "25.3", sectionNum: 25, priority: "high", roles: ["Admin"], title: "Storage path traversal blocked",

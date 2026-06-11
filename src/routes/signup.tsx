@@ -283,13 +283,14 @@ function SignupPageContent() {
             setFacilityErrorKey("signup.wrongLinkBlock");
             return;
           } else {
-            // Regular user via ?site= link — verify they belong to this facility + PIN
+            // Regular user via ?site= link — verify they belong to this facility.
+            // PIN match was removed when plaintext inmate_pin was dropped; facility
+            // check alone prevents cross-facility session reuse on shared tablets.
             const { data: profile } = await (supabase as any)
-              .from("user_profiles").select("facility, inmate_pin")
+              .from("user_profiles").select("facility")
               .eq("user_id", authedUser.id).maybeSingle();
             const facilityMatch = profile?.facility === lockedFacility.value;
-            const pinMatch = !activeInmatePin || profile?.inmate_pin === activeInmatePin;
-            if (!facilityMatch || !pinMatch) {
+            if (!facilityMatch) {
               await supabase.auth.signOut();
               setCheckingSignIn(false); // fix: was missing, leaving nav frozen on mismatch
               setFacilityErrorKey("signup.facilityMismatch");

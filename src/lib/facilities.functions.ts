@@ -2,14 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (error || !data) throw new Error("Forbidden: admin access required");
-}
+import { assertAdmin } from "@/lib/server-auth";
 
 export const listFacilities = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
@@ -32,7 +25,7 @@ export const listFacilities = createServerFn({ method: "GET" }).handler(async ()
 export const listAllFacilities = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { data, error } = await supabaseAdmin
       .from("facilities")
       .select("id, value, label, sort_order, site_id")
@@ -52,7 +45,7 @@ export const listAllFacilities = createServerFn({ method: "GET" })
 export const listFacilitiesWithStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
 
     const [facRes, facilityStatsRes, cifRes, catFacRes, msgRes] = await Promise.all([
       supabaseAdmin.from("facilities").select("id, value, label, sort_order, site_id").order("label", { ascending: true }),
@@ -148,7 +141,7 @@ export const addFacilities = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
 
     const { data: existing } = await supabaseAdmin
       .from("facilities")
@@ -201,7 +194,7 @@ export const updateFacility = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     if (data.siteId) {
       const { data: conflict } = await supabaseAdmin
         .from("facilities")
@@ -230,7 +223,7 @@ export const deleteFacility = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid() }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { error } = await supabaseAdmin
       .from("facilities")
       .delete()
@@ -245,7 +238,7 @@ export const deleteFacilities = createServerFn({ method: "POST" })
     z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }).parse(input),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { error } = await supabaseAdmin
       .from("facilities")
       .delete()

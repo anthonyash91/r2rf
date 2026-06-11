@@ -2,14 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (error || !data) throw new Error("Forbidden: admin access required");
-}
+import { assertAdmin } from "@/lib/server-auth";
 
 /** Returns the facility value for a facilityUser caller, or null if not a facilityUser. */
 async function getFacilityUserScope(userId: string): Promise<string | null> {
@@ -55,7 +48,7 @@ export const listAuditLog = createServerFn({ method: "POST" })
     // facilityUsers can view the audit log scoped to their facility; others need admin
     const facilityScope = await getFacilityUserScope(context.userId);
     if (!facilityScope) {
-      await assertAdmin(context.supabase, context.userId);
+      await assertAdmin(context.userId);
     }
 
     let q = supabaseAdmin

@@ -2,11 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (error || !data) throw new Error("Forbidden");
-}
+import { assertAdmin } from "@/lib/server-auth";
 
 export const listErrorLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -20,7 +16,7 @@ export const listErrorLogs = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
 
     let q = supabaseAdmin
       .from("error_logs")
@@ -61,7 +57,7 @@ export const clearOldErrorLogs = createServerFn({ method: "POST" })
     z.object({ olderThanDays: z.number().int().min(1).max(365).default(30) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const cutoff = new Date(Date.now() - data.olderThanDays * 24 * 60 * 60 * 1000).toISOString();
     const { error } = await supabaseAdmin.from("error_logs").delete().lt("created_at", cutoff);
     if (error) throw new Error("Failed to clear old logs");
@@ -71,7 +67,7 @@ export const clearOldErrorLogs = createServerFn({ method: "POST" })
 export const deleteAllErrorLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     // `.gte("created_at", "1900-01-01")` is a no-op filter that satisfies
     // Supabase's requirement that DELETE requests include at least one filter —
     // it deletes all rows without requiring a true "delete all" escape hatch.

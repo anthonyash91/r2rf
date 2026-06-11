@@ -1089,7 +1089,6 @@ export type Database = {
           created_at: string
           facility: string
           first_name: string
-          inmate_pin: string | null
           is_synthetic: boolean
           last_name: string
           updated_at: string
@@ -1100,7 +1099,6 @@ export type Database = {
           created_at?: string
           facility: string
           first_name?: string
-          inmate_pin?: string | null
           is_synthetic?: boolean
           last_name?: string
           updated_at?: string
@@ -1111,7 +1109,6 @@ export type Database = {
           created_at?: string
           facility?: string
           first_name?: string
-          inmate_pin?: string | null
           is_synthetic?: boolean
           last_name?: string
           updated_at?: string

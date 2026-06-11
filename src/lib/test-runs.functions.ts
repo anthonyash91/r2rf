@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { assertAdmin } from "@/lib/server-auth";
 
 // Cast once so the new tables (not yet in generated types) don't cause TS errors.
 const db = supabaseAdmin as any;
@@ -14,16 +15,6 @@ async function assertTester(userId: string) {
     .eq("role", "tester")
     .maybeSingle();
   if (error || !data) throw new Error("Forbidden: tester access required");
-}
-
-async function assertAdmin(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (error || !data) throw new Error("Forbidden: admin access required");
 }
 
 // Verify the run belongs to the caller.

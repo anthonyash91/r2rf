@@ -1010,7 +1010,6 @@ function UsersReportTab({
                       const name = [u.first_name, u.last_name].filter(Boolean).map(capFirst).join(" ") || capFirst(u.username) || "—";
                       const meta: string[] = [];
                       if (u.username) meta.push(`@${capFirst(u.username)}`);
-                      if ((u as any).inmate_pin) meta.push(`PIN: ${(u as any).inmate_pin}`);
                       if (isAll && (u as any).facility_label) meta.push((u as any).facility_label);
                       const lastLoginIso = (u as any).last_login_date || null;
                       return (
@@ -1031,7 +1030,7 @@ function UsersReportTab({
                           </div>
                           <button
                             type="button"
-                            onClick={() => setActiveUser({ userId: u.user_id, name, pin: (u as any).inmate_pin ?? null })}
+                            onClick={() => setActiveUser({ userId: u.user_id, name })}
                             className="rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted self-start sm:self-auto"
                           >
                             View report
@@ -1059,18 +1058,17 @@ function exportFacilityUsersCsv(
 ) {
   const lines: string[] = [];
   const headers = includeFacility
-    ? ["First name", "Last name", "Username", "PIN", "Facility", "Joined", "Last login", "Engagement tier", "Facility percentile"]
-    : ["First name", "Last name", "Username", "PIN", "Joined", "Last login", "Engagement tier", "Facility percentile"];
+    ? ["First name", "Last name", "Username", "Facility", "Joined", "Last login", "Engagement tier", "Facility percentile"]
+    : ["First name", "Last name", "Username", "Joined", "Last login", "Engagement tier", "Facility percentile"];
   lines.push(headers.map(csvEscape).join(","));
   for (const u of users) {
     const lastLogin = u.last_login_date || "";
     const tier = (u as any).engagement_tier ?? "";
     const pct = (u as any).facility_percentile != null ? `${(u as any).facility_percentile}%` : "";
-    const pin = (u as any).inmate_pin ?? "";
     const facilityName = (u as any).facility_label || u.facility || "";
     const row = includeFacility
-      ? [u.first_name, u.last_name, u.username, pin, facilityName, fmtDate(u.created_at), fmtDate(lastLogin), tier, pct]
-      : [u.first_name, u.last_name, u.username, pin, fmtDate(u.created_at), fmtDate(lastLogin), tier, pct];
+      ? [u.first_name, u.last_name, u.username, facilityName, fmtDate(u.created_at), fmtDate(lastLogin), tier, pct]
+      : [u.first_name, u.last_name, u.username, fmtDate(u.created_at), fmtDate(lastLogin), tier, pct];
     lines.push(row.map(csvEscape).join(","));
   }
   downloadCsv(
@@ -1118,7 +1116,7 @@ function exportBulkFacilityProgressCsv(
 
   const lines: string[] = [];
   lines.push([
-    "First Name", "Last Name", "Username", "PIN",
+    "First Name", "Last Name", "Username",
     "Last Login", "Items Completed", "Time Spent (hrs)",
     "Category", "Item Title",
     "Completed", "Completed On", "Progress %", "Time on Item (min)",
@@ -1176,7 +1174,6 @@ function exportBulkFacilityProgressCsv(
           isNewUser ? (user.first_name ?? "") : "",
           isNewUser ? (user.last_name ?? "") : "",
           isNewUser ? (user.username ?? "") : "",
-          isNewUser ? (user.inmate_pin ?? "") : "",
           isNewUser ? lastLogin : "",
           isNewUser ? itemsCompleted : "",
           isNewUser ? hoursSpent : "",
