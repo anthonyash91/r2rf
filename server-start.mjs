@@ -8,7 +8,24 @@ import handler from "./dist/server/server.js";
 
 const PORT = process.env.PORT || 3000;
 
-// In-process token-bucket rate limiter (Issue 13 — scalability audit).
+// ── Process-level crash handlers (Issue 4) ───────────────────────────────────
+// Node 15+ exits on unhandled rejections by default. These handlers ensure
+// every crash is logged before exit so Render's log stream captures the cause.
+process.on("uncaughtException", (err) => {
+  console.error("[server] uncaughtException:", err);
+  process.exit(1);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("[server] unhandledRejection:", reason);
+  process.exit(1);
+});
+
+// ── Request body size limit (Issue 1) ────────────────────────────────────────
+// Prevents OOM-crash via a client streaming an arbitrarily large body.
+// 10 MB covers any realistic JSON payload; file uploads go directly to Supabase Storage.
+const MAX_BODY_BYTES = 10 * 1024 * 1024;
+
+// ── In-process token-bucket rate limiter (Issue 13 — scalability audit).
 // Rejects requests before they reach the DB rate-limit RPCs, preventing
 // bots from exhausting the Supabase connection pool at the first line of defense.
 // Tokens refill at 2/sec; bucket holds 60 tokens (30-second burst capacity).
@@ -103,10 +120,27 @@ const server = createServer(async (req, res) => {
     else headers.set(key, value);
   }
 
+  // Issue 3: refuse new requests while draining after SIGTERM
+  if (isShuttingDown) {
+    res.writeHead(503, { "content-type": "text/plain", "connection": "close" });
+    res.end("Service Unavailable");
+    return;
+  }
+
   let body = undefined;
   if (req.method !== "GET" && req.method !== "HEAD") {
     const chunks = [];
-    for await (const chunk of req) chunks.push(chunk);
+    let totalBytes = 0;
+    for await (const chunk of req) {
+      totalBytes += chunk.length;
+      if (totalBytes > MAX_BODY_BYTES) {
+        res.writeHead(413, { "content-type": "text/plain" });
+        res.end("Payload Too Large");
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    }
     if (chunks.length) body = Buffer.concat(chunks);
   }
 
@@ -124,13 +158,48 @@ const server = createServer(async (req, res) => {
   for (const [key, value] of response.headers.entries()) res.setHeader(key, value);
 
   if (!response.body) { res.end(); return; }
+  // Issue 2: proper streaming with error handling on both the reader and the socket.
+  // The old recursive callback approach had no error handler — a client disconnect
+  // or SSR stream failure would throw an unhandled rejection and crash the process.
   const reader = response.body.getReader();
-  const pump = async () => {
-    const { done, value } = await reader.read();
-    if (done) { res.end(); return; }
-    res.write(value, pump);
-  };
-  pump();
+  res.on("error", () => reader.cancel().catch(() => {}));
+  (async () => {
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) { res.end(); break; }
+        // Respect backpressure: pause reading if the socket buffer is full.
+        if (!res.write(value)) {
+          await new Promise((resolve) => res.once("drain", resolve));
+        }
+      }
+    } catch (err) {
+      console.error("[server] stream error:", err);
+      if (!res.writableEnded) res.destroy();
+    }
+  })();
+});
+
+// ── Graceful shutdown on SIGTERM (Issue 3) ───────────────────────────────────
+// Render sends SIGTERM when deploying a new version. Without this handler,
+// the process exits immediately and drops every in-flight request.
+// server.close() stops accepting new connections and waits for existing ones
+// to finish. closeAllConnections() immediately closes idle keep-alive sockets
+// so the drain completes quickly. A 10s hard timeout ensures the old process
+// always exits even if a long-running request is stuck.
+let isShuttingDown = false;
+process.on("SIGTERM", () => {
+  isShuttingDown = true;
+  console.log("[server] SIGTERM received — draining connections");
+  server.closeAllConnections();
+  server.close(() => {
+    console.log("[server] graceful shutdown complete");
+    process.exit(0);
+  });
+  setTimeout(() => {
+    console.error("[server] forced shutdown after 10s timeout");
+    process.exit(1);
+  }, 10_000).unref();
 });
 
 server.listen(PORT, () => console.log(`Listening on port ${PORT}`));

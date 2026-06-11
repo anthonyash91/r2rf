@@ -23,3 +23,11 @@ services:
       # Check Render docs for your plan tier. Leave unset to use x-forwarded-for leftmost entry.
       - key: TRUSTED_IP_HEADER
         sync: false
+      # Required for HMAC-signed signup captcha tokens and inmate PIN hashing.
+      # Generate with: openssl rand -hex 32
+      - key: SIGNUP_CHALLENGE_SECRET
+        sync: false
+      # SHA-256 hex of the site passkey string used for IP-gating bypass.
+      # Generate with: echo -n "your-passkey" | openssl dgst -sha256
+      - key: SITE_PASSKEY_HASH
+        sync: false
