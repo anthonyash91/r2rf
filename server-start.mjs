@@ -59,7 +59,8 @@ setInterval(() => {
     if (bucket.lastRefill < cutoff) RATE_BUCKETS.delete(ip);
   }
 }, RATE_CLEANUP_INTERVAL_MS).unref();
-const CLIENT_DIR = join(fileURLToPath(import.meta.url), "../dist/client");
+import { resolve } from "node:path";
+const CLIENT_DIR = resolve(join(fileURLToPath(import.meta.url), "../dist/client"));
 
 const MIME = {
   ".js":    "application/javascript; charset=utf-8",
@@ -83,7 +84,13 @@ const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, "http://localhost").pathname;
   if (pathname.startsWith("/assets/")) {
     try {
-      const filePath = join(CLIENT_DIR, pathname);
+      const filePath = resolve(join(CLIENT_DIR, pathname));
+      // Containment guard: verify the resolved path stays inside CLIENT_DIR.
+      // URL normalization already strips ../  sequences before this point, but
+      // this explicit check is defense-in-depth against any edge case.
+      if (!filePath.startsWith(CLIENT_DIR + "/") && filePath !== CLIENT_DIR) {
+        res.writeHead(403); res.end(); return;
+      }
       const content = await readFile(filePath);
       const ext = extname(filePath);
       const headers = {
