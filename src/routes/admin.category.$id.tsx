@@ -38,35 +38,10 @@ import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { EmptyState } from "@/components/EmptyState";
+import { FacilityBadge } from "@/components/FacilityBadge";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { PageHeader } from "@/components/PageHeader";
 
-function FacilityBadge({ facilities, facilityLabelMap, className }: {
-  facilities: string[];
-  facilityLabelMap: Record<string, string>;
-  className?: string;
-}) {
-  return (
-    <TooltipProvider delayDuration={150}>
-      <Tooltip>
-        <TooltipTrigger
-          type="button"
-          onClick={(e) => e.stopPropagation()}
-          className="cursor-default inline-flex p-0 m-0 h-auto w-auto border-none bg-transparent shadow-none"
-        >
-          <Badge variant="facility" className={className}>
-            {facilities.length === 1
-              ? (facilityLabelMap[facilities[0]] ?? facilities[0])
-              : `${facilities.length} facilities`}
-          </Badge>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="text-xs">
-          {facilities.map((v) => facilityLabelMap[v] ?? v).join("; ")}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
 
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
