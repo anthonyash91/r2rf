@@ -66,6 +66,24 @@ export const Route = createFileRoute("/dashboard")({
     }
   },
   component: DashboardRoute,
+  errorComponent: ({ error, reset }) => (
+    <div className="min-h-screen flex flex-col">
+      <SiteHeader />
+      <main className="flex-1 flex items-center justify-center px-6 py-20">
+        <div className="max-w-sm text-center">
+          <p className="font-semibold text-foreground">Dashboard didn't load</p>
+          <p className="mt-1 text-sm text-muted-foreground">{error.message ?? "Something went wrong."}</p>
+          <button
+            onClick={reset}
+            className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Try again
+          </button>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
+  ),
 });
 
 function DashboardRoute() {
@@ -184,7 +202,10 @@ function DashboardPage() {
     },
   });
 
-  const categoryIds = (categoriesQuery.data ?? []).map((c) => c.id);
+  const categoryIds = useMemo(
+    () => (categoriesQuery.data ?? []).map((c) => c.id),
+    [categoriesQuery.data],
+  );
   const userId = user?.id ?? null;
 
   const progressQuery = useQuery({
@@ -192,7 +213,7 @@ function DashboardPage() {
     enabled: !!userId && categoryIds.length > 0,
     staleTime: 30 * 1000, // progress should feel near-live; 30s is enough
     queryFn: async () => {
-      const [itemsRes, readRes, seenRes] = await Promise.all([
+      const [itemsRes, readRes, seenRes, engRes, ratingsRes] = await Promise.all([
         supabase
           .from("content_items")
           .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at, url, file_url, exempt_from_progress")
@@ -207,6 +228,14 @@ function DashboardPage() {
         supabase
           .from("user_content_seen")
           .select("content_item_id")
+          .eq("user_id", userId!),
+        (supabase as any)
+          .from("user_content_engagement")
+          .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct")
+          .eq("user_id", userId!),
+        (supabase as any)
+          .from("user_content_ratings")
+          .select("content_item_id, rating")
           .eq("user_id", userId!),
       ]);
       if (itemsRes.error) throw itemsRes.error;
@@ -279,15 +308,11 @@ function DashboardPage() {
         }
       }
       // Real session seconds + per-item media progress from engagement tracking
-      const { data: engData } = await (supabase as any)
-        .from("user_content_engagement")
-        .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct")
-        .eq("user_id", userId);
-      const totalSeconds = ((engData ?? []) as any[]).reduce(
+      const totalSeconds = ((engRes.data ?? []) as any[]).reduce(
         (sum: number, r: any) => sum + ((r.session_seconds as number) || 0), 0,
       );
       const engagementMap = new Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null; manualCompletionPct: number | null }>();
-      for (const r of (engData ?? []) as any[]) {
+      for (const r of (engRes.data ?? []) as any[]) {
         engagementMap.set(r.content_item_id as string, {
           sessionSeconds: (r.session_seconds as number) || 0,
           mediaProgressSeconds: r.media_progress_seconds as number | null,
@@ -295,12 +320,8 @@ function DashboardPage() {
           manualCompletionPct: r.manual_completion_pct as number | null,
         });
       }
-      const { data: ratingsData } = await (supabase as any)
-        .from("user_content_ratings")
-        .select("content_item_id, rating")
-        .eq("user_id", userId);
       const ratingsMap = new Map<string, 1 | -1>();
-      for (const r of (ratingsData ?? []) as any[]) {
+      for (const r of (ratingsRes.data ?? []) as any[]) {
         if (r.rating === 1 || r.rating === -1) ratingsMap.set(r.content_item_id as string, r.rating as 1 | -1);
       }
 

@@ -376,6 +376,7 @@ function SignInSignUpForm({
                   maxLength={72}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)} {...kbPassword}
+                  autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
                   wrapperClassName="mt-1"
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
@@ -415,6 +416,7 @@ function SignInSignUpForm({
                   maxLength={72}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)} {...kbConfirm}
+                  autoComplete="new-password"
                   wrapperClassName="mt-1"
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
@@ -742,6 +744,7 @@ function ResetPasswordForm({
                 pattern="[A-Za-z0-9_]{3,32}"
                 value={resetUsername}
                 onChange={(e) => { setResetUsername(e.target.value); setResetErrorKey(null); }} {...kbResetUsername}
+                autoComplete="username"
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
@@ -775,6 +778,7 @@ function ResetPasswordForm({
                 maxLength={200}
                 value={resetAnswer1}
                 onChange={(e) => setResetAnswer1(e.target.value)} {...kbResetA1}
+                autoComplete="off"
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
@@ -790,6 +794,7 @@ function ResetPasswordForm({
                 maxLength={200}
                 value={resetAnswer2}
                 onChange={(e) => setResetAnswer2(e.target.value)} {...kbResetA2}
+                autoComplete="off"
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
@@ -802,6 +807,7 @@ function ResetPasswordForm({
                 maxLength={72}
                 value={resetNewPassword}
                 onChange={(e) => setResetNewPassword(e.target.value)} {...kbResetNew}
+                autoComplete="new-password"
                 wrapperClassName="mt-1"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
@@ -816,6 +822,7 @@ function ResetPasswordForm({
                 maxLength={72}
                 value={resetConfirmPassword}
                 onChange={(e) => setResetConfirmPassword(e.target.value)} {...kbResetConfirm}
+                autoComplete="new-password"
                 wrapperClassName="mt-1"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />

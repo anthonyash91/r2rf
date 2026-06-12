@@ -103,8 +103,30 @@ function IdlePrompt({ countdown, onStillHere }: { countdown: number; onStillHere
 }
 
 
+function CategoryError({ error, reset }: { error: Error; reset: () => void }) {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <SiteHeader />
+      <main className="flex-1 flex items-center justify-center px-6 py-20">
+        <div className="max-w-sm text-center">
+          <p className="font-semibold text-foreground">This page didn't load</p>
+          <p className="mt-1 text-sm text-muted-foreground">{error.message ?? "Something went wrong."}</p>
+          <button
+            onClick={reset}
+            className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Try again
+          </button>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/category/$slug")({
   component: CategoryPage,
+  errorComponent: CategoryError,
 });
 
 function CategoryPage() {
@@ -128,11 +150,12 @@ function CategoryPage() {
     for (const f of facilitiesData?.facilities ?? []) map[f.value] = f.label;
     return map;
   }, [facilitiesData]);
-  type PlayerPayload = { url: string; title: string; itemId: string };
-  const [videoPlayer, setVideoPlayer] = useState<PlayerPayload | null>(null);
-  const [audioPlayer, setAudioPlayer] = useState<PlayerPayload | null>(null);
-  const [pdfViewer, setPdfViewer] = useState<PlayerPayload | null>(null);
-  const [imageViewer, setImageViewer] = useState<PlayerPayload | null>(null);
+  type ActiveMedia = { type: "video" | "audio" | "pdf" | "image"; url: string; title: string; itemId: string } | null;
+  const [activeMedia, setActiveMedia] = useState<ActiveMedia>(null);
+  const videoPlayer  = activeMedia?.type === "video"  ? activeMedia : null;
+  const audioPlayer  = activeMedia?.type === "audio"  ? activeMedia : null;
+  const pdfViewer    = activeMedia?.type === "pdf"    ? activeMedia : null;
+  const imageViewer  = activeMedia?.type === "image"  ? activeMedia : null;
 
   // Callback refs (useState) so the engagement hook re-runs its effect when
   // the element actually mounts inside the Radix Dialog Portal — useRef alone
@@ -395,8 +418,7 @@ function CategoryPage() {
   const engagementMap = engagementQuery.data ?? new Map<string, EngagementRecord>();
 
   // Derive which item is currently open and its media kind
-  const activeItemId =
-    videoPlayer?.itemId ?? audioPlayer?.itemId ?? pdfViewer?.itemId ?? imageViewer?.itemId ?? null;
+  const activeItemId = activeMedia?.itemId ?? null;
 
   const invalidateEngagement = () => {
     // Delay slightly so the hook's write() cleanup has time to land in the DB
@@ -451,7 +473,7 @@ function CategoryPage() {
   };
 
   // Engagement tracking hook: timer (all types) + media progress (video/audio) + PDF auto-mark
-  const isMediaItem = !!(videoEl || audioEl || videoPlayer || audioPlayer);
+  const isMediaItem = !!(videoEl || audioEl || activeMedia?.type === "video" || activeMedia?.type === "audio");
   const { resetIdle, _debug: engDebug } = useContentEngagement({
     idleMs: currentIdleMs,
     contentItemId: activeItemId,
@@ -519,7 +541,15 @@ function CategoryPage() {
       <SiteHeader />
 
       {isLoading && (
-        <div className="flex-1 mx-auto max-w-5xl px-6 py-24 text-muted-foreground">{t("home.loading")}</div>
+        <div className="flex-1 mx-auto max-w-5xl w-full px-6 py-12 animate-pulse">
+          <div className="h-8 w-48 rounded bg-muted mb-2" />
+          <div className="h-4 w-72 rounded bg-muted mb-10" />
+          <div className="space-y-3">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-16 rounded-xl bg-muted" />
+            ))}
+          </div>
+        </div>
       )}
 
       {error && !isLoading && (
@@ -631,14 +661,14 @@ function CategoryPage() {
                     const openMedia = () => {
                       if (!isMedia) return;
                       const payload = { url: mediaSrc!, title, itemId: item.id };
-                      if (mediaKind === "video") setVideoPlayer(payload);
-                      else if (mediaKind === "audio") setAudioPlayer(payload);
+                      if (mediaKind === "video") setActiveMedia({ type: "video", ...payload });
+                      else if (mediaKind === "audio") setActiveMedia({ type: "audio", ...payload });
                       else if (mediaKind === "pdf") {
-                        setPdfViewer(payload);
+                        setActiveMedia({ type: "pdf", ...payload });
                         openedPdfsRef.current.add(item.id);
                       }
                       else if (mediaKind === "image") {
-                        setImageViewer(payload);
+                        setActiveMedia({ type: "image", ...payload });
                         // Opening an image = viewed — auto-mark immediately
                         if (!readSet.has(item.id)) {
                           toggleRead.mutate({ itemId: item.id, markRead: true });
@@ -1156,7 +1186,7 @@ function CategoryPage() {
 
       <SiteFooter />
 
-      <Dialog open={!!videoPlayer} onOpenChange={(open) => { if (!open) { setVideoPlayer(null); setVideoEl(null); invalidateEngagement(); } }}>
+      <Dialog open={!!videoPlayer} onOpenChange={(open) => { if (!open) { setActiveMedia(null); setVideoEl(null); invalidateEngagement(); } }}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]" onInteractOutside={(e) => { if (showIdlePrompt) e.preventDefault(); }}>
           <DialogTitle className="sr-only">{videoPlayer?.title ?? "Video"}</DialogTitle>
           {videoPlayer && (
@@ -1172,7 +1202,7 @@ function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!audioPlayer} onOpenChange={(open) => { if (!open) { setAudioPlayer(null); setAudioEl(null); invalidateEngagement(); } }}>
+      <Dialog open={!!audioPlayer} onOpenChange={(open) => { if (!open) { setActiveMedia(null); setAudioEl(null); invalidateEngagement(); } }}>
         <DialogContent className="max-w-lg pt-[18px] max-h-[calc(100dvh-2rem)] overflow-auto" onInteractOutside={(e) => { if (showIdlePrompt) e.preventDefault(); }}>
           <DialogTitle className="text-base font-semibold pr-8 break-words">{audioPlayer?.title ?? "Audio"}</DialogTitle>
           {audioPlayer && (
@@ -1188,7 +1218,7 @@ function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!pdfViewer} onOpenChange={(open) => { if (!open) { setPdfViewer(null); invalidateEngagement(); } }}>
+      <Dialog open={!!pdfViewer} onOpenChange={(open) => { if (!open) { setActiveMedia(null); invalidateEngagement(); } }}>
         <DialogContent className="w-[95vw] min-w-0 max-w-[95vw] sm:max-w-[95vw] p-0 overflow-hidden max-h-[calc(100dvh-2rem)]">
           <DialogTitle className="sr-only">{pdfViewer?.title ?? "PDF"}</DialogTitle>
           {pdfViewer && (
@@ -1200,7 +1230,7 @@ function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!imageViewer} onOpenChange={(open) => { if (!open) { setImageViewer(null); invalidateEngagement(); } }}>
+      <Dialog open={!!imageViewer} onOpenChange={(open) => { if (!open) { setActiveMedia(null); invalidateEngagement(); } }}>
         <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
           <DialogTitle className="sr-only">{imageViewer?.title ?? "Image"}</DialogTitle>
           {imageViewer && (
