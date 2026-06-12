@@ -728,6 +728,29 @@ A read-only dashboard showing every QA test run submitted by tester accounts.
 
 ---
 
+## Automated Tests
+
+Tests live in `src/lib/__tests__/` and use [Vitest](https://vitest.dev/).
+
+```bash
+npm test              # run once
+npm run test:watch    # watch mode
+npm run test:coverage # with v8 coverage report
+```
+
+### What is tested
+
+| File | Coverage |
+|---|---|
+| `server-auth.test.ts` | `assertAnalyticsAdmin` and `isFacilityScoped` — every role combination, admin short-circuit, tester dual-role edge case |
+| `reports-scope-guards.test.ts` | Facility scope guard logic for all three analytics handlers — admin pass-through, facilityUser own-facility allow, cross-facility reject, no-facility-assigned reject |
+
+### Adding tests
+
+- Unit tests for pure functions go directly in `src/lib/__tests__/`.
+- Mock `supabaseAdmin` using `vi.hoisted()` + `vi.mock("@/integrations/supabase/client.server", ...)`. See `server-auth.test.ts` for the chainable mock pattern.
+- Server function handlers cannot be called directly (they require TanStack Start middleware context). Extract and test the business logic functions they depend on instead.
+
 ## Additional Documentation
 
 | File | Description |
