@@ -188,9 +188,6 @@ function CategoryPage() {
         .order("sort_order", { ascending: true });
       if (e3) throw e3;
 
-      const filtered = (others ?? []) as typeof others;
-      const shuffled = [...filtered].sort(() => Math.random() - 0.5);
-
       // Fetch facility restrictions for all items
       const itemIds = (items ?? []).map((i) => i.id as string);
       const facilityMap: Record<string, string[]> = {};
@@ -219,12 +216,19 @@ function CategoryPage() {
       return {
         category: cat as Category,
         items: itemsWithFacilities,
-        others: shuffled as Category[],
+        others: (others ?? []) as Category[],
       };
     },
   });
 
   const trackedViewRef = useRef<string | null>(null);
+  // Shuffle once per fetch result so the carousel is stable across re-renders
+  // and background refetches don't reorder items mid-view.
+  const shuffledOthers = useMemo(
+    () => [...(data?.others ?? [])].sort(() => Math.random() - 0.5),
+    [data?.others],
+  );
+
   useEffect(() => {
     const id = data?.category.id;
     if (!id || trackedViewRef.current === id || canAccessAdmin || isFacilityUser) return;
@@ -1088,14 +1092,14 @@ function CategoryPage() {
               })()}
             </section>
 
-            {data.others.length > 0 && (
+            {shuffledOthers.length > 0 && (
               <section className="mx-auto max-w-5xl px-6 pb-20">
                 <div className="border-t border-border/60 pt-20">
                   <h2 className="font-display text-xl font-semibold mb-6">{t("category.exploreOthers")}</h2>
                   <Carousel setApi={setOthersApi} opts={{ align: "start", loop: false }} plugins={[AutoHeight()]} className="relative">
                     <CarouselContent className="items-start transition-[height] duration-300 ease-out">
-                      {Array.from({ length: Math.ceil(data.others.length / 9) }).map((_, slideIdx) => {
-                        const slide = data.others.slice(slideIdx * 9, slideIdx * 9 + 9);
+                      {Array.from({ length: Math.ceil(shuffledOthers.length / 9) }).map((_, slideIdx) => {
+                        const slide = shuffledOthers.slice(slideIdx * 9, slideIdx * 9 + 9);
                         return (
                           <CarouselItem key={slideIdx}>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
