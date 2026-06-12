@@ -68,16 +68,23 @@ function FacilityBadge({ facilities, facilityLabelMap, className }: {
 
 function IdlePrompt({ countdown, onStillHere }: { countdown: number; onStillHere: () => void }) {
   return (
-    <div className="absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-6">
+    <div
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="idle-prompt-title"
+      aria-describedby="idle-prompt-desc"
+      className="absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-6"
+    >
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-xl p-6 flex flex-col gap-4">
         <div>
-          <p className="font-display text-base font-semibold text-foreground">Are you still here?</p>
-          <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+          <p id="idle-prompt-title" className="font-display text-base font-semibold text-foreground">Are you still here?</p>
+          <p id="idle-prompt-desc" className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
             Your session will stop tracking in <span className="font-semibold tabular-nums text-foreground">{countdown}s</span>. Tap or scroll any time to keep the timer running automatically without this prompt appearing.
           </p>
         </div>
         <button
           type="button"
+          autoFocus
           onClick={onStillHere}
           className="inline-flex items-center justify-center rounded-[8px] border px-4 py-2 text-sm font-medium transition-colors"
           style={{

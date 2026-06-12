@@ -32,15 +32,25 @@ export function SiteHeader() {
   const toggleLang = () => setLang(lang === "en" ? "es" : "en");
 
   const locked = useSecurityLock();
-  const lockedLinkClass = locked ? "opacity-40 cursor-not-allowed" : "";
+  const lockedLinkClass = locked ? "opacity-40 cursor-not-allowed pointer-events-none" : "";
   const handleLockedNav = (e: React.MouseEvent) => {
     if (!locked) return;
     e.preventDefault();
     e.stopPropagation();
     toast.error("Please set up your security questions before leaving this page.");
   };
+  const handleLockedKey = (e: React.KeyboardEvent) => {
+    if (!locked) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toast.error("Please set up your security questions before leaving this page.");
+    }
+  };
+  // pointer-events-none blocks mouse/touch; onKeyDown blocks keyboard Enter/Space;
+  // aria-disabled announces the disabled state to screen readers without removing
+  // the element from the accessibility tree (better than tabIndex: -1).
   const lockProps = locked
-    ? { onClickCapture: handleLockedNav, "aria-disabled": true as const, tabIndex: -1 }
+    ? { "aria-disabled": true as const, onKeyDown: handleLockedKey }
     : {};
 
   // Detect facility slug from URL — supports both /facility/siteId (legacy) and /?site=siteId
