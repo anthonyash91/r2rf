@@ -26,7 +26,7 @@ import { LoadingButton } from "@/components/LoadingButton";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
 import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
-import { useI18n, pickLang, translateDuration, translateType } from "@/lib/i18n";
+import { useI18n, pickLang, translateDuration, translateType, type TranslationKey } from "@/lib/i18n";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { weightedCompletionPct } from "@/lib/content-progress";
 import { formatTimeSpent, fmtDateShort } from "@/lib/date-format";
@@ -1287,7 +1287,7 @@ function CategoryAccordion({
   progress: any;
   isAdmin: boolean;
   lang: "en" | "es";
-  t: (key: string, vars?: Record<string, string | number>) => string;
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
   bookmarkIds: Set<string>;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -1359,7 +1359,7 @@ function CategoryProgressSection({
   read: number;
   isAdmin: boolean;
   lang: "en" | "es";
-  t: (key: string, vars?: Record<string, string | number>) => string;
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
   engagementMap: Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null; manualCompletionPct: number | null }>;
   bookmarkIds: Set<string>;
   ratingsMap: Map<string, 1 | -1>;

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
-import { useI18n, pickLang, translateType, type Language } from "@/lib/i18n";
+import { useI18n, pickLang, translateType, type Language, type TranslationKey } from "@/lib/i18n";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { useAuth } from "@/hooks/use-auth";
 import { Search, Bookmark, ArrowRight } from "lucide-react";
@@ -130,7 +130,7 @@ function SearchResults({
   isFetching: boolean;
   query: string;
   lang: Language;
-  t: (key: string, vars?: Record<string, string | number>) => string;
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
 }) {
   const { bookmarkIds, toggle, isLoggedIn } = useBookmarks();
   const badgeStyles = useBadgeStyles();

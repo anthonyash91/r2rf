@@ -2,9 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 
 export type Language = "en" | "es";
 
-type Dict = Record<string, string>;
-
-const translations: Record<Language, Dict> = {
+const translations = {
   en: {
     "nav.categories": "Categories",
     "nav.privacy": "Privacy",
@@ -535,10 +533,12 @@ const translations: Record<Language, Dict> = {
   },
 };
 
+export type TranslationKey = keyof typeof translations.en;
+
 type Ctx = {
   lang: Language;
   setLang: (l: Language) => void;
-  t: (key: string, vars?: Record<string, string | number>) => string;
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
 };
 
 const I18nContext = createContext<Ctx | null>(null);
@@ -573,11 +573,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     } catch {}
   };
 
-  const t = (key: string, vars?: Record<string, string | number>) => {
+  const t = (key: TranslationKey, vars?: Record<string, string | number>) => {
     // Fallback chain: current language → English → the raw key itself.
     // Using the key as a last resort keeps the UI functional even when
     // a translation is missing rather than rendering an empty string.
-    let s = translations[lang][key] ?? translations.en[key] ?? key;
+    let s = (translations[lang] as Record<string, string>)[key] ?? translations.en[key] ?? key;
     if (vars) {
       for (const [k, v] of Object.entries(vars)) {
         s = s.replace(`{${k}}`, String(v));

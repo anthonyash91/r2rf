@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { toast } from "sonner";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, type TranslationKey } from "@/lib/i18n";
 import {
   getSignupChallenge,
   signupUser,
@@ -473,7 +473,7 @@ function SignInSignUpForm({
                             const sel = facilities.find((f) => f.value === facility);
                             if (!sel) return "Search and select your facility";
                             const k = `facility.${sel.value}`;
-                            const tr = t(k);
+                            const tr = t(k as TranslationKey);
                             return tr === k ? sel.label : tr;
                           })()}
                         </span>
@@ -488,7 +488,7 @@ function SignInSignUpForm({
                           <CommandGroup>
                             {facilities.map((f) => {
                               const i18nKey = `facility.${f.value}`;
-                              const translated = t(i18nKey);
+                              const translated = t(i18nKey as TranslationKey);
                               const display = translated === i18nKey ? f.label : translated;
                               return (
                                 <CommandItem

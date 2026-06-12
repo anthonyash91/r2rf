@@ -1,4 +1,5 @@
 // Client-safe shared constants + helpers for security questions.
+import type { TranslationKey } from "@/lib/i18n";
 
 export const SECURITY_QUESTION_KEYS = [
   "first_pet",
@@ -36,6 +37,6 @@ export function normalizeAnswer(value: string): string {
 }
 
 /** Translate a question key via the existing i18n `t` function. */
-export function questionLabel(t: (k: string) => string, key: string): string {
-  return t(`security.q.${key}`);
+export function questionLabel(t: (k: TranslationKey) => string, key: string): string {
+  return t(`security.q.${key}` as TranslationKey);
 }

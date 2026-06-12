@@ -1,3 +1,5 @@
+import type { TranslationKey } from "@/lib/i18n";
+
 const VIDEO_EXT = /\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i;
 const AUDIO_EXT = /\.(mp3|wav|m4a|aac|flac|oga|opus)(\?|#|$)/i;
 const PDF_EXT = /\.pdf(\?|#|$)/i;
@@ -24,7 +26,7 @@ function detectMediaFor(item: {
 }
 
 export function readStatusLabels(
-  t: (key: string) => string,
+  t: (key: TranslationKey) => string,
   item: { url?: string | null; file_url?: string | null },
 ): { read: string; unread: string } {
   const kind = detectMediaFor(item);
