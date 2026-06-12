@@ -2,6 +2,23 @@
 
 **Purpose:** End-to-end manual testing guide covering every user-facing and administrative feature of the platform. Tests are grouped by functional area and ordered from most critical to least critical within each section.
 
+---
+
+## Running automated tests
+
+Before starting a manual QA session, run the automated test suite first. It catches server-side auth and scoping regressions in seconds and doesn't require a browser or test accounts.
+
+```bash
+# From the project root:
+npm test
+```
+
+All 24 tests should pass. If any fail, do not proceed with manual QA — fix the regression first. Tests cover `assertAnalyticsAdmin`, `isFacilityScoped`, and the facility scope guards in all three analytics handlers.
+
+Tests with a **Automated coverage** callout below have their server-side logic verified by the automated suite. The manual step for those tests focuses on the full path: RLS policies, real session tokens, and UI behaviour — the layer the automated tests cannot reach.
+
+---
+
 **Priority scale:**
 - 🔴 **Critical** — broken functionality blocks core user flows or exposes a security vulnerability
 - 🟠 **High** — significant feature degradation; most users would notice
@@ -664,15 +681,21 @@ Sign in as Facility User A. Verify:
 - Individual user reports show only users at Facility A
 - Clicking a user from another facility (if reachable via URL manipulation) is rejected server-side
 
+> **Automated coverage:** The server-side guard logic is covered by `reports-scope-guards.test.ts`. This manual test verifies the full path — RLS policies, real data isolation, and UI-layer scoping — which the automated tests do not cover (they mock the database).
+
 ### 7.8 — Facility User cannot view users at other facilities via URL
 🔴 **Critical**
  **Role:** Facility User
 Sign in as Facility User A. Obtain a `userId` belonging to Facility B. Open the analytics users tab and try to navigate to or construct a URL that would show Facility B's user report. Verify the server rejects the request with a "Forbidden" error.
 
+> **Automated coverage:** The cross-facility rejection is covered by `reports-scope-guards.test.ts` ("facilityUser: cannot view a user from a different facility"). This manual test verifies the same protection against a real database with real session tokens.
+
 ### 7.9 — Server functions enforce access independently of route guards
 🔴 **Critical**
  **Role:** Regular User
 This tests that route guards alone are not the security boundary. Using browser devtools or a REST client, call a server function directly (e.g., `listAdminUsers`) while authenticated as a regular user. Verify the call is rejected with a 403 or "Forbidden" error even though the route guard has been bypassed.
+
+> **Automated coverage:** `assertAnalyticsAdmin` is covered by `server-auth.test.ts` ("throws for a regular user with no qualifying role"). This manual test verifies the same protection end-to-end over a real HTTP request.
 
 ### 7.10 — Admin cannot delete their own account
 🟠 **High**
@@ -987,6 +1010,8 @@ Note: When the tester enables analytics tracking via the Role Switcher (is_synth
 🔴 **Critical**
  **Role:** Facility User
 Sign in as Facility User A. Verify the analytics page shows only Facility A's data. Attempt to switch the facility filter to Facility B via browser devtools (modify the request). Verify the server rejects the override and returns Facility A's data regardless.
+
+> **Automated coverage:** The server-side facility override rejection is covered by `reports-scope-guards.test.ts` ("facilityUser: request for different facility is rejected"). This manual test additionally verifies the protection under real network conditions with a live session token.
 
 ---
 
