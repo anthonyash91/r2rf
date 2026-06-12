@@ -10,6 +10,7 @@ import { LabeledField } from "@/components/FormField";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
+import { QK } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/admin/certificate")({
   beforeLoad: requireStrictAdminBeforeLoad,
@@ -49,7 +50,7 @@ const DEFAULTS: CertHero = {
 function AdminCertificatePage() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
-    queryKey: ["admin", "site_settings", "certificate_hero"],
+    queryKey: QK.adminSiteSettings("certificate_hero"),
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<CertHero> => {
       const { data, error } = await supabase
@@ -91,8 +92,8 @@ function AdminCertificatePage() {
     },
     onSuccess: () => {
       toast.success("Saved");
-      qc.invalidateQueries({ queryKey: ["admin", "site_settings", "certificate_hero"] });
-      qc.invalidateQueries({ queryKey: ["site_settings", "certificate_hero"] });
+      qc.invalidateQueries({ queryKey: QK.adminSiteSettings("certificate_hero") });
+      qc.invalidateQueries({ queryKey: QK.siteSettings("certificate_hero") });
     },
     onError: (e: any) => toast.error(e.message),
   });

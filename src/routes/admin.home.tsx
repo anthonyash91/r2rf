@@ -11,6 +11,7 @@ import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { TranslationPanel } from "@/components/TranslationPanel";
+import { QK } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/admin/home")({
   beforeLoad: requireStrictAdminBeforeLoad,
@@ -46,7 +47,7 @@ const DEFAULTS: HomeHero = {
 function AdminHomePage() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
-    queryKey: ["admin", "site_settings", "home_hero"],
+    queryKey: QK.adminSiteSettings("home_hero"),
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<HomeHero> => {
       const { data, error } = await supabase
@@ -81,8 +82,8 @@ function AdminHomePage() {
     },
     onSuccess: () => {
       toast.success("Saved");
-      qc.invalidateQueries({ queryKey: ["admin", "site_settings", "home_hero"] });
-      qc.invalidateQueries({ queryKey: ["site_settings", "home_hero"] });
+      qc.invalidateQueries({ queryKey: QK.adminSiteSettings("home_hero") });
+      qc.invalidateQueries({ queryKey: QK.siteSettings("home_hero") });
     },
     onError: (e: any) => toast.error(e.message),
   });

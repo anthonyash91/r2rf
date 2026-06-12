@@ -11,6 +11,7 @@ import { SectionCard } from "@/components/SectionCard";
 import { LoadingButton } from "@/components/LoadingButton";
 import { Badge } from "@/components/Badge";
 import { defaultDurationForType } from "@/lib/duration";
+import { QK } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/admin/seed")({
   beforeLoad: requireStrictAdminBeforeLoad,
@@ -137,7 +138,7 @@ function AdminSeedPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const categoriesQuery = useQuery({
-    queryKey: ["admin", "seed", "categories"],
+    queryKey: QK.adminSeedCategories,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("categories")
@@ -235,8 +236,8 @@ function AdminSeedPage() {
       if (error) throw error;
       toast.success(`Seeded ${payload.length} item${payload.length === 1 ? "" : "s"}`);
       setText("");
-      qc.invalidateQueries({ queryKey: ["admin", "category"] });
-      qc.invalidateQueries({ queryKey: ["category"] });
+      qc.invalidateQueries({ queryKey: QK.adminCategoryBase });
+      qc.invalidateQueries({ queryKey: QK.categoryBase });
     } catch (e: any) {
       toast.error(e.message ?? "Failed to insert");
     } finally {

@@ -7,13 +7,14 @@ import { UserSectionHeader } from "@/components/UserSectionHeader";
 import { formatTimeSpent } from "@/lib/date-format";
 import { csvEscape, downloadCsv } from "@/lib/csv-utils";
 import { getFacilityComparison } from "@/lib/analytics-stats.functions";
+import { QK } from "@/lib/query-keys";
 import { InfoTooltip, UsageReportView } from "./AnalyticsUsageReport";
 import type { FacilityRow } from "./analytics-types";
 
 export function FacilityComparisonSection() {
   const fetch = useServerFn(getFacilityComparison);
   const { data, isLoading } = useQuery({
-    queryKey: ["facility-comparison"],
+    queryKey: QK.facilityComparison,
     queryFn: () => fetch(),
     staleTime: 10 * 60 * 1000,
   });
@@ -108,7 +109,7 @@ export function FacilityComparisonSection() {
 export function FacilityReportTab({ preselected }: { preselected: { value: string; label: string } }) {
   const fetch = useServerFn(getFacilityComparison);
   const { data } = useQuery({
-    queryKey: ["facility-comparison"],
+    queryKey: QK.facilityComparison,
     queryFn: () => fetch(),
     staleTime: 10 * 60 * 1000,
   });

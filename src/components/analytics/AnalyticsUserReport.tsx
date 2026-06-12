@@ -43,6 +43,7 @@ import { ACHIEVEMENTS } from "@/lib/achievements";
 import { csvEscape, downloadCsv, exportFacilityUsersCsv, exportBulkFacilityProgressCsv } from "@/lib/csv-utils";
 import type { RangeKey } from "./analytics-types";
 import { RANGE_OPTIONS } from "./analytics-types";
+import { QK } from "@/lib/query-keys";
 
 export function UsersReportTab({
   preselected,
@@ -64,14 +65,14 @@ export function UsersReportTab({
   useEffect(() => { setPage(0); }, [selected]);
 
   const usersQuery = useQuery({
-    queryKey: ["admin", "facility-users", selected, page],
+    queryKey: QK.adminFacilityUsers(selected, page),
     enabled: !!selected,
     staleTime: 5 * 60 * 1000,
     queryFn: () => fetchUsers({ data: { facilityValue: isAll ? "" : selected, page, pageSize: 10 } }),
   });
 
   const staffQuery = useQuery({
-    queryKey: ["admin", "facility-staff", selected],
+    queryKey: QK.adminFacilityStaff(selected),
     enabled: !!selected && !isAll,
     queryFn: () => fetchFacilityStaff({ data: { facilityValue: selected } }),
   });
@@ -263,14 +264,14 @@ function UserProgressView({
   const [range, setRange] = useState<RangeKey>("30d");
 
   const monthlySummaryQuery = useQuery({
-    queryKey: ["admin", "user-monthly-summary", userId],
+    queryKey: QK.adminUserMonthlySummary(userId),
     enabled: !!userId,
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchMonthlySummary({ data: { userId } }),
   });
   const [isExporting, setIsExporting] = useState(false);
   const { data: rawData, isLoading } = useQuery({
-    queryKey: ["admin", "user-progress", userId],
+    queryKey: QK.adminUserProgress(userId),
     queryFn: () => fetchProgress({ data: { userId } }),
   });
 

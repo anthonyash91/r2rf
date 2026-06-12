@@ -9,6 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { paletteStyle } from "@/lib/badge-styles";
+import { QK } from "@/lib/query-keys";
 
 export type SiteMessageKind = "home" | "facility";
 
@@ -64,7 +65,7 @@ export function SiteMessageBanner({
   // Admins and contributors see the globally scoped banner, not a facility one.
   const fetchFacility = useServerFn(getMyFacilityValue);
   const { data: facilityData } = useQuery({
-    queryKey: ["my-facility", userId],
+    queryKey: QK.myFacility(userId ?? undefined),
     enabled: kind === "facility" && !facilityValueProp && !!userId && !isAdmin && !isContributor,
     staleTime: Infinity,
     queryFn: () => fetchFacility(),
@@ -80,7 +81,7 @@ export function SiteMessageBanner({
     : KEY_FOR_KIND[kind as Exclude<SiteMessageKind, "facility">];
 
   const { data } = useQuery({
-    queryKey: ["site_settings", settingsKey],
+    queryKey: QK.siteSettings(settingsKey ?? ""),
     enabled: !!settingsKey,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<SiteMessage | null> => {

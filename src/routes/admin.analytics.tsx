@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { listAllFacilities } from "@/lib/facilities.functions";
+import { QK } from "@/lib/query-keys";
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 import { UsageReportView } from "@/components/analytics/AnalyticsUsageReport";
 import { FacilityComparisonSection, FacilityReportTab } from "@/components/analytics/AnalyticsFacilityView";
@@ -25,7 +26,7 @@ function AdminReportsPage() {
   const { isFacilityUser, user } = useAuth();
   const fetchMyFacility = useServerFn(getMyFacilityValue);
   const { data: myFacilityData } = useQuery({
-    queryKey: ["my-facility", user?.id],
+    queryKey: QK.myFacility(user?.id),
     enabled: isFacilityUser && !!user?.id,
     staleTime: Infinity,
     queryFn: () => fetchMyFacility(),
@@ -43,7 +44,7 @@ function AdminReportsPage() {
 
   const fetchFacilities = useServerFn(listAllFacilities);
   const facilitiesQuery = useQuery({
-    queryKey: ["facilities"],
+    queryKey: QK.facilities,
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilities(),
     enabled: pickerOpen || userPickerOpen,

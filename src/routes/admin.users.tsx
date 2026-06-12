@@ -50,6 +50,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FormDialog } from "@/components/FormDialog";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
+import { QK } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/admin/users")({
   beforeLoad: requireUserManagementAdminBeforeLoad,
@@ -82,7 +83,7 @@ function AdminUsersPage() {
   const setRole = useServerFn(setUserRole);
   const fetchMyFacility = useServerFn(getMyFacilityValue);
   const { data: myFacilityData } = useQuery({
-    queryKey: ["my-facility", user?.id],
+    queryKey: QK.myFacility(user?.id),
     enabled: isFacilityUser && !!user?.id,
     staleTime: Infinity,
     queryFn: () => fetchMyFacility(),
@@ -144,17 +145,17 @@ function AdminUsersPage() {
     : facilityFilter === "all" ? "" : facilityFilter;
 
   const adminQuery = useQuery({
-    queryKey: ["admin", "users", "admins"],
+    queryKey: QK.adminUsersAdmins,
     enabled: !isFacilityUser,
     queryFn: () => listAdminFn(),
   });
   const testerQuery = useQuery({
-    queryKey: ["admin", "users", "testers"],
+    queryKey: QK.adminUsersTesters,
     enabled: !isFacilityUser,
     queryFn: () => listTesterFn(),
   });
   const facilityAdminQuery = useQuery({
-    queryKey: ["admin", "users", "facilityAdmins", myFacilityValue],
+    queryKey: QK.adminUsersFacilityAdmins(myFacilityValue),
     queryFn: () => listFacilityAdminFn({ data: { facilityValue: myFacilityValue ?? undefined } }),
   });
   const regularQuery = useQuery({
@@ -191,7 +192,7 @@ function AdminUsersPage() {
 
   const fetchFacilities = useServerFn(listAllFacilities);
   const facilitiesQuery = useQuery({
-    queryKey: ["facilities"],
+    queryKey: QK.facilities,
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilities(),
   });

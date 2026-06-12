@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/Badge";
 import { FacilityBadge } from "@/components/FacilityBadge";
+import { QK } from "@/lib/query-keys";
 import { ReadStatusBadge } from "@/components/ReadStatusBadge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -116,7 +117,7 @@ function CategoryPage() {
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
   const fetchFacilitiesList = useServerFn(listFacilities);
   const { data: facilitiesData } = useQuery({
-    queryKey: ["facilities"],
+    queryKey: QK.facilities,
     queryFn: () => fetchFacilitiesList(),
     enabled: isAdmin,
   });
@@ -161,7 +162,7 @@ function CategoryPage() {
   }, [othersApi]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["category", slug],
+    queryKey: QK.category(slug),
     queryFn: async () => {
       const { data: cat, error: e1 } = await supabase
         .from("categories")
@@ -256,7 +257,7 @@ function CategoryPage() {
 
   const categoryId = data?.category.id;
   const progressQuery = useQuery({
-    queryKey: ["content-progress", user?.id, categoryId],
+    queryKey: QK.contentProgress(user?.id, categoryId),
     enabled: !!user?.id && !!categoryId,
     queryFn: async () => {
       const { data: rows, error } = await supabase
@@ -277,7 +278,7 @@ function CategoryPage() {
   const readAtMap = progressQuery.data?.readAtMap ?? new Map<string, string>();
 
   const seenQuery = useQuery({
-    queryKey: ["content-seen", user?.id],
+    queryKey: QK.contentSeen(user?.id),
     enabled: !!user?.id,
     queryFn: async () => {
       const { data: rows, error } = await supabase
@@ -291,7 +292,7 @@ function CategoryPage() {
   const seenSet = seenQuery.data ?? new Set<string>();
 
   const facilityQuery = useQuery({
-    queryKey: ["my-facility", user?.id],
+    queryKey: QK.myFacility(user?.id),
     enabled: !!user?.id && !isAdmin,
     queryFn: () => fetchFacilityValue(),
   });
@@ -359,17 +360,17 @@ function CategoryPage() {
       toast.error(t("category.markReadError"));
     },
     onSettled: (_data, _err, vars) => {
-      queryClient.invalidateQueries({ queryKey: ["content-progress", user?.id, categoryId] });
-      queryClient.invalidateQueries({ queryKey: ["content-seen", user?.id] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-progress", user?.id] });
-      queryClient.invalidateQueries({ queryKey: ["home-user-progress", user?.id] });
+      queryClient.invalidateQueries({ queryKey: QK.contentProgress(user?.id, categoryId) });
+      queryClient.invalidateQueries({ queryKey: QK.contentSeen(user?.id) });
+      queryClient.invalidateQueries({ queryKey: QK.homeUserProgress(user?.id) });
+      queryClient.invalidateQueries({ queryKey: QK.dashboardProgress });
       if (vars.markRead) checkAchievements();
     },
   });
 
   // Load engagement data for all items in this category (resume positions + progress %)
   const engagementQuery = useQuery({
-    queryKey: ["engagement", user?.id, categoryId],
+    queryKey: QK.engagement(user?.id, categoryId),
     enabled: !!user?.id && !!categoryId && !isAdmin && !isFacilityUser,
     staleTime: 30_000,
     queryFn: async () => {
@@ -400,8 +401,8 @@ function CategoryPage() {
     // before the refetch reads it back — without this, the refetch races the
     // write and returns stale data, making progress not appear until refresh.
     setTimeout(() => {
-      queryClient.invalidateQueries({ queryKey: ["engagement", user?.id, categoryId] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-progress"] });
+      queryClient.invalidateQueries({ queryKey: QK.engagement(user?.id, categoryId) });
+      queryClient.invalidateQueries({ queryKey: QK.dashboardProgress });
     }, 600);
   };
 
@@ -495,7 +496,7 @@ function CategoryPage() {
   );
 
   const { data: ratingTotals = {} } = useQuery({
-    queryKey: ["rating-totals", visibleItemIds.join(",")],
+    queryKey: QK.ratingTotalsFor(visibleItemIds.join(",")),
     enabled: visibleItemIds.length > 0 && !!user,
     staleTime: 60 * 1000,
     queryFn: async () => {
@@ -669,7 +670,7 @@ function CategoryPage() {
                           supabase.from("user_content_seen")
                             .insert({ user_id: user.id, content_item_id: item.id })
                         ).then(() => {
-                          queryClient.invalidateQueries({ queryKey: ["content-seen", user.id] });
+                          queryClient.invalidateQueries({ queryKey: QK.contentSeen(user.id) });
                         }).catch(() => {});
                       }
                     };

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
 import { checkAndGrantAchievements } from "@/lib/achievements.functions";
+import { QK } from "@/lib/query-keys";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 
 export function useAchievements() {
@@ -15,7 +16,7 @@ export function useAchievements() {
   // Runs on first render (and after staleTime expires). The server fn both checks
   // for newly earned achievements and returns the full earned set in one call.
   const { data } = useQuery({
-    queryKey: ["my-achievements", user?.id],
+    queryKey: QK.myAchievements(user?.id),
     enabled: !!user?.id && isUser,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
@@ -43,7 +44,7 @@ export function useAchievements() {
   // complete). Invalidating forces a fresh server-fn call on the next render.
   const check = async () => {
     if (!user?.id || !isUser) return;
-    await qc.invalidateQueries({ queryKey: ["my-achievements", user.id] });
+    await qc.invalidateQueries({ queryKey: QK.myAchievements(user.id) });
   };
 
   return {

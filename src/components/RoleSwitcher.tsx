@@ -5,6 +5,7 @@ import { setTesterAnalyticsTracking } from "@/lib/users.functions";
 import { FlaskConical, ChevronDown, User, Shield, PenLine, HeartHandshake, Wrench, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { QK } from "@/lib/query-keys";
 
 const ROLES: { value: SimulatedRole; label: string; icon: typeof User; description: string }[] = [
   { value: "user",         label: "Regular User",   icon: User,           description: "User dashboard, no admin access" },
@@ -22,7 +23,7 @@ export function RoleSwitcher() {
 
   // Fetch tester's current is_synthetic state
   const { data: profileData } = useQuery({
-    queryKey: ["tester-profile", user?.id],
+    queryKey: QK.testerProfile(user?.id),
     enabled: !!user?.id && isTester,
     staleTime: 30_000,
     queryFn: async () => {
@@ -43,7 +44,7 @@ export function RoleSwitcher() {
     setToggling(true);
     try {
       await toggleFn({ data: { enable: !tracking } });
-      qc.invalidateQueries({ queryKey: ["tester-profile", user?.id] });
+      qc.invalidateQueries({ queryKey: QK.testerProfile(user?.id) });
     } finally {
       setToggling(false);
     }

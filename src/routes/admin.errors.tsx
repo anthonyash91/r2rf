@@ -24,6 +24,7 @@ import {
   clearOldErrorLogs,
   deleteAllErrorLogs,
 } from "@/lib/error-logs.functions";
+import { QK } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/admin/errors")({
   head: () => ({ meta: [{ title: "Errors — Admin" }] }),
@@ -121,7 +122,7 @@ function AdminErrorsPage() {
   const sinceIso = useMemo(() => (since ? new Date(since).toISOString() : undefined), [since]);
 
   const query = useQuery({
-    queryKey: ["admin-error-logs", source, since],
+    queryKey: QK.adminErrorLogsFor(source || null, since || null),
     queryFn: () =>
       fetchErrors({
         data: {
@@ -153,7 +154,7 @@ function AdminErrorsPage() {
       onConfirm: async () => {
         await clearOld({ data: { olderThanDays: 30 } });
         toast.success("Old error logs cleared");
-        qc.invalidateQueries({ queryKey: ["admin-error-logs"] });
+        qc.invalidateQueries({ queryKey: QK.adminErrorLogs });
       },
     });
   };
@@ -166,7 +167,7 @@ function AdminErrorsPage() {
       onConfirm: async () => {
         await deleteAll({ data: undefined as never });
         toast.success("All error logs deleted");
-        qc.invalidateQueries({ queryKey: ["admin-error-logs"] });
+        qc.invalidateQueries({ queryKey: QK.adminErrorLogs });
       },
     });
   };

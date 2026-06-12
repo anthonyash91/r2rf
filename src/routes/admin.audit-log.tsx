@@ -12,6 +12,7 @@ import { FilterField } from "@/components/FilterField";
 import { EmptyState } from "@/components/EmptyState";
 import { Pager } from "@/components/LoadMorePager";
 import { listAuditLog } from "@/lib/admin-audit.functions";
+import { QK } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/admin/audit-log")({
   head: () => ({ meta: [{ title: "Audit Log — Admin" }] }),
@@ -85,7 +86,7 @@ function AdminAuditLogPage() {
   const { isFacilityUser, user } = useAuth();
   const fetchMyFacility = useServerFn(getMyFacilityValue);
   const { data: myFacilityData } = useQuery({
-    queryKey: ["my-facility", user?.id],
+    queryKey: QK.myFacility(user?.id),
     enabled: isFacilityUser && !!user?.id,
     staleTime: Infinity,
     queryFn: () => fetchMyFacility(),
@@ -94,7 +95,7 @@ function AdminAuditLogPage() {
 
   // For facilityUser: fetch user IDs at their facility to filter the log
   const { data: facilityUserIds } = useQuery({
-    queryKey: ["facility-user-ids-for-audit", myFacilityValue],
+    queryKey: QK.facilityUserIdsForAudit(myFacilityValue),
     enabled: isFacilityUser && !!myFacilityValue,
     queryFn: async () => {
       const { data } = await supabase
@@ -114,7 +115,7 @@ function AdminAuditLogPage() {
   const sinceIso = useMemo(() => (since ? new Date(since).toISOString() : undefined), [since]);
 
   const query = useQuery({
-    queryKey: ["admin-audit-log", action, since],
+    queryKey: QK.adminAuditLogFor(action || null, since || null),
     queryFn: () =>
       fetchAuditLog({
         data: {

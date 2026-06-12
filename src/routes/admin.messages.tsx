@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
 import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { listFacilities } from "@/lib/facilities.functions";
+import { QK } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/admin/messages")({
   beforeLoad: requireAnalyticsAdminBeforeLoad,
@@ -29,7 +30,7 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
 
   // Always call hooks unconditionally — Rules of Hooks
   const { data: facilitiesData } = useQuery({
-    queryKey: ["facilities"],
+    queryKey: QK.facilities,
     enabled: !preselectedFacility, // only needed for admin picker view
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilities(),
@@ -37,7 +38,7 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
   const facilities = facilitiesData?.facilities ?? [];
 
   const { data: existingMessages } = useQuery({
-    queryKey: ["site_settings", "facility-messages-list"],
+    queryKey: QK.siteSettings("facility-messages-list"),
     enabled: !preselectedFacility,
     queryFn: async () => {
       const { data } = await supabase
@@ -84,7 +85,7 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
             icon={<Building2 className="h-5 w-5 text-[var(--color-accent)]" />}
             context="Facility banner message"
             embedded
-            onSaved={() => qc.invalidateQueries({ queryKey: ["site_settings", "facility-messages-list"] })}
+            onSaved={() => qc.invalidateQueries({ queryKey: QK.siteSettings("facility-messages-list") })}
             overrideSave={async (v) => {
               await saveFacilityMsgFn({ data: { facilityValue: preselectedFacility, value: v } });
             }}
@@ -142,7 +143,7 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
             icon={<Building2 className="h-5 w-5 text-[var(--color-accent)]" />}
             context={`Facility banner message for ${selected.label}`}
             embedded
-            onSaved={() => qc.invalidateQueries({ queryKey: ["site_settings", "facility-messages-list"] })}
+            onSaved={() => qc.invalidateQueries({ queryKey: QK.siteSettings("facility-messages-list") })}
             overrideSave={async (v) => {
               await saveFacilityMsgFn({ data: { facilityValue: selected.value, value: v } });
             }}
@@ -158,7 +159,7 @@ function AdminMessagesPage() {
   const { isFacilityUser, user } = useAuth();
   const fetchMyFacility = useServerFn(getMyFacilityValue);
   const { data: myFacilityData } = useQuery({
-    queryKey: ["my-facility", user?.id],
+    queryKey: QK.myFacility(user?.id),
     enabled: isFacilityUser && !!user?.id,
     staleTime: Infinity,
     queryFn: () => fetchMyFacility(),
@@ -253,7 +254,7 @@ function MessageEditor({
     onSuccess: () => {
       toast.success("Saved");
       qc.invalidateQueries({ queryKey });
-      qc.invalidateQueries({ queryKey: ["site_settings", settingsKey] });
+      qc.invalidateQueries({ queryKey: QK.siteSettings(settingsKey) });
       onSaved?.();
     },
     onError: (e: any) => toast.error(e.message),
@@ -277,7 +278,7 @@ function MessageEditor({
       setShowEs(false);
       toast.success("Message cleared");
       qc.invalidateQueries({ queryKey });
-      qc.invalidateQueries({ queryKey: ["site_settings", settingsKey] });
+      qc.invalidateQueries({ queryKey: QK.siteSettings(settingsKey) });
       onSaved?.();
     },
     onError: (e: any) => toast.error(e.message),

@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { LayoutGrid, Users, Shield, BarChart3, Home, Award, Building2, MessageSquare, ChevronDown, MoreHorizontal, Palette, Sprout, ScrollText, AlertOctagon, FileText, ClipboardCheck } from "lucide-react";
 import { countNewUsers } from "@/lib/users.functions";
 import { useLastSeenUsersAt } from "@/lib/new-users-tracker";
+import { QK } from "@/lib/query-keys";
 
 import {
   DropdownMenu,
@@ -73,7 +74,7 @@ export function AdminNav() {
   const lastSeen = useLastSeenUsersAt();
   const countFn = useServerFn(countNewUsers);
   const newUsersQuery = useQuery({
-    queryKey: ["admin", "new-users-count", lastSeen],
+    queryKey: QK.adminNewUsersCount(lastSeen),
     queryFn: () => countFn({ data: { since: lastSeen } }),
     enabled: isAdmin,
     refetchInterval: 60_000,

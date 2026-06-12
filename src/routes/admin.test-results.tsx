@@ -18,6 +18,7 @@ import { fmtDate } from "@/lib/date-format";
 import { listAllTestRuns, getAdminRunDetail } from "@/lib/test-runs.functions";
 import { QA_TESTS, QA_SECTIONS, STATUS_LABELS, STATUS_COLORS, type TestStatus } from "@/lib/qa-test-plan";
 import { capFirst } from "@/lib/utils";
+import { QK } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/admin/test-results")({
   // Admin-only — requireStrictAdminBeforeLoad redirects all non-admin roles.
@@ -72,7 +73,7 @@ function RunSummaryBar({ counts }: { counts: Record<string, number> }) {
 function RunDetailView({ runId }: { runId: string }) {
   const fetchDetail = useServerFn(getAdminRunDetail);
   const { data, isLoading } = useQuery({
-    queryKey: ["admin", "test-run-detail", runId],
+    queryKey: QK.adminTestRunDetail(runId),
     queryFn: () => fetchDetail({ data: { runId } }),
     staleTime: 30_000,
   });
@@ -371,7 +372,7 @@ function RunDetailView({ runId }: { runId: string }) {
 function AdminTestResultsPage() {
   const fetchRuns = useServerFn(listAllTestRuns);
   const { data, isLoading } = useQuery({
-    queryKey: ["admin", "test-runs"],
+    queryKey: QK.adminTestRuns,
     queryFn: () => fetchRuns(),
     staleTime: 30_000,
   });

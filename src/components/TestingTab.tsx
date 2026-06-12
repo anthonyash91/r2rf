@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { QK } from "@/lib/query-keys";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
@@ -69,14 +70,14 @@ function TestingTab() {
   const [saving, setSaving]           = useState(false);
 
   const runsQuery = useQuery({
-    queryKey: ["my-test-runs"],
+    queryKey: QK.myTestRuns,
     queryFn:  () => listRunsFn(),
     staleTime: 30_000,
   });
   const runs = runsQuery.data?.runs ?? [];
 
   const resultsQuery = useQuery({
-    queryKey: ["my-test-run-results", activeRunId],
+    queryKey: QK.myTestRunResults(activeRunId),
     enabled:  !!activeRunId,
     queryFn:  () => getResultsFn({ data: { runId: activeRunId! } }),
     staleTime: 0,
@@ -137,7 +138,7 @@ function TestingTab() {
     try {
       const currentNotes = pendingNotes[testId] ?? resultMap.get(testId)?.notes ?? undefined;
       await upsertFn({ data: { runId: activeRunId, testId, status, notes: currentNotes } });
-      qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
+      qc.invalidateQueries({ queryKey: QK.myTestRunResults(activeRunId) });
       // Auto-expand the notes section for statuses that typically need an explanation.
       if (status === "fail" || status === "blocked") {
         setOpenNotes((prev) => new Set(prev).add(testId));
@@ -156,7 +157,7 @@ function TestingTab() {
     const currentStatus = resultMap.get(testId)?.status ?? "untested";
     try {
       await upsertFn({ data: { runId: activeRunId, testId, status: currentStatus, notes } });
-      qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
+      qc.invalidateQueries({ queryKey: QK.myTestRunResults(activeRunId) });
       setPendingNotes((prev) => { const next = { ...prev }; delete next[testId]; return next; });
       // "Saved ✓" persists until the user types again (onChange clears it).
       setSavedNotes((prev) => new Set(prev).add(testId));
@@ -175,7 +176,7 @@ function TestingTab() {
     const currentStatus = resultMap.get(testId)?.status ?? "untested";
     try {
       await upsertFn({ data: { runId: activeRunId, testId, status: currentStatus, notes: "" } });
-      qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
+      qc.invalidateQueries({ queryKey: QK.myTestRunResults(activeRunId) });
     } catch (e: any) {
       toast.error(e?.message ?? "Couldn't remove note");
     }
@@ -191,7 +192,7 @@ function TestingTab() {
       const currentStatus = resultMap.get(testId)?.status ?? "untested";
       const currentNotes  = pendingNotes[testId] ?? resultMap.get(testId)?.notes ?? undefined;
       await upsertFn({ data: { runId: activeRunId, testId, status: currentStatus, notes: currentNotes, screenshotUrl: publicUrl } });
-      qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
+      qc.invalidateQueries({ queryKey: QK.myTestRunResults(activeRunId) });
       toast.success("Screenshot attached");
     } catch (e: any) {
       toast.error(e?.message ?? "Upload failed");
@@ -205,7 +206,7 @@ function TestingTab() {
     const currentStatus = resultMap.get(testId)?.status ?? "untested";
     const currentNotes  = pendingNotes[testId] ?? resultMap.get(testId)?.notes ?? undefined;
     await upsertFn({ data: { runId: activeRunId, testId, status: currentStatus, notes: currentNotes, screenshotUrl: null } });
-    qc.invalidateQueries({ queryKey: ["my-test-run-results", activeRunId] });
+    qc.invalidateQueries({ queryKey: QK.myTestRunResults(activeRunId) });
   }
 
   async function handleCreateRun() {
@@ -213,7 +214,7 @@ function TestingTab() {
     if (!label) return;
     try {
       const { run } = await createRunFn({ data: { label } });
-      await qc.invalidateQueries({ queryKey: ["my-test-runs"] });
+      await qc.invalidateQueries({ queryKey: QK.myTestRuns });
       setActiveRunId((run as any).id);
       setCreating(false);
       setNewLabel("");
@@ -227,13 +228,13 @@ function TestingTab() {
   async function handleComplete() {
     if (!activeRunId) return;
     await completeFn({ data: { runId: activeRunId } });
-    qc.invalidateQueries({ queryKey: ["my-test-runs"] });
+    qc.invalidateQueries({ queryKey: QK.myTestRuns });
   }
 
   async function handleReopen() {
     if (!activeRunId) return;
     await reopenFn({ data: { runId: activeRunId } });
-    qc.invalidateQueries({ queryKey: ["my-test-runs"] });
+    qc.invalidateQueries({ queryKey: QK.myTestRuns });
   }
 
   async function handleDeleteRun(runId: string, label: string) {
@@ -243,7 +244,7 @@ function TestingTab() {
       onConfirm: async () => {
         await deleteRunFn({ data: { runId } });
         if (activeRunId === runId) setActiveRunId(null);
-        qc.invalidateQueries({ queryKey: ["my-test-runs"] });
+        qc.invalidateQueries({ queryKey: QK.myTestRuns });
       },
     });
   }

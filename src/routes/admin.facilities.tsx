@@ -25,6 +25,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
+import { QK } from "@/lib/query-keys";
 
 
 
@@ -55,7 +56,7 @@ function AdminFacilitiesPage() {
 
 
   const facilitiesQuery = useQuery({
-    queryKey: ["facilities", "with-stats"],
+    queryKey: QK.facilitiesWithStats,
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilities(),
   });

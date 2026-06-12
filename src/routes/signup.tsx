@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { toast } from "sonner";
 import { useI18n, type TranslationKey } from "@/lib/i18n";
+import { QK } from "@/lib/query-keys";
 import {
   getSignupChallenge,
   signupUser,
@@ -61,7 +62,7 @@ function SignupPageContent() {
 
   const fetchFacilities = useServerFn(listFacilities);
   const facilitiesQuery = useQuery({
-    queryKey: ["facilities"],
+    queryKey: QK.facilities,
     queryFn: () => fetchFacilities(),
   });
   const facilities = facilitiesQuery.data?.facilities ?? [];
@@ -189,7 +190,7 @@ function SignInSignUpForm({
   }, [facilities, facility, lockedFacility]);
 
   const pinCheckQuery = useQuery({
-    queryKey: ["inmate-pin-check", lockedFacility?.value, activeInmatePin],
+    queryKey: QK.inmatePinCheck(lockedFacility?.value, activeInmatePin),
     enabled: !!lockedFacility?.value && !!activeInmatePin,
     staleTime: 30 * 1000,
     queryFn: () => checkPin({ data: { facilityValue: lockedFacility!.value, inmatePin: activeInmatePin! } }),
@@ -203,7 +204,7 @@ function SignInSignUpForm({
     : null;
 
   const challengeQuery = useQuery({
-    queryKey: ["signup-challenge"],
+    queryKey: QK.signupChallenge,
     queryFn: () => getChallenge(),
     enabled: mode === "sign-up",
     staleTime: 4 * 60 * 1000,

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { QK } from "@/lib/query-keys";
 import { Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/privacy")({
 function PrivacyPage() {
   const { lang, t } = useI18n();
   const { data, isLoading } = useQuery({
-    queryKey: ["site_settings", "privacy_policy"],
+    queryKey: QK.siteSettings("privacy_policy"),
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<PrivacyPolicy> => {
       const { data, error } = await supabase

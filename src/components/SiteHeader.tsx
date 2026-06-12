@@ -12,6 +12,7 @@ import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
 import { useActiveInmatePin } from "@/lib/inmate-pin-context";
 import { useAuthChecking } from "@/lib/auth-checking-context";
+import { QK } from "@/lib/query-keys";
 
 export function SiteHeader() {
   const { isChecking } = useAuthChecking();
@@ -62,7 +63,7 @@ export function SiteHeader() {
   // For logged-in regular users and facilityUsers, get their facility from profile
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
   const { data: facilityData } = useQuery({
-    queryKey: ["my-facility", user?.id],
+    queryKey: QK.myFacility(user?.id),
     enabled: !!user?.id && (isUser || isFacilityUser) && !facilityRouteSlug,
     staleTime: Infinity,
     queryFn: () => fetchFacilityValue(),

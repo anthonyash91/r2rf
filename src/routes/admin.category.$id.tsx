@@ -41,6 +41,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { FacilityBadge } from "@/components/FacilityBadge";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { PageHeader } from "@/components/PageHeader";
+import { QK } from "@/lib/query-keys";
 
 
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
@@ -84,7 +85,7 @@ function AdminCategoryPageContent() {
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin", "category", id],
+    queryKey: QK.adminCategory(id),
     queryFn: async () => {
       const { data: cat, error: e1 } = await supabase.from("categories").select("*").eq("id", id).single();
       if (e1) throw e1;
@@ -141,11 +142,11 @@ function AdminCategoryPageContent() {
     },
     onSuccess: () => {
       toast.success("Saved");
-      qc.invalidateQueries({ queryKey: ["admin", "category", id] });
-      qc.invalidateQueries({ queryKey: ["admin", "categories"] });
-      qc.invalidateQueries({ queryKey: ["admin", "category-facility-map"] });
-      qc.invalidateQueries({ queryKey: ["categories"] });
-      qc.invalidateQueries({ queryKey: ["category"] });
+      qc.invalidateQueries({ queryKey: QK.adminCategory(id) });
+      qc.invalidateQueries({ queryKey: QK.adminCategories });
+      qc.invalidateQueries({ queryKey: QK.adminCategoryFacilityMap });
+      qc.invalidateQueries({ queryKey: QK.categories });
+      qc.invalidateQueries({ queryKey: QK.categoryBase });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -217,7 +218,7 @@ function CategoryEditor({
   const facilityPs = paletteStyle(catBadgeStyles.variants["facility"] ?? 11);
   const fetchFacilityList = useServerFn(listFacilities);
   const { data: facilityListData } = useQuery({
-    queryKey: ["facilities"],
+    queryKey: QK.facilities,
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilityList(),
   });
@@ -463,7 +464,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   const pendingDeletesRef = useRef<string[]>([]);
   const pendingBadgeStylesRef = useRef<BadgeStyles | null>(null);
   const { data: facilitiesData } = useQuery({
-    queryKey: ["facilities"],
+    queryKey: QK.facilities,
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilitiesList(),
   });
@@ -510,8 +511,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   }, [pendingScrollId, items]);
 
   const invalidate = () => {
-    qc.invalidateQueries({ queryKey: ["admin", "category", categoryId] });
-    qc.invalidateQueries({ queryKey: ["category"] });
+    qc.invalidateQueries({ queryKey: QK.adminCategory(categoryId) });
+    qc.invalidateQueries({ queryKey: QK.categoryBase });
   };
 
   const saveMut = useMutation({
@@ -560,7 +561,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       setEditing(null);
       if (savedId) setPendingScrollId(savedId);
       invalidate();
-      qc.invalidateQueries({ queryKey: ["content-types"] });
+      qc.invalidateQueries({ queryKey: QK.contentTypes });
       const pendingStyles = pendingBadgeStylesRef.current;
       if (pendingStyles) {
         pendingBadgeStylesRef.current = null;
@@ -602,7 +603,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
 
   const bulk = useBulkSelect();
   const { data: existingTypes = [] } = useQuery({
-    queryKey: ["content-types"],
+    queryKey: QK.contentTypes,
     staleTime: 0,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -919,7 +920,7 @@ function ItemEditor({
   const badgeStyles = useBadgeStyles();
   const facilityPs = paletteStyle(badgeStyles.variants["facility"] ?? 11);
   const { data: categoryColors = [] } = useQuery({
-    queryKey: ["admin", "icons-badges", "categories"],
+    queryKey: QK.adminIconsBadgesCategories,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase.from("categories").select("id, icon_color");
@@ -929,13 +930,13 @@ function ItemEditor({
   });
   const fetchFacilitiesList = useServerFn(listFacilities);
   const { data: facilitiesData } = useQuery({
-    queryKey: ["facilities-list"],
+    queryKey: QK.facilitiesList,
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilitiesList(),
   });
   const availableFacilities = facilitiesData?.facilities ?? [];
   const { data: sourceSuggestions = [] } = useQuery({
-    queryKey: ["admin", "content-sources"],
+    queryKey: QK.adminContentSources,
     queryFn: async (): Promise<string[]> => {
       const { data, error } = await supabase
         .from("content_items")
@@ -1042,7 +1043,7 @@ function ItemEditor({
   }
 
   const { data: existingTypes = [] } = useQuery({
-    queryKey: ["content-types"],
+    queryKey: QK.contentTypes,
     staleTime: 0,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -1067,11 +1068,11 @@ function ItemEditor({
     setAddingType(false);
     setNewType("");
     // Optimistically add to cache, then persist to DB and confirm
-    qc.setQueryData<string[]>(["content-types"], (old = []) =>
+    qc.setQueryData<string[]>(QK.contentTypes as unknown as string[], (old = []) =>
       Array.from(new Set([...old, v]))
     );
     supabase.from("content_types" as any).insert({ value: v }).then(() => {
-      qc.invalidateQueries({ queryKey: ["content-types"] });
+      qc.invalidateQueries({ queryKey: QK.contentTypes });
     });
     // Assign a unique palette color using all currently-in-use indices across
     // variants, all types, and category icon colors.
@@ -1129,17 +1130,17 @@ function ItemEditor({
 
     if (type === t) setType("Article");
     toast.success(`Deleted type "${t}"`);
-    qc.setQueryData<string[]>(["content-types"], (old = []) => old.filter((x) => x !== t));
-    qc.setQueryData(["admin", "category", categoryId], (old: any) => {
+    qc.setQueryData<string[]>(QK.contentTypes as unknown as string[], (old = []) => old.filter((x) => x !== t));
+    qc.setQueryData(QK.adminCategory(categoryId), (old: any) => {
       if (!old) return old;
       return {
         ...old,
         items: (old.items ?? []).map((i: any) => i.type === t ? { ...i, type: "Article" } : i),
       };
     });
-    qc.invalidateQueries({ queryKey: ["content-types"] });
-    qc.invalidateQueries({ queryKey: ["admin", "category"] });
-    qc.invalidateQueries({ queryKey: ["category"] });
+    qc.invalidateQueries({ queryKey: QK.contentTypes });
+    qc.invalidateQueries({ queryKey: QK.adminCategoryBase });
+    qc.invalidateQueries({ queryKey: QK.categoryBase });
   };
 
   return (

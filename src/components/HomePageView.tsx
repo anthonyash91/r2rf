@@ -15,12 +15,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ResponsiveBadgeGroup } from "@/components/ResponsiveBadgeGroup";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useBookmarks } from "@/hooks/use-bookmarks";
+import { QK } from "@/lib/query-keys";
 
 type CategoryStats = { count: number; trackableCount: number; recentItemIds: Set<string> };
 
 function useUserProgress(userId: string | null, categoryIds: string[]) {
   return useQuery({
-    queryKey: ["home-user-progress", userId, [...categoryIds].sort().join(",")],
+    queryKey: QK.homeUserProgressFor(userId ?? undefined, [...categoryIds].sort().join(",")),
     enabled: !!userId && categoryIds.length > 0,
     queryFn: async () => {
       const [progressRes, exemptRes] = await Promise.all([
@@ -57,7 +58,7 @@ function useUserProgress(userId: string | null, categoryIds: string[]) {
 function useCategoryItemStats(categoryIds: string[], userFacility: string | null | undefined) {
   const facilityKey = userFacility === undefined ? "admin" : (userFacility ?? "anon");
   return useQuery({
-    queryKey: ["category-item-stats", [...categoryIds].sort().join(","), facilityKey],
+    queryKey: QK.categoryItemStats([...categoryIds].sort().join(","), facilityKey as unknown as number),
     enabled: categoryIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -214,7 +215,7 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
   const { t } = useI18n();
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
   const { data: facilityData } = useQuery({
-    queryKey: ["my-facility", user?.id],
+    queryKey: QK.myFacility(user?.id),
     enabled: !!user?.id && !isAdmin,
     staleTime: Infinity,
     queryFn: () => fetchFacilityValue(),
@@ -409,7 +410,7 @@ export function HomePageView({
   }, [searchQuery]);
 
   const { data: facilityData } = useQuery({
-    queryKey: ["my-facility", user?.id],
+    queryKey: QK.myFacility(user?.id),
     enabled: !!user?.id && !isAdmin,
     staleTime: Infinity,
     queryFn: () => fetchFacilityValue(),
@@ -436,7 +437,7 @@ export function HomePageView({
   const { data: stats = {} } = useCategoryItemStats(visibleCategoryIds, userFacility);
 
   const { data: searchResults = [], isFetching: searchFetching } = useQuery({
-    queryKey: ["home-search", debouncedQuery, [...visibleCategoryIds].sort().join(","), facilityKey],
+    queryKey: QK.homeSearch(debouncedQuery, [...visibleCategoryIds].sort().join(","), facilityKey as unknown as number),
     enabled: debouncedQuery.length >= 2,
     staleTime: 30 * 1000,
     queryFn: async () => {
@@ -473,7 +474,7 @@ export function HomePageView({
   });
 
   const { data: hero = DEFAULT_HERO } = useQuery({
-    queryKey: ["site_settings", "home_hero"],
+    queryKey: QK.siteSettings("home_hero"),
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<HomeHero> => {
       const { data, error } = await supabase
@@ -487,7 +488,7 @@ export function HomePageView({
   });
 
   const { data: cert = DEFAULT_CERT } = useQuery({
-    queryKey: ["site_settings", "certificate_hero"],
+    queryKey: QK.siteSettings("certificate_hero"),
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<CertHero> => {
       const { data, error } = await supabase

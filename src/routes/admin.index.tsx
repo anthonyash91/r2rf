@@ -45,6 +45,7 @@ import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { listFacilities } from "@/lib/facilities.functions";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { paletteStyle } from "@/lib/badge-styles";
+import { QK } from "@/lib/query-keys";
 
 
 export const Route = createFileRoute("/admin/")({
@@ -79,18 +80,18 @@ function AdminCategoriesContent() {
   // Invalidate every cache that shows categories to any user, so changes
   // appear immediately without waiting for staleTime to expire.
   const invalidateAllCategoryQueries = () => {
-    qc.invalidateQueries({ queryKey: ["admin", "categories"] });
-    qc.invalidateQueries({ queryKey: ["admin", "category-facility-map"] });
-    qc.invalidateQueries({ queryKey: ["admin", "category-items"] });
-    qc.invalidateQueries({ queryKey: ["categories"] });           // home page (["categories", "public"])
-    qc.invalidateQueries({ queryKey: ["dashboard-categories"] }); // user dashboard (all facility variants)
-    qc.invalidateQueries({ queryKey: ["facility-categories"] });  // facility home pages
+    qc.invalidateQueries({ queryKey: QK.adminCategories });
+    qc.invalidateQueries({ queryKey: QK.adminCategoryFacilityMap });
+    qc.invalidateQueries({ queryKey: QK.adminCategoryItems });
+    qc.invalidateQueries({ queryKey: QK.categories });           // home page (["categories", "public"])
+    qc.invalidateQueries({ queryKey: QK.dashboardCategories }); // user dashboard (all facility variants)
+    qc.invalidateQueries({ queryKey: QK.facilityCategoriesBase });  // facility home pages
   };
   const [creating, setCreating] = useState(false);
   const [expandedCourses, setExpandedCourses] = useState(new Set<string>());
 
   const { data: categories = EMPTY_CATEGORIES, isLoading } = useQuery({
-    queryKey: ["admin", "categories"],
+    queryKey: QK.adminCategories,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Category[]> => {
       const { data, error } = await supabase
@@ -104,7 +105,7 @@ function AdminCategoriesContent() {
 
 
   const { data: itemsByCategory = {} } = useQuery({
-    queryKey: ["admin", "category-items"],
+    queryKey: QK.adminCategoryItems,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Record<string, { id: string; title: string; published: boolean; sort_order: number }[]>> => {
       const { data, error } = await supabase
@@ -124,7 +125,7 @@ function AdminCategoriesContent() {
   );
 
   const { data: itemFacilityMap = {} } = useQuery({
-    queryKey: ["admin", "item-facility-map"],
+    queryKey: QK.adminItemFacilityMap,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Record<string, string[]>> => {
       const { data, error } = await (supabase as any)
@@ -141,7 +142,7 @@ function AdminCategoriesContent() {
   });
 
   const { data: facilityLabelList = [] } = useQuery({
-    queryKey: ["admin", "facility-labels"],
+    queryKey: QK.adminFacilityLabels,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
       const { data } = await supabase.from("facilities").select("value, label").order("label");
@@ -150,7 +151,7 @@ function AdminCategoriesContent() {
   });
 
   const { data: categoryFacilityMap = {} } = useQuery({
-    queryKey: ["admin", "category-facility-map"],
+    queryKey: QK.adminCategoryFacilityMap,
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Record<string, string[]>> => {
       const { data, error } = await (supabase as any)
@@ -701,7 +702,7 @@ function NewCategoryForm({
   const [generating, setGenerating] = useState(false);
   const fetchFacilitiesForForm = useServerFn(listFacilities);
   const { data: facilitiesForForm } = useQuery({
-    queryKey: ["facilities"],
+    queryKey: QK.facilities,
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchFacilitiesForForm(),
   });

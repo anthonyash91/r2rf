@@ -52,6 +52,7 @@ import {
 } from "@/lib/badge-styles";
 import { ICON_REGISTRY, pickRelevantIcon } from "@/lib/category-icons";
 import { badgeStylesQueryKey, fetchBadgeStyles, BADGE_STYLES_KEY } from "@/hooks/use-badge-styles";
+import { QK } from "@/lib/query-keys";
 import { translateToSpanish } from "@/lib/category-ai.functions";
 
 export const Route = createFileRoute("/admin/icons-badges")({
@@ -157,7 +158,7 @@ function AdminIconsBadgesPage() {
   });
 
   const { data: categories } = useQuery({
-    queryKey: ["admin", "icons-badges", "categories"],
+    queryKey: QK.adminIconsBadgesCategories,
     queryFn: async (): Promise<CategoryRow[]> => {
       const { data, error } = await supabase
         .from("categories")
@@ -169,7 +170,7 @@ function AdminIconsBadgesPage() {
   });
 
   const { data: dbTypes = [], error: typesError } = useQuery({
-    queryKey: ["admin", "icons-badges", "content-types"],
+    queryKey: QK.adminIconsBadgesContentTypes,
     staleTime: 0,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -299,8 +300,8 @@ function AdminIconsBadgesPage() {
     },
     onSuccess: () => {
       qc.setQueryData(badgeStylesQueryKey, draft);
-      qc.invalidateQueries({ queryKey: ["admin", "icons-badges", "categories"] });
-      qc.invalidateQueries({ queryKey: ["categories"] });
+      qc.invalidateQueries({ queryKey: QK.adminIconsBadgesCategories });
+      qc.invalidateQueries({ queryKey: QK.categories });
       toast.success("Saved icons & colors");
     },
     onError: (err: Error) => toast.error(err.message ?? "Failed to save"),

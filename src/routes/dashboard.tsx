@@ -27,6 +27,7 @@ import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
 import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import { useI18n, pickLang, translateDuration, translateType, type TranslationKey } from "@/lib/i18n";
+import { QK } from "@/lib/query-keys";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { weightedCompletionPct } from "@/lib/content-progress";
 import { formatTimeSpent, fmtDateShort } from "@/lib/date-format";
@@ -117,19 +118,19 @@ function DashboardPage() {
   const submitUpdate = useServerFn(updateSecurityAnswers);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["my-profile"],
+    queryKey: QK.myProfile,
     staleTime: Infinity, // profile only changes on explicit edit
     queryFn: () => fetchProfile(),
   });
   const questionsQuery = useQuery({
-    queryKey: ["my-security-questions"],
+    queryKey: QK.mySecurityQuestions,
     staleTime: Infinity, // questions only change on explicit edit
     queryFn: () => fetchQuestions(),
   });
 
   const fetchFacilities = useServerFn(listFacilities);
   const facilitiesQuery = useQuery({
-    queryKey: ["facilities"],
+    queryKey: QK.facilities,
     staleTime: 10 * 60 * 1000, // facility list changes rarely
     queryFn: () => fetchFacilities(),
   });
@@ -140,7 +141,7 @@ function DashboardPage() {
   const userFacility = (data?.profile as any)?.facility ?? null;
 
   const categoriesQuery = useQuery({
-    queryKey: ["dashboard-categories", userFacility],
+    queryKey: QK.dashboardCategoriesFor(userFacility),
     enabled: !isLoading,
     staleTime: 5 * 60 * 1000, // categories change rarely; 5 min is fine
     queryFn: async (): Promise<Category[]> => {
@@ -178,14 +179,14 @@ function DashboardPage() {
 
   const fetchTier = useServerFn(getMyEngagementTier);
   const tierQuery = useQuery({
-    queryKey: ["my-engagement-tier", user?.id],
+    queryKey: QK.myEngagementTier(user?.id),
     enabled: !!user?.id && isUser,
     staleTime: 60 * 60 * 1000, // 1 hr — data is daily anyway
     queryFn: () => fetchTier(),
   });
 
   const loginsQuery = useQuery({
-    queryKey: ["my-login-days", user?.id ?? null],
+    queryKey: QK.myLoginDays(user?.id ?? null),
     enabled: !!user?.id,
     staleTime: 60 * 60 * 1000, // login history only needs refreshing hourly
     queryFn: async (): Promise<Set<string>> => {
@@ -209,7 +210,7 @@ function DashboardPage() {
   const userId = user?.id ?? null;
 
   const progressQuery = useQuery({
-    queryKey: ["dashboard-progress", userId, categoryIds.join(",")],
+    queryKey: QK.dashboardProgressFor(userId, categoryIds.join(",")),
     enabled: !!userId && categoryIds.length > 0,
     staleTime: 30 * 1000, // progress should feel near-live; 30s is enough
     queryFn: async () => {
@@ -334,13 +335,13 @@ function DashboardPage() {
   const { bookmarkIds, toggle: toggleBookmarkItem } = useBookmarks();
   const fetchMonthlySummary = useServerFn(getMyMonthlySummary);
   const monthlySummaryQuery = useQuery({
-    queryKey: ["my-monthly-summary", user?.id],
+    queryKey: QK.myMonthlySummary(user?.id),
     enabled: !!user?.id && isUser,
     staleTime: 10 * 60 * 1000,
     queryFn: () => fetchMonthlySummary(),
   });
   const resumeQuery = useQuery({
-    queryKey: ["resume-item", user?.id],
+    queryKey: QK.resumeItem(user?.id),
     enabled: !!user?.id && isUser,
     staleTime: 30_000,
     queryFn: async () => {
@@ -361,7 +362,7 @@ function DashboardPage() {
   const { earned: earnedAchievements } = useAchievements();
   const fetchBookmarkedItems = useServerFn(getMyBookmarkedItems);
   const bookmarkedItemsQuery = useQuery({
-    queryKey: ["my-bookmarked-items", user?.id],
+    queryKey: QK.myBookmarkedItems(user?.id),
     enabled: !!user?.id,
     staleTime: 60 * 1000,
     queryFn: () => fetchBookmarkedItems(),
@@ -438,7 +439,7 @@ function DashboardPage() {
       toast.success(t("security.updateSuccess"));
       setEditing(false);
       setPending([]);
-      queryClient.invalidateQueries({ queryKey: ["my-security-questions"] });
+      queryClient.invalidateQueries({ queryKey: QK.mySecurityQuestions });
     } catch (err: any) {
       toast.error(err.message ?? t("signup.genericError"));
     } finally {

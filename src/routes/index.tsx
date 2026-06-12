@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { QK } from "@/lib/query-keys";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
@@ -36,7 +37,7 @@ function Index() {
   const navigate = useNavigate();
   const fetchMyFacility = useServerFn(getMyFacilityValue);
   const { data: facilityData } = useQuery({
-    queryKey: ["my-facility", user?.id],
+    queryKey: QK.myFacility(user?.id),
     enabled: rolesLoaded && isFacilityUser && !!user?.id,
     staleTime: Infinity,
     queryFn: () => fetchMyFacility(),
@@ -67,7 +68,7 @@ function IndexContent() {
 
   // Look up facility by ?site= param
   const { data: siteFacility } = useQuery({
-    queryKey: ["facility-by-site-param", site ?? null],
+    queryKey: QK.facilityBySiteParam(site ?? null),
     enabled: !!site,
     staleTime: 10 * 60 * 1000,
     queryFn: async () => {
@@ -101,7 +102,7 @@ function IndexContent() {
   const facilityValue = siteFacility?.value as string | undefined;
 
   const { data: categories = [], isLoading } = useQuery({
-    queryKey: ["categories", "public", facilityValue ?? "all"],
+    queryKey: QK.categoriesPublic(facilityValue ?? "all"),
     staleTime: 10 * 60 * 1000,
     queryFn: async (): Promise<Category[]> => {
       const { data, error } = await supabase

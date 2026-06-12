@@ -32,6 +32,7 @@ import { waitForNextPaint } from "@/lib/paint";
 import { fmtDate, formatTimeSpent } from "@/lib/date-format";
 import { csvEscape, downloadCsv } from "@/lib/csv-utils";
 import { getUsageReport } from "@/lib/reports.functions";
+import { QK } from "@/lib/query-keys";
 import { getGrowthStats, triggerNightlyRefresh, resetFacilityAnalytics } from "@/lib/analytics-stats.functions";
 import type { RangeKey, AggregatedRow, UsageScope } from "./analytics-types";
 import { RANGE_OPTIONS } from "./analytics-types";
@@ -64,7 +65,7 @@ export function UsageReportView({ scope }: { scope: UsageScope }) {
   const facilityValue = scope.kind === "facility" ? scope.facilityValue : null;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["admin", "report", scope.kind, facilityValue, range],
+    queryKey: QK.adminReport(scope.kind, facilityValue, range),
     queryFn: () =>
       fetchReport({
         data: { range, facilityValue: facilityValue ?? null },
@@ -72,7 +73,7 @@ export function UsageReportView({ scope }: { scope: UsageScope }) {
   });
 
   const { data: growthData } = useQuery({
-    queryKey: ["admin", "growth", scope.kind, facilityValue],
+    queryKey: QK.adminGrowth(scope.kind, facilityValue),
     queryFn: () => fetchGrowth({ data: { facilityValue } }),
     staleTime: 30 * 60 * 1000,
   });

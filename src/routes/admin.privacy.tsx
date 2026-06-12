@@ -9,6 +9,7 @@ import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
 import { useTranslateToSpanish, TranslatingIndicator } from "@/components/TranslateButton";
+import { QK } from "@/lib/query-keys";
 
 type PrivacyPolicy = {
   title: string;
@@ -70,7 +71,7 @@ function AdminPrivacyPage() {
     onSuccess: () => {
       toast.success("Saved");
       qc.invalidateQueries({ queryKey });
-      qc.invalidateQueries({ queryKey: ["site_settings", SETTINGS_KEY] });
+      qc.invalidateQueries({ queryKey: QK.siteSettings(SETTINGS_KEY) });
     },
     onError: (e: any) => toast.error(e.message),
   });
