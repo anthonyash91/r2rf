@@ -3,14 +3,9 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { parseMinutes } from "@/lib/duration";
+import { sinceIsoFor } from "@/lib/date-format";
+import { chunkIds } from "@/lib/utils";
 import { assertAnalyticsAdmin, isFacilityScoped } from "@/lib/server-auth";
-
-/** Chunk a large ID array so each slice stays under Supabase's URL length limit. */
-function chunkIds(ids: string[], size = 500): string[][] {
-  const out: string[][] = [];
-  for (let i = 0; i < ids.length; i += size) out.push(ids.slice(i, i + size));
-  return out;
-}
 
 const RangeSchema = z.enum(["7d", "30d", "90d", "all", "month"]);
 
@@ -183,15 +178,7 @@ async function fetchAllProgress(
   return all;
 }
 
-function sinceIsoFor(range: z.infer<typeof RangeSchema>): string | null {
-  if (range === "month") {
-    const n = new Date();
-    return new Date(n.getFullYear(), n.getMonth(), 1).toISOString();
-  }
-  const days = range === "7d" ? 7 : range === "30d" ? 30 : range === "90d" ? 90 : null;
-  if (days === null) return null;
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-}
+
 
 /**
  * Overall + facility-scoped report. When facilityValue is provided, only

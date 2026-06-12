@@ -1,3 +1,24 @@
+export type DateRange = "7d" | "30d" | "90d" | "all" | "month";
+
+/**
+ * Returns an ISO timestamp representing the start of the given date range,
+ * or null for "all" (no lower bound). Used to filter analytics queries.
+ *
+ * Note: "month" = calendar month start (midnight on the 1st).
+ *       "30d"   = rolling 30 days from now.
+ * These are intentionally different — "month" resets on the 1st while
+ * "30d" always looks back exactly 30 days.
+ */
+export function sinceIsoFor(range: DateRange): string | null {
+  if (range === "month") {
+    const n = new Date();
+    return new Date(n.getFullYear(), n.getMonth(), 1).toISOString();
+  }
+  const days = range === "7d" ? 7 : range === "30d" ? 30 : range === "90d" ? 90 : null;
+  if (days === null) return null;
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
 /**
  * Formats a duration in seconds as a human-readable time breakdown.
  * Rounds up to the nearest second and shows all non-zero components.

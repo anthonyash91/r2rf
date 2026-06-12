@@ -11,6 +11,16 @@ export function capFirst(s: string | null | undefined): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+/**
+ * Splits a large ID array into slices so each stays under Supabase's URL
+ * length limit for .in() filters. Default size matches the Supabase cap.
+ */
+export function chunkIds(ids: string[], size = 500): string[][] {
+  const out: string[][] = [];
+  for (let i = 0; i < ids.length; i += size) out.push(ids.slice(i, i + size));
+  return out;
+}
+
 /** Returns a display name from first/last, falling back to a username or other string. */
 export function displayName(
   firstName: string | null | undefined,
