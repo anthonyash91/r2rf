@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category } from "@/lib/categories";
@@ -50,9 +51,13 @@ function Index() {
     }
   }, [rolesLoaded, isFacilityUser, facilityData, navigate]);
 
-  // Render nothing while the redirect is pending to prevent a flash of the
-  // generic home page before the facilityUser is sent to their facility.
-  if (isFacilityUser) return null;
+  // Show a spinner while the redirect is pending so there's no blank flash
+  // before the facilityUser is sent to their facility page.
+  if (isFacilityUser) return (
+    <div className="flex min-h-screen items-center justify-center">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  );
 
   return <IndexContent />;
 }

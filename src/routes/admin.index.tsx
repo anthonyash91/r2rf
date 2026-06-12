@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Eye, EyeOff, Sparkles, RefreshCw, ExternalLink, LayoutGrid, GripVertical, X } from "lucide-react";
+import { Pencil, Plus, Trash2, Eye, EyeOff, Sparkles, RefreshCw, ExternalLink, LayoutGrid, GripVertical, X, Loader2 } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -59,7 +59,11 @@ function AdminCategoriesPage() {
     if (rolesLoaded && isFacilityUser) navigate({ to: "/admin/users" });
   }, [isFacilityUser, rolesLoaded, navigate]);
 
-  if (!rolesLoaded || isFacilityUser) return null;
+  if (!rolesLoaded || isFacilityUser) return (
+    <div className="flex min-h-screen items-center justify-center">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  );
   return <AdminCategoriesContent />;
 }
 

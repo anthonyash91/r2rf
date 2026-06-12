@@ -35,6 +35,11 @@ function subscribe(cb: () => void) {
   };
 }
 
+/** Non-hook read — safe to call outside React (e.g. useState lazy initializer). */
+export function getActiveFacilitySlug(): string | null {
+  return read();
+}
+
 export function useActiveFacilitySlug(): string | null {
   // Third arg is the SSR snapshot — returns null on the server where
   // sessionStorage is unavailable.

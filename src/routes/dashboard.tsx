@@ -81,7 +81,11 @@ function DashboardRoute() {
 function DashboardRouter() {
   const { rolesLoaded } = useAuth();
 
-  if (!rolesLoaded) return null;
+  if (!rolesLoaded) return (
+    <div className="flex min-h-screen items-center justify-center">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  );
   return <DashboardPage />;
 }
 

@@ -65,6 +65,7 @@ export function SecurityQuestionsForm({ onChange, rows = 2 }: Props) {
         return (
           <QuestionRow
             key={i}
+            rowIndex={i}
             questionKey={questionKeys[i]}
             answer={answers[i]}
             onQuestionChange={(v) => setKey(i, v)}
@@ -83,6 +84,7 @@ export function SecurityQuestionsForm({ onChange, rows = 2 }: Props) {
 
 function QuestionRow({
   questionKey,
+  rowIndex,
   answer,
   onQuestionChange,
   onAnswerChange,
@@ -91,6 +93,7 @@ function QuestionRow({
   chooseLabel,
 }: {
   questionKey: string;
+  rowIndex: number;
   answer: string;
   onQuestionChange: (v: string) => void;
   onAnswerChange: (v: string) => void;
@@ -100,6 +103,7 @@ function QuestionRow({
 }) {
   const { t } = useI18n();
   const kb = useKeyboardInput(answer, onAnswerChange);
+  const answerId = `security-answer-${rowIndex}`;
   return (
     <div className="space-y-1.5">
       <Select value={questionKey} onValueChange={onQuestionChange}>
@@ -114,7 +118,11 @@ function QuestionRow({
           ))}
         </SelectContent>
       </Select>
+      <label htmlFor={answerId} className="sr-only">
+        {questionKey ? questionLabel(t, questionKey) : placeholder}
+      </label>
       <input
+        id={answerId}
         type="text"
         value={answer}
         onChange={(e) => onAnswerChange(e.target.value)}
