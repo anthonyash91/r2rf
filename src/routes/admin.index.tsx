@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Checkbox } from "@/components/ui/checkbox";
-import React, { lazy, Suspense, useState } from "react";
-import { requireContentAdminBeforeLoad } from "@/lib/admin-guards";
+import React, { lazy, Suspense, useEffect, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
@@ -47,9 +48,24 @@ import { paletteStyle } from "@/lib/badge-styles";
 
 
 export const Route = createFileRoute("/admin/")({
-  beforeLoad: requireContentAdminBeforeLoad,
-  component: AdminCategoriesContent,
+  component: AdminCategoriesPage,
 });
+
+function AdminCategoriesPage() {
+  const { isFacilityUser, rolesLoaded } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (rolesLoaded && isFacilityUser) navigate({ to: "/admin/users" });
+  }, [isFacilityUser, rolesLoaded, navigate]);
+
+  if (!rolesLoaded || isFacilityUser) return (
+    <div className="flex min-h-screen items-center justify-center">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+  );
+  return <AdminCategoriesContent />;
+}
 
 // Stable empty-array reference used as the default for the categories query.
 // A plain `= []` inline default creates a new array on every render, which
