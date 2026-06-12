@@ -86,7 +86,7 @@ export function useContentEngagement({
   onAutoMarkRead,
   onIdle,
   idleMs = DEFAULT_IDLE_MS,
-}: Params): { mediaProgressPct: number | null; resetIdle: () => void; _debug: { baseSeconds: React.RefObject<number>; accSeconds: React.RefObject<number>; furthestSeconds: React.RefObject<number>; durationSeconds: React.RefObject<number>; isIdle: React.RefObject<boolean>; idleMs: React.RefObject<number> } } {
+}: Params): { mediaProgressPct: number | null; resetIdle: () => void; debugRefs: { baseSeconds: React.RefObject<number>; accSeconds: React.RefObject<number>; furthestSeconds: React.RefObject<number>; durationSeconds: React.RefObject<number>; isIdle: React.RefObject<boolean>; idleMs: React.RefObject<number> } } {
   // Timer state — all in refs so they never cause re-renders
   const lastActivityRef = useRef(Date.now());
   const accSecondsRef = useRef(0);
@@ -316,7 +316,7 @@ export function useContentEngagement({
   return {
     mediaProgressPct,
     resetIdle,
-    _debug: {
+    debugRefs: {
       baseSeconds: baseSecondsRef,
       accSeconds: accSecondsRef,
       furthestSeconds: furthestRef,

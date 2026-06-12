@@ -450,7 +450,7 @@ function CategoryPage() {
 
   // Engagement tracking hook: timer (all types) + media progress (video/audio) + PDF auto-mark
   const isMediaItem = !!(videoEl || audioEl || activeMedia?.type === "video" || activeMedia?.type === "audio");
-  const { resetIdle, _debug: engDebug } = useContentEngagement({
+  const { resetIdle, debugRefs: engDebug } = useContentEngagement({
     idleMs: currentIdleMs,
     contentItemId: activeItemId,
     categoryId: categoryId ?? null,

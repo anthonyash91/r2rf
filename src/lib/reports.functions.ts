@@ -568,12 +568,12 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     await assertAnalyticsAdmin(context.userId);
 
     // facilityUser callers are scoped to their own facility only
-    const { scoped: scoped2, facility: callerFacility2 } = await isFacilityScoped(context.userId);
-    if (scoped2) {
-      if (!callerFacility2) throw new Error("Forbidden: no facility assigned");
-      if (data.facilityValue && data.facilityValue !== callerFacility2)
+    const { scoped, facility: callerFacility } = await isFacilityScoped(context.userId);
+    if (scoped) {
+      if (!callerFacility) throw new Error("Forbidden: no facility assigned");
+      if (data.facilityValue && data.facilityValue !== callerFacility)
         throw new Error("Forbidden: user is not in your facility");
-      data = { ...data, facilityValue: callerFacility2 };
+      data = { ...data, facilityValue: callerFacility };
     }
 
     const facilityValue = data.facilityValue ?? "";
@@ -688,10 +688,10 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
     await assertAnalyticsAdmin(context.userId);
 
     // facilityUser callers may only view users within their own facility (admins see all)
-    const { scoped: scoped3, facility: callerFacility3 } = await isFacilityScoped(context.userId);
-    if (scoped3) {
+    const { scoped, facility: callerFacility } = await isFacilityScoped(context.userId);
+    if (scoped) {
       const { data: targetProf } = await supabaseAdmin.from("user_profiles").select("facility").eq("user_id", data.userId).maybeSingle();
-      if (!callerFacility3 || callerFacility3 !== targetProf?.facility) {
+      if (!callerFacility || callerFacility !== targetProf?.facility) {
         throw new Error("Forbidden: user is not in your facility");
       }
     }
@@ -913,10 +913,10 @@ export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
 
     // Enforce facility scope for facilityUser callers (admins see all)
     let facilityValue = data.facilityValue;
-    const { scoped: scoped4, facility: callerFacility4 } = await isFacilityScoped(context.userId);
-    if (scoped4) {
-      if (!callerFacility4) throw new Error("Forbidden: no facility assigned");
-      if (facilityValue !== callerFacility4) throw new Error("Forbidden: user is not in your facility");
+    const { scoped, facility: callerFacility } = await isFacilityScoped(context.userId);
+    if (scoped) {
+      if (!callerFacility) throw new Error("Forbidden: no facility assigned");
+      if (facilityValue !== callerFacility) throw new Error("Forbidden: user is not in your facility");
     }
 
     // Staff IDs to exclude from the user list

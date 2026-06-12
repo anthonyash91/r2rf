@@ -11,9 +11,9 @@ const SIM_KEY = "tester_sim_role";
 const ROLES_CACHE_KEY = "auth_roles_cache";
 const USER_ID_CACHE_KEY = "auth_current_user_id";
 
-let _simulatedRole: SimulatedRole | null = null;
+let simulatedRole: SimulatedRole | null = null;
 try {
-  _simulatedRole = (localStorage.getItem(SIM_KEY) as SimulatedRole) ?? null;
+  simulatedRole = (localStorage.getItem(SIM_KEY) as SimulatedRole) ?? null;
 } catch { /* SSR / no window */ }
 
 // Read roles from sessionStorage synchronously — eliminates the blank flash
@@ -41,19 +41,19 @@ export function getCachedUserId(): string | null {
   try { return sessionStorage.getItem(USER_ID_CACHE_KEY); } catch { return null; }
 }
 
-const _listeners = new Set<() => void>();
+const listeners = new Set<() => void>();
 
 export function setSimulatedRole(role: SimulatedRole | null) {
-  _simulatedRole = role;
+  simulatedRole = role;
   try {
     if (role) localStorage.setItem(SIM_KEY, role);
     else localStorage.removeItem(SIM_KEY);
   } catch { /* ignore */ }
-  _listeners.forEach((fn) => fn());
+  listeners.forEach((fn) => fn());
 }
 
 export function getSimulatedRole(): SimulatedRole | null {
-  return _simulatedRole;
+  return simulatedRole;
 }
 
 // ── Hook ────────────────────────────────────────────────────────────────────
@@ -70,8 +70,8 @@ export function useAuth() {
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
 
   useEffect(() => {
-    _listeners.add(forceUpdate);
-    return () => { _listeners.delete(forceUpdate); };
+    listeners.add(forceUpdate);
+    return () => { listeners.delete(forceUpdate); };
   }, []);
 
   function loadRoles(userId: string) {
@@ -92,8 +92,8 @@ export function useAuth() {
         // it can never grant elevated access to a non-tester account.
         if (!userRoles.includes("tester")) {
           try { localStorage.removeItem(SIM_KEY); } catch { /* ignore */ }
-          _simulatedRole = null;
-          _listeners.forEach((fn) => fn());
+          simulatedRole = null;
+          listeners.forEach((fn) => fn());
         }
       });
   }
@@ -148,14 +148,14 @@ export function useAuth() {
   }, []);
 
   const isTester = roles.includes("tester");
-  const sim = isTester ? _simulatedRole : null;
+  const sim = isTester ? simulatedRole : null;
 
   const isAdmin        = sim ? sim === "admin"        : (!isTester && roles.includes("admin"));
   const isContributor  = sim ? sim === "contributor"  : (!isTester && roles.includes("contributor"));
   const isUser         = sim ? sim === "user"         : (!isTester && roles.includes("user"));
   const isFacilityUser = sim ? sim === "facilityUser" : (!isTester && roles.includes("facilityUser"));
 
-  const simFromStorage = _simulatedRole;
+  const simFromStorage = simulatedRole;
   const storageGrantsAdmin = isTester && !!session?.user && (
     simFromStorage === "admin" ||
     simFromStorage === "contributor" ||
