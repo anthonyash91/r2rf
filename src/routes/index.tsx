@@ -14,11 +14,12 @@ import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { setActiveFacilitySlug } from "@/lib/facility-context";
 import { setActiveInmatePin } from "@/lib/inmate-pin-context";
+import { getFacilityBySiteId } from "@/lib/facilities.functions";
 
 export const Route = createFileRoute("/")({
   validateSearch: z.object({
     site: z.coerce.string().optional(),
-    user: z.coerce.string().optional(),
+    user: z.coerce.string().optional().transform((v) => v?.replace(/^"+|"+$/g, "") || undefined),
     language: z.coerce.string().optional(),
   }),
   head: () => ({
@@ -45,15 +46,11 @@ function Index() {
 
   useEffect(() => {
     const slug = facilityData?.slug;
-    // Redirect facilityUser admins to their facility's home page so they see
-    // the scoped view. `replace: true` avoids a back-button loop back to "/".
     if (rolesLoaded && isFacilityUser && slug) {
       navigate({ to: "/facility/$slug", params: { slug }, replace: true });
     }
   }, [rolesLoaded, isFacilityUser, facilityData, navigate]);
 
-  // Show a spinner while the redirect is pending so there's no blank flash
-  // before the facilityUser is sent to their facility page.
   if (isFacilityUser) return (
     <div className="flex min-h-screen items-center justify-center">
       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -65,23 +62,23 @@ function Index() {
 
 function IndexContent() {
   const { site, user: inmatePin } = Route.useSearch();
+  const getFacilityFn = useServerFn(getFacilityBySiteId);
 
-  // Look up facility by ?site= param
   const { data: siteFacility } = useQuery({
     queryKey: QK.facilityBySiteParam(site ?? null),
     enabled: !!site,
     staleTime: 10 * 60 * 1000,
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("facilities")
-        .select("value, label, site_id")
-        .eq("site_id", site!)
-        .maybeSingle();
-      return data ?? null;
-    },
+    queryFn: () => getFacilityFn({ data: { siteId: site! } }),
   });
 
-  // Set active facility + inmate PIN contexts (same logic as /facility/$slug)
+  // Store PIN immediately from URL — used by the sign-up form to pre-fill
+  // the inmate's PIN so they don't have to type it during registration.
+  useEffect(() => {
+    if (!site || !inmatePin) return;
+    setActiveInmatePin(inmatePin);
+  }, [site, inmatePin]);
+
+  // Set facility context once the server call resolves.
   useEffect(() => {
     if (!site) return;
     if (!siteFacility) return;
@@ -90,11 +87,9 @@ function IndexContent() {
       ? window.sessionStorage.getItem("active-facility-slug")
       : null;
 
-    setActiveFacilitySlug(siteFacility.site_id as string);
+    setActiveFacilitySlug(site);
 
-    if (inmatePin) {
-      setActiveInmatePin(inmatePin);
-    } else if (prevSlug !== null && prevSlug !== siteFacility.site_id) {
+    if (!inmatePin && prevSlug !== null && prevSlug !== site) {
       setActiveInmatePin(null);
     }
   }, [siteFacility, site, inmatePin]);

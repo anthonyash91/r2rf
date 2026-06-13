@@ -28,14 +28,18 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
         .order("avg_completion_rate", { ascending: false, nullsFirst: false }),
       supabaseAdmin
         .from("facilities")
-        .select("value, label, site_id")
+        .select("value, label, site_id_encrypted")
         .order("label", { ascending: true }),
     ]);
 
     if (statsRes.error) throw new Error(statsRes.error.message);
 
+    const { decryptSiteId } = await import("@/lib/site-id-crypto.server");
     const labelMap = new Map<string, { label: string; siteId: string | null }>(
-      (facRes.data ?? []).map((f: any) => [f.value, { label: f.label, siteId: f.site_id }])
+      (facRes.data ?? []).map((f: any) => [
+        f.value,
+        { label: f.label, siteId: f.site_id_encrypted ? decryptSiteId(f.site_id_encrypted as string) : null },
+      ])
     );
 
     const rows = (statsRes.data ?? []).map((r: any) => ({

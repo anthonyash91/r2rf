@@ -682,7 +682,7 @@ function DashboardPage() {
                       className={[
                         TAB_NAV_CLS,
                         effectiveTab === tab.value
-                          ? "bg-background text-foreground shadow-sm"
+                          ? "bg-background text-foreground"
                           : tab.disabled
                             ? "opacity-40 cursor-not-allowed"
                             : "hover:bg-background hover:text-foreground",
@@ -699,7 +699,7 @@ function DashboardPage() {
                         className={[
                           TAB_NAV_CLS,
                           "outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 data-[state=open]:bg-background data-[state=open]:text-foreground",
-                          overflowTabActive ? "bg-background text-foreground shadow-sm" : "hover:bg-background hover:text-foreground",
+                          overflowTabActive ? "bg-background text-foreground" : "hover:bg-background hover:text-foreground",
                         ].join(" ")}
                       >
                         More
@@ -1149,9 +1149,12 @@ function DashboardPage() {
                 <dl className="grid gap-5 sm:grid-cols-2">
                   <div>
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                      <UserIcon className="h-3.5 w-3.5" /> {t("signup.username")}
+                      <UserIcon className="h-3.5 w-3.5" />
+                      {profile.username.match(/\d+$/) ? "PIN" : t("signup.username")}
                     </dt>
-                    <dd className="mt-1 font-medium">{capFirst(profile.username)}</dd>
+                    <dd className="mt-1 font-medium font-mono">
+                      {profile.username.match(/\d+$/)?.[0] ?? capFirst(profile.username)}
+                    </dd>
                   </div>
                   {((profile as any).first_name || (profile as any).last_name) && (
                     <div>
@@ -1398,46 +1401,43 @@ function CategoryProgressSection({
         className={`w-full flex items-center gap-4 p-6 ${open ? "border-b border-border" : ""} text-left hover:bg-muted/40 transition-colors`}
       >
         <CircleProgress value={pct} size={52} stroke={5} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="font-display text-base sm:text-lg font-semibold truncate">
-              {pickLang(lang, category.name, category.name_es)}
-            </h2>
-            {/* "New" badge next to title on larger screens */}
-            {hasRecent && (
-              <Badge variant="new" className="rounded-[8px] hidden sm:inline-flex shrink-0">
-                {t("category.newContentAdded")}
-              </Badge>
-            )}
-          </div>
-          {isAdmin && tagline && (
-            <p className="mt-0.5 text-xs text-muted-foreground truncate">{tagline}</p>
-          )}
-        </div>
-        {!isAdmin && (() => {
-          const catSecs = items.reduce((sum, it) => sum + (engagementMap.get(it.id)?.sessionSeconds ?? 0), 0);
-          return (
-            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 sm:gap-0 flex-shrink-0">
-              <span className={[
-                "inline-flex items-center gap-1 border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums",
-                catSecs > 0 ? "rounded-[8px] sm:rounded-l-[8px] sm:rounded-r-none" : "rounded-[8px]",
-              ].join(" ")}>
-                <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
-                {t("dashboard.itemsCompleted", { done: read.toLocaleString(), total: total.toLocaleString() } as any)}
-              </span>
-              {catSecs > 0 && (
-                <span className="inline-flex items-center gap-1 border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums rounded-[8px] sm:-ml-px sm:rounded-l-none sm:rounded-r-[8px]">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  {formatTimeSpent(catSecs)}
-                </span>
-              )}
-              {/* "New" badge stacks in the right column on small screens only */}
+        <div className="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-display text-base sm:text-lg font-semibold truncate">
+                {pickLang(lang, category.name, category.name_es)}
+              </h2>
               {hasRecent && (
-                <Badge variant="new" className="rounded-[8px] sm:hidden">{t("category.newContentAdded")}</Badge>
+                <Badge variant="new" className="rounded-[8px] shrink-0">
+                  {t("category.newContentAdded")}
+                </Badge>
               )}
             </div>
-          );
-        })()}
+            {isAdmin && tagline && (
+              <p className="mt-0.5 text-xs text-muted-foreground truncate">{tagline}</p>
+            )}
+          </div>
+          {!isAdmin && (() => {
+            const catSecs = items.reduce((sum, it) => sum + (engagementMap.get(it.id)?.sessionSeconds ?? 0), 0);
+            return (
+              <div className="flex items-center gap-0 flex-shrink-0">
+                <span className={[
+                  "inline-flex items-center gap-1 border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums",
+                  catSecs > 0 ? "rounded-l-[8px] rounded-r-none" : "rounded-[8px]",
+                ].join(" ")}>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+                  {t("dashboard.itemsCompleted", { done: read.toLocaleString(), total: total.toLocaleString() } as any)}
+                </span>
+                {catSecs > 0 && (
+                  <span className="inline-flex items-center gap-1 border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums rounded-r-[8px] -ml-px">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    {formatTimeSpent(catSecs)}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
+        </div>
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
       </button>
       {open && (

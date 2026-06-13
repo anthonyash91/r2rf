@@ -498,7 +498,7 @@ function AdminUsersPage() {
             key={u.id}
             user={u}
             isNew={isNewUser(u)}
-            facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""}
+            facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? "") : ""}
             hideDelete={isFacilityUser}
             pendingEmail={isPendingEmail(u.id)}
             pendingPassword={isPendingPw(u.id)}
@@ -599,7 +599,7 @@ function AdminUsersPage() {
                       key={u.id}
                       user={u}
                       isNew={false}
-                      facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? u.profile.facility) : ""}
+                      facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? "") : ""}
                       showFacilityUserBadge
                       hideRoleToggles
                       hideDelete={isFacilityUser}
@@ -935,8 +935,10 @@ function UserItem({
           {isRegularUser ? (
             <>
               <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                @{capFirst(user.profile!.username)}
-                {user.profile?.inmatePin && <> · PIN: {user.profile.inmatePin}</>}
+                {user.profile?.inmatePin
+                  ? <>PIN <span className="font-mono font-medium text-foreground">{user.profile.inmatePin}</span></>
+                  : <>@{capFirst(user.profile!.username)}</>
+                }
                 {facilityLabel && <> · {facilityLabel}</>}
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground truncate">

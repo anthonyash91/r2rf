@@ -98,8 +98,8 @@ export const getSignupChallenge = createServerFn({ method: "GET" }).handler(asyn
       throw new Error(error.message);
     }
   }
-  const a = randomInt(1, 100);
-  const b = randomInt(1, 100);
+  const a = randomInt(1, 10);
+  const b = randomInt(1, 10);
   const expiresAt = Date.now() + CHALLENGE_TTL_MS;
   return { a, b, token: signChallenge(a, b, expiresAt) };
 });
@@ -286,13 +286,17 @@ export const getMyFacilityValue = createServerFn({ method: "GET" }).handler(asyn
     .maybeSingle();
   const facilityValue = (profile?.facility as string | undefined) ?? null;
   if (!facilityValue) return { facility: null, slug: null };
-  // Resolve the site_id for this facility — that is the URL slug
-  const { data: facilityRow } = await supabaseAdmin
+  // Decrypt the site_id for this facility — that is the URL slug
+  const { data: facilityRow } = await (supabaseAdmin as any)
     .from("facilities")
-    .select("site_id")
+    .select("site_id_encrypted")
     .eq("value", facilityValue)
     .maybeSingle();
-  const slug = ((facilityRow as any)?.site_id ?? null) as string | null;
+  let slug: string | null = null;
+  if (facilityRow?.site_id_encrypted) {
+    const { decryptSiteId } = await import("@/lib/site-id-crypto.server");
+    slug = decryptSiteId(facilityRow.site_id_encrypted as string);
+  }
   return { facility: facilityValue, slug };
 });
 

@@ -130,6 +130,26 @@ Navigate to `/?site=validSiteId&user=newPin`. Open sign-up. Verify the facility 
  **Role:** Signed Out
 Navigate to the sign-up page via a facility URL with `?user=123456`. Verify the inmate PIN field does not require manual entry — the PIN from the URL is submitted automatically.
 
+### 1.17 — Auto-login: valid site + PIN → dashboard
+🔴 **Critical**
+ **Role:** Signed Out
+Find a registered inmate account. Navigate to `/?site=<their_facility_site_id>&user=<their_pin>`. A loading spinner should appear briefly, then the browser navigates to `/dashboard` with that user fully signed in. The URL no longer contains the `?user=` PIN parameter. The back button does not return to the PIN URL.
+
+### 1.18 — Auto-login: unregistered PIN → sign-up page remains
+🔴 **Critical**
+ **Role:** Signed Out
+Navigate to `/?site=validSiteId&user=pinThatHasNeverSignedUp`. The auto-login attempt fails silently (no crash). The home page for the facility loads normally. The sign-up link is visible so the inmate can create their account.
+
+### 1.19 — Auto-login: invalid site ID → home page loads
+🟠 **High**
+ **Role:** Signed Out
+Navigate to `/?site=DOESNOTEXIST&user=123456`. No crash, no unhandled error. The page loads as a standard (non-facility) home page. No spinner loops indefinitely.
+
+### 1.20 — Auto-login: already signed in → no re-auth
+🟠 **High**
+ **Role:** Regular User
+Sign in normally, then navigate to `/?site=validSiteId&user=validPin` (even for a different account). The auto-login effect does not trigger. The home page renders normally with the existing session intact.
+
 ---
 
 ## Section 2 — Sign-In Flow

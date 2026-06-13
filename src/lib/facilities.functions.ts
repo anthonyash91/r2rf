@@ -3,11 +3,12 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertAdmin } from "@/lib/server-auth";
+import { hashSiteId, encryptSiteId, decryptSiteId } from "@/lib/site-id-crypto.server";
 
 export const listFacilities = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("facilities")
-    .select("id, value, label, sort_order, site_id")
+    .select("id, value, label, sort_order")
     .eq("hidden", false)
     .order("label", { ascending: true });
   if (error) throw new Error(error.message);
@@ -17,7 +18,7 @@ export const listFacilities = createServerFn({ method: "GET" }).handler(async ()
       value: f.value as string,
       label: f.label as string,
       sort_order: f.sort_order as number,
-      siteId: (f.site_id ?? null) as string | null,
+      siteId: null as null, // never returned to public callers
     })),
   };
 });
@@ -28,16 +29,16 @@ export const listAllFacilities = createServerFn({ method: "GET" })
     await assertAdmin(context.userId);
     const { data, error } = await supabaseAdmin
       .from("facilities")
-      .select("id, value, label, sort_order, site_id")
+      .select("id, value, label, sort_order, site_id_encrypted")
       .order("label", { ascending: true });
     if (error) throw new Error(error.message);
     return {
-      facilities: (data ?? []).map((f) => ({
+      facilities: (data ?? []).map((f: any) => ({
         id: f.id as string,
         value: f.value as string,
         label: f.label as string,
         sort_order: f.sort_order as number,
-        siteId: (f.site_id ?? null) as string | null,
+        siteId: f.site_id_encrypted ? decryptSiteId(f.site_id_encrypted as string) : null,
       })),
     };
   });
@@ -48,8 +49,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
     await assertAdmin(context.userId);
 
     const [facRes, facilityStatsRes, cifRes, catFacRes, msgRes] = await Promise.all([
-      supabaseAdmin.from("facilities").select("id, value, label, sort_order, site_id").order("label", { ascending: true }),
-      // facility_stats.total_users is pre-computed nightly, excludes facilityUser accounts — O(facilities) not O(users)
+      supabaseAdmin.from("facilities").select("id, value, label, sort_order, site_id_encrypted").order("label", { ascending: true }),
       (supabaseAdmin as any).from("facility_stats").select("facility_value, total_users"),
       (supabaseAdmin as any).from("content_item_facilities").select("facility_value, content_items(id, title, category_id, categories(id, name))"),
       (supabaseAdmin as any).from("category_facilities").select("facility_value, category_id, categories(id, name, slug)"),
@@ -104,13 +104,30 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
         value: f.value as string,
         label: f.label as string,
         sort_order: f.sort_order as number,
-        siteId: (f.site_id ?? null) as string | null,
+        siteId: f.site_id_encrypted ? decryptSiteId(f.site_id_encrypted as string) : null,
         userCount: userCounts.get(f.value as string) ?? 0,
         contentItems: facilityContentMap.get(f.value as string) ?? [],
         customCategories: facilityCategoryMap.get(f.value as string) ?? [],
         facilityMessage: facilityMessageMap.get(f.value as string) ?? null,
       })),
     };
+  });
+
+/** Server-side facility lookup by site ID. Hashes the incoming value before querying
+ *  so the plaintext never reaches the DB layer. Safe to call from public routes. */
+export const getFacilityBySiteId = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z.object({ siteId: z.string().min(1).max(64) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const hmac = hashSiteId(data.siteId);
+    const { data: facility } = await (supabaseAdmin as any)
+      .from("facilities")
+      .select("value, label")
+      .eq("site_id_hmac", hmac)
+      .maybeSingle();
+    if (!facility) return null;
+    return { value: facility.value as string, label: facility.label as string };
   });
 
 // Converts an arbitrary site ID string into a stable URL-safe slug used
@@ -143,18 +160,18 @@ export const addFacilities = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
 
-    const { data: existing } = await supabaseAdmin
+    const { data: existing } = await (supabaseAdmin as any)
       .from("facilities")
-      .select("value, label, sort_order, site_id");
-    const usedValues = new Set((existing ?? []).map((r) => r.value as string));
-    const usedLabels = new Set((existing ?? []).map((r) => (r.label as string).trim().toLowerCase()));
-    const usedSiteIds = new Set((existing ?? []).map((r) => r.site_id as string).filter(Boolean));
+      .select("value, label, sort_order, site_id_hmac");
+    const usedValues = new Set((existing ?? []).map((r: any) => r.value as string));
+    const usedLabels = new Set((existing ?? []).map((r: any) => (r.label as string).trim().toLowerCase()));
+    const usedHmacs = new Set((existing ?? []).map((r: any) => r.site_id_hmac as string).filter(Boolean));
     const maxOrder = (existing ?? []).reduce(
-      (m, r) => Math.max(m, (r.sort_order as number) ?? 0),
+      (m: number, r: any) => Math.max(m, (r.sort_order as number) ?? 0),
       -1,
     );
 
-    const rows: { value: string; label: string; sort_order: number; site_id: string }[] = [];
+    const rows: { value: string; label: string; sort_order: number; site_id_hmac: string; site_id_encrypted: string }[] = [];
     const duplicates: string[] = [];
     let next = maxOrder + 1;
     for (const f of data.facilities) {
@@ -163,20 +180,25 @@ export const addFacilities = createServerFn({ method: "POST" })
       const base = deriveValue(siteId);
       if (!base) continue;
       const labelKey = label.toLowerCase();
-      // Reject duplicates on value, label, OR siteId so a re-import of the
-      // same CSV doesn't create partial duplicates when some rows already exist.
-      if (usedValues.has(base) || usedLabels.has(labelKey) || usedSiteIds.has(siteId)) {
+      const hmac = hashSiteId(siteId);
+      if (usedValues.has(base) || usedLabels.has(labelKey) || usedHmacs.has(hmac)) {
         duplicates.push(label);
         continue;
       }
       usedValues.add(base);
       usedLabels.add(labelKey);
-      usedSiteIds.add(siteId);
-      rows.push({ value: base, label, sort_order: next++, site_id: siteId });
+      usedHmacs.add(hmac);
+      rows.push({
+        value: base,
+        label,
+        sort_order: next++,
+        site_id_hmac: hmac,
+        site_id_encrypted: encryptSiteId(siteId),
+      });
     }
     if (!rows.length) return { ok: true, inserted: 0, duplicates };
 
-    const { error } = await supabaseAdmin.from("facilities").insert(rows);
+    const { error } = await (supabaseAdmin as any).from("facilities").insert(rows);
     if (error) throw new Error(error.message);
     return { ok: true, inserted: rows.length, duplicates };
   });
@@ -189,31 +211,25 @@ export const updateFacility = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         label: z.string().trim().min(1).max(100),
-        siteId: z.string().trim().min(1).max(64).nullable().optional(),
+        siteId: z.string().trim().min(1).max(64),
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
-    if (data.siteId) {
-      const { data: conflict } = await supabaseAdmin
-        .from("facilities")
-        .select("id")
-        .eq("site_id", data.siteId)
-        .neq("id", data.id)
-        .maybeSingle();
-      if (conflict) throw new Error("That Site ID is already in use by another facility.");
-      const { error } = await supabaseAdmin
-        .from("facilities")
-        .update({ label: data.label, site_id: data.siteId })
-        .eq("id", data.id);
-      if (error) throw new Error(error.message);
-    } else {
-      const patch: { label: string; site_id?: string | null } = { label: data.label };
-      if (data.siteId === null) patch.site_id = null;
-      const { error } = await supabaseAdmin.from("facilities").update(patch).eq("id", data.id);
-      if (error) throw new Error(error.message);
-    }
+    const hmac = hashSiteId(data.siteId);
+    const { data: conflict } = await (supabaseAdmin as any)
+      .from("facilities")
+      .select("id")
+      .eq("site_id_hmac", hmac)
+      .neq("id", data.id)
+      .maybeSingle();
+    if (conflict) throw new Error("That Site ID is already in use by another facility.");
+    const { error } = await (supabaseAdmin as any)
+      .from("facilities")
+      .update({ label: data.label, site_id_hmac: hmac, site_id_encrypted: encryptSiteId(data.siteId) })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 

@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
-import { useActiveInmatePin } from "@/lib/inmate-pin-context";
+import { useActiveInmatePin, setActiveInmatePin } from "@/lib/inmate-pin-context";
 import { useAuthChecking } from "@/lib/auth-checking-context";
 import { QK } from "@/lib/query-keys";
 
@@ -85,13 +85,12 @@ export function SiteHeader() {
   const activeFacility = facilityRouteSlug || userFacilitySlug || (isAdminUser ? null : persistedFacilitySlug);
 
   const handleSignOut = async () => {
+    // PIN is intentionally kept in session so the sign-in form re-locks to
+    // this user's PIN after sign-out. A different user arrives via their own
+    // facility URL which overwrites the stored PIN.
     await supabase.auth.signOut();
-    // Client-side navigation for all cases — no full page reload, no flash.
-    // The home page has no auth beforeLoad guard so there's no redirect race.
     if (activeFacility) {
-      const search: Record<string, string> = { site: activeFacility };
-      if (persistedPin) search.user = persistedPin;
-      navigate({ to: "/", search } as any);
+      navigate({ to: "/", search: { site: activeFacility } } as any);
     } else {
       navigate({ to: "/" });
     }

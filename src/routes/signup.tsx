@@ -15,8 +15,8 @@ import {
 } from "@/lib/user-signup.functions";
 import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
 import { syntheticEmail } from "@/lib/user-signup";
-import { listFacilities } from "@/lib/facilities.functions";
-import { useActiveFacilitySlug, setActiveFacilitySlug, getActiveFacilitySlug } from "@/lib/facility-context";
+import { listFacilities, getFacilityBySiteId } from "@/lib/facilities.functions";
+import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
 import { useActiveInmatePin, setActiveInmatePin } from "@/lib/inmate-pin-context";
 import { useAuthChecking } from "@/lib/auth-checking-context";
 import { questionLabel } from "@/lib/security-questions";
@@ -58,7 +58,7 @@ function SignupPageContent() {
 
   // Default to sign-up when arriving from a facility device (slug in session),
   // sign-in otherwise (admin/staff using the nav link).
-  const [mode, setMode] = useState<Mode>(() => getActiveFacilitySlug() ? "sign-up" : "sign-in");
+  const [mode, setMode] = useState<Mode>("sign-in");
 
   const fetchFacilities = useServerFn(listFacilities);
   const facilitiesQuery = useQuery({
@@ -70,9 +70,22 @@ function SignupPageContent() {
   const activeFacilitySlug = useActiveFacilitySlug();
   const activeInmatePin = useActiveInmatePin();
 
-  const lockedFacility = activeFacilitySlug
-    ? (facilities.find((f) => f.siteId === activeFacilitySlug) ?? null)
+  const getFacilityFn = useServerFn(getFacilityBySiteId);
+
+  // Resolve the locked facility via server function — this hashes the slug
+  // server-side so it never touches the DB as plaintext, and correctly
+  // returns null for invalid/unrecognised site IDs.
+  const lockedFacilityQuery = useQuery({
+    queryKey: ["lockedFacility", activeFacilitySlug],
+    enabled: !!activeFacilitySlug,
+    staleTime: 5 * 60 * 1000,
+    queryFn: () => getFacilityFn({ data: { siteId: activeFacilitySlug! } }),
+  });
+  // Map server result to the Facility shape the form expects
+  const lockedFacility: Facility | null = lockedFacilityQuery.data
+    ? { id: "", value: lockedFacilityQuery.data.value, label: lockedFacilityQuery.data.label, sort_order: 0, siteId: null }
     : null;
+  const lockedFacilityResolved = !activeFacilitySlug || !lockedFacilityQuery.isLoading;
 
   // Fires after sign-in or sign-up completes and auth state updates.
   useEffect(() => {
@@ -120,6 +133,7 @@ function SignupPageContent() {
             mode={mode}
             onModeChange={setMode}
             lockedFacility={lockedFacility}
+            lockedFacilityResolved={lockedFacilityResolved}
             facilities={facilities}
             activeFacilitySlug={activeFacilitySlug}
             activeInmatePin={activeInmatePin}
@@ -139,6 +153,7 @@ function SignInSignUpForm({
   mode,
   onModeChange,
   lockedFacility,
+  lockedFacilityResolved,
   facilities,
   activeFacilitySlug,
   activeInmatePin,
@@ -146,12 +161,22 @@ function SignInSignUpForm({
   mode: "sign-in" | "sign-up";
   onModeChange: (m: Mode) => void;
   lockedFacility: Facility | null;
+  lockedFacilityResolved: boolean;
   facilities: Facility[];
   activeFacilitySlug: string | null;
   activeInmatePin: string | null;
 }) {
   const { t } = useI18n();
   const { setIsChecking: setCheckingSignIn } = useAuthChecking();
+  // When arriving via a facility link, auto-derive the username from
+  // facilityValue + PIN so the user never has to choose or see it.
+  const derivedUsername = lockedFacility && activeInmatePin
+    ? `${lockedFacility.value.slice(0, 20)}_${activeInmatePin}`.toLowerCase().replace(/[^a-z0-9_]/g, "_")
+    : null;
+
+  const [signinPin, setSigninPin] = useState("");
+  const kbSigninPin = useKeyboardInput(signinPin, setSigninPin);
+
   const [disclosureChecked, setDisclosureChecked] = useState(false);
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -189,6 +214,7 @@ function SignInSignUpForm({
     }
   }, [facilities, facility, lockedFacility]);
 
+
   const pinCheckQuery = useQuery({
     queryKey: QK.inmatePinCheck(lockedFacility?.value, activeInmatePin),
     enabled: !!lockedFacility?.value && !!activeInmatePin,
@@ -196,10 +222,13 @@ function SignInSignUpForm({
     queryFn: () => checkPin({ data: { facilityValue: lockedFacility!.value, inmatePin: activeInmatePin! } }),
   });
 
-  const signupBlockReason: "no-facility" | "no-pin" | "pin-taken" | null =
+  const signupBlockReason: "no-facility" | "no-pin" | "pin-checking" | "pin-taken" | null =
     mode !== "sign-up" ? null
     : !activeFacilitySlug ? "no-facility"
+    : !lockedFacilityResolved ? "pin-checking"
+    : !lockedFacility ? "no-facility"
     : !activeInmatePin ? "no-pin"
+    : pinCheckQuery.isLoading ? "pin-checking"
     : pinCheckQuery.data?.available === false ? "pin-taken"
     : null;
 
@@ -225,13 +254,13 @@ function SignInSignUpForm({
     return () => clearTimeout(handle);
   }, [username, mode]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     setBusy(true);
     try {
       if (mode === "sign-up") {
-        const uname = username.trim().toLowerCase();
-        if (usernameStatus === "taken") return; // inline error already visible
+        const uname = (derivedUsername ?? username).trim().toLowerCase();
+        if (!derivedUsername && usernameStatus === "taken") return; // inline error already visible
         if (password !== confirmPassword) return; // inline error already visible
         if (!challengeQuery.data) {
           toast.error(t("signup.loadingVerification"));
@@ -263,7 +292,20 @@ function SignInSignUpForm({
         toast.success(t("signup.welcome"));
         // redirect handled by useEffect in SignupPageContent once role loads
       } else {
-        const id = username.trim();
+        // Facility context: derive username from facility value + typed PIN
+        let id: string;
+        if (lockedFacility) {
+          const pin = signinPin.trim();
+          if (!pin) { toast.error("PIN is required"); setBusy(false); return; }
+          if (activeInmatePin && pin !== activeInmatePin) {
+            setFacilityErrorKey("signup.pinMismatch");
+            setBusy(false);
+            return;
+          }
+          id = `${lockedFacility.value.slice(0, 20)}_${pin}`.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+        } else {
+          id = username.trim();
+        }
         const email = id.includes("@") ? id.toLowerCase() : syntheticEmail(id.toLowerCase());
         setCheckingSignIn(true);
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -282,7 +324,7 @@ function SignInSignUpForm({
             // Privileged — clear facility/PIN context so nav links don't use the shared-device flow.
             setActiveFacilitySlug(null);
             setActiveInmatePin(null);
-          } else if (!lockedFacility || !activeInmatePin) {
+          } else if (!lockedFacility) {
             await supabase.auth.signOut();
             setCheckingSignIn(false);
             setFacilityErrorKey("signup.wrongLinkBlock");
@@ -331,6 +373,31 @@ function SignInSignUpForm({
       </div>
 
       <div className={cn("rounded-lg border border-border bg-[#fffdf8] px-6 pb-2", mode === "sign-up" ? "pt-6" : "pt-4")}>
+        {/* Block messages — sign-up only */}
+        {mode === "sign-up" && !!signupBlockReason ? (
+          <div className="pt-2 pb-6 space-y-2">
+            {signupBlockReason === "pin-checking" && (
+              <div className="flex justify-center py-2">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            )}
+            {signupBlockReason === "no-pin" && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
+                A valid inmate PIN is required to sign up. Please use the link provided by your facility.
+              </div>
+            )}
+            {signupBlockReason === "no-facility" && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
+                {t("signup.noFacilityBlock")}
+              </div>
+            )}
+            {signupBlockReason === "pin-taken" && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
+                {t("signup.pinAlreadyRegistered")}
+              </div>
+            )}
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
           {mode === "sign-up" && !signupBlockReason && (
             <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
@@ -338,8 +405,26 @@ function SignInSignUpForm({
             </div>
           )}
 
-          {!(mode === "sign-up" && (signupBlockReason === "pin-taken" || signupBlockReason === "no-facility")) && (
+          {!(mode === "sign-up" && (signupBlockReason === "pin-taken" || signupBlockReason === "no-facility" || signupBlockReason === "no-pin" || signupBlockReason === "pin-checking")) && (
             <>
+              {/* Username: hidden for sign-up (auto-derived) and facility sign-in (PIN field shown instead) */}
+              {derivedUsername && mode === "sign-up" ? null
+              : mode === "sign-in" && lockedFacility ? (
+              <div>
+                <label htmlFor="signin-pin" className="text-sm font-medium">PIN</label>
+                <input
+                  id="signin-pin"
+                  type="text"
+                  required
+                  value={signinPin}
+                  onChange={(e) => { setSigninPin(e.target.value); setFacilityErrorKey(null); }}
+                  {...kbSigninPin}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                  placeholder="Enter your PIN"
+                  autoComplete="off"
+                />
+              </div>
+              ) : (
               <div>
                 <label htmlFor="signup-username" className="text-sm font-medium">
                   {mode === "sign-up" ? t("signup.username") : t("signup.usernameOrEmail")}
@@ -367,6 +452,7 @@ function SignInSignUpForm({
                   <p className="mt-1 text-xs text-destructive">{t("signup.usernameTaken")}</p>
                 )}
               </div>
+              )}
 
               <div>
                 <label htmlFor="signup-password" className="text-sm font-medium">{t("signup.password")}</label>
@@ -384,26 +470,6 @@ function SignInSignUpForm({
                 {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
               </div>
             </>
-          )}
-
-          {mode === "sign-up" && signupBlockReason && (
-            <div className="py-2 space-y-2">
-              {signupBlockReason === "no-facility" && (
-                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
-                  {t("signup.noFacilityBlock")}
-                </div>
-              )}
-              {signupBlockReason === "no-pin" && (
-                <p className="text-sm text-muted-foreground text-center">
-                  A valid inmate PIN is required to sign up. Please use the link provided by your facility.
-                </p>
-              )}
-              {signupBlockReason === "pin-taken" && (
-                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
-                  {t("signup.pinAlreadyRegistered")}
-                </div>
-              )}
-            </div>
           )}
 
           {mode === "sign-up" && !signupBlockReason && (
@@ -579,7 +645,7 @@ function SignInSignUpForm({
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={busy || (mode === "sign-up" && (!challengeQuery.data || usernameStatus === "taken" || usernameStatus === "checking" || !disclosureChecked))}
+                  disabled={busy || (mode === "sign-up" && (!challengeQuery.data || (!derivedUsername && (usernameStatus === "taken" || usernameStatus === "checking")) || !disclosureChecked))}
                   className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                 >
                   {busy && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -602,6 +668,7 @@ function SignInSignUpForm({
             </label>
           </div>
         </form>
+        )}
       </div>
 
       <div className="mt-4 flex flex-col gap-2">
@@ -660,7 +727,7 @@ function ResetPasswordForm({
   const kbResetNew = useKeyboardInput(resetNewPassword, setResetNewPassword);
   const kbResetConfirm = useKeyboardInput(resetConfirmPassword, setResetConfirmPassword);
 
-  async function handleResetStart(e: React.FormEvent) {
+  async function handleResetStart(e: React.SyntheticEvent) {
     e.preventDefault();
     setResetErrorKey(null);
     if (!lockedFacility || !activeInmatePin) {
@@ -686,7 +753,7 @@ function ResetPasswordForm({
     }
   }
 
-  async function handleResetSubmit(e: React.FormEvent) {
+  async function handleResetSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (resetNewPassword !== resetConfirmPassword) {
       // Inline error already visible under confirm-password field — no toast needed.

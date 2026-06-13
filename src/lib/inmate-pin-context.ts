@@ -12,6 +12,10 @@ function read(): string | null {
   }
 }
 
+export function getActiveInmatePin(): string | null {
+  return read();
+}
+
 export function setActiveInmatePin(pin: string | null) {
   if (typeof window === "undefined") return;
   try {

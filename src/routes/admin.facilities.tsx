@@ -256,8 +256,9 @@ function AdminFacilitiesPage() {
                             <LoadingButton
                               onClick={() => {
                                 const label = editingLabel.trim();
-                                if (!label) { toast.error("Label required"); return; }
-                                const siteId = editingSiteId.trim() || null;
+                                const siteId = editingSiteId.trim();
+                                if (!label) { toast.error("Facility name is required"); return; }
+                                if (!siteId) { toast.error("Site ID is required"); return; }
                                 updateMut.mutate({ id: f.id, label, siteId });
                               }}
                               pending={updateMut.isPending}

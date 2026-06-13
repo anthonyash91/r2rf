@@ -9,20 +9,16 @@ import { HomePageView } from "@/components/HomePageView";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
 import { setActiveFacilitySlug } from "@/lib/facility-context";
 import { setActiveInmatePin } from "@/lib/inmate-pin-context";
+import { getFacilityBySiteId } from "@/lib/facilities.functions";
 
 export const Route = createFileRoute("/facility/$slug")({
   loader: async ({ params }) => {
-    const { data: facility, error } = await supabase
-      .from("facilities")
-      .select("id, value, label, site_id")
-      .eq("site_id", params.slug)
-      .maybeSingle();
-    if (error) throw error;
+    const facility = await getFacilityBySiteId({ data: { siteId: params.slug } });
     if (!facility) throw notFound();
     return {
-      facilityValue: facility.value as string,
-      facilityLabel: facility.label as string,
-      facilitySiteId: facility.site_id as string,
+      facilityValue: facility.value,
+      facilityLabel: facility.label,
+      facilitySiteId: params.slug, // slug IS the site_id, already in scope
     };
   },
   component: FacilityPage,

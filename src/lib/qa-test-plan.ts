@@ -76,6 +76,14 @@ export const QA_TESTS: QATest[] = [
     description: "Navigate to /?site=validSiteId&user=newPin. Open the sign-up page. Look at the facility selector.\n\n✅ Pass: The facility associated with the ?site= ID is pre-selected and the selector is disabled — the user cannot change it to a different facility. The correct facility name is displayed." },
   { id: "1.16", sectionNum: 1, priority: "medium", roles: ["Signed Out"], title: "PIN is pre-filled and hidden",
     description: "Navigate to the sign-up page via a URL with ?user=123456. Look at the sign-up form for a PIN field.\n\n✅ Pass: No visible PIN input field exists on the form. The PIN is read from the URL silently. After completing sign-up, the user's profile shows inmate_pin_hmac is populated in user_profiles (verify in Supabase Table Editor)." },
+  { id: "1.17", sectionNum: 1, priority: "critical", roles: ["Signed Out"], title: "Auto-login: valid site + PIN → dashboard",
+    description: "Find a registered inmate account (one that has already completed sign-up). Navigate to /?site=<their_facility_site_id>&user=<their_pin>.\n\n✅ Pass: A loading spinner appears briefly, then the browser navigates to /dashboard with that user fully signed in. The URL no longer contains the ?user= PIN parameter. The back button does not return to the PIN URL." },
+  { id: "1.18", sectionNum: 1, priority: "critical", roles: ["Signed Out"], title: "Auto-login: unregistered PIN → sign-up page remains",
+    description: "Navigate to /?site=validSiteId&user=pinThatHasNeverSignedUp.\n\n✅ Pass: The auto-login attempt fails silently (no crash). The home page for the facility loads normally. The sign-up link is visible so the inmate can create their account." },
+  { id: "1.19", sectionNum: 1, priority: "high", roles: ["Signed Out"], title: "Auto-login: invalid site ID → home page loads",
+    description: "Navigate to /?site=DOESNOTEXIST&user=123456.\n\n✅ Pass: No crash, no unhandled error. The page loads as a standard (non-facility) home page. No spinner loops indefinitely." },
+  { id: "1.20", sectionNum: 1, priority: "high", roles: ["Regular User"], title: "Auto-login: already signed in → no re-auth",
+    description: "Sign in normally, then navigate to /?site=validSiteId&user=validPin (even one belonging to a different account).\n\n✅ Pass: The auto-login effect does not trigger (user is already authenticated). The home page renders normally with the existing session intact." },
 
   // ── Section 2 — Sign-In Flow ─────────────────────────────────────────────
   { id: "2.1",  sectionNum: 2, priority: "critical", roles: ["Regular User"], title: "Successful sign-in (correct facility + PIN)",
