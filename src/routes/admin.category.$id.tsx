@@ -879,8 +879,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
                 className="divide-y divide-border"
                 dragHandleClassName="pl-5"
                 items={order}
-                onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
-                renderItem={(item) => renderItemRow(item)}
+                onReorder={(next) => { setOrder(next as ContentItem[]); reorderMut.mutate(next as ContentItem[]); }}
+                renderItem={(item) => renderItemRow(item as ContentItem)}
               />
             </Suspense>
 

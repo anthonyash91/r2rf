@@ -645,8 +645,8 @@ function AdminCategoriesContent() {
                 <SortableList
                   className="divide-y divide-border"
                   items={order}
-                  onReorder={(next) => { setOrder(next); reorderMut.mutate(next); }}
-                  renderItem={(c) => renderCategoryRow(c)}
+                  onReorder={(next) => { setOrder(next as Category[]); reorderMut.mutate(next as Category[]); }}
+                  renderItem={(c) => renderCategoryRow(c as Category)}
                 />
               </Suspense>
             )}

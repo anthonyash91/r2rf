@@ -306,6 +306,7 @@ function AdminFacilitiesPage() {
                                       <Link
                                         to="/admin/category/$id"
                                         params={{ id: cat.id }}
+                                        search={{ edit: undefined }}
                                         className="text-xs text-muted-foreground hover:text-foreground hover:underline"
                                       >
                                         {cat.name}

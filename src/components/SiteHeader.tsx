@@ -125,7 +125,7 @@ export function SiteHeader() {
             </Link>
           )}
           {isUser && (
-            <Link to="/dashboard" className="hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
+            <Link to="/dashboard" search={{ tab: undefined }} className="hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
               {t("nav.dashboard")}
             </Link>
           )}
@@ -145,7 +145,7 @@ export function SiteHeader() {
               {signOutLabel}
             </button>
           ) : (
-            <Link to="/signup" {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
+            <Link to="/signup" search={{ redirect: undefined }} {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
               {signInLabel}
             </Link>
           )}
@@ -201,7 +201,7 @@ export function SiteHeader() {
               </Link>
             )}
             {isUser && (
-              <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
+              <Link to="/dashboard" search={{ tab: undefined }} onClick={() => setOpen(false)} className="py-2 hover:text-foreground transition-colors" activeProps={{ className: "text-foreground" }}>
                 {t("nav.dashboard")}
               </Link>
             )}
@@ -221,7 +221,7 @@ export function SiteHeader() {
                 {signOutLabel}
               </button>
             ) : (
-              <Link to="/signup" {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`}>
+              <Link to="/signup" search={{ redirect: undefined }} {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`}>
                 {signInLabel}
               </Link>
             )}
