@@ -158,7 +158,8 @@ function SearchResults({
             <a
               key={item.id}
               href={`/category/${cat.slug}#item-${item.id}`}
-              className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-5 hover:-translate-y-0.5 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)] transition-all"
+              style={{ "--card-color": color } as React.CSSProperties}
+              className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-5 hover:-translate-y-0.5 hover:border-[var(--card-color)] hover:shadow-[var(--shadow-card)] transition-all"
             >
               <div className="flex items-center gap-2">
                 <div
@@ -259,7 +260,8 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
               <Link
                 to="/category/$slug"
                 params={{ slug: c.slug }}
-                className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 transition-all hover:-translate-y-1 hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
+                style={{ "--card-color": cardColor } as React.CSSProperties}
+                className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 transition-all hover:-translate-y-1 hover:border-[var(--card-color)] hover:shadow-[var(--shadow-card)]"
               >
                 {/* Arrow circle — aligned to the top of the category icon, same border color scheme */}
                 <span
