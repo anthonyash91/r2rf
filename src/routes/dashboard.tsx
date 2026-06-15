@@ -472,7 +472,7 @@ function DashboardPage() {
           <Bookmark className="h-3.5 w-3.5" />
           {t("dashboard.tabSaved")}
           {bookmarkIds.size > 0 && (
-            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)]/15 px-1 text-[10px] font-semibold text-[var(--color-accent)]">
+            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)]/15 px-1 text-[10px] font-semibold leading-none text-[var(--color-accent)]">
               {bookmarkIds.size}
             </span>
           )}
@@ -487,7 +487,7 @@ function DashboardPage() {
           <Trophy className="h-3.5 w-3.5" />
           {t("dashboard.tabAchievements")}
           {Object.keys(earnedAchievements).length > 0 && (
-            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)]/15 px-1 text-[10px] font-semibold text-[var(--color-accent)]">
+            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-accent)]/15 px-1 text-[10px] font-semibold leading-none text-[var(--color-accent)]">
               {Object.keys(earnedAchievements).length}
             </span>
           )}

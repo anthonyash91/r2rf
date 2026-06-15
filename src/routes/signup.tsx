@@ -295,14 +295,19 @@ function SignInSignUpForm({
         // Facility context: derive username from facility value + typed PIN
         let id: string;
         if (lockedFacility) {
-          const pin = signinPin.trim();
-          if (!pin) { toast.error("PIN is required"); setBusy(false); return; }
-          if (activeInmatePin && pin !== activeInmatePin) {
-            setFacilityErrorKey("signup.pinMismatch");
-            setBusy(false);
-            return;
+          const input = signinPin.trim();
+          if (!input) { toast.error("PIN or email is required"); setBusy(false); return; }
+          if (input.includes("@")) {
+            // Admin email login — bypass facility/PIN logic entirely
+            id = input.toLowerCase();
+          } else {
+            if (activeInmatePin && input !== activeInmatePin) {
+              setFacilityErrorKey("signup.pinMismatch");
+              setBusy(false);
+              return;
+            }
+            id = `${lockedFacility.value.slice(0, 20)}_${input}`.toLowerCase().replace(/[^a-z0-9_]/g, "_");
           }
-          id = `${lockedFacility.value.slice(0, 20)}_${pin}`.toLowerCase().replace(/[^a-z0-9_]/g, "_");
         } else {
           id = username.trim();
         }
@@ -411,7 +416,7 @@ function SignInSignUpForm({
               {derivedUsername && mode === "sign-up" ? null
               : mode === "sign-in" && lockedFacility ? (
               <div>
-                <label htmlFor="signin-pin" className="text-sm font-medium">PIN</label>
+                <label htmlFor="signin-pin" className="text-sm font-medium">PIN or email</label>
                 <input
                   id="signin-pin"
                   type="text"
@@ -419,8 +424,8 @@ function SignInSignUpForm({
                   value={signinPin}
                   onChange={(e) => { setSigninPin(e.target.value); setFacilityErrorKey(null); }}
                   {...kbSigninPin}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
-                  placeholder="Enter your PIN"
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder="Enter your PIN or email"
                   autoComplete="off"
                 />
               </div>

@@ -153,7 +153,7 @@ export const addFacilities = createServerFn({ method: "POST" })
             }),
           )
           .min(1)
-          .max(50),
+          .max(100),
       })
       .parse(input),
   )

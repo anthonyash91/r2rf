@@ -47,6 +47,8 @@ function AdminFacilitiesPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newSiteId, setNewSiteId] = useState("");
+  const [showBulkAdd, setShowBulkAdd] = useState(false);
+  const [bulkText, setBulkText] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState("");
   const [editingSiteId, setEditingSiteId] = useState("");
@@ -93,6 +95,8 @@ function AdminFacilitiesPage() {
       setNewLabel("");
       setNewSiteId("");
       setShowAdd(false);
+      setBulkText("");
+      setShowBulkAdd(false);
     },
   });
 
@@ -117,7 +121,7 @@ function AdminFacilitiesPage() {
 
   return (
     <div>
-      <div className="mt-6 flex items-center justify-between gap-4 flex-wrap">
+      <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <PageHeader
           icon={Building2}
           title="Facilities"
@@ -128,14 +132,25 @@ function AdminFacilitiesPage() {
           }
           description="Manage facilities available in the signup form's facility dropdown."
         />
-        <LoadingButton
-          onClick={() => setShowAdd(true)}
-          disabled={showAdd}
-          icon={<Plus className="h-4 w-4" />}
-          className="w-full sm:w-auto"
-        >
-          Add facility
-        </LoadingButton>
+        <div className="flex flex-col min-[400px]:flex-row gap-2 w-full sm:w-auto shrink-0">
+          <LoadingButton
+            onClick={() => { setShowAdd(true); setShowBulkAdd(false); }}
+            disabled={showAdd}
+            icon={<Plus className="h-4 w-4" />}
+            className="w-full min-[400px]:flex-1 whitespace-nowrap"
+          >
+            Add facility
+          </LoadingButton>
+          <LoadingButton
+            variant="secondary"
+            onClick={() => { setShowBulkAdd(true); setShowAdd(false); }}
+            disabled={showBulkAdd}
+            icon={<Plus className="h-4 w-4" />}
+            className="w-full min-[400px]:flex-1 whitespace-nowrap"
+          >
+            Bulk add
+          </LoadingButton>
+        </div>
       </div>
 
       <section className="mt-8">
@@ -192,6 +207,66 @@ function AdminFacilitiesPage() {
             </div>
           </form>
         )}
+
+        {showBulkAdd && (() => {
+          const parsedRows = bulkText
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line) => {
+              const stripLabel = (s: string) => s.trim().replace(/,+$/, "").trim();
+              if (line.includes("\t")) {
+                const idx = line.indexOf("\t");
+                return { label: stripLabel(line.slice(0, idx)), siteId: line.slice(idx + 1).trim() };
+              }
+              const idx = line.lastIndexOf(",");
+              if (idx === -1) return { label: stripLabel(line), siteId: "" };
+              return { label: stripLabel(line.slice(0, idx)), siteId: line.slice(idx + 1).trim() };
+            })
+            .filter((r) => r.label && r.siteId);
+          return (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!parsedRows.length) { toast.error("No valid rows found"); return; }
+                addMut.mutate({ facilities: parsedRows });
+              }}
+              className="mt-3 mb-8 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-3"
+            >
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Facilities</label>
+                <p className="text-xs text-muted-foreground">One facility per line: <span className="font-mono">Facility Name, Site ID</span></p>
+                <textarea
+                  value={bulkText}
+                  onChange={(e) => setBulkText(e.target.value)}
+                  rows={8}
+                  placeholder={"Campbell, KY, S002001001\nSpringfield, IL, S002001002"}
+                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono resize-y"
+                  autoFocus
+                />
+                {parsedRows.length > 0 && (
+                  <p className="text-xs text-muted-foreground">{parsedRows.length} {parsedRows.length === 1 ? "facility" : "facilities"} ready to add</p>
+                )}
+              </div>
+              <div className="flex gap-2 justify-end">
+                <LoadingButton
+                  variant="secondary"
+                  onClick={() => { setShowBulkAdd(false); setBulkText(""); }}
+                >
+                  Cancel
+                </LoadingButton>
+                <LoadingButton
+                  type="submit"
+                  pending={addMut.isPending}
+                  pendingText="Adding…"
+                  disabled={parsedRows.length === 0}
+                >
+                  Add {parsedRows.length > 0 ? parsedRows.length : ""} {parsedRows.length === 1 ? "facility" : "facilities"}
+                </LoadingButton>
+              </div>
+            </form>
+          );
+        })()}
 
         {allFacilities.length > 0 && (
           <BulkActionBar
