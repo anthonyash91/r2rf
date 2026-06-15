@@ -9,9 +9,6 @@
 ALTER TABLE public.facilities
   ADD COLUMN IF NOT EXISTS site_id text;
 
-ALTER TABLE public.facilities
-  ALTER COLUMN site_id SET NOT NULL;
-
 -- Rename legacy index if it exists (was created under the old custom_slug name).
 DO $$ BEGIN
   IF EXISTS (
