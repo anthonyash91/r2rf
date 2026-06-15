@@ -19,17 +19,23 @@
 -- NULLS NOT DISTINCT (PG 15+): NULL facility_value (the "overall" aggregate row)
 -- participates in the uniqueness check so there can only ever be one overall row.
 
-ALTER TABLE public.analytics_retention
-  ADD CONSTRAINT analytics_retention_facility_unique
-  UNIQUE NULLS NOT DISTINCT (facility_value);
+DO $$ BEGIN
+  ALTER TABLE public.analytics_retention
+    ADD CONSTRAINT analytics_retention_facility_unique
+    UNIQUE NULLS NOT DISTINCT (facility_value);
+EXCEPTION WHEN duplicate_table THEN NULL; END $$;
 
-ALTER TABLE public.analytics_weekly_growth
-  ADD CONSTRAINT analytics_weekly_growth_facility_week_unique
-  UNIQUE NULLS NOT DISTINCT (facility_value, week_ending);
+DO $$ BEGIN
+  ALTER TABLE public.analytics_weekly_growth
+    ADD CONSTRAINT analytics_weekly_growth_facility_week_unique
+    UNIQUE NULLS NOT DISTINCT (facility_value, week_ending);
+EXCEPTION WHEN duplicate_table THEN NULL; END $$;
 
-ALTER TABLE public.analytics_program_completion
-  ADD CONSTRAINT analytics_program_completion_cat_facility_unique
-  UNIQUE NULLS NOT DISTINCT (category_id, facility_value);
+DO $$ BEGIN
+  ALTER TABLE public.analytics_program_completion
+    ADD CONSTRAINT analytics_program_completion_cat_facility_unique
+    UNIQUE NULLS NOT DISTINCT (category_id, facility_value);
+EXCEPTION WHEN duplicate_table THEN NULL; END $$;
 
 -- ── Rewrite refresh_analytics_stats() ────────────────────────────────────────
 -- Only the three rebuild sections change (analytics_retention, analytics_weekly_growth,
