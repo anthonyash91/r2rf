@@ -22,6 +22,10 @@ export function useBulkSelect() {
 
   const clear = useCallback(() => setSelectedIds(new Set()), []);
 
+  const selectAll = useCallback((ids: string[]) => {
+    setSelectedIds(new Set(ids));
+  }, []);
+
   const enterEditMode = useCallback(() => setEditMode(true), []);
 
   const exitEditMode = useCallback(() => {
@@ -67,6 +71,7 @@ export function useBulkSelect() {
     has: (id: string) => selectedIds.has(id),
     toggle,
     clear,
+    selectAll,
     enterEditMode,
     exitEditMode,
     runBulkDelete,

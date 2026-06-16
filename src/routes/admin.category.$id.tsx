@@ -490,7 +490,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   useEffect(() => {
     if (!editing) return;
     const t = setTimeout(() => {
-      editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      editorRef.current?.scrollIntoView({ behavior: "instant", block: "start" });
     }, 50);
     return () => clearTimeout(t);
   }, [editing]);
@@ -501,7 +501,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       const inner = document.querySelector<HTMLElement>(`[data-item-id="${pendingScrollId}"]`);
       const el = inner?.closest("li") as HTMLElement | null ?? inner;
       if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.scrollIntoView({ behavior: "instant", block: "center" });
         el.classList.add("bg-[var(--color-accent)]/15", "transition-colors", "duration-700");
         setTimeout(() => el.classList.remove("bg-[var(--color-accent)]/15"), 1800);
       }
@@ -513,6 +513,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: QK.adminCategory(categoryId) });
     qc.invalidateQueries({ queryKey: QK.categoryBase });
+    qc.invalidateQueries({ queryKey: QK.adminCategoryItems });
   };
 
   const saveMut = useMutation({
@@ -708,6 +709,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           onSearchChange={setSearchQuery}
           searchPlaceholder="Search content…"
           emptyEditHint="Click items to select for deletion"
+          allIds={filteredOrder.map((i) => i.id)}
           onEnterEditMode={() => setEditing(null)}
           onDeleteSelected={async (ids) =>
             confirmDelete({

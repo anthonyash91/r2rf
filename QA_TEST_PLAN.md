@@ -848,6 +848,20 @@ Prepare a CSV with valid `category_slug` and `title` columns. Import via the see
 
 ---
 
+### 8.22 — Bulk select all / deselect all content items
+🟡 **Medium**
+ **Role:** Admin
+Navigate to a category with 3+ items. Enter edit mode. Click "Select all". Verify every item is highlighted and the selected count matches the total. Click "Deselect all". Verify all items are deselected and the count returns to 0. Then type a search query that narrows the list to 2 items, click "Select all", and verify only the 2 visible items are selected (not all items in the category).
+
+---
+
+### 8.23 — Item count badge updates in real time
+🟠 **High**
+ **Role:** Admin
+Note the item count shown next to a category on the admin home page. Navigate into that category and add a new content item. Navigate back to the admin home page without a full page reload. Verify the item count for that category has incremented by 1. Repeat: delete an item and return — verify the count decrements immediately.
+
+---
+
 ## Section 9 — Admin User Management
 
 ### 9.1 — User list loads and paginates

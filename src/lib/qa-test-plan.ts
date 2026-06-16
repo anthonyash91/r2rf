@@ -340,6 +340,10 @@ export const QA_TESTS: QATest[] = [
     description: "Check the translation badge on three different items: one with full Spanish translations, one with some, and one with none.\n\n✅ Pass: Full translations → badge shows 'Complete'. Partial translations → badge shows 'Partially translated'. No translations → badge shows 'Needs ES'. The badge updates immediately when you add or remove Spanish text." },
   { id: "8.21", sectionNum: 8, priority: "medium", roles: ["Admin"], title: "Seed content CSV import",
     description: "Prepare a small CSV with at least: one valid row (category_slug matches an existing category, title is filled) and one invalid row (missing title). Upload it on the Seed Content page.\n\n✅ Pass: A preview table appears before import showing all rows. The invalid row is highlighted with an error. Clicking Import processes only the valid rows and adds them to the correct categories. The invalid row is skipped without blocking the valid ones." },
+  { id: "8.22", sectionNum: 8, priority: "medium", roles: ["Admin"], title: "Bulk select all / deselect all content items",
+    description: "Navigate to a category with 3+ items. Enter edit mode. Click 'Select all'.\n\n✅ Pass: Every item highlights and the selected count matches the total. Clicking 'Deselect all' clears all selections. Then filter the list with a search query so only 2 items are visible, click 'Select all' — only those 2 filtered items should be selected, not the full category." },
+  { id: "8.23", sectionNum: 8, priority: "high", roles: ["Admin"], title: "Item count badge updates in real time",
+    description: "Note the item count shown next to a category on the admin home page. Navigate into that category and add a new content item. Navigate back to the admin home without a full page reload.\n\n✅ Pass: The item count for that category increments by 1 immediately. Repeat with a deletion — the count should decrement without requiring a page refresh." },
 
   // ── Section 9 — Admin User Management ────────────────────────────────────
   { id: "9.1",  sectionNum: 9, priority: "high", roles: ["Admin"], title: "User list loads and paginates",

@@ -369,13 +369,13 @@ The admin panel (`/admin`) is accessible to admin, contributor, and facility use
 
 The main workspace for organizing the content library.
 
-- **View all categories** — full list with drag handles, publication status, item count, facility badges, translation status badges, and custom content badges
+- **View all categories** — full list with drag handles, publication status, item count, facility badges, translation status badges, and custom content badges. Item counts update in real time as items are added or removed — no page reload required.
 - **Reorder** — drag and drop to change display order on the main page
 - **Toggle published / draft** — draft categories are hidden from all users
 - **Add category** — opens the new category form (name, slug, tagline, description, icon, color, facilities, Spanish translation, published toggle)
 - **Edit** — opens the full category editor
 - **Preview** — external link icon opens the live category page
-- **Delete** — single or bulk delete with confirmation. Bulk delete uses the edit mode toggle.
+- **Delete** — single or bulk delete with confirmation. Bulk delete uses the edit mode toggle. In edit mode a **Select all** / **Deselect all** button selects every visible item at once (respects the active search filter).
 - **Search** — filters the list in real time; drag-and-drop is disabled while searching
 - **AI-generate copy** — one click generates a suggested tagline and description from the category name using Claude
 - **Icon generator** — generates a unique icon and color automatically, optionally guided by keywords
