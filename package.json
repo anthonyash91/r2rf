@@ -60,7 +60,8 @@
   "overrides": {
     "@tanstack/start-server-core": ">=1.167.30",
     "ws": ">=8.20.1",
-    "brace-expansion": ">=5.0.6"
+    "brace-expansion": ">=5.0.6",
+    "js-yaml": ">=4.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
