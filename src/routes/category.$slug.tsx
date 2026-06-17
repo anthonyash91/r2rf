@@ -699,7 +699,7 @@ function CategoryPage() {
                     const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 && !readSet.has(item.id) && !seenSet.has(item.id) && !engagementMap.has(item.id);
 
                     return (
-                      <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24 flex items-stretch hover:bg-[var(--color-secondary)]/60 transition-colors">
+                      <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24 flex flex-col hover:bg-[var(--color-secondary)]/60 transition-colors">
                         {highlightedId === item.id && (
                           <span
                             aria-hidden
@@ -714,7 +714,7 @@ function CategoryPage() {
                           {...wrapperProps}
                           className="flex-1 min-w-0 text-left flex flex-col gap-4 p-6 pb-[20px] cursor-pointer"
                         >
-                          <div className={`flex-shrink-0 flex items-center gap-2 flex-wrap ${user && !isAdmin && !isFacilityUser ? 'pr-44' : ''}`}>
+                          <div className={`flex-shrink-0 flex items-center gap-2 flex-wrap ${user && !isAdmin && !isFacilityUser ? 'sm:pr-44' : ''}`}>
                             <BadgeGroup>
                               {isNew && (
                                 <Badge variant="new" className="rounded-[8px]">{t("category.newContent")}</Badge>
@@ -804,7 +804,7 @@ function CategoryPage() {
                           const isBookmarked = bookmarkIds.has(item.id);
                           const myRating = myRatings.get(item.id) ?? null;
                           return (
-                            <div className="absolute right-0 top-0 h-full flex flex-col items-end justify-start gap-1 pr-6 pt-6 pb-5">
+                            <div className="flex flex-row items-center gap-1.5 justify-end px-6 pb-4 sm:absolute sm:right-0 sm:top-0 sm:h-full sm:flex-col sm:items-end sm:justify-start sm:gap-1 sm:px-0 sm:pr-6 sm:pt-6 sm:pb-5">
                               <div className="flex items-center gap-1.5 justify-end">
                               {isRead && <div className="inline-flex items-center rounded-[8px] border border-input overflow-hidden">
                                 <TooltipProvider delayDuration={150}>
@@ -1079,11 +1079,6 @@ function CategoryPage() {
                                 );
                               })()}
                               </div>
-                              {(item as any).exempt_from_progress && (
-                                <p className="text-[10px] text-muted-foreground leading-tight">
-                                  {t("category.exemptDisclaimer")}
-                                </p>
-                              )}
                             </div>
                           );
                         })()}
