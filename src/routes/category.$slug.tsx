@@ -710,11 +710,9 @@ function CategoryPage() {
 
 
 
-                        <Wrapper
-                          {...wrapperProps}
-                          className="flex-1 min-w-0 text-left flex flex-col gap-4 p-6 pb-[20px] cursor-pointer"
-                        >
-                          <div className={`flex-shrink-0 flex items-center gap-2 flex-wrap ${user && !isAdmin && !isFacilityUser ? 'sm:pr-44' : ''}`}>
+                        {/* Header row: badges/duration (left) + action buttons (right) */}
+                        <div className="flex items-start justify-between gap-3 px-6 pt-6">
+                          <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                             <BadgeGroup>
                               {isNew && (
                                 <Badge variant="new" className="rounded-[8px]">{t("category.newContent")}</Badge>
@@ -736,7 +734,312 @@ function CategoryPage() {
                             )}
                           </div>
 
-                          <div className="flex-1 min-w-0">
+                          {user && !isAdmin && !isFacilityUser && (() => {
+                            const isRead = readSet.has(item.id);
+                            let readLabel = t("category.markedRead");
+                            let unreadLabel = t("category.notRead");
+                            if (isMeetingOrCall) {
+                              readLabel = t("category.markedAttended");
+                              unreadLabel = t("category.notAttended");
+                            } else if (mediaKind === "video") {
+                              readLabel = t("category.markedWatched");
+                              unreadLabel = t("category.notWatched");
+                            } else if (mediaKind === "audio") {
+                              readLabel = t("category.markedListened");
+                              unreadLabel = t("category.notListened");
+                            } else if (mediaKind === "image") {
+                              readLabel = t("category.markedViewed");
+                              unreadLabel = t("category.notViewed");
+                            } else if (isExternalLink) {
+                              readLabel = t("category.markedClicked");
+                              unreadLabel = t("category.notClicked");
+                            }
+                            const isBookmarked = bookmarkIds.has(item.id);
+                            const myRating = myRatings.get(item.id) ?? null;
+                            return (
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                                {isRead && <div className="inline-flex items-center rounded-[8px] border border-input overflow-hidden">
+                                  <TooltipProvider delayDuration={150}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          aria-label={t("rating.helpful")}
+                                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); rate(item.id, myRating === 1 ? null : 1); }}
+                                          className={`inline-flex items-center justify-center px-2 py-1.5 transition-colors ${myRating === 1 ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                                        >
+                                          <ThumbsUp className={`h-3.5 w-3.5 ${myRating === 1 ? "fill-[var(--color-accent)]" : ""}`} />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="text-xs">{t("rating.helpful")}</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                  <div className="w-px self-stretch bg-border" />
+                                  <TooltipProvider delayDuration={150}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <button
+                                          type="button"
+                                          aria-label={t("rating.notHelpful")}
+                                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); rate(item.id, myRating === -1 ? null : -1); }}
+                                          className={`inline-flex items-center justify-center px-2 py-1.5 transition-colors ${myRating === -1 ? "bg-destructive/10 text-destructive" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                                        >
+                                          <ThumbsDown className={`h-3.5 w-3.5 ${myRating === -1 ? "fill-destructive" : ""}`} />
+                                        </button>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="text-xs">{t("rating.notHelpful")}</TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                </div>}
+                                <TooltipProvider delayDuration={150}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        type="button"
+                                        aria-label={isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
+                                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleBookmark(item.id); }}
+                                        className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                                      >
+                                        <Bookmark
+                                          className={`h-3.5 w-3.5 transition-colors ${isBookmarked ? "fill-[var(--color-accent)] text-[var(--color-accent)]" : "text-muted-foreground"}`}
+                                        />
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="text-xs">
+                                      {isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                {(() => {
+                                  const eng = engagementMap.get(item.id);
+
+                                  // ── Exempt items: "Acknowledged" button, no progress tracking ──
+                                  if ((item as any).exempt_from_progress) {
+                                    const isAcknowledged = readSet.has(item.id);
+                                    return (
+                                      <TooltipProvider delayDuration={150}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                e.preventDefault();
+                                                if (!isAcknowledged) toggleRead.mutate({ itemId: item.id, markRead: true });
+                                              }}
+                                              className={`inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium transition-colors flex-shrink-0 ${
+                                                isAcknowledged
+                                                  ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
+                                                  : "border-input bg-background hover:bg-muted"
+                                              }`}
+                                            >
+                                              {isAcknowledged
+                                                ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
+                                                : <Circle className="h-3.5 w-3.5 flex-shrink-0" />}
+                                              <span>{isAcknowledged ? t("category.acknowledged") : t("category.acknowledge")}</span>
+                                            </button>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top" className="text-xs max-w-[220px] text-center">
+                                            {t("category.exemptDisclaimer")}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    );
+                                  }
+
+                                  // ── Video / Audio: progress fill based on playback position ──
+                                  const mediaPct = !isRead && eng && (mediaKind === "video" || mediaKind === "audio") && eng.media_progress_seconds && eng.media_duration_seconds && eng.media_duration_seconds > 0
+                                    ? Math.min(100, Math.round((eng.media_progress_seconds / eng.media_duration_seconds) * 100))
+                                    : null;
+
+                                  if (mediaPct !== null && mediaPct >= 5) {
+                                    // Display-only progress fill — no manual click; auto-mark fires at 95%
+                                    return (
+                                      <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium overflow-hidden flex-shrink-0">
+                                        <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
+                                        <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
+                                        <span className="relative text-foreground">
+                                          {mediaPct}%{" "}
+                                          {mediaKind === "video" ? t("category.markedWatched").toLowerCase() : t("category.markedListened").toLowerCase()}
+                                        </span>
+                                      </span>
+                                    );
+                                  }
+
+                                  // ── PDF: progress fill based on time open vs estimated reading time ──
+                                  if (!isRead && mediaKind === "pdf") {
+                                    const hasOpened = openedPdfsRef.current.has(item.id) || !!eng;
+
+                                    if (!hasOpened) {
+                                      // Not yet opened — show dimmed badge with tooltip nudging them to open it
+                                      return (
+                                        <TooltipProvider delayDuration={100}>
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
+                                                className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer"
+                                              >
+                                                <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                                <span>{unreadLabel}</span>
+                                              </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
+                                              Open the PDF to start tracking your reading time
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </TooltipProvider>
+                                      );
+                                    }
+
+                                    const pdfMins = parseMinutes(item.duration);
+                                    const pdfEstSec = pdfMins > 0 ? pdfMins * 60 : 0;
+                                    const sessionSec = eng?.session_seconds ?? 0;
+                                    const pdfPct = pdfEstSec > 0
+                                      ? Math.min(100, Math.round((sessionSec / (pdfEstSec * 0.95)) * 100))
+                                      : null;
+
+                                    if (pdfPct !== null && pdfPct >= 1) {
+                                      return (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            // Record the % they were at when manually marking as read (before auto-mark)
+                                            if (!isRead && pdfPct < 100 && user?.id) {
+                                              Promise.resolve(
+                                                (supabase as any)
+                                                  .from("user_content_engagement")
+                                                  .update({ manual_completion_pct: pdfPct, last_updated_at: new Date().toISOString() })
+                                                  .eq("user_id", user.id)
+                                                  .eq("content_item_id", item.id)
+                                              ).catch(() => {});
+                                            }
+                                            toggleRead.mutate({ itemId: item.id, markRead: !isRead });
+                                          }}
+                                          className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
+                                        >
+                                          <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
+                                          <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
+                                          <span className="relative text-foreground">
+                                            {pdfPct}% {t("category.markedRead").toLowerCase()}
+                                          </span>
+                                        </button>
+                                      );
+                                    }
+
+                                    // Opened but no estimated duration or < 1% — show plain unread badge
+                                    return (
+                                      <ReadStatusBadge
+                                        read={false}
+                                        readLabel={readLabel}
+                                        unreadLabel={unreadLabel}
+                                        unreadIcon="circle"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          e.preventDefault();
+                                          toggleRead.mutate({ itemId: item.id, markRead: true });
+                                        }}
+                                      />
+                                    );
+                                  }
+
+                                  // ── Unread video/audio with no tracked progress yet: dimmed + tooltip ──
+                                  if (!isRead && (mediaKind === "video" || mediaKind === "audio")) {
+                                    const tipLabel = mediaKind === "video"
+                                      ? "Watch the video to track your progress"
+                                      : "Listen to the audio to track your progress";
+                                    return (
+                                      <TooltipProvider delayDuration={100}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
+                                              className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
+                                            >
+                                              <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                              <span>{unreadLabel}</span>
+                                            </button>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
+                                            {tipLabel}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    );
+                                  }
+
+                                  // ── Unread image: dimmed + tooltip (auto-marks the moment they open it) ──
+                                  if (!isRead && mediaKind === "image") {
+                                    return (
+                                      <TooltipProvider delayDuration={100}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
+                                              className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
+                                            >
+                                              <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                              <span>{unreadLabel}</span>
+                                            </button>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
+                                            View the image to mark it as seen
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    );
+                                  }
+
+                                  // ── Unread external link: dimmed — clicking the card auto-marks ──
+                                  if (!isRead && isExternalLink) {
+                                    return (
+                                      <TooltipProvider delayDuration={100}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 flex-shrink-0">
+                                              <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                              <span>{unreadLabel}</span>
+                                            </span>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
+                                            Click the link to access this resource
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
+                                    );
+                                  }
+
+                                  // ── All other types (worksheet, meeting/call, no-URL items): standard badge ──
+                                  return (
+                                    <ReadStatusBadge
+                                      read={isRead}
+                                      readLabel={readLabel}
+                                      unreadLabel={unreadLabel}
+                                      unreadIcon="circle"
+                                      readAt={isRead ? (fmtDateShort(readAtMap.get(item.id)) || null) : null}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        toggleRead.mutate({ itemId: item.id, markRead: !isRead });
+                                      }}
+                                    />
+                                  );
+                                })()}
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        <Wrapper
+                          {...wrapperProps}
+                          className="min-w-0 text-left px-6 pt-4 pb-5 cursor-pointer"
+                        >
+                          <div className="min-w-0">
                             <div className="flex items-start gap-2">
                               <h3 className="font-display text-lg font-semibold text-foreground leading-snug">
                                 {title}
@@ -779,309 +1082,6 @@ function CategoryPage() {
                             {source && <p className="mt-2 text-xs text-muted-foreground/80">{t("category.source")} · {source}</p>}
                           </div>
                         </Wrapper>
-
-
-                        {user && !isAdmin && !isFacilityUser && (() => {
-                          const isRead = readSet.has(item.id);
-                          let readLabel = t("category.markedRead");
-                          let unreadLabel = t("category.notRead");
-                          if (isMeetingOrCall) {
-                            readLabel = t("category.markedAttended");
-                            unreadLabel = t("category.notAttended");
-                          } else if (mediaKind === "video") {
-                            readLabel = t("category.markedWatched");
-                            unreadLabel = t("category.notWatched");
-                          } else if (mediaKind === "audio") {
-                            readLabel = t("category.markedListened");
-                            unreadLabel = t("category.notListened");
-                          } else if (mediaKind === "image") {
-                            readLabel = t("category.markedViewed");
-                            unreadLabel = t("category.notViewed");
-                          } else if (isExternalLink) {
-                            readLabel = t("category.markedClicked");
-                            unreadLabel = t("category.notClicked");
-                          }
-                          const isBookmarked = bookmarkIds.has(item.id);
-                          const myRating = myRatings.get(item.id) ?? null;
-                          return (
-                            <div className="flex flex-row items-center gap-1.5 justify-end px-6 pb-4 sm:absolute sm:right-0 sm:top-0 sm:h-full sm:flex-col sm:items-end sm:justify-start sm:gap-1 sm:px-0 sm:pr-6 sm:pt-6 sm:pb-5">
-                              <div className="flex items-center gap-1.5 justify-end">
-                              {isRead && <div className="inline-flex items-center rounded-[8px] border border-input overflow-hidden">
-                                <TooltipProvider delayDuration={150}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        type="button"
-                                        aria-label={t("rating.helpful")}
-                                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); rate(item.id, myRating === 1 ? null : 1); }}
-                                        className={`inline-flex items-center justify-center px-2 py-1.5 transition-colors ${myRating === 1 ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-background text-muted-foreground hover:bg-muted"}`}
-                                      >
-                                        <ThumbsUp className={`h-3.5 w-3.5 ${myRating === 1 ? "fill-[var(--color-accent)]" : ""}`} />
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="text-xs">{t("rating.helpful")}</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                                <div className="w-px self-stretch bg-border" />
-                                <TooltipProvider delayDuration={150}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        type="button"
-                                        aria-label={t("rating.notHelpful")}
-                                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); rate(item.id, myRating === -1 ? null : -1); }}
-                                        className={`inline-flex items-center justify-center px-2 py-1.5 transition-colors ${myRating === -1 ? "bg-destructive/10 text-destructive" : "bg-background text-muted-foreground hover:bg-muted"}`}
-                                      >
-                                        <ThumbsDown className={`h-3.5 w-3.5 ${myRating === -1 ? "fill-destructive" : ""}`} />
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="text-xs">{t("rating.notHelpful")}</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>}
-                              <TooltipProvider delayDuration={150}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <button
-                                      type="button"
-                                      aria-label={isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
-                                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleBookmark(item.id); }}
-                                      className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
-                                    >
-                                      <Bookmark
-                                        className={`h-3.5 w-3.5 transition-colors ${isBookmarked ? "fill-[var(--color-accent)] text-[var(--color-accent)]" : "text-muted-foreground"}`}
-                                      />
-                                    </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="top" className="text-xs">
-                                    {isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              {(() => {
-                                const eng = engagementMap.get(item.id);
-
-                                // ── Exempt items: "Acknowledged" button, no progress tracking ──
-                                if ((item as any).exempt_from_progress) {
-                                  const isAcknowledged = readSet.has(item.id);
-                                  return (
-                                    <TooltipProvider delayDuration={150}>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              e.preventDefault();
-                                              if (!isAcknowledged) toggleRead.mutate({ itemId: item.id, markRead: true });
-                                            }}
-                                            className={`inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium transition-colors flex-shrink-0 ${
-                                              isAcknowledged
-                                                ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
-                                                : "border-input bg-background hover:bg-muted"
-                                            }`}
-                                          >
-                                            {isAcknowledged
-                                              ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
-                                              : <Circle className="h-3.5 w-3.5 flex-shrink-0" />}
-                                            <span>{isAcknowledged ? t("category.acknowledged") : t("category.acknowledge")}</span>
-                                          </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top" className="text-xs max-w-[220px] text-center">
-                                          {t("category.exemptDisclaimer")}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  );
-                                }
-
-                                // ── Video / Audio: progress fill based on playback position ──
-                                const mediaPct = !isRead && eng && (mediaKind === "video" || mediaKind === "audio") && eng.media_progress_seconds && eng.media_duration_seconds && eng.media_duration_seconds > 0
-                                  ? Math.min(100, Math.round((eng.media_progress_seconds / eng.media_duration_seconds) * 100))
-                                  : null;
-
-                                if (mediaPct !== null && mediaPct >= 5) {
-                                  // Display-only progress fill — no manual click; auto-mark fires at 95%
-                                  return (
-                                    <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium overflow-hidden flex-shrink-0">
-                                      <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
-                                      <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
-                                      <span className="relative text-foreground">
-                                        {mediaPct}%{" "}
-                                        {mediaKind === "video" ? t("category.markedWatched").toLowerCase() : t("category.markedListened").toLowerCase()}
-                                      </span>
-                                    </span>
-                                  );
-                                }
-
-                                // ── PDF: progress fill based on time open vs estimated reading time ──
-                                if (!isRead && mediaKind === "pdf") {
-                                  const hasOpened = openedPdfsRef.current.has(item.id) || !!eng;
-
-                                  if (!hasOpened) {
-                                    // Not yet opened — show dimmed badge with tooltip nudging them to open it
-                                    return (
-                                      <TooltipProvider delayDuration={100}>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <button
-                                              type="button"
-                                              onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
-                                              className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer"
-                                            >
-                                              <Circle className="h-3.5 w-3.5 flex-shrink-0" />
-                                              <span>{unreadLabel}</span>
-                                            </button>
-                                          </TooltipTrigger>
-                                          <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
-                                            Open the PDF to start tracking your reading time
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    );
-                                  }
-
-                                  const pdfMins = parseMinutes(item.duration);
-                                  const pdfEstSec = pdfMins > 0 ? pdfMins * 60 : 0;
-                                  const sessionSec = eng?.session_seconds ?? 0;
-                                  const pdfPct = pdfEstSec > 0
-                                    ? Math.min(100, Math.round((sessionSec / (pdfEstSec * 0.95)) * 100))
-                                    : null;
-
-                                  if (pdfPct !== null && pdfPct >= 1) {
-                                    return (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          e.preventDefault();
-                                          // Record the % they were at when manually marking as read (before auto-mark)
-                                          if (!isRead && pdfPct < 100 && user?.id) {
-                                            Promise.resolve(
-                                              (supabase as any)
-                                                .from("user_content_engagement")
-                                                .update({ manual_completion_pct: pdfPct, last_updated_at: new Date().toISOString() })
-                                                .eq("user_id", user.id)
-                                                .eq("content_item_id", item.id)
-                                            ).catch(() => {});
-                                          }
-                                          toggleRead.mutate({ itemId: item.id, markRead: !isRead });
-                                        }}
-                                        className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
-                                      >
-                                        <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
-                                        <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
-                                        <span className="relative text-foreground">
-                                          {pdfPct}% {t("category.markedRead").toLowerCase()}
-                                        </span>
-                                      </button>
-                                    );
-                                  }
-
-                                  // Opened but no estimated duration or < 1% — show plain unread badge
-                                  return (
-                                    <ReadStatusBadge
-                                      read={false}
-                                      readLabel={readLabel}
-                                      unreadLabel={unreadLabel}
-                                      unreadIcon="circle"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        toggleRead.mutate({ itemId: item.id, markRead: true });
-                                      }}
-                                    />
-                                  );
-                                }
-
-                                // ── Unread video/audio with no tracked progress yet: dimmed + tooltip ──
-                                if (!isRead && (mediaKind === "video" || mediaKind === "audio")) {
-                                  const tipLabel = mediaKind === "video"
-                                    ? "Watch the video to track your progress"
-                                    : "Listen to the audio to track your progress";
-                                  return (
-                                    <TooltipProvider delayDuration={100}>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
-                                            className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
-                                          >
-                                            <Circle className="h-3.5 w-3.5 flex-shrink-0" />
-                                            <span>{unreadLabel}</span>
-                                          </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
-                                          {tipLabel}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  );
-                                }
-
-                                // ── Unread image: dimmed + tooltip (auto-marks the moment they open it) ──
-                                if (!isRead && mediaKind === "image") {
-                                  return (
-                                    <TooltipProvider delayDuration={100}>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
-                                            className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
-                                          >
-                                            <Circle className="h-3.5 w-3.5 flex-shrink-0" />
-                                            <span>{unreadLabel}</span>
-                                          </button>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
-                                          View the image to mark it as seen
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  );
-                                }
-
-                                // ── Unread external link: dimmed — clicking the card auto-marks ──
-                                if (!isRead && isExternalLink) {
-                                  return (
-                                    <TooltipProvider delayDuration={100}>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 flex-shrink-0">
-                                            <Circle className="h-3.5 w-3.5 flex-shrink-0" />
-                                            <span>{unreadLabel}</span>
-                                          </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
-                                          Click the link to access this resource
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  );
-                                }
-
-                                // ── All other types (worksheet, meeting/call, no-URL items): standard badge ──
-                                return (
-                                  <ReadStatusBadge
-                                    read={isRead}
-                                    readLabel={readLabel}
-                                    unreadLabel={unreadLabel}
-                                    unreadIcon="circle"
-                                    readAt={isRead ? (fmtDateShort(readAtMap.get(item.id)) || null) : null}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      e.preventDefault();
-                                      toggleRead.mutate({ itemId: item.id, markRead: !isRead });
-                                    }}
-                                  />
-                                );
-                              })()}
-                              </div>
-                            </div>
-                          );
-                        })()}
 
                       </li>
                     );
