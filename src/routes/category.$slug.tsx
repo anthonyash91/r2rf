@@ -712,7 +712,7 @@ function CategoryPage() {
 
                         <Wrapper
                           {...wrapperProps}
-                          className="flex-1 min-w-0 text-left flex flex-col gap-4 p-6 pb-[20px] cursor-pointer"
+                          className={`flex-1 min-w-0 text-left flex flex-col gap-4 pt-6 pl-6 pb-[20px] cursor-pointer ${user && !isAdmin && !isFacilityUser ? 'pr-48' : 'pr-6'}`}
                         >
                           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap">
                             <BadgeGroup>
@@ -804,7 +804,7 @@ function CategoryPage() {
                           const isBookmarked = bookmarkIds.has(item.id);
                           const myRating = myRatings.get(item.id) ?? null;
                           return (
-                            <div className="flex flex-col items-end justify-start gap-1 flex-shrink-0 pr-6 pt-6 pb-5">
+                            <div className="absolute right-0 top-0 h-full flex flex-col items-end justify-start gap-1 pr-6 pt-6 pb-5">
                               <div className="flex items-center gap-1.5 justify-end">
                               {isRead && <div className="inline-flex items-center rounded-[8px] border border-input overflow-hidden">
                                 <TooltipProvider delayDuration={150}>
