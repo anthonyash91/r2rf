@@ -63,9 +63,6 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
   const [layout, setLayout] = useState<"letters" | "symbols">("letters");
   const [hidden, setHidden] = useState(false);
   const keyboardRef = useRef<HTMLDivElement>(null);
-  // Computed bottom offset to anchor the keyboard to the visual viewport
-  // (fixes iOS Safari position:fixed drifting after page scroll).
-  const [bottomOffset, setBottomOffset] = useState(0);
 
   const show = isMobile && target !== null && !hidden;
 
@@ -78,29 +75,6 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
       el.classList.remove(...HIGHLIGHT_CLASSES);
     };
   }, [target]);
-
-  // Fix iOS Safari visual-viewport / position:fixed drift.
-  // window.visualViewport.offsetTop tells us how far the visible area has
-  // scrolled inside the layout viewport; we subtract to keep the keyboard
-  // pinned to the actual bottom of the screen.
-  useEffect(() => {
-    if (!show) {
-      setBottomOffset(0);
-      return;
-    }
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const update = () => {
-      setBottomOffset(Math.max(0, window.innerHeight - vv.offsetTop - vv.height));
-    };
-    update();
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-    };
-  }, [show]);
 
   // Keep document.body.paddingBottom equal to the keyboard height so the page
   // can be scrolled to reveal any content hidden behind the keyboard.
@@ -185,11 +159,8 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
         createPortal(
           <div
             ref={keyboardRef}
-            className="fixed inset-x-0 z-[1000] border-t border-border bg-card px-2 pt-2 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
-            style={{
-              bottom: `${bottomOffset}px`,
-              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)",
-            }}
+            className="fixed inset-x-0 bottom-0 z-[1000] border-t border-border bg-card px-2 pt-2 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
             onMouseDown={(e) => e.preventDefault()}
             onPointerDown={(e) => e.preventDefault()}
             onTouchStart={(e) => e.preventDefault()}
