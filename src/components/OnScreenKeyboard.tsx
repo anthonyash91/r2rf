@@ -107,32 +107,6 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     return () => { document.body.style.overscrollBehaviorY = ""; };
   }, [show]);
 
-  // Pad the page bottom so content hidden behind the keyboard can be scrolled
-  // into view — but only on short pages. On long pages iOS miscalculates the
-  // position of fixed elements when body paddingBottom is set, making the
-  // keyboard appear to scroll with the page.
-  useEffect(() => {
-    if (!show || !keyboardRef.current) return;
-    const el = keyboardRef.current;
-    const apply = () => {
-      if (!el) return;
-      const kbHeight = el.offsetHeight;
-      // Reset first so scrollHeight reflects the natural document height.
-      document.body.style.paddingBottom = "";
-      const naturalHeight = document.documentElement.scrollHeight;
-      if (naturalHeight < window.innerHeight + kbHeight) {
-        document.body.style.paddingBottom = `${kbHeight}px`;
-      }
-    };
-    apply();
-    const ro = new ResizeObserver(apply);
-    ro.observe(el);
-    return () => {
-      ro.disconnect();
-      document.body.style.paddingBottom = "";
-    };
-  }, [show]);
-
   // When the keyboard opens or the target changes, scroll the page just enough
   // to bring the active input above the keyboard.
   useEffect(() => {
