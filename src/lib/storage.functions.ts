@@ -130,17 +130,22 @@ export const estimatePdfDuration = createServerFn({ method: "POST" })
 
       // Use the legacy build — designed for non-browser environments and
       // avoids the DOMMatrix / browser-API errors that the main build throws
-      // in Node.js. createRequire resolves the worker path reliably across
-      // any deployment environment.
-      const [pdfjsLib, { createRequire }, { pathToFileURL }] = await Promise.all([
-        import("pdfjs-dist/legacy/build/pdf.mjs" as any),
-        import("module"),
-        import("url"),
-      ]);
-
-      const req = createRequire(import.meta.url);
-      const workerPath = req.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
+      // in Node.js. In Node.js we resolve the worker file path so pdfjs can
+      // spawn it as a thread; in Cloudflare Workers (no node:module/node:url)
+      // we skip the worker src entirely and pdfjs falls back to synchronous
+      // in-process parsing.
+      const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs" as any);
+      if (typeof process !== "undefined" && process.versions?.node) {
+        const [{ createRequire }, { pathToFileURL }] = await Promise.all([
+          import("module"),
+          import("url"),
+        ]);
+        const req = createRequire(import.meta.url);
+        const workerPath = req.resolve("pdfjs-dist/legacy/build/pdf.worker.mjs");
+        pdfjsLib.GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).href;
+      } else {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+      }
 
       const doc = await pdfjsLib.getDocument({ data: pdfData, verbosity: 0 }).promise;
       const pageCount = doc.numPages;

@@ -1,0 +1,22 @@
+name = "reentry-to-recovery"
+main = "dist/server/server.js"
+compatibility_date = "2025-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Static assets (JS bundles, CSS, fonts, images) served from Cloudflare's
+# CDN automatically. Requests for files that exist here are never forwarded
+# to the Worker. Everything else (SSR, server functions, API routes) hits
+# the Worker.
+[assets]
+directory = "dist/client"
+
+# Set secrets via the dashboard or:
+#   wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+#   wrangler secret put SITE_ID_HMAC_SECRET
+#   wrangler secret put SITE_ID_ENCRYPTION_KEY
+#   wrangler secret put ANTHROPIC_API_KEY
+#   wrangler secret put SIGNUP_CHALLENGE_SECRET
+#
+# VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY are baked into the
+# client bundle at build time — set them as environment variables in
+# your CI / Cloudflare Pages build settings, not as Worker secrets.
