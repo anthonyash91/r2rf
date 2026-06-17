@@ -100,22 +100,6 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     return () => { document.body.style.overscrollBehaviorY = ""; };
   }, [show]);
 
-  // Pad the page bottom by the keyboard height so all content can be scrolled
-  // into view above the keyboard. ResizeObserver keeps it accurate if the
-  // keyboard height changes (e.g. layout/symbol toggle).
-  useEffect(() => {
-    if (!show || !keyboardRef.current) return;
-    const el = keyboardRef.current;
-    const apply = () => { document.body.style.paddingBottom = `${el.offsetHeight}px`; };
-    apply();
-    const ro = new ResizeObserver(apply);
-    ro.observe(el);
-    return () => {
-      ro.disconnect();
-      document.body.style.paddingBottom = "";
-    };
-  }, [show]);
-
   // When the keyboard opens or the target changes, scroll the page just enough
   // to bring the active input above the keyboard.
   useEffect(() => {
