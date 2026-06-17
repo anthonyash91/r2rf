@@ -728,7 +728,7 @@ function CategoryPage() {
                               )}
                             </BadgeGroup>
                             {item.duration && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
                                 {translateDuration(lang, withActionWord(item.duration, item.type))}
                               </span>
                             )}
