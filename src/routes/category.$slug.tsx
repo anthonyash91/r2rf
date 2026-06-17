@@ -710,8 +710,8 @@ function CategoryPage() {
 
 
 
-                        {/* Header row: badges/duration (left) + action buttons (right on desktop, below on mobile) */}
-                        <div className="flex flex-col gap-2 px-6 pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                        {/* Header row: badges/duration (left) + action buttons (right) */}
+                        <div className="flex items-start justify-between gap-3 px-6 pt-6">
                           <div className="flex items-center gap-2 flex-wrap flex-1 min-w-0">
                             <BadgeGroup>
                               {isNew && (
@@ -757,7 +757,8 @@ function CategoryPage() {
                             const isBookmarked = bookmarkIds.has(item.id);
                             const myRating = myRatings.get(item.id) ?? null;
                             return (
-                              <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-start">
+                              <div className="relative flex items-center gap-1.5 flex-shrink-0 bg-card">
+                                <div className="absolute right-full inset-y-0 w-12 bg-gradient-to-r from-transparent to-card pointer-events-none" />
                                 {isRead && <div className="inline-flex items-center rounded-[8px] border border-input overflow-hidden">
                                   <TooltipProvider delayDuration={150}>
                                     <Tooltip>
