@@ -82,6 +82,27 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
 
   const show = isMobile && target !== null && !hidden;
 
+  // Close keyboard when the user taps outside an input or the keyboard itself.
+  // Tapping a nav link also triggers this, closing the keyboard before navigation.
+  useEffect(() => {
+    if (!show) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      const el = e.target as Element;
+      if (keyboardRef.current?.contains(el)) return;
+      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") return;
+      setTarget(null);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [show]);
+
+  // Close keyboard on browser back/forward navigation.
+  useEffect(() => {
+    const handlePop = () => setTarget(null);
+    window.addEventListener("popstate", handlePop);
+    return () => window.removeEventListener("popstate", handlePop);
+  }, []);
+
   // Apply / clear focus highlight on the active input.
   useEffect(() => {
     if (!target) return;
