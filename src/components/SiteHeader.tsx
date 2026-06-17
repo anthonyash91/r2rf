@@ -144,7 +144,7 @@ export function SiteHeader() {
               {signOutLabel}
             </button>
           ) : (
-            <Link to="/signup" search={{ redirect: undefined }} {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
+            <Link to="/signup" search={{ redirect: undefined, ...(activeFacility ? { site: activeFacility } : {}), ...(persistedPin ? { user: persistedPin } : {}) }} {...lockProps} className={`hover:text-foreground transition-colors ${lockedLinkClass}`}>
               {signInLabel}
             </Link>
           )}
@@ -220,7 +220,7 @@ export function SiteHeader() {
                 {signOutLabel}
               </button>
             ) : (
-              <Link to="/signup" search={{ redirect: undefined }} {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`}>
+              <Link to="/signup" search={{ redirect: undefined, ...(activeFacility ? { site: activeFacility } : {}), ...(persistedPin ? { user: persistedPin } : {}) }} {...lockProps} onClick={(e) => { if (locked) { handleLockedNav(e); return; } setOpen(false); }} className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`}>
                 {signInLabel}
               </Link>
             )}

@@ -33,6 +33,8 @@ export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Create your account — Reentry to Recovery" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+    site: typeof search.site === "string" ? search.site : undefined,
+    user: typeof search.user === "string" ? search.user : undefined,
   }),
   component: SignupPage,
 });
@@ -53,8 +55,16 @@ function SignupPage() {
 function SignupPageContent() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { redirect: redirectTo } = Route.useSearch();
+  const { redirect: redirectTo, site: siteParam, user: userParam } = Route.useSearch();
   const { isChecking: checkingSignIn } = useAuthChecking();
+
+  // If the signup page was opened directly with ?site=... and/or ?user=...,
+  // store them in session storage immediately so the facility lock and PIN
+  // context work even without visiting the index page first.
+  useEffect(() => {
+    if (siteParam) setActiveFacilitySlug(siteParam);
+    if (userParam) setActiveInmatePin(userParam);
+  }, [siteParam, userParam]);
 
   // Default to sign-up when arriving from a facility device (slug in session),
   // sign-in otherwise (admin/staff using the nav link).
