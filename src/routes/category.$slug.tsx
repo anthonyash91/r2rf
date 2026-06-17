@@ -712,7 +712,7 @@ function CategoryPage() {
 
                         <Wrapper
                           {...wrapperProps}
-                          className={`flex-1 min-w-0 text-left flex flex-col gap-4 pt-6 pl-6 pb-[20px] cursor-pointer ${user && !isAdmin && !isFacilityUser ? 'pr-48' : 'pr-6'}`}
+                          className={`flex-1 min-w-0 text-left flex flex-col gap-4 pt-6 pl-6 pb-[20px] cursor-pointer ${user && !isAdmin && !isFacilityUser ? 'pr-44' : 'pr-6'}`}
                         >
                           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap">
                             <BadgeGroup>
