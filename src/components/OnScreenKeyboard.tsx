@@ -179,11 +179,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
           <div
             ref={keyboardRef}
             className="fixed inset-x-0 bottom-0 z-[1000] border-t border-border bg-card px-2 pt-2 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
-            style={{
-              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)",
-              transform: "translateZ(0)",
-              willChange: "transform",
-            }}
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
             onMouseDown={(e) => e.preventDefault()}
             onPointerDown={(e) => e.preventDefault()}
             onTouchStart={(e) => e.preventDefault()}
