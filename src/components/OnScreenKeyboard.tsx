@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Delete, ArrowBigUp, CornerDownLeft, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { useRouter } from "@tanstack/react-router";
 
 /**
  * Accessible on-screen keyboard for forms (sign-in, sign-up, reset password).
@@ -82,12 +83,11 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
 
   const show = isMobile && target !== null && !hidden;
 
-  // Close keyboard on browser back/forward navigation.
+  // Close keyboard on any navigation (link clicks, back/forward, programmatic).
+  const router = useRouter();
   useEffect(() => {
-    const handlePop = () => setTarget(null);
-    window.addEventListener("popstate", handlePop);
-    return () => window.removeEventListener("popstate", handlePop);
-  }, []);
+    return router.history.subscribe(() => setTarget(null));
+  }, [router]);
 
   // Apply / clear focus highlight on the active input.
   useEffect(() => {
