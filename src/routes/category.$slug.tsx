@@ -1195,7 +1195,7 @@ function CategoryPage() {
       </Dialog>
 
       <Dialog open={!!pdfViewer} onOpenChange={(open) => { if (!open) { setActiveMedia(null); invalidateEngagement(); } }}>
-        <DialogContent className="w-[95vw] min-w-0 max-w-[95vw] sm:max-w-[95vw] p-0 overflow-hidden max-h-[calc(100dvh-2rem)]">
+        <DialogContent className="w-[95vw] min-w-0 max-w-[95vw] sm:max-w-[95vw] p-0 overflow-hidden max-h-[calc(100dvh-2rem)] top-[1rem] translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
           <DialogTitle className="sr-only">{pdfViewer?.title ?? "PDF"}</DialogTitle>
           {pdfViewer && (
             <Suspense fallback={<div className="p-8 text-sm text-muted-foreground h-[calc(100dvh-4rem)]">Loading PDF…</div>}>
