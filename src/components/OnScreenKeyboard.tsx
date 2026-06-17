@@ -92,6 +92,14 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     };
   }, [target]);
 
+  // Disable overscroll-bounce while the keyboard is visible so iOS doesn't
+  // rubber-band-scroll the fixed keyboard away from the bottom of the screen.
+  useEffect(() => {
+    if (!show) return;
+    document.body.style.overscrollBehaviorY = "none";
+    return () => { document.body.style.overscrollBehaviorY = ""; };
+  }, [show]);
+
   // When the keyboard opens or the target changes, scroll the page just enough
   // to bring the active input above the keyboard. We avoid adding paddingBottom
   // to document.body because on iOS Safari that causes position:fixed to treat
@@ -167,7 +175,11 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
           <div
             ref={keyboardRef}
             className="fixed inset-x-0 bottom-0 z-[1000] border-t border-border bg-card px-2 pt-2 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
+            style={{
+              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)",
+              transform: "translateZ(0)",
+              willChange: "transform",
+            }}
             onMouseDown={(e) => e.preventDefault()}
             onPointerDown={(e) => e.preventDefault()}
             onTouchStart={(e) => e.preventDefault()}
