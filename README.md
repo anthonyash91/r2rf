@@ -122,6 +122,8 @@ The sign-up and login flow (`/signup`) serves both new account creation and retu
 
 **Consent:** Before signing up, users must expand a collapsible disclosure (tap to read) explaining what data is collected, why, and who can see it. An acknowledgment checkbox must be checked before the Create Account button activates.
 
+**On-screen keyboard:** On mobile devices (coarse pointer + viewport ≤900px), a custom on-screen keyboard replaces the native system keyboard for all sign-up, sign-in, and password-reset fields. This prevents the native keyboard from resizing the page or obscuring inputs on shared tablets. The keyboard supports English and Spanish layouts — Spanish adds ñ to the letter rows and replaces a symbol row with accented vowels (á é í ó ú ü) and inverted punctuation (¿ ¡). The Shift key works in all layouts including symbol mode. The keyboard stays pinned to the bottom of the screen while the page scrolls, and the page bottom is padded by the keyboard height so every field can be scrolled into view above it.
+
 **Anti-bot protection:** A simple math captcha (e.g., "What is 4 + 7?") is generated server-side, signed with HMAC-SHA256, and verified using timing-safe comparison. Stale tokens (older than 5 minutes) are rejected. A hidden honeypot field catches basic bots.
 
 **Security questions:** Users choose 2 security questions and provide answers during sign-up. Answers are hashed server-side before storage. The dashboard is locked until security questions are set up.

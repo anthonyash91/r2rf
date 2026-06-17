@@ -1322,6 +1322,34 @@ Fill in all sign-up fields using the on-screen keyboard. Tap Enter. Verify the f
  **Role:** Signed Out
 Tap the X button in the top-right of the on-screen keyboard. Verify the keyboard hides. Tap a field again. Verify the keyboard reappears.
 
+### 16.17 — On-screen keyboard stays pinned while scrolling
+🟡 **Medium**
+ **Role:** Signed Out
+On a mobile device, tap a text field to open the on-screen keyboard. Scroll the page up and down while the keyboard remains open.
+
+✅ Pass: The keyboard stays fixed at the bottom of the screen throughout the scroll. It does not drift, slide up with the page content, or temporarily disappear during scrolling or rubber-band bounce.
+
+### 16.18 — On-screen keyboard: page pads bottom so all content is scrollable
+🟡 **Medium**
+ **Role:** Signed Out
+On a mobile device, open the sign-up form and tap the last visible text field (e.g., the math captcha answer). Observe whether the field is hidden behind the keyboard.
+
+✅ Pass: The page adds enough bottom padding so that the last fields can be scrolled up above the keyboard. No form field is permanently hidden behind the keyboard while it is open. Padding is removed when the keyboard is dismissed.
+
+### 16.19 — Spanish on-screen keyboard layout
+🟡 **Medium**
+ **Role:** Signed Out
+Set the language to Spanish (visit `?language=es` or tap the language toggle). Open the sign-up page on a mobile device. Tap a text field. Then tap "123" to switch to symbol mode.
+
+✅ Pass: In letter mode: ñ appears on the second row of keys. In symbol mode: the second row shows accented vowels (á é í ó ú ü) and inverted punctuation (¿ ¡) instead of the English punctuation row.
+
+### 16.20 — Spanish on-screen keyboard: shift key works in symbol mode
+🟡 **Medium**
+ **Role:** Signed Out
+With the Spanish on-screen keyboard open, tap "123" to enter symbol mode. Tap the Shift key (↑ arrow).
+
+✅ Pass: The Shift key is visible in symbol mode (it does not appear in English symbol mode). After tapping Shift, tapping á types Á, é types É, í types Í, ó types Ó, ú types Ú, ü types Ü. Tapping ¿ or ¡ types those characters unchanged (no uppercase form). Shift auto-releases after one character.
+
 ### 16.6 — Home page grid is responsive
 🟡 **Medium**
  **Role:** Regular User
