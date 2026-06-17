@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { createPortal } from "react-dom";
 import { Delete, ArrowBigUp, CornerDownLeft, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 /**
  * Accessible on-screen keyboard for forms (sign-in, sign-up, reset password).
@@ -24,15 +25,29 @@ type Ctx = {
 
 const KeyboardCtx = createContext<Ctx | null>(null);
 
-const LETTER_ROWS = [
+const LETTER_ROWS_EN = [
   ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
   ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
   ["z", "x", "c", "v", "b", "n", "m"],
 ];
 
-const SYMBOL_ROWS = [
+const SYMBOL_ROWS_EN = [
   ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
   ["-", "/", ":", ";", "(", ")", "$", "&", "@", '"'],
+  [".", ",", "?", "!", "'", "_", "#", "*"],
+];
+
+// Spanish QWERTY adds ñ to the second letter row and replaces the middle
+// symbol row with accented vowels and inverted punctuation.
+const LETTER_ROWS_ES = [
+  ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+  ["a", "s", "d", "f", "g", "h", "j", "k", "l", "ñ"],
+  ["z", "x", "c", "v", "b", "n", "m"],
+];
+
+const SYMBOL_ROWS_ES = [
+  ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+  ["á", "é", "í", "ó", "ú", "ü", "¿", "¡", "@", '"'],
   [".", ",", "?", "!", "'", "_", "#", "*"],
 ];
 
@@ -58,6 +73,7 @@ function useIsMobile() {
 
 export function OnScreenKeyboardProvider({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
+  const { lang, t } = useI18n();
   const [target, setTarget] = useState<Target | null>(null);
   const [shift, setShift] = useState(false);
   const [layout, setLayout] = useState<"letters" | "symbols">("letters");
@@ -149,7 +165,9 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     requestAnimationFrame(() => el.focus());
   }
 
-  const rows = layout === "letters" ? LETTER_ROWS : SYMBOL_ROWS;
+  const letterRows = lang === "es" ? LETTER_ROWS_ES : LETTER_ROWS_EN;
+  const symbolRows = lang === "es" ? SYMBOL_ROWS_ES : SYMBOL_ROWS_EN;
+  const rows: string[][] = layout === "letters" ? letterRows : symbolRows;
 
   return (
     <KeyboardCtx.Provider value={ctx}>
@@ -167,7 +185,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
           >
             <div className="mx-auto flex w-full max-w-[760px] flex-col gap-1.5">
               <div className="flex items-center justify-between px-1">
-                <span className="text-xs text-muted-foreground">On-screen keyboard</span>
+                <span className="text-xs text-muted-foreground">{t("osk.label")}</span>
                 <button
                   type="button"
                   onClick={() => setHidden(true)}
