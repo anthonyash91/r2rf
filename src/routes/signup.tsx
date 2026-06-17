@@ -27,7 +27,7 @@ import { Check, ChevronsUpDown, KeyRound, Lock, Loader2, LogIn, UserPlus, Chevro
 import { cn } from "@/lib/utils";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
-import { OnScreenKeyboardProvider, useKeyboardInput } from "@/components/OnScreenKeyboard";
+import { useKeyboardInput } from "@/components/OnScreenKeyboard";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Create your account — Reentry to Recovery" }] }),
@@ -43,11 +43,7 @@ type Mode = "sign-up" | "sign-in" | "reset";
 type Facility = { id: string; value: string; label: string; sort_order: number; siteId: string | null };
 
 function SignupPage() {
-  return (
-    <OnScreenKeyboardProvider>
-      <SignupPageContent />
-    </OnScreenKeyboardProvider>
-  );
+  return <SignupPageContent />;
 }
 
 // Orchestrates mode state, shared data (facilities, contexts), and the

@@ -15,6 +15,7 @@ import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
 import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { AuthCheckingProvider } from "@/lib/auth-checking-context";
 import { installGlobalErrorReporter, reportError } from "@/lib/client-error-reporter";
+import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -134,11 +135,13 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthCheckingProvider>
       <I18nProvider>
-        <ConfirmDialogProvider>
-          <Outlet />
-          <Toaster />
-          <RoleSwitcher />
-        </ConfirmDialogProvider>
+        <OnScreenKeyboardProvider>
+          <ConfirmDialogProvider>
+            <Outlet />
+            <Toaster />
+            <RoleSwitcher />
+          </ConfirmDialogProvider>
+        </OnScreenKeyboardProvider>
       </I18nProvider>
       </AuthCheckingProvider>
     </QueryClientProvider>

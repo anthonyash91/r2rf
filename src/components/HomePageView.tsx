@@ -16,6 +16,7 @@ import { ResponsiveBadgeGroup } from "@/components/ResponsiveBadgeGroup";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { QK } from "@/lib/query-keys";
+import { useKeyboardInput } from "@/components/OnScreenKeyboard";
 
 type CategoryStats = { count: number; trackableCount: number; recentItemIds: Set<string> };
 
@@ -405,6 +406,7 @@ export function HomePageView({
 
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const kbSearch = useKeyboardInput(searchQuery, setSearchQuery);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(searchQuery.trim()), 300);
@@ -540,6 +542,7 @@ export function HomePageView({
             <div className="relative flex-1 max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
               <input
+                {...kbSearch}
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

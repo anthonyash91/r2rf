@@ -25,7 +25,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { LoadingButton } from "@/components/LoadingButton";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
-import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
+import { useKeyboardInput } from "@/components/OnScreenKeyboard";
 import { useI18n, pickLang, translateDuration, translateType, type TranslationKey } from "@/lib/i18n";
 import { QK } from "@/lib/query-keys";
 import { withActionWord, parseMinutes } from "@/lib/duration";
@@ -88,11 +88,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardRoute() {
-  return (
-    <OnScreenKeyboardProvider>
-      <DashboardRouter />
-    </OnScreenKeyboardProvider>
-  );
+  return <DashboardRouter />;
 }
 
 // Splits tester accounts onto their own minimal page so they only see the QA
@@ -377,6 +373,8 @@ function DashboardPage() {
   const clearMustResetFn = useServerFn(clearMustResetPassword);
   const [resetPw, setResetPw] = useState("");
   const [resetPw2, setResetPw2] = useState("");
+  const kbResetPw = useKeyboardInput(resetPw, setResetPw);
+  const kbResetPw2 = useKeyboardInput(resetPw2, setResetPw2);
   const [resetBusy, setResetBusy] = useState(false);
   const [resetDone, setResetDone] = useState(false);
   async function handleForcedReset(e: React.FormEvent) {
@@ -617,6 +615,7 @@ function DashboardPage() {
           <form onSubmit={handleForcedReset} className="mt-[-4px] space-y-3">
               <div>
                 <PasswordInput
+                  {...kbResetPw}
                   autoComplete="new-password"
                   required
                   value={resetPw}
@@ -627,6 +626,7 @@ function DashboardPage() {
                 <PasswordStrengthMeter password={resetPw} />
               </div>
               <PasswordInput
+                {...kbResetPw2}
                 autoComplete="new-password"
                 required
                 value={resetPw2}
