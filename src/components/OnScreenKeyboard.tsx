@@ -92,34 +92,23 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     };
   }, [target]);
 
-  // Keep document.body.paddingBottom equal to the keyboard height so the page
-  // can be scrolled to reveal any content hidden behind the keyboard.
-  useEffect(() => {
-    if (!show) {
-      document.body.style.paddingBottom = "";
-      return;
-    }
-    const apply = () => {
-      if (keyboardRef.current) {
-        document.body.style.paddingBottom = `${keyboardRef.current.offsetHeight}px`;
-      }
-    };
-    apply();
-    const ro = new ResizeObserver(apply);
-    if (keyboardRef.current) ro.observe(keyboardRef.current);
-    return () => {
-      ro.disconnect();
-      document.body.style.paddingBottom = "";
-    };
-  }, [show]);
-
-  // Scroll the focused input into view after the keyboard opens or the target
-  // changes, giving the padding-bottom time to be applied first.
+  // When the keyboard opens or the target changes, scroll the page just enough
+  // to bring the active input above the keyboard. We avoid adding paddingBottom
+  // to document.body because on iOS Safari that causes position:fixed to treat
+  // the extended body height as the viewport bottom, making the keyboard appear
+  // off-screen and "rise" as the user scrolls.
   useEffect(() => {
     if (!show || !target) return;
     const id = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        target.el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        if (!keyboardRef.current || !target) return;
+        const rect = target.el.getBoundingClientRect();
+        const kbHeight = keyboardRef.current.offsetHeight;
+        const clearance = 12; // px gap between input bottom and keyboard top
+        const visibleBottom = window.innerHeight - kbHeight - clearance;
+        if (rect.bottom > visibleBottom) {
+          window.scrollBy({ top: rect.bottom - visibleBottom, behavior: "smooth" });
+        }
       });
     });
     return () => cancelAnimationFrame(id);
