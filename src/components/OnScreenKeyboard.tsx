@@ -147,7 +147,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
       setLayout((l) => (l === "letters" ? "symbols" : "letters"));
       return;
     } else {
-      const ch = layout === "letters" && shift ? key.toUpperCase() : key;
+      const ch = shift ? key.toUpperCase() : key;
       target.setValue(cur + ch);
       if (shift) setShift(false);
     }
@@ -187,7 +187,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
 
               {rows.map((row, i) => (
                 <div key={i} className="flex w-full justify-center gap-1">
-                  {i === rows.length - 1 && layout === "letters" && (
+                  {i === rows.length - 1 && (layout === "letters" || lang === "es") && (
                     <Key
                       onPress={() => press("SHIFT")}
                       flexBasis={1.5}
@@ -199,7 +199,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
                   )}
                   {row.map((k) => (
                     <Key key={k} onPress={() => press(k)} flexBasis={1}>
-                      {layout === "letters" && shift ? k.toUpperCase() : k}
+                      {shift ? k.toUpperCase() : k}
                     </Key>
                   ))}
                   {i === rows.length - 1 && (
