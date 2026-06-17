@@ -712,7 +712,7 @@ function CategoryPage() {
 
                         {/* Header row: badges/duration (left) + action buttons (right) */}
                         <div className="flex items-start justify-between gap-3 px-6 pt-6">
-                          <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden">
+                          <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, black, black calc(100% - 96px), transparent)', WebkitMaskImage: 'linear-gradient(to right, black, black calc(100% - 96px), transparent)' }}>
                             <BadgeGroup>
                               {isNew && (
                                 <Badge variant="new" className="rounded-[8px]">{t("category.newContent")}</Badge>
@@ -757,8 +757,7 @@ function CategoryPage() {
                             const isBookmarked = bookmarkIds.has(item.id);
                             const myRating = myRatings.get(item.id) ?? null;
                             return (
-                              <div className="relative flex items-center gap-1.5 flex-shrink-0 bg-card">
-                                <div className="absolute right-full inset-y-0 w-20 bg-gradient-to-r from-transparent to-card pointer-events-none" />
+                              <div className="flex items-center gap-1.5 flex-shrink-0">
                                 {isRead && <div className="inline-flex items-center rounded-[8px] border border-input overflow-hidden">
                                   <TooltipProvider delayDuration={150}>
                                     <Tooltip>
