@@ -47,8 +47,6 @@ function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
-    // Treat as mobile when the primary pointer is coarse (touch) AND the
-    // viewport is narrow. Covers phones and small tablets; excludes desktops.
     const mql = window.matchMedia("(pointer: coarse) and (max-width: 900px)");
     const update = () => setIsMobile(mql.matches);
     update();
@@ -64,6 +62,12 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
   const [shift, setShift] = useState(false);
   const [layout, setLayout] = useState<"letters" | "symbols">("letters");
   const [hidden, setHidden] = useState(false);
+  const keyboardRef = useRef<HTMLDivElement>(null);
+  // Computed bottom offset to anchor the keyboard to the visual viewport
+  // (fixes iOS Safari position:fixed drifting after page scroll).
+  const [bottomOffset, setBottomOffset] = useState(0);
+
+  const show = isMobile && target !== null && !hidden;
 
   // Apply / clear focus highlight on the active input.
   useEffect(() => {
@@ -74,6 +78,62 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
       el.classList.remove(...HIGHLIGHT_CLASSES);
     };
   }, [target]);
+
+  // Fix iOS Safari visual-viewport / position:fixed drift.
+  // window.visualViewport.offsetTop tells us how far the visible area has
+  // scrolled inside the layout viewport; we subtract to keep the keyboard
+  // pinned to the actual bottom of the screen.
+  useEffect(() => {
+    if (!show) {
+      setBottomOffset(0);
+      return;
+    }
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      setBottomOffset(Math.max(0, window.innerHeight - vv.offsetTop - vv.height));
+    };
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, [show]);
+
+  // Keep document.body.paddingBottom equal to the keyboard height so the page
+  // can be scrolled to reveal any content hidden behind the keyboard.
+  useEffect(() => {
+    if (!show) {
+      document.body.style.paddingBottom = "";
+      return;
+    }
+    const apply = () => {
+      if (keyboardRef.current) {
+        document.body.style.paddingBottom = `${keyboardRef.current.offsetHeight}px`;
+      }
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    if (keyboardRef.current) ro.observe(keyboardRef.current);
+    return () => {
+      ro.disconnect();
+      document.body.style.paddingBottom = "";
+    };
+  }, [show]);
+
+  // Scroll the focused input into view after the keyboard opens or the target
+  // changes, giving the padding-bottom time to be applied first.
+  useEffect(() => {
+    if (!show || !target) return;
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        target.el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [show, target]);
 
   const ctx = useMemo<Ctx>(
     () => ({
@@ -98,7 +158,6 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     } else if (key === "SPACE") {
       target.setValue(cur + " ");
     } else if (key === "ENTER") {
-      // Submit the nearest ancestor form so the OSK works like a hardware keyboard.
       const form = el.closest("form");
       form?.requestSubmit();
       return;
@@ -111,16 +170,12 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     } else {
       const ch = layout === "letters" && shift ? key.toUpperCase() : key;
       target.setValue(cur + ch);
-      // Auto-release shift after one uppercase character (standard mobile behavior).
       if (shift) setShift(false);
     }
-    // Restore focus to the input after each keypress so controlled value updates
-    // don't steal focus away from the input element.
     requestAnimationFrame(() => el.focus());
   }
 
   const rows = layout === "letters" ? LETTER_ROWS : SYMBOL_ROWS;
-  const show = isMobile && target !== null && !hidden;
 
   return (
     <KeyboardCtx.Provider value={ctx}>
@@ -129,8 +184,12 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
         typeof document !== "undefined" &&
         createPortal(
           <div
-            className="fixed inset-x-0 bottom-0 z-[1000] border-t border-border bg-card px-2 pt-2 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
+            ref={keyboardRef}
+            className="fixed inset-x-0 z-[1000] border-t border-border bg-card px-2 pt-2 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
+            style={{
+              bottom: `${bottomOffset}px`,
+              paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)",
+            }}
             onMouseDown={(e) => e.preventDefault()}
             onPointerDown={(e) => e.preventDefault()}
             onTouchStart={(e) => e.preventDefault()}
@@ -244,8 +303,6 @@ export function useKeyboardInput(value: string, onChange: (v: string) => void) {
     };
   }, [ctx]);
 
-  // On desktop, return only the ref so the field behaves like a normal native
-  // input — no inputMode override that would suppress the system keyboard.
   if (!ctx?.isMobile) {
     return { ref: ref as React.RefObject<any> };
   }
@@ -262,8 +319,6 @@ export function useKeyboardInput(value: string, onChange: (v: string) => void) {
 
   return {
     ref: ref as React.RefObject<any>,
-    // `inputMode: "none"` suppresses the native virtual keyboard on mobile so
-    // the on-screen keyboard is the only input method for this field.
     inputMode: "none" as const,
     onFocus: doRegister,
     onClick: doRegister,
