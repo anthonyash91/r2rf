@@ -107,6 +107,42 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     return () => { document.body.style.overscrollBehaviorY = ""; };
   }, [show]);
 
+  // iOS position:fixed is unreliable across scroll, URL-bar animation, and
+  // GPU compositing — so we switch to position:absolute and manually pin the
+  // keyboard to the visual viewport bottom on every scroll/resize frame.
+  // Direct DOM writes bypass React's render cycle so there is no lag.
+  useEffect(() => {
+    if (!show || !keyboardRef.current) return;
+    const el = keyboardRef.current;
+
+    const update = () => {
+      const h = el.offsetHeight;
+      // pageTop of visual viewport + visible height = document-coord bottom of screen.
+      const vv = window.visualViewport;
+      const top = vv
+        ? vv.pageTop + vv.height - h
+        : window.scrollY + window.innerHeight - h;
+      el.style.position = "absolute";
+      el.style.bottom = "auto";
+      el.style.top = `${top}px`;
+    };
+
+    update();
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", update);
+    vv?.addEventListener("scroll", update);
+    window.addEventListener("scroll", update, { passive: true });
+
+    return () => {
+      vv?.removeEventListener("resize", update);
+      vv?.removeEventListener("scroll", update);
+      window.removeEventListener("scroll", update);
+      el.style.position = "";
+      el.style.bottom = "";
+      el.style.top = "";
+    };
+  }, [show]);
+
   // When the keyboard opens or the target changes, scroll the page just enough
   // to bring the active input above the keyboard.
   useEffect(() => {
