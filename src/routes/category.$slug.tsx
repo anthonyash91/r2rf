@@ -613,8 +613,8 @@ function CategoryPage() {
                       <h2 className="font-display text-xl font-semibold shrink-0">
                         {displayItems.length} {displayItems.length === 1 ? t("category.resource") : t("category.resources")}
                       </h2>
-                      <div className="flex flex-1 items-center gap-2 sm:justify-end">
-                        <div className="relative flex-1 sm:max-w-[220px]">
+                      <div className="flex flex-col sm:flex-row sm:flex-1 sm:items-center gap-2 sm:justify-end">
+                        <div className="relative w-full sm:max-w-[220px] sm:flex-1">
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                           <input
                             {...kbSearch}
@@ -627,7 +627,7 @@ function CategoryPage() {
                         </div>
                         {showFilter && (
                           <Select value={typeFilter} onValueChange={setTypeFilter}>
-                            <SelectTrigger className="w-[140px] shrink-0 shadow-none capitalize">
+                            <SelectTrigger className="w-full sm:w-[140px] shrink-0 shadow-none capitalize">
                               <SelectValue placeholder="Filter by type" />
                             </SelectTrigger>
                             <SelectContent>
