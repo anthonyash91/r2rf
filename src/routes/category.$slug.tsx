@@ -17,7 +17,7 @@ import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n"
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { fmtDateShort } from "@/lib/date-format";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info, Search } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -38,6 +38,7 @@ import { useContentEngagement, type EngagementRecord } from "@/hooks/use-content
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useRatings } from "@/hooks/use-ratings";
 import { useAchievements } from "@/hooks/use-achievements";
+import { useKeyboardInput } from "@/components/OnScreenKeyboard";
 
 const PDF_EXT = /\.pdf(\?|#|$)/i;
 
@@ -143,6 +144,8 @@ function CategoryPage() {
   // button after the user has actually opened the viewer at least once.
   const openedPdfsRef = useRef(new Set<string>());
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const kbSearch = useKeyboardInput(searchQuery, setSearchQuery);
   const [categoryComplete, setCategoryComplete] = useState(false);
   const [othersApi, setOthersApi] = useState<CarouselApi>();
   const [othersCurrent, setOthersCurrent] = useState(0);
@@ -596,16 +599,35 @@ function CategoryPage() {
                   : itemsWithKind.filter((i) => i.filterKey === typeFilter).map((i) => i.item);
                 const orderedKinds = availableKinds.sort((a, b) => a.localeCompare(b));
                 const showFilter = orderedKinds.length > 1;
+                const searchLower = searchQuery.trim().toLowerCase();
+                const displayItems = searchLower.length === 0
+                  ? filteredItems
+                  : filteredItems.filter((item) => {
+                      const title = (pickLang(lang, item.title, item.title_es) ?? "").toLowerCase();
+                      const desc = (pickLang(lang, item.description, item.description_es) ?? "").toLowerCase();
+                      return title.includes(searchLower) || desc.includes(searchLower);
+                    });
                 return (
                   <>
-                    <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <h2 className="font-display text-xl font-semibold">
-                        {filteredItems.length} {filteredItems.length === 1 ? t("category.resource") : t("category.resources")}
+                    <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
+                      <h2 className="font-display text-xl font-semibold shrink-0">
+                        {displayItems.length} {displayItems.length === 1 ? t("category.resource") : t("category.resources")}
                       </h2>
-                      {showFilter && (
-                        <div className="sm:ml-auto">
+                      <div className="flex flex-1 items-center gap-2 sm:justify-end">
+                        <div className="relative flex-1 sm:max-w-[220px]">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                          <input
+                            {...kbSearch}
+                            type="search"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder={t("home.searchPlaceholder")}
+                            className="w-full rounded-lg border border-input bg-background pl-9 pr-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring/50 focus:border-ring/50"
+                          />
+                        </div>
+                        {showFilter && (
                           <Select value={typeFilter} onValueChange={setTypeFilter}>
-                            <SelectTrigger className="w-full sm:w-[180px] shadow-none capitalize">
+                            <SelectTrigger className="w-[140px] shrink-0 shadow-none capitalize">
                               <SelectValue placeholder="Filter by type" />
                             </SelectTrigger>
                             <SelectContent>
@@ -615,14 +637,16 @@ function CategoryPage() {
                               ))}
                             </SelectContent>
                           </Select>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-              {filteredItems.length === 0 ? (
-                <p className="text-muted-foreground">{t("category.noContent")}</p>
+              {displayItems.length === 0 ? (
+                <p className="text-muted-foreground">
+                  {searchLower.length > 0 ? `No results for "${searchQuery.trim()}"` : t("category.noContent")}
+                </p>
               ) : (
                 <ul className="divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden">
-                  {filteredItems.map((item) => {
+                  {displayItems.map((item) => {
                     const title = pickLang(lang, item.title, item.title_es);
                     const description = pickLang(lang, item.description, item.description_es);
                     const source = pickLang(lang, item.source, item.source_es);
