@@ -107,36 +107,37 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     return () => { document.body.style.overscrollBehaviorY = ""; };
   }, [show]);
 
-  // iOS position:fixed is unreliable across scroll, URL-bar animation, and
-  // GPU compositing — so we switch to position:absolute and manually pin the
-  // keyboard to the visual viewport bottom on every scroll/resize frame.
-  // Direct DOM writes bypass React's render cycle so there is no lag.
+  // On WebKit tablet browsers the page scrolls via an inner element, not the
+  // window, so window.scrollY is always 0 and position:fixed drifts. We
+  // switch to position:absolute and pin the keyboard to the visual-viewport
+  // bottom using window.innerHeight (which correctly excludes the browser
+  // chrome and updates when the URL bar shows/hides). Direct DOM writes
+  // bypass React so there is no render lag.
   useEffect(() => {
     if (!show || !keyboardRef.current) return;
     const el = keyboardRef.current;
 
     const update = () => {
       const h = el.offsetHeight;
-      // pageTop of visual viewport + visible height = document-coord bottom of screen.
-      const vv = window.visualViewport;
-      const top = vv
-        ? vv.pageTop + vv.height - h
-        : window.scrollY + window.innerHeight - h;
+      if (!h) return;
+      // window.scrollY = 0 for inner-div scrolling; correct for window scrolling.
+      // window.innerHeight = visual viewport height, auto-excludes URL bar.
+      const top = window.scrollY + window.innerHeight - h;
       el.style.position = "absolute";
       el.style.bottom = "auto";
       el.style.top = `${top}px`;
     };
 
     update();
-    const vv = window.visualViewport;
-    vv?.addEventListener("resize", update);
-    vv?.addEventListener("scroll", update);
-    window.addEventListener("scroll", update, { passive: true });
+    // capture:true catches scroll on any inner element, not just the window.
+    document.addEventListener("scroll", update, { passive: true, capture: true });
+    window.visualViewport?.addEventListener("resize", update);
+    window.addEventListener("resize", update, { passive: true });
 
     return () => {
-      vv?.removeEventListener("resize", update);
-      vv?.removeEventListener("scroll", update);
-      window.removeEventListener("scroll", update);
+      document.removeEventListener("scroll", update, { capture: true });
+      window.visualViewport?.removeEventListener("resize", update);
+      window.removeEventListener("resize", update);
       el.style.position = "";
       el.style.bottom = "";
       el.style.top = "";
