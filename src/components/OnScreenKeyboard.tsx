@@ -80,6 +80,22 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
   const [hidden, setHidden] = useState(false);
   const keyboardRef = useRef<HTMLDivElement>(null);
 
+  // A position:fixed container appended directly to <body> that acts as the
+  // portal target. Being fixed, it anchors to the viewport bottom without
+  // contributing to the document scroll height (which would cause infinite scroll
+  // when position:absolute + scroll tracking is used on inner-div-scrolling browsers).
+  const [portalContainer] = useState<HTMLDivElement | null>(() => {
+    if (typeof document === "undefined") return null;
+    const el = document.createElement("div");
+    el.style.cssText = "position:fixed;bottom:0;left:0;right:0;z-index:1000;pointer-events:none";
+    document.body.appendChild(el);
+    return el;
+  });
+  useEffect(() => {
+    return () => { portalContainer && document.body.contains(portalContainer) && document.body.removeChild(portalContainer); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const show = isMobile && target !== null && !hidden;
 
   // Close keyboard on browser back/forward navigation.
@@ -107,42 +123,6 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     return () => { document.body.style.overscrollBehaviorY = ""; };
   }, [show]);
 
-  // On WebKit tablet browsers the page scrolls via an inner element, not the
-  // window, so window.scrollY is always 0 and position:fixed drifts. We
-  // switch to position:absolute and pin the keyboard to the visual-viewport
-  // bottom using window.innerHeight (which correctly excludes the browser
-  // chrome and updates when the URL bar shows/hides). Direct DOM writes
-  // bypass React so there is no render lag.
-  useEffect(() => {
-    if (!show || !keyboardRef.current) return;
-    const el = keyboardRef.current;
-
-    const update = () => {
-      const h = el.offsetHeight;
-      if (!h) return;
-      // window.scrollY = 0 for inner-div scrolling; correct for window scrolling.
-      // window.innerHeight = visual viewport height, auto-excludes URL bar.
-      const top = window.scrollY + window.innerHeight - h;
-      el.style.position = "absolute";
-      el.style.bottom = "auto";
-      el.style.top = `${top}px`;
-    };
-
-    update();
-    // capture:true catches scroll on any inner element, not just the window.
-    document.addEventListener("scroll", update, { passive: true, capture: true });
-    window.visualViewport?.addEventListener("resize", update);
-    window.addEventListener("resize", update, { passive: true });
-
-    return () => {
-      document.removeEventListener("scroll", update, { capture: true });
-      window.visualViewport?.removeEventListener("resize", update);
-      window.removeEventListener("resize", update);
-      el.style.position = "";
-      el.style.bottom = "";
-      el.style.top = "";
-    };
-  }, [show]);
 
   // When the keyboard opens or the target changes, scroll the page just enough
   // to bring the active input above the keyboard.
@@ -211,12 +191,12 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     <KeyboardCtx.Provider value={ctx}>
       {children}
       {show &&
-        typeof document !== "undefined" &&
+        portalContainer &&
         createPortal(
           <div
             ref={keyboardRef}
-            className="fixed inset-x-0 bottom-0 z-[1000] border-t border-border bg-card px-2 pt-2 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
+            className="border-t border-border bg-card px-2 pt-2 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)", pointerEvents: "auto" }}
             onMouseDown={(e) => e.preventDefault()}
             onPointerDown={(e) => e.preventDefault()}
             onTouchStart={(e) => e.preventDefault()}
@@ -272,7 +252,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
               </div>
             </div>
           </div>,
-          document.body,
+          portalContainer
         )}
     </KeyboardCtx.Provider>
   );
