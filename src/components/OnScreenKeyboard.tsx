@@ -80,22 +80,6 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
   const [hidden, setHidden] = useState(false);
   const keyboardRef = useRef<HTMLDivElement>(null);
 
-  // A position:fixed container appended directly to <body> that acts as the
-  // portal target. Being fixed, it anchors to the viewport bottom without
-  // contributing to the document scroll height (which would cause infinite scroll
-  // when position:absolute + scroll tracking is used on inner-div-scrolling browsers).
-  const [portalContainer] = useState<HTMLDivElement | null>(() => {
-    if (typeof document === "undefined") return null;
-    const el = document.createElement("div");
-    el.style.cssText = "position:fixed;bottom:0;left:0;right:0;z-index:1000;pointer-events:none";
-    document.body.appendChild(el);
-    return el;
-  });
-  useEffect(() => {
-    return () => { portalContainer && document.body.contains(portalContainer) && document.body.removeChild(portalContainer); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const show = isMobile && target !== null && !hidden;
 
   // Close keyboard on browser back/forward navigation.
@@ -115,12 +99,35 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     };
   }, [target]);
 
-  // Disable overscroll-bounce while the keyboard is visible so iOS doesn't
-  // rubber-band-scroll the fixed keyboard away from the bottom of the screen.
+  // Disable overscroll-bounce while the keyboard is visible.
   useEffect(() => {
     if (!show) return;
     document.body.style.overscrollBehaviorY = "none";
     return () => { document.body.style.overscrollBehaviorY = ""; };
+  }, [show]);
+
+  // Pin keyboard to the visual viewport bottom using transform instead of
+  // updating `top`, so layout position stays at top:0 and never contributes
+  // to document scroll height (which would cause infinite scroll).
+  useEffect(() => {
+    if (!show || !keyboardRef.current) return;
+    const el = keyboardRef.current;
+    const update = () => {
+      const h = el.offsetHeight;
+      if (!h) return;
+      const translateY = window.scrollY + window.innerHeight - h;
+      el.style.transform = `translateY(${translateY}px)`;
+    };
+    update();
+    document.addEventListener("scroll", update, { passive: true, capture: true });
+    window.visualViewport?.addEventListener("resize", update);
+    window.addEventListener("resize", update, { passive: true });
+    return () => {
+      document.removeEventListener("scroll", update, { capture: true });
+      window.visualViewport?.removeEventListener("resize", update);
+      window.removeEventListener("resize", update);
+      el.style.transform = "";
+    };
   }, [show]);
 
 
@@ -191,12 +198,12 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
     <KeyboardCtx.Provider value={ctx}>
       {children}
       {show &&
-        portalContainer &&
+        typeof document !== "undefined" &&
         createPortal(
           <div
             ref={keyboardRef}
-            className="border-t border-border bg-card px-2 pt-2 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)", pointerEvents: "auto" }}
+            className="absolute inset-x-0 top-0 z-[1000] border-t border-border bg-card px-2 pt-2 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.25)]"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.5rem)" }}
             onMouseDown={(e) => e.preventDefault()}
             onPointerDown={(e) => e.preventDefault()}
             onTouchStart={(e) => e.preventDefault()}
@@ -252,7 +259,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
               </div>
             </div>
           </div>,
-          portalContainer
+          document.body
         )}
     </KeyboardCtx.Provider>
   );
