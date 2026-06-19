@@ -17,7 +17,7 @@ import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n"
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { fmtDateShort } from "@/lib/date-format";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info, Search } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info, Search, BookOpen, TrendingUp, List } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -32,7 +32,47 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
 import AutoHeight from "embla-carousel-auto-height";
 import { useAuth } from "@/hooks/use-auth";
-import { getMyFacilityValue } from "@/lib/user-signup.functions";
+import { getMyFacilityValue, getMyProfile } from "@/lib/user-signup.functions";
+import { SpotlightTutorial, type TutorialStep } from "@/components/SpotlightTutorial";
+
+const CAT_TUTORIAL_STEPS: TutorialStep[] = [
+  {
+    Icon: BookOpen,
+    title: "Welcome to this category",
+    body: "Each category contains a set of learning resources — articles, videos, audio, and more. Here's a quick look at how it works.",
+    targetId: null,
+  },
+  {
+    Icon: TrendingUp,
+    title: "Your progress",
+    body: "This bar tracks how many items you've completed in this category. It updates as you work through the content.",
+    targetId: "cat-progress",
+  },
+  {
+    Icon: List,
+    title: "Learning resources",
+    body: "Each row is one resource. Tap or click to open it — videos and audio play inline, PDFs open in a viewer, and links open in a new tab.",
+    targetId: "cat-first-item",
+  },
+  {
+    Icon: CheckCircle2,
+    title: "Mark as complete",
+    body: "Use the status button on the right of each item to mark it as read, watched, or listened to. Your progress updates automatically.",
+    targetId: "cat-first-actions",
+  },
+  {
+    Icon: Bookmark,
+    title: "Save for later",
+    body: "Tap the bookmark icon to save any item to your Saved list on the dashboard.",
+    targetId: "cat-first-bookmark",
+  },
+  {
+    Icon: ThumbsUp,
+    title: "Rate resources",
+    body: "After marking an item as complete, a thumbs up / thumbs down appears so you can rate whether it was helpful. Your ratings help improve the library.",
+    targetId: null,
+  },
+];
 import { listFacilities } from "@/lib/facilities.functions";
 import { useContentEngagement, type EngagementRecord } from "@/hooks/use-content-engagement";
 import { useBookmarks } from "@/hooks/use-bookmarks";
@@ -115,6 +155,30 @@ function CategoryPage() {
   const { myRatings, rate } = useRatings();
   const { check: checkAchievements } = useAchievements();
   const queryClient = useQueryClient();
+  const fetchProfile = useServerFn(getMyProfile);
+  const profileQuery = useQuery({
+    queryKey: QK.myProfile,
+    staleTime: Infinity,
+    enabled: !!user?.id && !isAdmin && !isFacilityUser,
+    queryFn: () => fetchProfile(),
+  });
+
+  const showCatTutorial =
+    !!user && !isAdmin && !isFacilityUser && !isTester &&
+    profileQuery.data !== undefined &&
+    (profileQuery.data?.profile as any)?.category_tutorial_seen === false;
+
+  const handleCatTutorialDone = async () => {
+    if (!user?.id) return;
+    try {
+      await (supabase as any).from("user_profiles").update({ category_tutorial_seen: true }).eq("user_id", user.id);
+      queryClient.setQueryData(QK.myProfile, (old: any) => ({
+        ...old,
+        profile: old?.profile ? { ...old.profile, category_tutorial_seen: true } : null,
+      }));
+    } catch {}
+  };
+
   const fetchFacilityValue = useServerFn(getMyFacilityValue);
   const fetchFacilitiesList = useServerFn(listFacilities);
   const { data: facilitiesData } = useQuery({
@@ -518,6 +582,9 @@ function CategoryPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
+      {showCatTutorial && (
+        <SpotlightTutorial steps={CAT_TUTORIAL_STEPS} onComplete={handleCatTutorialDone} />
+      )}
 
       {isLoading && (
         <div className="flex-1 mx-auto max-w-5xl w-full px-6 py-12 animate-pulse">
@@ -568,7 +635,7 @@ function CategoryPage() {
                     const trackableItems = visibleItems.filter((it) => !(it as any).exempt_from_progress);
                     const completedCount = trackableItems.filter((it) => readSet.has(it.id)).length;
                     return (
-                      <div className="mt-6 max-w-md space-y-1.5">
+                      <div id="cat-progress" className="mt-6 max-w-md space-y-1.5">
                         <Progress
                           value={weightedCompletionPct(trackableItems, readSet, normEngMap)}
                           className="h-2"
@@ -646,7 +713,7 @@ function CategoryPage() {
                 </p>
               ) : (
                 <ul className="divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden">
-                  {displayItems.map((item) => {
+                  {displayItems.map((item, itemIdx) => {
                     const title = pickLang(lang, item.title, item.title_es);
                     const description = pickLang(lang, item.description, item.description_es);
                     const source = pickLang(lang, item.source, item.source_es);
@@ -723,7 +790,7 @@ function CategoryPage() {
                     const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 && !readSet.has(item.id) && !seenSet.has(item.id) && !engagementMap.has(item.id);
 
                     return (
-                      <li key={item.id} id={`item-${item.id}`} className="relative scroll-mt-24 flex flex-col hover:bg-[var(--color-secondary)]/60 transition-colors">
+                      <li key={item.id} id={itemIdx === 0 ? "cat-first-item" : `item-${item.id}`} className="relative scroll-mt-24 flex flex-col hover:bg-[var(--color-secondary)]/60 transition-colors">
                         {highlightedId === item.id && (
                           <span
                             aria-hidden
@@ -781,7 +848,7 @@ function CategoryPage() {
                             const isBookmarked = bookmarkIds.has(item.id);
                             const myRating = myRatings.get(item.id) ?? null;
                             return (
-                              <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <div id={itemIdx === 0 ? "cat-first-actions" : undefined} className="flex items-center gap-1.5 flex-shrink-0">
                                 {isRead && <div className="inline-flex items-center rounded-[8px] border border-input overflow-hidden">
                                   <TooltipProvider delayDuration={150}>
                                     <Tooltip>
@@ -820,6 +887,7 @@ function CategoryPage() {
                                     <TooltipTrigger asChild>
                                       <button
                                         type="button"
+                                        id={itemIdx === 0 ? "cat-first-bookmark" : undefined}
                                         aria-label={isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
                                         onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleBookmark(item.id); }}
                                         className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"

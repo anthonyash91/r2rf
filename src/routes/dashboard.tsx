@@ -47,6 +47,7 @@ import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/Se
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight, ClipboardCheck } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { SpotlightTutorial, type TutorialStep } from "@/components/SpotlightTutorial";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -421,6 +422,78 @@ function DashboardPage() {
   });
 
 
+  const handleDashTutorialDone = async () => {
+    if (!user?.id) return;
+    try {
+      await (supabase as any).from("user_profiles").update({ dashboard_tutorial_seen: true }).eq("user_id", user.id);
+      queryClient.setQueryData(QK.myProfile, (old: any) => ({
+        ...old,
+        profile: old?.profile ? { ...old.profile, dashboard_tutorial_seen: true } : null,
+      }));
+    } catch {}
+  };
+
+  const [accordionOpenId, setAccordionOpenId] = useState<string | null>(null);
+
+  const dashTutorialSteps: TutorialStep[] = useMemo(() => [
+    {
+      Icon: BookOpen,
+      title: "Welcome to your dashboard",
+      body: "This is your personal learning hub. Here you can track your progress, pick up where you left off, and explore all available resources.",
+      targetId: null,
+    },
+    {
+      Icon: CheckCircle2,
+      title: "Your overall progress",
+      body: "This card shows how much of the full library you've completed — across every category.",
+      targetId: "dash-progress-card",
+    },
+    {
+      Icon: Trophy,
+      title: "Key stats",
+      body: "Track items completed, categories finished, total time spent, and your daily learning streak.",
+      targetId: "dash-stats-grid",
+    },
+    {
+      Icon: Compass,
+      title: "Navigation tabs",
+      body: "Use these tabs to jump between your category progress, saved items, achievements, and account settings.",
+      targetId: "dash-tab-bar",
+    },
+    {
+      Icon: BookOpen,
+      title: "Category progress",
+      body: "Each row is a learning category. Tap one to expand it and see the individual resources inside.",
+      targetId: "dash-first-cat",
+      onEnter: () => {
+        const firstId = categoriesQuery.data?.[0]?.id ?? null;
+        setAccordionOpenId(firstId);
+      },
+    },
+    {
+      Icon: Bookmark,
+      title: "Saved items",
+      body: "Any resource you bookmark from a category page appears here so you can find it quickly later.",
+      targetId: "dash-saved-content",
+      onEnter: () => setActiveTab("saved"),
+    },
+    {
+      Icon: Trophy,
+      title: "Achievements",
+      body: "Earn badges as you make progress — completing categories, building a streak, and reaching time milestones.",
+      targetId: "dash-achievements-content",
+      onEnter: () => setActiveTab("achievements"),
+    },
+    {
+      Icon: UserIcon,
+      title: "Account settings",
+      body: "View your profile, update your security questions, or change your password here.",
+      targetId: "dash-account-content",
+      onEnter: () => setActiveTab("account"),
+    },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [categoriesQuery.data]);
+
   async function handleSave() {
     if (pending.length < 2) {
       toast.error(t("security.needTwo"));
@@ -449,6 +522,12 @@ function DashboardPage() {
   const { tab: searchTab } = Route.useSearch();
   const [activeTab, setActiveTab] = useState<string>(searchTab ?? "categories");
   const effectiveTab = mustSetup ? "account" : activeTab;
+
+  const showDashTutorial =
+    !!user && !isAdmin && !isTester &&
+    effectiveTab === "categories" &&
+    !!categoriesQuery.data && !!progressQuery.data &&
+    (profile as any)?.dashboard_tutorial_seen === false;
 
   const tabContainerRef = useRef<HTMLDivElement | null>(null);
   const tabMeasureRef = useRef<HTMLUListElement | null>(null);
@@ -643,6 +722,9 @@ function DashboardPage() {
         </DialogContent>
       </Dialog>
       <SiteHeader />
+      {showDashTutorial && (
+        <SpotlightTutorial steps={dashTutorialSteps} onComplete={handleDashTutorialDone} />
+      )}
 
       <SiteMessageBanner kind="home" />
       <SiteMessageBanner kind="facility" facilityValue={userFacility ?? undefined} />
@@ -673,7 +755,7 @@ function DashboardPage() {
                 </li>
               </ul>
               {/* Visible tab row */}
-              <ul className="flex w-full items-center justify-center gap-1 rounded-lg border border-border bg-muted/40 p-2 text-muted-foreground">
+              <ul id="dash-tab-bar" className="flex w-full items-center justify-center gap-1 rounded-lg border border-border bg-muted/40 p-2 text-muted-foreground">
                 {primaryTabs.map((tab) => (
                   <li key={tab.value} className="shrink-0">
                     <button
@@ -823,7 +905,7 @@ function DashboardPage() {
                   ];
                   return (
                     <>
-                      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6 flex items-center gap-6">
+                      <div id="dash-progress-card" className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6 flex items-center gap-6">
                         <CircleProgress value={pctAll} size={96} stroke={8} />
                         <div className="min-w-0">
                           <h2 className="font-display text-xl sm:text-2xl font-semibold">{t("dashboard.overallProgress")}</h2>
@@ -833,7 +915,7 @@ function DashboardPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
+                      <div id="dash-stats-grid" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
                         {stats.map((s) => (
                           <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
                         ))}
@@ -984,6 +1066,8 @@ function DashboardPage() {
                   lang={lang}
                   t={t}
                   bookmarkIds={bookmarkIds}
+                  openId={accordionOpenId}
+                  onOpenIdChange={setAccordionOpenId}
                 />
 
               </>
@@ -991,7 +1075,7 @@ function DashboardPage() {
           </TabsContent>
 
 
-          <TabsContent value="saved" className="mt-6">
+          <TabsContent value="saved" className="mt-6" id="dash-saved-content">
             {bookmarkedItemsQuery.isLoading ? (
               <p className="text-sm text-muted-foreground">{t("dashboard.loading")}</p>
             ) : (bookmarkedItemsQuery.data?.items ?? []).length === 0 ? (
@@ -1059,7 +1143,7 @@ function DashboardPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="achievements" className="mt-6">
+          <TabsContent value="achievements" className="mt-6" id="dash-achievements-content">
             {(() => {
               const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
                 BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
@@ -1136,7 +1220,7 @@ function DashboardPage() {
             })()}
           </TabsContent>
 
-          <TabsContent value="account" className="mt-6 space-y-6">
+          <TabsContent value="account" className="mt-6 space-y-6" id="dash-account-content">
             <div className="rounded-2xl border border-border bg-card p-6">
               {isLoading ? (
                 <p className="text-muted-foreground">{t("dashboard.loading")}</p>
@@ -1286,6 +1370,8 @@ function CategoryAccordion({
   lang,
   t,
   bookmarkIds,
+  openId: controlledOpenId,
+  onOpenIdChange,
 }: {
   categories: Category[];
   progress: any;
@@ -1293,14 +1379,22 @@ function CategoryAccordion({
   lang: "en" | "es";
   t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
   bookmarkIds: Set<string>;
+  openId?: string | null;
+  onOpenIdChange?: (id: string | null) => void;
 }) {
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [internalOpenId, setInternalOpenId] = useState<string | null>(null);
+  const openId = controlledOpenId !== undefined ? controlledOpenId : internalOpenId;
+  const setOpenId = (updater: (cur: string | null) => string | null) => {
+    const next = updater(openId);
+    if (onOpenIdChange) onOpenIdChange(next);
+    else setInternalOpenId(next);
+  };
   const engagementMap = progress?.engagementMap ?? new Map();
   const readAtMap = progress?.readAtMap ?? new Map<string, string>();
   const ratingsMap: Map<string, 1 | -1> = progress?.ratingsMap ?? new Map();
   return (
     <div className="flex flex-col [&>section]:rounded-none [&>section:first-child]:rounded-t-2xl [&>section:last-child]:rounded-b-2xl [&>section:not(:first-child)]:-mt-px">
-      {categories.map((c) => {
+      {categories.map((c, idx) => {
         const total = progress?.totals.get(c.id) ?? 0;
         const read = progress?.reads.get(c.id) ?? 0;
         const items = progress?.itemsByCat.get(c.id) ?? [];
@@ -1310,6 +1404,7 @@ function CategoryAccordion({
         return (
           <CategoryProgressSection
             key={c.id}
+            id={idx === 0 ? "dash-first-cat" : undefined}
             category={c}
             items={items}
             readSet={readSet}
@@ -1335,6 +1430,7 @@ function CategoryAccordion({
 }
 
 function CategoryProgressSection({
+  id,
   category,
   items,
   readSet,
@@ -1353,6 +1449,7 @@ function CategoryProgressSection({
   dimmed,
   onToggle,
 }: {
+  id?: string;
   category: Category;
   items: CatItem[];
   readSet: Set<string>;
@@ -1392,7 +1489,7 @@ function CategoryProgressSection({
   }, [isOpen]);
 
   return (
-    <section ref={sectionRef} className={`scroll-mt-24 rounded-2xl bg-[#fffdf8] overflow-hidden transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "border-2 border-[var(--color-accent)]" : "border border-border"}`}>
+    <section id={id} ref={sectionRef} className={`scroll-mt-24 rounded-2xl bg-[#fffdf8] overflow-hidden transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "border-2 border-[var(--color-accent)]" : "border border-border"}`}>
       <button
         type="button"
         onClick={onToggle}

@@ -261,12 +261,12 @@ export const getMyProfile = createServerFn({ method: "GET" }).handler(async () =
   if (!userRes?.user) return { profile: null };
   const { data: profile } = await supabaseAdmin
     .from("user_profiles")
-    .select("username, facility, created_at, first_name, last_name")
+    .select("username, facility, created_at, first_name, last_name, dashboard_tutorial_seen, category_tutorial_seen")
     .eq("user_id", userRes.user.id)
     .maybeSingle();
   return {
     profile: profile
-      ? { ...profile, email: userRes.user.email ?? null }
+      ? { ...(profile as any), email: userRes.user.email ?? null }
       : null,
   };
 });
