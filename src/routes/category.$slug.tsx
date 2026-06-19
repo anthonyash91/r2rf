@@ -1173,7 +1173,7 @@ function CategoryPage() {
                                   key={other.id}
                                   to="/category/$slug"
                                   params={{ slug: other.slug }}
-                                  style={{ "--card-border": `color-mix(in oklab, ${other.icon_color || "var(--color-accent)"} 35%, transparent)` } as React.CSSProperties}
+                                  style={{ "--card-color": other.icon_color || "var(--color-accent)", "--card-border": `color-mix(in oklab, ${other.icon_color || "var(--color-accent)"} 35%, transparent)` } as React.CSSProperties}
                                   className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--card-border)] hover:shadow-[var(--shadow-card)]"
                                 >
                                   <CategoryIcon
@@ -1187,7 +1187,7 @@ function CategoryPage() {
                                     </h3>
                                     <p className="mt-0.5 text-xs text-muted-foreground truncate">{pickLang(lang, other.tagline, other.tagline_es)}</p>
                                   </div>
-                                  <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--color-accent)] flex-shrink-0" />
+                                  <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--card-color)] flex-shrink-0" />
                                 </Link>
                               ))}
                             </div>
