@@ -4,6 +4,7 @@ import { Search, Phone, Mail, Globe, MapPin, X, ExternalLink } from "lucide-reac
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang } from "@/lib/i18n";
 import type { TranslationKey } from "@/lib/i18n";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/kentucky")({
   head: () => ({
@@ -1771,26 +1772,28 @@ function KentuckyPage() {
               className="w-full rounded-md border border-input bg-background pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as Category | "")}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-56"
-          >
-            <option value="">{t("ky.allCategories")}</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{t(CATEGORY_KEY[c])}</option>
-            ))}
-          </select>
-          <select
-            value={region}
-            onChange={(e) => setRegion(e.target.value as Region | "")}
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring sm:w-60"
-          >
-            <option value="">{t("ky.allRegions")}</option>
-            {REGIONS.map((r) => (
-              <option key={r} value={r}>{t(REGION_KEY[r])}</option>
-            ))}
-          </select>
+          <Select value={category} onValueChange={(v) => setCategory(v === "__all__" ? "" : v as Category)}>
+            <SelectTrigger className="sm:w-56">
+              <SelectValue placeholder={t("ky.allCategories")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{t("ky.allCategories")}</SelectItem>
+              {CATEGORIES.map((c) => (
+                <SelectItem key={c} value={c}>{t(CATEGORY_KEY[c])}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={region} onValueChange={(v) => setRegion(v === "__all__" ? "" : v as Region)}>
+            <SelectTrigger className="sm:w-60">
+              <SelectValue placeholder={t("ky.allRegions")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">{t("ky.allRegions")}</SelectItem>
+              {REGIONS.map((r) => (
+                <SelectItem key={r} value={r}>{t(REGION_KEY[r])}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {hasFilters && (
             <button
               type="button"
@@ -1805,7 +1808,7 @@ function KentuckyPage() {
       </div>
 
       {/* Results */}
-      <main className="mx-auto max-w-6xl w-full px-4 py-8 flex-1">
+      <main className="w-full px-4 sm:px-6 lg:px-8 py-8 flex-1">
         <p className="text-sm text-muted-foreground mb-6">
           {filtered.length === RESOURCES.length
             ? t("ky.showingAll", { count: RESOURCES.length })
@@ -1828,9 +1831,11 @@ function KentuckyPage() {
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6">
           {filtered.map((r) => (
-            <ResourceCard key={r.id} resource={r} />
+            <div key={r.id} className="break-inside-avoid mb-6">
+              <ResourceCard resource={r} />
+            </div>
           ))}
         </div>
       </main>
