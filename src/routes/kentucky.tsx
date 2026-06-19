@@ -2033,7 +2033,493 @@ const RESOURCES: Resource[] = [
     website: "https://lifeskills-inc.org",
     notes: "24/7 Crisis Line: (270) 901-5151",
   },
+
+  // ── EMPLOYMENT — ADDITIONAL KENTUCKY CAREER CENTERS ────────────────────────────
+  {
+    id: 500,
+    name: "Kentucky Career Center — Paducah / West Kentucky",
+    category: "Employment",
+    description: "American Job Center serving western Kentucky's Purchase Area. Free job search, resume workshops, career counseling, skills training funding, and employer connections for individuals with criminal records. Operated through the West Kentucky Workforce Development Board.",
+    description_es: "Centro de Trabajo Americano que atiende el Área de Purchase en el oeste de Kentucky. Búsqueda de empleo gratuita, talleres de currículum, orientación profesional, financiamiento de capacitación y conexiones con empleadores para personas con antecedentes penales. Operado a través del West Kentucky Workforce Development Board.",
+    address: "1530 Lone Oak Road",
+    city: "Paducah",
+    region: "Paducah / Western Kentucky",
+    phone: "(270) 575-7240",
+    website: "https://wkwdb.com",
+  },
+  {
+    id: 501,
+    name: "Kentucky Career Center — Owensboro / Green River",
+    category: "Employment",
+    description: "American Job Center serving Daviess County and six surrounding Green River counties. Free job search, skills assessment, resume assistance, career coaching, and training referrals for individuals with barriers including criminal history. Operated through the Green River Workforce Development Board.",
+    description_es: "Centro de Trabajo Americano que atiende el Condado de Daviess y seis condados circundantes del Río Verde. Búsqueda de empleo gratuita, evaluación de habilidades, asistencia con currículum, orientación profesional y referencias de capacitación para personas con antecedentes penales.",
+    city: "Owensboro",
+    region: "Owensboro / Daviess County",
+    phone: "(270) 687-7244",
+    website: "https://greenriverworkforce.com",
+  },
+  {
+    id: 502,
+    name: "Kentucky Career Center — Pikeville (EKCEP)",
+    category: "Employment",
+    description: "American Job Center in Pike County operated through EKCEP. Provides free job search, resume help, career counseling, training funding, and employer connections with a recovery-informed lens for individuals with justice involvement. Same organization as the SITE program (id 107) with a dedicated Pikeville location serving Pike and surrounding counties.",
+    description_es: "Centro de Trabajo Americano en el Condado de Pike operado a través de EKCEP. Proporciona búsqueda de empleo gratuita, ayuda con currículum, orientación profesional, financiamiento de capacitación y conexiones con empleadores con un enfoque informado en recuperación.",
+    address: "126 Town Mountain Road",
+    city: "Pikeville",
+    region: "Eastern Kentucky",
+    phone: "(606) 433-7675",
+    website: "https://ekcep.org",
+  },
+  {
+    id: 503,
+    name: "Kentucky Career Center — Somerset / Lake Cumberland",
+    category: "Employment",
+    description: "American Job Center serving Pulaski County and the Lake Cumberland region. Free job seeker services including job search, resume assistance, career assessment, and training referrals. Assists individuals with criminal records navigating employment barriers in the south-central Kentucky area.",
+    description_es: "Centro de Trabajo Americano que atiende el Condado de Pulaski y la región de Lake Cumberland. Servicios gratuitos para buscadores de empleo que incluyen búsqueda de empleo, asistencia con currículum, evaluación profesional y referencias de capacitación.",
+    city: "Somerset",
+    region: "Eastern Kentucky",
+    phone: "(606) 677-2100",
+    website: "https://kcc.ky.gov",
+  },
+  {
+    id: 504,
+    name: "Kentucky Career Center — Hopkinsville / Pennyrile",
+    category: "Employment",
+    description: "American Job Center for Christian County and nine surrounding Pennyrile region counties. Free career services including job readiness workshops, skills training funding, resume help, and second-chance employer connections. Operated through the Pennyrile Workforce Investment Board.",
+    description_es: "Centro de Trabajo Americano para el Condado de Christian y nueve condados circundantes de la región de Pennyrile. Servicios profesionales gratuitos que incluyen talleres de preparación laboral, financiamiento de capacitación en habilidades, ayuda con currículum y conexiones con empleadores de segunda oportunidad.",
+    address: "3715 Fort Campbell Blvd",
+    city: "Hopkinsville",
+    region: "Paducah / Western Kentucky",
+    phone: "(270) 707-0550",
+    website: "https://kcc.ky.gov",
+  },
+  {
+    id: 505,
+    name: "Kentucky Career Center — Corbin / Cumberland Valley",
+    category: "Employment",
+    description: "American Job Center serving Laurel County and the Cumberland Valley region of southeastern Kentucky. Free job search, resume assistance, career coaching, and skills training referrals. Serves individuals with criminal records across Laurel, Knox, Bell, Whitley, Harlan, Clay, and surrounding counties.",
+    description_es: "Centro de Trabajo Americano que atiende el Condado de Laurel y la región del Valle de Cumberland en el sureste de Kentucky. Búsqueda de empleo gratuita, asistencia con currículum, orientación profesional y referencias de capacitación en habilidades.",
+    city: "Corbin",
+    region: "Eastern Kentucky",
+    website: "https://kcc.ky.gov",
+    notes: "Locate the nearest KCC office at kcc.ky.gov",
+  },
+
+  // ── HEALTHCARE — REGIONAL CMHCs (GAPS FILLED) ──────────────────────────────────
+  {
+    id: 506,
+    name: "Four Rivers Behavioral Health — Paducah",
+    category: "Healthcare",
+    description: "Community Mental Health Center for the eight Purchase Area counties of western Kentucky. Provides outpatient mental health therapy, psychiatric services, substance use treatment, crisis intervention, and in-jail mental health screening and linkage at McCracken County Regional Jail and surrounding county detention centers. 24/7 crisis line.",
+    description_es: "Centro Comunitario de Salud Mental para los ocho condados del Área de Purchase en el oeste de Kentucky. Proporciona terapia ambulatoria de salud mental, servicios psiquiátricos, tratamiento de uso de sustancias, intervención en crisis y evaluación de salud mental en cárceles. Línea de crisis las 24 horas.",
+    city: "Paducah",
+    region: "Paducah / Western Kentucky",
+    phone: "(270) 442-7121",
+    website: "https://4rbh.org",
+    notes: "24/7 Crisis Line: (270) 442-7121",
+  },
+  {
+    id: 507,
+    name: "River Valley Behavioral Health — Owensboro",
+    category: "Healthcare",
+    description: "Community Mental Health Center for Daviess County and six surrounding Green River region counties. Provides outpatient mental health therapy, psychiatric evaluation and medication management, substance use treatment, and crisis services. Offers in-jail mental health linkage at the Daviess County Detention Center and Henderson County Detention Center. 24/7 crisis line.",
+    description_es: "Centro Comunitario de Salud Mental para el Condado de Daviess y seis condados circundantes de la región del Río Verde. Proporciona terapia ambulatoria de salud mental, evaluación psiquiátrica, tratamiento de uso de sustancias y servicios de crisis. Ofrece vinculación de salud mental en la cárcel del Condado de Daviess. Línea de crisis las 24 horas.",
+    city: "Owensboro",
+    region: "Owensboro / Daviess County",
+    phone: "(270) 689-6500",
+    website: "https://rvbh.com",
+    notes: "24/7 Crisis Line: (270) 689-6500",
+  },
+  {
+    id: 508,
+    name: "Adanta Group — Somerset (South-Central Kentucky)",
+    category: "Healthcare",
+    description: "Community Mental Health Center for Adair, Casey, Clinton, Cumberland, McCreary, Pulaski, Russell, and Wayne counties in south-central Kentucky. Provides behavioral health outpatient services, psychiatric care, substance use treatment, and crisis intervention. Offers mental health linkage for individuals leaving the Pulaski County Detention Center and surrounding county jails. Multiple county offices — call for the location nearest to you.",
+    description_es: "Centro Comunitario de Salud Mental para los condados de Adair, Casey, Clinton, Cumberland, McCreary, Pulaski, Russell y Wayne en el centro-sur de Kentucky. Proporciona servicios ambulatorios de salud conductual, atención psiquiátrica, tratamiento de uso de sustancias e intervención en crisis. Múltiples oficinas en el condado.",
+    city: "Somerset",
+    region: "Eastern Kentucky",
+    phone: "(606) 679-1881",
+    website: "https://adanta.com",
+    notes: "24/7 Crisis: (606) 679-1881 | Multiple county offices — call for location nearest to you",
+  },
+
+  // ── PROBATION & PAROLE — MISSING DISTRICTS ─────────────────────────────────────
+  {
+    id: 509,
+    name: "Probation & Parole — Owensboro (District 6)",
+    category: "Probation & Parole",
+    description: "District 6 probation and parole office serving Daviess, Ohio, Hancock, McLean, and Breckinridge counties in western Kentucky.",
+    description_es: "Oficina de libertad condicional y vigilada del Distrito 6 que atiende los condados de Daviess, Ohio, Hancock, McLean y Breckinridge en el oeste de Kentucky.",
+    city: "Owensboro",
+    region: "Owensboro / Daviess County",
+    website: "https://corrections.ky.gov/Probation-and-Parole",
+    notes: "Call KY DOC central line (502) 782-2277 to be directed to the Owensboro district office",
+  },
+  {
+    id: 510,
+    name: "Probation & Parole — Ashland (District 8)",
+    category: "Probation & Parole",
+    description: "District 8 probation and parole office serving Boyd, Carter, Elliott, and Greenup counties in northeastern Kentucky.",
+    description_es: "Oficina de libertad condicional y vigilada del Distrito 8 que atiende los condados de Boyd, Carter, Elliott y Greenup en el noreste de Kentucky.",
+    city: "Ashland",
+    region: "Ashland / Boyd County",
+    website: "https://corrections.ky.gov/Probation-and-Parole",
+    notes: "Call KY DOC central line (502) 782-2277 to be directed to the Ashland district office",
+  },
+
+  // ── BASIC NEEDS — COMMUNITY ACTION AGENCIES (GAPS FILLED) ─────────────────────
+  {
+    id: 511,
+    name: "Pennyrile Allied Community Services (PACS)",
+    category: "Basic Needs",
+    description: "Community action agency serving nine counties in western and south-central Kentucky. Provides LIHEAP utility assistance, emergency financial aid, food programs, housing support, weatherization, Head Start, and case management for low-income individuals — including those leaving county jails in Christian, Hopkins, Muhlenberg, and surrounding counties.",
+    description_es: "Agencia de acción comunitaria que atiende nueve condados en el oeste y el centro-sur de Kentucky. Proporciona asistencia de servicios públicos LIHEAP, ayuda financiera de emergencia, programas de alimentos, apoyo de vivienda, climatización, Head Start y gestión de casos para personas de bajos ingresos.",
+    address: "312 E. 9th Street",
+    city: "Hopkinsville",
+    region: "Paducah / Western Kentucky",
+    phone: "(270) 886-5328",
+    website: "https://pennyrileallied.org",
+  },
+  {
+    id: 512,
+    name: "Purchase Area Development District (PADD)",
+    category: "Basic Needs",
+    description: "Regional planning and community services organization for eight western Kentucky counties. Administers LIHEAP energy assistance, housing programs, senior services, and transportation coordination. Can connect individuals leaving McCracken County Regional Jail and surrounding county detention centers with available local resources.",
+    description_es: "Organización regional de planificación y servicios comunitarios para ocho condados del oeste de Kentucky. Administra asistencia energética LIHEAP, programas de vivienda, servicios para personas mayores y coordinación de transporte. Puede conectar a las personas que salen de las cárceles del condado con recursos del área.",
+    address: "1002 Medical Drive",
+    city: "Mayfield",
+    region: "Paducah / Western Kentucky",
+    phone: "(270) 247-7171",
+    website: "https://purchaseadd.org",
+  },
+  {
+    id: 513,
+    name: "Green River Area Development District (GRADD)",
+    category: "Basic Needs",
+    description: "Regional planning and community services agency for seven western Kentucky counties. Administers LIHEAP utility assistance, senior services, transportation, housing programs, and workforce development. Can connect individuals leaving the Daviess County Detention Center and surrounding jails with local resources.",
+    description_es: "Agencia regional de planificación y servicios comunitarios para siete condados del oeste de Kentucky. Administra asistencia de servicios públicos LIHEAP, servicios para personas mayores, transporte, programas de vivienda y desarrollo de la fuerza laboral.",
+    address: "300 GRADD Way",
+    city: "Owensboro",
+    region: "Owensboro / Daviess County",
+    phone: "(270) 926-4433",
+    website: "https://gradd.com",
+  },
+  {
+    id: 514,
+    name: "Buffalo Trace Area Development District (BTADD)",
+    category: "Basic Needs",
+    description: "Regional planning and community services agency for six northeastern Kentucky counties: Bath, Bracken, Fleming, Mason, Nicholas, and Robertson. Provides LIHEAP utility assistance, housing programs, transportation, senior services, and emergency aid. Headquartered in Maysville (Mason County) and can help individuals leaving the Mason County Detention Center and surrounding jails navigate local resources.",
+    description_es: "Agencia regional de planificación y servicios comunitarios para seis condados del noreste de Kentucky: Bath, Bracken, Fleming, Mason, Nicholas y Robertson. Proporciona asistencia de servicios públicos LIHEAP, programas de vivienda, transporte, servicios para personas mayores y ayuda de emergencia.",
+    city: "Maysville",
+    region: "Ashland / Boyd County",
+    phone: "(606) 564-6894",
+    website: "https://btadd.com",
+  },
+  {
+    id: 515,
+    name: "Barren River Area Development District (BRADD)",
+    category: "Basic Needs",
+    description: "Regional planning and community services agency for eight south-central Kentucky counties. Administers LIHEAP energy assistance, senior and disability services, transportation coordination, housing programs, and workforce development. Serves rural communities in Barren, Butler, Edmonson, Hart, Logan, Metcalfe, Monroe, and Warren counties that may not have access to urban Bowling Green services.",
+    description_es: "Agencia regional de planificación y servicios comunitarios para ocho condados del centro-sur de Kentucky. Administra asistencia energética LIHEAP, servicios para personas mayores y con discapacidades, coordinación de transporte, programas de vivienda y desarrollo de la fuerza laboral.",
+    city: "Bowling Green",
+    region: "Bowling Green / Warren County",
+    phone: "(270) 781-2381",
+    website: "https://bradd.org",
+  },
+  {
+    id: 516,
+    name: "Catholic Charities Diocese of Owensboro",
+    category: "Basic Needs",
+    description: "Social services arm of the Catholic Diocese of Owensboro, covering 33 counties across western and south-central Kentucky — one of the largest nonprofit footprints in the region. Provides emergency food, clothing, utility assistance, housing support, and case management. Open to all regardless of faith. Serves counties across the Green River, Purchase, and Pennyrile regions.",
+    description_es: "Brazo de servicios sociales de la Diócesis Católica de Owensboro, que cubre 33 condados en el oeste y el centro-sur de Kentucky. Proporciona alimentos de emergencia, ropa, asistencia de servicios públicos, apoyo de vivienda y gestión de casos. Abierto a todos independientemente de la fe.",
+    city: "Owensboro",
+    region: "Owensboro / Daviess County",
+    phone: "(270) 683-6525",
+    website: "https://rcdowensboro.org/catholic-charities",
+  },
+
+  // ── EDUCATION — KCTCS ADULT EDUCATION (GAPS FILLED) ───────────────────────────
+  {
+    id: 517,
+    name: "Ashland Community & Technical College — Adult Education",
+    category: "Education",
+    description: "Free GED preparation and adult literacy classes for Boyd County and surrounding northeastern Kentucky counties. Part of the KCTCS statewide adult education network. Classes held in community and county jail settings. First-time GED test fees waived in Kentucky.",
+    description_es: "Clases gratuitas de preparación para el GED y alfabetización adulta para el Condado de Boyd y los condados circundantes del noreste de Kentucky. Parte de la red de educación para adultos de KCTCS. Las clases se imparten en entornos comunitarios y en cárceles del condado.",
+    city: "Ashland",
+    region: "Ashland / Boyd County",
+    phone: "(606) 326-2000",
+    website: "https://ashland.kctcs.edu",
+  },
+  {
+    id: 518,
+    name: "Big Sandy Community & Technical College — Adult Education",
+    category: "Education",
+    description: "Free GED preparation classes for Floyd, Johnson, Lawrence, Magoffin, Martin, and Pike counties in eastern Kentucky. Part of the KCTCS network. Offers GED instruction inside Big Sandy Regional Detention Center and Pike County Detention Center. First-time GED test fees waived.",
+    description_es: "Clases gratuitas de preparación para el GED para los condados de Floyd, Johnson, Lawrence, Magoffin, Martin y Pike en el este de Kentucky. Parte de la red KCTCS. Ofrece instrucción para el GED dentro del Centro de Detención Regional Big Sandy y el Centro de Detención del Condado de Pike.",
+    address: "One Bert T. Combs Drive",
+    city: "Prestonsburg",
+    region: "Eastern Kentucky",
+    phone: "(606) 886-3863",
+    website: "https://bigsandy.kctcs.edu",
+  },
+  {
+    id: 519,
+    name: "Somerset Community College — Adult Education",
+    category: "Education",
+    description: "Free GED preparation and adult education programs for Pulaski County and the Lake Cumberland region of south-central Kentucky. Part of the KCTCS statewide network. Serves adults in community settings and county jails. First-time GED test fees waived in Kentucky.",
+    description_es: "Programas gratuitos de preparación para el GED y educación para adultos para el Condado de Pulaski y la región de Lake Cumberland en el centro-sur de Kentucky. Parte de la red estatal de KCTCS. Atiende a adultos en entornos comunitarios y cárceles del condado.",
+    city: "Somerset",
+    region: "Eastern Kentucky",
+    phone: "(606) 679-8501",
+    website: "https://somerset.kctcs.edu",
+  },
+  {
+    id: 520,
+    name: "Owensboro Community & Technical College — Adult Education",
+    category: "Education",
+    description: "Free GED preparation and adult literacy programs for Daviess County and surrounding Green River counties. Part of the KCTCS statewide adult education network. Classes available in community locations and at the Daviess County Detention Center. First-time GED test fees waived.",
+    description_es: "Programas gratuitos de preparación para el GED y alfabetización adulta para el Condado de Daviess y los condados circundantes del Río Verde. Parte de la red estatal de educación para adultos de KCTCS. Clases disponibles en ubicaciones comunitarias y en la cárcel del Condado de Daviess.",
+    city: "Owensboro",
+    region: "Owensboro / Daviess County",
+    phone: "(270) 686-4400",
+    website: "https://owensboro.kctcs.edu",
+  },
+  {
+    id: 521,
+    name: "Madisonville Community College — Adult Education",
+    category: "Education",
+    description: "Free GED preparation and adult literacy classes for Hopkins County and surrounding western Kentucky counties. Part of the KCTCS statewide adult education network. Serves adults in community settings and those recently released from the Hopkins County Detention Center and Muhlenberg County Detention Center.",
+    description_es: "Clases gratuitas de preparación para el GED y alfabetización adulta para el Condado de Hopkins y los condados circundantes del oeste de Kentucky. Parte de la red estatal de educación para adultos de KCTCS.",
+    city: "Madisonville",
+    region: "Paducah / Western Kentucky",
+    phone: "(270) 821-2250",
+    website: "https://madisonville.kctcs.edu",
+  },
+  {
+    id: 522,
+    name: "Hazard Community & Technical College — Adult Education",
+    category: "Education",
+    description: "Free GED preparation and adult education for Perry County and the surrounding coalfields region of deep eastern Kentucky. Part of the KCTCS network. Offers GED instruction inside Perry County Detention Center and surrounding county jails. Covers Perry, Breathitt, Knott, Leslie, Letcher, Lee, Owsley, and Harlan counties. First-time GED test fees waived.",
+    description_es: "Preparación gratuita para el GED y educación para adultos para el Condado de Perry y la región de los yacimientos de carbón del este profundo de Kentucky. Parte de la red KCTCS. Ofrece instrucción para el GED dentro del Centro de Detención del Condado de Perry y las cárceles circundantes.",
+    city: "Hazard",
+    region: "Eastern Kentucky",
+    phone: "(606) 436-5721",
+    website: "https://hazard.kctcs.edu",
+  },
+  {
+    id: 523,
+    name: "Elizabethtown Community & Technical College — Adult Education",
+    category: "Education",
+    description: "Free GED preparation and adult literacy programs for Hardin County and surrounding Lincoln Trail counties. Part of the KCTCS statewide adult education network. Classes available in community and correctional settings in the Elizabethtown area. First-time GED test fees waived.",
+    description_es: "Programas gratuitos de preparación para el GED y alfabetización adulta para el Condado de Hardin y los condados circundantes de Lincoln Trail. Parte de la red estatal de educación para adultos de KCTCS.",
+    city: "Elizabethtown",
+    region: "Elizabethtown / Hardin County",
+    phone: "(270) 769-2371",
+    website: "https://elizabethtown.kctcs.edu",
+  },
+  {
+    id: 524,
+    name: "Maysville Community & Technical College — Adult Education",
+    category: "Education",
+    description: "Free GED preparation and adult literacy classes for Mason County and surrounding northeastern Kentucky counties including Bath, Bracken, Fleming, Nicholas, and Robertson. Part of the KCTCS network. Serves adults in community and county jail settings in the Maysville area. First-time GED test fees waived.",
+    description_es: "Clases gratuitas de preparación para el GED y alfabetización adulta para el Condado de Mason y los condados circundantes del noreste de Kentucky. Parte de la red KCTCS. Atiende a adultos en entornos comunitarios y cárceles del condado en el área de Maysville.",
+    city: "Maysville",
+    region: "Ashland / Boyd County",
+    phone: "(606) 759-7141",
+    website: "https://maysville.kctcs.edu",
+  },
+  {
+    id: 525,
+    name: "Hopkinsville Community College — Adult Education",
+    category: "Education",
+    description: "Free GED preparation and adult literacy classes for Christian County and surrounding Pennyrile counties. Part of the KCTCS statewide adult education network. Offers adult education inside the Christian County Detention Center. First-time GED test fees waived.",
+    description_es: "Clases gratuitas de preparación para el GED y alfabetización adulta para el Condado de Christian y los condados circundantes de Pennyrile. Parte de la red estatal de educación para adultos de KCTCS. Ofrece educación para adultos dentro del Centro de Detención del Condado de Christian.",
+    city: "Hopkinsville",
+    region: "Paducah / Western Kentucky",
+    phone: "(270) 707-3700",
+    website: "https://hopkinsville.kctcs.edu",
+  },
 ];
+
+// ─── County coverage map (keyed by resource id) ──────────────────────────────
+// Statewide resources are omitted — their badge already conveys scope.
+
+const COUNTY_MAP: Record<number, string[]> = {
+  // State Agencies
+  4:   ["Logan", "Simpson", "Butler", "Warren", "Edmonson", "Hart", "Barren", "Allen", "Metcalfe", "Monroe"],
+  5:   ["Boyd", "Carter", "Elliott", "Greenup", "Lawrence"],
+
+  // Housing — Louisville
+  10: ["Jefferson"], 11: ["Jefferson"], 12: ["Jefferson"], 13: ["Jefferson"],
+  14: ["Jefferson"], 15: ["Jefferson"], 16: ["Jefferson"], 17: ["Jefferson"], 18: ["Jefferson"],
+
+  // Housing — Lexington
+  20: ["Fayette"], 21: ["Fayette"], 22: ["Fayette"], 23: ["Fayette"], 24: ["Fayette"],
+  25: ["Fayette", "Woodford", "Madison"],
+
+  // Housing — Northern KY
+  30: ["Boone", "Kenton", "Campbell"],
+  31: ["Boone", "Kenton", "Campbell"],
+  32: ["Boone", "Kenton", "Campbell"],
+
+  // Housing — Bowling Green / Warren
+  40: ["Warren"], 41: ["Warren"],
+
+  // Housing — Richmond / Madison
+  50: ["Madison"], 51: ["Madison"],
+
+  // Housing — Owensboro / Daviess
+  60: ["Daviess"],
+
+  // Housing — Eastern & Western KY
+  70: ["Pike"],
+  71: ["McCracken"],
+
+  // Employment
+  102: ["Jefferson"],
+  103: ["Fayette"],
+  104: ["Boone", "Kenton", "Campbell"],
+  105: ["Warren"],
+  106: ["Boyd", "Greenup", "Carter"],
+  107: ["Perry", "Floyd", "Pike", "Letcher", "Knott", "Johnson", "Martin", "Lawrence", "Magoffin", "Morgan", "Breathitt", "Harlan", "Leslie", "Lee", "Owsley", "Wolfe", "Menifee", "Elliott", "Rowan", "Powell", "Clay", "Bell", "Knox"],
+  489: ["Hardin", "LaRue"],
+  492: ["Franklin"],
+
+  // Healthcare
+  121: ["Jefferson"],
+  122: ["Jefferson"],
+  123: ["Fayette", "Anderson", "Bourbon", "Clark", "Fleming", "Harrison", "Jessamine", "Menifee", "Mercer", "Montgomery", "Nicholas", "Powell", "Robertson", "Scott", "Washington", "Wolfe", "Woodford"],
+  124: ["Boone", "Kenton", "Campbell", "Grant", "Pendleton"],
+  126: ["Jefferson"],
+  127: ["Jefferson"],
+  128: ["Fayette"],
+  129: ["Jefferson"],
+  478: ["Bath", "Boyd", "Carter", "Elliott", "Fleming", "Greenup", "Lawrence", "Lewis", "Mason", "Menifee", "Montgomery", "Morgan", "Rowan", "Wolfe"],
+  480: ["Breathitt", "Floyd", "Harlan", "Johnson", "Knott", "Knox", "Lawrence", "Leslie", "Letcher", "Magoffin", "Martin", "Morgan", "Perry", "Pike"],
+  483: ["Bell", "Clay", "Harlan", "Jackson", "Knox", "Laurel", "McCreary", "Rockcastle", "Wayne", "Whitley"],
+  488: ["Hardin", "LaRue", "Marion", "Meade", "Washington"],
+  491: ["Hardin", "LaRue", "Meade", "Breckinridge", "Grayson"],
+  494: ["Christian", "Todd", "Trigg", "Caldwell", "Crittenden", "Livingston"],
+  497: ["Barren", "Breckinridge", "Butler", "Edmonson", "Grayson", "Green", "Hart", "LaRue", "Marion", "Metcalfe", "Monroe", "Nelson", "Taylor", "Washington"],
+
+  // Substance Use Treatment
+  140: ["Jefferson"], 141: ["Jefferson"],
+  479: ["Lawrence", "Johnson", "Martin", "Floyd", "Pike", "Magoffin", "Morgan", "Wolfe"],
+
+  // Legal Aid
+  160: ["Jefferson", "Breckinridge", "Bullitt", "Grayson", "Hardin", "Henry", "LaRue", "Marion", "Meade", "Nelson", "Oldham", "Shelby", "Spencer", "Trimble", "Washington"],
+  161: ["Fayette", "Bath", "Boone", "Bourbon", "Boyd", "Bracken", "Campbell", "Carroll", "Carter", "Clark", "Elliott", "Fleming", "Grant", "Greenup", "Harrison", "Henry", "Lawrence", "Lewis", "Mason", "Menifee", "Montgomery", "Morgan", "Nicholas", "Pendleton", "Robertson", "Rowan", "Scott", "Shelby", "Trimble", "Woodford", "Anderson", "Mercer"],
+  162: ["Warren", "Logan", "Todd", "Butler", "Muhlenberg", "McLean", "Ohio", "Hancock", "Breckinridge", "Meade", "Edmonson", "Barren", "Allen", "Simpson", "Monroe", "Metcalfe", "Adair", "Cumberland", "Green", "Taylor", "Hart", "Casey", "Russell"],
+  163: ["Daviess", "Ohio", "Hancock", "McLean", "Henderson", "Union", "Webster"],
+  164: ["McCracken", "Ballard", "Carlisle", "Hickman", "Fulton", "Graves", "Marshall", "Calloway", "Trigg", "Caldwell", "Lyon", "Crittenden", "Livingston", "Christian"],
+  165: ["Bell", "Breathitt", "Carter", "Clay", "Elliott", "Estill", "Fleming", "Floyd", "Greenup", "Harlan", "Jackson", "Johnson", "Knott", "Knox", "Laurel", "Lawrence", "Lee", "Leslie", "Letcher", "Magoffin", "Martin", "Mason", "McCreary", "Menifee", "Montgomery", "Morgan", "Owsley", "Perry", "Pike", "Powell", "Pulaski", "Rockcastle", "Rowan", "Wayne", "Whitley", "Wolfe", "Bath"],
+  169: ["Jefferson"],
+  170: ["Jefferson"],
+  171: ["Fayette"],
+  482: ["Letcher", "Harlan", "Perry", "Floyd", "Pike"],
+
+  // Food & Nutrition
+  181: ["Jefferson"],
+  182: ["Fayette", "Anderson", "Bath", "Bourbon", "Breathitt", "Clark", "Clay", "Elliott", "Estill", "Fleming", "Franklin", "Garrard", "Grant", "Harrison", "Jackson", "Jessamine", "Knott", "Lawrence", "Lee", "Leslie", "Letcher", "Lincoln", "Madison", "Magoffin", "Menifee", "Mercer", "Montgomery", "Morgan", "Nicholas", "Owsley", "Perry", "Powell", "Robertson", "Rockcastle", "Rowan", "Scott", "Washington", "Wolfe", "Woodford", "Boyd", "Carter", "Greenup", "Martin", "Johnson"],
+  183: ["Hardin", "LaRue", "Marion", "Nelson", "Taylor", "Green", "Adair", "Casey", "Russell", "Clinton", "Cumberland", "Metcalfe", "Monroe", "Barren", "Allen", "Simpson", "Warren", "Butler", "Edmonson", "Hart", "Ohio", "Muhlenberg", "Logan", "Todd", "Christian", "Trigg", "Caldwell", "Lyon", "Crittenden", "Livingston", "Webster", "McLean", "Hancock", "Henderson", "Union", "Daviess"],
+  481: ["Floyd", "Johnson", "Lawrence", "Magoffin", "Martin", "Pike"],
+  485: ["Pulaski", "Russell", "Casey", "Clinton", "Cumberland", "Wayne"],
+  484: ["Bell", "Clay", "Harlan", "Jackson", "Knox", "Laurel", "McCreary", "Rockcastle", "Wayne", "Whitley"],
+  495: ["Henderson", "Ohio", "Daviess"],
+
+  // ID & Documentation
+  203: ["Jefferson"],
+  204: ["Fayette"],
+
+  // Financial Assistance
+  221: ["Boone", "Kenton", "Campbell"],
+  224: ["Jefferson"],
+  225: ["Fayette"],
+
+  // Transportation
+  240: ["Jefferson"],
+  241: ["Fayette"],
+  242: ["Boone", "Kenton", "Campbell"],
+
+  // Family & Children
+  261: ["Jefferson"],
+  263: ["Jefferson"],
+
+  // Peer Support
+  281: ["Perry", "Floyd", "Pike", "Letcher", "Knott", "Johnson", "Martin", "Lawrence", "Magoffin", "Morgan", "Breathitt", "Harlan", "Leslie", "Lee", "Owsley", "Wolfe", "Menifee", "Elliott", "Rowan", "Powell", "Clay", "Bell", "Knox"],
+  282: ["Jefferson"],
+  475: ["Campbell"],
+  476: ["Kenton"],
+  477: ["Campbell"],
+
+  // Education
+  301: ["Fayette", "Bourbon", "Clark", "Harrison", "Jessamine", "Mercer", "Scott", "Woodford"],
+  302: ["Boone", "Kenton", "Campbell", "Grant", "Owen"],
+  303: ["Warren", "Barren", "Simpson", "Metcalfe"],
+
+  // Veterans
+  400: ["Jefferson"], 401: ["Jefferson"],
+  402: ["Fayette"], 403: ["Fayette"],
+  406: ["Jefferson"],
+  407: ["Fayette"],
+  408: ["Jefferson"],
+
+  // Basic Needs
+  430: ["Jefferson"], 431: ["Jefferson"], 432: ["Jefferson"],
+
+  // Probation & Parole
+  450: ["Franklin"],
+  451: ["Jefferson"],
+  452: ["Fayette"],
+  453: ["Kenton"],
+  454: ["Warren", "Adair", "Barren", "Casey", "Cumberland", "Metcalfe"],
+  455: ["McCracken"],
+  456: ["Pike"],
+  486: ["Perry"],
+  487: ["Laurel", "Whitley", "Knox", "Bell"],
+  490: ["Hardin", "LaRue", "Marion", "Meade", "Washington"],
+  493: ["Franklin", "Anderson", "Owen", "Carroll", "Trimble", "Henry", "Shelby"],
+  496: ["Christian", "Todd", "Trigg"],
+
+  // Reentry Organizations
+  470: ["Jefferson"], 471: ["Jefferson"], 472: ["Jefferson"], 473: ["Jefferson"], 474: ["Jefferson"],
+
+  // Employment — additional KCC offices
+  500: ["Ballard", "Calloway", "Carlisle", "Fulton", "Graves", "Hickman", "Marshall", "McCracken"],
+  501: ["Daviess", "Hancock", "Henderson", "McLean", "Ohio", "Union", "Webster"],
+  502: ["Pike", "Floyd", "Johnson", "Martin", "Lawrence", "Magoffin"],
+  503: ["Pulaski", "Russell", "Adair", "Casey", "Clinton", "Cumberland", "McCreary", "Wayne"],
+  504: ["Christian", "Caldwell", "Crittenden", "Hopkins", "Livingston", "Lyon", "Muhlenberg", "Todd", "Trigg"],
+  505: ["Laurel", "Knox", "Bell", "Clay", "Harlan", "Jackson", "McCreary", "Rockcastle", "Whitley"],
+
+  // Healthcare — regional CMHCs
+  506: ["McCracken", "Ballard", "Calloway", "Carlisle", "Fulton", "Graves", "Hickman", "Marshall"],
+  507: ["Daviess", "Hancock", "Henderson", "McLean", "Ohio", "Union", "Webster"],
+  508: ["Adair", "Casey", "Clinton", "Cumberland", "McCreary", "Pulaski", "Russell", "Wayne"],
+
+  // Probation & Parole — missing districts
+  509: ["Daviess", "Ohio", "Hancock", "McLean", "Breckinridge"],
+  510: ["Boyd", "Carter", "Elliott", "Greenup"],
+
+  // Basic Needs — community action agencies
+  511: ["Caldwell", "Christian", "Crittenden", "Hopkins", "Livingston", "Lyon", "Muhlenberg", "Todd", "Trigg"],
+  512: ["Ballard", "Calloway", "Carlisle", "Fulton", "Graves", "Hickman", "Marshall", "McCracken"],
+  513: ["Daviess", "Hancock", "Henderson", "McLean", "Ohio", "Union", "Webster"],
+  514: ["Bath", "Bracken", "Fleming", "Mason", "Nicholas", "Robertson"],
+  515: ["Barren", "Butler", "Edmonson", "Hart", "Logan", "Metcalfe", "Monroe", "Warren"],
+  516: ["Daviess", "Hancock", "Ohio", "McLean", "Henderson", "Union", "Webster", "Hopkins", "Muhlenberg", "Caldwell", "Crittenden", "Lyon", "Livingston", "Marshall", "Calloway", "McCracken", "Graves", "Carlisle", "Hickman", "Fulton", "Ballard", "Logan", "Todd", "Christian", "Trigg"],
+
+  // Education — KCTCS campuses
+  517: ["Boyd", "Carter", "Greenup", "Lawrence"],
+  518: ["Floyd", "Johnson", "Lawrence", "Magoffin", "Martin", "Pike"],
+  519: ["Pulaski", "Russell", "Adair", "Casey", "Clinton", "Cumberland", "McCreary", "Wayne"],
+  520: ["Daviess", "Hancock", "Henderson", "McLean", "Ohio"],
+  521: ["Hopkins", "Muhlenberg", "Webster", "Caldwell", "Christian"],
+  522: ["Perry", "Breathitt", "Knott", "Leslie", "Letcher", "Lee", "Owsley", "Harlan"],
+  523: ["Hardin", "LaRue", "Marion", "Meade", "Nelson", "Breckinridge", "Grayson", "Washington"],
+  524: ["Mason", "Bath", "Bracken", "Fleming", "Nicholas", "Robertson"],
+  525: ["Christian", "Caldwell", "Crittenden", "Hopkins", "Todd", "Trigg"],
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -2219,6 +2705,7 @@ function ResourceCard({ resource: r }: { resource: Resource }) {
   const { lang, t } = useI18n();
   const description = pickLang(lang, r.description, r.description_es);
   const notes = pickLang(lang, r.notes ?? "", r.notes_es);
+  const counties = COUNTY_MAP[r.id];
 
   return (
     <div
@@ -2248,6 +2735,12 @@ function ResourceCard({ resource: r }: { resource: Resource }) {
       )}
 
       <div className="flex flex-col gap-1.5 pt-3 border-t border-border">
+        {counties && (
+          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+            <span><span className="font-medium text-foreground">{t("ky.countiesServed")}:</span> {counties.join(", ")}</span>
+          </div>
+        )}
         {(r.address || r.city) && (
           <div className="flex items-start gap-2 text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
