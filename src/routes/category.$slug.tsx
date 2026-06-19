@@ -1173,7 +1173,8 @@ function CategoryPage() {
                                   key={other.id}
                                   to="/category/$slug"
                                   params={{ slug: other.slug }}
-                                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--color-accent)] hover:shadow-[var(--shadow-card)]"
+                                  style={{ "--card-border": `color-mix(in oklab, ${other.icon_color || "var(--color-accent)"} 25%, transparent)` } as React.CSSProperties}
+                                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--card-border)] hover:shadow-[var(--shadow-card)]"
                                 >
                                   <CategoryIcon
                                     name={other.icon_name}
