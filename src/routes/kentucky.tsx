@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { Search, Phone, Mail, Globe, MapPin, X, ExternalLink } from "lucide-react";
+import {
+  Search, Phone, Mail, Globe, MapPin, X, ExternalLink,
+  Landmark, Home, Briefcase, Stethoscope, Leaf, Scale, Utensils,
+  IdCard, Wallet, Bus, Baby, HeartHandshake, GraduationCap, Shield,
+  Shirt, Gavel, Unlock, type LucideIcon,
+} from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang } from "@/lib/i18n";
 import type { TranslationKey } from "@/lib/i18n";
@@ -111,23 +116,43 @@ const REGION_KEY: Record<Region, TranslationKey> = {
 // ─── Category styling ─────────────────────────────────────────────────────────
 
 const CATEGORY_COLORS: Record<Category, string> = {
-  "State Agency":            "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
-  "Housing":                 "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
-  "Employment":              "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
-  "Healthcare":              "bg-teal-100 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300",
-  "Substance Use Treatment": "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
-  "Legal Aid":               "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
-  "Food & Nutrition":        "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
-  "ID & Documentation":      "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300",
-  "Financial Assistance":    "bg-lime-100 text-lime-800 dark:bg-lime-900/40 dark:text-lime-300",
-  "Transportation":          "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300",
-  "Family & Children":       "bg-pink-100 text-pink-800 dark:bg-pink-900/40 dark:text-pink-300",
-  "Peer Support":            "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300",
-  "Education":               "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300",
-  "Veterans":                "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
-  "Basic Needs":             "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300",
-  "Probation & Parole":      "bg-slate-100 text-slate-800 dark:bg-slate-900/40 dark:text-slate-300",
-  "Reentry Organizations":   "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
+  "State Agency":            "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800/40",
+  "Housing":                 "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-800/40",
+  "Employment":              "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-800/40",
+  "Healthcare":              "bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/40 dark:text-teal-300 dark:border-teal-800/40",
+  "Substance Use Treatment": "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-800/40",
+  "Legal Aid":               "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800/40",
+  "Food & Nutrition":        "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800/40",
+  "ID & Documentation":      "bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-900/40 dark:text-cyan-300 dark:border-cyan-800/40",
+  "Financial Assistance":    "bg-lime-100 text-lime-800 border-lime-200 dark:bg-lime-900/40 dark:text-lime-300 dark:border-lime-800/40",
+  "Transportation":          "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/40 dark:text-sky-300 dark:border-sky-800/40",
+  "Family & Children":       "bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/40 dark:text-pink-300 dark:border-pink-800/40",
+  "Peer Support":            "bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-800/40",
+  "Education":               "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-800/40",
+  "Veterans":                "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-800/40",
+  "Basic Needs":             "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800/40",
+  "Probation & Parole":      "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/40 dark:text-slate-300 dark:border-slate-800/40",
+  "Reentry Organizations":   "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800/40",
+};
+
+const CATEGORY_ICONS: Record<Category, LucideIcon> = {
+  "State Agency":            Landmark,
+  "Housing":                 Home,
+  "Employment":              Briefcase,
+  "Healthcare":              Stethoscope,
+  "Substance Use Treatment": Leaf,
+  "Legal Aid":               Scale,
+  "Food & Nutrition":        Utensils,
+  "ID & Documentation":      IdCard,
+  "Financial Assistance":    Wallet,
+  "Transportation":          Bus,
+  "Family & Children":       Baby,
+  "Peer Support":            HeartHandshake,
+  "Education":               GraduationCap,
+  "Veterans":                Shield,
+  "Basic Needs":             Shirt,
+  "Probation & Parole":      Gavel,
+  "Reentry Organizations":   Unlock,
 };
 
 const CATEGORIES: Category[] = [
@@ -1861,19 +1886,21 @@ function ResourceCard({ resource: r }: { resource: Resource }) {
 
   return (
     <div className="flex flex-col rounded-xl border border-border bg-card p-5 gap-3 hover:shadow-md transition-shadow">
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap gap-1.5">
-          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${CATEGORY_COLORS[r.category]}`}>
+      <div className="flex flex-wrap gap-1.5">
+        {(() => { const Icon = CATEGORY_ICONS[r.category]; return (
+          <span className={`inline-flex items-center leading-none rounded-[8px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 gap-1 ${CATEGORY_COLORS[r.category]}`}>
+            <Icon className="h-3.5 w-3.5" strokeWidth={2} />
             {t(CATEGORY_KEY[r.category])}
           </span>
-          {r.region === "Statewide" && (
-            <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
-              {t("ky.statewide")}
-            </span>
-          )}
-        </div>
-        <h2 className="text-sm font-semibold leading-snug">{r.name}</h2>
+        ); })()}
+        {r.region === "Statewide" && (
+          <span className="inline-flex items-center leading-none rounded-[8px] border border-border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 gap-1 bg-muted text-muted-foreground">
+            <Globe className="h-3.5 w-3.5" strokeWidth={2} />
+            {t("ky.statewide")}
+          </span>
+        )}
       </div>
+      <h2 className="text-base font-semibold leading-snug">{r.name}</h2>
 
       <p className="text-xs text-muted-foreground leading-relaxed flex-1">{description}</p>
 
@@ -1881,7 +1908,7 @@ function ResourceCard({ resource: r }: { resource: Resource }) {
         <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2">{notes}</p>
       )}
 
-      <div className="flex flex-col gap-1.5 pt-1 border-t border-border">
+      <div className="flex flex-col gap-1.5 pt-3 border-t border-border">
         {(r.address || r.city) && (
           <div className="flex items-start gap-2 text-xs text-muted-foreground">
             <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
