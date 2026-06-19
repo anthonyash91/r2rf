@@ -524,8 +524,7 @@ function DashboardPage() {
   const effectiveTab = mustSetup ? "account" : activeTab;
 
   const showDashTutorial =
-    !!user && !isAdmin && !isTester &&
-    effectiveTab === "categories" &&
+    !!user && !isAdmin && !isTester && !mustSetup &&
     !!categoriesQuery.data && !!progressQuery.data &&
     (profile as any)?.dashboard_tutorial_seen === false;
 
