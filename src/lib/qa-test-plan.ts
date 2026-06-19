@@ -214,6 +214,12 @@ export const QA_TESTS: QATest[] = [
     description: "Open a video. Play it for approximately 1 minute without pausing or switching tabs. Close the dialog. In admin → Analytics → Users tab, open the individual report for that user.\n\n✅ Pass: The 'Time on Item' for that video shows approximately 1 minute. It does NOT show 0 (no tracking) and does NOT show the admin-estimated duration from the duration field (that would be a different value)." },
   { id: "5.27", sectionNum: 5, priority: "high", roles: ["Regular User"], title: "Language toggle on category page",
     description: "Navigate to a category that has Spanish translations set. Click the language toggle to Spanish. Toggle back to English.\n\n✅ Pass: After switching to Spanish: the category name, tagline, item titles, item descriptions (if translated), and action badge labels (e.g. 'Marcar como leído', 'Leído') all display in Spanish. After switching back to English: all text returns to English." },
+  { id: "5.28", sectionNum: 5, priority: "medium", roles: ["Regular User"], title: "Category page search filters by title and description",
+    description: "On a category page with multiple items, type a word that appears in an item title into the search bar. Clear it, then type a word that appears only in an item description.\n\n✅ Pass: Each search shows only the matching items. The item count heading updates to the filtered count. Clearing the search field restores all items." },
+  { id: "5.29", sectionNum: 5, priority: "medium", roles: ["Regular User"], title: "Category page search combines with type filter",
+    description: "On a category with mixed content types, select 'Video' from the type filter, then type a search term.\n\n✅ Pass: Only items that are both type Video AND match the search term appear. Switching the type filter back to 'All' (while keeping the search term) shows all types matching the search term." },
+  { id: "5.30", sectionNum: 5, priority: "medium", roles: ["Regular User"], title: "Category page search no-results message",
+    description: "In the category page search bar, type a string that matches no items (e.g. 'zzzzzzzzz').\n\n✅ Pass: The item list is replaced with 'No results for \"zzzzzzzzz\"'. The count heading shows 0. Clearing the search restores the full list." },
 
   // ── Section 6 — User Dashboard ────────────────────────────────────────────
   { id: "6.1",  sectionNum: 6, priority: "critical", roles: ["Signed Out"], title: "Dashboard requires authentication",

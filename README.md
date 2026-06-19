@@ -98,6 +98,28 @@ Tapping a card opens that category's full content page.
 
 ---
 
+## Category Page
+
+The category page (`/category/[slug]`) opens when a user taps a category card from the home page.
+
+### Search
+
+A search bar above the content list lets users filter items within that category by title or description. Filtering is instant and respects the active language — searching in Spanish mode matches against Spanish translations when they exist. The search bar is always visible, regardless of whether the type filter appears.
+
+### Type Filter
+
+When a category contains more than one content type (e.g. Video and Article), a type filter dropdown appears alongside the search bar. Selecting a type narrows the list to only that type; selecting "All" restores the full list. The type filter and search bar work together — both filters are applied simultaneously.
+
+### Responsive Layout
+
+On small screens the heading, search bar, and type filter each occupy their own full-width line. On `sm+` screens the search bar and type filter sit in a row to the right of the heading.
+
+### Item Count
+
+The heading above the list always reflects the number of items visible after both filters are applied. When search returns no matches the list is replaced with a contextual message: `No results for "[query]"` when a search is active, or the generic empty-state message when the category has no content.
+
+---
+
 ## Facility-Scoped Visibility
 
 Users only see categories and items available to their facility. Categories and items can be restricted to specific facilities by administrators — users outside the target facility simply don't see those items. No special action is needed from the user.

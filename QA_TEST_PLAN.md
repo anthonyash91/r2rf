@@ -476,6 +476,27 @@ Open a video. Play it for ~1 minute without pausing. Close the dialog. Navigate 
  **Role:** Regular User
 On a category that has Spanish translations, toggle to Spanish. Verify category name, tagline, item titles, descriptions, and all action badge labels switch to Spanish. Toggle back. Verify English returns.
 
+### 5.28 — Category page search filters by title and description
+🟡 **Medium**
+ **Role:** Regular User
+On a category page with multiple items, type a word that appears in the title of one item into the search bar. Then clear it and type a word that appears only in the description of a different item.
+
+✅ Pass: In both cases only matching items are shown in the list. The item count heading updates to reflect the filtered count. Clearing the search field restores all items.
+
+### 5.29 — Category page search combines with type filter
+🟡 **Medium**
+ **Role:** Regular User
+On a category with mixed content types, select "Video" from the type filter, then type a search term.
+
+✅ Pass: Only items that are both type Video AND match the search term are shown. Changing the type filter to "All" while keeping the search term active shows all item types that match the search term.
+
+### 5.30 — Category page search no-results message
+🟡 **Medium**
+ **Role:** Regular User
+In the category page search bar, type a string that matches no item titles or descriptions (e.g. "zzzzzzzzz").
+
+✅ Pass: The item list is replaced with the message `No results for "zzzzzzzzz"`. The type filter and item count both update to reflect zero results. Clearing the search restores the full list.
+
 ---
 
 ## Section 6 — User Dashboard
