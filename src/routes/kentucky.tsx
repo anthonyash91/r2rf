@@ -1869,7 +1869,7 @@ function KentuckyPage() {
             />
           </div>
           <Select value={category} onValueChange={(v) => setCategory(v === "__all__" ? "" : v as Category)}>
-            <SelectTrigger id="ky-category-select" className="sm:w-56 bg-background">
+            <SelectTrigger id="ky-category-select" className="sm:w-56 bg-background h-auto">
               <SelectValue placeholder={t("ky.allCategories")} />
             </SelectTrigger>
             <SelectContent>
@@ -1880,7 +1880,7 @@ function KentuckyPage() {
             </SelectContent>
           </Select>
           <Select value={region} onValueChange={(v) => setRegion(v === "__all__" ? "" : v as Region)}>
-            <SelectTrigger id="ky-region-select" className="sm:w-60 bg-background">
+            <SelectTrigger id="ky-region-select" className="sm:w-60 bg-background h-auto">
               <SelectValue placeholder={t("ky.allRegions")} />
             </SelectTrigger>
             <SelectContent>
