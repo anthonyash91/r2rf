@@ -481,7 +481,7 @@ function DashboardPage() {
       Icon: Trophy,
       title: "Achievements",
       body: "Earn badges as you make progress — completing categories, building a streak, and reaching time milestones.",
-      targetId: "dash-achievements-content",
+      targetId: "dash-first-achievement",
       onEnter: () => setActiveTab("achievements"),
     },
     {
@@ -1163,13 +1163,14 @@ function DashboardPage() {
                           {t(`achievement.category.${cat}` as any)}
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                          {byCategory[cat].map((a) => {
+                          {byCategory[cat].map((a, aIdx) => {
                             const earned = !!earnedAchievements[a.key];
                             const Icon = ICON_MAP[a.icon] ?? Trophy;
                             const earnedAt = earnedAchievements[a.key];
                             return (
                               <div
                                 key={a.key}
+                                id={cats[0] === cat && aIdx === 0 ? "dash-first-achievement" : undefined}
                                 className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all ${
                                   earned
                                     ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5"
