@@ -1758,39 +1758,6 @@ function normalizeSearch(s: string): string {
 
 // ─── Tutorial ─────────────────────────────────────────────────────────────────
 
-const KY_TUTORIAL_STEPS: TutorialStep[] = [
-  {
-    Icon: BookOpen,
-    title: "Welcome to the Kentucky Directory",
-    body: `This directory has ${RESOURCES.length} resources for housing, employment, healthcare, legal aid, and more — for people re-entering from incarceration.`,
-    targetId: null,
-  },
-  {
-    Icon: Search,
-    title: "Search anything",
-    body: "Type any keyword — a resource name, city, phone number, or topic — to instantly filter the list.",
-    targetId: "ky-search-input",
-  },
-  {
-    Icon: SlidersHorizontal,
-    title: "Filter by category",
-    body: "Narrow results to one resource type: Housing, Employment, Healthcare, Legal Aid, and more.",
-    targetId: "ky-category-select",
-  },
-  {
-    Icon: MapPin,
-    title: "Filter by region",
-    body: "Focus on resources near you by selecting a region or county of Kentucky.",
-    targetId: "ky-region-select",
-  },
-  {
-    Icon: CheckCircle2,
-    title: "You're all set",
-    body: "Each card shows contact details, address, and website links. Use the search and filters to find exactly what you need.",
-    targetId: "ky-first-card",
-  },
-];
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function KentuckyPage() {
@@ -1816,6 +1783,15 @@ function KentuckyPage() {
 
   const hasFilters = !!query || !!category || !!region;
 
+  const kyTutorialSteps: TutorialStep[] = useMemo(() => [
+    { Icon: BookOpen,        title: t("tutorial.ky.welcomeTitle"),  body: t("tutorial.ky.welcomeBody",  { count: RESOURCES.length }), targetId: null },
+    { Icon: Search,          title: t("tutorial.ky.searchTitle"),   body: t("tutorial.ky.searchBody"),                               targetId: "ky-search-input" },
+    { Icon: SlidersHorizontal, title: t("tutorial.ky.categoryTitle"), body: t("tutorial.ky.categoryBody"),                           targetId: "ky-category-select" },
+    { Icon: MapPin,          title: t("tutorial.ky.regionTitle"),   body: t("tutorial.ky.regionBody"),                               targetId: "ky-region-select" },
+    { Icon: CheckCircle2,    title: t("tutorial.ky.doneTitle"),     body: t("tutorial.ky.doneBody"),                                 targetId: "ky-first-card" },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [t]);
+
   const [showTutorial, setShowTutorial] = useState(() => {
     try { return !localStorage.getItem("ky-tutorial-seen"); } catch { return true; }
   });
@@ -1828,7 +1804,7 @@ function KentuckyPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {showTutorial && (
-        <SpotlightTutorial steps={KY_TUTORIAL_STEPS} onComplete={closeTutorial} />
+        <SpotlightTutorial steps={kyTutorialSteps} onComplete={closeTutorial} />
       )}
       <SiteHeader />
 

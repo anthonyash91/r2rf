@@ -35,44 +35,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue, getMyProfile } from "@/lib/user-signup.functions";
 import { SpotlightTutorial, type TutorialStep } from "@/components/SpotlightTutorial";
 
-const CAT_TUTORIAL_STEPS: TutorialStep[] = [
-  {
-    Icon: BookOpen,
-    title: "Welcome to this category",
-    body: "Each category contains a set of learning resources — articles, videos, audio, and more. Here's a quick look at how it works.",
-    targetId: null,
-  },
-  {
-    Icon: TrendingUp,
-    title: "Your progress",
-    body: "This bar tracks how many items you've completed in this category. It updates as you work through the content.",
-    targetId: "cat-progress",
-  },
-  {
-    Icon: List,
-    title: "Learning resources",
-    body: "Each row is one resource. Tap or click to open it — videos and audio play inline, PDFs open in a viewer, and links open in a new tab.",
-    targetId: "cat-first-item",
-  },
-  {
-    Icon: CheckCircle2,
-    title: "Mark as complete",
-    body: "Use the status button on the right of each item to mark it as read, watched, or listened to. Your progress updates automatically.",
-    targetId: "cat-first-actions",
-  },
-  {
-    Icon: Bookmark,
-    title: "Save for later",
-    body: "Tap the bookmark icon to save any item to your Saved list on the dashboard.",
-    targetId: "cat-first-bookmark",
-  },
-  {
-    Icon: ThumbsUp,
-    title: "Rate resources",
-    body: "After marking an item as complete, a thumbs up / thumbs down appears so you can rate whether it was helpful. Your ratings help improve the library.",
-    targetId: null,
-  },
-];
 import { listFacilities } from "@/lib/facilities.functions";
 import { useContentEngagement, type EngagementRecord } from "@/hooks/use-content-engagement";
 import { useBookmarks } from "@/hooks/use-bookmarks";
@@ -162,6 +124,16 @@ function CategoryPage() {
     enabled: !!user?.id && !isAdmin && !isFacilityUser,
     queryFn: () => fetchProfile(),
   });
+
+  const catTutorialSteps: TutorialStep[] = useMemo(() => [
+    { Icon: BookOpen,     title: t("tutorial.cat.welcomeTitle"),   body: t("tutorial.cat.welcomeBody"),   targetId: null },
+    { Icon: TrendingUp,   title: t("tutorial.cat.progressTitle"),  body: t("tutorial.cat.progressBody"),  targetId: "cat-progress" },
+    { Icon: List,         title: t("tutorial.cat.resourcesTitle"), body: t("tutorial.cat.resourcesBody"), targetId: "cat-first-item" },
+    { Icon: CheckCircle2, title: t("tutorial.cat.completeTitle"),  body: t("tutorial.cat.completeBody"),  targetId: "cat-first-actions" },
+    { Icon: Bookmark,     title: t("tutorial.cat.bookmarkTitle"),  body: t("tutorial.cat.bookmarkBody"),  targetId: "cat-first-bookmark" },
+    { Icon: ThumbsUp,     title: t("tutorial.cat.ratingsTitle"),   body: t("tutorial.cat.ratingsBody"),   targetId: null },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ], [t]);
 
   const showCatTutorial =
     !!user && !isAdmin && !isFacilityUser && !isTester &&
@@ -583,7 +555,7 @@ function CategoryPage() {
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       {showCatTutorial && (
-        <SpotlightTutorial steps={CAT_TUTORIAL_STEPS} onComplete={handleCatTutorialDone} />
+        <SpotlightTutorial steps={catTutorialSteps} onComplete={handleCatTutorialDone} />
       )}
 
       {isLoading && (

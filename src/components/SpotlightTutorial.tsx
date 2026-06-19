@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRight } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 export type TutorialStep = {
   targetId: string | null;
@@ -19,6 +20,7 @@ const TIP_W = 320;
 const SPOT_PAD = 6;
 
 export function SpotlightTutorial({ steps, onComplete }: SpotlightTutorialProps) {
+  const { t } = useI18n();
   const [stepIdx, setStepIdx] = useState(0);
   const [meas, setMeas] = useState<{ rect: DOMRect; vw: number; vh: number } | null>(null);
 
@@ -141,7 +143,7 @@ export function SpotlightTutorial({ steps, onComplete }: SpotlightTutorialProps)
               onClick={onComplete}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Skip tour
+              {t("tutorial.skip")}
             </button>
           )}
         </div>
@@ -160,7 +162,7 @@ export function SpotlightTutorial({ steps, onComplete }: SpotlightTutorialProps)
           onClick={advance}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
         >
-          {isLast ? "Get started" : isFirst ? "Show me around" : "Next"}
+          {isLast ? t("tutorial.getStarted") : isFirst ? t("tutorial.showMeAround") : t("tutorial.next")}
           {!isLast && <ArrowRight className="h-4 w-4" />}
         </button>
       </div>
