@@ -1831,7 +1831,7 @@ function KentuckyPage() {
       </section>
 
       {/* Sticky search + filters */}
-      <div id="ky-sticky-bar" className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm">
+      <div id="ky-sticky-bar" className="sticky top-[69px] z-20 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm">
         <div className="mx-auto max-w-6xl px-4 py-3 flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
