@@ -109,7 +109,7 @@ function useColumnCount() {
   useEffect(() => {
     const compute = () => {
       const w = window.innerWidth;
-      if (w >= 1280) setCols(4);
+      if (w >= 1536) setCols(4);
       else if (w >= 1024) setCols(3);
       else if (w >= 640) setCols(2);
       else setCols(1);
@@ -248,7 +248,7 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
   const buckets: Array<Array<{ c: Category; i: number }>> = Array.from({ length: cols }, () => []);
   visibleCategories.forEach((c, i) => buckets[i % cols].push({ c, i }));
   return (
-    <div className="flex gap-5 items-start">
+    <div className="flex gap-9 items-start">
       {buckets.map((bucket, ci) => (
         <div key={ci} className="flex-1 flex flex-col gap-9 min-w-0">
           {bucket.map(({ c }) => {
