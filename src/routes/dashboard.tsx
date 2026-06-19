@@ -506,10 +506,12 @@ function DashboardPage() {
       // which causes attachSupabaseAuth to send an empty Authorization header.
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) await supabase.auth.refreshSession();
+      const wasFirstSetup = mustSetup;
       await submitUpdate({ data: { answers: pending.slice(0, 2) } });
       toast.success(t("security.updateSuccess"));
       setEditing(false);
       setPending([]);
+      if (wasFirstSetup) setActiveTab("categories");
       queryClient.invalidateQueries({ queryKey: QK.mySecurityQuestions });
     } catch (err: any) {
       toast.error(err.message ?? t("signup.genericError"));
