@@ -4,8 +4,6 @@ import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { getSignedUploadUrl } from "@/lib/storage.functions";
 import { actionButtonClassName } from "@/components/LoadingButton";
-import { useBadgeStyles } from "@/hooks/use-badge-styles";
-import { paletteStyle, indexForType } from "@/lib/badge-styles";
 
 const BUCKET = "content-files";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
@@ -16,8 +14,9 @@ type Props = {
   label?: string;
   mimeTypes?: string[];
   existingFileUrl?: string | null;
-  /** Content type string (e.g. "video", "pdf") — used to match the type badge color during upload. */
-  contentType?: string | null;
+  className?: string;
+  /** Optional content to render inside the drop zone before the upload button (e.g. a URL text input). */
+  children?: React.ReactNode;
 };
 
 function extractStoragePath(url: string): string | null {
@@ -61,17 +60,18 @@ function xhrUpload(
 export function FileUploader({
   onUploaded,
   onPendingDelete,
-  label = "Upload file to fill URL",
+  label = "Upload File",
   mimeTypes,
   existingFileUrl,
-  contentType,
+  className,
+  children,
 }: Props) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dragCounter = useRef(0);
   const getUrl = useServerFn(getSignedUploadUrl);
-  const badgeStyles = useBadgeStyles();
-  const ps = paletteStyle(indexForType(contentType, badgeStyles));
 
   async function handleFile(file: File) {
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
@@ -122,6 +122,31 @@ export function FileUploader({
     }
   }
 
+  function handleDragEnter(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounter.current++;
+    if (!uploading) setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounter.current--;
+    if (dragCounter.current === 0) setIsDragging(false);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    dragCounter.current = 0;
+    setIsDragging(false);
+    if (uploading) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
+  }
+
   return (
     <>
       <input
@@ -134,56 +159,52 @@ export function FileUploader({
           if (file) handleFile(file);
         }}
       />
-      {(() => {
-        const typeName = contentType
-          ? contentType.charAt(0).toUpperCase() + contentType.slice(1)
-          : null;
-        const uploadingLabel = typeName
-          ? `${uploadProgress}% Uploading ${typeName}`
-          : `${uploadProgress}% uploading…`;
-        // Mix the badge color against white (not transparent) so the clipped
-        // "revealed" text layer reads as a visible light tint on the fill swatch.
-        const uploadTextColor = `color-mix(in oklab, ${ps.color} 15%, white)`;
-        return (
-      <button
-        type="button"
-        disabled={uploading}
-        onClick={() => !uploading && inputRef.current?.click()}
-        className={`${actionButtonClassName("secondary")} relative overflow-hidden ${uploading ? "w-52" : ""}`}
+      <div
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        className={`flex items-center gap-2 rounded-md border border-dashed px-4 py-3 transition-colors ${isDragging ? "border-foreground bg-muted" : "border-input"} ${className ?? ""}`}
       >
+        {children}
         {uploading ? (
-          <>
-            {/* Moving fill — badge background color with a border accent on its leading edge. */}
+          <button
+            type="button"
+            disabled
+            className={`${actionButtonClassName("secondary")} relative overflow-hidden w-40 flex-shrink-0`}
+          >
             <span
-              className="absolute inset-y-0 left-0 pointer-events-none transition-[width] duration-150"
-              style={{ width: `${uploadProgress}%`, backgroundColor: ps.color, borderRight: `2px solid ${ps.border}` }}
+              className="absolute inset-y-0 left-0 pointer-events-none transition-[width] duration-150 bg-foreground"
+              style={{ width: `${uploadProgress}%` }}
             />
-
-            {/* Base text layer — badge-color text, fully visible in the unfilled region. */}
-            <span className="relative z-10 flex items-center justify-center gap-2 w-full whitespace-nowrap tabular-nums" style={{ color: ps.color }}>
+            <span className="relative z-10 flex items-center justify-center gap-2 w-full whitespace-nowrap text-foreground">
               <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
-              {uploadingLabel}
+              Uploading
             </span>
-
-            {/* Revealed text layer — light-tint text clipped to the filled region, creating
-                a two-tone readout: dark text on fill, light text on background. */}
             <span
-              className="absolute inset-0 z-20 flex items-center justify-center gap-2 pointer-events-none whitespace-nowrap tabular-nums transition-[clip-path] duration-150"
-              style={{ clipPath: `inset(0 ${100 - uploadProgress}% 0 0)`, color: uploadTextColor }}
+              className="absolute inset-0 z-20 flex items-center justify-center gap-2 pointer-events-none whitespace-nowrap text-background transition-[clip-path] duration-150"
+              style={{ clipPath: `inset(0 ${100 - uploadProgress}% 0 0)` }}
             >
               <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
-              {uploadingLabel}
+              Uploading
             </span>
-          </>
+          </button>
         ) : (
           <>
-            <Upload className="h-4 w-4" />
-            {label}
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className={`${actionButtonClassName("secondary")} flex-shrink-0`}
+            >
+              <Upload className="h-4 w-4" />
+              {label}
+            </button>
+            <span className="text-sm text-muted-foreground">
+              {children ? "or drag & drop" : "or drag a file here"}
+            </span>
           </>
         )}
-      </button>
-        );
-      })()}
+      </div>
     </>
   );
 }
