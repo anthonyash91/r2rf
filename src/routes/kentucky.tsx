@@ -1,15 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Search, Phone, Mail, Globe, MapPin, X, ExternalLink,
   Landmark, Home, Briefcase, Stethoscope, Leaf, Scale, Utensils,
   IdCard, Wallet, Bus, Baby, HeartHandshake, GraduationCap, Shield,
-  Shirt, Gavel, Unlock, type LucideIcon,
+  Shirt, Gavel, Unlock, BookOpen, ArrowRight, CheckCircle2, SlidersHorizontal,
+  type LucideIcon,
 } from "lucide-react";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang } from "@/lib/i18n";
 import type { TranslationKey } from "@/lib/i18n";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BadgeGroup } from "@/components/BadgeGroup";
 
 export const Route = createFileRoute("/kentucky")({
   head: () => ({
@@ -133,6 +135,26 @@ const CATEGORY_COLORS: Record<Category, string> = {
   "Basic Needs":             "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800/40",
   "Probation & Parole":      "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/40 dark:text-slate-300 dark:border-slate-800/40",
   "Reentry Organizations":   "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800/40",
+};
+
+const CATEGORY_COLOR: Record<Category, string> = {
+  "State Agency":            "#bfdbfe",
+  "Housing":                 "#bbf7d0",
+  "Employment":              "#fed7aa",
+  "Healthcare":              "#99f6e4",
+  "Substance Use Treatment": "#e9d5ff",
+  "Legal Aid":               "#fecaca",
+  "Food & Nutrition":        "#fde68a",
+  "ID & Documentation":      "#a5f3fc",
+  "Financial Assistance":    "#d9f99d",
+  "Transportation":          "#bae6fd",
+  "Family & Children":       "#fbcfe8",
+  "Peer Support":            "#ddd6fe",
+  "Education":               "#c7d2fe",
+  "Veterans":                "#fef08a",
+  "Basic Needs":             "#fecdd3",
+  "Probation & Parole":      "#e2e8f0",
+  "Reentry Organizations":   "#a7f3d0",
 };
 
 const CATEGORY_ICONS: Record<Category, LucideIcon> = {
@@ -1733,6 +1755,188 @@ function normalizeSearch(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
 
+// ─── Tutorial ─────────────────────────────────────────────────────────────────
+
+const TUTORIAL_STEPS: Array<{
+  Icon: LucideIcon;
+  title: string;
+  body: string;
+  targetId: string | null;
+}> = [
+  {
+    Icon: BookOpen,
+    title: "Welcome to the Kentucky Directory",
+    body: `This directory has ${RESOURCES.length} resources for housing, employment, healthcare, legal aid, and more — for people re-entering from incarceration.`,
+    targetId: null,
+  },
+  {
+    Icon: Search,
+    title: "Search anything",
+    body: "Type any keyword — a resource name, city, phone number, or topic — to instantly filter the list.",
+    targetId: "ky-search-input",
+  },
+  {
+    Icon: SlidersHorizontal,
+    title: "Filter by category",
+    body: "Narrow results to one resource type: Housing, Employment, Healthcare, Legal Aid, and more.",
+    targetId: "ky-category-select",
+  },
+  {
+    Icon: MapPin,
+    title: "Filter by region",
+    body: "Focus on resources near you by selecting a region or county of Kentucky.",
+    targetId: "ky-region-select",
+  },
+  {
+    Icon: CheckCircle2,
+    title: "You're all set",
+    body: "Each card shows contact details, address, and website links. Use the search and filters to find exactly what you need.",
+    targetId: "ky-first-card",
+  },
+];
+
+const TIP_W = 320;
+const SPOT_PAD = 6;
+
+function KentuckyTutorial({
+  step,
+  onNext,
+  onSkip,
+}: {
+  step: number;
+  onNext: () => void;
+  onSkip: () => void;
+}) {
+  const { Icon, title, body, targetId } = TUTORIAL_STEPS[step];
+  const total = TUTORIAL_STEPS.length;
+  const isFirst = step === 0;
+  const isLast = step === total - 1;
+
+  const [meas, setMeas] = useState<{ rect: DOMRect; vw: number; vh: number } | null>(null);
+
+  useEffect(() => {
+    setMeas(null);
+    if (!targetId) return;
+
+    const measure = () => {
+      const el = document.getElementById(targetId);
+      if (el) setMeas({ rect: el.getBoundingClientRect(), vw: window.innerWidth, vh: window.innerHeight });
+    };
+
+    if (targetId === "ky-first-card") {
+      document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      const bar = document.getElementById("ky-sticky-bar");
+      if (bar) {
+        const headerEl = document.querySelector("header");
+        const headerH = headerEl ? headerEl.getBoundingClientRect().height : 64;
+        window.scrollTo({ top: bar.offsetTop - headerH - 8, behavior: "smooth" });
+      }
+    }
+    const timer = setTimeout(measure, 400);
+    window.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, [targetId]);
+
+  let spotStyle: React.CSSProperties | undefined;
+  let tipPos: React.CSSProperties = {};
+  let arrowLeft = 0;
+  let arrowDir: "up" | "down" | null = null;
+
+  if (meas) {
+    const { rect, vw, vh } = meas;
+    spotStyle = {
+      position: "fixed",
+      top: rect.top - SPOT_PAD,
+      left: rect.left - SPOT_PAD,
+      width: rect.width + SPOT_PAD * 2,
+      height: rect.height + SPOT_PAD * 2,
+      borderRadius: 10,
+      boxShadow: "0 0 0 9999px rgba(0,0,0,0.75)",
+      outline: "2px solid rgba(255,255,255,0.3)",
+      outlineOffset: "1px",
+      zIndex: 52,
+      pointerEvents: "none",
+    };
+    const rawLeft = rect.left + rect.width / 2 - TIP_W / 2;
+    const clampedLeft = Math.max(8, Math.min(rawLeft, vw - TIP_W - 8));
+    const inTopHalf = rect.top + rect.height / 2 < vh * 0.6;
+    if (inTopHalf) {
+      tipPos = { top: rect.bottom + SPOT_PAD + 12, left: clampedLeft };
+      arrowDir = "up";
+    } else {
+      tipPos = { bottom: vh - rect.top + SPOT_PAD + 12, left: clampedLeft };
+      arrowDir = "down";
+    }
+    arrowLeft = Math.max(16, Math.min(rect.left + rect.width / 2 - clampedLeft, TIP_W - 16));
+  } else if (!targetId) {
+    tipPos = { top: "50%", left: "50%", transform: "translate(-50%, -50%)" };
+  } else {
+    return <div className="fixed inset-0 z-[51] bg-black/70 backdrop-blur-sm" />;
+  }
+
+  return (
+    <>
+      {!targetId && <div className="fixed inset-0 z-[51] bg-black/70 backdrop-blur-sm" />}
+      {spotStyle && <div style={spotStyle} />}
+      <div
+        className="fixed z-[60] bg-card border border-border rounded-xl shadow-2xl p-5 flex flex-col gap-4"
+        style={{ width: TIP_W, ...tipPos }}
+      >
+        {arrowDir === "up" && (
+          <div
+            className="absolute -top-[7px] w-3 h-3 bg-card border-t border-l border-border rotate-45"
+            style={{ left: arrowLeft - 6 }}
+          />
+        )}
+        {arrowDir === "down" && (
+          <div
+            className="absolute -bottom-[7px] w-3 h-3 bg-card border-b border-r border-border rotate-45"
+            style={{ left: arrowLeft - 6 }}
+          />
+        )}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-1.5">
+            {Array.from({ length: total }).map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === step ? "w-6 bg-primary" : i < step ? "w-1.5 bg-primary/40" : "w-1.5 bg-muted-foreground/25"
+                }`}
+              />
+            ))}
+          </div>
+          {!isLast && (
+            <button type="button" onClick={onSkip} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              Skip tour
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0 flex items-center justify-center h-9 w-9 rounded-lg bg-primary/10 text-primary">
+            <Icon className="h-5 w-5" strokeWidth={1.5} />
+          </div>
+          <h2 className="text-sm font-semibold leading-snug">{title}</h2>
+        </div>
+        <p className="text-xs text-muted-foreground leading-relaxed">{body}</p>
+        <button
+          type="button"
+          onClick={onNext}
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          {isLast ? "Get started" : isFirst ? "Show me around" : "Next"}
+          {!isLast && <ArrowRight className="h-4 w-4" />}
+        </button>
+      </div>
+    </>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 function KentuckyPage() {
@@ -1758,8 +1962,34 @@ function KentuckyPage() {
 
   const hasFilters = !!query || !!category || !!region;
 
+  const [tutorialStep, setTutorialStep] = useState<number | null>(() => {
+    try {
+      return localStorage.getItem("ky-tutorial-seen") ? null : 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const closeTutorial = () => {
+    try { localStorage.setItem("ky-tutorial-seen", "1"); } catch {}
+    setTutorialStep(null);
+  };
+
+  const advanceTutorial = () => {
+    if (tutorialStep === null) return;
+    if (tutorialStep >= TUTORIAL_STEPS.length - 1) closeTutorial();
+    else setTutorialStep(tutorialStep + 1);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {tutorialStep !== null && (
+        <KentuckyTutorial
+          step={tutorialStep}
+          onNext={advanceTutorial}
+          onSkip={closeTutorial}
+        />
+      )}
       <SiteHeader />
 
       {/* Hero */}
@@ -1785,7 +2015,7 @@ function KentuckyPage() {
       </section>
 
       {/* Sticky search + filters */}
-      <div className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm">
+      <div id="ky-sticky-bar" className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm">
         <div className="mx-auto max-w-6xl px-4 py-3 flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -1794,11 +2024,12 @@ function KentuckyPage() {
               placeholder={t("ky.searchPlaceholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              id="ky-search-input"
               className="w-full rounded-md border border-input bg-background pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <Select value={category} onValueChange={(v) => setCategory(v === "__all__" ? "" : v as Category)}>
-            <SelectTrigger className="sm:w-56">
+            <SelectTrigger id="ky-category-select" className="sm:w-56">
               <SelectValue placeholder={t("ky.allCategories")} />
             </SelectTrigger>
             <SelectContent>
@@ -1809,7 +2040,7 @@ function KentuckyPage() {
             </SelectContent>
           </Select>
           <Select value={region} onValueChange={(v) => setRegion(v === "__all__" ? "" : v as Region)}>
-            <SelectTrigger className="sm:w-60">
+            <SelectTrigger id="ky-region-select" className="sm:w-60">
               <SelectValue placeholder={t("ky.allRegions")} />
             </SelectTrigger>
             <SelectContent>
@@ -1856,9 +2087,9 @@ function KentuckyPage() {
           </div>
         )}
 
-        <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6">
-          {filtered.map((r) => (
-            <div key={r.id} className="break-inside-avoid mb-6">
+        <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6">
+          {filtered.map((r, i) => (
+            <div key={r.id} id={i === 0 ? "ky-first-card" : undefined} className="break-inside-avoid mb-6">
               <ResourceCard resource={r} />
             </div>
           ))}
@@ -1885,8 +2116,11 @@ function ResourceCard({ resource: r }: { resource: Resource }) {
   const notes = pickLang(lang, r.notes ?? "", r.notes_es);
 
   return (
-    <div className="flex flex-col rounded-xl border border-border bg-card p-5 gap-3 hover:shadow-md transition-shadow">
-      <div className="flex flex-wrap gap-1.5">
+    <div
+      className="flex flex-col rounded-xl border border-border bg-card p-5 gap-3 transition-all hover:-translate-y-0.5 hover:border-[var(--card-color)] hover:shadow-[var(--shadow-card)]"
+      style={{ "--card-color": CATEGORY_COLOR[r.category] } as React.CSSProperties}
+    >
+      <BadgeGroup>
         {(() => { const Icon = CATEGORY_ICONS[r.category]; return (
           <span className={`inline-flex items-center leading-none rounded-[8px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 gap-1 ${CATEGORY_COLORS[r.category]}`}>
             <Icon className="h-3.5 w-3.5" strokeWidth={2} />
@@ -1899,7 +2133,7 @@ function ResourceCard({ resource: r }: { resource: Resource }) {
             {t("ky.statewide")}
           </span>
         )}
-      </div>
+      </BadgeGroup>
       <h2 className="text-base font-semibold leading-snug mt-1">{r.name}</h2>
 
       <p className="text-xs text-muted-foreground leading-relaxed flex-1">{description}</p>
