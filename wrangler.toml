@@ -1,4 +1,4 @@
-name = "reentry-to-recovery"
+name = "r2rf"
 main = "dist/server/server.js"
 compatibility_date = "2025-09-23"
 compatibility_flags = ["nodejs_compat"]
