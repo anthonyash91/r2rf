@@ -269,6 +269,11 @@ const translations = {
     "security.q.favorite_color": "What is your favorite color?",
     "security.q.favorite_movie": "What is your favorite movie?",
 
+    "audio.chapters": "Audio Files",
+    "audio.chapter": "Audio File {n}",
+    "audio.nowPlaying": "Now Playing",
+    "audio.nextChapter": "Next Audio File",
+
     "tutorial.skip": "Skip tour",
     "tutorial.showMeAround": "Show me around",
     "tutorial.next": "Next",
@@ -569,6 +574,11 @@ const translations = {
     "security.q.street_grew_up": "¿En qué calle creció?",
     "security.q.favorite_color": "¿Cuál es su color favorito?",
     "security.q.favorite_movie": "¿Cuál es su película favorita?",
+
+    "audio.chapters": "Archivos de audio",
+    "audio.chapter": "Archivo de audio {n}",
+    "audio.nowPlaying": "Reproduciendo",
+    "audio.nextChapter": "Siguiente archivo de audio",
 
     "tutorial.skip": "Omitir recorrido",
     "tutorial.showMeAround": "Muéstrame cómo funciona",

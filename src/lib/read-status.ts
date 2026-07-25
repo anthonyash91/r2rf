@@ -27,9 +27,16 @@ function detectMediaFor(item: {
 
 export function readStatusLabels(
   t: (key: TranslationKey) => string,
-  item: { url?: string | null; file_url?: string | null },
+  item: { url?: string | null; file_url?: string | null; type?: string | null },
 ): { read: string; unread: string } {
-  const kind = detectMediaFor(item);
+  // Detect from URL/file first; fall back to item type for chapter-only audio
+  // items that have no URL on the item itself (URLs live on the chapters).
+  const kind = detectMediaFor(item) ??
+    ((() => {
+      const tl = (item.type ?? "").toLowerCase();
+      if (tl.includes("audio") || tl.includes("podcast")) return "audio" as const;
+      return null;
+    })());
   if (kind === "video") {
     return { read: t("category.markedWatched"), unread: t("category.notWatched") };
   }

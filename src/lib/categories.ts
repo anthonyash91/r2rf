@@ -1,5 +1,18 @@
 export type ContentType = "Article" | "Video" | "Podcast" | "Worksheet" | "Guide";
 
+export type ContentChapter = {
+  id: string;
+  content_item_id: string;
+  title: string;
+  title_es: string | null;
+  sort_order: number;
+  file_url: string | null;
+  file_name: string | null;
+  file_url_es: string | null;
+  file_name_es: string | null;
+  duration_seconds: number | null;
+};
+
 
 export type HomePageMode = "default" | "custom";
 

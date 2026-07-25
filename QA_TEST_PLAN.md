@@ -374,7 +374,42 @@ Play a video to ~40%. Close the dialog. Verify the item's action badge shows som
 ### 5.8 — Audio — same behavior as video
 🟠 **High**
  **Role:** Regular User
-Repeat tests 5.4–5.7 for an audio item. Verify "Listened" label instead of "Watched."
+Repeat tests 5.4–5.7 for an audio item (single file, no chapters). Verify "Listened" label instead of "Watched."
+
+### 5.8a — Audio chapters — chapter list renders
+🟠 **High**
+ **Role:** Regular User
+Open an audio item that has chapters. Verify the audio player dialog shows a numbered chapter list below the player controls. Verify each chapter shows its title and duration (m:ss format). Verify the first chapter plays automatically on open.
+
+### 5.8b — Audio chapters — clicking a chapter seeks to it
+🟠 **High**
+ **Role:** Regular User
+With the chapter list visible, click a chapter other than the one currently playing. Verify the audio element switches to that chapter and playback begins immediately. Verify the clicked chapter is highlighted in the list.
+
+### 5.8c — Audio chapters — auto-advance to next chapter
+🟠 **High**
+ **Role:** Regular User
+Play a chapter to the end. Verify the player automatically advances to the next chapter and continues playing without interaction. Verify the chapter list highlights the new current chapter.
+
+### 5.8d — Audio chapters — no auto-advance after last chapter
+🟡 **Medium**
+ **Role:** Regular User
+Play the final chapter to the end. Verify playback stops and the item is marked complete (auto-marked at 95% of total duration). Verify no attempt is made to advance beyond the last chapter.
+
+### 5.8e — Audio chapters — resume resumes correct chapter
+🟠 **High**
+ **Role:** Regular User
+Open a chapter audio item, play into chapter 2 a bit, then close the dialog. Reopen the same item. Verify playback resumes at approximately the correct position within chapter 2 (not from chapter 1 start).
+
+### 5.8f — Audio chapters — progress tracked across all chapters
+🟠 **High**
+ **Role:** Regular User
+Play through chapters 1 and partway into chapter 2. Close and reopen. Verify the progress badge reflects accumulated progress across both chapters, not just the current chapter's position.
+
+### 5.8g — Audio chapters — Spanish audio files
+🟡 **Medium**
+ **Role:** Regular User (Spanish language)
+For an audio item that has ES audio files on its chapters, switch to Spanish. Open the item. Verify each chapter plays the Spanish audio file.
 
 ### 5.9 — PDF — opens viewer dialog
 🟠 **High**

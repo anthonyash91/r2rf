@@ -10,6 +10,17 @@ import { supabase } from "@/integrations/supabase/client";
 const SESSION_PROGRESS_MAX = 500;
 const sessionProgress = new Map<string, number>();
 
+// Module-level cache of per-chapter furthest positions for the current page
+// session. Keyed by chapterId. Lets the hook correctly initialize when a
+// chapter is revisited within the same session before the DB write has landed.
+const sessionChapterProgress = new Map<string, number>();
+
+/** Read the module-level session cache for a content item. Returns the furthest
+ *  position written in the current page session, or undefined if never played. */
+export function getSessionProgress(contentItemId: string): number | undefined {
+  return sessionProgress.get(contentItemId);
+}
+
 function setSessionProgress(id: string, value: number) {
   if (!sessionProgress.has(id) && sessionProgress.size >= SESSION_PROGRESS_MAX) {
     sessionProgress.delete(sessionProgress.keys().next().value!);
@@ -54,6 +65,30 @@ type Params = {
   /** The actual audio element (same reasoning as videoEl). */
   audioEl?: HTMLAudioElement | null;
   /**
+   * For chapter audio: the cumulative duration of all chapters that have
+   * already completed before the currently playing one. Added to the element's
+   * currentTime so furthest position is tracked as a single timeline offset.
+   */
+  mediaProgressOffset?: number;
+  /**
+   * For chapter audio: the total duration of all chapters combined. Overrides
+   * the element's own .duration for the auto-mark threshold calculation so the
+   * item isn't marked complete until the last chapter finishes.
+   */
+  totalMediaDuration?: number;
+  /**
+   * For chapter audio: the ID of the currently playing chapter. When set, the
+   * hook tracks per-chapter furthest progress and writes it to
+   * user_chapter_progress so progress can be summed across chapters.
+   */
+  chapterId?: string | null;
+  /**
+   * For chapter audio: the furthest_seconds already stored in the DB for the
+   * currently playing chapter. Used to initialize chapterFurthestRef so that
+   * revisiting a chapter in a new session never resets saved progress.
+   */
+  existingChapterFurthest?: number;
+  /**
    * Estimated reading time in seconds for PDF items (derived from the
    * item's duration field). When provided, the hook auto-marks as read at
    * 95% of this value based on cumulative active session time.
@@ -82,11 +117,15 @@ export function useContentEngagement({
   existing,
   videoEl,
   audioEl,
+  mediaProgressOffset = 0,
+  totalMediaDuration,
+  chapterId = null,
+  existingChapterFurthest = 0,
   pdfEstimatedSeconds,
   onAutoMarkRead,
   onIdle,
   idleMs = DEFAULT_IDLE_MS,
-}: Params): { mediaProgressPct: number | null; resetIdle: () => void; debugRefs: { baseSeconds: React.RefObject<number>; accSeconds: React.RefObject<number>; furthestSeconds: React.RefObject<number>; durationSeconds: React.RefObject<number>; isIdle: React.RefObject<boolean>; idleMs: React.RefObject<number> } } {
+}: Params): { mediaProgressPct: number | null; chapterFurthestSeconds: number; getSessionChapterFurthest: (chapterId: string) => number; resetIdle: () => void; debugRefs: { baseSeconds: React.RefObject<number>; accSeconds: React.RefObject<number>; furthestSeconds: React.RefObject<number>; durationSeconds: React.RefObject<number>; isIdle: React.RefObject<boolean>; idleMs: React.RefObject<number> } } {
   // Timer state — all in refs so they never cause re-renders
   const lastActivityRef = useRef(Date.now());
   const accSecondsRef = useRef(0);
@@ -96,6 +135,8 @@ export function useContentEngagement({
   const firedIdleRef = useRef(false);
   const onIdleRef = useRef(onIdle);
   useEffect(() => { onIdleRef.current = onIdle; }, [onIdle]);
+  const onAutoMarkReadRef = useRef(onAutoMarkRead);
+  useEffect(() => { onAutoMarkReadRef.current = onAutoMarkRead; }, [onAutoMarkRead]);
   const idleMsRef = useRef(idleMs);
   useEffect(() => { idleMsRef.current = idleMs; }, [idleMs]);
 
@@ -106,20 +147,29 @@ export function useContentEngagement({
   }, [pdfEstimatedSeconds]);
 
   // Media state
-  const furthestRef = useRef(0);
+  const furthestRef = useRef(0);      // high-watermark: used only for auto-mark-read threshold
+  const currentPositionRef = useRef(0); // actual current position: used for resume and DB writes
   const durationRef = useRef(0);
   const autoMarkedRef = useRef(false);
 
+  // Per-chapter progress (chapter audio only)
+  const chapterIdRef = useRef<string | null>(chapterId);
+  useEffect(() => { chapterIdRef.current = chapterId; }, [chapterId]);
+  const chapterFurthestRef = useRef(0); // furthest seconds within the current chapter
+
   // Sync base values when a new item opens or when existing data arrives late.
-  // `sessionProgress` may be ahead of the DB if the user interacted and the
-  // flush hasn't landed yet — take the max to avoid seeking backward on reopen.
+  // `sessionProgress` is preferred over DB when available — it's always the most
+  // recent value and correctly reflects backward chapter navigation.
   useEffect(() => {
     if (!isActive || !contentItemId) return;
     baseSecondsRef.current = existing?.session_seconds ?? 0;
     const dbPos = existing?.media_progress_seconds ?? 0;
     const sessionPos = sessionProgress.get(contentItemId) ?? 0;
-    const resumePos = Math.max(dbPos, sessionPos);
+    // Prefer session cache when available (it's always more recent than DB in a
+    // same-page-session reopen and correctly handles backward chapter navigation).
+    const resumePos = sessionProgress.has(contentItemId) ? sessionPos : dbPos;
     furthestRef.current = resumePos;
+    currentPositionRef.current = resumePos;
     durationRef.current = existing?.media_duration_seconds ?? 0;
     accSecondsRef.current = 0;
     lastActivityRef.current = Date.now();
@@ -127,9 +177,12 @@ export function useContentEngagement({
 
     // If the element is already loaded, seek immediately; otherwise the
     // loadedmetadata handler below will seek once metadata is available.
+    // Chapter audio is NOT seeked here — the audio effect owns that seek using
+    // chapterFurthestRef (driven by existingChapterFurthest). Seeking with the
+    // cumulative resumePos on a single-chapter element would overshoot.
     if (resumePos > 5) {
       if (videoEl && videoEl.readyState >= 1) videoEl.currentTime = resumePos;
-      if (audioEl && audioEl.readyState >= 1) audioEl.currentTime = resumePos;
+      if (audioEl && audioEl.readyState >= 1 && !chapterId) audioEl.currentTime = resumePos;
     }
   }, [contentItemId, isActive, existing, videoEl, audioEl]);
 
@@ -147,13 +200,32 @@ export function useContentEngagement({
             category_id: categoryId,
             // Always send base + accumulated so any previous partial write is overwritten.
             session_seconds: baseSecondsRef.current + accSecondsRef.current,
-            media_progress_seconds: furthestRef.current > 0 ? furthestRef.current : null,
+            media_progress_seconds: currentPositionRef.current > 0 ? currentPositionRef.current : null,
             media_duration_seconds: durationRef.current > 0 ? durationRef.current : null,
             last_updated_at: new Date().toISOString(),
           },
           { onConflict: "user_id,content_item_id" },
         )
     ).catch(() => {});
+
+    // Per-chapter furthest: only write when we actually have progress in this chapter.
+    const cId = chapterIdRef.current;
+    if (cId && chapterFurthestRef.current > 0) {
+      Promise.resolve(
+        (supabase as any)
+          .from("user_chapter_progress")
+          .upsert(
+            {
+              user_id: userId,
+              chapter_id: cId,
+              content_item_id: contentItemId,
+              furthest_seconds: chapterFurthestRef.current,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id,chapter_id" },
+          )
+      ).catch(() => {});
+    }
   }, [userId, contentItemId, categoryId]);
 
   // Stamp `lastActivityRef` on any user interaction so the heartbeat can detect
@@ -191,7 +263,7 @@ export function useContentEngagement({
           const total = baseSecondsRef.current + accSecondsRef.current;
           if (total >= pdfThreshold * 0.95) {
             autoMarkedRef.current = true;
-            onAutoMarkRead?.();
+            onAutoMarkReadRef.current?.();
             write();
           }
         }
@@ -229,8 +301,8 @@ export function useContentEngagement({
 
     const onLoadedMetadata = () => {
       durationRef.current = el.duration || 0;
-      if (furthestRef.current > 5) {
-        el.currentTime = furthestRef.current;
+      if (currentPositionRef.current > 5) {
+        el.currentTime = currentPositionRef.current;
       }
     };
 
@@ -240,15 +312,16 @@ export function useContentEngagement({
       if (t - lastSample < MEDIA_SAMPLE_S) return;
       lastSample = t;
       if (el.duration) durationRef.current = el.duration;
+      currentPositionRef.current = t;
       furthestRef.current = Math.max(furthestRef.current, t);
-      if (contentItemId) setSessionProgress(contentItemId, furthestRef.current);
+      if (contentItemId) setSessionProgress(contentItemId, currentPositionRef.current);
       if (
         !autoMarkedRef.current &&
         el.duration > 0 &&
         furthestRef.current / el.duration >= AUTO_READ_PCT
       ) {
         autoMarkedRef.current = true;
-        onAutoMarkRead?.();
+        onAutoMarkReadRef.current?.();
         write();
       }
     };
@@ -262,17 +335,36 @@ export function useContentEngagement({
       el.removeEventListener("timeupdate", onTimeUpdate);
       write();
     };
-  }, [videoEl, write, onAutoMarkRead, contentItemId]);
+  }, [videoEl, write, contentItemId]);
 
-  // Audio progress tracking + resume (same as video)
+  // Audio progress tracking + resume (same as video, but supports chapter offset).
+  // mediaProgressOffset = cumulative duration of chapters already completed.
+  // totalMediaDuration   = total duration of all chapters (overrides el.duration for auto-mark).
   useEffect(() => {
     const el = audioEl;
     if (!el) return;
 
+    // Initialize chapterFurthestRef from DB value or within-session cache, whichever
+    // is higher. Handles both first-open and same-session chapter revisits.
+    if (chapterId) {
+      const sessionMax = sessionChapterProgress.get(chapterId) ?? 0;
+      chapterFurthestRef.current = Math.max(existingChapterFurthest, sessionMax);
+    } else {
+      chapterFurthestRef.current = 0;
+    }
+
     const onLoadedMetadata = () => {
-      durationRef.current = el.duration || 0;
-      if (furthestRef.current > 5) {
-        el.currentTime = furthestRef.current;
+      // Use totalMediaDuration when set (chapter mode); otherwise use the element's own duration.
+      durationRef.current = totalMediaDuration ?? el.duration ?? 0;
+      // Chapter mode: seek to the chapter-level furthest position — this is the same
+      // value the UI timestamp shows and is driven by existingChapterFurthest so the
+      // audio effect re-runs (and re-seeks) whenever the chapter-progress data loads.
+      // Non-chapter: use the cumulative position minus offset (always 0 for single files).
+      const resumeWithinChapter = chapterId
+        ? chapterFurthestRef.current
+        : (currentPositionRef.current - mediaProgressOffset);
+      if (resumeWithinChapter > 5 && resumeWithinChapter < (el.duration || Infinity)) {
+        el.currentTime = resumeWithinChapter;
       }
     };
 
@@ -281,30 +373,67 @@ export function useContentEngagement({
       const t = el.currentTime;
       if (t - lastSample < MEDIA_SAMPLE_S) return;
       lastSample = t;
-      if (el.duration) durationRef.current = el.duration;
-      furthestRef.current = Math.max(furthestRef.current, t);
-      if (contentItemId) setSessionProgress(contentItemId, furthestRef.current);
+      // In chapter mode, durationRef is the total across all chapters.
+      if (!totalMediaDuration && el.duration) durationRef.current = el.duration;
+      // currentPosition tracks where the user actually is (used for resume and DB writes).
+      currentPositionRef.current = mediaProgressOffset + t;
+      // furthest only moves forward — used exclusively for the auto-mark-read threshold.
+      furthestRef.current = Math.max(furthestRef.current, currentPositionRef.current);
+      if (contentItemId) setSessionProgress(contentItemId, currentPositionRef.current);
+      // Per-chapter furthest: tracks how much of this specific chapter has been heard.
+      if (chapterId) {
+        chapterFurthestRef.current = Math.max(chapterFurthestRef.current, t);
+        sessionChapterProgress.set(chapterId, chapterFurthestRef.current);
+      }
+      const effectiveDuration = totalMediaDuration ?? el.duration;
       if (
         !autoMarkedRef.current &&
-        el.duration > 0 &&
-        furthestRef.current / el.duration >= AUTO_READ_PCT
+        effectiveDuration > 0 &&
+        furthestRef.current / effectiveDuration >= AUTO_READ_PCT
       ) {
         autoMarkedRef.current = true;
-        onAutoMarkRead?.();
+        onAutoMarkReadRef.current?.();
         write();
       }
     };
 
+    // Fires when the audio element reaches the end of the file. Captures the
+    // exact chapter duration so the last 0-5 seconds missed by the sampling
+    // interval are always recorded — without this, full listens only credit
+    // ~95-99% depending on chapter length.
+    const onEnded = () => {
+      const dur = el.duration || 0;
+      currentPositionRef.current = mediaProgressOffset + dur;
+      furthestRef.current = Math.max(furthestRef.current, currentPositionRef.current);
+      if (contentItemId) setSessionProgress(contentItemId, currentPositionRef.current);
+      if (chapterId) {
+        chapterFurthestRef.current = dur;
+        sessionChapterProgress.set(chapterId, dur);
+      }
+      const effectiveDuration = totalMediaDuration ?? dur;
+      if (
+        !autoMarkedRef.current &&
+        effectiveDuration > 0 &&
+        furthestRef.current / effectiveDuration >= AUTO_READ_PCT
+      ) {
+        autoMarkedRef.current = true;
+        onAutoMarkReadRef.current?.();
+      }
+      write();
+    };
+
     el.addEventListener("loadedmetadata", onLoadedMetadata);
     el.addEventListener("timeupdate", onTimeUpdate);
+    el.addEventListener("ended", onEnded);
     if (el.readyState >= 1) onLoadedMetadata();
 
     return () => {
       el.removeEventListener("loadedmetadata", onLoadedMetadata);
       el.removeEventListener("timeupdate", onTimeUpdate);
+      el.removeEventListener("ended", onEnded);
       write();
     };
-  }, [audioEl, write, onAutoMarkRead, contentItemId]);
+  }, [audioEl, mediaProgressOffset, totalMediaDuration, chapterId, existingChapterFurthest, write, contentItemId]);
 
   // Exposed so the UI can show a progress bar. Null when no media has been played
   // (non-media content types) or before the player reports a duration.
@@ -315,6 +444,8 @@ export function useContentEngagement({
 
   return {
     mediaProgressPct,
+    chapterFurthestSeconds: chapterFurthestRef.current,
+    getSessionChapterFurthest: (chId: string) => sessionChapterProgress.get(chId) ?? 0,
     resetIdle,
     debugRefs: {
       baseSeconds: baseSecondsRef,

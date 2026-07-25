@@ -211,7 +211,7 @@ function DashboardPage() {
     enabled: !!userId && categoryIds.length > 0,
     staleTime: 30 * 1000, // progress should feel near-live; 30s is enough
     queryFn: async () => {
-      const [itemsRes, readRes, seenRes, engRes, ratingsRes] = await Promise.all([
+      const [itemsRes, readRes, seenRes, engRes, ratingsRes, chapterProgressRes] = await Promise.all([
         supabase
           .from("content_items")
           .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at, url, file_url, exempt_from_progress")
@@ -234,6 +234,10 @@ function DashboardPage() {
         (supabase as any)
           .from("user_content_ratings")
           .select("content_item_id, rating")
+          .eq("user_id", userId!),
+        (supabase as any)
+          .from("user_chapter_progress")
+          .select("content_item_id, furthest_seconds")
           .eq("user_id", userId!),
       ]);
       if (itemsRes.error) throw itemsRes.error;
@@ -322,8 +326,13 @@ function DashboardPage() {
       for (const r of (ratingsRes.data ?? []) as any[]) {
         if (r.rating === 1 || r.rating === -1) ratingsMap.set(r.content_item_id as string, r.rating as 1 | -1);
       }
+      const itemChapterProgressMap = new Map<string, number>();
+      for (const r of (chapterProgressRes.data ?? []) as any[]) {
+        const id = r.content_item_id as string;
+        itemChapterProgressMap.set(id, (itemChapterProgressMap.get(id) ?? 0) + (r.furthest_seconds as number));
+      }
 
-      return { totals, reads, itemsByCat, readSet, readAtMap, recentCats, newItemSet, totalSeconds, readDays, engagementMap, ratingsMap };
+      return { totals, reads, itemsByCat, readSet, readAtMap, recentCats, newItemSet, totalSeconds, readDays, engagementMap, ratingsMap, itemChapterProgressMap };
     },
   });
 
@@ -1394,6 +1403,7 @@ function CategoryAccordion({
   const engagementMap = progress?.engagementMap ?? new Map();
   const readAtMap = progress?.readAtMap ?? new Map<string, string>();
   const ratingsMap: Map<string, 1 | -1> = progress?.ratingsMap ?? new Map();
+  const itemChapterProgressMap: Map<string, number> = progress?.itemChapterProgressMap ?? new Map();
   return (
     <div className="flex flex-col [&>section]:rounded-none [&>section:first-child]:rounded-t-2xl [&>section:last-child]:rounded-b-2xl [&>section:not(:first-child)]:-mt-px">
       {categories.map((c, idx) => {
@@ -1419,6 +1429,7 @@ function CategoryAccordion({
             lang={lang}
             t={t}
             engagementMap={engagementMap}
+            itemChapterProgressMap={itemChapterProgressMap}
             bookmarkIds={bookmarkIds}
             ratingsMap={ratingsMap}
             isOpen={openId === c.id}
@@ -1445,6 +1456,7 @@ function CategoryProgressSection({
   lang,
   t,
   engagementMap,
+  itemChapterProgressMap,
   bookmarkIds,
   ratingsMap,
   isOpen,
@@ -1464,6 +1476,7 @@ function CategoryProgressSection({
   lang: "en" | "es";
   t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
   engagementMap: Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null; manualCompletionPct: number | null }>;
+  itemChapterProgressMap: Map<string, number>;
   bookmarkIds: Set<string>;
   ratingsMap: Map<string, 1 | -1>;
   isOpen: boolean;
@@ -1575,8 +1588,12 @@ function CategoryProgressSection({
                       // Determine action badge
                       let actionBadge: React.ReactNode;
                       const isAV = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
-                      const mediaPct = !isRead && isAV && eng?.mediaProgressSeconds && eng?.mediaDurationSeconds && eng.mediaDurationSeconds > 0
-                        ? Math.min(100, Math.round((eng.mediaProgressSeconds / eng.mediaDurationSeconds) * 100))
+                      const chapterListened = itemChapterProgressMap.get(it.id);
+                      const listenedSeconds = chapterListened !== undefined
+                        ? Math.max(chapterListened, eng?.mediaProgressSeconds ?? 0)
+                        : (eng?.mediaProgressSeconds ?? 0);
+                      const mediaPct = !isRead && isAV && eng?.mediaDurationSeconds && eng.mediaDurationSeconds > 0 && listenedSeconds > 0
+                        ? Math.min(100, Math.round((listenedSeconds / eng.mediaDurationSeconds) * 100))
                         : null;
                       const isPdf = (it.file_url && /\.pdf(\?|#|$)/i.test(it.file_url)) || (it.url && /\.pdf(\?|#|$)/i.test(it.url));
                       const pdfMins = isPdf ? parseMinutes(it.duration) : 0;

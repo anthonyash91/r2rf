@@ -11,13 +11,13 @@ import { trackCategoryView, trackContentClick } from "@/lib/analytics";
 import { weightedCompletionPct } from "@/lib/content-progress";
 import { detectMedia, type MediaKind } from "@/lib/read-status";
 import { supabase } from "@/integrations/supabase/client";
-import type { Category, ContentItem } from "@/lib/categories";
+import type { Category, ContentItem, ContentChapter } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { fmtDateShort } from "@/lib/date-format";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info, Search, BookOpen, TrendingUp, List } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info, Search, BookOpen, TrendingUp, List, Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -36,7 +36,7 @@ import { getMyFacilityValue, getMyProfile } from "@/lib/user-signup.functions";
 import { SpotlightTutorial, type TutorialStep } from "@/components/SpotlightTutorial";
 
 import { listFacilities } from "@/lib/facilities.functions";
-import { useContentEngagement, type EngagementRecord } from "@/hooks/use-content-engagement";
+import { useContentEngagement, getSessionProgress, type EngagementRecord } from "@/hooks/use-content-engagement";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useRatings } from "@/hooks/use-ratings";
 import { useAchievements } from "@/hooks/use-achievements";
@@ -170,11 +170,54 @@ function CategoryPage() {
   const pdfViewer    = activeMedia?.type === "pdf"    ? activeMedia : null;
   const imageViewer  = activeMedia?.type === "image"  ? activeMedia : null;
 
+  // Chapter playback state (only relevant when audioPlayer is open)
+  const [currentChapterIdx, setCurrentChapterIdx] = useState(0);
+  const [chapterOffset, setChapterOffset] = useState(0); // seconds of all fully-played chapters before the current one
+
+  // Fetch chapters for the currently open audio item
+  const { data: audioChapters = [] } = useQuery<ContentChapter[]>({
+    queryKey: ["chapters", audioPlayer?.itemId ?? null],
+    enabled: !!audioPlayer,
+    staleTime: Infinity,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("content_chapters")
+        .select("*")
+        .eq("content_item_id", audioPlayer!.itemId)
+        .order("sort_order", { ascending: true });
+      if (error) return [];
+      return (data ?? []) as ContentChapter[];
+    },
+  });
+
+  const hasChapters = audioChapters.length > 0;
+  const activeChapter = hasChapters ? (audioChapters[currentChapterIdx] ?? null) : null;
+  const activeChapterUrl = activeChapter
+    ? (lang === "es" && activeChapter.file_url_es ? activeChapter.file_url_es : activeChapter.file_url)
+    : null;
+  const totalChapterDuration = hasChapters
+    ? audioChapters.reduce((s, ch) => s + (ch.duration_seconds ?? 0), 0)
+    : 0;
+
+  // Tracks whether we've set the initial resume chapter for the currently open player.
+  // Reset to false when the player closes so the next open re-initialises.
+  const resumeChapterDone = useRef(false);
+
   // Callback refs (useState) so the engagement hook re-runs its effect when
   // the element actually mounts inside the Radix Dialog Portal — useRef alone
   // would give null because the Portal renders asynchronously.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
+
+  // Custom audio player UI state
+  const [isPlaying, setIsPlaying]     = useState(false);
+  const [playerTime, setPlayerTime]   = useState(0);   // displayed current position (seconds)
+  const [playerDuration, setPlayerDuration] = useState(0);
+  const isScrubbing = useRef(false);                   // true while user is dragging the seek bar
+  const wantPlayRef = useRef(false);                   // user intent: true = should be playing
+  const SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const;
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const playbackRateRef = useRef(1);
 
   // Track PDF item IDs opened this session so we only show the progress
   // button after the user has actually opened the viewer at least once.
@@ -432,8 +475,167 @@ function CategoryPage() {
   });
   const engagementMap = engagementQuery.data ?? new Map<string, EngagementRecord>();
 
+  // When the player opens for a chapter-based item, seek to the correct chapter based
+  // on the last saved position. Prefers the in-session cache (always most recent) over
+  // the DB value so a same-session reopen lands at the right spot before the write lands.
+  // Uses audioPlayer + engagementMap + audioChapters as deps so it runs correctly
+  // regardless of which data arrives first (chapters may be cached, engagement may not).
+  useEffect(() => {
+    if (!audioPlayer) {
+      resumeChapterDone.current = false; // reset when player closes
+      return;
+    }
+    if (audioChapters.length === 0) return; // wait for chapters to load
+    if (resumeChapterDone.current) return;  // already initialised for this open
+    resumeChapterDone.current = true;
+
+    // Session cache is always fresher than the DB for same-page reopens
+    const resumePos =
+      getSessionProgress(audioPlayer.itemId) ??
+      engagementMap.get(audioPlayer.itemId)?.media_progress_seconds ??
+      0;
+    if (resumePos <= 5) return; // nothing meaningful to resume
+
+    let offset = 0;
+    for (let i = 0; i < audioChapters.length; i++) {
+      const dur = audioChapters[i].duration_seconds ?? 0;
+      if (resumePos < offset + dur || i === audioChapters.length - 1) {
+        setCurrentChapterIdx(i);
+        setChapterOffset(offset);
+        return;
+      }
+      offset += dur;
+    }
+  }, [audioPlayer, audioChapters, engagementMap]);
+
+  // Sync the hidden <audio> element's play/time/duration state into React so
+  // the custom player UI can re-render without touching the engagement hook.
+  // Also handles play-on-mount: browsers block the autoPlay attribute when the
+  // element mounts async inside a Portal, so we call play() explicitly here
+  // whenever wantPlayRef says the user intends to be playing.
+  useEffect(() => {
+    const el = audioEl;
+    if (!el) {
+      setIsPlaying(false);
+      setPlayerTime(0);
+      setPlayerDuration(0);
+      return;
+    }
+    // Explicit play() call — more reliable than the autoPlay attribute in Portals.
+    if (wantPlayRef.current) el.play().catch(() => {});
+    el.playbackRate = playbackRateRef.current;
+
+    const onPlay      = () => { setIsPlaying(true);  wantPlayRef.current = true;  };
+    const onPause     = () => { setIsPlaying(false); wantPlayRef.current = false; };
+    const onTimeUpdate = () => { if (!isScrubbing.current) setPlayerTime(el.currentTime); };
+    const onDuration   = () => setPlayerDuration(isFinite(el.duration) ? el.duration : 0);
+    const onMeta       = () => {
+      setPlayerDuration(isFinite(el.duration) ? el.duration : 0);
+      setPlayerTime(el.currentTime);
+    };
+    el.addEventListener("play",           onPlay);
+    el.addEventListener("pause",          onPause);
+    el.addEventListener("timeupdate",     onTimeUpdate);
+    el.addEventListener("durationchange", onDuration);
+    el.addEventListener("loadedmetadata", onMeta);
+    // Sync immediately if element already has data (e.g. same-session chapter revisit)
+    setIsPlaying(!el.paused);
+    setPlayerTime(el.currentTime);
+    if (isFinite(el.duration)) setPlayerDuration(el.duration);
+    return () => {
+      el.removeEventListener("play",           onPlay);
+      el.removeEventListener("pause",          onPause);
+      el.removeEventListener("timeupdate",     onTimeUpdate);
+      el.removeEventListener("durationchange", onDuration);
+      el.removeEventListener("loadedmetadata", onMeta);
+    };
+  }, [audioEl]);
+
+  // Per-chapter furthest progress — used for accurate progress % on audio items with chapters.
+  // One row per (user, chapter). Progress = SUM(furthest_seconds) / total_duration.
+  const items = data?.items ?? [];
+  const chapterProgressQuery = useQuery({
+    queryKey: ["chapterProgress", categoryId, user?.id],
+    enabled: !!user?.id && !!categoryId && !isAdmin && !isFacilityUser && items.length > 0,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const itemIds = items.map((i) => i.id);
+      const { data: rows, error } = await (supabase as any)
+        .from("user_chapter_progress")
+        .select("chapter_id, content_item_id, furthest_seconds")
+        .eq("user_id", user!.id)
+        .in("content_item_id", itemIds);
+      if (error) throw error;
+      return (rows ?? []) as { chapter_id: string; content_item_id: string; furthest_seconds: number }[];
+    },
+  });
+  const chapterProgressRows = chapterProgressQuery.data ?? [];
+
+  // Per-chapter map: chapterId → furthest_seconds (for passing to the engagement hook)
+  const perChapterProgressMap = useMemo(
+    () => new Map(chapterProgressRows.map((r) => [r.chapter_id, r.furthest_seconds])),
+    [chapterProgressRows],
+  );
+
+  // Per-item aggregation: itemId → total listened seconds (for card progress display)
+  const itemChapterProgressMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of chapterProgressRows) {
+      map.set(r.content_item_id, (map.get(r.content_item_id) ?? 0) + r.furthest_seconds);
+    }
+    return map;
+  }, [chapterProgressRows]);
+
   // Derive which item is currently open and its media kind
   const activeItemId = activeMedia?.itemId ?? null;
+
+  // --- Custom audio player helpers ---
+  const fmtTime = (s: number) => {
+    if (!isFinite(s) || s < 0) return "0:00";
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = Math.floor(s % 60);
+    return h > 0
+      ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+      : `${m}:${String(sec).padStart(2, "0")}`;
+  };
+  const togglePlay = () => {
+    if (!audioEl) {
+      // Element not mounted yet — set intent so it plays as soon as it mounts
+      wantPlayRef.current = true;
+      return;
+    }
+    if (audioEl.paused) {
+      wantPlayRef.current = true;
+      audioEl.play().catch(() => {});
+    } else {
+      wantPlayRef.current = false;
+      audioEl.pause();
+    }
+  };
+  const seekTo = (s: number) => {
+    if (!audioEl) return;
+    audioEl.currentTime = Math.max(0, Math.min(s, audioEl.duration || 0));
+  };
+  const cycleSpeed = () => {
+    const idx = SPEEDS.indexOf(playbackRate as typeof SPEEDS[number]);
+    const next = SPEEDS[(idx + 1) % SPEEDS.length];
+    playbackRateRef.current = next;
+    setPlaybackRate(next);
+    if (audioEl) audioEl.playbackRate = next;
+  };
+  const prevChapter = () => {
+    if (!hasChapters || currentChapterIdx <= 0) return;
+    const i = currentChapterIdx - 1;
+    setChapterOffset(audioChapters.slice(0, i).reduce((a, c) => a + (c.duration_seconds ?? 0), 0));
+    setCurrentChapterIdx(i);
+  };
+  const nextChapter = () => {
+    if (!hasChapters || currentChapterIdx >= audioChapters.length - 1) return;
+    setChapterOffset((prev) => prev + (activeChapter?.duration_seconds ?? 0));
+    setCurrentChapterIdx(currentChapterIdx + 1);
+  };
+  // ---
 
   const invalidateEngagement = () => {
     // Delay slightly so the hook's write() cleanup has time to land in the DB
@@ -442,6 +644,7 @@ function CategoryPage() {
     setTimeout(() => {
       queryClient.invalidateQueries({ queryKey: QK.engagement(user?.id, categoryId) });
       queryClient.invalidateQueries({ queryKey: QK.dashboardProgress });
+      queryClient.invalidateQueries({ queryKey: ["chapterProgress", categoryId, user?.id] });
     }, 600);
   };
 
@@ -489,7 +692,7 @@ function CategoryPage() {
 
   // Engagement tracking hook: timer (all types) + media progress (video/audio) + PDF auto-mark
   const isMediaItem = !!(videoEl || audioEl || activeMedia?.type === "video" || activeMedia?.type === "audio");
-  const { resetIdle, debugRefs: engDebug } = useContentEngagement({
+  const { resetIdle, chapterFurthestSeconds, getSessionChapterFurthest, debugRefs: engDebug } = useContentEngagement({
     idleMs: currentIdleMs,
     contentItemId: activeItemId,
     categoryId: categoryId ?? null,
@@ -498,6 +701,10 @@ function CategoryPage() {
     existing: activeItemId ? (engagementMap.get(activeItemId) ?? null) : null,
     videoEl,
     audioEl,
+    mediaProgressOffset: hasChapters ? chapterOffset : 0,
+    totalMediaDuration: hasChapters && totalChapterDuration > 0 ? totalChapterDuration : undefined,
+    chapterId: hasChapters ? (activeChapter?.id ?? null) : null,
+    existingChapterFurthest: activeChapter ? (perChapterProgressMap.get(activeChapter.id) ?? 0) : 0,
     pdfEstimatedSeconds: activePdfEstimatedSeconds,
     onAutoMarkRead: activeItemId
       ? () => toggleRead.mutate({ itemId: activeItemId, markRead: true })
@@ -693,15 +900,20 @@ function CategoryPage() {
                     const fileName = lang === "es" && item.file_url_es ? (item.file_name_es ?? item.file_name) : item.file_name;
                     const fileMedia = detectMedia(fileUrl);
                     const urlMedia = detectMedia(item.url);
-                    const mediaKind: MediaKind | null = fileMedia ?? urlMedia;
+                    // Fall back to type-based audio detection for chapter-only audio items
+                    // that have no URL on the content item itself.
+                    const itemTypeLower = (item.type ?? "").toLowerCase();
+                    const typeAudio = (itemTypeLower.includes("audio") || itemTypeLower.includes("podcast")) ? "audio" as const : null;
+                    const mediaKind: MediaKind | null = fileMedia ?? urlMedia ?? typeAudio;
                     const mediaSrc = fileMedia ? fileUrl : urlMedia ? item.url : null;
-                    const isMedia = !!mediaKind && !!mediaSrc;
+                    // Chapter-only audio items: mediaKind is "audio" but mediaSrc is null — still open the player.
+                    const isMedia = mediaKind === "audio" ? true : (!!mediaKind && !!mediaSrc);
 
                     const openMedia = () => {
-                      if (!isMedia) return;
-                      const payload = { url: mediaSrc!, title, itemId: item.id };
+                      if (!mediaKind) return;
+                      const payload = { url: mediaSrc ?? "", title, itemId: item.id };
                       if (mediaKind === "video") setActiveMedia({ type: "video", ...payload });
-                      else if (mediaKind === "audio") setActiveMedia({ type: "audio", ...payload });
+                      else if (mediaKind === "audio") { wantPlayRef.current = true; setActiveMedia({ type: "audio", ...payload }); }
                       else if (mediaKind === "pdf") {
                         setActiveMedia({ type: "pdf", ...payload });
                         openedPdfsRef.current.add(item.id);
@@ -912,8 +1124,17 @@ function CategoryPage() {
                                   }
 
                                   // ── Video / Audio: progress fill based on playback position ──
-                                  const mediaPct = !isRead && eng && (mediaKind === "video" || mediaKind === "audio") && eng.media_progress_seconds && eng.media_duration_seconds && eng.media_duration_seconds > 0
-                                    ? Math.min(100, Math.round((eng.media_progress_seconds / eng.media_duration_seconds) * 100))
+                                  // Use the max of chapter-sum and overall media progress so that
+                                  // stale/corrupted chapter rows never cause a regression vs the
+                                  // cumulative position recorded in user_content_engagement.
+                                  const chapterListened = itemChapterProgressMap.get(item.id);
+                                  const listenedSeconds = chapterListened !== undefined
+                                    ? Math.max(chapterListened, eng?.media_progress_seconds ?? 0)
+                                    : (eng?.media_progress_seconds ?? 0);
+                                  const mediaPct = !isRead && eng && (mediaKind === "video" || mediaKind === "audio") && eng.media_duration_seconds && eng.media_duration_seconds > 0
+                                    ? (listenedSeconds > 0
+                                        ? Math.min(100, Math.round((listenedSeconds / eng.media_duration_seconds) * 100))
+                                        : null)
                                     : null;
 
                                   if (mediaPct !== null && mediaPct >= 5) {
@@ -1238,18 +1459,232 @@ function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!audioPlayer} onOpenChange={(open) => { if (!open) { setActiveMedia(null); setAudioEl(null); invalidateEngagement(); } }}>
-        <DialogContent className="max-w-lg pt-[18px] max-h-[calc(100dvh-2rem)] overflow-auto" onInteractOutside={(e) => { if (showIdlePrompt) e.preventDefault(); }}>
-          <DialogTitle className="text-base font-semibold pr-8 break-words">{audioPlayer?.title ?? "Audio"}</DialogTitle>
-          {audioPlayer && (
-            <audio
-              ref={setAudioEl}
-              key={audioPlayer.url}
-              src={audioPlayer.url}
-              controls
-              autoPlay
-              className="w-full mt-[-5px]"
-            />
+      <Dialog open={!!audioPlayer} onOpenChange={(open) => {
+        if (!open) {
+          wantPlayRef.current = false;
+          setActiveMedia(null);
+          setAudioEl(null);
+          setCurrentChapterIdx(0);
+          setChapterOffset(0);
+          playbackRateRef.current = 1;
+          setPlaybackRate(1);
+          invalidateEngagement();
+        }
+      }}>
+        <DialogContent className="max-w-xl p-0 max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col" onInteractOutside={(e) => { if (showIdlePrompt) e.preventDefault(); }}>
+          {/* Sticky header: title + custom audio player */}
+          <div className="flex-shrink-0 px-6 pt-[18px] pb-4 border-b space-y-3">
+            <DialogTitle className="text-base font-semibold pr-8 break-words">{audioPlayer?.title ?? "Audio"}</DialogTitle>
+            {hasChapters && activeChapter && (
+              <p className="text-sm text-muted-foreground -mt-2 truncate">
+                {pickLang(lang, activeChapter.title, activeChapter.title_es)}
+              </p>
+            )}
+            {audioPlayer && (
+              <>
+                {/* Hidden audio element — engagement hook wires to this via ref */}
+                <audio
+                  ref={setAudioEl}
+                  key={hasChapters ? `${audioPlayer.itemId}-ch${currentChapterIdx}` : audioPlayer.url}
+                  src={hasChapters ? (activeChapterUrl ?? undefined) : audioPlayer.url}
+                  className="hidden"
+                  onEnded={() => {
+                    if (!hasChapters) return;
+                    const nextIdx = currentChapterIdx + 1;
+                    if (nextIdx < audioChapters.length) {
+                      setChapterOffset((prev) => prev + (activeChapter?.duration_seconds ?? 0));
+                      setCurrentChapterIdx(nextIdx);
+                    }
+                  }}
+                />
+
+                {/* Seek bar */}
+                <div className="space-y-1">
+                  <input
+                    type="range"
+                    min={0}
+                    max={playerDuration || 1}
+                    value={playerTime}
+                    step={0.1}
+                    aria-label="Seek"
+                    className="w-full h-1 cursor-pointer rounded-full appearance-none bg-border [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--color-accent)]"
+                    style={{
+                      background: `linear-gradient(to right, var(--color-accent) ${playerDuration ? (playerTime / playerDuration) * 100 : 0}%, var(--color-border) 0%)`,
+                    }}
+                    onPointerDown={() => { isScrubbing.current = true; }}
+                    onChange={(e) => setPlayerTime(Number(e.target.value))}
+                    onPointerUp={(e) => {
+                      isScrubbing.current = false;
+                      seekTo(Number((e.target as HTMLInputElement).value));
+                    }}
+                  />
+                  <div className="flex justify-between text-xs tabular-nums text-muted-foreground">
+                    <span>{fmtTime(playerTime)}</span>
+                    <span>{fmtTime(playerDuration)}</span>
+                  </div>
+                </div>
+
+                {/* Controls */}
+                <div className="relative flex items-center justify-center gap-2">
+                  {/* Prev chapter */}
+                  <button
+                    type="button"
+                    onClick={prevChapter}
+                    disabled={!hasChapters || currentChapterIdx === 0}
+                    aria-label="Previous"
+                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <SkipBack className="h-4 w-4" />
+                    <span className="text-[9px] font-medium">Prev</span>
+                  </button>
+
+                  {/* Back 15s */}
+                  <button
+                    type="button"
+                    onClick={() => seekTo(playerTime - 15)}
+                    aria-label="Back 15 seconds"
+                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    <span className="text-[9px] font-medium">15s</span>
+                  </button>
+
+                  {/* Play / Pause */}
+                  <button
+                    type="button"
+                    onClick={togglePlay}
+                    aria-label={isPlaying ? "Pause" : "Play"}
+                    className="mx-2 h-12 w-12 rounded-full bg-[var(--color-accent)] text-white flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                  >
+                    {isPlaying
+                      ? <Pause className="h-5 w-5" />
+                      : <Play className="h-5 w-5 translate-x-px" />}
+                  </button>
+
+                  {/* Forward 15s */}
+                  <button
+                    type="button"
+                    onClick={() => seekTo(playerTime + 15)}
+                    aria-label="Forward 15 seconds"
+                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  >
+                    <RotateCw className="h-4 w-4" />
+                    <span className="text-[9px] font-medium">15s</span>
+                  </button>
+
+                  {/* Next chapter */}
+                  <button
+                    type="button"
+                    onClick={nextChapter}
+                    disabled={!hasChapters || currentChapterIdx === audioChapters.length - 1}
+                    aria-label="Next"
+                    className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <SkipForward className="h-4 w-4" />
+                    <span className="text-[9px] font-medium">Next</span>
+                  </button>
+
+                  {/* Playback speed — absolute so it doesn't shift the centered controls */}
+                  <button
+                    type="button"
+                    onClick={cycleSpeed}
+                    aria-label={`Playback speed: ${playbackRate}×`}
+                    className="absolute right-0 flex flex-col items-center gap-0.5 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  >
+                    <span className="text-xs font-semibold tabular-nums leading-none">{playbackRate}×</span>
+                    <span className="text-[9px] font-medium">Speed</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+          {/* Scrollable chapter list */}
+          {audioPlayer && hasChapters && (
+            <div className="overflow-y-auto flex-1 px-6 py-4">
+              {(() => {
+                const fmtSecs = (s: number) =>
+                  Math.floor(s / 3600) > 0
+                    ? `${Math.floor(s / 3600)}:${String(Math.floor((s % 3600) / 60)).padStart(2, "0")}:${String(Math.round(s % 60)).padStart(2, "0")}`
+                    : `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+                const totalListened = audioChapters.reduce((sum, ch, idx) => {
+                  const isActive = idx === currentChapterIdx;
+                  const f = isActive
+                    ? Math.max(chapterFurthestSeconds, perChapterProgressMap.get(ch.id) ?? 0)
+                    : Math.max(getSessionChapterFurthest(ch.id), perChapterProgressMap.get(ch.id) ?? 0);
+                  return sum + f;
+                }, 0);
+                return (
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center justify-between">
+                    <span>{t("audio.chapters")} ({audioChapters.length})</span>
+                    {totalChapterDuration > 0 && (
+                      <span className="font-normal normal-case tracking-normal tabular-nums">
+                        {totalListened > 0 && <>{fmtSecs(totalListened)} / </>}
+                        {fmtSecs(totalChapterDuration)} total
+                      </span>
+                    )}
+                  </p>
+                );
+              })()}
+
+              <div className="space-y-1">
+                {audioChapters.map((ch, idx) => {
+                  const chTitle = pickLang(lang, ch.title, ch.title_es);
+                  const isActive = idx === currentChapterIdx;
+                  const chOffset = audioChapters.slice(0, idx).reduce((s, c) => s + (c.duration_seconds ?? 0), 0);
+                  // Active chapter: live hook value. Others: max of session cache and DB map
+                  // so chapters completed via auto-advance show immediately.
+                  const furthest = isActive
+                    ? Math.max(chapterFurthestSeconds, perChapterProgressMap.get(ch.id) ?? 0)
+                    : Math.max(getSessionChapterFurthest(ch.id), perChapterProgressMap.get(ch.id) ?? 0);
+                  const chPct = ch.duration_seconds && ch.duration_seconds > 0
+                    ? Math.min(1, furthest / ch.duration_seconds)
+                    : 0;
+                  const chDone = chPct >= 0.9;
+                  return (
+                    <button
+                      key={ch.id}
+                      type="button"
+                      onClick={() => {
+                        wantPlayRef.current = true;
+                        setChapterOffset(chOffset);
+                        setCurrentChapterIdx(idx);
+                      }}
+                      className={[
+                        "w-full text-left rounded-lg px-3 py-2 text-sm flex items-center gap-3 transition-colors relative overflow-hidden",
+                        isActive
+                          ? "bg-[color-mix(in_oklab,var(--color-accent)_12%,transparent)] text-foreground font-medium"
+                          : "hover:bg-muted text-muted-foreground",
+                      ].join(" ")}
+                    >
+                      {chPct > 0 && !chDone && (
+                        <span
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-y-0 left-0 rounded-lg bg-[var(--color-accent)] opacity-[0.08]"
+                          style={{ width: `${chPct * 100}%` }}
+                        />
+                      )}
+                      <span className="relative min-w-0 flex-1 break-words">{chTitle}</span>
+                      <span className="relative flex items-center gap-1.5 flex-shrink-0">
+                        {chDone ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+                        ) : furthest > 0 ? (
+                          <span className="text-xs tabular-nums opacity-60">
+                            {Math.floor(furthest / 3600) > 0
+                              ? `${Math.floor(furthest / 3600)}:${String(Math.floor((furthest % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(furthest % 60)).padStart(2, "0")}`
+                              : `${Math.floor(furthest / 60)}:${String(Math.floor(furthest % 60)).padStart(2, "0")}`} /
+                          </span>
+                        ) : null}
+                        {ch.duration_seconds ? (
+                          <span className="text-xs tabular-nums">
+                            {Math.floor(ch.duration_seconds / 60)}:{String(Math.round(ch.duration_seconds % 60)).padStart(2, "0")}
+                          </span>
+                        ) : null}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>

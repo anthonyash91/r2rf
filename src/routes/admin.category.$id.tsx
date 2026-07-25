@@ -5,13 +5,13 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { slugify, type Category, type ContentItem } from "@/lib/categories";
+import { slugify, type Category, type ContentItem, type ContentChapter } from "@/lib/categories";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, FolderOpen, GripVertical, Info, Tag, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, FolderOpen, GripVertical, Info, Tag, ChevronDown, ChevronUp, Languages } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { listFacilities } from "@/lib/facilities.functions";
@@ -517,8 +517,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   };
 
   const saveMut = useMutation({
-    mutationFn: async (values: Partial<ContentItem> & { id?: string }) => {
-      const { facilities, ...itemValues } = values;
+    mutationFn: async (values: ItemSavePayload) => {
+      const { facilities, chapters, ...itemValues } = values;
       let savedId: string;
       if (itemValues.id) {
         const { id: itemId, ...rest } = itemValues;
@@ -555,12 +555,34 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         );
         if (fErr) throw fErr;
       }
+      // Sync chapters: replace all existing rows then reinsert in order
+      if (chapters !== undefined) {
+        await (supabase as any).from("content_chapters").delete().eq("content_item_id", savedId);
+        if (chapters.length > 0) {
+          const { error: chErr } = await (supabase as any).from("content_chapters").insert(
+            chapters.map((ch, i) => ({
+              content_item_id: savedId,
+              title: ch.title,
+              title_es: ch.title_es || null,
+              sort_order: i + 1,
+              file_url: ch.file_url,
+              file_name: ch.file_name,
+              file_url_es: ch.file_url_es || null,
+              file_name_es: ch.file_name_es || null,
+              duration_seconds: ch.duration_seconds,
+            }))
+          );
+          if (chErr) throw chErr;
+        }
+      }
       return savedId;
     },
     onSuccess: (savedId) => {
       toast.success("Saved");
       setEditing(null);
       if (savedId) setPendingScrollId(savedId);
+      // Remove stale chapter cache so the next editor open always fetches fresh data
+      if (savedId) qc.removeQueries({ queryKey: ["chapters", savedId] });
       invalidate();
       qc.invalidateQueries({ queryKey: QK.contentTypes });
       const pendingStyles = pendingBadgeStylesRef.current;
@@ -678,7 +700,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             categoryId={categoryId}
             categoryName={categoryName}
             onCancel={() => setEditing(null)}
-            onSave={(v) => saveMut.mutate(v)}
+            onSave={(v) => saveMut.mutate(v as ItemSavePayload)}
             busy={saveMut.isPending}
             categoryFacilities={categoryFacilities}
             onPendingDelete={(path) => { pendingDeletesRef.current.push(path); }}
@@ -896,6 +918,19 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   );
 }
 
+type ChapterDraft = {
+  id?: string;
+  title: string;
+  title_es: string;
+  file_url: string | null;
+  file_name: string | null;
+  file_url_es: string | null;
+  file_name_es: string | null;
+  duration_seconds: number | null;
+};
+
+type ItemSavePayload = Partial<ContentItem> & { id?: string; chapters?: ChapterDraft[] };
+
 function ItemEditor({
   item,
   categoryId,
@@ -911,7 +946,7 @@ function ItemEditor({
   categoryId: string;
   categoryName: string;
   onCancel: () => void;
-  onSave: (v: Partial<ContentItem> & { id?: string }) => void;
+  onSave: (v: ItemSavePayload) => void;
   busy: boolean;
   categoryFacilities: string[];
   onPendingDelete: (path: string) => void;
@@ -975,6 +1010,44 @@ function ItemEditor({
     !!(item?.title_es || item?.description_es || item?.source_es || item?.file_url_es),
   );
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
+  const { run: runChapterTitleEs, busy: chapterTitleEsBusy } = useTranslateToSpanish();
+  const [translatingChapterIdx, setTranslatingChapterIdx] = useState<number | null>(null);
+
+  // Chapters — only relevant for audio/podcast types
+  const [chapters, setChapters] = useState<ChapterDraft[]>([]);
+  const [chaptersOpen, setChaptersOpen] = useState(true);
+  const { data: existingChapters } = useQuery({
+    queryKey: ["chapters", item?.id ?? null],
+    enabled: !!item?.id,
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("content_chapters")
+        .select("*")
+        .eq("content_item_id", item!.id)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as ContentChapter[];
+    },
+  });
+  // Initialise chapter state once the DB data arrives (only on first load)
+  const chaptersInitialised = useRef(false);
+  useEffect(() => {
+    if (!existingChapters || chaptersInitialised.current) return;
+    chaptersInitialised.current = true;
+    setChapters(
+      existingChapters.map((ch) => ({
+        id: ch.id,
+        title: ch.title,
+        title_es: ch.title_es ?? "",
+        file_url: ch.file_url,
+        file_name: ch.file_name,
+        file_url_es: ch.file_url_es,
+        file_name_es: ch.file_name_es,
+        duration_seconds: ch.duration_seconds,
+      }))
+    );
+  }, [existingChapters]);
 
   const generateDesc = useServerFn(generateContentDescription);
   const [generatingDesc, setGeneratingDesc] = useState(false);
@@ -1026,6 +1099,15 @@ function ItemEditor({
     return () => { cancelled = true; };
   }, [type, url]);
 
+
+  const isAudioType = type.toLowerCase().includes("audio") || type.toLowerCase().includes("podcast");
+
+  // When chapters have known durations, auto-sum them into the duration field
+  useEffect(() => {
+    if (!isAudioType || chapters.length === 0) return;
+    const total = chapters.reduce((s, ch) => s + (ch.duration_seconds ?? 0), 0);
+    if (total > 0) setDuration(withActionWord(formatMediaDuration(total), type));
+  }, [chapters, isAudioType, type]);
 
   async function handleAutoGenerateDesc() {
     const trimmed = title.trim();
@@ -1168,6 +1250,7 @@ function ItemEditor({
           source_es: sourceEs.trim() || null,
           file_url_es: fileUrlEs,
           file_name_es: fileNameEs,
+          chapters: isAudioType ? chapters : undefined,
         });
       }}
       className="mt-6 mb-8 rounded-2xl border border-border bg-card p-6 pt-[18px] space-y-4"
@@ -1363,6 +1446,232 @@ function ItemEditor({
           />
         </FileUploader>
       </label>
+      {/* ── Audio Files (audio types only) ── */}
+      {isAudioType && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setChaptersOpen((o) => !o)}
+              className="flex items-center gap-1.5 text-sm font-medium hover:text-foreground/70 transition-colors"
+            >
+              <ChevronDown className={`h-4 w-4 transition-transform ${chaptersOpen ? "" : "-rotate-90"}`} />
+              Audio Files
+              {chapters.length > 0 && (
+                <span className="ml-0.5 text-xs text-muted-foreground font-normal">
+                  ({chapters.length})
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setChaptersOpen(true);
+                setChapters((prev) => [
+                  ...prev,
+                  { title: "", title_es: "", file_url: null, file_name: null, file_url_es: null, file_name_es: null, duration_seconds: null },
+                ]);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+            >
+              <Plus className="h-3 w-3" /> Add audio file
+            </button>
+          </div>
+
+          {chaptersOpen && chapters.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              No audio files yet. Add audio files to let users navigate this content by section.
+            </p>
+          )}
+
+          {chaptersOpen && chapters.map((ch, idx) => (
+            <div key={idx} className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Audio File {idx + 1}
+                  {ch.duration_seconds ? ` · ${formatMediaDuration(ch.duration_seconds)}` : ""}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={idx === 0}
+                    onClick={() =>
+                      setChapters((prev) => {
+                        const next = [...prev];
+                        [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                        return next;
+                      })
+                    }
+                    className="p-1 rounded hover:bg-muted disabled:opacity-30"
+                    title="Move up"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={idx === chapters.length - 1}
+                    onClick={() =>
+                      setChapters((prev) => {
+                        const next = [...prev];
+                        [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                        return next;
+                      })
+                    }
+                    className="p-1 rounded hover:bg-muted disabled:opacity-30"
+                    title="Move down"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ch = chapters[idx];
+                      if (ch.file_url) {
+                        const path = ch.file_url.split("/object/public/content-files/")[1];
+                        if (path) onPendingDelete(path);
+                      }
+                      if (ch.file_url_es) {
+                        const path = ch.file_url_es.split("/object/public/content-files/")[1];
+                        if (path) onPendingDelete(path);
+                      }
+                      setChapters((prev) => prev.filter((_, i) => i !== idx));
+                    }}
+                    className="p-1 rounded hover:bg-destructive/10 text-destructive"
+                    title="Remove audio file"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <LabeledInput
+                  label="Title"
+                  value={ch.title}
+                  onChange={(v) => setChapters((prev) => prev.map((c, i) => i === idx ? { ...c, title: v } : c))}
+                  required
+                />
+                <label className="block">
+                  <span className="flex items-center justify-between gap-2 text-sm font-medium">
+                    Title (ES)
+                    <button
+                      type="button"
+                      disabled={!ch.title.trim() || (chapterTitleEsBusy && translatingChapterIdx === idx)}
+                      onClick={async () => {
+                        setTranslatingChapterIdx(idx);
+                        await runChapterTitleEs(
+                          { title: ch.title },
+                          (t) => {
+                            if (t.title) setChapters((prev) => prev.map((c, i) => i === idx ? { ...c, title_es: t.title } : c));
+                          },
+                          "Audio chapter title in a recovery education app",
+                        );
+                        setTranslatingChapterIdx(null);
+                      }}
+                      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-muted-foreground border border-transparent hover:border-input hover:bg-muted disabled:opacity-40 transition-colors"
+                      title="Generate Spanish translation with AI"
+                    >
+                      {chapterTitleEsBusy && translatingChapterIdx === idx
+                        ? <RefreshCw className="h-3 w-3 animate-spin" />
+                        : <Languages className="h-3 w-3" />}
+                      Translate
+                    </button>
+                  </span>
+                  <input
+                    type="text"
+                    value={ch.title_es}
+                    onChange={(e) => setChapters((prev) => prev.map((c, i) => i === idx ? { ...c, title_es: e.target.value } : c))}
+                    className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                  />
+                </label>
+              </div>
+
+              <label className="block">
+                <span className="text-sm font-medium">Audio file (EN)</span>
+                <FileUploader
+                  className="mt-1"
+                  existingFileUrl={ch.file_url ?? undefined}
+                  onPendingDelete={onPendingDelete}
+                  onUploaded={async (u, name) => {
+                    const seconds = await probeMediaDuration(u, "audio");
+                    setChapters((prev) =>
+                      prev.map((c, i) =>
+                        i === idx
+                          ? { ...c, file_url: u, file_name: name ?? null, duration_seconds: seconds > 0 ? seconds : null }
+                          : c
+                      )
+                    );
+                  }}
+                >
+                  <input
+                    type="url"
+                    placeholder="https://…"
+                    value={ch.file_url ?? ""}
+                    onChange={(e) =>
+                      setChapters((prev) =>
+                        prev.map((c, i) => i === idx ? { ...c, file_url: e.target.value || null } : c)
+                      )
+                    }
+                    onBlur={async (e) => {
+                      const v = e.target.value.trim();
+                      if (!v) return;
+                      const seconds = await probeMediaDuration(v, "audio");
+                      if (seconds > 0) {
+                        setChapters((prev) =>
+                          prev.map((c, i) => i === idx ? { ...c, duration_seconds: seconds } : c)
+                        );
+                      }
+                    }}
+                    className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+                  />
+                </FileUploader>
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-medium">Audio file (ES, optional)</span>
+                <FileUploader
+                  className="mt-1"
+                  existingFileUrl={ch.file_url_es ?? undefined}
+                  onPendingDelete={onPendingDelete}
+                  onUploaded={(u, name) =>
+                    setChapters((prev) =>
+                      prev.map((c, i) => i === idx ? { ...c, file_url_es: u, file_name_es: name ?? null } : c)
+                    )
+                  }
+                >
+                  <input
+                    type="url"
+                    placeholder="https://…"
+                    value={ch.file_url_es ?? ""}
+                    onChange={(e) =>
+                      setChapters((prev) =>
+                        prev.map((c, i) => i === idx ? { ...c, file_url_es: e.target.value || null } : c)
+                      )
+                    }
+                    className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+                  />
+                </FileUploader>
+              </label>
+            </div>
+          ))}
+
+          {chaptersOpen && chapters.length > 0 && (
+            <button
+              type="button"
+              onClick={() =>
+                setChapters((prev) => [
+                  ...prev,
+                  { title: "", title_es: "", file_url: null, file_name: null, file_url_es: null, file_name_es: null, duration_seconds: null },
+                ])
+              }
+              className="w-full inline-flex items-center justify-center gap-1.5 rounded-md border border-dashed border-input bg-background px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <Plus className="h-3 w-3" /> Add audio file
+            </button>
+          )}
+        </div>
+      )}
+
       <div>
         <label className="block">
           <span className="text-sm font-medium">Description</span>

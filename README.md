@@ -304,6 +304,18 @@ The modal appears once per category completion. It is only shown on the dashboar
 
 For video and audio content, the platform stores the furthest point reached. Reopening the content resumes from that exact position — users never lose their place across sessions or devices.
 
+### Audio Chapters
+
+Audio content items can be broken into ordered chapters. Each chapter is a separate audio file with its own title (English + optional Spanish) and optional Spanish audio track. When chapters are present:
+
+- The player shows a numbered chapter list below the controls.
+- Tapping a chapter seeks directly to it.
+- Playback auto-advances to the next chapter when the current one ends.
+- Progress and resume position are tracked as a single continuous timeline across all chapters.
+- Items are auto-marked complete when the last chapter reaches 95% playback.
+
+Admins add chapters in the content item editor — the **Chapters** section appears when the content type is Audio or Podcast.
+
 ---
 
 ## Saved Tab
