@@ -586,6 +586,32 @@ function CategoryPage() {
     return map;
   }, [chapterProgressRows]);
 
+  // Total chapter durations per item — queried directly from content_chapters so
+  // the denominator for progress % is always the real total, not the potentially
+  // stale media_duration_seconds stored in user_content_engagement.
+  const chapterDurationsQuery = useQuery({
+    queryKey: ["chapterDurations", categoryId],
+    enabled: !!categoryId && items.length > 0,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const itemIds = items.map((i) => i.id);
+      const { data: rows, error } = await (supabase as any)
+        .from("content_chapters")
+        .select("content_item_id, duration_seconds")
+        .in("content_item_id", itemIds);
+      if (error) return [];
+      return (rows ?? []) as { content_item_id: string; duration_seconds: number | null }[];
+    },
+  });
+  const itemTotalDurationMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of chapterDurationsQuery.data ?? []) {
+      map.set(r.content_item_id, (map.get(r.content_item_id) ?? 0) + (r.duration_seconds ?? 0));
+    }
+    return map;
+  }, [chapterDurationsQuery.data]);
+
+
   // Derive which item is currently open and its media kind
   const activeItemId = activeMedia?.itemId ?? null;
 
@@ -913,7 +939,7 @@ function CategoryPage() {
                       if (!mediaKind) return;
                       const payload = { url: mediaSrc ?? "", title, itemId: item.id };
                       if (mediaKind === "video") setActiveMedia({ type: "video", ...payload });
-                      else if (mediaKind === "audio") { wantPlayRef.current = true; setActiveMedia({ type: "audio", ...payload }); }
+                      else if (mediaKind === "audio") { setActiveMedia({ type: "audio", ...payload }); }
                       else if (mediaKind === "pdf") {
                         setActiveMedia({ type: "pdf", ...payload });
                         openedPdfsRef.current.add(item.id);
@@ -1131,20 +1157,21 @@ function CategoryPage() {
                                   const listenedSeconds = chapterListened !== undefined
                                     ? Math.max(chapterListened, eng?.media_progress_seconds ?? 0)
                                     : (eng?.media_progress_seconds ?? 0);
-                                  const mediaPct = !isRead && eng && (mediaKind === "video" || mediaKind === "audio") && eng.media_duration_seconds && eng.media_duration_seconds > 0
-                                    ? (listenedSeconds > 0
-                                        ? Math.min(100, Math.round((listenedSeconds / eng.media_duration_seconds) * 100))
-                                        : null)
+                                  const totalDuration = itemTotalDurationMap.get(item.id) || eng?.media_duration_seconds || 0;
+                                  const mediaPct = !isRead && (mediaKind === "video" || mediaKind === "audio") && totalDuration > 0 && listenedSeconds > 0
+                                    ? Math.min(100, Math.round((listenedSeconds / totalDuration) * 100))
                                     : null;
 
-                                  if (mediaPct !== null && mediaPct >= 5) {
+                                  if (mediaPct !== null) {
+                                    const barWidth = Math.max(1, mediaPct);
+                                    const pctLabel = mediaPct < 1 ? "< 1" : String(mediaPct);
                                     // Display-only progress fill — no manual click; auto-mark fires at 95%
                                     return (
                                       <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium overflow-hidden flex-shrink-0">
-                                        <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
+                                        <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${barWidth}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
                                         <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
                                         <span className="relative text-foreground">
-                                          {mediaPct}%{" "}
+                                          {pctLabel}%{" "}
                                           {mediaKind === "video" ? t("category.markedWatched").toLowerCase() : t("category.markedListened").toLowerCase()}
                                         </span>
                                       </span>

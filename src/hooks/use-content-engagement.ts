@@ -152,6 +152,12 @@ export function useContentEngagement({
   const durationRef = useRef(0);
   const autoMarkedRef = useRef(false);
 
+  // Updated synchronously during render (not in a useEffect) so the write()
+  // callback always sees the latest value even during effect cleanups — which
+  // run before the next effect's useEffect body executes.
+  const totalMediaDurationRef = useRef<number | undefined>(undefined);
+  totalMediaDurationRef.current = totalMediaDuration;
+
   // Per-chapter progress (chapter audio only)
   const chapterIdRef = useRef<string | null>(chapterId);
   useEffect(() => { chapterIdRef.current = chapterId; }, [chapterId]);
@@ -201,7 +207,7 @@ export function useContentEngagement({
             // Always send base + accumulated so any previous partial write is overwritten.
             session_seconds: baseSecondsRef.current + accSecondsRef.current,
             media_progress_seconds: currentPositionRef.current > 0 ? currentPositionRef.current : null,
-            media_duration_seconds: durationRef.current > 0 ? durationRef.current : null,
+            media_duration_seconds: (totalMediaDurationRef.current ?? durationRef.current) > 0 ? (totalMediaDurationRef.current ?? durationRef.current) : null,
             last_updated_at: new Date().toISOString(),
           },
           { onConflict: "user_id,content_item_id" },

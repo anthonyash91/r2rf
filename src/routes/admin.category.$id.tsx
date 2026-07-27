@@ -11,13 +11,13 @@ import { BadgeGroup } from "@/components/BadgeGroup";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, FolderOpen, GripVertical, Info, Tag, ChevronDown, ChevronUp, Languages } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, FolderOpen, GripVertical, Info, Tag, ChevronDown, ChevronUp, Languages, Upload } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { listFacilities } from "@/lib/facilities.functions";
 import { generateUniqueCategoryIcon, resolveCategoryIcon } from "@/lib/category-icons";
 import { FileUploader } from "@/components/FileUploader";
-import { deleteStorageFile, estimatePdfDuration } from "@/lib/storage.functions";
+import { deleteStorageFile, estimatePdfDuration, getSignedUploadUrl } from "@/lib/storage.functions";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
 const SortableList = lazy(() =>
@@ -35,7 +35,7 @@ import { BulkActionBar } from "@/components/BulkActionBar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LabeledInput } from "@/components/FormField";
 import { FacilityCombobox } from "@/components/FacilityCombobox";
-import { LoadingButton } from "@/components/LoadingButton";
+import { LoadingButton, actionButtonClassName } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { EmptyState } from "@/components/EmptyState";
 import { FacilityBadge } from "@/components/FacilityBadge";
@@ -1016,6 +1016,9 @@ function ItemEditor({
   // Chapters — only relevant for audio/podcast types
   const [chapters, setChapters] = useState<ChapterDraft[]>([]);
   const [chaptersOpen, setChaptersOpen] = useState(true);
+  const [multiUploading, setMultiUploading] = useState(false);
+  const multiUploadInputRef = useRef<HTMLInputElement>(null);
+  const getSignedUrl = useServerFn(getSignedUploadUrl);
   const { data: existingChapters } = useQuery({
     queryKey: ["chapters", item?.id ?? null],
     enabled: !!item?.id,
@@ -1101,6 +1104,60 @@ function ItemEditor({
 
 
   const isAudioType = type.toLowerCase().includes("audio") || type.toLowerCase().includes("podcast");
+
+  async function handleMultipleFiles(files: FileList) {
+    const arr = Array.from(files);
+    if (arr.length === 0) return;
+    setMultiUploading(true);
+    setChaptersOpen(true);
+    const drafts: ChapterDraft[] = arr.map((f) => ({
+      title: filenameToTitle(f.name),
+      title_es: "",
+      file_url: null,
+      file_name: null,
+      file_url_es: null,
+      file_name_es: null,
+      duration_seconds: null,
+    }));
+    let baseIdx = 0;
+    setChapters((prev) => { baseIdx = prev.length; return [...prev, ...drafts]; });
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+    const BUCKET = "content-files";
+    for (let i = 0; i < arr.length; i++) {
+      const file = arr[i];
+      try {
+        const path = `uploads/${Date.now()}-${file.name.replace(/[^A-Za-z0-9._\-]/g, "_")}`;
+        const { token, publicUrl } = await getSignedUrl({ data: { path } });
+        const uploadUrl =
+          `${SUPABASE_URL}/storage/v1/object/upload/sign/${BUCKET}/${path}` +
+          `?token=${encodeURIComponent(token)}`;
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) resolve();
+            else reject(new Error(`Upload failed (${xhr.status})`));
+          });
+          xhr.addEventListener("error", () => reject(new Error("Upload failed")));
+          xhr.open("PUT", uploadUrl);
+          xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+          xhr.send(file);
+        });
+        const seconds = await probeMediaDuration(publicUrl, "audio");
+        const chIdx = baseIdx + i;
+        setChapters((prev) =>
+          prev.map((c, idx) =>
+            idx === chIdx
+              ? { ...c, file_url: publicUrl, file_name: file.name, duration_seconds: seconds > 0 ? seconds : null }
+              : c
+          )
+        );
+      } catch (err: any) {
+        toast.error(`Failed to upload "${file.name}": ${err.message ?? "Upload failed"}`);
+      }
+    }
+    setMultiUploading(false);
+    if (multiUploadInputRef.current) multiUploadInputRef.current.value = "";
+  }
 
   // When chapters have known durations, auto-sum them into the duration field
   useEffect(() => {
@@ -1449,33 +1506,66 @@ function ItemEditor({
       {/* ── Audio Files (audio types only) ── */}
       {isAudioType && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setChaptersOpen((o) => !o)}
-              className="flex items-center gap-1.5 text-sm font-medium hover:text-foreground/70 transition-colors"
-            >
-              <ChevronDown className={`h-4 w-4 transition-transform ${chaptersOpen ? "" : "-rotate-90"}`} />
-              Audio Files
-              {chapters.length > 0 && (
-                <span className="ml-0.5 text-xs text-muted-foreground font-normal">
-                  ({chapters.length})
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setChaptersOpen(true);
-                setChapters((prev) => [
-                  ...prev,
-                  { title: "", title_es: "", file_url: null, file_name: null, file_url_es: null, file_name_es: null, duration_seconds: null },
-                ]);
-              }}
-              className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-            >
-              <Plus className="h-3 w-3" /> Add audio file
-            </button>
+          <input
+            ref={multiUploadInputRef}
+            type="file"
+            multiple
+            accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.flac,.opus"
+            className="hidden"
+            onChange={(e) => { if (e.target.files?.length) handleMultipleFiles(e.target.files); }}
+          />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setChaptersOpen((o) => !o)}
+                className="flex items-center gap-1.5 text-sm font-medium hover:text-foreground/70 transition-colors"
+              >
+                <ChevronDown className={`h-4 w-4 transition-transform ${chaptersOpen ? "" : "-rotate-90"}`} />
+                Audio Files
+                {chapters.length > 0 && (
+                  <span className="ml-0.5 text-xs text-muted-foreground font-normal">
+                    ({chapters.length})
+                  </span>
+                )}
+              </button>
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" className="text-muted-foreground hover:text-foreground rounded-sm focus:outline-none">
+                      <Info className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-[260px] text-xs">
+                    Use this section to break an audio post into multiple chapters — one file per chapter. Users can jump between chapters in the audio player. This is different from the URL field above, which is for a single standalone audio file with no chapters.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={multiUploading}
+                onClick={() => multiUploadInputRef.current?.click()}
+                className={actionButtonClassName("secondary")}
+              >
+                <Upload className="h-4 w-4" />
+                {multiUploading ? "Uploading…" : "Upload multiple"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setChaptersOpen(true);
+                  setChapters((prev) => [
+                    ...prev,
+                    { title: "", title_es: "", file_url: null, file_name: null, file_url_es: null, file_name_es: null, duration_seconds: null },
+                  ]);
+                }}
+                className={actionButtonClassName("secondary")}
+              >
+                <Plus className="h-4 w-4" /> Add audio file
+              </button>
+            </div>
           </div>
 
           {chaptersOpen && chapters.length === 0 && (
@@ -1597,7 +1687,13 @@ function ItemEditor({
                     setChapters((prev) =>
                       prev.map((c, i) =>
                         i === idx
-                          ? { ...c, file_url: u, file_name: name ?? null, duration_seconds: seconds > 0 ? seconds : null }
+                          ? {
+                              ...c,
+                              file_url: u,
+                              file_name: name ?? null,
+                              duration_seconds: seconds > 0 ? seconds : null,
+                              title: c.title.trim() ? c.title : (name ? filenameToTitle(name) : c.title),
+                            }
                           : c
                       )
                     );
@@ -1664,7 +1760,7 @@ function ItemEditor({
                   { title: "", title_es: "", file_url: null, file_name: null, file_url_es: null, file_name_es: null, duration_seconds: null },
                 ])
               }
-              className="w-full inline-flex items-center justify-center gap-1.5 rounded-md border border-dashed border-input bg-background px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              className={actionButtonClassName("secondary", "w-full border-dashed")}
             >
               <Plus className="h-3 w-3" /> Add audio file
             </button>
@@ -1875,4 +1971,28 @@ async function estimatePdfReadMinutes(url: string): Promise<number> {
   } catch {
     return 0;
   }
+}
+
+function filenameToTitle(name: string): string {
+  const SMALL_WORDS = new Set([
+    "a", "an", "the",
+    "and", "but", "or", "nor", "for", "so", "yet",
+    "at", "by", "in", "of", "on", "to", "up", "as", "via",
+  ]);
+  const words = name
+    .replace(/\.[^.]+$/, "")
+    .replace(/[_\-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean);
+  return words
+    .map((word, i) => {
+      const lower = word.toLowerCase();
+      if (i === 0 || i === words.length - 1 || !SMALL_WORDS.has(lower)) {
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      }
+      return lower;
+    })
+    .join(" ");
 }
