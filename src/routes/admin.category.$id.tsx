@@ -573,6 +573,14 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         if (chapters.length > 0) {
           const { error: chErr } = await (supabase as any).from("content_chapters").insert(
             chapters.map((ch, i) => ({
+              // Reuse the chapter's existing id (real or client-pregenerated)
+              // rather than letting Postgres assign a new one on every
+              // reinsert — keeps user_chapter_progress rows (FK'd to this id,
+              // ON DELETE CASCADE) attached across edits instead of silently
+              // wiping residents' saved listening progress, and lets a
+              // late-arriving duration be patched in by id (see StreamUploader
+              // onUploaded below).
+              id: ch.id,
               content_item_id: savedId,
               title: ch.title,
               title_es: ch.title_es || null,
@@ -1191,6 +1199,11 @@ function ItemEditor({
     setChaptersOpen(true);
     const inheritedSection = lastChapterSection(chapters);
     const drafts: ChapterDraft[] = arr.map((f) => ({
+      // Generated up front (not left for the DB to assign on first save) so
+      // a chapter has a stable id even before the item is ever saved — lets
+      // a late-arriving duration (see the Phase 2 loop below) be patched
+      // straight into the DB by id, not just into local state.
+      id: crypto.randomUUID(),
       title: filenameToTitle(f.name),
       title_es: "",
       file_url: null,
@@ -1214,6 +1227,7 @@ function ItemEditor({
     const sessions: Array<{
       file: File;
       chIdx: number;
+      chapterId: string;
       session: Awaited<ReturnType<typeof beginStreamUpload>>;
     } | null> = [];
     for (let i = 0; i < arr.length; i++) {
@@ -1234,7 +1248,7 @@ function ItemEditor({
             idx === chIdx ? { ...c, file_url: session.playbackUrl, file_name: file.name } : c,
           ),
         );
-        sessions.push({ file, chIdx, session });
+        sessions.push({ file, chIdx, chapterId: drafts[i].id!, session });
       } catch (err: any) {
         console.error(`[handleMultipleFiles] failed to start "${file.name}":`, err);
         toast.error(`Failed to start upload for "${file.name}": ${err.message ?? "Upload failed"}`);
@@ -1249,7 +1263,7 @@ function ItemEditor({
     await Promise.all(
       sessions.map(async (entry) => {
         if (!entry) return;
-        const { file, chIdx, session } = entry;
+        const { file, chIdx, chapterId, session } = entry;
         setChapterUpload(chIdx, { phase: "uploading", progress: 0 });
         try {
           const { videoId, playbackUrl } = await runTusUpload(file, session, (pct) =>
@@ -1269,6 +1283,17 @@ function ItemEditor({
                 : c,
             ),
           );
+          // Same reasoning as the single-chapter uploader: Save doesn't wait
+          // on processing, so patch the duration straight into the DB by id
+          // in case the item was already saved while this file was still
+          // transcoding — a no-op if it hasn't been saved yet.
+          if (seconds && seconds > 0) {
+            const { error } = await (supabase as any)
+              .from("content_chapters")
+              .update({ duration_seconds: seconds })
+              .eq("id", chapterId);
+            if (error) console.error("Failed to patch chapter duration:", error);
+          }
         } catch (err: any) {
           console.error(`[handleMultipleFiles] "${file.name}" failed:`, err);
           toast.error(`Failed to upload "${file.name}": ${err.message ?? "Upload failed"}`);
@@ -1633,7 +1658,21 @@ function ItemEditor({
               onCollectionCreated={setStreamCollectionId}
               onUploaded={(playbackUrl, _name, seconds) => {
                 setUrl(playbackUrl);
-                if (seconds) setDuration(withActionWord(formatMediaDuration(seconds), type));
+                if (seconds) {
+                  const formatted = withActionWord(formatMediaDuration(seconds), type);
+                  setDuration(formatted);
+                  // Same reasoning as the chapter uploaders: Save doesn't wait
+                  // on processing, so patch the duration straight into the DB
+                  // in case the item was already saved while this file was
+                  // still transcoding — a no-op if it hasn't been saved yet.
+                  (supabase as any)
+                    .from("content_items")
+                    .update({ duration: formatted })
+                    .eq("id", itemId)
+                    .then(({ error }: any) => {
+                      if (error) console.error("Failed to patch item duration:", error);
+                    });
+                }
               }}
             >
               {urlInput}
@@ -1717,6 +1756,7 @@ function ItemEditor({
                   setChapters((prev) => [
                     ...prev,
                     {
+                      id: crypto.randomUUID(),
                       title: "",
                       title_es: "",
                       file_url: null,
@@ -1940,6 +1980,21 @@ function ItemEditor({
                               : c,
                           ),
                         );
+                        // Save no longer waits on processing to finish, so an
+                        // admin can already have saved the item (and moved on)
+                        // by the time the real duration is known. Patch it
+                        // straight into the DB by id — a no-op if the row
+                        // hasn't been saved yet, in which case the setChapters
+                        // update above is what the next Save will persist.
+                        if (seconds && seconds > 0 && ch.id) {
+                          (supabase as any)
+                            .from("content_chapters")
+                            .update({ duration_seconds: seconds })
+                            .eq("id", ch.id)
+                            .then(({ error }: any) => {
+                              if (error) console.error("Failed to patch chapter duration:", error);
+                            });
+                        }
                       }}
                     >
                       <input
@@ -2030,6 +2085,7 @@ function ItemEditor({
                   setChapters((prev) => [
                     ...prev,
                     {
+                      id: crypto.randomUUID(),
                       title: "",
                       title_es: "",
                       file_url: null,
