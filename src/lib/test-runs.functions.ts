@@ -17,8 +17,9 @@ async function assertTester(userId: string) {
   if (error || !data) throw new Error("Forbidden: tester access required");
 }
 
-// Verify the run belongs to the caller.
-async function assertRunOwner(runId: string, userId: string) {
+// Verify the run belongs to the caller. Exported for reuse by the
+// /api/uploads/qa-screenshot route (see upload-handler.server.ts).
+export async function assertRunOwner(runId: string, userId: string) {
   const { data } = await db.from("test_runs").select("tester_id").eq("id", runId).single();
   if (!data || data.tester_id !== userId) throw new Error("Forbidden");
 }
@@ -201,29 +202,6 @@ export const getAdminRunDetail = createServerFn({ method: "POST" })
     return { results: (results ?? []) as any[] };
   });
 
-// Returns a signed upload URL for a QA failure screenshot stored in the
-// content-files bucket under qa-screenshots/. Only the run owner can upload.
-export const getQaScreenshotUploadUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({
-      runId:    z.string().uuid(),
-      testId:   z.string().min(1).max(20),
-      fileName: z.string().min(1).max(255),
-    }).parse(input),
-  )
-  .handler(async ({ context, data }) => {
-    await assertRunOwner(data.runId, context.userId);
-    const ext = (data.fileName.split(".").pop() ?? "png").toLowerCase();
-    const allowed = new Set(["png", "jpg", "jpeg", "gif", "webp"]);
-    if (!allowed.has(ext)) throw new Error("Only image files are allowed (png, jpg, gif, webp)");
-    const path = `qa-screenshots/${data.runId}/${data.testId}/${Date.now()}.${ext}`;
-    const { data: signed, error } = await supabaseAdmin.storage
-      .from("content-files")
-      .createSignedUploadUrl(path);
-    if (error) throw new Error(error.message);
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from("content-files")
-      .getPublicUrl(path);
-    return { signedUrl: signed.signedUrl, publicUrl };
-  });
+// Uploading a QA screenshot now goes through the streaming /api/uploads/qa-screenshot
+// route (see src/routes/api/uploads/qa-screenshot.ts), which reuses assertRunOwner
+// above directly — no signed-URL-issuing server function needed anymore.

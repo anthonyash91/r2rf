@@ -28,8 +28,9 @@ import { readStatusLabels } from "@/lib/read-status";
 import type { Category } from "@/lib/categories";
 import {
   createTestRun, listMyTestRuns, getRunResults, upsertTestResult,
-  completeTestRun, reopenTestRun, deleteTestRun, getQaScreenshotUploadUrl,
+  completeTestRun, reopenTestRun, deleteTestRun,
 } from "@/lib/test-runs.functions";
+import { uploadFile } from "@/lib/upload-client";
 import {
   QA_TESTS, QA_SECTIONS, PRIORITY_LABELS, STATUS_LABELS, STATUS_ICONS, STATUS_COLORS,
   type TestStatus,
@@ -54,7 +55,6 @@ function TestingTab() {
   const completeFn     = useServerFn(completeTestRun);
   const reopenFn       = useServerFn(reopenTestRun);
   const deleteRunFn    = useServerFn(deleteTestRun);
-  const getUploadUrlFn = useServerFn(getQaScreenshotUploadUrl);
 
   const confirmDelete = useConfirmDelete();
 
@@ -186,9 +186,12 @@ function TestingTab() {
     if (!activeRunId) return;
     setUploadingTests((prev) => new Set(prev).add(testId));
     try {
-      const { signedUrl, publicUrl } = await getUploadUrlFn({ data: { runId: activeRunId, testId, fileName: file.name } });
-      const res = await fetch(signedUrl, { method: "PUT", headers: { "Content-Type": file.type || "image/png" }, body: file });
-      if (!res.ok) throw new Error("Upload failed");
+      const { publicUrl } = await uploadFile({
+        file,
+        kind: "qa-screenshot",
+        runId: activeRunId,
+        testId,
+      });
       const currentStatus = resultMap.get(testId)?.status ?? "untested";
       const currentNotes  = pendingNotes[testId] ?? resultMap.get(testId)?.notes ?? undefined;
       await upsertFn({ data: { runId: activeRunId, testId, status: currentStatus, notes: currentNotes, screenshotUrl: publicUrl } });

@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { join, extname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { Readable } from "node:stream";
 import handler from "./dist/server/server.js";
 
 const PORT = process.env.PORT || 3000;
@@ -22,17 +23,27 @@ process.on("unhandledRejection", (reason) => {
 
 // ── Request body size limit (Issue 1) ────────────────────────────────────────
 // Prevents OOM-crash via a client streaming an arbitrarily large body.
-// 10 MB covers any realistic JSON payload; file uploads go directly to Supabase Storage.
+// 10 MB covers any realistic JSON payload. File uploads (/api/uploads/*) are
+// exempt from this buffering path — they're streamed straight through to
+// Bunny Storage instead (see the isStreamedUpload branch below and
+// src/lib/bunny-storage.server.ts), since a 500MB video can't be buffered in
+// memory. Real size enforcement for those routes happens downstream, per
+// upload type, against the actual byte count as it streams.
 const MAX_BODY_BYTES = 10 * 1024 * 1024;
 
 // ── In-process token-bucket rate limiter (Issue 13 — scalability audit).
 // Rejects requests before they reach the DB rate-limit RPCs, preventing
 // bots from exhausting the Supabase connection pool at the first line of defense.
-// Tokens refill at 2/sec; bucket holds 60 tokens (30-second burst capacity).
+// Tokens refill at 3/sec; bucket holds 120 tokens (40-second burst capacity).
 // Static assets bypass the limiter — they are served before this check.
+// Bumped from the original 2/sec-60-token budget after Bunny Stream uploads
+// introduced legitimate server-side traffic (session creation + processing-
+// status polling) that a single admin's batch upload could burst past — the
+// original budget was sized for a world where uploads never touched this
+// server at all (direct-to-storage). Still tight enough to deter bots.
 const RATE_BUCKETS = new Map();
-const RATE_REFILL_PER_SEC = 2;
-const RATE_MAX_TOKENS = 60;
+const RATE_REFILL_PER_SEC = 3;
+const RATE_MAX_TOKENS = 120;
 const RATE_CLEANUP_INTERVAL_MS = 60_000;
 
 function checkRateLimit(ip) {
@@ -134,26 +145,44 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // Streamed uploads bypass the buffering loop entirely — bytes flow straight
+  // from the client socket into the Request body as a Web ReadableStream,
+  // never fully materialized in this process's memory. Everything else keeps
+  // the buffered MAX_BODY_BYTES path unchanged.
+  const isStreamedUpload = req.method === "PUT" && pathname.startsWith("/api/uploads/");
+
   let body = undefined;
   if (req.method !== "GET" && req.method !== "HEAD") {
-    const chunks = [];
-    let totalBytes = 0;
-    for await (const chunk of req) {
-      totalBytes += chunk.length;
-      if (totalBytes > MAX_BODY_BYTES) {
-        res.writeHead(413, { "content-type": "text/plain" });
-        res.end("Payload Too Large");
-        req.destroy();
-        return;
+    if (isStreamedUpload) {
+      body = Readable.toWeb(req);
+    } else {
+      const chunks = [];
+      let totalBytes = 0;
+      for await (const chunk of req) {
+        totalBytes += chunk.length;
+        if (totalBytes > MAX_BODY_BYTES) {
+          res.writeHead(413, { "content-type": "text/plain" });
+          res.end("Payload Too Large");
+          req.destroy();
+          return;
+        }
+        chunks.push(chunk);
       }
-      chunks.push(chunk);
+      if (chunks.length) body = Buffer.concat(chunks);
     }
-    if (chunks.length) body = Buffer.concat(chunks);
   }
 
   let response;
   try {
-    response = await handler.fetch(new Request(url, { method: req.method, headers, body }));
+    response = await handler.fetch(
+      new Request(url, {
+        method: req.method,
+        headers,
+        body,
+        // Required by Node's fetch (undici) whenever body is a stream instance.
+        duplex: isStreamedUpload ? "half" : undefined,
+      }),
+    );
   } catch (err) {
     console.error("[server] handler threw:", err);
     res.writeHead(500, { "content-type": "text/plain" });

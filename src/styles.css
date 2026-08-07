@@ -177,4 +177,17 @@
   .animate-highlight-pulse {
     animation: highlight-pulse 2.5s ease-in-out forwards;
   }
+
+  /* Bunny Stream's encodeProgress reports in large, uneven jumps (e.g. 5% →
+     flat for ~9s → 40% → flat for ~6s → 100%), confirmed by direct testing —
+     a literal width-based fill looks stuck between jumps. This sliding
+     segment communicates "still working" without claiming a specific,
+     misleadingly-static percentage. */
+  @keyframes indeterminate-slide {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(350%); }
+  }
+  .animate-indeterminate-slide {
+    animation: indeterminate-slide 1.3s ease-in-out infinite;
+  }
 }

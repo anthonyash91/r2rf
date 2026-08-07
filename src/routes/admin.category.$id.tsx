@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { requireContentAdminBeforeLoad } from "@/lib/admin-guards";
 import { Checkbox } from "@/components/ui/checkbox";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +17,14 @@ import { generateCategoryCopy, generateContentDescription } from "@/lib/category
 import { listFacilities } from "@/lib/facilities.functions";
 import { generateUniqueCategoryIcon, resolveCategoryIcon } from "@/lib/category-icons";
 import { FileUploader } from "@/components/FileUploader";
-import { deleteStorageFile, estimatePdfDuration, getSignedUploadUrl } from "@/lib/storage.functions";
+import { StreamUploader } from "@/components/StreamUploader";
+import { deleteStorageFile, estimatePdfDuration } from "@/lib/storage.functions";
+import {
+  uploadFileToStream,
+  waitForStreamProcessing,
+  beginStreamUpload,
+  runTusUpload,
+} from "@/lib/upload-stream-client";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
 const SortableList = lazy(() =>
@@ -518,7 +525,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
 
   const saveMut = useMutation({
     mutationFn: async (values: ItemSavePayload) => {
-      const { facilities, chapters, ...itemValues } = values;
+      const { facilities, chapters, pregeneratedId, ...itemValues } = values;
       let savedId: string;
       if (itemValues.id) {
         const { id: itemId, ...rest } = itemValues;
@@ -526,7 +533,10 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
         if (error) throw error;
         savedId = itemId!;
       } else {
-        const { data, error } = await supabase.from("content_items").insert({
+        // storage_folder isn't in the generated Database types yet — (supabase as any)
+        // here matches the existing pattern used for the update branch above.
+        const { data, error } = await (supabase as any).from("content_items").insert({
+          id: pregeneratedId,
           category_id: categoryId,
           title: itemValues.title!,
           type: itemValues.type ?? "Article",
@@ -542,6 +552,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           file_url_es: itemValues.file_url_es ?? null,
           file_name_es: itemValues.file_name_es ?? null,
           published: itemValues.published ?? true,
+          storage_folder: itemValues.storage_folder ?? null,
+          stream_collection_id: itemValues.stream_collection_id ?? null,
           sort_order: (items.at(-1)?.sort_order ?? 0) + 1,
         }).select("id").single();
         if (error) throw error;
@@ -570,7 +582,9 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
               file_url_es: ch.file_url_es || null,
               file_name_es: ch.file_name_es || null,
               duration_seconds: ch.duration_seconds,
-            }))
+              section: ch.section || null,
+              section_es: ch.section_es || null,
+            })),
           );
           if (chErr) throw chErr;
         }
@@ -597,7 +611,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
       // safely persisted. A failed delete is non-fatal — just wastes storage.
       const toDelete = pendingDeletesRef.current.splice(0);
       if (toDelete.length > 0) {
-        Promise.all(toDelete.map((path) => deleteOldFile({ data: { path } }))).catch(() => {});
+        Promise.all(toDelete.map((url) => deleteOldFile({ data: { url } }))).catch(() => {});
       }
     },
     onError: (e: any) => toast.error(e.message),
@@ -699,11 +713,12 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             item={editing === "new" ? null : editing}
             categoryId={categoryId}
             categoryName={categoryName}
+            categorySlug={categorySlug}
             onCancel={() => setEditing(null)}
             onSave={(v) => saveMut.mutate(v as ItemSavePayload)}
             busy={saveMut.isPending}
             categoryFacilities={categoryFacilities}
-            onPendingDelete={(path) => { pendingDeletesRef.current.push(path); }}
+            onPendingDelete={(url) => { pendingDeletesRef.current.push(url); }}
             onNewTypeBadgeStyle={(styles) => { pendingBadgeStylesRef.current = styles; }}
           />
         </div>
@@ -927,14 +942,25 @@ type ChapterDraft = {
   file_url_es: string | null;
   file_name_es: string | null;
   duration_seconds: number | null;
+  section: string;
+  section_es: string;
 };
 
-type ItemSavePayload = Partial<ContentItem> & { id?: string; chapters?: ChapterDraft[] };
+// pregeneratedId: only set for new items — the id chosen client-side up front
+// so uploaded files' storage folder matches the row's eventual id (see itemId
+// below). Kept separate from `id` (which stays undefined for new items) so
+// saveMut's insert-vs-update branch is unaffected.
+type ItemSavePayload = Partial<ContentItem> & {
+  id?: string;
+  pregeneratedId?: string;
+  chapters?: ChapterDraft[];
+};
 
 function ItemEditor({
   item,
   categoryId,
   categoryName,
+  categorySlug,
   onCancel,
   onSave,
   busy,
@@ -945,11 +971,12 @@ function ItemEditor({
   item: ContentItem | null;
   categoryId: string;
   categoryName: string;
+  categorySlug: string;
   onCancel: () => void;
   onSave: (v: ItemSavePayload) => void;
   busy: boolean;
   categoryFacilities: string[];
-  onPendingDelete: (path: string) => void;
+  onPendingDelete: (url: string) => void;
   onNewTypeBadgeStyle?: (styles: BadgeStyles) => void;
 }) {
   const qc = useQueryClient();
@@ -990,6 +1017,42 @@ function ItemEditor({
     },
   });
   const [title, setTitle] = useState(item?.title ?? "");
+  // Stable identity for this item's Bunny storage folder (uploads/{categorySlug}/{itemFolder}/...).
+  // itemId is generated once for a NEW item (no id yet) and reused as the
+  // row's actual id on save. itemFolder is derived live from the current
+  // title for new/not-yet-organized items — so an upload uses whatever's
+  // been typed by then, not whatever the title was when the editor opened —
+  // but always uses the persisted storage_folder for an item that already
+  // has one, so a later title edit doesn't move already-uploaded files into
+  // a new folder.
+  const [itemId] = useState(() => item?.id ?? crypto.randomUUID());
+  const itemFolder =
+    item?.storage_folder || `${slugify(title) || "untitled"}-${itemId.slice(0, 8)}`;
+  // Bunny Stream collection grouping this item's video/audio uploads (main
+  // file + all chapters). Created lazily on the first Stream upload of an
+  // editing session, then reused for every subsequent one and persisted on save.
+  const [streamCollectionId, setStreamCollectionId] = useState<string | null>(
+    item?.stream_collection_id ?? null,
+  );
+  // Chapter indices currently mid-upload/processing via the batch uploader
+  // below, keyed to the same phase/progress shape StreamUploader's own
+  // internal state uses — passed back into that row's uploader as
+  // externalUpload so a batch upload shows through the exact same busy
+  // button UI as a manual single-file upload, instead of a separate
+  // indicator.
+  const [chapterUploadState, setChapterUploadState] = useState<
+    Map<number, { phase: "uploading" | "processing"; progress: number }>
+  >(new Map());
+  const setChapterUpload = (
+    idx: number,
+    value: { phase: "uploading" | "processing"; progress: number } | null,
+  ) =>
+    setChapterUploadState((prev) => {
+      const next = new Map(prev);
+      if (value) next.set(idx, value);
+      else next.delete(idx);
+      return next;
+    });
   const [type, setType] = useState(item?.type ?? "Article");
   const [addingType, setAddingType] = useState(false);
   const [newType, setNewType] = useState("");
@@ -1015,10 +1078,16 @@ function ItemEditor({
 
   // Chapters — only relevant for audio/podcast types
   const [chapters, setChapters] = useState<ChapterDraft[]>([]);
+  // A newly added chapter defaults to the last existing chapter's section —
+  // adding one more chapter to a section-in-progress is the common case, so
+  // this avoids re-typing/re-selecting the label every time.
+  function lastChapterSection(list: ChapterDraft[]): { section: string; section_es: string } {
+    const last = list[list.length - 1];
+    return { section: last?.section ?? "", section_es: last?.section_es ?? "" };
+  }
   const [chaptersOpen, setChaptersOpen] = useState(true);
   const [multiUploading, setMultiUploading] = useState(false);
   const multiUploadInputRef = useRef<HTMLInputElement>(null);
-  const getSignedUrl = useServerFn(getSignedUploadUrl);
   const { data: existingChapters } = useQuery({
     queryKey: ["chapters", item?.id ?? null],
     enabled: !!item?.id,
@@ -1048,7 +1117,9 @@ function ItemEditor({
         file_url_es: ch.file_url_es,
         file_name_es: ch.file_name_es,
         duration_seconds: ch.duration_seconds,
-      }))
+        section: ch.section ?? "",
+        section_es: ch.section_es ?? "",
+      })),
     );
   }, [existingChapters]);
 
@@ -1099,17 +1170,26 @@ function ItemEditor({
         if (!cancelled && fallback) setDuration(fallback);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [type, url]);
 
-
-  const isAudioType = type.toLowerCase().includes("audio") || type.toLowerCase().includes("podcast");
+  const isAudioType =
+    type.toLowerCase().includes("audio") || type.toLowerCase().includes("podcast");
+  const isVideoType = type.toLowerCase().includes("video");
 
   async function handleMultipleFiles(files: FileList) {
     const arr = Array.from(files);
     if (arr.length === 0) return;
+    // Read directly from the current render's chapters array rather than
+    // inside the setChapters updater — a plain, unambiguous snapshot instead
+    // of relying on a side effect inside the updater to hand back the right
+    // index.
+    const baseIdx = chapters.length;
     setMultiUploading(true);
     setChaptersOpen(true);
+    const inheritedSection = lastChapterSection(chapters);
     const drafts: ChapterDraft[] = arr.map((f) => ({
       title: filenameToTitle(f.name),
       title_es: "",
@@ -1118,43 +1198,86 @@ function ItemEditor({
       file_url_es: null,
       file_name_es: null,
       duration_seconds: null,
+      ...inheritedSection,
     }));
-    let baseIdx = 0;
-    setChapters((prev) => { baseIdx = prev.length; return [...prev, ...drafts]; });
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-    const BUCKET = "content-files";
+    setChapters((prev) => [...prev, ...drafts]);
+
+    // Phase 1 — create every Stream session up front, sequentially. Each
+    // call is a small JSON round trip (no file bytes), so this is fast, and
+    // it means only the very first call can ever need to lazily create the
+    // shared collection — every later call already has its id, instead of
+    // every file racing to create its own duplicate. The URL for each file
+    // is known as soon as its session exists, so every new chapter row gets
+    // its (not-yet-playable) URL filled in within a couple seconds of
+    // selecting files, not just the first one.
+    let collectionId = streamCollectionId;
+    const sessions: Array<{
+      file: File;
+      chIdx: number;
+      session: Awaited<ReturnType<typeof beginStreamUpload>>;
+    } | null> = [];
     for (let i = 0; i < arr.length; i++) {
       const file = arr[i];
+      const chIdx = baseIdx + i;
       try {
-        const path = `uploads/${Date.now()}-${file.name.replace(/[^A-Za-z0-9._\-]/g, "_")}`;
-        const { token, publicUrl } = await getSignedUrl({ data: { path } });
-        const uploadUrl =
-          `${SUPABASE_URL}/storage/v1/object/upload/sign/${BUCKET}/${path}` +
-          `?token=${encodeURIComponent(token)}`;
-        await new Promise<void>((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.addEventListener("load", () => {
-            if (xhr.status >= 200 && xhr.status < 300) resolve();
-            else reject(new Error(`Upload failed (${xhr.status})`));
-          });
-          xhr.addEventListener("error", () => reject(new Error("Upload failed")));
-          xhr.open("PUT", uploadUrl);
-          xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-          xhr.send(file);
+        const session = await beginStreamUpload({
+          title: `${title || "Untitled"} — ${filenameToTitle(file.name)}`,
+          collectionId,
+          collectionName: title || "Untitled",
+          onCollectionCreated: (id) => {
+            collectionId = id;
+            setStreamCollectionId(id);
+          },
         });
-        const seconds = await probeMediaDuration(publicUrl, "audio");
-        const chIdx = baseIdx + i;
         setChapters((prev) =>
           prev.map((c, idx) =>
-            idx === chIdx
-              ? { ...c, file_url: publicUrl, file_name: file.name, duration_seconds: seconds > 0 ? seconds : null }
-              : c
-          )
+            idx === chIdx ? { ...c, file_url: session.playbackUrl, file_name: file.name } : c,
+          ),
         );
+        sessions.push({ file, chIdx, session });
       } catch (err: any) {
-        toast.error(`Failed to upload "${file.name}": ${err.message ?? "Upload failed"}`);
+        console.error(`[handleMultipleFiles] failed to start "${file.name}":`, err);
+        toast.error(`Failed to start upload for "${file.name}": ${err.message ?? "Upload failed"}`);
+        sessions.push(null);
       }
     }
+
+    // Phase 2 — the slow part (byte transfer + transcode wait, which can
+    // each take from seconds to minutes) runs for every file in parallel
+    // instead of making chapter 2 wait for chapter 1 to fully finish
+    // processing before it even starts.
+    await Promise.all(
+      sessions.map(async (entry) => {
+        if (!entry) return;
+        const { file, chIdx, session } = entry;
+        setChapterUpload(chIdx, { phase: "uploading", progress: 0 });
+        try {
+          const { videoId, playbackUrl } = await runTusUpload(file, session, (pct) =>
+            setChapterUpload(chIdx, { phase: "uploading", progress: pct }),
+          );
+          setChapterUpload(chIdx, { phase: "processing", progress: 0 });
+          const seconds = await waitForStreamProcessing(videoId);
+          setChapters((prev) =>
+            prev.map((c, idx) =>
+              idx === chIdx
+                ? {
+                    ...c,
+                    file_url: playbackUrl,
+                    file_name: file.name,
+                    duration_seconds: seconds && seconds > 0 ? seconds : null,
+                  }
+                : c,
+            ),
+          );
+        } catch (err: any) {
+          console.error(`[handleMultipleFiles] "${file.name}" failed:`, err);
+          toast.error(`Failed to upload "${file.name}": ${err.message ?? "Upload failed"}`);
+        } finally {
+          setChapterUpload(chIdx, null);
+        }
+      }),
+    );
+
     setMultiUploading(false);
     if (multiUploadInputRef.current) multiUploadInputRef.current.value = "";
   }
@@ -1291,6 +1414,9 @@ function ItemEditor({
         e.preventDefault();
         onSave({
           id: item?.id,
+          pregeneratedId: item ? undefined : itemId,
+          storage_folder: itemFolder,
+          stream_collection_id: streamCollectionId,
           title: title.trim(),
           type,
           source: source.trim(),
@@ -1467,41 +1593,69 @@ function ItemEditor({
       </div>
       <label className="block">
         <span className="text-sm font-medium">URL (optional)</span>
-        <FileUploader
-          className="mt-1"
-          existingFileUrl={url || undefined}
-          onPendingDelete={onPendingDelete}
-          onUploaded={async (u, name) => {
-            setUrl(u);
-            const estimated = await estimateDuration(u, name, type);
-            if (estimated) setDuration(estimated);
-          }}
-        >
-          <input
-            type="url"
-            placeholder="https://…"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onBlur={async (e) => {
-              const v = e.target.value.trim();
-              if (!v) return;
-              const kind = mediaKindFor(type, v, null);
-              if (kind) {
-                const seconds = await probeMediaDuration(v, kind);
-                const formatted = formatMediaDuration(seconds);
-                if (formatted) setDuration(formatted);
-                else {
-                  const fallback = defaultDurationForType(type);
-                  if (fallback) setDuration(fallback);
+        {(() => {
+          const urlInput = (
+            <input
+              type="url"
+              placeholder="https://…"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onBlur={async (e) => {
+                const v = e.target.value.trim();
+                if (!v) return;
+                const kind = mediaKindFor(type, v, null);
+                if (kind) {
+                  const seconds = await probeMediaDuration(v, kind);
+                  const formatted = formatMediaDuration(seconds);
+                  if (formatted) setDuration(formatted);
+                  else {
+                    const fallback = defaultDurationForType(type);
+                    if (fallback) setDuration(fallback);
+                  }
+                  return;
                 }
-                return;
-              }
-              const estimated = await estimateDuration(v, null, type);
-              if (estimated) setDuration(estimated);
-            }}
-            className="mt-0 min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
-          />
-        </FileUploader>
+                const estimated = await estimateDuration(v, null, type);
+                if (estimated) setDuration(estimated);
+              }}
+              className="mt-0 min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
+          );
+          // Video/audio types go through Bunny Stream (adaptive HLS); everything
+          // else (PDF, image, article, etc.) keeps using the Storage flow.
+          return isAudioType || isVideoType ? (
+            <StreamUploader
+              className="mt-1"
+              existingFileUrl={url || undefined}
+              onPendingDelete={onPendingDelete}
+              itemTitle={title || "Untitled"}
+              collectionName={title || "Untitled"}
+              collectionId={streamCollectionId}
+              onCollectionCreated={setStreamCollectionId}
+              onUploaded={(playbackUrl, _name, seconds) => {
+                setUrl(playbackUrl);
+                if (seconds) setDuration(withActionWord(formatMediaDuration(seconds), type));
+              }}
+            >
+              {urlInput}
+            </StreamUploader>
+          ) : (
+            <FileUploader
+              className="mt-1"
+              existingFileUrl={url || undefined}
+              onPendingDelete={onPendingDelete}
+              categorySlug={categorySlug}
+              itemFolder={itemFolder}
+              language="english"
+              onUploaded={async (u, name) => {
+                setUrl(u);
+                const estimated = await estimateDuration(u, name, type);
+                if (estimated) setDuration(estimated);
+              }}
+            >
+              {urlInput}
+            </FileUploader>
+          );
+        })()}
       </label>
       {/* ── Audio Files (audio types only) ── */}
       {isAudioType && (
@@ -1550,7 +1704,11 @@ function ItemEditor({
                 className={actionButtonClassName("secondary")}
               >
                 <Upload className="h-4 w-4" />
-                {multiUploading ? "Uploading…" : "Upload multiple"}
+                {multiUploading
+                  ? chapterUploadState.size > 0
+                    ? `Uploading ${chapterUploadState.size} file${chapterUploadState.size === 1 ? "" : "s"}…`
+                    : "Starting…"
+                  : "Upload multiple"}
               </button>
               <button
                 type="button"
@@ -1558,7 +1716,16 @@ function ItemEditor({
                   setChaptersOpen(true);
                   setChapters((prev) => [
                     ...prev,
-                    { title: "", title_es: "", file_url: null, file_name: null, file_url_es: null, file_name_es: null, duration_seconds: null },
+                    {
+                      title: "",
+                      title_es: "",
+                      file_url: null,
+                      file_name: null,
+                      file_url_es: null,
+                      file_name_es: null,
+                      duration_seconds: null,
+                      ...lastChapterSection(prev),
+                    },
                   ]);
                 }}
                 className={actionButtonClassName("secondary")}
@@ -1574,196 +1741,311 @@ function ItemEditor({
             </p>
           )}
 
-          {chaptersOpen && chapters.map((ch, idx) => (
-            <div key={idx} className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Audio File {idx + 1}
-                  {ch.duration_seconds ? ` · ${formatMediaDuration(ch.duration_seconds)}` : ""}
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    disabled={idx === 0}
-                    onClick={() =>
-                      setChapters((prev) => {
-                        const next = [...prev];
-                        [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                        return next;
-                      })
-                    }
-                    className="p-1 rounded hover:bg-muted disabled:opacity-30"
-                    title="Move up"
-                  >
-                    <ChevronUp className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    disabled={idx === chapters.length - 1}
-                    onClick={() =>
-                      setChapters((prev) => {
-                        const next = [...prev];
-                        [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                        return next;
-                      })
-                    }
-                    className="p-1 rounded hover:bg-muted disabled:opacity-30"
-                    title="Move down"
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const ch = chapters[idx];
-                      if (ch.file_url) {
-                        const path = ch.file_url.split("/object/public/content-files/")[1];
-                        if (path) onPendingDelete(path);
-                      }
-                      if (ch.file_url_es) {
-                        const path = ch.file_url_es.split("/object/public/content-files/")[1];
-                        if (path) onPendingDelete(path);
-                      }
-                      setChapters((prev) => prev.filter((_, i) => i !== idx));
-                    }}
-                    className="p-1 rounded hover:bg-destructive/10 text-destructive"
-                    title="Remove audio file"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
+          <datalist id="chapter-section-options">
+            {Array.from(new Set(chapters.map((c) => c.section).filter(Boolean))).map((s) => (
+              <option key={s} value={s} />
+            ))}
+          </datalist>
 
-              <div className="grid sm:grid-cols-2 gap-3">
-                <LabeledInput
-                  label="Title"
-                  value={ch.title}
-                  onChange={(v) => setChapters((prev) => prev.map((c, i) => i === idx ? { ...c, title: v } : c))}
-                  required
-                />
-                <label className="block">
-                  <span className="flex items-center justify-between gap-2 text-sm font-medium">
-                    Title (ES)
-                    <button
-                      type="button"
-                      disabled={!ch.title.trim() || (chapterTitleEsBusy && translatingChapterIdx === idx)}
-                      onClick={async () => {
-                        setTranslatingChapterIdx(idx);
-                        await runChapterTitleEs(
-                          { title: ch.title },
-                          (t) => {
-                            if (t.title) setChapters((prev) => prev.map((c, i) => i === idx ? { ...c, title_es: t.title } : c));
-                          },
-                          "Audio chapter title in a recovery education app",
-                        );
-                        setTranslatingChapterIdx(null);
-                      }}
-                      className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-muted-foreground border border-transparent hover:border-input hover:bg-muted disabled:opacity-40 transition-colors"
-                      title="Generate Spanish translation with AI"
-                    >
-                      {chapterTitleEsBusy && translatingChapterIdx === idx
-                        ? <RefreshCw className="h-3 w-3 animate-spin" />
-                        : <Languages className="h-3 w-3" />}
-                      Translate
-                    </button>
-                  </span>
-                  <input
-                    type="text"
-                    value={ch.title_es}
-                    onChange={(e) => setChapters((prev) => prev.map((c, i) => i === idx ? { ...c, title_es: e.target.value } : c))}
-                    className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-                  />
-                </label>
-              </div>
+          {chaptersOpen &&
+            chapters.map((ch, idx) => (
+              <Fragment key={idx}>
+                {ch.section && ch.section !== chapters[idx - 1]?.section && (
+                  <p className="pt-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground first:pt-0">
+                    {ch.section}
+                  </p>
+                )}
+                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Audio File {idx + 1}
+                      {ch.duration_seconds ? ` · ${formatMediaDuration(ch.duration_seconds)}` : ""}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() =>
+                          setChapters((prev) => {
+                            const next = [...prev];
+                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                            return next;
+                          })
+                        }
+                        className="p-1 rounded hover:bg-muted disabled:opacity-30"
+                        title="Move up"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === chapters.length - 1}
+                        onClick={() =>
+                          setChapters((prev) => {
+                            const next = [...prev];
+                            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                            return next;
+                          })
+                        }
+                        className="p-1 rounded hover:bg-muted disabled:opacity-30"
+                        title="Move down"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const ch = chapters[idx];
+                          // deleteStorageFile re-derives the provider/path from the URL
+                          // itself server-side, so no client-side extraction is needed here.
+                          if (ch.file_url) onPendingDelete(ch.file_url);
+                          if (ch.file_url_es) onPendingDelete(ch.file_url_es);
+                          setChapters((prev) => prev.filter((_, i) => i !== idx));
+                        }}
+                        className="p-1 rounded hover:bg-destructive/10 text-destructive"
+                        title="Remove audio file"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
 
-              <label className="block">
-                <span className="text-sm font-medium">Audio file (EN)</span>
-                <FileUploader
-                  className="mt-1"
-                  existingFileUrl={ch.file_url ?? undefined}
-                  onPendingDelete={onPendingDelete}
-                  onUploaded={async (u, name) => {
-                    const seconds = await probeMediaDuration(u, "audio");
-                    setChapters((prev) =>
-                      prev.map((c, i) =>
-                        i === idx
-                          ? {
-                              ...c,
-                              file_url: u,
-                              file_name: name ?? null,
-                              duration_seconds: seconds > 0 ? seconds : null,
-                              title: c.title.trim() ? c.title : (name ? filenameToTitle(name) : c.title),
-                            }
-                          : c
-                      )
-                    );
-                  }}
-                >
-                  <input
-                    type="url"
-                    placeholder="https://…"
-                    value={ch.file_url ?? ""}
-                    onChange={(e) =>
-                      setChapters((prev) =>
-                        prev.map((c, i) => i === idx ? { ...c, file_url: e.target.value || null } : c)
-                      )
-                    }
-                    onBlur={async (e) => {
-                      const v = e.target.value.trim();
-                      if (!v) return;
-                      const seconds = await probeMediaDuration(v, "audio");
-                      if (seconds > 0) {
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <LabeledInput
+                      label="Title"
+                      value={ch.title}
+                      onChange={(v) =>
                         setChapters((prev) =>
-                          prev.map((c, i) => i === idx ? { ...c, duration_seconds: seconds } : c)
-                        );
+                          prev.map((c, i) => (i === idx ? { ...c, title: v } : c)),
+                        )
                       }
-                    }}
-                    className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
-                  />
-                </FileUploader>
-              </label>
+                      required
+                    />
+                    <label className="block">
+                      <span className="flex items-center justify-between gap-2 text-sm font-medium">
+                        Title (ES)
+                        <button
+                          type="button"
+                          disabled={
+                            !ch.title.trim() ||
+                            (chapterTitleEsBusy && translatingChapterIdx === idx)
+                          }
+                          onClick={async () => {
+                            setTranslatingChapterIdx(idx);
+                            await runChapterTitleEs(
+                              { title: ch.title, section: ch.section },
+                              (t) => {
+                                if (t.title || t.section)
+                                  setChapters((prev) =>
+                                    prev.map((c, i) =>
+                                      i === idx
+                                        ? {
+                                            ...c,
+                                            ...(t.title ? { title_es: t.title } : {}),
+                                            ...(t.section ? { section_es: t.section } : {}),
+                                          }
+                                        : c,
+                                    ),
+                                  );
+                              },
+                              "Audio chapter title in a recovery education app",
+                            );
+                            setTranslatingChapterIdx(null);
+                          }}
+                          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-muted-foreground border border-transparent hover:border-input hover:bg-muted disabled:opacity-40 transition-colors"
+                          title="Generate Spanish translation of title and section with AI"
+                        >
+                          {chapterTitleEsBusy && translatingChapterIdx === idx ? (
+                            <RefreshCw className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Languages className="h-3 w-3" />
+                          )}
+                          Translate
+                        </button>
+                      </span>
+                      <input
+                        type="text"
+                        value={ch.title_es}
+                        onChange={(e) =>
+                          setChapters((prev) =>
+                            prev.map((c, i) =>
+                              i === idx ? { ...c, title_es: e.target.value } : c,
+                            ),
+                          )
+                        }
+                        className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                      />
+                    </label>
+                  </div>
 
-              <label className="block">
-                <span className="text-sm font-medium">Audio file (ES, optional)</span>
-                <FileUploader
-                  className="mt-1"
-                  existingFileUrl={ch.file_url_es ?? undefined}
-                  onPendingDelete={onPendingDelete}
-                  onUploaded={(u, name) =>
-                    setChapters((prev) =>
-                      prev.map((c, i) => i === idx ? { ...c, file_url_es: u, file_name_es: name ?? null } : c)
-                    )
-                  }
-                >
-                  <input
-                    type="url"
-                    placeholder="https://…"
-                    value={ch.file_url_es ?? ""}
-                    onChange={(e) =>
-                      setChapters((prev) =>
-                        prev.map((c, i) => i === idx ? { ...c, file_url_es: e.target.value || null } : c)
-                      )
-                    }
-                    className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
-                  />
-                </FileUploader>
-              </label>
-            </div>
-          ))}
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <label className="block">
+                      <span className="text-sm font-medium">Section (optional)</span>
+                      <input
+                        type="text"
+                        list="chapter-section-options"
+                        placeholder="e.g. Foreword, Chapters, Appendices"
+                        value={ch.section}
+                        onChange={(e) =>
+                          setChapters((prev) =>
+                            prev.map((c, i) => (i === idx ? { ...c, section: e.target.value } : c)),
+                          )
+                        }
+                        className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-sm font-medium">Section (ES)</span>
+                      <input
+                        type="text"
+                        value={ch.section_es}
+                        onChange={(e) =>
+                          setChapters((prev) =>
+                            prev.map((c, i) =>
+                              i === idx ? { ...c, section_es: e.target.value } : c,
+                            ),
+                          )
+                        }
+                        className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                      />
+                    </label>
+                  </div>
+
+                  <label className="block">
+                    <span className="text-sm font-medium">Audio file (EN)</span>
+                    <StreamUploader
+                      className="mt-1"
+                      existingFileUrl={ch.file_url ?? undefined}
+                      onPendingDelete={onPendingDelete}
+                      itemTitle={`${title || "Untitled"} — ${ch.title || `Chapter ${idx + 1}`}`}
+                      collectionName={title || "Untitled"}
+                      collectionId={streamCollectionId}
+                      onCollectionCreated={setStreamCollectionId}
+                      externalUpload={chapterUploadState.get(idx) ?? null}
+                      onUploaded={(playbackUrl, name, seconds) => {
+                        setChapters((prev) =>
+                          prev.map((c, i) =>
+                            i === idx
+                              ? {
+                                  ...c,
+                                  file_url: playbackUrl,
+                                  file_name: name ?? null,
+                                  duration_seconds: seconds && seconds > 0 ? seconds : null,
+                                  title: c.title.trim()
+                                    ? c.title
+                                    : name
+                                      ? filenameToTitle(name)
+                                      : c.title,
+                                }
+                              : c,
+                          ),
+                        );
+                      }}
+                    >
+                      <input
+                        type="url"
+                        placeholder="https://…"
+                        value={ch.file_url ?? ""}
+                        onChange={(e) =>
+                          setChapters((prev) =>
+                            prev.map((c, i) =>
+                              i === idx ? { ...c, file_url: e.target.value || null } : c,
+                            ),
+                          )
+                        }
+                        onBlur={async (e) => {
+                          const v = e.target.value.trim();
+                          if (!v) return;
+                          const seconds = await probeMediaDuration(v, "audio");
+                          if (seconds > 0) {
+                            setChapters((prev) =>
+                              prev.map((c, i) =>
+                                i === idx ? { ...c, duration_seconds: seconds } : c,
+                              ),
+                            );
+                          }
+                        }}
+                        className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+                      />
+                    </StreamUploader>
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-medium">Audio file (ES, optional)</span>
+                    <StreamUploader
+                      className="mt-1"
+                      existingFileUrl={ch.file_url_es ?? undefined}
+                      onPendingDelete={onPendingDelete}
+                      itemTitle={`${title || "Untitled"} — ${ch.title || `Chapter ${idx + 1}`} (ES)`}
+                      collectionName={title || "Untitled"}
+                      collectionId={streamCollectionId}
+                      onCollectionCreated={setStreamCollectionId}
+                      onUploaded={(playbackUrl, name) =>
+                        setChapters((prev) =>
+                          prev.map((c, i) =>
+                            i === idx
+                              ? { ...c, file_url_es: playbackUrl, file_name_es: name ?? null }
+                              : c,
+                          ),
+                        )
+                      }
+                    >
+                      <input
+                        type="url"
+                        placeholder="https://…"
+                        value={ch.file_url_es ?? ""}
+                        onChange={(e) =>
+                          setChapters((prev) =>
+                            prev.map((c, i) =>
+                              i === idx ? { ...c, file_url_es: e.target.value || null } : c,
+                            ),
+                          )
+                        }
+                        className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+                      />
+                    </StreamUploader>
+                  </label>
+                </div>
+              </Fragment>
+            ))}
 
           {chaptersOpen && chapters.length > 0 && (
-            <button
-              type="button"
-              onClick={() =>
-                setChapters((prev) => [
-                  ...prev,
-                  { title: "", title_es: "", file_url: null, file_name: null, file_url_es: null, file_name_es: null, duration_seconds: null },
-                ])
-              }
-              className={actionButtonClassName("secondary", "w-full border-dashed")}
-            >
-              <Plus className="h-3 w-3" /> Add audio file
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={multiUploading}
+                onClick={() => multiUploadInputRef.current?.click()}
+                className={actionButtonClassName("secondary", "flex-1 border-dashed")}
+              >
+                <Upload className="h-3 w-3" />
+                {multiUploading
+                  ? chapterUploadState.size > 0
+                    ? `Uploading ${chapterUploadState.size} file${chapterUploadState.size === 1 ? "" : "s"}…`
+                    : "Starting…"
+                  : "Upload multiple"}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setChapters((prev) => [
+                    ...prev,
+                    {
+                      title: "",
+                      title_es: "",
+                      file_url: null,
+                      file_name: null,
+                      file_url_es: null,
+                      file_name_es: null,
+                      duration_seconds: null,
+                      ...lastChapterSection(prev),
+                    },
+                  ])
+                }
+                className={actionButtonClassName("secondary", "flex-1 border-dashed")}
+              >
+                <Plus className="h-3 w-3" /> Add audio file
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -1843,20 +2125,49 @@ function ItemEditor({
         </label>
         <label className="block">
           <span className="text-sm font-medium">URL (ES, optional)</span>
-          <FileUploader
-            className="mt-1"
-            existingFileUrl={fileUrlEs ?? undefined}
-            onPendingDelete={onPendingDelete}
-            onUploaded={(u, name) => { setFileUrlEs(u); setFileNameEs(name ?? null); }}
-          >
-            <input
-              type="url"
-              placeholder="https://…"
-              value={fileUrlEs ?? ""}
-              onChange={(e) => setFileUrlEs(e.target.value.trim() ? e.target.value : null)}
-              className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
-            />
-          </FileUploader>
+          {(() => {
+            const urlInputEs = (
+              <input
+                type="url"
+                placeholder="https://…"
+                value={fileUrlEs ?? ""}
+                onChange={(e) => setFileUrlEs(e.target.value.trim() ? e.target.value : null)}
+                className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+              />
+            );
+            return isAudioType || isVideoType ? (
+              <StreamUploader
+                className="mt-1"
+                existingFileUrl={fileUrlEs ?? undefined}
+                onPendingDelete={onPendingDelete}
+                itemTitle={`${title || "Untitled"} (ES)`}
+                collectionName={title || "Untitled"}
+                collectionId={streamCollectionId}
+                onCollectionCreated={setStreamCollectionId}
+                onUploaded={(playbackUrl, name) => {
+                  setFileUrlEs(playbackUrl);
+                  setFileNameEs(name ?? null);
+                }}
+              >
+                {urlInputEs}
+              </StreamUploader>
+            ) : (
+              <FileUploader
+                className="mt-1"
+                existingFileUrl={fileUrlEs ?? undefined}
+                onPendingDelete={onPendingDelete}
+                categorySlug={categorySlug}
+                itemFolder={itemFolder}
+                language="spanish"
+                onUploaded={(u, name) => {
+                  setFileUrlEs(u);
+                  setFileNameEs(name ?? null);
+                }}
+              >
+                {urlInputEs}
+              </FileUploader>
+            );
+          })()}
         </label>
       </TranslationPanel>
 

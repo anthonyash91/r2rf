@@ -33,6 +33,8 @@ import { Route as AdminErrorsRouteImport } from './routes/admin.errors'
 import { Route as AdminCertificateRouteImport } from './routes/admin.certificate'
 import { Route as AdminAuditLogRouteImport } from './routes/admin.audit-log'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as ApiUploadsQaScreenshotRouteImport } from './routes/api/uploads/qa-screenshot'
+import { Route as ApiUploadsContentFileRouteImport } from './routes/api/uploads/content-file'
 import { Route as ApiPublicLogErrorRouteImport } from './routes/api/public/log-error'
 import { Route as AdminCategoryIdRouteImport } from './routes/admin.category.$id'
 
@@ -156,6 +158,16 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiUploadsQaScreenshotRoute = ApiUploadsQaScreenshotRouteImport.update({
+  id: '/api/uploads/qa-screenshot',
+  path: '/api/uploads/qa-screenshot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUploadsContentFileRoute = ApiUploadsContentFileRouteImport.update({
+  id: '/api/uploads/content-file',
+  path: '/api/uploads/content-file',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicLogErrorRoute = ApiPublicLogErrorRouteImport.update({
   id: '/api/public/log-error',
   path: '/api/public/log-error',
@@ -194,6 +206,8 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/api/public/log-error': typeof ApiPublicLogErrorRoute
+  '/api/uploads/content-file': typeof ApiUploadsContentFileRoute
+  '/api/uploads/qa-screenshot': typeof ApiUploadsQaScreenshotRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -221,6 +235,8 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/api/public/log-error': typeof ApiPublicLogErrorRoute
+  '/api/uploads/content-file': typeof ApiUploadsContentFileRoute
+  '/api/uploads/qa-screenshot': typeof ApiUploadsQaScreenshotRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -250,6 +266,8 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/admin/category/$id': typeof AdminCategoryIdRoute
   '/api/public/log-error': typeof ApiPublicLogErrorRoute
+  '/api/uploads/content-file': typeof ApiUploadsContentFileRoute
+  '/api/uploads/qa-screenshot': typeof ApiUploadsQaScreenshotRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -280,6 +298,8 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/category/$id'
     | '/api/public/log-error'
+    | '/api/uploads/content-file'
+    | '/api/uploads/qa-screenshot'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -307,6 +327,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/category/$id'
     | '/api/public/log-error'
+    | '/api/uploads/content-file'
+    | '/api/uploads/qa-screenshot'
   id:
     | '__root__'
     | '/'
@@ -335,6 +357,8 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/category/$id'
     | '/api/public/log-error'
+    | '/api/uploads/content-file'
+    | '/api/uploads/qa-screenshot'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -348,6 +372,8 @@ export interface RootRouteChildren {
   CategorySlugRoute: typeof CategorySlugRoute
   FacilitySlugRoute: typeof FacilitySlugRoute
   ApiPublicLogErrorRoute: typeof ApiPublicLogErrorRoute
+  ApiUploadsContentFileRoute: typeof ApiUploadsContentFileRoute
+  ApiUploadsQaScreenshotRoute: typeof ApiUploadsQaScreenshotRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -520,6 +546,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/uploads/qa-screenshot': {
+      id: '/api/uploads/qa-screenshot'
+      path: '/api/uploads/qa-screenshot'
+      fullPath: '/api/uploads/qa-screenshot'
+      preLoaderRoute: typeof ApiUploadsQaScreenshotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/uploads/content-file': {
+      id: '/api/uploads/content-file'
+      path: '/api/uploads/content-file'
+      fullPath: '/api/uploads/content-file'
+      preLoaderRoute: typeof ApiUploadsContentFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/log-error': {
       id: '/api/public/log-error'
       path: '/api/public/log-error'
@@ -588,6 +628,8 @@ const rootRouteChildren: RootRouteChildren = {
   CategorySlugRoute: CategorySlugRoute,
   FacilitySlugRoute: FacilitySlugRoute,
   ApiPublicLogErrorRoute: ApiPublicLogErrorRoute,
+  ApiUploadsContentFileRoute: ApiUploadsContentFileRoute,
+  ApiUploadsQaScreenshotRoute: ApiUploadsQaScreenshotRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

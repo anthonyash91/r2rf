@@ -38,3 +38,6 @@ dist-ssr
 
 # Test coverage output
 coverage/
+
+# Local output from download-item-audio.mjs
+downloads/

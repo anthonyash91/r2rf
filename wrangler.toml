@@ -16,7 +16,11 @@ directory = "dist/client"
 #   wrangler secret put SITE_ID_ENCRYPTION_KEY
 #   wrangler secret put ANTHROPIC_API_KEY
 #   wrangler secret put SIGNUP_CHALLENGE_SECRET
+#   wrangler secret put BUNNY_STORAGE_API_KEY
 #
-# VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY are baked into the
-# client bundle at build time — set them as environment variables in
-# your CI / Cloudflare Pages build settings, not as Worker secrets.
+# Non-secret Bunny config (BUNNY_STORAGE_ZONE, BUNNY_STORAGE_ENDPOINT,
+# BUNNY_CDN_HOSTNAME) can be set as plain environment variables.
+#
+# VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, and VITE_BUNNY_CDN_HOSTNAME
+# are baked into the client bundle at build time — set them as environment
+# variables in your CI / Cloudflare Pages build settings, not as Worker secrets.

@@ -11,6 +11,8 @@ export type ContentChapter = {
   file_url_es: string | null;
   file_name_es: string | null;
   duration_seconds: number | null;
+  section: string | null;
+  section_es: string | null;
 };
 
 
@@ -56,6 +58,12 @@ export type ContentItem = {
   file_name_es: string | null;
   created_at?: string;
   facilities?: string[] | null; // null = restrictions failed to load; hide for non-admins
+  /** Bunny storage folder for this item's uploads (uploads/{category-slug}/{storage_folder}/...).
+   * Null for items created before this feature — their files stay in the flat legacy structure. */
+  storage_folder?: string | null;
+  /** Bunny Stream collection grouping this item's video/audio uploads. Null
+   * for items with no Stream video yet, or whose media stays on Bunny Storage. */
+  stream_collection_id?: string | null;
 };
 
 export function slugify(s: string) {

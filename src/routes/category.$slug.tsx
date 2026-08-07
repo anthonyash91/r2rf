@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState, useMemo, lazy, Suspense } from "react";
+import { useEffect, useRef, useState, useMemo, lazy, Suspense, Fragment } from "react";
 import { createPortal } from "react-dom";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -9,7 +9,9 @@ import { useServerFn } from "@tanstack/react-start";
 const PdfViewer = lazy(() => import("@/components/PdfViewer"));
 import { trackCategoryView, trackContentClick } from "@/lib/analytics";
 import { weightedCompletionPct } from "@/lib/content-progress";
-import { detectMedia, type MediaKind } from "@/lib/read-status";
+import { detectMedia, mediaKindFromType, type MediaKind } from "@/lib/read-status";
+import { isStreamPlaybackUrl } from "@/lib/storage-url";
+import { useHlsSource } from "@/hooks/use-hls-source";
 import { supabase } from "@/integrations/supabase/client";
 import type { Category, ContentItem, ContentChapter } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
@@ -208,6 +210,11 @@ function CategoryPage() {
   // would give null because the Portal renders asynchronously.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
+
+  // Transparently attaches hls.js when the URL is a Bunny Stream playlist;
+  // a no-op passthrough (`el.src = url`) for direct-file URLs otherwise.
+  useHlsSource(videoEl, videoPlayer?.url);
+  useHlsSource(audioEl, hasChapters ? activeChapterUrl : audioPlayer?.url);
 
   // Custom audio player UI state
   const [isPlaying, setIsPlaying]     = useState(false);
@@ -926,12 +933,17 @@ function CategoryPage() {
                     const fileName = lang === "es" && item.file_url_es ? (item.file_name_es ?? item.file_name) : item.file_name;
                     const fileMedia = detectMedia(fileUrl);
                     const urlMedia = detectMedia(item.url);
+                    // Bunny Stream URLs (.../playlist.m3u8) have no extension for
+                    // detectMedia to match — resolve video vs. audio from item.type instead.
+                    const fileIsStream = isStreamPlaybackUrl(fileUrl);
+                    const urlIsStream = isStreamPlaybackUrl(item.url);
+                    const streamKind = fileIsStream || urlIsStream ? mediaKindFromType(item.type) : null;
                     // Fall back to type-based audio detection for chapter-only audio items
                     // that have no URL on the content item itself.
                     const itemTypeLower = (item.type ?? "").toLowerCase();
                     const typeAudio = (itemTypeLower.includes("audio") || itemTypeLower.includes("podcast")) ? "audio" as const : null;
-                    const mediaKind: MediaKind | null = fileMedia ?? urlMedia ?? typeAudio;
-                    const mediaSrc = fileMedia ? fileUrl : urlMedia ? item.url : null;
+                    const mediaKind: MediaKind | null = fileMedia ?? urlMedia ?? streamKind ?? typeAudio;
+                    const mediaSrc = fileMedia ? fileUrl : urlMedia ? item.url : fileIsStream ? fileUrl : urlIsStream ? item.url : null;
                     // Chapter-only audio items: mediaKind is "audio" but mediaSrc is null — still open the player.
                     const isMedia = mediaKind === "audio" ? true : (!!mediaKind && !!mediaSrc);
 
@@ -1477,7 +1489,6 @@ function CategoryPage() {
             <video
               ref={setVideoEl}
               key={videoPlayer.url}
-              src={videoPlayer.url}
               controls
               autoPlay
               className="w-full h-auto max-h-[calc(100dvh-2rem)] bg-black"
@@ -1512,8 +1523,9 @@ function CategoryPage() {
                 {/* Hidden audio element — engagement hook wires to this via ref */}
                 <audio
                   ref={setAudioEl}
-                  key={hasChapters ? `${audioPlayer.itemId}-ch${currentChapterIdx}` : audioPlayer.url}
-                  src={hasChapters ? (activeChapterUrl ?? undefined) : audioPlayer.url}
+                  key={
+                    hasChapters ? `${audioPlayer.itemId}-ch${currentChapterIdx}` : audioPlayer.url
+                  }
                   className="hidden"
                   onEnded={() => {
                     if (!hasChapters) return;
@@ -1656,58 +1668,82 @@ function CategoryPage() {
               <div className="space-y-1">
                 {audioChapters.map((ch, idx) => {
                   const chTitle = pickLang(lang, ch.title, ch.title_es);
+                  const chSection = pickLang(lang, ch.section, ch.section_es);
+                  const prevSection =
+                    idx > 0
+                      ? pickLang(
+                          lang,
+                          audioChapters[idx - 1].section,
+                          audioChapters[idx - 1].section_es,
+                        )
+                      : null;
+                  const showSectionHeader = !!chSection && chSection !== prevSection;
                   const isActive = idx === currentChapterIdx;
-                  const chOffset = audioChapters.slice(0, idx).reduce((s, c) => s + (c.duration_seconds ?? 0), 0);
+                  const chOffset = audioChapters
+                    .slice(0, idx)
+                    .reduce((s, c) => s + (c.duration_seconds ?? 0), 0);
                   // Active chapter: live hook value. Others: max of session cache and DB map
                   // so chapters completed via auto-advance show immediately.
                   const furthest = isActive
                     ? Math.max(chapterFurthestSeconds, perChapterProgressMap.get(ch.id) ?? 0)
-                    : Math.max(getSessionChapterFurthest(ch.id), perChapterProgressMap.get(ch.id) ?? 0);
-                  const chPct = ch.duration_seconds && ch.duration_seconds > 0
-                    ? Math.min(1, furthest / ch.duration_seconds)
-                    : 0;
+                    : Math.max(
+                        getSessionChapterFurthest(ch.id),
+                        perChapterProgressMap.get(ch.id) ?? 0,
+                      );
+                  const chPct =
+                    ch.duration_seconds && ch.duration_seconds > 0
+                      ? Math.min(1, furthest / ch.duration_seconds)
+                      : 0;
                   const chDone = chPct >= 0.9;
                   return (
-                    <button
-                      key={ch.id}
-                      type="button"
-                      onClick={() => {
-                        wantPlayRef.current = true;
-                        setChapterOffset(chOffset);
-                        setCurrentChapterIdx(idx);
-                      }}
-                      className={[
-                        "w-full text-left rounded-lg px-3 py-2 text-sm flex items-center gap-3 transition-colors relative overflow-hidden",
-                        isActive
-                          ? "bg-[color-mix(in_oklab,var(--color-accent)_12%,transparent)] text-foreground font-medium"
-                          : "hover:bg-muted text-muted-foreground",
-                      ].join(" ")}
-                    >
-                      {chPct > 0 && !chDone && (
-                        <span
-                          aria-hidden="true"
-                          className="pointer-events-none absolute inset-y-0 left-0 rounded-lg bg-[var(--color-accent)] opacity-[0.08]"
-                          style={{ width: `${chPct * 100}%` }}
-                        />
+                    <Fragment key={ch.id}>
+                      {showSectionHeader && (
+                        <p className="pt-3 pb-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground first:pt-0">
+                          {chSection}
+                        </p>
                       )}
-                      <span className="relative min-w-0 flex-1 break-words">{chTitle}</span>
-                      <span className="relative flex items-center gap-1.5 flex-shrink-0">
-                        {chDone ? (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
-                        ) : furthest > 0 ? (
-                          <span className="text-xs tabular-nums opacity-60">
-                            {Math.floor(furthest / 3600) > 0
-                              ? `${Math.floor(furthest / 3600)}:${String(Math.floor((furthest % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(furthest % 60)).padStart(2, "0")}`
-                              : `${Math.floor(furthest / 60)}:${String(Math.floor(furthest % 60)).padStart(2, "0")}`} /
-                          </span>
-                        ) : null}
-                        {ch.duration_seconds ? (
-                          <span className="text-xs tabular-nums">
-                            {Math.floor(ch.duration_seconds / 60)}:{String(Math.round(ch.duration_seconds % 60)).padStart(2, "0")}
-                          </span>
-                        ) : null}
-                      </span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          wantPlayRef.current = true;
+                          setChapterOffset(chOffset);
+                          setCurrentChapterIdx(idx);
+                        }}
+                        className={[
+                          "w-full text-left rounded-lg px-3 py-2 text-sm flex items-center gap-3 transition-colors relative overflow-hidden",
+                          isActive
+                            ? "bg-[color-mix(in_oklab,var(--color-accent)_12%,transparent)] text-foreground font-medium"
+                            : "hover:bg-muted text-muted-foreground",
+                        ].join(" ")}
+                      >
+                        {chPct > 0 && !chDone && (
+                          <span
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-y-0 left-0 rounded-lg bg-[var(--color-accent)] opacity-[0.08]"
+                            style={{ width: `${chPct * 100}%` }}
+                          />
+                        )}
+                        <span className="relative min-w-0 flex-1 break-words">{chTitle}</span>
+                        <span className="relative flex items-center gap-1.5 flex-shrink-0">
+                          {chDone ? (
+                            <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+                          ) : furthest > 0 ? (
+                            <span className="text-xs tabular-nums opacity-60">
+                              {Math.floor(furthest / 3600) > 0
+                                ? `${Math.floor(furthest / 3600)}:${String(Math.floor((furthest % 3600) / 60)).padStart(2, "0")}:${String(Math.floor(furthest % 60)).padStart(2, "0")}`
+                                : `${Math.floor(furthest / 60)}:${String(Math.floor(furthest % 60)).padStart(2, "0")}`}{" "}
+                              /
+                            </span>
+                          ) : null}
+                          {ch.duration_seconds ? (
+                            <span className="text-xs tabular-nums">
+                              {Math.floor(ch.duration_seconds / 60)}:
+                              {String(Math.round(ch.duration_seconds % 60)).padStart(2, "0")}
+                            </span>
+                          ) : null}
+                        </span>
+                      </button>
+                    </Fragment>
                   );
                 })}
               </div>

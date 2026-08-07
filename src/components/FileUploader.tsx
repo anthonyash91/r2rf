@@ -1,61 +1,24 @@
 import { useRef, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { getSignedUploadUrl } from "@/lib/storage.functions";
+import { uploadFile, type UploadLanguage } from "@/lib/upload-client";
+import { extractStorageRef } from "@/lib/storage-url";
 import { actionButtonClassName } from "@/components/LoadingButton";
-
-const BUCKET = "content-files";
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 
 type Props = {
   onUploaded: (fileUrl: string, fileName: string | null) => void;
-  onPendingDelete?: (oldStoragePath: string) => void;
+  onPendingDelete?: (oldStorageUrl: string) => void;
   label?: string;
   mimeTypes?: string[];
   existingFileUrl?: string | null;
   className?: string;
+  /** Organizes Bunny uploads as uploads/{categorySlug}/{itemFolder}/{language}/... */
+  categorySlug: string;
+  itemFolder: string;
+  language: UploadLanguage;
   /** Optional content to render inside the drop zone before the upload button (e.g. a URL text input). */
   children?: React.ReactNode;
 };
-
-function extractStoragePath(url: string): string | null {
-  try {
-    if (!SUPABASE_URL || !url) return null;
-    const u = new URL(url);
-    if (!u.href.startsWith(SUPABASE_URL)) return null;
-    const match = u.pathname.match(new RegExp(`/object/public/${BUCKET}/(.+)$`));
-    return match ? decodeURIComponent(match[1]) : null;
-  } catch {
-    return null;
-  }
-}
-
-function safeName(name: string): string {
-  return name.replace(/[^A-Za-z0-9._\-]/g, "_");
-}
-
-/** Upload a file via XHR so we get real byte-level progress events. */
-function xhrUpload(
-  url: string,
-  file: File,
-  onProgress: (pct: number) => void,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.upload.addEventListener("progress", (e) => {
-      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
-    });
-    xhr.addEventListener("load", () => {
-      if (xhr.status >= 200 && xhr.status < 300) resolve();
-      else reject(new Error(`Upload failed (${xhr.status})`));
-    });
-    xhr.addEventListener("error", () => reject(new Error("Upload failed")));
-    xhr.open("PUT", url);
-    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-    xhr.send(file);
-  });
-}
 
 export function FileUploader({
   onUploaded,
@@ -64,6 +27,9 @@ export function FileUploader({
   mimeTypes,
   existingFileUrl,
   className,
+  categorySlug,
+  itemFolder,
+  language,
   children,
 }: Props) {
   const [uploading, setUploading] = useState(false);
@@ -71,47 +37,29 @@ export function FileUploader({
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dragCounter = useRef(0);
-  const getUrl = useServerFn(getSignedUploadUrl);
 
   async function handleFile(file: File) {
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-    const maxMb: Record<string, number> = {
-      mp4: 500, webm: 500, mov: 500,
-      mp3: 100, wav: 100, ogg: 100, m4a: 100,
-      pdf: 50,
-      jpg: 20, jpeg: 20, png: 20, gif: 20, webp: 20,
-    };
-    const allowed = new Set(Object.keys(maxMb));
-    if (!allowed.has(ext)) {
-      toast.error(`File type .${ext} is not allowed.`);
-      return;
-    }
-    const limitMb = maxMb[ext];
-    if (file.size > limitMb * 1024 * 1024) {
-      toast.error(`File exceeds the ${limitMb} MB limit for .${ext} files.`);
-      return;
-    }
     setUploading(true);
     setUploadProgress(0);
     try {
-      const path = `uploads/${Date.now()}-${safeName(file.name)}`;
-      const oldPath = existingFileUrl ? extractStoragePath(existingFileUrl) : null;
+      // Only queue the old file for deletion if it's actually one of our
+      // managed files (Supabase or Bunny) — an admin-entered external URL
+      // must never be deleted.
+      const oldRefExists = existingFileUrl ? extractStorageRef(existingFileUrl) : null;
 
-      const { token, publicUrl } = await getUrl({ data: { path } });
-
-      // Build the Supabase signed-upload URL manually so we can use XHR.
-      // XHR exposes upload.onprogress for byte-level progress; fetch and the
-      // Supabase JS client provide no equivalent upload progress event.
-      const uploadUrl =
-        `${SUPABASE_URL}/storage/v1/object/upload/sign/${BUCKET}/${path}` +
-        `?token=${encodeURIComponent(token)}`;
-
-      await xhrUpload(uploadUrl, file, setUploadProgress);
+      const { publicUrl } = await uploadFile({
+        file,
+        kind: "content-file",
+        categorySlug,
+        itemFolder,
+        language,
+        onProgress: setUploadProgress,
+      });
 
       onUploaded(publicUrl, file.name);
 
-      if (oldPath && onPendingDelete) {
-        onPendingDelete(oldPath);
+      if (oldRefExists && existingFileUrl && onPendingDelete) {
+        onPendingDelete(existingFileUrl);
       }
     } catch (err: any) {
       toast.error(err.message ?? "Upload failed");
