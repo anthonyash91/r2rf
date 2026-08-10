@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Pencil, Plus, Trash2, Eye, EyeOff, Sparkles, RefreshCw, ExternalLink, LayoutGrid, GripVertical, X } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
+import { BackToTopButton } from "@/components/BackToTopButton";
 import { EmptyState } from "@/components/EmptyState";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { useServerFn } from "@tanstack/react-start";
@@ -654,6 +655,7 @@ function AdminCategoriesContent() {
         );
       })()}
       </section>
+      <BackToTopButton />
     </div>
   );
 }

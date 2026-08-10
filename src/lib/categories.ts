@@ -35,6 +35,10 @@ export type Category = {
   description_es: string | null;
   created_at?: string;
   facilities?: string[] | null; // facility values assigned to this category; null = fetch failed
+  /** Admin-managed display order for this category's content-item sections
+   * (lowercased/trimmed section values). Any section in use but not listed
+   * here is appended alphabetically at render time. */
+  section_order?: string[] | null;
 };
 
 export type ContentItem = {
@@ -64,6 +68,11 @@ export type ContentItem = {
   /** Bunny Stream collection grouping this item's video/audio uploads. Null
    * for items with no Stream video yet, or whose media stays on Bunny Storage. */
   stream_collection_id?: string | null;
+  /** Independent per-item section label (e.g. "eBooks", "Audiobooks") for
+   * grouping items on the category page — unrelated to `type`. Null falls
+   * into an "uncategorized" bucket. */
+  section?: string | null;
+  section_es?: string | null;
 };
 
 export function slugify(s: string) {

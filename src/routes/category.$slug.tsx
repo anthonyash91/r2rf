@@ -19,7 +19,7 @@ import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n"
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { fmtDateShort } from "@/lib/date-format";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info, Search, BookOpen, TrendingUp, List, Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info, Search, BookOpen, TrendingUp, List, Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, ChevronDown } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -30,7 +30,6 @@ import { ReadStatusBadge } from "@/components/ReadStatusBadge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
 import AutoHeight from "embla-carousel-auto-height";
 import { useAuth } from "@/hooks/use-auth";
@@ -229,7 +228,8 @@ function CategoryPage() {
   // Track PDF item IDs opened this session so we only show the progress
   // button after the user has actually opened the viewer at least once.
   const openedPdfsRef = useRef(new Set<string>());
-  const [typeFilter, setTypeFilter] = useState<string>("all");
+  // Empty by default — every type section starts expanded on page load.
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const kbSearch = useKeyboardInput(searchQuery, setSearchQuery);
   const [categoryComplete, setCategoryComplete] = useState(false);
@@ -253,17 +253,21 @@ function CategoryPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: QK.category(slug),
     queryFn: async () => {
-      const { data: cat, error: e1 } = await supabase
+      const { data: cat, error: e1 } = await (supabase as any)
         .from("categories")
-        .select("id, slug, name, tagline, description, icon_url, icon_name, icon_color, sort_order, published, home_page_mode, name_es, tagline_es, description_es")
+        .select(
+          "id, slug, name, tagline, description, icon_url, icon_name, icon_color, sort_order, published, home_page_mode, name_es, tagline_es, description_es, section_order",
+        )
         .eq("slug", slug)
         .eq("published", true)
         .maybeSingle();
       if (e1) throw e1;
       if (!cat) throw notFound();
-      const { data: items, error: e2 } = await supabase
+      const { data: items, error: e2 } = await (supabase as any)
         .from("content_items")
-        .select("id, category_id, title, title_es, type, source, source_es, duration, description, description_es, url, file_url, file_url_es, file_name, file_name_es, sort_order, published, exempt_from_progress")
+        .select(
+          "id, category_id, title, title_es, type, source, source_es, duration, description, description_es, url, file_url, file_url_es, file_name, file_name_es, sort_order, published, exempt_from_progress, section, section_es",
+        )
         .eq("category_id", cat.id)
         .eq("published", true)
         .order("sort_order", { ascending: true });
@@ -277,7 +281,7 @@ function CategoryPage() {
       if (e3) throw e3;
 
       // Fetch facility restrictions for all items
-      const itemIds = (items ?? []).map((i) => i.id as string);
+      const itemIds = (items ?? []).map((i: any) => i.id as string);
       const facilityMap: Record<string, string[]> = {};
       let facilityFetchFailed = false;
       if (itemIds.length > 0) {
@@ -295,7 +299,7 @@ function CategoryPage() {
           }
         }
       }
-      const itemsWithFacilities = (items ?? []).map((item) => ({
+      const itemsWithFacilities = (items ?? []).map((item: any) => ({
         ...item,
         // null = fetch failed; visibleItems treats null as "restricted, hide from non-admins"
         facilities: facilityFetchFailed ? null : (facilityMap[item.id as string] ?? []),
@@ -332,6 +336,18 @@ function CategoryPage() {
     if (!hash.startsWith("#item-")) return;
     const id = hash.slice(1);
     const itemId = id.replace(/^item-/, "");
+    // If the target item's section is collapsed, expand it first so the
+    // element is actually visible once we scroll to it.
+    const targetItem = data.items.find((i) => i.id === itemId);
+    if (targetItem) {
+      const key = (targetItem.section ?? "").trim().toLowerCase() || "uncategorized";
+      setCollapsedSections((prev) => {
+        if (!prev.has(key)) return prev;
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
     // Wait a tick for layout
     const t = window.setTimeout(() => {
       const el = document.getElementById(id);
@@ -868,29 +884,60 @@ function CategoryPage() {
           <main className="flex-1">
             <section className="mx-auto max-w-5xl px-6 py-20">
               {(() => {
-                const itemsWithKind = visibleItems.map((item) => {
-                  const filterKey = (item.type ?? "other").trim().toLowerCase() || "other";
-                  return { item, filterKey };
-                });
-                const availableKinds = Array.from(new Set(itemsWithKind.map((i) => i.filterKey)));
-                const filteredItems = typeFilter === "all"
-                  ? visibleItems
-                  : itemsWithKind.filter((i) => i.filterKey === typeFilter).map((i) => i.item);
-                const orderedKinds = availableKinds.sort((a, b) => a.localeCompare(b));
-                const showFilter = orderedKinds.length > 1;
                 const searchLower = searchQuery.trim().toLowerCase();
-                const displayItems = searchLower.length === 0
-                  ? filteredItems
-                  : filteredItems.filter((item) => {
-                      const title = (pickLang(lang, item.title, item.title_es) ?? "").toLowerCase();
-                      const desc = (pickLang(lang, item.description, item.description_es) ?? "").toLowerCase();
-                      return title.includes(searchLower) || desc.includes(searchLower);
-                    });
+                const displayItems =
+                  searchLower.length === 0
+                    ? visibleItems
+                    : visibleItems.filter((item) => {
+                        const title = (
+                          pickLang(lang, item.title, item.title_es) ?? ""
+                        ).toLowerCase();
+                        const desc = (
+                          pickLang(lang, item.description, item.description_es) ?? ""
+                        ).toLowerCase();
+                        return title.includes(searchLower) || desc.includes(searchLower);
+                      });
+                // Group into sections by the item's own independent `section`
+                // field (nothing to do with `type`/badges) — ordered by the
+                // category's admin-managed section_order, with any
+                // used-but-unlisted section appended alphabetically and a
+                // final "uncategorized" bucket (no section set) always last.
+                const byKey = new Map<string, typeof displayItems>();
+                for (const item of displayItems) {
+                  const key = (item.section ?? "").trim().toLowerCase() || "uncategorized";
+                  const bucket = byKey.get(key);
+                  if (bucket) bucket.push(item);
+                  else byKey.set(key, [item]);
+                }
+                const orderedSections = (data?.category.section_order ?? []).map((s) =>
+                  s.trim().toLowerCase(),
+                );
+                const seenKeys = new Set<string>();
+                const groups: { key: string; items: typeof displayItems }[] = [];
+                for (const k of orderedSections) {
+                  const bucket = byKey.get(k);
+                  if (bucket) {
+                    groups.push({ key: k, items: bucket });
+                    seenKeys.add(k);
+                  }
+                }
+                for (const k of Array.from(byKey.keys())
+                  .filter((k) => k !== "uncategorized" && !seenKeys.has(k))
+                  .sort((a, b) => a.localeCompare(b))) {
+                  groups.push({ key: k, items: byKey.get(k)! });
+                }
+                if (byKey.has("uncategorized")) {
+                  groups.push({ key: "uncategorized", items: byKey.get("uncategorized")! });
+                }
+                const firstItemId = groups[0]?.items[0]?.id;
                 return (
                   <>
                     <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
                       <h2 className="font-display text-xl font-semibold shrink-0">
-                        {displayItems.length} {displayItems.length === 1 ? t("category.resource") : t("category.resources")}
+                        {displayItems.length}{" "}
+                        {displayItems.length === 1
+                          ? t("category.resource")
+                          : t("category.resources")}
                       </h2>
                       <div className="flex flex-col sm:flex-row sm:flex-1 sm:items-center gap-2 sm:justify-end">
                         <div className="relative w-full sm:max-w-[220px] sm:flex-1">
@@ -904,514 +951,806 @@ function CategoryPage() {
                             className="w-full rounded-lg border border-input bg-background pl-9 pr-3 py-1.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring/50 focus:border-ring/50"
                           />
                         </div>
-                        {showFilter && (
-                          <Select value={typeFilter} onValueChange={setTypeFilter}>
-                            <SelectTrigger className="w-full sm:w-[140px] shrink-0 shadow-none capitalize">
-                              <SelectValue placeholder="Filter by type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">{t("home.allTypes")}</SelectItem>
-                              {orderedKinds.map((k) => (
-                                <SelectItem key={k} value={k} className="capitalize">{translateType(lang, k, badgeStyles.typeNamesEs)}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
                       </div>
                     </div>
-              {displayItems.length === 0 ? (
-                <p className="text-muted-foreground">
-                  {searchLower.length > 0 ? `No results for "${searchQuery.trim()}"` : t("category.noContent")}
-                </p>
-              ) : (
-                <ul className="divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden">
-                  {displayItems.map((item, itemIdx) => {
-                    const title = pickLang(lang, item.title, item.title_es);
-                    const description = pickLang(lang, item.description, item.description_es);
-                    const source = pickLang(lang, item.source, item.source_es);
-                    const fileUrl = lang === "es" && item.file_url_es ? item.file_url_es : item.file_url;
-                    const fileName = lang === "es" && item.file_url_es ? (item.file_name_es ?? item.file_name) : item.file_name;
-                    const fileMedia = detectMedia(fileUrl);
-                    const urlMedia = detectMedia(item.url);
-                    // Bunny Stream URLs (.../playlist.m3u8) have no extension for
-                    // detectMedia to match — resolve video vs. audio from item.type instead.
-                    const fileIsStream = isStreamPlaybackUrl(fileUrl);
-                    const urlIsStream = isStreamPlaybackUrl(item.url);
-                    const streamKind = fileIsStream || urlIsStream ? mediaKindFromType(item.type) : null;
-                    // Fall back to type-based audio detection for chapter-only audio items
-                    // that have no URL on the content item itself.
-                    const itemTypeLower = (item.type ?? "").toLowerCase();
-                    const typeAudio = (itemTypeLower.includes("audio") || itemTypeLower.includes("podcast")) ? "audio" as const : null;
-                    const mediaKind: MediaKind | null = fileMedia ?? urlMedia ?? streamKind ?? typeAudio;
-                    const mediaSrc = fileMedia ? fileUrl : urlMedia ? item.url : fileIsStream ? fileUrl : urlIsStream ? item.url : null;
-                    // Chapter-only audio items: mediaKind is "audio" but mediaSrc is null — still open the player.
-                    const isMedia = mediaKind === "audio" ? true : (!!mediaKind && !!mediaSrc);
-
-                    const openMedia = () => {
-                      if (!mediaKind) return;
-                      const payload = { url: mediaSrc ?? "", title, itemId: item.id };
-                      if (mediaKind === "video") setActiveMedia({ type: "video", ...payload });
-                      else if (mediaKind === "audio") { setActiveMedia({ type: "audio", ...payload }); }
-                      else if (mediaKind === "pdf") {
-                        setActiveMedia({ type: "pdf", ...payload });
-                        openedPdfsRef.current.add(item.id);
-                      }
-                      else if (mediaKind === "image") {
-                        setActiveMedia({ type: "image", ...payload });
-                        // Opening an image = viewed — auto-mark immediately
-                        if (!readSet.has(item.id)) {
-                          toggleRead.mutate({ itemId: item.id, markRead: true });
-                        }
-                      }
-                    };
-
-                    const isMeetingOrCall = item.type && (
-                      item.type.toLowerCase().includes("meeting") ||
-                      item.type.toLowerCase().includes("call")
-                    );
-                    const isExternalLink = !isMedia && !!item.url && !isMeetingOrCall;
-
-                    const handleActivate = () => {
-                      if (!canAccessAdmin && !isFacilityUser) trackContentClick(item.id, data.category.id);
-                      // External links: auto-mark as accessed the moment the link is clicked
-                      if (!isAdmin && !isFacilityUser && isExternalLink && !readSet.has(item.id) && user?.id) {
-                        toggleRead.mutate({ itemId: item.id, markRead: true });
-                      }
-                      // Mark as seen so the "New" badge is suppressed on any engagement
-                      if (user?.id && !readSet.has(item.id) && !seenSet.has(item.id)) {
-                        Promise.resolve(
-                          supabase.from("user_content_seen")
-                            .insert({ user_id: user.id, content_item_id: item.id })
-                        ).then(() => {
-                          queryClient.invalidateQueries({ queryKey: QK.contentSeen(user.id) });
-                        }).catch(() => {});
-                      }
-                    };
-
-                    let Wrapper: any = "div";
-                    let wrapperProps: any = {};
-                    if (isMedia) {
-                      Wrapper = "button";
-                      wrapperProps = { type: "button", onClick: () => { handleActivate(); openMedia(); } };
-                    } else if (item.url) {
-                      Wrapper = "a";
-                      wrapperProps = { href: item.url, target: "_blank", rel: "noopener noreferrer", onClick: handleActivate };
-                    }
-
-                    const MediaIcon =
-                      mediaKind === "video"
-                        ? PlayCircle
-                        : mediaKind === "audio"
-                          ? Headphones
-                          : mediaKind === "pdf"
-                            ? FileText
-                            : mediaKind === "image"
-                              ? ImageIcon
-                              : null;
-
-                    const isNew = !!item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 24 * 60 * 60 * 1000 && !readSet.has(item.id) && !seenSet.has(item.id) && !engagementMap.has(item.id);
-
-                    return (
-                      <li key={item.id} id={itemIdx === 0 ? "cat-first-item" : `item-${item.id}`} className="relative scroll-mt-24 flex flex-col hover:bg-[var(--color-secondary)]/60 transition-colors">
-                        {highlightedId === item.id && (
-                          <span
-                            aria-hidden
-                            className="pointer-events-none absolute inset-0 z-10 rounded-[inherit] bg-[var(--color-accent)]/15 opacity-0 animate-highlight-pulse"
-                          />
-                        )}
-
-
-
-
-                        {/* Header row: badges/duration (left) + action buttons (right) */}
-                        <div className="flex items-start justify-between gap-3 px-6 pt-6">
-                          <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden" style={{ maskImage: 'linear-gradient(to right, black, black calc(100% - 96px), transparent)', WebkitMaskImage: 'linear-gradient(to right, black, black calc(100% - 96px), transparent)' }}>
-                            <BadgeGroup>
-                              {isNew && (
-                                <Badge variant="new" className="rounded-[8px]">{t("category.newContent")}</Badge>
-                              )}
-                              <Badge variant="type" type={item.type} className="rounded-[8px]">
-                                {translateType(lang, item.type, badgeStyles.typeNamesEs)}
-                              </Badge>
-                              {isAdmin && (item.facilities?.length ?? 0) > 0 && (
-                                <FacilityBadge
-                                  facilities={item.facilities!}
-                                  facilityLabelMap={facilityLabelMap}
+                    {displayItems.length === 0 ? (
+                      <p className="text-muted-foreground">
+                        {searchLower.length > 0
+                          ? `No results for "${searchQuery.trim()}"`
+                          : t("category.noContent")}
+                      </p>
+                    ) : (
+                      <div className="space-y-6">
+                        {groups.map(({ key, items }) => {
+                          const isCollapsed = collapsedSections.has(key);
+                          const sectionLabel =
+                            key === "uncategorized"
+                              ? t("category.uncategorized")
+                              : pickLang(lang, items[0].section, items[0].section_es) ||
+                                items[0].section ||
+                                key;
+                          return (
+                            <div key={key}>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setCollapsedSections((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(key)) next.delete(key);
+                                    else next.add(key);
+                                    return next;
+                                  })
+                                }
+                                className="mb-2 flex w-full items-center gap-1.5 text-left font-display text-base font-semibold"
+                              >
+                                <ChevronDown
+                                  className={`h-4 w-4 transition-transform flex-shrink-0 ${isCollapsed ? "-rotate-90" : ""}`}
                                 />
-                              )}
-                            </BadgeGroup>
-                            {item.duration && (
-                              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                {translateDuration(lang, withActionWord(item.duration, item.type))}
-                              </span>
-                            )}
-                          </div>
+                                <span>{sectionLabel}</span>
+                                <span className="font-normal text-sm text-muted-foreground">
+                                  ({items.length})
+                                </span>
+                              </button>
+                              {/* Always rendered (never unmounted) so the #item-{id}
+                            deep-link effect above can find it via
+                            getElementById even while visually collapsed. */}
+                              <ul
+                                className={`divide-y divide-border rounded-2xl border border-border bg-card overflow-hidden ${isCollapsed ? "hidden" : ""}`}
+                              >
+                                {items.map((item) => {
+                                  const title = pickLang(lang, item.title, item.title_es);
+                                  const description = pickLang(
+                                    lang,
+                                    item.description,
+                                    item.description_es,
+                                  );
+                                  const source = pickLang(lang, item.source, item.source_es);
+                                  const fileUrl =
+                                    lang === "es" && item.file_url_es
+                                      ? item.file_url_es
+                                      : item.file_url;
+                                  const fileName =
+                                    lang === "es" && item.file_url_es
+                                      ? (item.file_name_es ?? item.file_name)
+                                      : item.file_name;
+                                  const fileMedia = detectMedia(fileUrl);
+                                  const urlMedia = detectMedia(item.url);
+                                  // Bunny Stream URLs (.../playlist.m3u8) have no extension for
+                                  // detectMedia to match — resolve video vs. audio from item.type instead.
+                                  const fileIsStream = isStreamPlaybackUrl(fileUrl);
+                                  const urlIsStream = isStreamPlaybackUrl(item.url);
+                                  const streamKind =
+                                    fileIsStream || urlIsStream
+                                      ? mediaKindFromType(item.type)
+                                      : null;
+                                  // Fall back to type-based audio detection for chapter-only audio items
+                                  // that have no URL on the content item itself.
+                                  const itemTypeLower = (item.type ?? "").toLowerCase();
+                                  const typeAudio =
+                                    itemTypeLower.includes("audio") ||
+                                    itemTypeLower.includes("podcast")
+                                      ? ("audio" as const)
+                                      : null;
+                                  const mediaKind: MediaKind | null =
+                                    fileMedia ?? urlMedia ?? streamKind ?? typeAudio;
+                                  const mediaSrc = fileMedia
+                                    ? fileUrl
+                                    : urlMedia
+                                      ? item.url
+                                      : fileIsStream
+                                        ? fileUrl
+                                        : urlIsStream
+                                          ? item.url
+                                          : null;
+                                  // Chapter-only audio items: mediaKind is "audio" but mediaSrc is null — still open the player.
+                                  const isMedia =
+                                    mediaKind === "audio" ? true : !!mediaKind && !!mediaSrc;
 
-                          {user && !isAdmin && !isFacilityUser && (() => {
-                            const isRead = readSet.has(item.id);
-                            let readLabel = t("category.markedRead");
-                            let unreadLabel = t("category.notRead");
-                            if (isMeetingOrCall) {
-                              readLabel = t("category.markedAttended");
-                              unreadLabel = t("category.notAttended");
-                            } else if (mediaKind === "video") {
-                              readLabel = t("category.markedWatched");
-                              unreadLabel = t("category.notWatched");
-                            } else if (mediaKind === "audio") {
-                              readLabel = t("category.markedListened");
-                              unreadLabel = t("category.notListened");
-                            } else if (mediaKind === "image") {
-                              readLabel = t("category.markedViewed");
-                              unreadLabel = t("category.notViewed");
-                            } else if (isExternalLink) {
-                              readLabel = t("category.markedClicked");
-                              unreadLabel = t("category.notClicked");
-                            }
-                            const isBookmarked = bookmarkIds.has(item.id);
-                            const myRating = myRatings.get(item.id) ?? null;
-                            return (
-                              <div id={itemIdx === 0 ? "cat-first-actions" : undefined} className="flex items-center gap-1.5 flex-shrink-0">
-                                {isRead && <div className="inline-flex items-center rounded-[8px] border border-input overflow-hidden">
-                                  <TooltipProvider delayDuration={150}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <button
-                                          type="button"
-                                          aria-label={t("rating.helpful")}
-                                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); rate(item.id, myRating === 1 ? null : 1); }}
-                                          className={`inline-flex items-center justify-center px-2 py-1.5 transition-colors ${myRating === 1 ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-background text-muted-foreground hover:bg-muted"}`}
-                                        >
-                                          <ThumbsUp className={`h-3.5 w-3.5 ${myRating === 1 ? "fill-[var(--color-accent)]" : ""}`} />
-                                        </button>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="top" className="text-xs">{t("rating.helpful")}</TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                  <div className="w-px self-stretch bg-border" />
-                                  <TooltipProvider delayDuration={150}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <button
-                                          type="button"
-                                          aria-label={t("rating.notHelpful")}
-                                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); rate(item.id, myRating === -1 ? null : -1); }}
-                                          className={`inline-flex items-center justify-center px-2 py-1.5 transition-colors ${myRating === -1 ? "bg-destructive/10 text-destructive" : "bg-background text-muted-foreground hover:bg-muted"}`}
-                                        >
-                                          <ThumbsDown className={`h-3.5 w-3.5 ${myRating === -1 ? "fill-destructive" : ""}`} />
-                                        </button>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="top" className="text-xs">{t("rating.notHelpful")}</TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </div>}
-                                <TooltipProvider delayDuration={150}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <button
-                                        type="button"
-                                        id={itemIdx === 0 ? "cat-first-bookmark" : undefined}
-                                        aria-label={isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
-                                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleBookmark(item.id); }}
-                                        className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
-                                      >
-                                        <Bookmark
-                                          className={`h-3.5 w-3.5 transition-colors ${isBookmarked ? "fill-[var(--color-accent)] text-[var(--color-accent)]" : "text-muted-foreground"}`}
+                                  const openMedia = () => {
+                                    if (!mediaKind) return;
+                                    const payload = { url: mediaSrc ?? "", title, itemId: item.id };
+                                    if (mediaKind === "video")
+                                      setActiveMedia({ type: "video", ...payload });
+                                    else if (mediaKind === "audio") {
+                                      setActiveMedia({ type: "audio", ...payload });
+                                    } else if (mediaKind === "pdf") {
+                                      setActiveMedia({ type: "pdf", ...payload });
+                                      openedPdfsRef.current.add(item.id);
+                                    } else if (mediaKind === "image") {
+                                      setActiveMedia({ type: "image", ...payload });
+                                      // Opening an image = viewed — auto-mark immediately
+                                      if (!readSet.has(item.id)) {
+                                        toggleRead.mutate({ itemId: item.id, markRead: true });
+                                      }
+                                    }
+                                  };
+
+                                  const isMeetingOrCall =
+                                    item.type &&
+                                    (item.type.toLowerCase().includes("meeting") ||
+                                      item.type.toLowerCase().includes("call"));
+                                  const isExternalLink = !isMedia && !!item.url && !isMeetingOrCall;
+
+                                  const handleActivate = () => {
+                                    if (!canAccessAdmin && !isFacilityUser)
+                                      trackContentClick(item.id, data.category.id);
+                                    // External links: auto-mark as accessed the moment the link is clicked
+                                    if (
+                                      !isAdmin &&
+                                      !isFacilityUser &&
+                                      isExternalLink &&
+                                      !readSet.has(item.id) &&
+                                      user?.id
+                                    ) {
+                                      toggleRead.mutate({ itemId: item.id, markRead: true });
+                                    }
+                                    // Mark as seen so the "New" badge is suppressed on any engagement
+                                    if (
+                                      user?.id &&
+                                      !readSet.has(item.id) &&
+                                      !seenSet.has(item.id)
+                                    ) {
+                                      Promise.resolve(
+                                        supabase
+                                          .from("user_content_seen")
+                                          .insert({ user_id: user.id, content_item_id: item.id }),
+                                      )
+                                        .then(() => {
+                                          queryClient.invalidateQueries({
+                                            queryKey: QK.contentSeen(user.id),
+                                          });
+                                        })
+                                        .catch(() => {});
+                                    }
+                                  };
+
+                                  let Wrapper: any = "div";
+                                  let wrapperProps: any = {};
+                                  if (isMedia) {
+                                    Wrapper = "button";
+                                    wrapperProps = {
+                                      type: "button",
+                                      onClick: () => {
+                                        handleActivate();
+                                        openMedia();
+                                      },
+                                    };
+                                  } else if (item.url) {
+                                    Wrapper = "a";
+                                    wrapperProps = {
+                                      href: item.url,
+                                      target: "_blank",
+                                      rel: "noopener noreferrer",
+                                      onClick: handleActivate,
+                                    };
+                                  }
+
+                                  const MediaIcon =
+                                    mediaKind === "video"
+                                      ? PlayCircle
+                                      : mediaKind === "audio"
+                                        ? Headphones
+                                        : mediaKind === "pdf"
+                                          ? FileText
+                                          : mediaKind === "image"
+                                            ? ImageIcon
+                                            : null;
+
+                                  const isNew =
+                                    !!item.created_at &&
+                                    Date.now() - new Date(item.created_at).getTime() <
+                                      7 * 24 * 60 * 60 * 1000 &&
+                                    !readSet.has(item.id) &&
+                                    !seenSet.has(item.id) &&
+                                    !engagementMap.has(item.id);
+
+                                  return (
+                                    <li
+                                      key={item.id}
+                                      id={
+                                        item.id === firstItemId
+                                          ? "cat-first-item"
+                                          : `item-${item.id}`
+                                      }
+                                      className="relative scroll-mt-24 flex flex-col hover:bg-[var(--color-secondary)]/60 transition-colors"
+                                    >
+                                      {highlightedId === item.id && (
+                                        <span
+                                          aria-hidden
+                                          className="pointer-events-none absolute inset-0 z-10 rounded-[inherit] bg-[var(--color-accent)]/15 opacity-0 animate-highlight-pulse"
                                         />
-                                      </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" className="text-xs">
-                                      {isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                                {(() => {
-                                  const eng = engagementMap.get(item.id);
+                                      )}
 
-                                  // ── Exempt items: "Acknowledged" button, no progress tracking ──
-                                  if ((item as any).exempt_from_progress) {
-                                    const isAcknowledged = readSet.has(item.id);
-                                    return (
-                                      <TooltipProvider delayDuration={150}>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <button
-                                              type="button"
+                                      {/* Header row: badges/duration (left) + action buttons (right) */}
+                                      <div className="flex items-start justify-between gap-3 px-6 pt-6">
+                                        <div
+                                          className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden"
+                                          style={{
+                                            maskImage:
+                                              "linear-gradient(to right, black, black calc(100% - 96px), transparent)",
+                                            WebkitMaskImage:
+                                              "linear-gradient(to right, black, black calc(100% - 96px), transparent)",
+                                          }}
+                                        >
+                                          <BadgeGroup>
+                                            {isNew && (
+                                              <Badge variant="new" className="rounded-[8px]">
+                                                {t("category.newContent")}
+                                              </Badge>
+                                            )}
+                                            <Badge
+                                              variant="type"
+                                              type={item.type}
+                                              className="rounded-[8px]"
+                                            >
+                                              {translateType(lang, item.type, badgeStyles.typeNamesEs)}
+                                            </Badge>
+                                            {isAdmin && (item.facilities?.length ?? 0) > 0 && (
+                                              <FacilityBadge
+                                                facilities={item.facilities!}
+                                                facilityLabelMap={facilityLabelMap}
+                                              />
+                                            )}
+                                          </BadgeGroup>
+                                          {item.duration && (
+                                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                              {translateDuration(
+                                                lang,
+                                                withActionWord(item.duration, item.type),
+                                              )}
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        {user &&
+                                          !isAdmin &&
+                                          !isFacilityUser &&
+                                          (() => {
+                                            const isRead = readSet.has(item.id);
+                                            let readLabel = t("category.markedRead");
+                                            let unreadLabel = t("category.notRead");
+                                            if (isMeetingOrCall) {
+                                              readLabel = t("category.markedAttended");
+                                              unreadLabel = t("category.notAttended");
+                                            } else if (mediaKind === "video") {
+                                              readLabel = t("category.markedWatched");
+                                              unreadLabel = t("category.notWatched");
+                                            } else if (mediaKind === "audio") {
+                                              readLabel = t("category.markedListened");
+                                              unreadLabel = t("category.notListened");
+                                            } else if (mediaKind === "image") {
+                                              readLabel = t("category.markedViewed");
+                                              unreadLabel = t("category.notViewed");
+                                            } else if (isExternalLink) {
+                                              readLabel = t("category.markedClicked");
+                                              unreadLabel = t("category.notClicked");
+                                            }
+                                            const isBookmarked = bookmarkIds.has(item.id);
+                                            const myRating = myRatings.get(item.id) ?? null;
+                                            return (
+                                              <div
+                                                id={
+                                                  item.id === firstItemId
+                                                    ? "cat-first-actions"
+                                                    : undefined
+                                                }
+                                                className="flex items-center gap-1.5 flex-shrink-0"
+                                              >
+                                                {isRead && (
+                                                  <div className="inline-flex items-center rounded-[8px] border border-input overflow-hidden">
+                                                    <TooltipProvider delayDuration={150}>
+                                                      <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                          <button
+                                                            type="button"
+                                                            aria-label={t("rating.helpful")}
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              e.preventDefault();
+                                                              rate(
+                                                                item.id,
+                                                                myRating === 1 ? null : 1,
+                                                              );
+                                                            }}
+                                                            className={`inline-flex items-center justify-center px-2 py-1.5 transition-colors ${myRating === 1 ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                                                          >
+                                                            <ThumbsUp
+                                                              className={`h-3.5 w-3.5 ${myRating === 1 ? "fill-[var(--color-accent)]" : ""}`}
+                                                            />
+                                                          </button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent
+                                                          side="top"
+                                                          className="text-xs"
+                                                        >
+                                                          {t("rating.helpful")}
+                                                        </TooltipContent>
+                                                      </Tooltip>
+                                                    </TooltipProvider>
+                                                    <div className="w-px self-stretch bg-border" />
+                                                    <TooltipProvider delayDuration={150}>
+                                                      <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                          <button
+                                                            type="button"
+                                                            aria-label={t("rating.notHelpful")}
+                                                            onClick={(e) => {
+                                                              e.stopPropagation();
+                                                              e.preventDefault();
+                                                              rate(
+                                                                item.id,
+                                                                myRating === -1 ? null : -1,
+                                                              );
+                                                            }}
+                                                            className={`inline-flex items-center justify-center px-2 py-1.5 transition-colors ${myRating === -1 ? "bg-destructive/10 text-destructive" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                                                          >
+                                                            <ThumbsDown
+                                                              className={`h-3.5 w-3.5 ${myRating === -1 ? "fill-destructive" : ""}`}
+                                                            />
+                                                          </button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent
+                                                          side="top"
+                                                          className="text-xs"
+                                                        >
+                                                          {t("rating.notHelpful")}
+                                                        </TooltipContent>
+                                                      </Tooltip>
+                                                    </TooltipProvider>
+                                                  </div>
+                                                )}
+                                                <TooltipProvider delayDuration={150}>
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <button
+                                                        type="button"
+                                                        id={
+                                                          item.id === firstItemId
+                                                            ? "cat-first-bookmark"
+                                                            : undefined
+                                                        }
+                                                        aria-label={
+                                                          isBookmarked
+                                                            ? t("bookmark.remove")
+                                                            : t("bookmark.save")
+                                                        }
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          e.preventDefault();
+                                                          toggleBookmark(item.id);
+                                                        }}
+                                                        className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                                                      >
+                                                        <Bookmark
+                                                          className={`h-3.5 w-3.5 transition-colors ${isBookmarked ? "fill-[var(--color-accent)] text-[var(--color-accent)]" : "text-muted-foreground"}`}
+                                                        />
+                                                      </button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top" className="text-xs">
+                                                      {isBookmarked
+                                                        ? t("bookmark.remove")
+                                                        : t("bookmark.save")}
+                                                    </TooltipContent>
+                                                  </Tooltip>
+                                                </TooltipProvider>
+                                                {(() => {
+                                                  const eng = engagementMap.get(item.id);
+
+                                                  // ── Exempt items: "Acknowledged" button, no progress tracking ──
+                                                  if ((item as any).exempt_from_progress) {
+                                                    const isAcknowledged = readSet.has(item.id);
+                                                    return (
+                                                      <TooltipProvider delayDuration={150}>
+                                                        <Tooltip>
+                                                          <TooltipTrigger asChild>
+                                                            <button
+                                                              type="button"
+                                                              onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                e.preventDefault();
+                                                                if (!isAcknowledged)
+                                                                  toggleRead.mutate({
+                                                                    itemId: item.id,
+                                                                    markRead: true,
+                                                                  });
+                                                              }}
+                                                              className={`inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium transition-colors flex-shrink-0 ${
+                                                                isAcknowledged
+                                                                  ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
+                                                                  : "border-input bg-background hover:bg-muted"
+                                                              }`}
+                                                            >
+                                                              {isAcknowledged ? (
+                                                                <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
+                                                              ) : (
+                                                                <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                                              )}
+                                                              <span>
+                                                                {isAcknowledged
+                                                                  ? t("category.acknowledged")
+                                                                  : t("category.acknowledge")}
+                                                              </span>
+                                                            </button>
+                                                          </TooltipTrigger>
+                                                          <TooltipContent
+                                                            side="top"
+                                                            className="text-xs max-w-[220px] text-center"
+                                                          >
+                                                            {t("category.exemptDisclaimer")}
+                                                          </TooltipContent>
+                                                        </Tooltip>
+                                                      </TooltipProvider>
+                                                    );
+                                                  }
+
+                                                  // ── Video / Audio: progress fill based on playback position ──
+                                                  // Use the max of chapter-sum and overall media progress so that
+                                                  // stale/corrupted chapter rows never cause a regression vs the
+                                                  // cumulative position recorded in user_content_engagement.
+                                                  const chapterListened =
+                                                    itemChapterProgressMap.get(item.id);
+                                                  const listenedSeconds =
+                                                    chapterListened !== undefined
+                                                      ? Math.max(
+                                                          chapterListened,
+                                                          eng?.media_progress_seconds ?? 0,
+                                                        )
+                                                      : (eng?.media_progress_seconds ?? 0);
+                                                  const totalDuration =
+                                                    itemTotalDurationMap.get(item.id) ||
+                                                    eng?.media_duration_seconds ||
+                                                    0;
+                                                  const mediaPct =
+                                                    !isRead &&
+                                                    (mediaKind === "video" ||
+                                                      mediaKind === "audio") &&
+                                                    totalDuration > 0 &&
+                                                    listenedSeconds > 0
+                                                      ? Math.min(
+                                                          100,
+                                                          Math.round(
+                                                            (listenedSeconds / totalDuration) * 100,
+                                                          ),
+                                                        )
+                                                      : null;
+
+                                                  if (mediaPct !== null) {
+                                                    const barWidth = Math.max(1, mediaPct);
+                                                    const pctLabel =
+                                                      mediaPct < 1 ? "< 1" : String(mediaPct);
+                                                    // Display-only progress fill — no manual click; auto-mark fires at 95%
+                                                    return (
+                                                      <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium overflow-hidden flex-shrink-0">
+                                                        <span
+                                                          className="absolute inset-y-0 left-0 pointer-events-none"
+                                                          style={{
+                                                            width: `${barWidth}%`,
+                                                            background: `color-mix(in oklab, var(--color-accent) 22%, transparent)`,
+                                                          }}
+                                                        />
+                                                        <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
+                                                        <span className="relative text-foreground">
+                                                          {pctLabel}%{" "}
+                                                          {mediaKind === "video"
+                                                            ? t(
+                                                                "category.markedWatched",
+                                                              ).toLowerCase()
+                                                            : t(
+                                                                "category.markedListened",
+                                                              ).toLowerCase()}
+                                                        </span>
+                                                      </span>
+                                                    );
+                                                  }
+
+                                                  // ── PDF: progress fill based on time open vs estimated reading time ──
+                                                  if (!isRead && mediaKind === "pdf") {
+                                                    const hasOpened =
+                                                      openedPdfsRef.current.has(item.id) || !!eng;
+
+                                                    if (!hasOpened) {
+                                                      // Not yet opened — show dimmed badge with tooltip nudging them to open it
+                                                      return (
+                                                        <TooltipProvider delayDuration={100}>
+                                                          <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                              <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                  e.stopPropagation();
+                                                                  e.preventDefault();
+                                                                  openMedia();
+                                                                }}
+                                                                className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer"
+                                                              >
+                                                                <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                                                <span>{unreadLabel}</span>
+                                                              </button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent
+                                                              side="top"
+                                                              className="text-xs max-w-[200px] text-center"
+                                                            >
+                                                              Open the PDF to start tracking your
+                                                              reading time
+                                                            </TooltipContent>
+                                                          </Tooltip>
+                                                        </TooltipProvider>
+                                                      );
+                                                    }
+
+                                                    const pdfMins = parseMinutes(item.duration);
+                                                    const pdfEstSec =
+                                                      pdfMins > 0 ? pdfMins * 60 : 0;
+                                                    const sessionSec = eng?.session_seconds ?? 0;
+                                                    const pdfPct =
+                                                      pdfEstSec > 0
+                                                        ? Math.min(
+                                                            100,
+                                                            Math.round(
+                                                              (sessionSec / (pdfEstSec * 0.95)) *
+                                                                100,
+                                                            ),
+                                                          )
+                                                        : null;
+
+                                                    if (pdfPct !== null && pdfPct >= 1) {
+                                                      return (
+                                                        <button
+                                                          type="button"
+                                                          onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            e.preventDefault();
+                                                            // Record the % they were at when manually marking as read (before auto-mark)
+                                                            if (
+                                                              !isRead &&
+                                                              pdfPct < 100 &&
+                                                              user?.id
+                                                            ) {
+                                                              Promise.resolve(
+                                                                (supabase as any)
+                                                                  .from("user_content_engagement")
+                                                                  .update({
+                                                                    manual_completion_pct: pdfPct,
+                                                                    last_updated_at:
+                                                                      new Date().toISOString(),
+                                                                  })
+                                                                  .eq("user_id", user.id)
+                                                                  .eq("content_item_id", item.id),
+                                                              ).catch(() => {});
+                                                            }
+                                                            toggleRead.mutate({
+                                                              itemId: item.id,
+                                                              markRead: !isRead,
+                                                            });
+                                                          }}
+                                                          className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
+                                                        >
+                                                          <span
+                                                            className="absolute inset-y-0 left-0 pointer-events-none"
+                                                            style={{
+                                                              width: `${pdfPct}%`,
+                                                              background: `color-mix(in oklab, var(--color-accent) 22%, transparent)`,
+                                                            }}
+                                                          />
+                                                          <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
+                                                          <span className="relative text-foreground">
+                                                            {pdfPct}%{" "}
+                                                            {t("category.markedRead").toLowerCase()}
+                                                          </span>
+                                                        </button>
+                                                      );
+                                                    }
+
+                                                    // Opened but no estimated duration or < 1% — show plain unread badge
+                                                    return (
+                                                      <ReadStatusBadge
+                                                        read={false}
+                                                        readLabel={readLabel}
+                                                        unreadLabel={unreadLabel}
+                                                        unreadIcon="circle"
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          e.preventDefault();
+                                                          toggleRead.mutate({
+                                                            itemId: item.id,
+                                                            markRead: true,
+                                                          });
+                                                        }}
+                                                      />
+                                                    );
+                                                  }
+
+                                                  // ── Unread video/audio with no tracked progress yet: dimmed + tooltip ──
+                                                  if (
+                                                    !isRead &&
+                                                    (mediaKind === "video" || mediaKind === "audio")
+                                                  ) {
+                                                    const tipLabel =
+                                                      mediaKind === "video"
+                                                        ? "Watch the video to track your progress"
+                                                        : "Listen to the audio to track your progress";
+                                                    return (
+                                                      <TooltipProvider delayDuration={100}>
+                                                        <Tooltip>
+                                                          <TooltipTrigger asChild>
+                                                            <button
+                                                              type="button"
+                                                              onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                e.preventDefault();
+                                                                openMedia();
+                                                              }}
+                                                              className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
+                                                            >
+                                                              <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                                              <span>{unreadLabel}</span>
+                                                            </button>
+                                                          </TooltipTrigger>
+                                                          <TooltipContent
+                                                            side="top"
+                                                            className="text-xs max-w-[200px] text-center"
+                                                          >
+                                                            {tipLabel}
+                                                          </TooltipContent>
+                                                        </Tooltip>
+                                                      </TooltipProvider>
+                                                    );
+                                                  }
+
+                                                  // ── Unread image: dimmed + tooltip (auto-marks the moment they open it) ──
+                                                  if (!isRead && mediaKind === "image") {
+                                                    return (
+                                                      <TooltipProvider delayDuration={100}>
+                                                        <Tooltip>
+                                                          <TooltipTrigger asChild>
+                                                            <button
+                                                              type="button"
+                                                              onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                e.preventDefault();
+                                                                openMedia();
+                                                              }}
+                                                              className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
+                                                            >
+                                                              <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                                              <span>{unreadLabel}</span>
+                                                            </button>
+                                                          </TooltipTrigger>
+                                                          <TooltipContent
+                                                            side="top"
+                                                            className="text-xs max-w-[200px] text-center"
+                                                          >
+                                                            View the image to mark it as seen
+                                                          </TooltipContent>
+                                                        </Tooltip>
+                                                      </TooltipProvider>
+                                                    );
+                                                  }
+
+                                                  // ── Unread external link: dimmed — clicking the card auto-marks ──
+                                                  if (!isRead && isExternalLink) {
+                                                    return (
+                                                      <TooltipProvider delayDuration={100}>
+                                                        <Tooltip>
+                                                          <TooltipTrigger asChild>
+                                                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 flex-shrink-0">
+                                                              <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                                              <span>{unreadLabel}</span>
+                                                            </span>
+                                                          </TooltipTrigger>
+                                                          <TooltipContent
+                                                            side="top"
+                                                            className="text-xs max-w-[200px] text-center"
+                                                          >
+                                                            Click the link to access this resource
+                                                          </TooltipContent>
+                                                        </Tooltip>
+                                                      </TooltipProvider>
+                                                    );
+                                                  }
+
+                                                  // ── All other types (worksheet, meeting/call, no-URL items): standard badge ──
+                                                  return (
+                                                    <ReadStatusBadge
+                                                      read={isRead}
+                                                      readLabel={readLabel}
+                                                      unreadLabel={unreadLabel}
+                                                      unreadIcon="circle"
+                                                      readAt={
+                                                        isRead
+                                                          ? fmtDateShort(readAtMap.get(item.id)) ||
+                                                            null
+                                                          : null
+                                                      }
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                        toggleRead.mutate({
+                                                          itemId: item.id,
+                                                          markRead: !isRead,
+                                                        });
+                                                      }}
+                                                    />
+                                                  );
+                                                })()}
+                                              </div>
+                                            );
+                                          })()}
+                                      </div>
+
+                                      <Wrapper
+                                        {...wrapperProps}
+                                        className="min-w-0 text-left px-6 pt-4 pb-5 cursor-pointer"
+                                      >
+                                        <div className="min-w-0">
+                                          <div className="flex items-start gap-2">
+                                            <h3 className="font-display text-lg font-semibold text-foreground leading-snug">
+                                              {title}
+                                            </h3>
+                                            <div className="flex items-center gap-1 mt-1 flex-shrink-0">
+                                              {(item as any).exempt_from_progress &&
+                                                !isAdmin &&
+                                                !isFacilityUser && (
+                                                  <TooltipProvider delayDuration={150}>
+                                                    <Tooltip>
+                                                      <TooltipTrigger asChild>
+                                                        <span className="inline-flex cursor-help text-muted-foreground">
+                                                          <Info className="h-4 w-4" />
+                                                        </span>
+                                                      </TooltipTrigger>
+                                                      <TooltipContent
+                                                        side="top"
+                                                        className="text-xs max-w-[220px] text-center"
+                                                      >
+                                                        {t("category.exemptTooltip")}
+                                                      </TooltipContent>
+                                                    </Tooltip>
+                                                  </TooltipProvider>
+                                                )}
+                                              {MediaIcon ? (
+                                                <MediaIcon className="h-4 w-4 text-muted-foreground" />
+                                              ) : item.url ? (
+                                                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                                              ) : null}
+                                            </div>
+                                          </div>
+                                          {description && (
+                                            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+                                              {description}
+                                            </p>
+                                          )}
+                                          {fileUrl && !isMedia && (
+                                            <a
+                                              href={fileUrl}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
                                               onClick={(e) => {
                                                 e.stopPropagation();
-                                                e.preventDefault();
-                                                if (!isAcknowledged) toggleRead.mutate({ itemId: item.id, markRead: true });
+                                                handleActivate();
                                               }}
-                                              className={`inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium transition-colors flex-shrink-0 ${
-                                                isAcknowledged
-                                                  ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
-                                                  : "border-input bg-background hover:bg-muted"
-                                              }`}
+                                              className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-accent)] hover:underline"
                                             >
-                                              {isAcknowledged
-                                                ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
-                                                : <Circle className="h-3.5 w-3.5 flex-shrink-0" />}
-                                              <span>{isAcknowledged ? t("category.acknowledged") : t("category.acknowledge")}</span>
-                                            </button>
-                                          </TooltipTrigger>
-                                          <TooltipContent side="top" className="text-xs max-w-[220px] text-center">
-                                            {t("category.exemptDisclaimer")}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    );
-                                  }
-
-                                  // ── Video / Audio: progress fill based on playback position ──
-                                  // Use the max of chapter-sum and overall media progress so that
-                                  // stale/corrupted chapter rows never cause a regression vs the
-                                  // cumulative position recorded in user_content_engagement.
-                                  const chapterListened = itemChapterProgressMap.get(item.id);
-                                  const listenedSeconds = chapterListened !== undefined
-                                    ? Math.max(chapterListened, eng?.media_progress_seconds ?? 0)
-                                    : (eng?.media_progress_seconds ?? 0);
-                                  const totalDuration = itemTotalDurationMap.get(item.id) || eng?.media_duration_seconds || 0;
-                                  const mediaPct = !isRead && (mediaKind === "video" || mediaKind === "audio") && totalDuration > 0 && listenedSeconds > 0
-                                    ? Math.min(100, Math.round((listenedSeconds / totalDuration) * 100))
-                                    : null;
-
-                                  if (mediaPct !== null) {
-                                    const barWidth = Math.max(1, mediaPct);
-                                    const pctLabel = mediaPct < 1 ? "< 1" : String(mediaPct);
-                                    // Display-only progress fill — no manual click; auto-mark fires at 95%
-                                    return (
-                                      <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium overflow-hidden flex-shrink-0">
-                                        <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${barWidth}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
-                                        <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
-                                        <span className="relative text-foreground">
-                                          {pctLabel}%{" "}
-                                          {mediaKind === "video" ? t("category.markedWatched").toLowerCase() : t("category.markedListened").toLowerCase()}
-                                        </span>
-                                      </span>
-                                    );
-                                  }
-
-                                  // ── PDF: progress fill based on time open vs estimated reading time ──
-                                  if (!isRead && mediaKind === "pdf") {
-                                    const hasOpened = openedPdfsRef.current.has(item.id) || !!eng;
-
-                                    if (!hasOpened) {
-                                      // Not yet opened — show dimmed badge with tooltip nudging them to open it
-                                      return (
-                                        <TooltipProvider delayDuration={100}>
-                                          <Tooltip>
-                                            <TooltipTrigger asChild>
-                                              <button
-                                                type="button"
-                                                onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
-                                                className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer"
-                                              >
-                                                <Circle className="h-3.5 w-3.5 flex-shrink-0" />
-                                                <span>{unreadLabel}</span>
-                                              </button>
-                                            </TooltipTrigger>
-                                            <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
-                                              Open the PDF to start tracking your reading time
-                                            </TooltipContent>
-                                          </Tooltip>
-                                        </TooltipProvider>
-                                      );
-                                    }
-
-                                    const pdfMins = parseMinutes(item.duration);
-                                    const pdfEstSec = pdfMins > 0 ? pdfMins * 60 : 0;
-                                    const sessionSec = eng?.session_seconds ?? 0;
-                                    const pdfPct = pdfEstSec > 0
-                                      ? Math.min(100, Math.round((sessionSec / (pdfEstSec * 0.95)) * 100))
-                                      : null;
-
-                                    if (pdfPct !== null && pdfPct >= 1) {
-                                      return (
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                            // Record the % they were at when manually marking as read (before auto-mark)
-                                            if (!isRead && pdfPct < 100 && user?.id) {
-                                              Promise.resolve(
-                                                (supabase as any)
-                                                  .from("user_content_engagement")
-                                                  .update({ manual_completion_pct: pdfPct, last_updated_at: new Date().toISOString() })
-                                                  .eq("user_id", user.id)
-                                                  .eq("content_item_id", item.id)
-                                              ).catch(() => {});
-                                            }
-                                            toggleRead.mutate({ itemId: item.id, markRead: !isRead });
-                                          }}
-                                          className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium cursor-pointer overflow-hidden transition-colors hover:bg-muted"
-                                        >
-                                          <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: `color-mix(in oklab, var(--color-accent) 22%, transparent)` }} />
-                                          <Circle className="h-3.5 w-3.5 flex-shrink-0 relative text-foreground" />
-                                          <span className="relative text-foreground">
-                                            {pdfPct}% {t("category.markedRead").toLowerCase()}
-                                          </span>
-                                        </button>
-                                      );
-                                    }
-
-                                    // Opened but no estimated duration or < 1% — show plain unread badge
-                                    return (
-                                      <ReadStatusBadge
-                                        read={false}
-                                        readLabel={readLabel}
-                                        unreadLabel={unreadLabel}
-                                        unreadIcon="circle"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          e.preventDefault();
-                                          toggleRead.mutate({ itemId: item.id, markRead: true });
-                                        }}
-                                      />
-                                    );
-                                  }
-
-                                  // ── Unread video/audio with no tracked progress yet: dimmed + tooltip ──
-                                  if (!isRead && (mediaKind === "video" || mediaKind === "audio")) {
-                                    const tipLabel = mediaKind === "video"
-                                      ? "Watch the video to track your progress"
-                                      : "Listen to the audio to track your progress";
-                                    return (
-                                      <TooltipProvider delayDuration={100}>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <button
-                                              type="button"
-                                              onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
-                                              className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
-                                            >
-                                              <Circle className="h-3.5 w-3.5 flex-shrink-0" />
-                                              <span>{unreadLabel}</span>
-                                            </button>
-                                          </TooltipTrigger>
-                                          <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
-                                            {tipLabel}
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    );
-                                  }
-
-                                  // ── Unread image: dimmed + tooltip (auto-marks the moment they open it) ──
-                                  if (!isRead && mediaKind === "image") {
-                                    return (
-                                      <TooltipProvider delayDuration={100}>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <button
-                                              type="button"
-                                              onClick={(e) => { e.stopPropagation(); e.preventDefault(); openMedia(); }}
-                                              className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 cursor-pointer flex-shrink-0"
-                                            >
-                                              <Circle className="h-3.5 w-3.5 flex-shrink-0" />
-                                              <span>{unreadLabel}</span>
-                                            </button>
-                                          </TooltipTrigger>
-                                          <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
-                                            View the image to mark it as seen
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    );
-                                  }
-
-                                  // ── Unread external link: dimmed — clicking the card auto-marks ──
-                                  if (!isRead && isExternalLink) {
-                                    return (
-                                      <TooltipProvider delayDuration={100}>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium opacity-40 flex-shrink-0">
-                                              <Circle className="h-3.5 w-3.5 flex-shrink-0" />
-                                              <span>{unreadLabel}</span>
-                                            </span>
-                                          </TooltipTrigger>
-                                          <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
-                                            Click the link to access this resource
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    );
-                                  }
-
-                                  // ── All other types (worksheet, meeting/call, no-URL items): standard badge ──
-                                  return (
-                                    <ReadStatusBadge
-                                      read={isRead}
-                                      readLabel={readLabel}
-                                      unreadLabel={unreadLabel}
-                                      unreadIcon="circle"
-                                      readAt={isRead ? (fmtDateShort(readAtMap.get(item.id)) || null) : null}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        toggleRead.mutate({ itemId: item.id, markRead: !isRead });
-                                      }}
-                                    />
+                                              <Download className="h-3.5 w-3.5" />
+                                              {fileName || t("category.downloadFile")}
+                                            </a>
+                                          )}
+                                          {source && (
+                                            <p className="mt-2 text-xs text-muted-foreground/80">
+                                              {t("category.source")} · {source}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </Wrapper>
+                                    </li>
                                   );
-                                })()}
-                              </div>
-                            );
-                          })()}
-                        </div>
-
-                        <Wrapper
-                          {...wrapperProps}
-                          className="min-w-0 text-left px-6 pt-4 pb-5 cursor-pointer"
-                        >
-                          <div className="min-w-0">
-                            <div className="flex items-start gap-2">
-                              <h3 className="font-display text-lg font-semibold text-foreground leading-snug">
-                                {title}
-                              </h3>
-                              <div className="flex items-center gap-1 mt-1 flex-shrink-0">
-                                {(item as any).exempt_from_progress && !isAdmin && !isFacilityUser && (
-                                  <TooltipProvider delayDuration={150}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <span className="inline-flex cursor-help text-muted-foreground">
-                                          <Info className="h-4 w-4" />
-                                        </span>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="top" className="text-xs max-w-[220px] text-center">
-                                        {t("category.exemptTooltip")}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
-                                {MediaIcon ? (
-                                  <MediaIcon className="h-4 w-4 text-muted-foreground" />
-                                ) : item.url ? (
-                                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                                ) : null}
-                              </div>
+                                })}
+                              </ul>
                             </div>
-                            {description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{description}</p>}
-                            {fileUrl && !isMedia && (
-                              <a
-                                href={fileUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => { e.stopPropagation(); handleActivate(); }}
-                                className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-accent)] hover:underline"
-                              >
-                                <Download className="h-3.5 w-3.5" />
-                                {fileName || t("category.downloadFile")}
-                              </a>
-                            )}
-                            {source && <p className="mt-2 text-xs text-muted-foreground/80">{t("category.source")} · {source}</p>}
-                          </div>
-                        </Wrapper>
-
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+                          );
+                        })}
+                      </div>
+                    )}
                   </>
                 );
               })()}

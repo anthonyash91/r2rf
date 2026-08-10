@@ -18,6 +18,7 @@ import { listFacilities } from "@/lib/facilities.functions";
 import { generateUniqueCategoryIcon, resolveCategoryIcon } from "@/lib/category-icons";
 import { FileUploader } from "@/components/FileUploader";
 import { StreamUploader } from "@/components/StreamUploader";
+import { uploadFile } from "@/lib/upload-client";
 import { deleteStorageFile, estimatePdfDuration } from "@/lib/storage.functions";
 import {
   uploadFileToStream,
@@ -39,7 +40,7 @@ import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { paletteStyle, nextUnusedIndex, paletteIndexOfColor, DEFAULT_BADGE_STYLES, BADGE_VARIANTS, type BadgeStyles } from "@/lib/badge-styles";
 import { badgeStylesQueryKey, BADGE_STYLES_KEY } from "@/hooks/use-badge-styles";
 import { BulkActionBar } from "@/components/BulkActionBar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { LabeledInput } from "@/components/FormField";
 import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { LoadingButton, actionButtonClassName } from "@/components/LoadingButton";
@@ -48,6 +49,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { FacilityBadge } from "@/components/FacilityBadge";
 import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { PageHeader } from "@/components/PageHeader";
+import { BackToTopButton } from "@/components/BackToTopButton";
 import { QK } from "@/lib/query-keys";
 
 
@@ -137,7 +139,10 @@ function AdminCategoryPageContent() {
   const saveCategory = useMutation({
     mutationFn: async (input: Partial<Category>) => {
       const { facilities, ...categoryFields } = input;
-      const { error } = await supabase.from("categories").update(categoryFields).eq("id", id);
+      const { error } = await (supabase as any)
+        .from("categories")
+        .update(categoryFields)
+        .eq("id", id);
       if (error) throw error;
       // Sync category_facilities
       await (supabase as any).from("category_facilities").delete().eq("category_id", id);
@@ -172,7 +177,16 @@ function AdminCategoryPageContent() {
             />
           </div>
           <CategoryEditor category={data.category} onSave={(v) => saveCategory.mutate(v)} busy={saveCategory.isPending} />
-          <ContentManager categoryId={id} categoryName={data.category.name} categorySlug={data.category.slug} items={data.items} initialEditId={edit} categoryFacilities={data.category.facilities ?? []} />
+          <ContentManager
+            categoryId={id}
+            categoryName={data.category.name}
+            categorySlug={data.category.slug}
+            items={data.items}
+            initialEditId={edit}
+            categoryFacilities={data.category.facilities ?? []}
+            sectionOrder={data.category.section_order ?? []}
+          />
+          <BackToTopButton />
         </>
       )}
     </div>
@@ -462,7 +476,309 @@ function CategoryEditor({
   );
 }
 
-function ContentManager({ categoryId, categoryName, categorySlug, items, initialEditId, categoryFacilities }: { categoryId: string; categoryName: string; categorySlug: string; items: ContentItem[]; initialEditId?: string; categoryFacilities: string[] }) {
+// Lets an admin control the top-to-bottom order sections appear in on the
+// public category page — independent of item order/type, since a section is
+// just a free-text label an admin assigns per item (see ItemEditor's
+// "Section" field). Only shown once 2+ distinct sections are in use; a
+// single section has nothing to order relative to.
+function SectionsPanel({
+  categoryId,
+  items,
+  sectionOrder,
+  onReordered,
+}: {
+  categoryId: string;
+  items: ContentItem[];
+  sectionOrder: string[];
+  onReordered: () => void;
+}) {
+  const qc = useQueryClient();
+  const distinctSections = Array.from(
+    new Set(items.map((i) => i.section).filter((s): s is string => !!s?.trim())),
+  );
+  const orderedLower = sectionOrder.map((s) => s.trim().toLowerCase());
+  const bySection = new Map(distinctSections.map((s) => [s.trim().toLowerCase(), s]));
+  const seen = new Set<string>();
+  const displayOrder: string[] = [];
+  for (const k of orderedLower) {
+    const original = bySection.get(k);
+    if (original) {
+      displayOrder.push(original);
+      seen.add(k);
+    }
+  }
+  for (const s of distinctSections
+    .filter((s) => !seen.has(s.trim().toLowerCase()))
+    .sort((a, b) => a.localeCompare(b))) {
+    displayOrder.push(s);
+  }
+
+  const reorderMut = useMutation({
+    mutationFn: async (newOrder: string[]) => {
+      const { error } = await (supabase as any)
+        .from("categories")
+        .update({ section_order: newOrder.map((s) => s.trim().toLowerCase()) })
+        .eq("id", categoryId);
+      if (error) throw error;
+    },
+    onSuccess: onReordered,
+    onError: (e: any) => toast.error(e.message ?? "Failed to reorder sections"),
+  });
+
+  function move(section: string, direction: -1 | 1) {
+    const idx = displayOrder.indexOf(section);
+    const swapWith = idx + direction;
+    if (idx < 0 || swapWith < 0 || swapWith >= displayOrder.length) return;
+    const next = [...displayOrder];
+    [next[idx], next[swapWith]] = [next[swapWith], next[idx]];
+    reorderMut.mutate(next);
+  }
+
+  if (displayOrder.length < 2) return null;
+
+  return (
+    <div className="mb-4 rounded-xl border border-border bg-muted/30 p-3">
+      <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        Section order (category page)
+      </p>
+      <ul className="space-y-1">
+        {displayOrder.map((s, idx) => (
+          <li key={s} className="flex items-center gap-1 text-sm">
+            <button
+              type="button"
+              disabled={idx === 0}
+              onClick={() => move(s, -1)}
+              className="p-1 rounded hover:bg-muted disabled:opacity-30"
+              title="Move up"
+            >
+              <ChevronUp className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={idx === displayOrder.length - 1}
+              onClick={() => move(s, 1)}
+              className="p-1 rounded hover:bg-muted disabled:opacity-30"
+              title="Move down"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+            <span>{s}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+type BulkReviewSavePayload = {
+  id: string;
+  title: string;
+  type: string;
+  section: string | null;
+  section_es: string | null;
+  description: string;
+  published: boolean;
+};
+
+// Shown above the item list right after a bulk upload — one lightweight
+// card per just-created (unpublished) item, so the admin can fill in the
+// real details without leaving this page or opening the full ItemEditor N
+// times. Cards are purely a review convenience: the rows already exist and
+// are already saved, so dismissing (individually or all at once) just hides
+// the card, it never deletes anything. Field edits are lifted up here (not
+// held in each card) so one "Save all" button can save every card's current
+// values in a single action.
+function BulkReviewPanel({
+  ids,
+  items,
+  typeOptions,
+  existingSections,
+  onSaveAll,
+  saving,
+  onDismiss,
+  onDismissAll,
+}: {
+  ids: string[];
+  items: ContentItem[];
+  typeOptions: string[];
+  existingSections: string[];
+  onSaveAll: (payloads: BulkReviewSavePayload[]) => void;
+  saving: boolean;
+  onDismiss: (id: string) => void;
+  onDismissAll: () => void;
+}) {
+  const reviewItems = ids
+    .map((id) => items.find((i) => i.id === id))
+    .filter((i): i is ContentItem => !!i);
+
+  const [drafts, setDrafts] = useState<Record<string, BulkReviewSavePayload>>({});
+
+  // Seed a draft for any reviewed item that doesn't have one yet — defaults
+  // Published to true (the common case: the admin is here specifically to
+  // finish and publish), not the item's actual just-created "false" state.
+  useEffect(() => {
+    setDrafts((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const item of reviewItems) {
+        if (next[item.id]) continue;
+        next[item.id] = {
+          id: item.id,
+          title: item.title,
+          type: item.type,
+          section: item.section ?? null,
+          section_es: item.section_es ?? null,
+          description: item.description ?? "",
+          published: true,
+        };
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewItems.map((i) => i.id).join(",")]);
+
+  function updateDraft(id: string, patch: Partial<BulkReviewSavePayload>) {
+    setDrafts((prev) => (prev[id] ? { ...prev, [id]: { ...prev[id], ...patch } } : prev));
+  }
+
+  if (reviewItems.length === 0) return null;
+
+  return (
+    <div className="mb-4 rounded-xl border border-border bg-muted/30 p-4">
+      <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+        Review new uploads ({reviewItems.length})
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {reviewItems.map((item) => {
+          const draft = drafts[item.id];
+          if (!draft) return null;
+          return (
+            <BulkReviewCard
+              key={item.id}
+              fileName={item.file_name ?? item.title}
+              draft={draft}
+              onChange={(patch) => updateDraft(item.id, patch)}
+              typeOptions={typeOptions}
+              existingSections={existingSections}
+              onDismiss={() => onDismiss(item.id)}
+            />
+          );
+        })}
+      </div>
+      <div className="mt-4 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={onDismissAll}
+          className="text-xs text-muted-foreground underline hover:text-foreground"
+        >
+          Done reviewing
+        </button>
+        <LoadingButton
+          type="button"
+          pending={saving}
+          pendingText="Saving…"
+          onClick={() => onSaveAll(reviewItems.map((item) => drafts[item.id]).filter(Boolean))}
+        >
+          Save all
+        </LoadingButton>
+      </div>
+    </div>
+  );
+}
+
+function BulkReviewCard({
+  fileName,
+  draft,
+  onChange,
+  typeOptions,
+  existingSections,
+  onDismiss,
+}: {
+  fileName: string;
+  draft: BulkReviewSavePayload;
+  onChange: (patch: Partial<BulkReviewSavePayload>) => void;
+  typeOptions: string[];
+  existingSections: string[];
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="space-y-2 rounded-lg border border-border bg-card p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate text-xs text-muted-foreground" title={fileName}>
+          {fileName}
+        </span>
+        <button
+          type="button"
+          onClick={onDismiss}
+          title="Remove from review (the item stays saved either way)"
+          className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <LabeledInput label="Title" value={draft.title} onChange={(v) => onChange({ title: v })} />
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block">
+          <span className="text-sm font-medium">Type</span>
+          <Select value={draft.type} onValueChange={(v) => onChange({ type: v })}>
+            <SelectTrigger className="mt-1 w-full shadow-none bg-background">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {typeOptions.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </label>
+        <LabeledInput
+          label="Section"
+          value={draft.section ?? ""}
+          onChange={(v) => onChange({ section: v || null })}
+          suggestions={existingSections}
+        />
+      </div>
+      <label className="block">
+        <span className="text-sm font-medium">Description</span>
+        <textarea
+          rows={2}
+          value={draft.description}
+          onChange={(e) => onChange({ description: e.target.value })}
+          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+        />
+      </label>
+      <label className="flex items-center gap-1.5 pt-1 text-sm">
+        <input
+          type="checkbox"
+          checked={draft.published}
+          onChange={(e) => onChange({ published: e.target.checked })}
+        />
+        Published
+      </label>
+    </div>
+  );
+}
+
+function ContentManager({
+  categoryId,
+  categoryName,
+  categorySlug,
+  items,
+  initialEditId,
+  categoryFacilities,
+  sectionOrder,
+}: {
+  categoryId: string;
+  categoryName: string;
+  categorySlug: string;
+  items: ContentItem[];
+  initialEditId?: string;
+  categoryFacilities: string[];
+  sectionOrder: string[];
+}) {
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
   const { lang } = useI18n();
@@ -554,6 +870,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
           published: itemValues.published ?? true,
           storage_folder: itemValues.storage_folder ?? null,
           stream_collection_id: itemValues.stream_collection_id ?? null,
+          section: itemValues.section ?? null,
+          section_es: itemValues.section_es ?? null,
           sort_order: (items.at(-1)?.sort_order ?? 0) + 1,
         }).select("id").single();
         if (error) throw error;
@@ -647,6 +965,8 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
   });
 
   const bulk = useBulkSelect();
+  const [addingBulkSection, setAddingBulkSection] = useState(false);
+  const [newBulkSection, setNewBulkSection] = useState("");
   const { data: existingTypes = [] } = useQuery({
     queryKey: QK.contentTypes,
     staleTime: 0,
@@ -660,6 +980,16 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     },
   });
   const bulkTypeOptions = [...existingTypes].sort((a, b) => a.localeCompare(b));
+  const existingSections = Array.from(
+    new Set(items.map((i) => i.section).filter((s): s is string => !!s?.trim())),
+  ).sort((a, b) => a.localeCompare(b));
+  // Bulk file->item upload: each selected file becomes its own unpublished
+  // content_items row, then shows up as a review card below until the admin
+  // fills in details and publishes. bulkReviewIds tracks which ids (from
+  // this session's bulk uploads) still have a review card showing.
+  const [bulkType, setBulkType] = useState("Article");
+  const [bulkReviewIds, setBulkReviewIds] = useState<string[]>([]);
+  const bulkUploadInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const deleteManyMut = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -690,6 +1020,26 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     onError: (e: any) => toast.error(e.message),
   });
 
+  const updateSectionMut = useMutation({
+    mutationFn: async ({ ids, section }: { ids: string[]; section: string | null }) => {
+      const { error } = await (supabase as any)
+        .from("content_items")
+        .update({ section })
+        .in("id", ids);
+      if (error) throw error;
+      return { count: ids.length, section };
+    },
+    onSuccess: ({ count, section }) => {
+      toast.success(
+        `Updated ${count} ${count === 1 ? "item" : "items"} to ${section || "Uncategorized"}`,
+      );
+      invalidate();
+      bulk.clear();
+      bulk.exitEditMode();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const reorderMut = useMutation({
     mutationFn: async (next: ContentItem[]) => {
       await Promise.all(
@@ -702,18 +1052,173 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Each file uploads (Bunny Storage, same as a single-item FileUploader)
+  // and becomes its own unpublished content_items row — no per-file session/
+  // transcode wait like the Stream chapter uploader, so every file can run
+  // fully in parallel; failures are isolated per file via allSettled.
+  const bulkCreateMut = useMutation({
+    mutationFn: async ({ files, type }: { files: File[]; type: string }) => {
+      let nextSortOrder = (items.at(-1)?.sort_order ?? 0) + 1;
+      const results = await Promise.allSettled(
+        files.map(async (file) => {
+          // .map()'s callback runs synchronously per file before any await,
+          // so this assigns sort_order in file order even though the async
+          // bodies themselves resolve concurrently.
+          const sortOrder = nextSortOrder++;
+          const id = crypto.randomUUID();
+          const title = filenameToTitle(file.name);
+          const folder = `${slugify(title) || "untitled"}-${id.slice(0, 8)}`;
+          const { publicUrl } = await uploadFile({
+            file,
+            kind: "content-file",
+            categorySlug,
+            itemFolder: folder,
+            language: "english",
+          });
+          const { error } = await (supabase as any).from("content_items").insert({
+            id,
+            category_id: categoryId,
+            title,
+            type,
+            source: "",
+            duration: "",
+            description: "",
+            url: publicUrl,
+            published: false,
+            storage_folder: folder,
+            sort_order: sortOrder,
+          });
+          if (error) throw error;
+          return id as string;
+        }),
+      );
+      return {
+        createdIds: results
+          .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+          .map((r) => r.value),
+        failedCount: results.filter((r) => r.status === "rejected").length,
+      };
+    },
+    onSuccess: ({ createdIds, failedCount }) => {
+      if (createdIds.length > 0) {
+        toast.success(
+          `Created ${createdIds.length} ${createdIds.length === 1 ? "item" : "items"} — review below`,
+        );
+        setBulkReviewIds((prev) => [...prev, ...createdIds]);
+      }
+      if (failedCount > 0) {
+        toast.error(`${failedCount} file${failedCount === 1 ? "" : "s"} failed to upload`);
+      }
+      invalidate();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Bulk upload failed"),
+  });
+
+  // Deliberately separate from saveMut — that mutation's onSuccess sets
+  // pendingScrollId, which scrolls the page down to and highlights the
+  // saved row (right, for a single-item edit; wrong here, since saving N
+  // review cards at once shouldn't yank the page down to wherever the last
+  // one happens to sit in the list). One summary toast instead of N.
+  const saveAllReviewMut = useMutation({
+    mutationFn: async (payloads: BulkReviewSavePayload[]) => {
+      const results = await Promise.allSettled(
+        payloads.map(async (d) => {
+          const { error } = await (supabase as any)
+            .from("content_items")
+            .update({
+              title: d.title.trim() || d.title,
+              type: d.type,
+              section: d.section,
+              section_es: d.section_es,
+              description: d.description,
+              published: d.published,
+            })
+            .eq("id", d.id);
+          if (error) throw error;
+        }),
+      );
+      return {
+        savedCount: results.filter((r) => r.status === "fulfilled").length,
+        failedCount: results.filter((r) => r.status === "rejected").length,
+      };
+    },
+    onSuccess: ({ savedCount, failedCount }) => {
+      if (savedCount > 0) {
+        toast.success(`Saved ${savedCount} ${savedCount === 1 ? "item" : "items"}`);
+      }
+      if (failedCount > 0) {
+        toast.error(`${failedCount} item${failedCount === 1 ? "" : "s"} failed to save`);
+      }
+      invalidate();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Failed to save"),
+  });
+
   return (
     <section className="mt-8">
-      <div className="mb-4 flex items-end justify-between">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <h2 className="font-display text-2xl font-semibold">Content <span className="text-muted-foreground font-normal">({order.length})</span></h2>
-        <button
-          onClick={() => setEditing("new")}
-          disabled={editing === "new"}
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
-        >
-          <Plus className="h-4 w-4" /> New item
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={bulkType} onValueChange={setBulkType}>
+            <SelectTrigger
+              className="w-[140px] shadow-none bg-background"
+              title="Type applied to bulk-uploaded files"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {bulkTypeOptions.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <input
+            ref={bulkUploadInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.doc,.docx,image/*"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files?.length) {
+                bulkCreateMut.mutate({ files: Array.from(e.target.files), type: bulkType });
+              }
+              if (bulkUploadInputRef.current) bulkUploadInputRef.current.value = "";
+            }}
+          />
+          <button
+            type="button"
+            disabled={bulkCreateMut.isPending}
+            onClick={() => bulkUploadInputRef.current?.click()}
+            title="Each file becomes its own content item (documents/images only)"
+            className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Upload className="h-4 w-4" />
+            {bulkCreateMut.isPending ? "Uploading…" : "Bulk upload"}
+          </button>
+          <button
+            onClick={() => setEditing("new")}
+            disabled={editing === "new"}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-primary"
+          >
+            <Plus className="h-4 w-4" /> New item
+          </button>
+        </div>
       </div>
+
+      <SectionsPanel categoryId={categoryId} items={items} sectionOrder={sectionOrder} onReordered={invalidate} />
+
+      <BulkReviewPanel
+        ids={bulkReviewIds}
+        items={items}
+        typeOptions={bulkTypeOptions}
+        existingSections={existingSections}
+        saving={saveAllReviewMut.isPending}
+        onSaveAll={(payloads) => saveAllReviewMut.mutate(payloads)}
+        onDismiss={(id) => setBulkReviewIds((prev) => prev.filter((x) => x !== id))}
+        onDismissAll={() => setBulkReviewIds([])}
+      />
 
       {editing && (
         <div ref={editorRef} className="scroll-mt-24">
@@ -726,6 +1231,7 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             onSave={(v) => saveMut.mutate(v as ItemSavePayload)}
             busy={saveMut.isPending}
             categoryFacilities={categoryFacilities}
+            existingSections={existingSections}
             onPendingDelete={(url) => { pendingDeletesRef.current.push(url); }}
             onNewTypeBadgeStyle={(styles) => { pendingBadgeStylesRef.current = styles; }}
           />
@@ -764,29 +1270,112 @@ function ContentManager({ categoryId, categoryName, categorySlug, items, initial
             })
           }
           extraSelectionActions={(ids) => (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <LoadingButton
-                  variant="secondary"
-                  pending={updateTypeMut.isPending}
-                  pendingText="Updating…"
-                  icon={<Tag className="h-4 w-4" />}
-                >
-                  Change type ({ids.length})
-                  <ChevronDown className="ml-1 h-3.5 w-3.5" />
-                </LoadingButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" collisionPadding={16} className="max-h-[80vh]">
-                {bulkTypeOptions.map((t) => (
-                  <DropdownMenuItem
-                    key={t}
-                    onSelect={() => updateTypeMut.mutate({ ids, type: t })}
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <LoadingButton
+                    variant="secondary"
+                    pending={updateTypeMut.isPending}
+                    pendingText="Updating…"
+                    icon={<Tag className="h-4 w-4" />}
                   >
-                    {t}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    Change type ({ids.length})
+                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                  </LoadingButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" collisionPadding={16} className="max-h-[80vh]">
+                  {bulkTypeOptions.map((t) => (
+                    <DropdownMenuItem
+                      key={t}
+                      onSelect={() => updateTypeMut.mutate({ ids, type: t })}
+                    >
+                      {t}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu
+                onOpenChange={(open) => {
+                  if (!open) {
+                    setAddingBulkSection(false);
+                    setNewBulkSection("");
+                  }
+                }}
+              >
+                <DropdownMenuTrigger asChild>
+                  <LoadingButton
+                    variant="secondary"
+                    pending={updateSectionMut.isPending}
+                    pendingText="Updating…"
+                    icon={<FolderOpen className="h-4 w-4" />}
+                  >
+                    Change section ({ids.length})
+                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                  </LoadingButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" collisionPadding={16} className="max-h-[80vh]">
+                  {addingBulkSection ? (
+                    <div className="flex items-center gap-2 p-1.5">
+                      <input
+                        autoFocus
+                        value={newBulkSection}
+                        onChange={(e) => setNewBulkSection(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const v = newBulkSection.trim();
+                            if (!v) return;
+                            updateSectionMut.mutate({ ids, section: v });
+                            setAddingBulkSection(false);
+                            setNewBulkSection("");
+                          }
+                          if (e.key === "Escape") {
+                            e.preventDefault();
+                            setAddingBulkSection(false);
+                            setNewBulkSection("");
+                          }
+                        }}
+                        placeholder="New section name"
+                        className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          const v = newBulkSection.trim();
+                          if (!v) return;
+                          updateSectionMut.mutate({ ids, section: v });
+                          setAddingBulkSection(false);
+                          setNewBulkSection("");
+                        }}
+                        className="shrink-0 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onSelect={() => updateSectionMut.mutate({ ids, section: null })}>
+                        Uncategorized
+                      </DropdownMenuItem>
+                      {existingSections.length > 0 && <DropdownMenuSeparator />}
+                      {existingSections.map((s) => (
+                        <DropdownMenuItem
+                          key={s}
+                          onSelect={() => updateSectionMut.mutate({ ids, section: s })}
+                        >
+                          {s}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setAddingBulkSection(true); }}>
+                        + New section…
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           )}
         />
       )}
@@ -973,6 +1562,7 @@ function ItemEditor({
   onSave,
   busy,
   categoryFacilities,
+  existingSections,
   onPendingDelete,
   onNewTypeBadgeStyle,
 }: {
@@ -984,6 +1574,9 @@ function ItemEditor({
   onSave: (v: ItemSavePayload) => void;
   busy: boolean;
   categoryFacilities: string[];
+  /** Distinct section names already used elsewhere in this category, for
+   * the Section field's autocomplete — unrelated to content types. */
+  existingSections: string[];
   onPendingDelete: (url: string) => void;
   onNewTypeBadgeStyle?: (styles: BadgeStyles) => void;
 }) {
@@ -1064,6 +1657,10 @@ function ItemEditor({
   const [type, setType] = useState(item?.type ?? "Article");
   const [addingType, setAddingType] = useState(false);
   const [newType, setNewType] = useState("");
+  // Independent of `type` — which shelf this item sits on, not what kind of
+  // content it is. Empty means "uncategorized" on the category page.
+  const [section, setSection] = useState(item?.section ?? "");
+  const [sectionEs, setSectionEs] = useState(item?.section_es ?? "");
   const [source, setSource] = useState(item?.source ?? "");
   const [duration, setDuration] = useState(item?.duration ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
@@ -1458,6 +2055,8 @@ function ItemEditor({
           source_es: sourceEs.trim() || null,
           file_url_es: fileUrlEs,
           file_name_es: fileNameEs,
+          section: section.trim() || null,
+          section_es: sectionEs.trim() || null,
           chapters: isAudioType ? chapters : undefined,
         });
       }}
@@ -1508,34 +2107,49 @@ function ItemEditor({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {typeOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                {typeOptions.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    <span className="flex w-full items-center justify-between gap-2">
+                      <span className="truncate">{t}</span>
+                      <span
+                        role="button"
+                        tabIndex={-1}
+                        title={`Delete type "${t}"`}
+                        // Radix Select treats the whole item as the "select"
+                        // target, so this needs to stop the event before it
+                        // bubbles to the item's own select handling — both on
+                        // pointerdown (which Radix uses to start selection)
+                        // and click (where the actual delete happens).
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          deleteType(t);
+                        }}
+                        className="shrink-0 rounded-full p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
+                      >
+                        <X className="h-3 w-3" />
+                      </span>
+                    </span>
+                  </SelectItem>
+                ))}
                 <SelectItem value="__new__">+ Add new type…</SelectItem>
               </SelectContent>
             </Select>
           )}
-          {!addingType && typeOptions.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {typeOptions.map((t) => (
-                <Badge key={t} variant="type" type={t} className="gap-1">
-                  {t}
-                  <button
-                    type="button"
-                    onClick={() => deleteType(t)}
-                    title={`Delete type "${t}"`}
-                    className="rounded-full hover:bg-black/10 dark:hover:bg-white/10 p-0.5"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          )}
         </label>
         <LabeledInput label="Source" value={source} onChange={setSource} suggestions={sourceSuggestions} />
-        <div>
-          <LabeledInput label="Duration" value={duration} onChange={setDuration} placeholder="8 min read" />
-          {extOf(url, null) === "pdf" && (
-            <div className="mt-2 flex items-center gap-2 flex-wrap">
+        <label className="block">
+          <span className="text-sm font-medium">Duration</span>
+          <div className="relative mt-1">
+            <input
+              type="text"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="8 min read"
+              className={`w-full rounded-md border border-input bg-background px-4 py-2 text-sm ${extOf(url, null) === "pdf" ? "pr-9" : ""}`}
+            />
+            {extOf(url, null) === "pdf" && (
               <button
                 type="button"
                 disabled={pdfEstimating}
@@ -1548,17 +2162,14 @@ function ItemEditor({
                     setPdfEstimating(false);
                   }
                 }}
-                className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted disabled:opacity-60"
+                title={pdfEstimating ? "Calculating PDF duration…" : "Recalculate PDF duration"}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-60"
               >
-                <RefreshCw className={`h-3 w-3 ${pdfEstimating ? "animate-spin" : ""}`} />
-                {pdfEstimating ? "Calculating PDF duration…" : "Recalculate PDF duration"}
+                <RefreshCw className={`h-3.5 w-3.5 ${pdfEstimating ? "animate-spin" : ""}`} />
               </button>
-              {pdfEstimating && (
-                <span className="text-xs text-muted-foreground">Reading PDF to estimate reading time…</span>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </label>
         <div className={categoryFacilities.length > 0 ? "opacity-40 pointer-events-none select-none" : ""}>
           <span className="inline-flex items-center gap-1.5 text-sm font-medium">
             Facility
@@ -1615,87 +2226,100 @@ function ItemEditor({
             </div>
           )}
         </div>
+        <LabeledInput
+          label="Section"
+          value={section}
+          onChange={setSection}
+          suggestions={existingSections}
+          placeholder="e.g. eBooks, Audiobooks"
+          description="Which shelf this shows under on the category page — unrelated to Type. Leave blank to leave it uncategorized."
+        />
       </div>
-      <label className="block">
-        <span className="text-sm font-medium">URL (optional)</span>
-        {(() => {
-          const urlInput = (
-            <input
-              type="url"
-              placeholder="https://…"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              onBlur={async (e) => {
-                const v = e.target.value.trim();
-                if (!v) return;
-                const kind = mediaKindFor(type, v, null);
-                if (kind) {
-                  const seconds = await probeMediaDuration(v, kind);
-                  const formatted = formatMediaDuration(seconds);
-                  if (formatted) setDuration(formatted);
-                  else {
-                    const fallback = defaultDurationForType(type);
-                    if (fallback) setDuration(fallback);
+      {/* Hidden once the item has chapters — a chaptered audio item plays
+          through its chapter files, so a top-level URL alongside them is
+          redundant and confusing, not an alternative source. */}
+      {!(isAudioType && chapters.length > 0) && (
+        <label className="block">
+          <span className="text-sm font-medium">URL (optional)</span>
+          {(() => {
+            const urlInput = (
+              <input
+                type="url"
+                placeholder="https://…"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                onBlur={async (e) => {
+                  const v = e.target.value.trim();
+                  if (!v) return;
+                  const kind = mediaKindFor(type, v, null);
+                  if (kind) {
+                    const seconds = await probeMediaDuration(v, kind);
+                    const formatted = formatMediaDuration(seconds);
+                    if (formatted) setDuration(formatted);
+                    else {
+                      const fallback = defaultDurationForType(type);
+                      if (fallback) setDuration(fallback);
+                    }
+                    return;
                   }
-                  return;
-                }
-                const estimated = await estimateDuration(v, null, type);
-                if (estimated) setDuration(estimated);
-              }}
-              className="mt-0 min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
-            />
-          );
-          // Video/audio types go through Bunny Stream (adaptive HLS); everything
-          // else (PDF, image, article, etc.) keeps using the Storage flow.
-          return isAudioType || isVideoType ? (
-            <StreamUploader
-              className="mt-1"
-              existingFileUrl={url || undefined}
-              onPendingDelete={onPendingDelete}
-              itemTitle={title || "Untitled"}
-              collectionName={title || "Untitled"}
-              collectionId={streamCollectionId}
-              onCollectionCreated={setStreamCollectionId}
-              onUploaded={(playbackUrl, _name, seconds) => {
-                setUrl(playbackUrl);
-                if (seconds) {
-                  const formatted = withActionWord(formatMediaDuration(seconds), type);
-                  setDuration(formatted);
-                  // Same reasoning as the chapter uploaders: Save doesn't wait
-                  // on processing, so patch the duration straight into the DB
-                  // in case the item was already saved while this file was
-                  // still transcoding — a no-op if it hasn't been saved yet.
-                  (supabase as any)
-                    .from("content_items")
-                    .update({ duration: formatted })
-                    .eq("id", itemId)
-                    .then(({ error }: any) => {
-                      if (error) console.error("Failed to patch item duration:", error);
-                    });
-                }
-              }}
-            >
-              {urlInput}
-            </StreamUploader>
-          ) : (
-            <FileUploader
-              className="mt-1"
-              existingFileUrl={url || undefined}
-              onPendingDelete={onPendingDelete}
-              categorySlug={categorySlug}
-              itemFolder={itemFolder}
-              language="english"
-              onUploaded={async (u, name) => {
-                setUrl(u);
-                const estimated = await estimateDuration(u, name, type);
-                if (estimated) setDuration(estimated);
-              }}
-            >
-              {urlInput}
-            </FileUploader>
-          );
-        })()}
-      </label>
+                  const estimated = await estimateDuration(v, null, type);
+                  if (estimated) setDuration(estimated);
+                }}
+                className="mt-0 min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+              />
+            );
+            // Video/audio types go through Bunny Stream (adaptive HLS); everything
+            // else (PDF, image, article, etc.) keeps using the Storage flow.
+            return isAudioType || isVideoType ? (
+              <StreamUploader
+                className="mt-1"
+                existingFileUrl={url || undefined}
+                onPendingDelete={onPendingDelete}
+                itemTitle={title || "Untitled"}
+                collectionName={title || "Untitled"}
+                collectionId={streamCollectionId}
+                onCollectionCreated={setStreamCollectionId}
+                onUploaded={(playbackUrl, _name, seconds) => {
+                  setUrl(playbackUrl);
+                  if (seconds) {
+                    const formatted = withActionWord(formatMediaDuration(seconds), type);
+                    setDuration(formatted);
+                    // Same reasoning as the chapter uploaders: Save doesn't wait
+                    // on processing, so patch the duration straight into the DB
+                    // in case the item was already saved while this file was
+                    // still transcoding — a no-op if it hasn't been saved yet.
+                    (supabase as any)
+                      .from("content_items")
+                      .update({ duration: formatted })
+                      .eq("id", itemId)
+                      .then(({ error }: any) => {
+                        if (error) console.error("Failed to patch item duration:", error);
+                      });
+                  }
+                }}
+              >
+                {urlInput}
+              </StreamUploader>
+            ) : (
+              <FileUploader
+                className="mt-1"
+                existingFileUrl={url || undefined}
+                onPendingDelete={onPendingDelete}
+                categorySlug={categorySlug}
+                itemFolder={itemFolder}
+                language="english"
+                onUploaded={async (u, name) => {
+                  setUrl(u);
+                  const estimated = await estimateDuration(u, name, type);
+                  if (estimated) setDuration(estimated);
+                }}
+              >
+                {urlInput}
+              </FileUploader>
+            );
+          })()}
+        </label>
+      )}
       {/* ── Audio Files (audio types only) ── */}
       {isAudioType && (
         <div className="space-y-3">
@@ -2158,11 +2782,12 @@ function ItemEditor({
         description="Leave blank to fall back to the English version when Spanish is selected."
         onTranslate={() => {
           runAddEs(
-            { title, description, source },
+            { title, description, source, section },
             (t) => {
               if (t.title) setTitleEs(t.title);
               if (t.description) setDescriptionEs(t.description);
               if (t.source) setSourceEs(t.source);
+              if (t.section) setSectionEs(t.section);
             },
             "Content item metadata in a learning library",
           );
@@ -2170,6 +2795,7 @@ function ItemEditor({
       >
         <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
         <LabeledInput label="Source (ES)" value={sourceEs} onChange={setSourceEs} />
+        <LabeledInput label="Section (ES)" value={sectionEs} onChange={setSectionEs} />
         <label className="block">
           <span className="text-sm font-medium">Description (ES)</span>
           <textarea
@@ -2179,52 +2805,54 @@ function ItemEditor({
             className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
         </label>
-        <label className="block">
-          <span className="text-sm font-medium">URL (ES, optional)</span>
-          {(() => {
-            const urlInputEs = (
-              <input
-                type="url"
-                placeholder="https://…"
-                value={fileUrlEs ?? ""}
-                onChange={(e) => setFileUrlEs(e.target.value.trim() ? e.target.value : null)}
-                className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
-              />
-            );
-            return isAudioType || isVideoType ? (
-              <StreamUploader
-                className="mt-1"
-                existingFileUrl={fileUrlEs ?? undefined}
-                onPendingDelete={onPendingDelete}
-                itemTitle={`${title || "Untitled"} (ES)`}
-                collectionName={title || "Untitled"}
-                collectionId={streamCollectionId}
-                onCollectionCreated={setStreamCollectionId}
-                onUploaded={(playbackUrl, name) => {
-                  setFileUrlEs(playbackUrl);
-                  setFileNameEs(name ?? null);
-                }}
-              >
-                {urlInputEs}
-              </StreamUploader>
-            ) : (
-              <FileUploader
-                className="mt-1"
-                existingFileUrl={fileUrlEs ?? undefined}
-                onPendingDelete={onPendingDelete}
-                categorySlug={categorySlug}
-                itemFolder={itemFolder}
-                language="spanish"
-                onUploaded={(u, name) => {
-                  setFileUrlEs(u);
-                  setFileNameEs(name ?? null);
-                }}
-              >
-                {urlInputEs}
-              </FileUploader>
-            );
-          })()}
-        </label>
+        {!(isAudioType && chapters.length > 0) && (
+          <label className="block">
+            <span className="text-sm font-medium">URL (ES, optional)</span>
+            {(() => {
+              const urlInputEs = (
+                <input
+                  type="url"
+                  placeholder="https://…"
+                  value={fileUrlEs ?? ""}
+                  onChange={(e) => setFileUrlEs(e.target.value.trim() ? e.target.value : null)}
+                  className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+                />
+              );
+              return isAudioType || isVideoType ? (
+                <StreamUploader
+                  className="mt-1"
+                  existingFileUrl={fileUrlEs ?? undefined}
+                  onPendingDelete={onPendingDelete}
+                  itemTitle={`${title || "Untitled"} (ES)`}
+                  collectionName={title || "Untitled"}
+                  collectionId={streamCollectionId}
+                  onCollectionCreated={setStreamCollectionId}
+                  onUploaded={(playbackUrl, name) => {
+                    setFileUrlEs(playbackUrl);
+                    setFileNameEs(name ?? null);
+                  }}
+                >
+                  {urlInputEs}
+                </StreamUploader>
+              ) : (
+                <FileUploader
+                  className="mt-1"
+                  existingFileUrl={fileUrlEs ?? undefined}
+                  onPendingDelete={onPendingDelete}
+                  categorySlug={categorySlug}
+                  itemFolder={itemFolder}
+                  language="spanish"
+                  onUploaded={(u, name) => {
+                    setFileUrlEs(u);
+                    setFileNameEs(name ?? null);
+                  }}
+                >
+                  {urlInputEs}
+                </FileUploader>
+              );
+            })()}
+          </label>
+        )}
       </TranslationPanel>
 
       <div className="flex justify-end gap-2">
