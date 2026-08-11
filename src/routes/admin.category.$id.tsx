@@ -990,6 +990,11 @@ function ContentManager({
   const [bulkType, setBulkType] = useState("Article");
   const [bulkReviewIds, setBulkReviewIds] = useState<string[]>([]);
   const bulkUploadInputRef = useRef<HTMLInputElement>(null);
+  // In-flight status for the (slower, transcode-wait) Stream files within a
+  // bulk upload — Storage files are fast enough not to need this.
+  const [bulkUploadState, setBulkUploadState] = useState<
+    Map<string, { fileName: string; phase: "uploading" | "processing"; progress: number }>
+  >(new Map());
   const [searchQuery, setSearchQuery] = useState("");
   const deleteManyMut = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -1052,10 +1057,13 @@ function ContentManager({
     onError: (e: any) => toast.error(e.message),
   });
 
-  // Each file uploads (Bunny Storage, same as a single-item FileUploader)
-  // and becomes its own unpublished content_items row — no per-file session/
-  // transcode wait like the Stream chapter uploader, so every file can run
-  // fully in parallel; failures are isolated per file via allSettled.
+  // Each file becomes its own unpublished content_items row. Document/image
+  // files upload via Bunny Storage (uploadFile, one shot); audio/video files
+  // upload via Bunny Stream (session + TUS transfer + transcode wait), same
+  // as a single-item StreamUploader — but since each new item gets its own
+  // brand-new collection, there's no shared resource to race over like the
+  // chapter batch uploader has, so every file (either kind) still runs fully
+  // in parallel; failures are isolated per file via allSettled.
   const bulkCreateMut = useMutation({
     mutationFn: async ({ files, type }: { files: File[]; type: string }) => {
       let nextSortOrder = (items.at(-1)?.sort_order ?? 0) + 1;
@@ -1067,6 +1075,54 @@ function ContentManager({
           const sortOrder = nextSortOrder++;
           const id = crypto.randomUUID();
           const title = filenameToTitle(file.name);
+          const ext = extOf("", file.name);
+          const isMedia = AUDIO_EXT.has(ext) || VIDEO_EXT.has(ext);
+
+          if (isMedia) {
+            setBulkUploadState((prev) =>
+              new Map(prev).set(id, { fileName: file.name, phase: "uploading", progress: 0 }),
+            );
+            try {
+              const session = await beginStreamUpload({
+                title,
+                collectionId: null,
+                collectionName: title,
+              });
+              const { videoId, playbackUrl } = await runTusUpload(file, session, (pct) =>
+                setBulkUploadState((prev) =>
+                  new Map(prev).set(id, { fileName: file.name, phase: "uploading", progress: pct }),
+                ),
+              );
+              setBulkUploadState((prev) =>
+                new Map(prev).set(id, { fileName: file.name, phase: "processing", progress: 0 }),
+              );
+              const seconds = await waitForStreamProcessing(videoId);
+              const duration =
+                seconds && seconds > 0 ? withActionWord(formatMediaDuration(seconds), type) : "";
+              const { error } = await (supabase as any).from("content_items").insert({
+                id,
+                category_id: categoryId,
+                title,
+                type,
+                source: "",
+                duration,
+                description: "",
+                url: playbackUrl,
+                published: false,
+                stream_collection_id: session.collectionId,
+                sort_order: sortOrder,
+              });
+              if (error) throw error;
+              return id as string;
+            } finally {
+              setBulkUploadState((prev) => {
+                const next = new Map(prev);
+                next.delete(id);
+                return next;
+              });
+            }
+          }
+
           const folder = `${slugify(title) || "untitled"}-${id.slice(0, 8)}`;
           const { publicUrl } = await uploadFile({
             file,
@@ -1178,7 +1234,7 @@ function ContentManager({
             ref={bulkUploadInputRef}
             type="file"
             multiple
-            accept=".pdf,.doc,.docx,image/*"
+            accept=".pdf,.doc,.docx,image/*,audio/*,video/*"
             className="hidden"
             onChange={(e) => {
               if (e.target.files?.length) {
@@ -1191,7 +1247,7 @@ function ContentManager({
             type="button"
             disabled={bulkCreateMut.isPending}
             onClick={() => bulkUploadInputRef.current?.click()}
-            title="Each file becomes its own content item (documents/images only)"
+            title="Each file becomes its own content item"
             className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Upload className="h-4 w-4" />
@@ -1206,6 +1262,35 @@ function ContentManager({
           </button>
         </div>
       </div>
+
+      {bulkUploadState.size > 0 && (
+        <div className="mb-4 space-y-2">
+          {Array.from(bulkUploadState.entries()).map(([id, u]) => (
+            <div
+              key={id}
+              className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2"
+            >
+              <RefreshCw className="h-4 w-4 flex-shrink-0 animate-spin text-muted-foreground" />
+              <span className="min-w-0 flex-1 truncate text-sm" title={u.fileName}>
+                {u.fileName}
+              </span>
+              <div className="relative h-1.5 w-28 flex-shrink-0 overflow-hidden rounded-full bg-muted">
+                {u.phase === "uploading" ? (
+                  <span
+                    className="absolute inset-y-0 left-0 rounded-full bg-foreground transition-[width] duration-150"
+                    style={{ width: `${u.progress}%` }}
+                  />
+                ) : (
+                  <span className="absolute inset-y-0 left-0 w-2/5 rounded-full bg-foreground/50 animate-indeterminate-slide" />
+                )}
+              </div>
+              <span className="w-20 flex-shrink-0 text-right text-xs text-muted-foreground">
+                {u.phase === "uploading" ? `${u.progress}%` : "Processing…"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <SectionsPanel categoryId={categoryId} items={items} sectionOrder={sectionOrder} onReordered={invalidate} />
 
