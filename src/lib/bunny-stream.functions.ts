@@ -49,6 +49,21 @@ export const createStreamUploadSession = createServerFn({ method: "POST" })
     };
   });
 
+/**
+ * Resolves/creates just the collection, with no throwaway video — used by
+ * the bulk multi-item uploader to serialize a category's first-ever
+ * collection creation before its per-file uploads run in parallel, so N
+ * media files in one batch don't each create their own collection.
+ */
+export const ensureStreamCollection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ name: z.string().min(1).max(300) }).parse(input))
+  .handler(async ({ context, data }) => {
+    await assertAdminOrContributor(context.userId);
+    const collectionId = await createStreamCollection(data.name);
+    return { collectionId };
+  });
+
 export const getStreamUploadStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ videoId: z.string().min(1) }).parse(input))

@@ -16,15 +16,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { listFacilities } from "@/lib/facilities.functions";
 import { generateUniqueCategoryIcon, resolveCategoryIcon } from "@/lib/category-icons";
-import { FileUploader } from "@/components/FileUploader";
 import { StreamUploader } from "@/components/StreamUploader";
+import { MediaUploader } from "@/components/MediaUploader";
 import { uploadFile } from "@/lib/upload-client";
 import { deleteStorageFile, estimatePdfDuration } from "@/lib/storage.functions";
+import { extOf, AUDIO_EXT, VIDEO_EXT, mediaKindFor } from "@/lib/media-kind";
 import {
-  uploadFileToStream,
   waitForStreamProcessing,
   beginStreamUpload,
   runTusUpload,
+  ensureStreamCollection,
 } from "@/lib/upload-stream-client";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
@@ -181,6 +182,7 @@ function AdminCategoryPageContent() {
             categoryId={id}
             categoryName={data.category.name}
             categorySlug={data.category.slug}
+            categoryStreamCollectionId={data.category.stream_collection_id ?? null}
             items={data.items}
             initialEditId={edit}
             categoryFacilities={data.category.facilities ?? []}
@@ -766,6 +768,7 @@ function ContentManager({
   categoryId,
   categoryName,
   categorySlug,
+  categoryStreamCollectionId,
   items,
   initialEditId,
   categoryFacilities,
@@ -774,6 +777,7 @@ function ContentManager({
   categoryId: string;
   categoryName: string;
   categorySlug: string;
+  categoryStreamCollectionId: string | null;
   items: ContentItem[];
   initialEditId?: string;
   categoryFacilities: string[];
@@ -839,6 +843,23 @@ function ContentManager({
     qc.invalidateQueries({ queryKey: QK.adminCategoryItems });
   };
 
+  // All video/audio uploads within this category (single-item and bulk)
+  // share one Bunny Stream collection, named after the category slug —
+  // local state is the source of truth for the rest of this session; the
+  // Supabase write below is fire-and-forget, same pattern as the item-
+  // duration patches elsewhere in this file.
+  const [categoryCollectionId, setCategoryCollectionId] = useState(categoryStreamCollectionId);
+  function persistCategoryCollectionId(collectionId: string) {
+    setCategoryCollectionId(collectionId);
+    (supabase as any)
+      .from("categories")
+      .update({ stream_collection_id: collectionId })
+      .eq("id", categoryId)
+      .then(({ error }: any) => {
+        if (error) console.error("Failed to persist category stream collection id:", error);
+      });
+  }
+
   const saveMut = useMutation({
     mutationFn: async (values: ItemSavePayload) => {
       const { facilities, chapters, pregeneratedId, ...itemValues } = values;
@@ -869,7 +890,6 @@ function ContentManager({
           file_name_es: itemValues.file_name_es ?? null,
           published: itemValues.published ?? true,
           storage_folder: itemValues.storage_folder ?? null,
-          stream_collection_id: itemValues.stream_collection_id ?? null,
           section: itemValues.section ?? null,
           section_es: itemValues.section_es ?? null,
           sort_order: (items.at(-1)?.sort_order ?? 0) + 1,
@@ -1060,13 +1080,27 @@ function ContentManager({
   // Each file becomes its own unpublished content_items row. Document/image
   // files upload via Bunny Storage (uploadFile, one shot); audio/video files
   // upload via Bunny Stream (session + TUS transfer + transcode wait), same
-  // as a single-item StreamUploader — but since each new item gets its own
-  // brand-new collection, there's no shared resource to race over like the
-  // chapter batch uploader has, so every file (either kind) still runs fully
-  // in parallel; failures are isolated per file via allSettled.
+  // as a single-item StreamUploader — all sharing the category's one Stream
+  // collection. Every file still runs fully in parallel (failures isolated
+  // via allSettled) *except* a category's very first-ever collection
+  // creation, which is resolved once, sequentially, before the parallel loop
+  // starts (see the ensureStreamCollection call below) — otherwise N media
+  // files in one batch would each race to lazily create their own.
   const bulkCreateMut = useMutation({
     mutationFn: async ({ files, type }: { files: File[]; type: string }) => {
       let nextSortOrder = (items.at(-1)?.sort_order ?? 0) + 1;
+      let collectionId = categoryCollectionId;
+      if (
+        !collectionId &&
+        files.some((f) => {
+          const ext = extOf("", f.name);
+          return AUDIO_EXT.has(ext) || VIDEO_EXT.has(ext);
+        })
+      ) {
+        const { collectionId: created } = await ensureStreamCollection(categorySlug);
+        collectionId = created;
+        persistCategoryCollectionId(created);
+      }
       const results = await Promise.allSettled(
         files.map(async (file) => {
           // .map()'s callback runs synchronously per file before any await,
@@ -1085,8 +1119,8 @@ function ContentManager({
             try {
               const session = await beginStreamUpload({
                 title,
-                collectionId: null,
-                collectionName: title,
+                collectionId,
+                collectionName: categorySlug,
               });
               const { videoId, playbackUrl } = await runTusUpload(file, session, (pct) =>
                 setBulkUploadState((prev) =>
@@ -1109,7 +1143,6 @@ function ContentManager({
                 description: "",
                 url: playbackUrl,
                 published: false,
-                stream_collection_id: session.collectionId,
                 sort_order: sortOrder,
               });
               if (error) throw error;
@@ -1312,6 +1345,8 @@ function ContentManager({
             categoryId={categoryId}
             categoryName={categoryName}
             categorySlug={categorySlug}
+            collectionId={categoryCollectionId}
+            onCollectionCreated={persistCategoryCollectionId}
             onCancel={() => setEditing(null)}
             onSave={(v) => saveMut.mutate(v as ItemSavePayload)}
             busy={saveMut.isPending}
@@ -1643,6 +1678,8 @@ function ItemEditor({
   categoryId,
   categoryName,
   categorySlug,
+  collectionId,
+  onCollectionCreated,
   onCancel,
   onSave,
   busy,
@@ -1655,6 +1692,11 @@ function ItemEditor({
   categoryId: string;
   categoryName: string;
   categorySlug: string;
+  /** The category's shared Bunny Stream collection (all video/audio uploads
+   * within a category, item's own or its chapters', land in one collection
+   * named after the category slug) — null until the first upload creates one. */
+  collectionId: string | null;
+  onCollectionCreated: (collectionId: string) => void;
   onCancel: () => void;
   onSave: (v: ItemSavePayload) => void;
   busy: boolean;
@@ -1714,12 +1756,6 @@ function ItemEditor({
   const [itemId] = useState(() => item?.id ?? crypto.randomUUID());
   const itemFolder =
     item?.storage_folder || `${slugify(title) || "untitled"}-${itemId.slice(0, 8)}`;
-  // Bunny Stream collection grouping this item's video/audio uploads (main
-  // file + all chapters). Created lazily on the first Stream upload of an
-  // editing session, then reused for every subsequent one and persisted on save.
-  const [streamCollectionId, setStreamCollectionId] = useState<string | null>(
-    item?.stream_collection_id ?? null,
-  );
   // Chapter indices currently mid-upload/processing via the batch uploader
   // below, keyed to the same phase/progress shape StreamUploader's own
   // internal state uses — passed back into that row's uploader as
@@ -1867,7 +1903,6 @@ function ItemEditor({
 
   const isAudioType =
     type.toLowerCase().includes("audio") || type.toLowerCase().includes("podcast");
-  const isVideoType = type.toLowerCase().includes("video");
 
   async function handleMultipleFiles(files: FileList) {
     const arr = Array.from(files);
@@ -1905,7 +1940,7 @@ function ItemEditor({
     // is known as soon as its session exists, so every new chapter row gets
     // its (not-yet-playable) URL filled in within a couple seconds of
     // selecting files, not just the first one.
-    let collectionId = streamCollectionId;
+    let currentCollectionId = collectionId;
     const sessions: Array<{
       file: File;
       chIdx: number;
@@ -1918,11 +1953,11 @@ function ItemEditor({
       try {
         const session = await beginStreamUpload({
           title: `${title || "Untitled"} — ${filenameToTitle(file.name)}`,
-          collectionId,
-          collectionName: title || "Untitled",
+          collectionId: currentCollectionId,
+          collectionName: categorySlug,
           onCollectionCreated: (id) => {
-            collectionId = id;
-            setStreamCollectionId(id);
+            currentCollectionId = id;
+            onCollectionCreated(id);
           },
         });
         setChapters((prev) =>
@@ -2123,7 +2158,6 @@ function ItemEditor({
           id: item?.id,
           pregeneratedId: item ? undefined : itemId,
           storage_folder: itemFolder,
-          stream_collection_id: streamCollectionId,
           title: title.trim(),
           type,
           source: source.trim(),
@@ -2353,54 +2387,50 @@ function ItemEditor({
                 className="mt-0 min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             );
-            // Video/audio types go through Bunny Stream (adaptive HLS); everything
-            // else (PDF, image, article, etc.) keeps using the Storage flow.
-            return isAudioType || isVideoType ? (
-              <StreamUploader
-                className="mt-1"
-                existingFileUrl={url || undefined}
-                onPendingDelete={onPendingDelete}
-                itemTitle={title || "Untitled"}
-                collectionName={title || "Untitled"}
-                collectionId={streamCollectionId}
-                onCollectionCreated={setStreamCollectionId}
-                onUploaded={(playbackUrl, _name, seconds) => {
-                  setUrl(playbackUrl);
-                  if (seconds) {
-                    const formatted = withActionWord(formatMediaDuration(seconds), type);
-                    setDuration(formatted);
-                    // Same reasoning as the chapter uploaders: Save doesn't wait
-                    // on processing, so patch the duration straight into the DB
-                    // in case the item was already saved while this file was
-                    // still transcoding — a no-op if it hasn't been saved yet.
-                    (supabase as any)
-                      .from("content_items")
-                      .update({ duration: formatted })
-                      .eq("id", itemId)
-                      .then(({ error }: any) => {
-                        if (error) console.error("Failed to patch item duration:", error);
-                      });
-                  }
-                }}
-              >
-                {urlInput}
-              </StreamUploader>
-            ) : (
-              <FileUploader
+            // MediaUploader decides Storage vs Stream from the selected
+            // file's own extension, not from the type field (an admin might
+            // attach a file before setting Type) — see its own doc comment.
+            return (
+              <MediaUploader
                 className="mt-1"
                 existingFileUrl={url || undefined}
                 onPendingDelete={onPendingDelete}
                 categorySlug={categorySlug}
                 itemFolder={itemFolder}
                 language="english"
-                onUploaded={async (u, name) => {
+                itemTitle={title || "Untitled"}
+                collectionName={categorySlug}
+                collectionId={collectionId}
+                onCollectionCreated={onCollectionCreated}
+                onUploaded={async (u, name, seconds) => {
                   setUrl(u);
-                  const estimated = await estimateDuration(u, name, type);
-                  if (estimated) setDuration(estimated);
+                  const ext = name ? extOf("", name) : "";
+                  if (AUDIO_EXT.has(ext) || VIDEO_EXT.has(ext)) {
+                    if (seconds) {
+                      const formatted = withActionWord(formatMediaDuration(seconds), type);
+                      setDuration(formatted);
+                      // Same reasoning as the chapter uploaders: Save doesn't
+                      // wait on processing, so patch the duration straight
+                      // into the DB in case the item was already saved while
+                      // this file was still transcoding — a no-op otherwise.
+                      (supabase as any)
+                        .from("content_items")
+                        .update({ duration: formatted })
+                        .eq("id", itemId)
+                        .then(({ error }: any) => {
+                          if (error) console.error("Failed to patch item duration:", error);
+                        });
+                    }
+                    // else: still processing — the later onUploaded call
+                    // (with seconds) follows once transcoding finishes.
+                  } else {
+                    const estimated = await estimateDuration(u, name, type);
+                    if (estimated) setDuration(estimated);
+                  }
                 }}
               >
                 {urlInput}
-              </FileUploader>
+              </MediaUploader>
             );
           })()}
         </label>
@@ -2667,9 +2697,9 @@ function ItemEditor({
                       existingFileUrl={ch.file_url ?? undefined}
                       onPendingDelete={onPendingDelete}
                       itemTitle={`${title || "Untitled"} — ${ch.title || `Chapter ${idx + 1}`}`}
-                      collectionName={title || "Untitled"}
-                      collectionId={streamCollectionId}
-                      onCollectionCreated={setStreamCollectionId}
+                      collectionName={categorySlug}
+                      collectionId={collectionId}
+                      onCollectionCreated={onCollectionCreated}
                       externalUpload={chapterUploadState.get(idx) ?? null}
                       onUploaded={(playbackUrl, name, seconds) => {
                         setChapters((prev) =>
@@ -2741,9 +2771,9 @@ function ItemEditor({
                       existingFileUrl={ch.file_url_es ?? undefined}
                       onPendingDelete={onPendingDelete}
                       itemTitle={`${title || "Untitled"} — ${ch.title || `Chapter ${idx + 1}`} (ES)`}
-                      collectionName={title || "Untitled"}
-                      collectionId={streamCollectionId}
-                      onCollectionCreated={setStreamCollectionId}
+                      collectionName={categorySlug}
+                      collectionId={collectionId}
+                      onCollectionCreated={onCollectionCreated}
                       onUploaded={(playbackUrl, name) =>
                         setChapters((prev) =>
                           prev.map((c, i) =>
@@ -2903,37 +2933,25 @@ function ItemEditor({
                   className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
                 />
               );
-              return isAudioType || isVideoType ? (
-                <StreamUploader
-                  className="mt-1"
-                  existingFileUrl={fileUrlEs ?? undefined}
-                  onPendingDelete={onPendingDelete}
-                  itemTitle={`${title || "Untitled"} (ES)`}
-                  collectionName={title || "Untitled"}
-                  collectionId={streamCollectionId}
-                  onCollectionCreated={setStreamCollectionId}
-                  onUploaded={(playbackUrl, name) => {
-                    setFileUrlEs(playbackUrl);
-                    setFileNameEs(name ?? null);
-                  }}
-                >
-                  {urlInputEs}
-                </StreamUploader>
-              ) : (
-                <FileUploader
+              return (
+                <MediaUploader
                   className="mt-1"
                   existingFileUrl={fileUrlEs ?? undefined}
                   onPendingDelete={onPendingDelete}
                   categorySlug={categorySlug}
                   itemFolder={itemFolder}
                   language="spanish"
+                  itemTitle={`${title || "Untitled"} (ES)`}
+                  collectionName={categorySlug}
+                  collectionId={collectionId}
+                  onCollectionCreated={onCollectionCreated}
                   onUploaded={(u, name) => {
                     setFileUrlEs(u);
                     setFileNameEs(name ?? null);
                   }}
                 >
                   {urlInputEs}
-                </FileUploader>
+                </MediaUploader>
               );
             })()}
           </label>
@@ -2958,24 +2976,6 @@ function ItemEditor({
 }
 
 
-function extOf(url: string, name: string | null): string {
-  const src = (name ?? url).toLowerCase().split("?")[0].split("#")[0];
-  const m = src.match(/\.([a-z0-9]+)$/);
-  return m?.[1] ?? "";
-}
-
-const AUDIO_EXT = new Set(["mp3", "wav", "m4a", "aac", "ogg", "oga", "flac", "webm", "opus"]);
-const VIDEO_EXT = new Set(["mp4", "mov", "webm", "mkv", "avi", "m4v"]);
-
-function mediaKindFor(type: string, url: string, name: string | null): "audio" | "video" | null {
-  const ext = extOf(url, name);
-  if (AUDIO_EXT.has(ext)) return "audio";
-  if (VIDEO_EXT.has(ext)) return "video";
-  const t = type.toLowerCase();
-  if (t.includes("podcast") || t.includes("audio")) return "audio";
-  if (t.includes("video")) return "video";
-  return null;
-}
 
 function formatMediaDuration(seconds: number): string {
   if (!isFinite(seconds) || seconds <= 0) return "";

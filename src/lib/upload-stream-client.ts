@@ -1,5 +1,9 @@
 import { Upload } from "tus-js-client";
-import { createStreamUploadSession, getStreamUploadStatus } from "@/lib/bunny-stream.functions";
+import {
+  createStreamUploadSession,
+  getStreamUploadStatus,
+  ensureStreamCollection as ensureStreamCollectionFn,
+} from "@/lib/bunny-stream.functions";
 
 // 6s (not 3s): halves our own server-side polling volume. The UI shows an
 // indeterminate bar during processing (Bunny's encodeProgress jumps too
@@ -55,6 +59,16 @@ export function waitForStreamProcessing(
       }
     }, POLL_INTERVAL_MS);
   });
+}
+
+/**
+ * Resolves/creates a category's shared Stream collection with no throwaway
+ * video, for callers that need the id up front before starting several
+ * parallel per-file uploads (the bulk multi-item uploader) — see
+ * beginStreamUpload's doc comment for why blind-creating per file is unsafe.
+ */
+export async function ensureStreamCollection(name: string): Promise<{ collectionId: string }> {
+  return ensureStreamCollectionFn({ data: { name } });
 }
 
 type StreamUploadSession = Awaited<ReturnType<typeof createStreamUploadSession>>;

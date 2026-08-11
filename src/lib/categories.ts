@@ -39,6 +39,9 @@ export type Category = {
    * (lowercased/trimmed section values). Any section in use but not listed
    * here is appended alphabetically at render time. */
   section_order?: string[] | null;
+  /** Bunny Stream collection shared by every video/audio upload within this
+   * category. Null until the first video/audio upload creates one. */
+  stream_collection_id?: string | null;
 };
 
 export type ContentItem = {
