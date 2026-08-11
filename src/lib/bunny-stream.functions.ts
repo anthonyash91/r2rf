@@ -30,10 +30,29 @@ export const createStreamUploadSession = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdminOrContributor(context.userId);
 
-    const collectionId =
+    let collectionId =
       data.collectionId ??
       (data.collectionName ? await createStreamCollection(data.collectionName) : null);
-    const videoId = await createStreamVideo(data.title, collectionId);
+
+    let videoId: string;
+    try {
+      videoId = await createStreamVideo(data.title, collectionId);
+    } catch (err) {
+      // A cached collectionId (a category's shared collection, reused
+      // across many uploads) can go stale if the collection was deleted on
+      // Bunny's side out from under us — e.g. manually, from their
+      // dashboard. Rather than permanently failing every future upload for
+      // that category, self-heal by creating a fresh collection and
+      // returning its id so the caller can update its cache.
+      const isMissingCollection =
+        err instanceof Error && err.message.includes("Collection does not exist");
+      if (collectionId && data.collectionName && isMissingCollection) {
+        collectionId = await createStreamCollection(data.collectionName);
+        videoId = await createStreamVideo(data.title, collectionId);
+      } else {
+        throw err;
+      }
+    }
     const { signature, expiration, libraryId } = computeTusSignature(videoId);
 
     return {

@@ -93,10 +93,16 @@ export async function beginStreamUpload(opts: {
     data: {
       title: opts.title,
       collectionId: opts.collectionId,
-      collectionName: opts.collectionId ? undefined : opts.collectionName,
+      // Always sent, even when collectionId is provided too — the server
+      // needs a name to self-heal with if that cached id turns out to be
+      // stale (e.g. the collection was deleted on Bunny's side).
+      collectionName: opts.collectionName,
     },
   });
-  if (!opts.collectionId && session.collectionId) {
+  // Covers both "no id was passed, one got created" and "a stale id was
+  // passed and the server had to replace it" — either way the caller's
+  // cached id is now out of date and needs to learn the real one.
+  if (session.collectionId && session.collectionId !== opts.collectionId) {
     opts.onCollectionCreated?.(session.collectionId);
   }
   return session;
