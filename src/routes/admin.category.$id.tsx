@@ -11,7 +11,7 @@ import { BadgeGroup } from "@/components/BadgeGroup";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, FolderOpen, GripVertical, Info, Tag, ChevronDown, ChevronUp, Languages, Upload } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, FolderOpen, GripVertical, Info, Tag, ChevronDown, ChevronUp, Languages, Upload, BookOpen } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { listFacilities } from "@/lib/facilities.functions";
@@ -576,6 +576,7 @@ type BulkReviewSavePayload = {
   id: string;
   title: string;
   type: string;
+  source: string;
   section: string | null;
   section_es: string | null;
   description: string;
@@ -593,8 +594,10 @@ type BulkReviewSavePayload = {
 function BulkReviewPanel({
   ids,
   items,
+  categoryName,
   typeOptions,
   existingSections,
+  sourceSuggestions,
   onSaveAll,
   saving,
   onDismiss,
@@ -602,8 +605,10 @@ function BulkReviewPanel({
 }: {
   ids: string[];
   items: ContentItem[];
+  categoryName: string;
   typeOptions: string[];
   existingSections: string[];
+  sourceSuggestions: string[];
   onSaveAll: (payloads: BulkReviewSavePayload[]) => void;
   saving: boolean;
   onDismiss: (id: string) => void;
@@ -628,6 +633,7 @@ function BulkReviewPanel({
           id: item.id,
           title: item.title,
           type: item.type,
+          source: item.source ?? "",
           section: item.section ?? null,
           section_es: item.section_es ?? null,
           description: item.description ?? "",
@@ -661,8 +667,10 @@ function BulkReviewPanel({
               fileName={item.file_name ?? item.title}
               draft={draft}
               onChange={(patch) => updateDraft(item.id, patch)}
+              categoryName={categoryName}
               typeOptions={typeOptions}
               existingSections={existingSections}
+              sourceSuggestions={sourceSuggestions}
               onDismiss={() => onDismiss(item.id)}
             />
           );
@@ -693,17 +701,44 @@ function BulkReviewCard({
   fileName,
   draft,
   onChange,
+  categoryName,
   typeOptions,
   existingSections,
+  sourceSuggestions,
   onDismiss,
 }: {
   fileName: string;
   draft: BulkReviewSavePayload;
   onChange: (patch: Partial<BulkReviewSavePayload>) => void;
+  categoryName: string;
   typeOptions: string[];
   existingSections: string[];
+  sourceSuggestions: string[];
   onDismiss: () => void;
 }) {
+  const generateDesc = useServerFn(generateContentDescription);
+  const [generatingDesc, setGeneratingDesc] = useState(false);
+
+  async function handleGenerateDesc() {
+    const trimmed = draft.title.trim();
+    if (!trimmed) {
+      toast.error("Enter a title first");
+      return;
+    }
+    setGeneratingDesc(true);
+    try {
+      const result = await generateDesc({
+        data: { title: trimmed, type: draft.type, categoryName },
+      });
+      if (result.description) onChange({ description: result.description });
+      toast.success("Generated description");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to generate");
+    } finally {
+      setGeneratingDesc(false);
+    }
+  }
+
   return (
     <div className="space-y-2 rounded-lg border border-border bg-card p-3">
       <div className="flex items-center justify-between gap-2">
@@ -743,8 +778,25 @@ function BulkReviewCard({
           suggestions={existingSections}
         />
       </div>
+      <LabeledInput
+        label="Source"
+        value={draft.source}
+        onChange={(v) => onChange({ source: v })}
+        suggestions={sourceSuggestions}
+      />
       <label className="block">
-        <span className="text-sm font-medium">Description</span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-medium">Description</span>
+          <button
+            type="button"
+            onClick={handleGenerateDesc}
+            disabled={generatingDesc || !draft.title.trim()}
+            title="Auto-generate description"
+            className="inline-flex items-center gap-1 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+          >
+            <Sparkles className={`h-3.5 w-3.5 ${generatingDesc ? "animate-pulse" : ""}`} />
+          </button>
+        </div>
         <textarea
           rows={2}
           value={draft.description}
@@ -987,6 +1039,7 @@ function ContentManager({
   const bulk = useBulkSelect();
   const [addingBulkSection, setAddingBulkSection] = useState(false);
   const [newBulkSection, setNewBulkSection] = useState("");
+  const [bulkChangeSource, setBulkChangeSource] = useState("");
   const { data: existingTypes = [] } = useQuery({
     queryKey: QK.contentTypes,
     staleTime: 0,
@@ -1003,11 +1056,31 @@ function ContentManager({
   const existingSections = Array.from(
     new Set(items.map((i) => i.section).filter((s): s is string => !!s?.trim())),
   ).sort((a, b) => a.localeCompare(b));
+  // Same query ItemEditor uses for its Source field's autocomplete — shared
+  // React Query cache (same queryKey), not a duplicate request.
+  const { data: sourceSuggestions = [] } = useQuery({
+    queryKey: QK.adminContentSources,
+    queryFn: async (): Promise<string[]> => {
+      const { data, error } = await supabase
+        .from("content_items")
+        .select("source")
+        .not("source", "is", null)
+        .limit(1000);
+      if (error) throw error;
+      const set = new Set<string>();
+      for (const row of (data ?? []) as { source: string | null }[]) {
+        const s = (row.source ?? "").trim();
+        if (s) set.add(s);
+      }
+      return Array.from(set).sort((a, b) => a.localeCompare(b));
+    },
+  });
   // Bulk file->item upload: each selected file becomes its own unpublished
   // content_items row, then shows up as a review card below until the admin
   // fills in details and publishes. bulkReviewIds tracks which ids (from
   // this session's bulk uploads) still have a review card showing.
   const [bulkType, setBulkType] = useState("Article");
+  const [bulkSource, setBulkSource] = useState("");
   const [bulkReviewIds, setBulkReviewIds] = useState<string[]>([]);
   const bulkUploadInputRef = useRef<HTMLInputElement>(null);
   // In-flight status for the (slower, transcode-wait) Stream files within a
@@ -1065,6 +1138,24 @@ function ContentManager({
     onError: (e: any) => toast.error(e.message),
   });
 
+  const updateSourceMut = useMutation({
+    mutationFn: async ({ ids, source }: { ids: string[]; source: string }) => {
+      const { error } = await (supabase as any)
+        .from("content_items")
+        .update({ source })
+        .in("id", ids);
+      if (error) throw error;
+      return { count: ids.length, source };
+    },
+    onSuccess: ({ count, source }) => {
+      toast.success(`Updated ${count} ${count === 1 ? "item" : "items"} to "${source}"`);
+      invalidate();
+      bulk.clear();
+      bulk.exitEditMode();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const reorderMut = useMutation({
     mutationFn: async (next: ContentItem[]) => {
       await Promise.all(
@@ -1087,7 +1178,15 @@ function ContentManager({
   // starts (see the ensureStreamCollection call below) — otherwise N media
   // files in one batch would each race to lazily create their own.
   const bulkCreateMut = useMutation({
-    mutationFn: async ({ files, type }: { files: File[]; type: string }) => {
+    mutationFn: async ({
+      files,
+      type,
+      source,
+    }: {
+      files: File[];
+      type: string;
+      source: string;
+    }) => {
       let nextSortOrder = (items.at(-1)?.sort_order ?? 0) + 1;
       let collectionId = categoryCollectionId;
       if (
@@ -1138,7 +1237,7 @@ function ContentManager({
                 category_id: categoryId,
                 title,
                 type,
-                source: "",
+                source,
                 duration,
                 description: "",
                 url: playbackUrl,
@@ -1164,13 +1263,17 @@ function ContentManager({
             itemFolder: folder,
             language: "english",
           });
+          // Same estimation the single-item FileUploader path uses (PDF text
+          // extraction, "View image", etc.) — without this, bulk-uploaded
+          // PDFs silently got no duration at all.
+          const duration = await estimateDuration(publicUrl, file.name, type);
           const { error } = await (supabase as any).from("content_items").insert({
             id,
             category_id: categoryId,
             title,
             type,
-            source: "",
-            duration: "",
+            source,
+            duration,
             description: "",
             url: publicUrl,
             published: false,
@@ -1217,6 +1320,7 @@ function ContentManager({
             .update({
               title: d.title.trim() || d.title,
               type: d.type,
+              source: d.source,
               section: d.section,
               section_es: d.section_es,
               description: d.description,
@@ -1264,6 +1368,19 @@ function ContentManager({
             </SelectContent>
           </Select>
           <input
+            value={bulkSource}
+            onChange={(e) => setBulkSource(e.target.value)}
+            list="bulk-source-suggestions"
+            placeholder="Source (optional)"
+            title="Source applied to bulk-uploaded files"
+            className="w-[160px] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-none"
+          />
+          <datalist id="bulk-source-suggestions">
+            {sourceSuggestions.map((s) => (
+              <option key={s} value={s} />
+            ))}
+          </datalist>
+          <input
             ref={bulkUploadInputRef}
             type="file"
             multiple
@@ -1271,7 +1388,11 @@ function ContentManager({
             className="hidden"
             onChange={(e) => {
               if (e.target.files?.length) {
-                bulkCreateMut.mutate({ files: Array.from(e.target.files), type: bulkType });
+                bulkCreateMut.mutate({
+                  files: Array.from(e.target.files),
+                  type: bulkType,
+                  source: bulkSource.trim(),
+                });
               }
               if (bulkUploadInputRef.current) bulkUploadInputRef.current.value = "";
             }}
@@ -1330,8 +1451,10 @@ function ContentManager({
       <BulkReviewPanel
         ids={bulkReviewIds}
         items={items}
+        categoryName={categoryName}
         typeOptions={bulkTypeOptions}
         existingSections={existingSections}
+        sourceSuggestions={sourceSuggestions}
         saving={saveAllReviewMut.isPending}
         onSaveAll={(payloads) => saveAllReviewMut.mutate(payloads)}
         onDismiss={(id) => setBulkReviewIds((prev) => prev.filter((x) => x !== id))}
@@ -1493,6 +1616,65 @@ function ContentManager({
                       </DropdownMenuItem>
                     </>
                   )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu onOpenChange={(open) => { if (!open) setBulkChangeSource(""); }}>
+                <DropdownMenuTrigger asChild>
+                  <LoadingButton
+                    variant="secondary"
+                    pending={updateSourceMut.isPending}
+                    pendingText="Updating…"
+                    icon={<BookOpen className="h-4 w-4" />}
+                  >
+                    Change source ({ids.length})
+                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                  </LoadingButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" collisionPadding={16} className="max-h-[80vh]">
+                  {sourceSuggestions.length > 0 && (
+                    <>
+                      {sourceSuggestions.map((s) => (
+                        <DropdownMenuItem
+                          key={s}
+                          onSelect={() => updateSourceMut.mutate({ ids, source: s })}
+                        >
+                          {s}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <div className="flex items-center gap-2 p-1.5">
+                    <input
+                      autoFocus
+                      value={bulkChangeSource}
+                      onChange={(e) => setBulkChangeSource(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const v = bulkChangeSource.trim();
+                          if (!v) return;
+                          updateSourceMut.mutate({ ids, source: v });
+                          setBulkChangeSource("");
+                        }
+                      }}
+                      placeholder="Source name"
+                      className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        const v = bulkChangeSource.trim();
+                        if (!v) return;
+                        updateSourceMut.mutate({ ids, source: v });
+                        setBulkChangeSource("");
+                      }}
+                      className="shrink-0 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                    >
+                      Apply
+                    </button>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
