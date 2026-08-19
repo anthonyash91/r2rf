@@ -1255,33 +1255,52 @@ function ContentManager({
             }
           }
 
-          const folder = `${slugify(title) || "untitled"}-${id.slice(0, 8)}`;
-          const { publicUrl } = await uploadFile({
-            file,
-            kind: "content-file",
-            categorySlug,
-            itemFolder: folder,
-            language: "english",
-          });
-          // Same estimation the single-item FileUploader path uses (PDF text
-          // extraction, "View image", etc.) — without this, bulk-uploaded
-          // PDFs silently got no duration at all.
-          const duration = await estimateDuration(publicUrl, file.name, type);
-          const { error } = await (supabase as any).from("content_items").insert({
-            id,
-            category_id: categoryId,
-            title,
-            type,
-            source,
-            duration,
-            description: "",
-            url: publicUrl,
-            published: false,
-            storage_folder: folder,
-            sort_order: sortOrder,
-          });
-          if (error) throw error;
-          return id as string;
+          setBulkUploadState((prev) =>
+            new Map(prev).set(id, { fileName: file.name, phase: "uploading", progress: 0 }),
+          );
+          try {
+            const folder = `${slugify(title) || "untitled"}-${id.slice(0, 8)}`;
+            const { publicUrl } = await uploadFile({
+              file,
+              kind: "content-file",
+              categorySlug,
+              itemFolder: folder,
+              language: "english",
+              onProgress: (pct) =>
+                setBulkUploadState((prev) =>
+                  new Map(prev).set(id, { fileName: file.name, phase: "uploading", progress: pct }),
+                ),
+            });
+            // "Processing" here covers duration estimation (e.g. PDF text
+            // extraction), which can take a few seconds — same estimation the
+            // single-item FileUploader path uses ("View image", etc.);
+            // without this, bulk-uploaded PDFs silently got no duration at all.
+            setBulkUploadState((prev) =>
+              new Map(prev).set(id, { fileName: file.name, phase: "processing", progress: 0 }),
+            );
+            const duration = await estimateDuration(publicUrl, file.name, type);
+            const { error } = await (supabase as any).from("content_items").insert({
+              id,
+              category_id: categoryId,
+              title,
+              type,
+              source,
+              duration,
+              description: "",
+              url: publicUrl,
+              published: false,
+              storage_folder: folder,
+              sort_order: sortOrder,
+            });
+            if (error) throw error;
+            return id as string;
+          } finally {
+            setBulkUploadState((prev) => {
+              const next = new Map(prev);
+              next.delete(id);
+              return next;
+            });
+          }
         }),
       );
       return {
