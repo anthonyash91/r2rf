@@ -495,11 +495,23 @@ function SectionsPanel({
   onReordered: () => void;
 }) {
   const qc = useQueryClient();
+  const confirmDelete = useConfirmDelete();
+  const { run: runTranslateSection, busy: translatingSection } = useTranslateToSpanish();
   const distinctSections = Array.from(
     new Set(items.map((i) => i.section).filter((s): s is string => !!s?.trim())),
   );
   const orderedLower = sectionOrder.map((s) => s.trim().toLowerCase());
   const bySection = new Map(distinctSections.map((s) => [s.trim().toLowerCase(), s]));
+  // First item's section_es for each key — same "first item in the group"
+  // rule the public category page uses to pick a section's displayed
+  // Spanish label, so this form starts prefilled with what's actually showing.
+  const bySectionEs = new Map(
+    distinctSections.map((s) => {
+      const key = s.trim().toLowerCase();
+      const match = items.find((i) => (i.section ?? "").trim().toLowerCase() === key);
+      return [key, match?.section_es ?? ""];
+    }),
+  );
   const seen = new Set<string>();
   const displayOrder: string[] = [];
   for (const k of orderedLower) {
@@ -527,6 +539,65 @@ function SectionsPanel({
     onError: (e: any) => toast.error(e.message ?? "Failed to reorder sections"),
   });
 
+  const renameSectionMut = useMutation({
+    mutationFn: async ({
+      oldKey,
+      newEn,
+      newEs,
+    }: {
+      oldKey: string;
+      newEn: string;
+      newEs: string | null;
+    }) => {
+      const ids = items
+        .filter((i) => (i.section ?? "").trim().toLowerCase() === oldKey)
+        .map((i) => i.id);
+      const { error: itemsErr } = await (supabase as any)
+        .from("content_items")
+        .update({ section: newEn, section_es: newEs })
+        .in("id", ids);
+      if (itemsErr) throw itemsErr;
+      const newOrder = sectionOrder.map((s) =>
+        s.trim().toLowerCase() === oldKey ? newEn.trim().toLowerCase() : s,
+      );
+      const { error: catErr } = await (supabase as any)
+        .from("categories")
+        .update({ section_order: newOrder })
+        .eq("id", categoryId);
+      if (catErr) throw catErr;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`Renamed section for ${count} ${count === 1 ? "item" : "items"}`);
+      onReordered();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Failed to rename section"),
+  });
+
+  const deleteSectionMut = useMutation({
+    mutationFn: async (key: string) => {
+      const ids = items
+        .filter((i) => (i.section ?? "").trim().toLowerCase() === key)
+        .map((i) => i.id);
+      const { error: itemsErr } = await (supabase as any)
+        .from("content_items")
+        .update({ section: null, section_es: null })
+        .in("id", ids);
+      if (itemsErr) throw itemsErr;
+      const { error: catErr } = await (supabase as any)
+        .from("categories")
+        .update({ section_order: sectionOrder.filter((s) => s.trim().toLowerCase() !== key) })
+        .eq("id", categoryId);
+      if (catErr) throw catErr;
+      return ids.length;
+    },
+    onSuccess: (count) => {
+      toast.success(`${count} ${count === 1 ? "item" : "items"} moved to Uncategorized`);
+      onReordered();
+    },
+    onError: (e: any) => toast.error(e.message ?? "Failed to delete section"),
+  });
+
   function move(section: string, direction: -1 | 1) {
     const idx = displayOrder.indexOf(section);
     const swapWith = idx + direction;
@@ -536,7 +607,33 @@ function SectionsPanel({
     reorderMut.mutate(next);
   }
 
-  if (displayOrder.length < 2) return null;
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [enDraft, setEnDraft] = useState("");
+  const [esDraft, setEsDraft] = useState("");
+
+  function startEdit(key: string) {
+    setEditingKey(key);
+    setEnDraft(bySection.get(key) ?? "");
+    setEsDraft(bySectionEs.get(key) ?? "");
+  }
+  function cancelEdit() {
+    setEditingKey(null);
+    setEnDraft("");
+    setEsDraft("");
+  }
+  function saveEdit(key: string) {
+    const newEn = enDraft.trim();
+    if (!newEn) {
+      toast.error("Section title can't be empty");
+      return;
+    }
+    renameSectionMut.mutate(
+      { oldKey: key, newEn, newEs: esDraft.trim() || null },
+      { onSuccess: cancelEdit },
+    );
+  }
+
+  if (displayOrder.length === 0) return null;
 
   return (
     <div className="mb-4 rounded-xl border border-border bg-muted/30 p-3">
@@ -544,29 +641,112 @@ function SectionsPanel({
         Section order (category page)
       </p>
       <ul className="space-y-1">
-        {displayOrder.map((s, idx) => (
-          <li key={s} className="flex items-center gap-1 text-sm">
-            <button
-              type="button"
-              disabled={idx === 0}
-              onClick={() => move(s, -1)}
-              className="p-1 rounded hover:bg-muted disabled:opacity-30"
-              title="Move up"
-            >
-              <ChevronUp className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              disabled={idx === displayOrder.length - 1}
-              onClick={() => move(s, 1)}
-              className="p-1 rounded hover:bg-muted disabled:opacity-30"
-              title="Move down"
-            >
-              <ChevronDown className="h-3.5 w-3.5" />
-            </button>
-            <span>{s}</span>
-          </li>
-        ))}
+        {displayOrder.map((s, idx) => {
+          const key = s.trim().toLowerCase();
+          const editing = editingKey === key;
+          return (
+            <li key={s} className="rounded-md px-1 py-0.5 text-sm">
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={idx === 0}
+                  onClick={() => move(s, -1)}
+                  className="p-1 rounded hover:bg-muted disabled:opacity-30"
+                  title="Move up"
+                >
+                  <ChevronUp className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  disabled={idx === displayOrder.length - 1}
+                  onClick={() => move(s, 1)}
+                  className="p-1 rounded hover:bg-muted disabled:opacity-30"
+                  title="Move down"
+                >
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+                <span className="flex-1 min-w-0 truncate">{s}</span>
+                <button
+                  type="button"
+                  onClick={() => (editing ? cancelEdit() : startEdit(key))}
+                  className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                  title={editing ? "Cancel" : "Edit section title"}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    confirmDelete({
+                      title: `Delete section "${s}"?`,
+                      description: `${items.filter((i) => (i.section ?? "").trim().toLowerCase() === key).length} item(s) will become Uncategorized.`,
+                      confirmLabel: "Delete",
+                      pendingLabel: "Deleting",
+                      onConfirm: () => deleteSectionMut.mutateAsync(key),
+                    })
+                  }
+                  className="p-1 rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  title="Delete section"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              {editing && (
+                <div className="mt-2 ml-6 space-y-3 rounded-md border border-border bg-card p-4">
+                  <LabeledInput label="Section title (EN)" value={enDraft} onChange={setEnDraft} />
+                  <div className="flex items-end gap-2">
+                    <LabeledInput
+                      label="Section title (ES)"
+                      value={esDraft}
+                      onChange={setEsDraft}
+                      className="flex-1"
+                    />
+                    <button
+                      type="button"
+                      disabled={translatingSection || !enDraft.trim()}
+                      onClick={() =>
+                        runTranslateSection(
+                          { section: enDraft },
+                          (t) => {
+                            if (t.section) setEsDraft(t.section);
+                          },
+                          "Section/category label in a learning library",
+                        )
+                      }
+                      title="Translate to Spanish"
+                      // mt-6 (not mt-1, like the input) — LabeledInput's own
+                      // label line (text-sm, 1.25rem) plus its input's mt-1
+                      // (0.25rem) adds up to 1.5rem before the input box
+                      // starts; this button has no label line of its own, so
+                      // it needs that same 1.5rem pushed down directly to
+                      // land at the same vertical position, without a
+                      // same-width invisible label sibling widening this
+                      // flex item past the button's own natural width.
+                      className="mt-6 inline-flex h-[2.375rem] items-center justify-center gap-1 rounded-md border border-input bg-background px-4 text-sm hover:bg-muted disabled:opacity-50"
+                    >
+                      <Languages
+                        className={`h-3.5 w-3.5 ${translatingSection ? "animate-pulse" : ""}`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <LoadingButton variant="secondary" onClick={cancelEdit}>
+                      Cancel
+                    </LoadingButton>
+                    <LoadingButton
+                      type="button"
+                      pending={renameSectionMut.isPending}
+                      pendingText="Saving…"
+                      onClick={() => saveEdit(key)}
+                    >
+                      Save
+                    </LoadingButton>
+                  </div>
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
