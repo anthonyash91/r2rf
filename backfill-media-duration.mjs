@@ -9,9 +9,20 @@
  * the answer into content_chapters.duration_seconds / content_items.duration.
  * No re-upload needed.
  *
+ * --force also recalculates Stream-hosted chapters/items that already HAVE a
+ * duration — for the separate bug where the value is just wrong (client-side
+ * HTML5 <video>/<audio> probing can't read a duration from Bunny's .m3u8 HLS
+ * URLs outside Safari, so any duration set that way could be stale/incorrect;
+ * see the admin Duration field's recalculate button, which now uses this same
+ * Bunny-API lookup instead). WARNING: --force overwrites any existing
+ * duration text for every Stream-hosted item, including one an admin may
+ * have manually customized — always --dry-run first to review before
+ * applying.
+ *
  * Usage:
- *   node backfill-media-duration.mjs        # apply
- *   node backfill-media-duration.mjs --dry-run
+ *   node backfill-media-duration.mjs                  # missing durations only
+ *   node backfill-media-duration.mjs --force           # + recalculate existing ones too
+ *   node backfill-media-duration.mjs --force --dry-run # preview --force's changes first
  *
  * Requires in the environment (or a .env file in the project root):
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
@@ -49,6 +60,7 @@ for (const [name, v] of Object.entries({
 }
 
 const dryRun = process.argv.includes("--dry-run");
+const force = process.argv.includes("--force");
 
 const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -99,13 +111,12 @@ function withActionWord(duration, type) {
 
 async function run() {
   console.log(dryRun ? "DRY RUN — no writes will be made.\n" : "Applying fixes.\n");
+  if (force) console.log("--force: also recalculating chapters/items that already have a duration.\n");
 
   // ── Chapters ──────────────────────────────────────────────────────────
-  const { data: chapters, error: chErr } = await db
-    .from("content_chapters")
-    .select("id, title, file_url")
-    .is("duration_seconds", null)
-    .not("file_url", "is", null);
+  let chapterQuery = db.from("content_chapters").select("id, title, file_url").not("file_url", "is", null);
+  if (!force) chapterQuery = chapterQuery.is("duration_seconds", null);
+  const { data: chapters, error: chErr } = await chapterQuery;
   if (chErr) { console.error("Failed to fetch chapters:", chErr.message); process.exit(1); }
 
   let chFixed = 0, chSkippedNotStream = 0, chFailed = 0;
@@ -136,7 +147,7 @@ async function run() {
 
   let itFixed = 0, itSkippedNotStream = 0, itSkippedHasDuration = 0, itFailed = 0;
   for (const item of items ?? []) {
-    if (item.duration && item.duration.trim()) { itSkippedHasDuration++; continue; }
+    if (!force && item.duration && item.duration.trim()) { itSkippedHasDuration++; continue; }
     const videoId = extractStreamVideoId(item.url);
     if (!videoId) { itSkippedNotStream++; continue; }
     try {
