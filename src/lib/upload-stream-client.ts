@@ -71,6 +71,17 @@ export async function ensureStreamCollection(name: string): Promise<{ collection
   return ensureStreamCollectionFn({ data: { name } });
 }
 
+/**
+ * One-shot duration lookup for an already-uploaded Stream video — unlike
+ * waitForStreamProcessing, this doesn't poll; it just asks Bunny what it
+ * currently reports, for recalculating a stale/wrong duration after the
+ * fact rather than waiting on a fresh upload's transcode.
+ */
+export async function getStreamDurationSeconds(videoId: string): Promise<number | null> {
+  const status = await getStreamUploadStatus({ data: { videoId } });
+  return status.durationSeconds;
+}
+
 type StreamUploadSession = Awaited<ReturnType<typeof createStreamUploadSession>>;
 
 /**

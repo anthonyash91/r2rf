@@ -30,3 +30,15 @@ export function mediaKindFor(
   if (t.includes("video")) return "video";
   return null;
 }
+
+const STREAM_VIDEO_ID_RE =
+  /\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/playlist\.m3u8/i;
+
+/**
+ * Pulls the Bunny Stream video id out of a stored playback URL
+ * (".../{videoId}/playlist.m3u8"). Returns null for anything else, e.g. a
+ * direct (non-Stream) file URL or a PDF.
+ */
+export function extractStreamVideoId(url: string): string | null {
+  return url.match(STREAM_VIDEO_ID_RE)?.[1] ?? null;
+}

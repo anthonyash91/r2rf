@@ -20,12 +20,13 @@ import { StreamUploader } from "@/components/StreamUploader";
 import { MediaUploader } from "@/components/MediaUploader";
 import { uploadFile } from "@/lib/upload-client";
 import { deleteStorageFile, estimatePdfDuration } from "@/lib/storage.functions";
-import { extOf, AUDIO_EXT, VIDEO_EXT, mediaKindFor } from "@/lib/media-kind";
+import { extOf, AUDIO_EXT, VIDEO_EXT, mediaKindFor, extractStreamVideoId } from "@/lib/media-kind";
 import {
   waitForStreamProcessing,
   beginStreamUpload,
   runTusUpload,
   ensureStreamCollection,
+  getStreamDurationSeconds,
 } from "@/lib/upload-stream-client";
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
@@ -2232,7 +2233,7 @@ function ItemEditor({
 
   const generateDesc = useServerFn(generateContentDescription);
   const [generatingDesc, setGeneratingDesc] = useState(false);
-  const [pdfEstimating, setPdfEstimating] = useState(false);
+  const [durationEstimating, setDurationEstimating] = useState(false);
 
   // Auto-recalculate duration when the PDF URL changes (after initial mount).
   const initialPdfUrlRef = useRef(item?.url ?? "");
@@ -2242,13 +2243,13 @@ function ItemEditor({
     if (u === initialPdfUrlRef.current) return;
     initialPdfUrlRef.current = u;
     let cancelled = false;
-    setPdfEstimating(true);
+    setDurationEstimating(true);
     (async () => {
       try {
         const estimated = await estimateDuration(u, null, type);
         if (!cancelled && estimated) setDuration(estimated);
       } finally {
-        if (!cancelled) setPdfEstimating(false);
+        if (!cancelled) setDurationEstimating(false);
       }
     })();
     return () => { cancelled = true; };
@@ -2265,12 +2266,12 @@ function ItemEditor({
       const ext = u ? extOf(u, null) : null;
       const isMedia = ext && (ext === "pdf" || AUDIO_EXT.has(ext) || VIDEO_EXT.has(ext));
       if (isMedia) {
-        if (ext === "pdf") setPdfEstimating(true);
+        if (ext === "pdf") setDurationEstimating(true);
         try {
           const estimated = await estimateDuration(u, null, type);
           if (!cancelled && estimated) setDuration(estimated);
         } finally {
-          if (!cancelled && ext === "pdf") setPdfEstimating(false);
+          if (!cancelled && ext === "pdf") setDurationEstimating(false);
         }
       } else {
         const fallback = defaultDurationForType(type);
@@ -2284,6 +2285,9 @@ function ItemEditor({
 
   const isAudioType =
     type.toLowerCase().includes("audio") || type.toLowerCase().includes("podcast");
+
+  const canRecalculateDuration =
+    extOf(url, null) === "pdf" || !!extractStreamVideoId(url) || !!mediaKindFor(type, url, null);
 
   async function handleMultipleFiles(files: FileList) {
     const arr = Array.from(files);
@@ -2647,25 +2651,46 @@ function ItemEditor({
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               placeholder="8 min read"
-              className={`w-full rounded-md border border-input bg-background px-4 py-2 text-sm ${extOf(url, null) === "pdf" ? "pr-9" : ""}`}
+              className={`w-full rounded-md border border-input bg-background px-4 py-2 text-sm ${canRecalculateDuration ? "pr-9" : ""}`}
             />
-            {extOf(url, null) === "pdf" && (
+            {canRecalculateDuration && (
               <button
                 type="button"
-                disabled={pdfEstimating}
+                disabled={durationEstimating}
                 onClick={async () => {
-                  setPdfEstimating(true);
+                  setDurationEstimating(true);
                   try {
+                    if (extOf(url, null) === "pdf") {
+                      const estimated = await estimateDuration(url, null, type);
+                      if (estimated) setDuration(estimated);
+                      return;
+                    }
+                    // Stream-hosted video/audio: the stored URL is a Bunny HLS
+                    // playlist, which plain <video>/<audio> probing can't read
+                    // outside Safari (no native HLS support) — ask Bunny for
+                    // the video's real duration directly instead.
+                    const videoId = extractStreamVideoId(url);
+                    if (videoId) {
+                      const seconds = await getStreamDurationSeconds(videoId);
+                      if (seconds && seconds > 0) {
+                        setDuration(withActionWord(formatMediaDuration(seconds), type));
+                      } else {
+                        toast.error("Bunny hasn't reported a duration for this video yet");
+                      }
+                      return;
+                    }
+                    // Direct (non-Stream) audio/video file — a real file URL,
+                    // no HLS involved, so client-side probing works fine.
                     const estimated = await estimateDuration(url, null, type);
                     if (estimated) setDuration(estimated);
                   } finally {
-                    setPdfEstimating(false);
+                    setDurationEstimating(false);
                   }
                 }}
-                title={pdfEstimating ? "Calculating PDF duration…" : "Recalculate PDF duration"}
+                title={durationEstimating ? "Calculating duration…" : "Recalculate duration"}
                 className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-60"
               >
-                <RefreshCw className={`h-3.5 w-3.5 ${pdfEstimating ? "animate-spin" : ""}`} />
+                <RefreshCw className={`h-3.5 w-3.5 ${durationEstimating ? "animate-spin" : ""}`} />
               </button>
             )}
           </div>
