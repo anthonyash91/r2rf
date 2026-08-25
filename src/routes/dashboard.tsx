@@ -826,7 +826,15 @@ function DashboardPage() {
               <>
                 {/* Resume card — most recently touched incomplete item */}
                 {(() => {
-                  if (!resumeQuery.data || !progressQuery.data) return null;
+                  // Also wait out any in-flight refetch of progressQuery, not just its
+                  // initial load: marking an item read on the category page invalidates
+                  // this query (by the shared "dashboard-progress" key prefix) without
+                  // clearing its cached value, so remounting here would otherwise paint
+                  // once with the stale (pre-completion) readSet — showing the just-read
+                  // item as still unread for a moment — before the background refetch
+                  // corrects it a beat later.
+                  if (!resumeQuery.data || !progressQuery.data || progressQuery.isFetching)
+                    return null;
                   const readSet = progressQuery.data.readSet;
                   const itemsByCat = progressQuery.data.itemsByCat;
                   for (const eng of resumeQuery.data) {
