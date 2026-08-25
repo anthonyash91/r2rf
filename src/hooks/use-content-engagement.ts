@@ -88,13 +88,7 @@ type Params = {
    * revisiting a chapter in a new session never resets saved progress.
    */
   existingChapterFurthest?: number;
-  /**
-   * Estimated reading time in seconds for PDF items (derived from the
-   * item's duration field). When provided, the hook auto-marks as read at
-   * 95% of this value based on cumulative active session time.
-   */
-  pdfEstimatedSeconds?: number;
-  /** Called when 95%+ of the media/PDF threshold has been reached. */
+  /** Called when 95%+ of the media threshold has been reached. */
   onAutoMarkRead?: () => void;
   /** Called once when the idle threshold is crossed (for static content only). */
   onIdle?: () => void;
@@ -121,7 +115,6 @@ export function useContentEngagement({
   totalMediaDuration,
   chapterId = null,
   existingChapterFurthest = 0,
-  pdfEstimatedSeconds,
   onAutoMarkRead,
   onIdle,
   idleMs = DEFAULT_IDLE_MS,
@@ -139,12 +132,6 @@ export function useContentEngagement({
   useEffect(() => { onAutoMarkReadRef.current = onAutoMarkRead; }, [onAutoMarkRead]);
   const idleMsRef = useRef(idleMs);
   useEffect(() => { idleMsRef.current = idleMs; }, [idleMs]);
-
-  // PDF: store estimated seconds in a ref so the timer effect stays stable
-  const pdfEstimatedSecondsRef = useRef(pdfEstimatedSeconds ?? 0);
-  useEffect(() => {
-    pdfEstimatedSecondsRef.current = pdfEstimatedSeconds ?? 0;
-  }, [pdfEstimatedSeconds]);
 
   // Media state
   const furthestRef = useRef(0);      // high-watermark: used only for auto-mark-read threshold
@@ -263,16 +250,6 @@ export function useContentEngagement({
       if (!idle) {
         firedIdleRef.current = false;
         accSecondsRef.current += TICK_S;
-        // PDF auto-mark: fire when cumulative active time reaches 95% of estimate
-        const pdfThreshold = pdfEstimatedSecondsRef.current;
-        if (!autoMarkedRef.current && pdfThreshold > 0) {
-          const total = baseSecondsRef.current + accSecondsRef.current;
-          if (total >= pdfThreshold * 0.95) {
-            autoMarkedRef.current = true;
-            onAutoMarkReadRef.current?.();
-            write();
-          }
-        }
         if (accSecondsRef.current % FLUSH_INTERVAL_S === 0) {
           write();
         }

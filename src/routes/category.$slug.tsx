@@ -43,8 +43,6 @@ import { useRatings } from "@/hooks/use-ratings";
 import { useAchievements } from "@/hooks/use-achievements";
 import { useKeyboardInput } from "@/components/OnScreenKeyboard";
 
-const PDF_EXT = /\.pdf(\?|#|$)/i;
-
 
 function IdlePrompt({ countdown, onStillHere }: { countdown: number; onStillHere: () => void }) {
   return (
@@ -697,17 +695,6 @@ function CategoryPage() {
     }, 600);
   };
 
-  // For PDF items: derive estimated reading time in seconds from the duration field
-  const activeItem = activeItemId ? data?.items.find((it) => it.id === activeItemId) : null;
-  const activePdfEstimatedSeconds = (() => {
-    if (!activeItem) return undefined;
-    // Uploaded files are saved to `url` (file_url is always null in the DB)
-    const pdfUrl = activeItem.file_url || activeItem.url;
-    if (!pdfUrl || !PDF_EXT.test(pdfUrl)) return undefined;
-    const mins = parseMinutes(activeItem.duration);
-    return mins > 0 ? mins * 60 : undefined;
-  })();
-
   // Debug idle counter — only runs for tester accounts
   const [debugIdleSecs, setDebugIdleSecs] = useState(0);
   const debugLastActivityRef = useRef(Date.now());
@@ -721,6 +708,26 @@ function CategoryPage() {
     }, 500);
     return () => { clearInterval(t); events.forEach((e) => document.removeEventListener(e, reset)); };
   }, [isTester]);
+
+  // PDFs are marked read manually (see the "Mark as read" button in the PDF
+  // dialog below) rather than automatically after some estimated reading
+  // time — this delay just stops the button from being clickable the instant
+  // the file opens. Resets every time a (possibly different) PDF is opened.
+  const PDF_READ_DELAY_MS = 8000;
+  const [pdfReadReady, setPdfReadReady] = useState(false);
+  useEffect(() => {
+    if (!pdfViewer) {
+      setPdfReadReady(false);
+      return;
+    }
+    setPdfReadReady(false);
+    const t = setTimeout(() => setPdfReadReady(true), PDF_READ_DELAY_MS);
+    return () => clearTimeout(t);
+    // Deliberately keyed on itemId, not the pdfViewer object itself — a new
+    // object reference on every render (same PDF still open) shouldn't
+    // restart the delay, only actually opening a (possibly different) PDF should.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pdfViewer?.itemId]);
 
   // Progressive idle thresholds: 90s → 3min → 5min cap
   const IDLE_THRESHOLDS_MS = [90_000, 180_000, 300_000];
@@ -754,7 +761,6 @@ function CategoryPage() {
     totalMediaDuration: hasChapters && totalChapterDuration > 0 ? totalChapterDuration : undefined,
     chapterId: hasChapters ? (activeChapter?.id ?? null) : null,
     existingChapterFurthest: activeChapter ? (perChapterProgressMap.get(activeChapter.id) ?? 0) : 0,
-    pdfEstimatedSeconds: activePdfEstimatedSeconds,
     onAutoMarkRead: activeItemId
       ? () => toggleRead.mutate({ itemId: activeItemId, markRead: true })
       : undefined,
@@ -2099,6 +2105,37 @@ function CategoryPage() {
               <PdfViewer key={pdfViewer.url} url={pdfViewer.url} />
             </Suspense>
           )}
+          {pdfViewer &&
+            (() => {
+              const isRead = readSet.has(pdfViewer.itemId);
+              const waiting = !isRead && !pdfReadReady;
+              return (
+                <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center">
+                  <button
+                    type="button"
+                    disabled={waiting}
+                    onClick={() => {
+                      if (!isRead) toggleRead.mutate({ itemId: pdfViewer.itemId, markRead: true });
+                    }}
+                    title={waiting ? "Give it a moment before marking as read" : undefined}
+                    className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium shadow-lg backdrop-blur transition-colors ${
+                      isRead
+                        ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
+                        : waiting
+                          ? "border-input bg-background/80 text-muted-foreground cursor-not-allowed"
+                          : "border-input bg-background/95 hover:bg-muted"
+                    }`}
+                  >
+                    {isRead ? (
+                      <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                    ) : (
+                      <Circle className="h-4 w-4 flex-shrink-0" />
+                    )}
+                    <span>{isRead ? t("category.markedRead") : t("category.markAsRead")}</span>
+                  </button>
+                </div>
+              );
+            })()}
           {showIdlePrompt && <IdlePrompt countdown={idleCountdown} onStillHere={() => { clearIdleCountdown(); setShowIdlePrompt(false); setIdleConfirmCount((n) => n + 1); resetIdle(); }} />}
         </DialogContent>
       </Dialog>
