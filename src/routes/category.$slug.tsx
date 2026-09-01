@@ -935,6 +935,13 @@ function CategoryPage() {
                 if (byKey.has("uncategorized")) {
                   groups.push({ key: "uncategorized", items: byKey.get("uncategorized")! });
                 }
+                // No item in the category has a section set — don't show any
+                // section UI at all, just the flat list (as if the feature
+                // didn't exist). Section headers only start appearing once at
+                // least one item actually has a section; from then on, the
+                // leftover unsectioned items get their own "Other Content"
+                // header instead of disappearing into an unlabeled group.
+                const noSectionsUsed = groups.length === 1 && groups[0].key === "uncategorized";
                 const firstItemId = groups[0]?.items[0]?.id;
                 return (
                   <>
@@ -968,35 +975,37 @@ function CategoryPage() {
                     ) : (
                       <div className="space-y-6">
                         {groups.map(({ key, items }) => {
-                          const isCollapsed = collapsedSections.has(key);
+                          const isCollapsed = !noSectionsUsed && collapsedSections.has(key);
                           const sectionLabel =
                             key === "uncategorized"
-                              ? t("category.uncategorized")
+                              ? t("category.otherContent")
                               : pickLang(lang, items[0].section, items[0].section_es) ||
                                 items[0].section ||
                                 key;
                           return (
                             <div key={key}>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setCollapsedSections((prev) => {
-                                    const next = new Set(prev);
-                                    if (next.has(key)) next.delete(key);
-                                    else next.add(key);
-                                    return next;
-                                  })
-                                }
-                                className="mb-2 flex w-full items-center gap-1.5 text-left font-display text-base font-semibold"
-                              >
-                                <ChevronDown
-                                  className={`h-4 w-4 transition-transform flex-shrink-0 ${isCollapsed ? "-rotate-90" : ""}`}
-                                />
-                                <span>{sectionLabel}</span>
-                                <span className="font-normal text-sm text-muted-foreground">
-                                  ({items.length})
-                                </span>
-                              </button>
+                              {!noSectionsUsed && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setCollapsedSections((prev) => {
+                                      const next = new Set(prev);
+                                      if (next.has(key)) next.delete(key);
+                                      else next.add(key);
+                                      return next;
+                                    })
+                                  }
+                                  className="mb-2 flex w-full items-center gap-1.5 text-left font-display text-base font-semibold"
+                                >
+                                  <ChevronDown
+                                    className={`h-4 w-4 transition-transform flex-shrink-0 ${isCollapsed ? "-rotate-90" : ""}`}
+                                  />
+                                  <span>{sectionLabel}</span>
+                                  <span className="font-normal text-sm text-muted-foreground">
+                                    ({items.length})
+                                  </span>
+                                </button>
+                              )}
                               {/* Always rendered (never unmounted) so the #item-{id}
                             deep-link effect above can find it via
                             getElementById even while visually collapsed. */}
@@ -2101,41 +2110,49 @@ function CategoryPage() {
         <DialogContent className="w-[95vw] min-w-0 max-w-[95vw] sm:max-w-[95vw] p-0 overflow-hidden max-h-[calc(100dvh-2rem)] top-[1rem] translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
           <DialogTitle className="sr-only">{pdfViewer?.title ?? "PDF"}</DialogTitle>
           {pdfViewer && (
-            <Suspense fallback={<div className="p-8 text-sm text-muted-foreground h-[calc(100dvh-4rem)]">Loading PDF…</div>}>
-              <PdfViewer key={pdfViewer.url} url={pdfViewer.url} />
-            </Suspense>
+            <div className="flex h-[min(85dvh,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] min-h-0 flex-col">
+              <Suspense
+                fallback={
+                  <div className="p-8 text-sm text-muted-foreground h-[calc(100dvh-4rem)]">
+                    Loading PDF…
+                  </div>
+                }
+              >
+                <PdfViewer key={pdfViewer.url} url={pdfViewer.url} />
+              </Suspense>
+              {(() => {
+                const isRead = readSet.has(pdfViewer.itemId);
+                const waiting = !isRead && !pdfReadReady;
+                return (
+                  <div className="flex shrink-0 justify-center border-t border-border bg-card p-2">
+                    <button
+                      type="button"
+                      disabled={waiting}
+                      onClick={() => {
+                        if (!isRead)
+                          toggleRead.mutate({ itemId: pdfViewer.itemId, markRead: true });
+                      }}
+                      title={waiting ? "Give it a moment before marking as read" : undefined}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                        isRead
+                          ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
+                          : waiting
+                            ? "border-input bg-background text-muted-foreground cursor-not-allowed"
+                            : "border-input bg-background hover:bg-muted"
+                      }`}
+                    >
+                      {isRead ? (
+                        <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                      ) : (
+                        <Circle className="h-4 w-4 flex-shrink-0" />
+                      )}
+                      <span>{isRead ? t("category.markedRead") : t("category.markAsRead")}</span>
+                    </button>
+                  </div>
+                );
+              })()}
+            </div>
           )}
-          {pdfViewer &&
-            (() => {
-              const isRead = readSet.has(pdfViewer.itemId);
-              const waiting = !isRead && !pdfReadReady;
-              return (
-                <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex justify-center">
-                  <button
-                    type="button"
-                    disabled={waiting}
-                    onClick={() => {
-                      if (!isRead) toggleRead.mutate({ itemId: pdfViewer.itemId, markRead: true });
-                    }}
-                    title={waiting ? "Give it a moment before marking as read" : undefined}
-                    className={`pointer-events-auto inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium shadow-lg backdrop-blur transition-colors ${
-                      isRead
-                        ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
-                        : waiting
-                          ? "border-input bg-background/80 text-muted-foreground cursor-not-allowed"
-                          : "border-input bg-background/95 hover:bg-muted"
-                    }`}
-                  >
-                    {isRead ? (
-                      <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-                    ) : (
-                      <Circle className="h-4 w-4 flex-shrink-0" />
-                    )}
-                    <span>{isRead ? t("category.markedRead") : t("category.markAsRead")}</span>
-                  </button>
-                </div>
-              );
-            })()}
           {showIdlePrompt && <IdlePrompt countdown={idleCountdown} onStillHere={() => { clearIdleCountdown(); setShowIdlePrompt(false); setIdleConfirmCount((n) => n + 1); resetIdle(); }} />}
         </DialogContent>
       </Dialog>

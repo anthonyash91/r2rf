@@ -11,7 +11,7 @@ import { BadgeGroup } from "@/components/BadgeGroup";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, FolderOpen, GripVertical, Info, Tag, ChevronDown, ChevronUp, Languages, Upload, BookOpen } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, FolderOpen, GripVertical, Info, Tag, ChevronDown, ChevronUp, Languages, Upload, BookOpen, ShieldOff } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { listFacilities } from "@/lib/facilities.functions";
@@ -153,6 +153,16 @@ function AdminCategoryPageContent() {
           facilities.map((f) => ({ category_id: id, facility_value: f }))
         );
       }
+      // Turning exemption ON cascades to every current item in the category —
+      // a one-time bulk action, not a live-inherited flag. Turning it OFF
+      // does not auto-revert existing items (see Category type doc comment).
+      if (input.exempt_from_progress === true && data?.category.exempt_from_progress !== true) {
+        const { error: bulkErr } = await (supabase as any)
+          .from("content_items")
+          .update({ exempt_from_progress: true })
+          .eq("category_id", id);
+        if (bulkErr) throw bulkErr;
+      }
     },
     onSuccess: () => {
       toast.success("Saved");
@@ -184,6 +194,7 @@ function AdminCategoryPageContent() {
             categoryName={data.category.name}
             categorySlug={data.category.slug}
             categoryStreamCollectionId={data.category.stream_collection_id ?? null}
+            categoryExemptDefault={data.category.exempt_from_progress ?? false}
             items={data.items}
             initialEditId={edit}
             categoryFacilities={data.category.facilities ?? []}
@@ -212,6 +223,9 @@ function CategoryEditor({
   const [iconName, setIconName] = useState<string | null>(category.icon_name);
   const [iconColor, setIconColor] = useState<string | null>(category.icon_color);
   const [published, setPublished] = useState(category.published);
+  const [exemptFromProgress, setExemptFromProgress] = useState(
+    category.exempt_from_progress ?? false,
+  );
   const [catFacilities, setCatFacilities] = useState<string[]>(category.facilities ?? []);
   const [nameEs, setNameEs] = useState(category.name_es ?? "");
   const [taglineEs, setTaglineEs] = useState(category.tagline_es ?? "");
@@ -231,6 +245,7 @@ function CategoryEditor({
     setIconName(category.icon_name);
     setIconColor(category.icon_color);
     setPublished(category.published);
+    setExemptFromProgress(category.exempt_from_progress ?? false);
     setCatFacilities(category.facilities ?? []);
     setNameEs(category.name_es ?? "");
     setTaglineEs(category.tagline_es ?? "");
@@ -306,6 +321,7 @@ function CategoryEditor({
             icon_name: iconName,
             icon_color: iconColor,
             published,
+            exempt_from_progress: exemptFromProgress,
             facilities: catFacilities,
             name_es: nameEs.trim() || null,
             tagline_es: taglineEs.trim() || null,
@@ -423,12 +439,33 @@ function CategoryEditor({
           </div>
         </div>
 
-        <label className="inline-flex items-center gap-2 text-sm">
-          <Checkbox checked={published} onCheckedChange={(v) => setPublished(Boolean(v))} />
+        <div className="flex flex-col gap-2">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={published} onCheckedChange={(v) => setPublished(Boolean(v))} />
+            Published (visible to the public)
+          </label>
 
-          Published (visible to the public)
-        </label>
-
+          <div className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={exemptFromProgress}
+              onCheckedChange={(v) => setExemptFromProgress(Boolean(v))}
+            />
+            <span>Exempt entire category from tracking</span>
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help flex-shrink-0" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs max-w-[260px] text-center">
+                  Turning this on immediately marks every current item in this category as exempt
+                  (same as the item-level setting) and makes new items default to exempt too.
+                  Turning it off does not un-exempt items already marked exempt — do that from the
+                  content list's multi-select "Exempt from tracking" action instead.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
 
         <TranslationPanel
           open={showEs}
@@ -758,10 +795,12 @@ type BulkReviewSavePayload = {
   title: string;
   type: string;
   source: string;
+  duration: string;
   section: string | null;
   section_es: string | null;
   description: string;
   published: boolean;
+  exempt_from_progress: boolean;
 };
 
 // Shown above the item list right after a bulk upload — one lightweight
@@ -815,10 +854,12 @@ function BulkReviewPanel({
           title: item.title,
           type: item.type,
           source: item.source ?? "",
+          duration: item.duration ?? "",
           section: item.section ?? null,
           section_es: item.section_es ?? null,
           description: item.description ?? "",
           published: true,
+          exempt_from_progress: item.exempt_from_progress ?? false,
         };
         changed = true;
       }
@@ -846,6 +887,7 @@ function BulkReviewPanel({
             <BulkReviewCard
               key={item.id}
               fileName={item.file_name ?? item.title}
+              url={item.url ?? ""}
               draft={draft}
               onChange={(patch) => updateDraft(item.id, patch)}
               categoryName={categoryName}
@@ -880,6 +922,7 @@ function BulkReviewPanel({
 
 function BulkReviewCard({
   fileName,
+  url,
   draft,
   onChange,
   categoryName,
@@ -889,6 +932,7 @@ function BulkReviewCard({
   onDismiss,
 }: {
   fileName: string;
+  url: string;
   draft: BulkReviewSavePayload;
   onChange: (patch: Partial<BulkReviewSavePayload>) => void;
   categoryName: string;
@@ -899,6 +943,11 @@ function BulkReviewCard({
 }) {
   const generateDesc = useServerFn(generateContentDescription);
   const [generatingDesc, setGeneratingDesc] = useState(false);
+  const [durationEstimating, setDurationEstimating] = useState(false);
+  const canRecalculateDuration =
+    extOf(url, null) === "pdf" ||
+    !!extractStreamVideoId(url) ||
+    !!mediaKindFor(draft.type, url, null);
 
   async function handleGenerateDesc() {
     const trimmed = draft.title.trim();
@@ -917,6 +966,17 @@ function BulkReviewCard({
       toast.error(e?.message ?? "Failed to generate");
     } finally {
       setGeneratingDesc(false);
+    }
+  }
+
+  async function handleRecalculateDuration() {
+    setDurationEstimating(true);
+    try {
+      const result = await recalculateDurationValue(url, draft.type);
+      if (result) onChange({ duration: result });
+      else toast.error("Bunny hasn't reported a duration for this video yet");
+    } finally {
+      setDurationEstimating(false);
     }
   }
 
@@ -966,6 +1026,29 @@ function BulkReviewCard({
         suggestions={sourceSuggestions}
       />
       <label className="block">
+        <span className="text-sm font-medium">Duration</span>
+        <div className="relative mt-1">
+          <input
+            type="text"
+            value={draft.duration}
+            onChange={(e) => onChange({ duration: e.target.value })}
+            placeholder="8 min read"
+            className={`w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm ${canRecalculateDuration ? "pr-8" : ""}`}
+          />
+          {canRecalculateDuration && (
+            <button
+              type="button"
+              disabled={durationEstimating}
+              onClick={handleRecalculateDuration}
+              title={durationEstimating ? "Calculating duration…" : "Recalculate duration"}
+              className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-60"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${durationEstimating ? "animate-spin" : ""}`} />
+            </button>
+          )}
+        </div>
+      </label>
+      <label className="block">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-medium">Description</span>
           <button
@@ -993,6 +1076,25 @@ function BulkReviewCard({
         />
         Published
       </label>
+      <div className="flex items-center gap-1.5 text-sm">
+        <input
+          type="checkbox"
+          checked={draft.exempt_from_progress}
+          onChange={(e) => onChange({ exempt_from_progress: e.target.checked })}
+        />
+        <span>Exempt from tracking</span>
+        <TooltipProvider delayDuration={150}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help flex-shrink-0" />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-xs max-w-[220px] text-center">
+              Exempt items show an "Acknowledged" button but don't count toward user progress,
+              completion rates, or monthly summaries.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </div>
   );
 }
@@ -1002,6 +1104,7 @@ function ContentManager({
   categoryName,
   categorySlug,
   categoryStreamCollectionId,
+  categoryExemptDefault,
   items,
   initialEditId,
   categoryFacilities,
@@ -1011,6 +1114,7 @@ function ContentManager({
   categoryName: string;
   categorySlug: string;
   categoryStreamCollectionId: string | null;
+  categoryExemptDefault: boolean;
   items: ContentItem[];
   initialEditId?: string;
   categoryFacilities: string[];
@@ -1122,6 +1226,7 @@ function ContentManager({
           file_url_es: itemValues.file_url_es ?? null,
           file_name_es: itemValues.file_name_es ?? null,
           published: itemValues.published ?? true,
+          exempt_from_progress: itemValues.exempt_from_progress ?? false,
           storage_folder: itemValues.storage_folder ?? null,
           section: itemValues.section ?? null,
           section_es: itemValues.section_es ?? null,
@@ -1337,6 +1442,26 @@ function ContentManager({
     onError: (e: any) => toast.error(e.message),
   });
 
+  const updateExemptMut = useMutation({
+    mutationFn: async ({ ids, exempt }: { ids: string[]; exempt: boolean }) => {
+      const { error } = await (supabase as any)
+        .from("content_items")
+        .update({ exempt_from_progress: exempt })
+        .in("id", ids);
+      if (error) throw error;
+      return { count: ids.length, exempt };
+    },
+    onSuccess: ({ count, exempt }) => {
+      toast.success(
+        `${count} ${count === 1 ? "item" : "items"} ${exempt ? "exempted from" : "no longer exempt from"} tracking`,
+      );
+      invalidate();
+      bulk.clear();
+      bulk.exitEditMode();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const reorderMut = useMutation({
     mutationFn: async (next: ContentItem[]) => {
       await Promise.all(
@@ -1423,6 +1548,7 @@ function ContentManager({
                 description: "",
                 url: playbackUrl,
                 published: false,
+                exempt_from_progress: categoryExemptDefault,
                 sort_order: sortOrder,
               });
               if (error) throw error;
@@ -1470,6 +1596,7 @@ function ContentManager({
               description: "",
               url: publicUrl,
               published: false,
+              exempt_from_progress: categoryExemptDefault,
               storage_folder: folder,
               sort_order: sortOrder,
             });
@@ -1521,10 +1648,12 @@ function ContentManager({
               title: d.title.trim() || d.title,
               type: d.type,
               source: d.source,
+              duration: d.duration,
               section: d.section,
               section_es: d.section_es,
               description: d.description,
               published: d.published,
+              exempt_from_progress: d.exempt_from_progress,
             })
             .eq("id", d.id);
           if (error) throw error;
@@ -1670,6 +1799,7 @@ function ContentManager({
             categorySlug={categorySlug}
             collectionId={categoryCollectionId}
             onCollectionCreated={persistCategoryCollectionId}
+            categoryExemptDefault={categoryExemptDefault}
             onCancel={() => setEditing(null)}
             onSave={(v) => saveMut.mutate(v as ItemSavePayload)}
             busy={saveMut.isPending}
@@ -1877,6 +2007,27 @@ function ContentManager({
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <LoadingButton
+                    variant="secondary"
+                    pending={updateExemptMut.isPending}
+                    pendingText="Updating…"
+                    icon={<ShieldOff className="h-4 w-4" />}
+                  >
+                    Exempt from tracking ({ids.length})
+                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                  </LoadingButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" collisionPadding={16}>
+                  <DropdownMenuItem onSelect={() => updateExemptMut.mutate({ ids, exempt: true })}>
+                    Mark as exempt
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => updateExemptMut.mutate({ ids, exempt: false })}>
+                    Remove exemption
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
         />
@@ -2062,6 +2213,7 @@ function ItemEditor({
   categorySlug,
   collectionId,
   onCollectionCreated,
+  categoryExemptDefault,
   onCancel,
   onSave,
   busy,
@@ -2079,6 +2231,9 @@ function ItemEditor({
    * named after the category slug) — null until the first upload creates one. */
   collectionId: string | null;
   onCollectionCreated: (collectionId: string) => void;
+  /** The category's own exempt-from-tracking setting — used only as the
+   * default for a brand-new item; existing items keep their own stored value. */
+  categoryExemptDefault: boolean;
   onCancel: () => void;
   onSave: (v: ItemSavePayload) => void;
   busy: boolean;
@@ -2169,7 +2324,9 @@ function ItemEditor({
   const [description, setDescription] = useState(item?.description ?? "");
   const [url, setUrl] = useState(item?.url ?? "");
   const [published, setPublished] = useState(item?.published ?? true);
-  const [exemptFromProgress, setExemptFromProgress] = useState(item?.exempt_from_progress ?? false);
+  const [exemptFromProgress, setExemptFromProgress] = useState(
+    item?.exempt_from_progress ?? categoryExemptDefault,
+  );
   const [facilities, setFacilities] = useState<string[]>(item?.facilities ?? []);
   const [titleEs, setTitleEs] = useState(item?.title_es ?? "");
   const [descriptionEs, setDescriptionEs] = useState(item?.description_es ?? "");
@@ -2660,29 +2817,9 @@ function ItemEditor({
                 onClick={async () => {
                   setDurationEstimating(true);
                   try {
-                    if (extOf(url, null) === "pdf") {
-                      const estimated = await estimateDuration(url, null, type);
-                      if (estimated) setDuration(estimated);
-                      return;
-                    }
-                    // Stream-hosted video/audio: the stored URL is a Bunny HLS
-                    // playlist, which plain <video>/<audio> probing can't read
-                    // outside Safari (no native HLS support) — ask Bunny for
-                    // the video's real duration directly instead.
-                    const videoId = extractStreamVideoId(url);
-                    if (videoId) {
-                      const seconds = await getStreamDurationSeconds(videoId);
-                      if (seconds && seconds > 0) {
-                        setDuration(withActionWord(formatMediaDuration(seconds), type));
-                      } else {
-                        toast.error("Bunny hasn't reported a duration for this video yet");
-                      }
-                      return;
-                    }
-                    // Direct (non-Stream) audio/video file — a real file URL,
-                    // no HLS involved, so client-side probing works fine.
-                    const estimated = await estimateDuration(url, null, type);
-                    if (estimated) setDuration(estimated);
+                    const result = await recalculateDurationValue(url, type);
+                    if (result) setDuration(result);
+                    else toast.error("Bunny hasn't reported a duration for this video yet");
                   } finally {
                     setDurationEstimating(false);
                   }
@@ -3429,6 +3566,29 @@ async function estimateDuration(url: string, name: string | null, type: string):
     }
   }
   return defaultDurationForType(type);
+}
+
+/**
+ * Recalculates a content item's duration from its actual file — PDF text
+ * extraction, a direct probe of a real audio/video file, or (for Bunny
+ * Stream-hosted media) asking Bunny for the video's real duration directly,
+ * since client-side <video>/<audio> probing can't read a duration from an
+ * .m3u8 HLS URL outside Safari. Shared by the single-item editor's and the
+ * bulk review cards' recalculate buttons so there's one implementation, not
+ * two that can drift out of sync. Returns null only when Bunny hasn't
+ * reported a duration for the video yet — every other path always returns
+ * something, since estimateDuration falls back to a type-based default.
+ */
+async function recalculateDurationValue(url: string, type: string): Promise<string | null> {
+  if (extOf(url, null) === "pdf") {
+    return (await estimateDuration(url, null, type)) || null;
+  }
+  const videoId = extractStreamVideoId(url);
+  if (videoId) {
+    const seconds = await getStreamDurationSeconds(videoId);
+    return seconds && seconds > 0 ? withActionWord(formatMediaDuration(seconds), type) : null;
+  }
+  return (await estimateDuration(url, null, type)) || null;
 }
 
 function defaultDurationForType(type: string): string {

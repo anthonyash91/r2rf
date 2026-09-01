@@ -42,6 +42,11 @@ export type Category = {
   /** Bunny Stream collection shared by every video/audio upload within this
    * category. Null until the first video/audio upload creates one. */
   stream_collection_id?: string | null;
+  /** Not a live-inherited flag — turning this on bulk-sets every current item
+   * in the category to exempt (one-time) and becomes the default for new
+   * items created in the category going forward. Turning it off does not
+   * auto-revert existing items. */
+  exempt_from_progress?: boolean;
 };
 
 export type ContentItem = {

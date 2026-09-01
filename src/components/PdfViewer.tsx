@@ -77,7 +77,7 @@ export default function PdfViewer({ url }: { url: string }) {
   const pageWidth = width > 0 ? Math.max(width - 16, 1) : 0;
 
   return (
-    <div className="flex h-[min(85dvh,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] min-h-0 w-full min-w-0 max-w-full flex-col overflow-hidden bg-background">
+    <div className="flex h-full min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-hidden bg-background">
       <div ref={containerRef} className="min-h-0 w-full min-w-0 max-w-full flex-1 overflow-y-auto overflow-x-hidden p-2">
         <Document
           file={url}
