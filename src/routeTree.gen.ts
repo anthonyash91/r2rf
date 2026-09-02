@@ -19,6 +19,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as FacilitySlugRouteImport } from './routes/facility.$slug'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiDebugHeadersRouteImport } from './routes/api/debug-headers'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminTestResultsRouteImport } from './routes/admin.test-results'
 import { Route as AdminTermsRouteImport } from './routes/admin.terms'
@@ -86,6 +87,11 @@ const CategorySlugRoute = CategorySlugRouteImport.update({
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDebugHeadersRoute = ApiDebugHeadersRouteImport.update({
+  id: '/api/debug-headers',
+  path: '/api/debug-headers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
@@ -200,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/admin/terms': typeof AdminTermsRoute
   '/admin/test-results': typeof AdminTestResultsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/debug-headers': typeof ApiDebugHeadersRoute
   '/api/health': typeof ApiHealthRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
@@ -229,6 +236,7 @@ export interface FileRoutesByTo {
   '/admin/terms': typeof AdminTermsRoute
   '/admin/test-results': typeof AdminTestResultsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/debug-headers': typeof ApiDebugHeadersRoute
   '/api/health': typeof ApiHealthRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
@@ -260,6 +268,7 @@ export interface FileRoutesById {
   '/admin/terms': typeof AdminTermsRoute
   '/admin/test-results': typeof AdminTestResultsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/api/debug-headers': typeof ApiDebugHeadersRoute
   '/api/health': typeof ApiHealthRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
@@ -292,6 +301,7 @@ export interface FileRouteTypes {
     | '/admin/terms'
     | '/admin/test-results'
     | '/admin/users'
+    | '/api/debug-headers'
     | '/api/health'
     | '/category/$slug'
     | '/facility/$slug'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/admin/terms'
     | '/admin/test-results'
     | '/admin/users'
+    | '/api/debug-headers'
     | '/api/health'
     | '/category/$slug'
     | '/facility/$slug'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/admin/terms'
     | '/admin/test-results'
     | '/admin/users'
+    | '/api/debug-headers'
     | '/api/health'
     | '/category/$slug'
     | '/facility/$slug'
@@ -368,6 +380,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
+  ApiDebugHeadersRoute: typeof ApiDebugHeadersRoute
   ApiHealthRoute: typeof ApiHealthRoute
   CategorySlugRoute: typeof CategorySlugRoute
   FacilitySlugRoute: typeof FacilitySlugRoute
@@ -446,6 +459,13 @@ declare module '@tanstack/react-router' {
       path: '/api/health'
       fullPath: '/api/health'
       preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/debug-headers': {
+      id: '/api/debug-headers'
+      path: '/api/debug-headers'
+      fullPath: '/api/debug-headers'
+      preLoaderRoute: typeof ApiDebugHeadersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/users': {
@@ -624,6 +644,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
+  ApiDebugHeadersRoute: ApiDebugHeadersRoute,
   ApiHealthRoute: ApiHealthRoute,
   CategorySlugRoute: CategorySlugRoute,
   FacilitySlugRoute: FacilitySlugRoute,
