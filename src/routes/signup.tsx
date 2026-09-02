@@ -19,7 +19,7 @@ import { listFacilities, getFacilityBySiteId } from "@/lib/facilities.functions"
 import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
 import { useActiveInmatePin, setActiveInmatePin } from "@/lib/inmate-pin-context";
 import { useAuthChecking } from "@/lib/auth-checking-context";
-import { usePlatformIdentity } from "@/hooks/use-platform-identity";
+import { readPlatformIdentity } from "@/lib/platform-identity";
 import { questionLabel } from "@/lib/security-questions";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -37,6 +37,7 @@ export const Route = createFileRoute("/signup")({
     site: typeof search.site === "string" ? search.site : undefined,
     user: typeof search.user === "string" ? search.user : undefined,
   }),
+  loader: async () => readPlatformIdentity(),
   component: SignupPage,
 });
 
@@ -53,7 +54,9 @@ function SignupPageContent() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { redirect: redirectTo, site: searchSite, user: searchUser } = Route.useSearch();
-  const { site: siteParam, inmatePin: userParam } = usePlatformIdentity(searchSite, searchUser);
+  const platformIdentity = Route.useLoaderData();
+  const siteParam = platformIdentity?.facilityId ?? searchSite;
+  const userParam = platformIdentity?.residentId ?? searchUser;
   const { isChecking: checkingSignIn } = useAuthChecking();
 
   // If the signup page was opened directly with a platform header or

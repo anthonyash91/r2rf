@@ -15,7 +15,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { setActiveFacilitySlug } from "@/lib/facility-context";
 import { setActiveInmatePin } from "@/lib/inmate-pin-context";
 import { getFacilityBySiteId } from "@/lib/facilities.functions";
-import { usePlatformIdentity } from "@/hooks/use-platform-identity";
+import { readPlatformIdentity } from "@/lib/platform-identity";
 
 export const Route = createFileRoute("/")({
   validateSearch: z.object({
@@ -23,6 +23,7 @@ export const Route = createFileRoute("/")({
     user: z.coerce.string().optional().transform((v) => v?.replace(/^"+|"+$/g, "") || undefined),
     language: z.coerce.string().optional(),
   }),
+  loader: async () => readPlatformIdentity(),
   head: () => ({
     meta: [
       { title: "Reentry to Recovery — Content Library" },
@@ -63,7 +64,9 @@ function Index() {
 
 function IndexContent() {
   const { site: searchSite, user: searchUser } = Route.useSearch();
-  const { site, inmatePin } = usePlatformIdentity(searchSite, searchUser);
+  const platformIdentity = Route.useLoaderData();
+  const site = platformIdentity?.facilityId ?? searchSite;
+  const inmatePin = platformIdentity?.residentId ?? searchUser;
   const getFacilityFn = useServerFn(getFacilityBySiteId);
 
   const { data: siteFacility } = useQuery({
