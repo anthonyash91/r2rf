@@ -4,27 +4,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdminOrContributor } from "@/lib/server-auth";
 import Anthropic from "@anthropic-ai/sdk";
 
-// Shared in-process rate limiter for all AI generation calls: 60 per hour per user.
-// Prevents a single authenticated user from running up unbounded Anthropic API costs.
-const AI_WINDOW_MS = 60 * 60_000;
-const AI_MAX_PER_USER = 60;
-type AiBucket = { count: number; windowStart: number };
-const aiBuckets = new Map<string, AiBucket>();
-
-function assertAiRateLimit(userId: string): void {
-  const now = Date.now();
-  let bucket = aiBuckets.get(userId);
-  if (!bucket || now - bucket.windowStart > AI_WINDOW_MS) {
-    bucket = { count: 0, windowStart: now };
-    aiBuckets.set(userId, bucket);
-  }
-  if (bucket.count >= AI_MAX_PER_USER) {
-    throw new Error("AI generation rate limit reached. Please wait before generating more content.");
-  }
-  bucket.count++;
-}
-
-
 const anthropic = new Anthropic();
 
 // Pulls the first text block from a Claude response; falls back to "{}"
@@ -47,7 +26,6 @@ export const generateCategoryCopy = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdminOrContributor(context.userId);
-    assertAiRateLimit(context.userId);
     checkApiKey();
 
     const msg = await anthropic.messages.create({
@@ -91,7 +69,6 @@ export const generateContentDescription = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context: ctx }) => {
     await assertAdminOrContributor(ctx.userId);
-    assertAiRateLimit(ctx.userId);
     checkApiKey();
 
     const context = [
@@ -151,7 +128,6 @@ export const translateToSpanish = createServerFn({ method: "POST" })
     if (!adminRes.data && !contribRes.data && !facilityRes.data) {
       throw new Error("Forbidden: admin, contributor, or facility user access required");
     }
-    assertAiRateLimit(context.userId);
     checkApiKey();
 
     const entries = Object.entries(data.fields).filter(([, v]) => v && v.trim());
