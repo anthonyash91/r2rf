@@ -151,28 +151,43 @@ export async function getCustomHomeRestrictions(): Promise<Map<string, Set<strin
 }
 
 /**
+ * Picks the non-spoofable entry out of a comma-separated forwarded-IP header,
+ * per TRUSTED_IP_XFF_POSITION ("leftmost", the default, or "rightmost").
+ *
+ * Different hosts append their own trustworthy IP to a different end of the
+ * list: Render strips any client-supplied x-forwarded-for and sets its own
+ * value first (leftmost authoritative). Heroku's router instead appends its
+ * own value to the right of whatever x-forwarded-for it received — including
+ * a client-forged one — so on Heroku the RIGHTMOST entry is the authoritative
+ * one and the leftmost is attacker-controlled. Set TRUSTED_IP_XFF_POSITION to
+ * match whichever platform this is actually deployed on.
+ */
+function pickXffEntry(headerValue: string): string | null {
+  const parts = headerValue.split(",").map((s) => s.trim()).filter(Boolean);
+  if (!parts.length) return null;
+  const position = process.env.TRUSTED_IP_XFF_POSITION === "rightmost" ? "rightmost" : "leftmost";
+  return position === "rightmost" ? parts[parts.length - 1] : parts[0];
+}
+
+/**
  * Returns the real client IP from the request.
  *
  * SECURITY — header trust model:
- * On Render, the proxy sets `x-forwarded-for` with the real client IP as the
- * FIRST (leftmost) entry. Render strips client-supplied `x-forwarded-for` values
- * before appending its own, so the leftmost entry is authoritative.
- * Set TRUSTED_IP_HEADER to override which header is read (e.g. "x-real-ip" if
- * your infrastructure guarantees that header is not client-forgeable).
- * WARNING: if this server is ever placed behind a CDN/proxy that does NOT strip
- * client-supplied XFF headers, the leftmost entry becomes attacker-controlled.
- * Verify your proxy's XFF behaviour before changing this function.
+ * Set TRUSTED_IP_HEADER to read a platform-provided single-IP header instead
+ * (e.g. a CDN's own "connecting IP" header) when your infrastructure
+ * guarantees that header is not client-forgeable. Otherwise this falls back
+ * to x-forwarded-for, picked per TRUSTED_IP_XFF_POSITION (see pickXffEntry
+ * above) — verify your host's XFF behaviour and set that env var to match
+ * before relying on this for access control.
  */
 export function getClientIp(request: Request): string | null {
   const trustedHeader = process.env.TRUSTED_IP_HEADER;
   if (trustedHeader) {
     const val = request.headers.get(trustedHeader);
-    if (val) return val.split(",")[0]?.trim() ?? null;
+    if (val) return pickXffEntry(val);
   }
-  // Default fallback chain for Render (no TRUSTED_IP_HEADER set):
-  // x-forwarded-for leftmost entry is the real client IP on Render's infrastructure.
   const xff = request.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]?.trim() ?? null;
+  if (xff) return pickXffEntry(xff);
   const real = request.headers.get("x-real-ip");
   if (real) return real.trim();
   return null;

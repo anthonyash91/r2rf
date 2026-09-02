@@ -1,5 +1,5 @@
 // Node.js HTTP server wrapper for the TanStack Start fetch handler.
-// Used by Render (and any Node.js host) — run with: node server-start.mjs
+// Host-agnostic — run with: node server-start.mjs (or `npm start`)
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { join, extname } from "node:path";
@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 
 // ── Process-level crash handlers (Issue 4) ───────────────────────────────────
 // Node 15+ exits on unhandled rejections by default. These handlers ensure
-// every crash is logged before exit so Render's log stream captures the cause.
+// every crash is logged before exit so the host's log stream captures the cause.
 process.on("uncaughtException", (err) => {
   console.error("[server] uncaughtException:", err);
   process.exit(1);
@@ -120,8 +120,14 @@ const server = createServer(async (req, res) => {
 
   // Rate limit check — runs after static assets (which are fast/cheap) but
   // before SSR handler (which triggers DB queries). Static assets already returned above.
+  // Which end of x-forwarded-for is the real client IP is host-dependent — see
+  // TRUSTED_IP_XFF_POSITION docs on getClientIp in src/lib/ip-allowlist.ts.
   const xff = req.headers["x-forwarded-for"];
-  const clientIp = xff ? xff.split(",")[0].trim() : req.socket.remoteAddress;
+  const clientIp = xff
+    ? (process.env.TRUSTED_IP_XFF_POSITION === "rightmost"
+        ? xff.split(",").map((s) => s.trim()).filter(Boolean).pop()
+        : xff.split(",")[0].trim())
+    : req.socket.remoteAddress;
   if (checkRateLimit(clientIp)) {
     res.writeHead(429, { "content-type": "text/plain", "retry-after": "1" });
     res.end("Too Many Requests");
@@ -218,7 +224,8 @@ const server = createServer(async (req, res) => {
 });
 
 // ── Graceful shutdown on SIGTERM (Issue 3) ───────────────────────────────────
-// Render sends SIGTERM when deploying a new version. Without this handler,
+// Render, Heroku, and most hosts send SIGTERM when deploying a new version or
+// restarting a dyno/instance. Without this handler,
 // the process exits immediately and drops every in-flight request.
 // server.close() stops accepting new connections and waits for existing ones
 // to finish. closeAllConnections() immediately closes idle keep-alive sockets

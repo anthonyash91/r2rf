@@ -3,6 +3,7 @@
 // authenticated/anon writes — this helper is the only sanctioned writer.
 import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getClientIp } from "@/lib/ip-allowlist";
 
 export type AdminAuditAction =
   | "user.create"
@@ -26,13 +27,10 @@ function getRequestMeta(): { ip: string | null; userAgent: string | null } {
   try {
     const req = getRequest();
     if (!req?.headers) return { ip: null, userAgent: null };
-    // Header priority: Cloudflare → standard proxy → NGINX real-ip.
-    // x-forwarded-for is a comma-separated list; take the first (leftmost) entry.
-    const ip =
-      req.headers.get("cf-connecting-ip") ||
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      req.headers.get("x-real-ip") ||
-      null;
+    // Cloudflare's own header first (only meaningful if a Cloudflare proxy
+    // sits in front of this deploy); otherwise defer to getClientIp's
+    // platform-aware x-forwarded-for handling (see ip-allowlist.ts).
+    const ip = req.headers.get("cf-connecting-ip") || getClientIp(req);
     const userAgent = req.headers.get("user-agent") || null;
     return { ip, userAgent };
   } catch {
