@@ -19,6 +19,7 @@ import { listFacilities, getFacilityBySiteId } from "@/lib/facilities.functions"
 import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
 import { useActiveInmatePin, setActiveInmatePin } from "@/lib/inmate-pin-context";
 import { useAuthChecking } from "@/lib/auth-checking-context";
+import { usePlatformIdentity } from "@/hooks/use-platform-identity";
 import { questionLabel } from "@/lib/security-questions";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -51,12 +52,14 @@ function SignupPage() {
 function SignupPageContent() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { redirect: redirectTo, site: siteParam, user: userParam } = Route.useSearch();
+  const { redirect: redirectTo, site: searchSite, user: searchUser } = Route.useSearch();
+  const { site: siteParam, inmatePin: userParam } = usePlatformIdentity(searchSite, searchUser);
   const { isChecking: checkingSignIn } = useAuthChecking();
 
-  // If the signup page was opened directly with ?site=... and/or ?user=...,
-  // store them in session storage immediately so the facility lock and PIN
-  // context work even without visiting the index page first.
+  // If the signup page was opened directly with a platform header or
+  // ?site=.../?user=..., store them in session storage immediately so the
+  // facility lock and PIN context work even without visiting the index page
+  // first.
   useEffect(() => {
     if (siteParam) setActiveFacilitySlug(siteParam);
     if (userParam) setActiveInmatePin(userParam);

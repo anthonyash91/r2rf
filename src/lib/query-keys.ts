@@ -44,6 +44,7 @@ export const QK = {
   facilityComparison: ["facility-comparison"] as const,
   facilityUserIdsForAudit: (facilityValue: string | null) =>
     ["facility-user-ids-for-audit", facilityValue] as const,
+  platformIdentity: ["platform-identity"] as const,
 
   // ── user / dashboard ──────────────────────────────────────────────────────
   myProfile: ["my-profile"] as const,

@@ -15,6 +15,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { setActiveFacilitySlug } from "@/lib/facility-context";
 import { setActiveInmatePin } from "@/lib/inmate-pin-context";
 import { getFacilityBySiteId } from "@/lib/facilities.functions";
+import { usePlatformIdentity } from "@/hooks/use-platform-identity";
 
 export const Route = createFileRoute("/")({
   validateSearch: z.object({
@@ -61,7 +62,8 @@ function Index() {
 }
 
 function IndexContent() {
-  const { site, user: inmatePin } = Route.useSearch();
+  const { site: searchSite, user: searchUser } = Route.useSearch();
+  const { site, inmatePin } = usePlatformIdentity(searchSite, searchUser);
   const getFacilityFn = useServerFn(getFacilityBySiteId);
 
   const { data: siteFacility } = useQuery({
@@ -71,8 +73,9 @@ function IndexContent() {
     queryFn: () => getFacilityFn({ data: { siteId: site! } }),
   });
 
-  // Store PIN immediately from URL — used by the sign-up form to pre-fill
-  // the inmate's PIN so they don't have to type it during registration.
+  // Store PIN immediately (from the platform header, or the URL as a
+  // fallback) — used by the sign-up form to pre-fill the inmate's PIN so
+  // they don't have to type it during registration.
   useEffect(() => {
     if (!site || !inmatePin) return;
     setActiveInmatePin(inmatePin);
