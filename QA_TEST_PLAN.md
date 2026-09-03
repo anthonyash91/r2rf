@@ -2315,7 +2315,7 @@ These tests verify the "Recommended Fixes After Launch" items from the security 
 🟢 **Low**
 **Role:** Admin
 
-In the Render dashboard (or `.env` locally), verify `TESTER_FACILITY` is set. Create a new tester account via Admin → Users → Add Tester. Sign in as that tester and simulate Facility User role via the Role Switcher. Check that the facility shown is the one matching `TESTER_FACILITY`.
+In the Heroku dashboard (or `.env` locally), verify `TESTER_FACILITY` is set. Create a new tester account via Admin → Users → Add Tester. Sign in as that tester and simulate Facility User role via the Role Switcher. Check that the facility shown is the one matching `TESTER_FACILITY`.
 
 ✅ Pass: The tester's facility matches the env var value (default `s003007001` / CPC Sales). Changing the env var and redeploying uses the new value without a code change.
 
@@ -2450,9 +2450,9 @@ Functional test: Enter a non-existent username on the "Forgot password?" form mo
 🟡 **Medium**
 **Role:** Admin (infra verification)
 
-In Render dashboard → Environment → verify `TRUSTED_IP_HEADER` is documented (can be left unset to use the default `x-forwarded-for` leftmost-entry behavior, which Render guarantees is the real client IP). Review the Render docs for your plan to confirm `x-forwarded-for` leftmost entry is the authoritative client IP and that Render strips client-supplied XFF values.
+In the Heroku dashboard → Settings → Config Vars → verify `TRUSTED_IP_XFF_POSITION` is set to `rightmost` (Heroku appends its trustworthy value to the right end of `x-forwarded-for`, unlike Render which prepends to the left — see `src/lib/ip-allowlist.ts`). Confirm `getClientIp()` reads this position correctly.
 
-✅ Pass: The `TRUSTED_IP_HEADER` env var is documented in `render.yaml`. The `getClientIp()` function uses it when set, falls back to `x-forwarded-for` leftmost entry otherwise.
+✅ Pass: `TRUSTED_IP_XFF_POSITION=rightmost` is set on Heroku. `getClientIp()` picks the rightmost `x-forwarded-for` entry, not the leftmost (leftmost would be attacker-controlled on Heroku).
 
 ---
 

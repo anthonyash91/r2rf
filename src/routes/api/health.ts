@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-// Render uses this path (configured via healthCheckPath in render.yaml) to
-// decide whether a deployment succeeded and to route traffic to the instance.
-// The endpoint is exempt from IP allowlist checks in server.ts — Render's probe
+// The host's health check probe hits this path to decide whether a
+// deployment succeeded and whether to route traffic to the instance.
+// The endpoint is exempt from IP allowlist checks in server.ts — the probe's
 // IPs are not on the allowlist and are not known in advance.
 export const Route = createFileRoute("/api/health")({
   server: {

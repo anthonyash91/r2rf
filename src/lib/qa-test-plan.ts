@@ -3046,7 +3046,7 @@ export const QA_TESTS: QATest[] = [
     roles: ["Admin"],
     title: "TESTER_FACILITY is env-var-driven",
     description:
-      "In the Render dashboard (or .env locally), verify TESTER_FACILITY is set. Create a new tester account via Admin → Users → Add Tester. Sign in as that tester and simulate Facility User via the Role Switcher. Verify the facility shown matches the TESTER_FACILITY value.\n\n✅ Pass: Tester facility matches the env var. Changing it and redeploying uses the new value without a code change.",
+      "In the Heroku dashboard (or .env locally), verify TESTER_FACILITY is set. Create a new tester account via Admin → Users → Add Tester. Sign in as that tester and simulate Facility User via the Role Switcher. Verify the facility shown matches the TESTER_FACILITY value.\n\n✅ Pass: Tester facility matches the env var. Changing it and redeploying uses the new value without a code change.",
   },
   {
     id: "24.2",
@@ -3138,7 +3138,7 @@ export const QA_TESTS: QATest[] = [
     roles: ["Admin"],
     title: "Trusted IP header is configurable",
     description:
-      "Verify TRUSTED_IP_HEADER is documented in render.yaml. Review Render docs to confirm which header is the authoritative real client IP and that client-supplied x-forwarded-for values are stripped by the Render proxy.\n\n✅ Pass: TRUSTED_IP_HEADER env var is documented. getClientIp() uses it when set, falls back to x-forwarded-for leftmost entry otherwise.",
+      "In the Heroku dashboard, verify TRUSTED_IP_XFF_POSITION is set to \"rightmost\" (Heroku appends its trustworthy value to the right end of x-forwarded-for, unlike Render which prepends to the left). Review src/lib/ip-allowlist.ts's getClientIp() to confirm the position env var is being read correctly.\n\n✅ Pass: TRUSTED_IP_XFF_POSITION=rightmost is set on Heroku. getClientIp() picks the rightmost x-forwarded-for entry, not the leftmost (leftmost would be attacker-controlled on Heroku).",
   },
 
   // ── Section 26 — Post-Launch Security Fixes (After Launch) ────────────────

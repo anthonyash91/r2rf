@@ -145,9 +145,9 @@ export default {
       const ip = getClientIp(request);
       const pathname = new URL(request.url).pathname;
 
-      // Health check: bypass IP restriction entirely so Render's probe can
+      // Health check: bypass IP restriction entirely so the host's probe can
       // reach the endpoint regardless of the allowlist state. This path must
-      // be exempt — Render's internal IPs are not on the allowlist and are
+      // be exempt — the probe's internal IPs are not on the allowlist and are
       // not known in advance.
       if (pathname === "/api/health") {
         const handler = await getServerEntry();
