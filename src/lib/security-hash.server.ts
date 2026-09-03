@@ -34,17 +34,24 @@ export function verifyPin(candidatePin: string, storedHmac: string): boolean {
 // New hashes use bcrypt (slow, salted, key-stretched). Legacy hashes use
 // `sha256$<salt>$<hex>` and are still accepted on verify for backward
 // compatibility; users are silently upgraded when they re-enroll.
-export function hashAnswer(answer: string): string {
+//
+// Async, not sync: bcrypt's cost factor is deliberately slow (~150-300ms),
+// and this is a single-process Node server — a sync call blocks the entire
+// event loop for that duration, freezing every other request (every other
+// user's page load, tracking write, or signup) until it finishes. bcryptjs's
+// async path chunks the work via setImmediate, yielding back to the event
+// loop between pieces instead of blocking it solid.
+export async function hashAnswer(answer: string): Promise<string> {
   const norm = normalizeAnswer(answer);
-  return bcrypt.hashSync(norm, BCRYPT_ROUNDS);
+  return bcrypt.hash(norm, BCRYPT_ROUNDS);
 }
 
-export function verifyAnswer(answer: string, stored: string): boolean {
+export async function verifyAnswer(answer: string, stored: string): Promise<boolean> {
   try {
     const norm = normalizeAnswer(answer);
     // Detect bcrypt by prefix — all three variants ($2a$, $2b$, $2y$) are valid.
     if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
-      return bcrypt.compareSync(norm, stored);
+      return await bcrypt.compare(norm, stored);
     }
     // Legacy sha256$<salt>$<hex> format — uses timingSafeEqual to prevent
     // timing attacks that could reveal partial hash information.

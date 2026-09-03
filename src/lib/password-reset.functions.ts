@@ -155,7 +155,7 @@ export const resetPassword = createServerFn({ method: "POST" })
     const byKey = new Map(rows.map((r) => [r.question_key, r.answer_hash]));
     for (const a of data.answers) {
       const stored = byKey.get(a.key);
-      if (!stored || !verifyAnswer(a.value, stored)) {
+      if (!stored || !(await verifyAnswer(a.value, stored))) {
         throw new Error(genericError);
       }
     }
@@ -188,11 +188,13 @@ export const updateSecurityAnswers = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const userId = context.userId;
     const newKeys = data.answers.map((a) => a.key);
-    const rows = data.answers.map((a) => ({
-      user_id: userId,
-      question_key: a.key,
-      answer_hash: hashAnswer(a.value),
-    }));
+    const rows = await Promise.all(
+      data.answers.map(async (a) => ({
+        user_id: userId,
+        question_key: a.key,
+        answer_hash: await hashAnswer(a.value),
+      })),
+    );
 
     // Insert new answers first. If this fails the user retains their existing
     // answers — no lockout risk. Only delete old answers after the insert succeeds.

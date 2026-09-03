@@ -232,11 +232,13 @@ export const signupUser = createServerFn({ method: "POST" })
     }
 
     if (data.securityAnswers && data.securityAnswers.length === 2) {
-      const securityRows = data.securityAnswers.map((a) => ({
-        user_id: userId,
-        question_key: a.key,
-        answer_hash: hashAnswer(a.value),
-      }));
+      const securityRows = await Promise.all(
+        data.securityAnswers.map(async (a) => ({
+          user_id: userId,
+          question_key: a.key,
+          answer_hash: await hashAnswer(a.value),
+        })),
+      );
       const { error: secErr } = await supabaseAdmin.from("user_security_answers").insert(securityRows);
       if (secErr) {
         console.error("[signup] user_security_answers insert failed:", secErr.message);
