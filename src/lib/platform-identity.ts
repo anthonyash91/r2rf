@@ -1,7 +1,12 @@
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 
-export type PlatformIdentity = { facilityId: string | null; residentId: string | null };
+export type PlatformIdentity = {
+  facilityId: string | null;
+  residentId: string | null;
+  firstName: string | null;
+  lastName: string | null;
+};
 
 // Reads the app-platform's identity headers off the CURRENT request. Used
 // from a route `loader`, which runs this server-side against the real
@@ -20,8 +25,15 @@ export const readPlatformIdentity = createIsomorphicFn()
   .server((): PlatformIdentity => {
     const request = getRequest();
     return {
-      facilityId: request?.headers.get("x-facility-id") || null,
-      residentId: request?.headers.get("x-resident-id") || null,
+      facilityId: request?.headers.get("siteID") || null,
+      residentId: request?.headers.get("apin") || null,
+      firstName: request?.headers.get("firstName") || null,
+      lastName: request?.headers.get("lastName") || null,
     };
   })
-  .client((): PlatformIdentity => ({ facilityId: null, residentId: null }));
+  .client((): PlatformIdentity => ({
+    facilityId: null,
+    residentId: null,
+    firstName: null,
+    lastName: null,
+  }));

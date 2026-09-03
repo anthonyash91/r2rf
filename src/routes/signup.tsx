@@ -149,6 +149,8 @@ function SignupPageContent() {
             facilities={facilities}
             activeFacilitySlug={activeFacilitySlug}
             activeInmatePin={activeInmatePin}
+            lockedFirstName={platformIdentity?.firstName ?? null}
+            lockedLastName={platformIdentity?.lastName ?? null}
           />
         )}
       </main>
@@ -169,6 +171,8 @@ function SignInSignUpForm({
   facilities,
   activeFacilitySlug,
   activeInmatePin,
+  lockedFirstName,
+  lockedLastName,
 }: {
   mode: "sign-in" | "sign-up";
   onModeChange: (m: Mode) => void;
@@ -177,6 +181,8 @@ function SignInSignUpForm({
   facilities: Facility[];
   activeFacilitySlug: string | null;
   activeInmatePin: string | null;
+  lockedFirstName: string | null;
+  lockedLastName: string | null;
 }) {
   const { t } = useI18n();
   const { setIsChecking: setCheckingSignIn } = useAuthChecking();
@@ -216,6 +222,12 @@ function SignInSignUpForm({
   const kbFirst = useKeyboardInput(firstName, setFirstName);
   const kbLast = useKeyboardInput(lastName, setLastName);
   const kbAnswer = useKeyboardInput(answer, setAnswer);
+
+  // Seed first/last name from the platform-provided headers, when present.
+  useEffect(() => {
+    if (lockedFirstName) setFirstName(lockedFirstName);
+    if (lockedLastName) setLastName(lockedLastName);
+  }, [lockedFirstName, lockedLastName]);
 
   // Seed facility from lockedFacility or first available
   useEffect(() => {
@@ -511,29 +523,43 @@ function SignInSignUpForm({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="signup-first-name" className="text-sm font-medium">First name</label>
-                  <input
-                    id="signup-first-name"
-                    type="text"
-                    required
-                    minLength={1}
-                    maxLength={100}
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)} {...kbFirst}
-                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  />
+                  {lockedFirstName ? (
+                    <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
+                      <span>{firstName}</span>
+                      <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <input
+                      id="signup-first-name"
+                      type="text"
+                      required
+                      minLength={1}
+                      maxLength={100}
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)} {...kbFirst}
+                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  )}
                 </div>
                 <div>
                   <label htmlFor="signup-last-name" className="text-sm font-medium">Last name</label>
-                  <input
-                    id="signup-last-name"
-                    type="text"
-                    required
-                    minLength={1}
-                    maxLength={100}
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)} {...kbLast}
-                    className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  />
+                  {lockedLastName ? (
+                    <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
+                      <span>{lastName}</span>
+                      <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <input
+                      id="signup-last-name"
+                      type="text"
+                      required
+                      minLength={1}
+                      maxLength={100}
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)} {...kbLast}
+                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    />
+                  )}
                 </div>
               </div>
               <div>
