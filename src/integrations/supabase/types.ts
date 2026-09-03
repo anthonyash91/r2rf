@@ -214,11 +214,69 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_entries: {
+        Row: {
+          client_id: string
+          created_at: string
+          description: string
+          entry_date: string
+          entry_type: string
+          id: string
+          invoice_id: string | null
+          quantity: number
+          rate: number
+          recurring_line_item_id: string | null
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          description?: string
+          entry_date: string
+          entry_type?: string
+          id?: string
+          invoice_id?: string | null
+          quantity?: number
+          rate?: number
+          recurring_line_item_id?: string | null
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          description?: string
+          entry_date?: string
+          entry_type?: string
+          id?: string
+          invoice_id?: string | null
+          quantity?: number
+          rate?: number
+          recurring_line_item_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_entries_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_entries_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
           description: string
           description_es: string | null
+          exempt_from_progress: boolean
           home_page_mode: string
           icon_color: string | null
           icon_name: string | null
@@ -227,8 +285,10 @@ export type Database = {
           name: string
           name_es: string | null
           published: boolean
+          section_order: string[]
           slug: string
           sort_order: number
+          stream_collection_id: string | null
           tagline: string
           tagline_es: string | null
           updated_at: string
@@ -237,6 +297,7 @@ export type Database = {
           created_at?: string
           description?: string
           description_es?: string | null
+          exempt_from_progress?: boolean
           home_page_mode?: string
           icon_color?: string | null
           icon_name?: string | null
@@ -245,8 +306,10 @@ export type Database = {
           name: string
           name_es?: string | null
           published?: boolean
+          section_order?: string[]
           slug: string
           sort_order?: number
+          stream_collection_id?: string | null
           tagline?: string
           tagline_es?: string | null
           updated_at?: string
@@ -255,6 +318,7 @@ export type Database = {
           created_at?: string
           description?: string
           description_es?: string | null
+          exempt_from_progress?: boolean
           home_page_mode?: string
           icon_color?: string | null
           icon_name?: string | null
@@ -263,8 +327,10 @@ export type Database = {
           name?: string
           name_es?: string | null
           published?: boolean
+          section_order?: string[]
           slug?: string
           sort_order?: number
+          stream_collection_id?: string | null
           tagline?: string
           tagline_es?: string | null
           updated_at?: string
@@ -290,6 +356,114 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_facilities_facility_value_fkey"
+            columns: ["facility_value"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["value"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          additional_emails: Json
+          additional_rates: Json
+          address: string
+          company: string
+          created_at: string
+          email: string
+          hourly_rate: number
+          id: string
+          name: string
+          recurring_calendar_exclusions: Json
+          recurring_line_items: Json
+          user_id: string
+        }
+        Insert: {
+          additional_emails?: Json
+          additional_rates?: Json
+          address?: string
+          company?: string
+          created_at?: string
+          email?: string
+          hourly_rate?: number
+          id?: string
+          name?: string
+          recurring_calendar_exclusions?: Json
+          recurring_line_items?: Json
+          user_id: string
+        }
+        Update: {
+          additional_emails?: Json
+          additional_rates?: Json
+          address?: string
+          company?: string
+          created_at?: string
+          email?: string
+          hourly_rate?: number
+          id?: string
+          name?: string
+          recurring_calendar_exclusions?: Json
+          recurring_line_items?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_chapters: {
+        Row: {
+          content_item_id: string
+          created_at: string
+          duration_seconds: number | null
+          file_name: string | null
+          file_name_es: string | null
+          file_url: string | null
+          file_url_es: string | null
+          id: string
+          section: string | null
+          section_es: string | null
+          sort_order: number
+          title: string
+          title_es: string | null
+        }
+        Insert: {
+          content_item_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          file_name?: string | null
+          file_name_es?: string | null
+          file_url?: string | null
+          file_url_es?: string | null
+          id?: string
+          section?: string | null
+          section_es?: string | null
+          sort_order?: number
+          title: string
+          title_es?: string | null
+        }
+        Update: {
+          content_item_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          file_name?: string | null
+          file_name_es?: string | null
+          file_url?: string | null
+          file_url_es?: string | null
+          id?: string
+          section?: string | null
+          section_es?: string | null
+          sort_order?: number
+          title?: string
+          title_es?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_chapters_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
             referencedColumns: ["id"]
           },
         ]
@@ -340,6 +514,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "content_items"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_item_facilities_facility_value_fkey"
+            columns: ["facility_value"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["value"]
           },
         ]
       }
@@ -485,9 +666,13 @@ export type Database = {
           file_url_es: string | null
           id: string
           published: boolean
+          section: string | null
+          section_es: string | null
           sort_order: number
           source: string
           source_es: string | null
+          storage_folder: string | null
+          stream_collection_id: string | null
           title: string
           title_es: string | null
           type: string
@@ -507,9 +692,13 @@ export type Database = {
           file_url_es?: string | null
           id?: string
           published?: boolean
+          section?: string | null
+          section_es?: string | null
           sort_order?: number
           source?: string
           source_es?: string | null
+          storage_folder?: string | null
+          stream_collection_id?: string | null
           title: string
           title_es?: string | null
           type?: string
@@ -529,9 +718,13 @@ export type Database = {
           file_url_es?: string | null
           id?: string
           published?: boolean
+          section?: string | null
+          section_es?: string | null
           sort_order?: number
           source?: string
           source_es?: string | null
+          storage_folder?: string | null
+          stream_collection_id?: string | null
           title?: string
           title_es?: string | null
           type?: string
@@ -546,7 +739,29 @@ export type Database = {
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "content_items_type_fkey"
+            columns: ["type"]
+            isOneToOne: false
+            referencedRelation: "content_types"
+            referencedColumns: ["value"]
+          },
         ]
+      }
+      content_types: {
+        Row: {
+          sort_order: number
+          value: string
+        }
+        Insert: {
+          sort_order?: number
+          value: string
+        }
+        Update: {
+          sort_order?: number
+          value?: string
+        }
+        Relationships: []
       }
       custom_home_page_categories: {
         Row: {
@@ -665,7 +880,8 @@ export type Database = {
           hidden: boolean
           id: string
           label: string
-          site_id: string | null
+          site_id_encrypted: string
+          site_id_hmac: string
           sort_order: number
           updated_at: string
           value: string
@@ -675,7 +891,8 @@ export type Database = {
           hidden?: boolean
           id?: string
           label: string
-          site_id?: string | null
+          site_id_encrypted: string
+          site_id_hmac: string
           sort_order?: number
           updated_at?: string
           value: string
@@ -685,7 +902,8 @@ export type Database = {
           hidden?: boolean
           id?: string
           label?: string
-          site_id?: string | null
+          site_id_encrypted?: string
+          site_id_hmac?: string
           sort_order?: number
           updated_at?: string
           value?: string
@@ -739,6 +957,118 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "facilities"
             referencedColumns: ["value"]
+          },
+        ]
+      }
+      invoice_email_history: {
+        Row: {
+          client_name: string
+          email_kind: string
+          id: string
+          invoice_id: string | null
+          invoice_number: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          client_name: string
+          email_kind: string
+          id?: string
+          invoice_id?: string | null
+          invoice_number: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          client_name?: string
+          email_kind?: string
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_email_history_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          client_id: string | null
+          client_name: string
+          created_at: string
+          due_date: string | null
+          email_send_count: number
+          id: string
+          issue_date: string
+          last_email_sent_at: string | null
+          last_email_sent_kind: string | null
+          line_items: Json
+          notes: string
+          number: string
+          owner_confirm_token: string | null
+          paid_at: string | null
+          public_token: string | null
+          status: string
+          tax_enabled: boolean
+          tax_rate: number
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          client_name: string
+          created_at?: string
+          due_date?: string | null
+          email_send_count?: number
+          id?: string
+          issue_date: string
+          last_email_sent_at?: string | null
+          last_email_sent_kind?: string | null
+          line_items?: Json
+          notes?: string
+          number: string
+          owner_confirm_token?: string | null
+          paid_at?: string | null
+          public_token?: string | null
+          status?: string
+          tax_enabled?: boolean
+          tax_rate?: number
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          client_name?: string
+          created_at?: string
+          due_date?: string | null
+          email_send_count?: number
+          id?: string
+          issue_date?: string
+          last_email_sent_at?: string | null
+          last_email_sent_kind?: string | null
+          line_items?: Json
+          notes?: string
+          number?: string
+          owner_confirm_token?: string | null
+          paid_at?: string | null
+          public_token?: string | null
+          status?: string
+          tax_enabled?: boolean
+          tax_rate?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -829,6 +1159,68 @@ export type Database = {
         }
         Relationships: []
       }
+      test_run_results: {
+        Row: {
+          id: string
+          notes: string | null
+          run_id: string
+          screenshot_url: string | null
+          status: string
+          test_id: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          notes?: string | null
+          run_id: string
+          screenshot_url?: string | null
+          status?: string
+          test_id: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          notes?: string | null
+          run_id?: string
+          screenshot_url?: string | null
+          status?: string
+          test_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_run_results_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "test_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          label: string
+          tester_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          tester_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          tester_id?: string
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_key: string
@@ -846,6 +1238,45 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_chapter_progress: {
+        Row: {
+          chapter_id: string
+          content_item_id: string
+          furthest_seconds: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chapter_id: string
+          content_item_id: string
+          furthest_seconds?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string
+          content_item_id?: string
+          furthest_seconds?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_chapter_progress_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "content_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_chapter_progress_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_content_bookmarks: {
         Row: {
@@ -942,7 +1373,22 @@ export type Database = {
           id?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_content_progress_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_content_progress_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_content_ratings: {
         Row: {
@@ -992,7 +1438,15 @@ export type Database = {
           seen_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_content_seen_content_item_id_fkey"
+            columns: ["content_item_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_content_sessions: {
         Row: {
@@ -1086,9 +1540,14 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          category_tutorial_seen: boolean
           created_at: string
+          dashboard_tutorial_seen: boolean
+          email: string | null
           facility: string
           first_name: string
+          inmate_pin_hmac: string | null
+          is_staff: boolean
           is_synthetic: boolean
           last_name: string
           updated_at: string
@@ -1096,9 +1555,14 @@ export type Database = {
           username: string
         }
         Insert: {
+          category_tutorial_seen?: boolean
           created_at?: string
+          dashboard_tutorial_seen?: boolean
+          email?: string | null
           facility: string
           first_name?: string
+          inmate_pin_hmac?: string | null
+          is_staff?: boolean
           is_synthetic?: boolean
           last_name?: string
           updated_at?: string
@@ -1106,9 +1570,14 @@ export type Database = {
           username: string
         }
         Update: {
+          category_tutorial_seen?: boolean
           created_at?: string
+          dashboard_tutorial_seen?: boolean
+          email?: string | null
           facility?: string
           first_name?: string
+          inmate_pin_hmac?: string | null
+          is_staff?: boolean
           is_synthetic?: boolean
           last_name?: string
           updated_at?: string
@@ -1165,6 +1634,66 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          business_address: string
+          business_name: string
+          default_due_days: number
+          default_tax_rate: number
+          email: string
+          email_templates: Json
+          late_reminder_interval_days: number
+          logo: string | null
+          mailing_address: string
+          next_invoice_number: number
+          payment_details: string
+          paypal_client_id: string
+          paypal_client_secret: string
+          paypal_sandbox: boolean
+          reminder_interval_days: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_address?: string
+          business_name?: string
+          default_due_days?: number
+          default_tax_rate?: number
+          email?: string
+          email_templates?: Json
+          late_reminder_interval_days?: number
+          logo?: string | null
+          mailing_address?: string
+          next_invoice_number?: number
+          payment_details?: string
+          paypal_client_id?: string
+          paypal_client_secret?: string
+          paypal_sandbox?: boolean
+          reminder_interval_days?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_address?: string
+          business_name?: string
+          default_due_days?: number
+          default_tax_rate?: number
+          email?: string
+          email_templates?: Json
+          late_reminder_interval_days?: number
+          logo?: string | null
+          mailing_address?: string
+          next_invoice_number?: number
+          payment_details?: string
+          paypal_client_id?: string
+          paypal_client_secret?: string
+          paypal_sandbox?: boolean
+          reminder_interval_days?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_stats: {
         Row: {
           facility_percentile: number | null
@@ -1200,6 +1729,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_record_question_probe: {
+        Args: { p_ip: string; p_max: number; p_since: string }
+        Returns: undefined
+      }
       check_and_record_reset_attempt: {
         Args: {
           p_ip: string
@@ -1207,6 +1740,10 @@ export type Database = {
           p_since: string
           p_username: string
         }
+        Returns: undefined
+      }
+      check_and_record_signup_challenge_attempt: {
+        Args: { p_ip: string; p_max: number; p_since: string }
         Returns: undefined
       }
       has_role: {
@@ -1238,12 +1775,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1267,11 +1804,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1292,11 +1829,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1317,11 +1854,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1334,11 +1871,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
