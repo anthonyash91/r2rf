@@ -31,7 +31,7 @@ function WrappingBadgeGroup({
 
   // Initialize with full connected-pill styling (correct for single-row, fixed after measure).
   const [extraClasses, setExtraClasses] = useState<string[]>(() =>
-    items.map((_, i) => buildClass(i === 0, i === items.length - 1, i !== 0))
+    items.map((_, i) => buildClass(i === 0, i === items.length - 1, i !== 0)),
   );
 
   const recalc = useCallback(() => {
@@ -58,9 +58,7 @@ function WrappingBadgeGroup({
       });
     });
 
-    setExtraClasses((prev) =>
-      prev.every((c, i) => c === next[i]) ? prev : next
-    );
+    setExtraClasses((prev) => (prev.every((c, i) => c === next[i]) ? prev : next));
   }, [items.length]);
 
   useEffect(() => {
@@ -71,7 +69,10 @@ function WrappingBadgeGroup({
   }, [recalc]);
 
   return (
-    <div ref={containerRef} className={cn("flex flex-wrap items-center gap-y-2 min-w-0", className)}>
+    <div
+      ref={containerRef}
+      className={cn("flex flex-wrap items-center gap-y-2 min-w-0", className)}
+    >
       {items.map((child, i) => {
         const existing = (child.props as any)?.className as string | undefined;
         return React.cloneElement(child, {

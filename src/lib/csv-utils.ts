@@ -22,14 +22,39 @@ export function downloadCsv(filename: string, lines: string[]): void {
 }
 
 export function exportFacilityUsersCsv(
-  users: { user_id: string; username: string; first_name: string; last_name: string; created_at: string; facility?: string; last_login_date?: string | null }[],
+  users: {
+    user_id: string;
+    username: string;
+    first_name: string;
+    last_name: string;
+    created_at: string;
+    facility?: string;
+    last_login_date?: string | null;
+  }[],
   facilityLabel: string,
   includeFacility = false,
 ) {
   const lines: string[] = [];
   const headers = includeFacility
-    ? ["First name", "Last name", "Username", "Facility", "Joined", "Last login", "Engagement tier", "Facility percentile"]
-    : ["First name", "Last name", "Username", "Joined", "Last login", "Engagement tier", "Facility percentile"];
+    ? [
+        "First name",
+        "Last name",
+        "Username",
+        "Facility",
+        "Joined",
+        "Last login",
+        "Engagement tier",
+        "Facility percentile",
+      ]
+    : [
+        "First name",
+        "Last name",
+        "Username",
+        "Joined",
+        "Last login",
+        "Engagement tier",
+        "Facility percentile",
+      ];
   lines.push(headers.map(csvEscape).join(","));
   for (const u of users) {
     const lastLogin = u.last_login_date || "";
@@ -37,8 +62,25 @@ export function exportFacilityUsersCsv(
     const pct = (u as any).facility_percentile != null ? `${(u as any).facility_percentile}%` : "";
     const facilityName = (u as any).facility_label || u.facility || "";
     const row = includeFacility
-      ? [u.first_name, u.last_name, u.username, facilityName, fmtDate(u.created_at), fmtDate(lastLogin), tier, pct]
-      : [u.first_name, u.last_name, u.username, fmtDate(u.created_at), fmtDate(lastLogin), tier, pct];
+      ? [
+          u.first_name,
+          u.last_name,
+          u.username,
+          facilityName,
+          fmtDate(u.created_at),
+          fmtDate(lastLogin),
+          tier,
+          pct,
+        ]
+      : [
+          u.first_name,
+          u.last_name,
+          u.username,
+          fmtDate(u.created_at),
+          fmtDate(lastLogin),
+          tier,
+          pct,
+        ];
     lines.push(row.map(csvEscape).join(","));
   }
   downloadCsv(
@@ -47,11 +89,9 @@ export function exportFacilityUsersCsv(
   );
 }
 
-export function exportBulkFacilityProgressCsv(
-  data: any,
-  facilityLabel: string,
-) {
-  const { users, categories, items, progress, engagement, bookmarks, ratings, logins, userStats } = data as any;
+export function exportBulkFacilityProgressCsv(data: any, facilityLabel: string) {
+  const { users, categories, items, progress, engagement, bookmarks, ratings, logins, userStats } =
+    data as any;
 
   const progressSet = new Set<string>();
   const progressDate = new Map<string, string>();
@@ -65,7 +105,8 @@ export function exportBulkFacilityProgressCsv(
   const bookmarkSet = new Set<string>();
   for (const r of bookmarks as any[]) bookmarkSet.add(`${r.user_id}|${r.content_item_id}`);
   const ratingMap = new Map<string, number>();
-  for (const r of ratings as any[]) ratingMap.set(`${r.user_id}|${r.content_item_id}`, r.rating as number);
+  for (const r of ratings as any[])
+    ratingMap.set(`${r.user_id}|${r.content_item_id}`, r.rating as number);
   const lastLoginMap = new Map<string, string>();
   for (const r of logins as any[]) {
     if (!lastLoginMap.has(r.user_id) || r.login_date > (lastLoginMap.get(r.user_id) ?? "")) {
@@ -83,13 +124,26 @@ export function exportBulkFacilityProgressCsv(
   }
 
   const lines: string[] = [];
-  lines.push([
-    "First Name", "Last Name", "Username",
-    "Last Login", "Items Completed", "Time Spent (hrs)",
-    "Category", "Item Title",
-    "Completed", "Completed On", "Progress %", "Time on Item (min)",
-    "Bookmarked", "Rating",
-  ].map(csvEscape).join(","));
+  lines.push(
+    [
+      "First Name",
+      "Last Name",
+      "Username",
+      "Last Login",
+      "Items Completed",
+      "Time Spent (hrs)",
+      "Category",
+      "Item Title",
+      "Completed",
+      "Completed On",
+      "Progress %",
+      "Time on Item (min)",
+      "Bookmarked",
+      "Rating",
+    ]
+      .map(csvEscape)
+      .join(","),
+  );
 
   let prevUid = "";
   let prevCatId = "";
@@ -113,8 +167,14 @@ export function exportBulkFacilityProgressCsv(
         const rating = ratingMap.get(key);
         const ratingStr = rating === 1 ? "Helpful" : rating === -1 ? "Not helpful" : "";
 
-        const isAV = item.type && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("audio") || item.type.toLowerCase().includes("podcast"));
-        const isPdf = (item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url)) || (item.url && /\.pdf(\?|#|$)/i.test(item.url));
+        const isAV =
+          item.type &&
+          (item.type.toLowerCase().includes("video") ||
+            item.type.toLowerCase().includes("audio") ||
+            item.type.toLowerCase().includes("podcast"));
+        const isPdf =
+          (item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url)) ||
+          (item.url && /\.pdf(\?|#|$)/i.test(item.url));
         let progressPct = "";
         if (isRead) {
           progressPct = "100%";
@@ -132,18 +192,26 @@ export function exportBulkFacilityProgressCsv(
         const isNewUser = uid !== prevUid;
         const isNewCat = isNewUser || cat.id !== prevCatId;
 
-        lines.push([
-          isNewUser ? (user.first_name ?? "") : "",
-          isNewUser ? (user.last_name ?? "") : "",
-          isNewUser ? (user.username ?? "") : "",
-          isNewUser ? lastLogin : "",
-          isNewUser ? itemsCompleted : "",
-          isNewUser ? hoursSpent : "",
-          isNewCat ? cat.name : "",
-          item.title,
-          isRead ? "Yes" : "No", readDate, progressPct, timeOnItem,
-          bookmarked, ratingStr,
-        ].map(csvEscape).join(","));
+        lines.push(
+          [
+            isNewUser ? (user.first_name ?? "") : "",
+            isNewUser ? (user.last_name ?? "") : "",
+            isNewUser ? (user.username ?? "") : "",
+            isNewUser ? lastLogin : "",
+            isNewUser ? itemsCompleted : "",
+            isNewUser ? hoursSpent : "",
+            isNewCat ? cat.name : "",
+            item.title,
+            isRead ? "Yes" : "No",
+            readDate,
+            progressPct,
+            timeOnItem,
+            bookmarked,
+            ratingStr,
+          ]
+            .map(csvEscape)
+            .join(","),
+        );
 
         prevUid = uid;
         prevCatId = cat.id;

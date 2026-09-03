@@ -30,15 +30,15 @@ function FacilityPage() {
   useEffect(() => {
     // Read the previously stored facility slug BEFORE overwriting it, so we can
     // detect whether the user has navigated to a genuinely different facility.
-    const prevSlug = typeof window !== "undefined"
-      ? window.sessionStorage.getItem("active-facility-slug")
-      : null;
+    const prevSlug =
+      typeof window !== "undefined" ? window.sessionStorage.getItem("active-facility-slug") : null;
 
     setActiveFacilitySlug(facilitySiteId);
 
-    const pin = typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("user")
-      : null;
+    const pin =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("user")
+        : null;
 
     if (pin) {
       // Explicit PIN in URL — always store it.

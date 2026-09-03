@@ -5,7 +5,22 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Users, Mail, KeyRound, Shield, ShieldOff, Send, Pencil, Check, X, Trash2, UserPlus, HelpCircle, Loader2, Wrench } from "lucide-react";
+import {
+  Users,
+  Mail,
+  KeyRound,
+  Shield,
+  ShieldOff,
+  Send,
+  Pencil,
+  Check,
+  X,
+  Trash2,
+  UserPlus,
+  HelpCircle,
+  Loader2,
+  Wrench,
+} from "lucide-react";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { UserSectionHeader } from "@/components/UserSectionHeader";
@@ -46,7 +61,13 @@ import { useConfirm } from "@/components/ConfirmDialog";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { IconButton } from "@/components/IconButton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FormDialog } from "@/components/FormDialog";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
@@ -64,10 +85,14 @@ type UserRow = {
   last_sign_in_at: string | null;
   email_confirmed_at: string | null;
   roles: string[];
-  profile: { username: string; facility: string; first_name: string; last_name: string; inmatePin: string | null } | null;
+  profile: {
+    username: string;
+    facility: string;
+    first_name: string;
+    last_name: string;
+    inmatePin: string | null;
+  } | null;
 };
-
-
 
 function AdminUsersPage() {
   const confirm = useConfirm();
@@ -101,7 +126,9 @@ function AdminUsersPage() {
 
   // Add-user flow: picker dialog -> one of three inline forms.
   const [showKindPicker, setShowKindPicker] = useState(false);
-  const [addKind, setAddKind] = useState<null | "adminContributor" | "tester" | "facilityUser">(null);
+  const [addKind, setAddKind] = useState<null | "adminContributor" | "tester" | "facilityUser">(
+    null,
+  );
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
@@ -113,7 +140,7 @@ function AdminUsersPage() {
   // facilityUser admins are locked to their facility; others default to "all"
   const [facilityFilter, setFacilityFilter] = useState<string>(() => "all");
   const [page, setPage] = useState(0);
-  
+
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -140,9 +167,12 @@ function AdminUsersPage() {
   }, [searchQuery]);
 
   // facilityUser admins are locked to their own facility for all user views
-  const effectiveFacilityFilter = isFacilityUser && myFacilityValue
-    ? myFacilityValue
-    : facilityFilter === "all" ? "" : facilityFilter;
+  const effectiveFacilityFilter =
+    isFacilityUser && myFacilityValue
+      ? myFacilityValue
+      : facilityFilter === "all"
+        ? ""
+        : facilityFilter;
 
   const adminQuery = useQuery({
     queryKey: QK.adminUsersAdmins,
@@ -180,15 +210,22 @@ function AdminUsersPage() {
     placeholderData: (prev) => prev,
   });
 
-  const isLoading = (!isFacilityUser && (adminQuery.isLoading || testerQuery.isLoading)) || facilityAdminQuery.isLoading || regularQuery.isLoading;
+  const isLoading =
+    (!isFacilityUser && (adminQuery.isLoading || testerQuery.isLoading)) ||
+    facilityAdminQuery.isLoading ||
+    regularQuery.isLoading;
   const isTester = (u: UserRow) => u.roles.includes("tester");
   const adminUsers: UserRow[] = (adminQuery.data?.users ?? []).filter((u) => !isTester(u));
   const testerUsers: UserRow[] = testerQuery.data?.users ?? [];
-  const facilityAdminUsers: UserRow[] = (facilityAdminQuery.data?.users ?? []).filter((u) => !isTester(u));
+  const facilityAdminUsers: UserRow[] = (facilityAdminQuery.data?.users ?? []).filter(
+    (u) => !isTester(u),
+  );
   const regularUsers: UserRow[] = regularQuery.data?.users ?? [];
   const regularTotal = regularQuery.data?.total ?? 0;
-  const totalUsers = (isFacilityUser ? 0 : adminUsers.length + testerUsers.length) + facilityAdminUsers.length + regularTotal;
-
+  const totalUsers =
+    (isFacilityUser ? 0 : adminUsers.length + testerUsers.length) +
+    facilityAdminUsers.length +
+    regularTotal;
 
   const fetchFacilities = useServerFn(listAllFacilities);
   const facilitiesQuery = useQuery({
@@ -226,33 +263,53 @@ function AdminUsersPage() {
     successMessage: "Verification email resent",
   });
   const roleMut = useToastMutation({
-    mutationFn: (input: { userId: string; role: "admin" | "contributor" | "tester"; enabled: boolean }) => setRole({ data: input }),
+    mutationFn: (input: {
+      userId: string;
+      role: "admin" | "contributor" | "tester";
+      enabled: boolean;
+    }) => setRole({ data: input }),
     successMessage: "Role updated",
     invalidate: usersKey,
   });
   const closeAddForm = () => {
     setAddKind(null);
-    setNewEmail(""); setNewPassword(""); setNewRole("admin");
-    setNewUsername(""); setNewTesterPassword("");
-    setNewFacilityUserEmail(""); setNewFacilityUserPassword(""); setNewFacilityUserFacility("");
+    setNewEmail("");
+    setNewPassword("");
+    setNewRole("admin");
+    setNewUsername("");
+    setNewTesterPassword("");
+    setNewFacilityUserEmail("");
+    setNewFacilityUserPassword("");
+    setNewFacilityUserFacility("");
   };
   const createMut = useToastMutation({
-    mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" }) => createFn({ data: input }),
+    mutationFn: (input: { email: string; password: string; role: "admin" | "contributor" }) =>
+      createFn({ data: input }),
     successMessage: "User created. A verification email has been sent.",
     invalidate: usersKey,
-    onSuccess: () => { closeAddForm(); newUsersSinceRef.current = new Date().toISOString(); },
+    onSuccess: () => {
+      closeAddForm();
+      newUsersSinceRef.current = new Date().toISOString();
+    },
   });
   const createTesterMut = useToastMutation({
     mutationFn: (input: { username: string; password: string }) => createTesterFn({ data: input }),
     successMessage: "Test user created",
     invalidate: usersKey,
-    onSuccess: () => { closeAddForm(); newUsersSinceRef.current = new Date().toISOString(); },
+    onSuccess: () => {
+      closeAddForm();
+      newUsersSinceRef.current = new Date().toISOString();
+    },
   });
   const createFacilityUserMut = useToastMutation({
-    mutationFn: (input: { email: string; password: string; facilityValue: string }) => createFacilityFn({ data: input }),
+    mutationFn: (input: { email: string; password: string; facilityValue: string }) =>
+      createFacilityFn({ data: input }),
     successMessage: "Facility user created. A verification email has been sent.",
     invalidate: usersKey,
-    onSuccess: () => { closeAddForm(); newUsersSinceRef.current = new Date().toISOString(); },
+    onSuccess: () => {
+      closeAddForm();
+      newUsersSinceRef.current = new Date().toISOString();
+    },
   });
   const deleteMut = useToastMutation({
     mutationFn: (input: { userId: string }) => deleteFn({ data: input }),
@@ -309,35 +366,58 @@ function AdminUsersPage() {
         <div className="grid gap-2 mt-[-4px]">
           <button
             type="button"
-            onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("admin"); }}
+            onClick={() => {
+              setShowKindPicker(false);
+              setAddKind("adminContributor");
+              setNewRole("admin");
+            }}
             className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
           >
             <div className="font-medium">Admin</div>
-            <div className="text-xs text-muted-foreground">Full access. Verification email sent.</div>
+            <div className="text-xs text-muted-foreground">
+              Full access. Verification email sent.
+            </div>
           </button>
           <button
             type="button"
-            onClick={() => { setShowKindPicker(false); setAddKind("adminContributor"); setNewRole("contributor"); }}
+            onClick={() => {
+              setShowKindPicker(false);
+              setAddKind("adminContributor");
+              setNewRole("contributor");
+            }}
             className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
           >
             <div className="font-medium">Contributor</div>
-            <div className="text-xs text-muted-foreground">Can manage content. Verification email sent.</div>
+            <div className="text-xs text-muted-foreground">
+              Can manage content. Verification email sent.
+            </div>
           </button>
           <button
             type="button"
-            onClick={() => { setShowKindPicker(false); setAddKind("facilityUser"); }}
+            onClick={() => {
+              setShowKindPicker(false);
+              setAddKind("facilityUser");
+            }}
             className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
           >
             <div className="font-medium">Facility User</div>
-            <div className="text-xs text-muted-foreground">Facility staff with facility-scoped admin access. Verification email sent.</div>
+            <div className="text-xs text-muted-foreground">
+              Facility staff with facility-scoped admin access. Verification email sent.
+            </div>
           </button>
           <button
             type="button"
-            onClick={() => { setShowKindPicker(false); setAddKind("tester"); }}
+            onClick={() => {
+              setShowKindPicker(false);
+              setAddKind("tester");
+            }}
             className="w-full rounded-md border border-input bg-background px-4 py-3 text-left text-sm hover:bg-muted transition-colors"
           >
             <div className="font-medium">Tester</div>
-            <div className="text-xs text-muted-foreground">QA account. Browses the app like a regular user but is excluded from all analytics. Gets a Testing tab on their dashboard to work through the QA checklist.</div>
+            <div className="text-xs text-muted-foreground">
+              QA account. Browses the app like a regular user but is excluded from all analytics.
+              Gets a Testing tab on their dashboard to work through the QA checklist.
+            </div>
           </button>
         </div>
       </FormDialog>
@@ -346,7 +426,10 @@ function AdminUsersPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+            if (newPassword.length < 8) {
+              toast.error("Password must be at least 8 characters");
+              return;
+            }
             createMut.mutate({ email: newEmail.trim(), password: newPassword, role: newRole });
           }}
           className="mt-4 rounded-2xl border-2 border-[var(--color-accent)] bg-[var(--color-accent)]/5 shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-accent)_12%,transparent)] p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_180px_auto_auto] gap-2"
@@ -395,7 +478,10 @@ function AdminUsersPage() {
               toast.error("Username must be 3–32 chars: letters, numbers, underscores");
               return;
             }
-            if (newTesterPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+            if (newTesterPassword.length < 8) {
+              toast.error("Password must be at least 8 characters");
+              return;
+            }
             createTesterMut.mutate({ username: uname, password: newTesterPassword });
           }}
           className="mt-4 rounded-2xl border-2 border-[var(--color-accent)] bg-[var(--color-accent)]/5 shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-accent)_12%,transparent)] p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto] gap-2"
@@ -430,9 +516,19 @@ function AdminUsersPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (!newFacilityUserFacility) { toast.error("Select a facility"); return; }
-            if (newFacilityUserPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
-            createFacilityUserMut.mutate({ email: newFacilityUserEmail.trim(), password: newFacilityUserPassword, facilityValue: newFacilityUserFacility });
+            if (!newFacilityUserFacility) {
+              toast.error("Select a facility");
+              return;
+            }
+            if (newFacilityUserPassword.length < 8) {
+              toast.error("Password must be at least 8 characters");
+              return;
+            }
+            createFacilityUserMut.mutate({
+              email: newFacilityUserEmail.trim(),
+              password: newFacilityUserPassword,
+              facilityValue: newFacilityUserFacility,
+            });
           }}
           className="mt-4 rounded-2xl border-2 border-[var(--color-accent)] bg-[var(--color-accent)]/5 shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-accent)_12%,transparent)] p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_200px_auto_auto] gap-2"
         >
@@ -461,8 +557,14 @@ function AdminUsersPage() {
             searchPlaceholder="Search facilities…"
             emptyMessage="No facilities found."
           />
-          <LoadingButton variant="secondary" onClick={closeAddForm}>Cancel</LoadingButton>
-          <LoadingButton type="submit" pending={createFacilityUserMut.isPending} pendingText="Creating…">
+          <LoadingButton variant="secondary" onClick={closeAddForm}>
+            Cancel
+          </LoadingButton>
+          <LoadingButton
+            type="submit"
+            pending={createFacilityUserMut.isPending}
+            pendingText="Creating…"
+          >
             Create
           </LoadingButton>
         </form>
@@ -483,7 +585,6 @@ function AdminUsersPage() {
             </SectionCard>
           );
         }
-
 
         const isPendingEmail = rowPending<string>(emailMut, "userId");
         const isPendingPw = rowPending<string>(pwMut, "userId");
@@ -532,7 +633,8 @@ function AdminUsersPage() {
                 confirmLabel: enabled ? "Make contributor" : "Revoke",
                 destructive: !enabled,
                 pendingLabel: "Saving",
-                onConfirm: () => roleMut.mutateAsync({ userId: u.id, role: "contributor", enabled }),
+                onConfirm: () =>
+                  roleMut.mutateAsync({ userId: u.id, role: "contributor", enabled }),
               });
             }}
             onDelete={async () => {
@@ -570,13 +672,14 @@ function AdminUsersPage() {
             className={`transition-opacity ${addKind ? "opacity-40 pointer-events-none" : ""}`}
             aria-hidden={addKind ? true : undefined}
           >
-
-
-
             {!isFacilityUser && (
               <section className="mt-8">
                 <div>
-                  <UserSectionHeader title="Admin Users" count={adminUsers.length} description="Accounts with admin or contributor access." />
+                  <UserSectionHeader
+                    title="Admin Users"
+                    count={adminUsers.length}
+                    description="Accounts with admin or contributor access."
+                  />
                 </div>
                 <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
                   {adminUsers.length ? (
@@ -590,51 +693,59 @@ function AdminUsersPage() {
 
             <section className="mt-8">
               <div>
-                <UserSectionHeader title="Facility Users" count={facilityAdminUsers.length} description="Facility staff with facility-scoped admin access." />
+                <UserSectionHeader
+                  title="Facility Users"
+                  count={facilityAdminUsers.length}
+                  description="Facility staff with facility-scoped admin access."
+                />
               </div>
               <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
                 {facilityAdminUsers.length ? (
-                  <ul className="divide-y divide-border">{facilityAdminUsers.map((u) => (
-                    <UserItem
-                      key={u.id}
-                      user={u}
-                      isNew={false}
-                      facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? "") : ""}
-                      showFacilityUserBadge
-                      hideRoleToggles
-                      hideDelete={isFacilityUser}
-                      selfUserId={isFacilityUser ? user?.id : undefined}
-                      pendingEmail={isPendingEmail(u.id)}
-                      pendingPassword={isPendingPw(u.id)}
-                      pendingReset={isPendingResetEmail(u.email)}
-                      pendingResendVerify={isPendingResendVerify(u.email)}
-                      pendingRole={isPendingRole(u.id)}
-                      pendingDelete={isPendingDelete(u.id)}
-                      pendingClearSec={isPendingClearSec(u.id)}
-                      onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
-                      onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
-                      onSendReset={() => resetMut.mutate({ email: u.email })}
-                      onResendVerify={() => resendVerifyMut.mutate({ email: u.email })}
-                      onToggleAdmin={async () => {}}
-                      onToggleContributor={async () => {}}
-                      onDelete={async () => {
-                        await confirmDelete({
-                          title: "Delete facility user?",
-                          description: `Permanently delete ${u.email}?`,
-                          onConfirm: () => deleteMut.mutateAsync({ userId: u.id }),
-                        });
-                      }}
-                      onResetSecurity={async () => {
-                        await confirmDelete({
-                          title: "Reset security questions?",
-                          description: `Clear ${u.email}'s security questions?`,
-                          confirmLabel: "Reset",
-                          pendingLabel: "Resetting",
-                          onConfirm: () => clearSecMut.mutateAsync({ userId: u.id }),
-                        });
-                      }}
-                    />
-                  ))}</ul>
+                  <ul className="divide-y divide-border">
+                    {facilityAdminUsers.map((u) => (
+                      <UserItem
+                        key={u.id}
+                        user={u}
+                        isNew={false}
+                        facilityLabel={
+                          u.profile ? (facilityLabelMap[u.profile.facility] ?? "") : ""
+                        }
+                        showFacilityUserBadge
+                        hideRoleToggles
+                        hideDelete={isFacilityUser}
+                        selfUserId={isFacilityUser ? user?.id : undefined}
+                        pendingEmail={isPendingEmail(u.id)}
+                        pendingPassword={isPendingPw(u.id)}
+                        pendingReset={isPendingResetEmail(u.email)}
+                        pendingResendVerify={isPendingResendVerify(u.email)}
+                        pendingRole={isPendingRole(u.id)}
+                        pendingDelete={isPendingDelete(u.id)}
+                        pendingClearSec={isPendingClearSec(u.id)}
+                        onChangeEmail={(email) => emailMut.mutate({ userId: u.id, email })}
+                        onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
+                        onSendReset={() => resetMut.mutate({ email: u.email })}
+                        onResendVerify={() => resendVerifyMut.mutate({ email: u.email })}
+                        onToggleAdmin={async () => {}}
+                        onToggleContributor={async () => {}}
+                        onDelete={async () => {
+                          await confirmDelete({
+                            title: "Delete facility user?",
+                            description: `Permanently delete ${u.email}?`,
+                            onConfirm: () => deleteMut.mutateAsync({ userId: u.id }),
+                          });
+                        }}
+                        onResetSecurity={async () => {
+                          await confirmDelete({
+                            title: "Reset security questions?",
+                            description: `Clear ${u.email}'s security questions?`,
+                            confirmLabel: "Reset",
+                            pendingLabel: "Resetting",
+                            onConfirm: () => clearSecMut.mutateAsync({ userId: u.id }),
+                          });
+                        }}
+                      />
+                    ))}
+                  </ul>
                 ) : (
                   <EmptyState size="sm">No facility users.</EmptyState>
                 )}
@@ -644,7 +755,11 @@ function AdminUsersPage() {
             {!isFacilityUser && (
               <section className="mt-8">
                 <div>
-                  <UserSectionHeader title="Test Users" count={testerUsers.length} description="Accounts used for internal testing. They behave like regular users." />
+                  <UserSectionHeader
+                    title="Test Users"
+                    count={testerUsers.length}
+                    description="Accounts used for internal testing. They behave like regular users."
+                  />
                 </div>
                 <SectionCard as="div" padded={false} className="mt-3 overflow-hidden">
                   {testerUsers.length ? (
@@ -676,7 +791,10 @@ function AdminUsersPage() {
                   <div className="w-full sm:flex-1 sm:min-w-0">
                     <FacilityCombobox
                       value={facilityFilter === "all" ? "" : facilityFilter}
-                      onChange={(v) => { setFacilityFilter(v || "all"); setPage(0); }}
+                      onChange={(v) => {
+                        setFacilityFilter(v || "all");
+                        setPage(0);
+                      }}
                       options={facilities.map((f) => ({ value: f.value, label: f.label }))}
                       placeholder="Filter by facility"
                       allowClear
@@ -696,7 +814,10 @@ function AdminUsersPage() {
                         filteredCount={regularTotal}
                         noun={{ singular: "user", plural: "users" }}
                         searchQuery={searchQuery}
-                        onSearchChange={(v) => { setSearchQuery(v); setPage(0); }}
+                        onSearchChange={(v) => {
+                          setSearchQuery(v);
+                          setPage(0);
+                        }}
                         searchPlaceholder="Search users…"
                         onDeleteSelected={async (ids) =>
                           confirmDelete({
@@ -707,15 +828,15 @@ function AdminUsersPage() {
                         }
                       />
                     )}
-                    <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${regularTotal > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
+                    <div
+                      className={`rounded-b-2xl border border-border bg-card overflow-hidden ${regularTotal > 0 ? "" : "mt-3 rounded-t-2xl"}`}
+                    >
                       {visible.length ? (
                         <ul className="divide-y divide-border">
                           {visible.map((u) => {
                             const selected = bulk.has(u.id);
                             const isNew = isNewUser(u);
-                            const newHighlight = isNew
-                              ? "bg-[var(--color-accent)]/10"
-                              : "";
+                            const newHighlight = isNew ? "bg-[var(--color-accent)]/10" : "";
                             if (bulk.editMode) {
                               return (
                                 <li
@@ -739,10 +860,20 @@ function AdminUsersPage() {
                           })}
                         </ul>
                       ) : (
-                        <EmptyState size="sm">{debouncedSearch ? "No users match your search." : "No users for this facility."}</EmptyState>
+                        <EmptyState size="sm">
+                          {debouncedSearch
+                            ? "No users match your search."
+                            : "No users for this facility."}
+                        </EmptyState>
                       )}
                     </div>
-                    <Pager page={page} total={regularTotal} pageSize={10} onPage={setPage} itemLabel="user" />
+                    <Pager
+                      page={page}
+                      total={regularTotal}
+                      pageSize={10}
+                      onPage={setPage}
+                      itemLabel="user"
+                    />
                   </>
                 );
               })()}
@@ -753,7 +884,6 @@ function AdminUsersPage() {
     </div>
   );
 }
-
 
 function UserItem({
   user,
@@ -820,7 +950,8 @@ function UserItem({
   const isContributor = user.roles.includes("contributor");
   const isTester = user.roles.includes("tester");
 
-  const isRegularUser = !!user.profile && !isAdmin && !isContributor && !isTester && !showFacilityUserBadge;
+  const isRegularUser =
+    !!user.profile && !isAdmin && !isContributor && !isTester && !showFacilityUserBadge;
   const isUsernameUser = !!user.profile && (isRegularUser || isTester);
 
   return (
@@ -833,9 +964,18 @@ function UserItem({
                 /* Regular users: name + status badges inline */
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-medium truncate">
-                    {displayName(user.profile!.first_name, user.profile!.last_name, user.profile!.username)}
+                    {displayName(
+                      user.profile!.first_name,
+                      user.profile!.last_name,
+                      user.profile!.username,
+                    )}
                   </span>
-                  <UserStatusBadges user={user} facilityLabel={facilityLabel} isNew={isNew} hideFacilityBadge={isRegularUser} />
+                  <UserStatusBadges
+                    user={user}
+                    facilityLabel={facilityLabel}
+                    isNew={isNew}
+                    hideFacilityBadge={isRegularUser}
+                  />
                 </div>
               ) : (
                 <div className="flex items-center gap-2 flex-wrap min-w-0">
@@ -844,7 +984,9 @@ function UserItem({
                   </span>
                   {(user.profile!.first_name || user.profile!.last_name) && (
                     <span className="text-sm text-muted-foreground truncate">
-                      {[capFirst(user.profile!.first_name), capFirst(user.profile!.last_name)].filter(Boolean).join(" ")}
+                      {[capFirst(user.profile!.first_name), capFirst(user.profile!.last_name)]
+                        .filter(Boolean)
+                        .join(" ")}
                     </span>
                   )}
                   <UserStatusBadges
@@ -853,12 +995,21 @@ function UserItem({
                     isNew={isNew}
                     hideFacilityBadge={isRegularUser}
                   >
-                    {showFacilityUserBadge && <Badge variant="facility-user" className="rounded-[8px]">Facility User</Badge>}
                     {showFacilityUserBadge && (
-                      user.email_confirmed_at
-                        ? <Badge variant="verified" className="rounded-[8px]">Verified</Badge>
-                        : <Badge variant="unverified" className="rounded-[8px]">Unverified</Badge>
+                      <Badge variant="facility-user" className="rounded-[8px]">
+                        Facility User
+                      </Badge>
                     )}
+                    {showFacilityUserBadge &&
+                      (user.email_confirmed_at ? (
+                        <Badge variant="verified" className="rounded-[8px]">
+                          Verified
+                        </Badge>
+                      ) : (
+                        <Badge variant="unverified" className="rounded-[8px]">
+                          Unverified
+                        </Badge>
+                      ))}
                   </UserStatusBadges>
                 </div>
               )}
@@ -877,17 +1028,27 @@ function UserItem({
                 disabled={pendingEmail}
                 onClick={() => {
                   const next = emailDraft.trim();
-                  if (!next || next === user.email) { setEditingEmail(false); return; }
+                  if (!next || next === user.email) {
+                    setEditingEmail(false);
+                    return;
+                  }
                   onChangeEmail(next);
                   setEditingEmail(false);
                 }}
                 className="p-1.5 rounded-md hover:bg-muted text-foreground disabled:opacity-60"
               >
-                {pendingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                {pendingEmail ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
               </button>
               <button
                 title="Cancel"
-                onClick={() => { setEmailDraft(user.email); setEditingEmail(false); }}
+                onClick={() => {
+                  setEmailDraft(user.email);
+                  setEditingEmail(false);
+                }}
                 className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
               >
                 <X className="h-4 w-4" />
@@ -897,14 +1058,34 @@ function UserItem({
             <>
               <div className="flex sm:hidden items-center gap-2 flex-wrap mb-2">
                 <BadgeGroup>
-                  {isAdmin && <Badge variant="admin" className="rounded-[8px]">Admin</Badge>}
-                  {isContributor && <Badge variant="contributor" className="rounded-[8px]">Contributor</Badge>}
-                  {isTester && <Badge variant="tester" className="rounded-[8px]">Tester</Badge>}
-                  {showFacilityUserBadge && <Badge variant="facility-user" className="rounded-[8px]">Facility User</Badge>}
+                  {isAdmin && (
+                    <Badge variant="admin" className="rounded-[8px]">
+                      Admin
+                    </Badge>
+                  )}
+                  {isContributor && (
+                    <Badge variant="contributor" className="rounded-[8px]">
+                      Contributor
+                    </Badge>
+                  )}
+                  {isTester && (
+                    <Badge variant="tester" className="rounded-[8px]">
+                      Tester
+                    </Badge>
+                  )}
+                  {showFacilityUserBadge && (
+                    <Badge variant="facility-user" className="rounded-[8px]">
+                      Facility User
+                    </Badge>
+                  )}
                   {user.email_confirmed_at ? (
-                    <Badge variant="verified" className="rounded-[8px]">Verified</Badge>
+                    <Badge variant="verified" className="rounded-[8px]">
+                      Verified
+                    </Badge>
                   ) : (
-                    <Badge variant="unverified" className="rounded-[8px]">Unverified</Badge>
+                    <Badge variant="unverified" className="rounded-[8px]">
+                      Unverified
+                    </Badge>
                   )}
                 </BadgeGroup>
               </div>
@@ -919,14 +1100,34 @@ function UserItem({
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
                 <BadgeGroup className="ml-1 hidden sm:inline-flex">
-                  {isAdmin && <Badge variant="admin" className="rounded-[8px]">Admin</Badge>}
-                  {isContributor && <Badge variant="contributor" className="rounded-[8px]">Contributor</Badge>}
-                  {isTester && <Badge variant="tester" className="rounded-[8px]">Tester</Badge>}
-                  {showFacilityUserBadge && <Badge variant="facility-user" className="rounded-[8px]">Facility User</Badge>}
+                  {isAdmin && (
+                    <Badge variant="admin" className="rounded-[8px]">
+                      Admin
+                    </Badge>
+                  )}
+                  {isContributor && (
+                    <Badge variant="contributor" className="rounded-[8px]">
+                      Contributor
+                    </Badge>
+                  )}
+                  {isTester && (
+                    <Badge variant="tester" className="rounded-[8px]">
+                      Tester
+                    </Badge>
+                  )}
+                  {showFacilityUserBadge && (
+                    <Badge variant="facility-user" className="rounded-[8px]">
+                      Facility User
+                    </Badge>
+                  )}
                   {user.email_confirmed_at ? (
-                    <Badge variant="verified" className="rounded-[8px]">Verified</Badge>
+                    <Badge variant="verified" className="rounded-[8px]">
+                      Verified
+                    </Badge>
                   ) : (
-                    <Badge variant="unverified" className="rounded-[8px]">Unverified</Badge>
+                    <Badge variant="unverified" className="rounded-[8px]">
+                      Unverified
+                    </Badge>
                   )}
                 </BadgeGroup>
               </div>
@@ -935,37 +1136,52 @@ function UserItem({
           {isRegularUser ? (
             <>
               <p className="mt-0.5 text-xs text-muted-foreground truncate">
-                {user.profile?.inmatePin
-                  ? <>PIN <span className="font-mono font-medium text-foreground">{user.profile.inmatePin}</span></>
-                  : <>@{capFirst(user.profile!.username)}</>
-                }
+                {user.profile?.inmatePin ? (
+                  <>
+                    PIN{" "}
+                    <span className="font-mono font-medium text-foreground">
+                      {user.profile.inmatePin}
+                    </span>
+                  </>
+                ) : (
+                  <>@{capFirst(user.profile!.username)}</>
+                )}
                 {facilityLabel && <> · {facilityLabel}</>}
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground truncate">
                 Signed up {new Date(user.created_at).toLocaleDateString()}
-                {user.last_sign_in_at && <> · Last login {new Date(user.last_sign_in_at).toLocaleDateString()}</>}
+                {user.last_sign_in_at && (
+                  <> · Last login {new Date(user.last_sign_in_at).toLocaleDateString()}</>
+                )}
               </p>
             </>
           ) : (
             <>
               <p className="mt-1 text-xs text-muted-foreground">
-                {(showFacilityUserBadge) && facilityLabel && (
-                  <><span className="font-medium text-foreground">{facilityLabel}</span>{" · "}</>
+                {showFacilityUserBadge && facilityLabel && (
+                  <>
+                    <span className="font-medium text-foreground">{facilityLabel}</span>
+                    {" · "}
+                  </>
                 )}
                 Joined {new Date(user.created_at).toLocaleDateString()}
-                {user.last_sign_in_at && <>{" · "}Last sign-in {new Date(user.last_sign_in_at).toLocaleDateString()}</>}
+                {user.last_sign_in_at && (
+                  <>
+                    {" · "}Last sign-in {new Date(user.last_sign_in_at).toLocaleDateString()}
+                  </>
+                )}
               </p>
               {isUsernameUser && !showFacilityUserBadge && user.profile?.inmatePin && (
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  PIN <span className="font-mono font-medium text-foreground">{user.profile.inmatePin}</span>
+                  PIN{" "}
+                  <span className="font-mono font-medium text-foreground">
+                    {user.profile.inmatePin}
+                  </span>
                 </p>
               )}
             </>
           )}
-
         </div>
-
-
 
         <TooltipProvider delayDuration={150}>
           <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0 self-end md:self-auto">
@@ -1059,7 +1275,10 @@ function UserItem({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (pw.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+            if (pw.length < 8) {
+              toast.error("Password must be at least 8 characters");
+              return;
+            }
             onSetPassword(pw);
             setPw("");
             setPwOpen(false);
@@ -1077,18 +1296,17 @@ function UserItem({
           <div className="flex justify-end gap-2">
             <LoadingButton
               variant="secondary"
-              onClick={() => { setPw(""); setPwOpen(false); }}
+              onClick={() => {
+                setPw("");
+                setPwOpen(false);
+              }}
             >
               Cancel
             </LoadingButton>
-            <LoadingButton type="submit">
-              Update
-            </LoadingButton>
-
+            <LoadingButton type="submit">Update</LoadingButton>
           </div>
         </form>
       )}
     </li>
   );
 }
-

@@ -49,18 +49,30 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
     await assertAdmin(context.userId);
 
     const [facRes, facilityStatsRes, cifRes, catFacRes, msgRes] = await Promise.all([
-      supabaseAdmin.from("facilities").select("id, value, label, sort_order, site_id_encrypted").order("label", { ascending: true }),
+      supabaseAdmin
+        .from("facilities")
+        .select("id, value, label, sort_order, site_id_encrypted")
+        .order("label", { ascending: true }),
       (supabaseAdmin as any).from("facility_stats").select("facility_value, total_users"),
-      (supabaseAdmin as any).from("content_item_facilities").select("facility_value, content_items(id, title, category_id, categories(id, name))"),
-      (supabaseAdmin as any).from("category_facilities").select("facility_value, category_id, categories(id, name, slug)"),
+      (supabaseAdmin as any)
+        .from("content_item_facilities")
+        .select("facility_value, content_items(id, title, category_id, categories(id, name))"),
+      (supabaseAdmin as any)
+        .from("category_facilities")
+        .select("facility_value, category_id, categories(id, name, slug)"),
       supabaseAdmin.from("site_settings").select("key, value").like("key", "facility_message_%"),
     ]);
     if (facRes.error) throw new Error(facRes.error.message);
-    if (cifRes.error) console.warn("[listFacilitiesWithStats] content_item_facilities:", cifRes.error.message);
-    if (catFacRes.error) console.warn("[listFacilitiesWithStats] category_facilities:", catFacRes.error.message);
+    if (cifRes.error)
+      console.warn("[listFacilitiesWithStats] content_item_facilities:", cifRes.error.message);
+    if (catFacRes.error)
+      console.warn("[listFacilitiesWithStats] category_facilities:", catFacRes.error.message);
 
     const userCounts = new Map<string, number>(
-      (facilityStatsRes.data ?? []).map((r: any) => [r.facility_value as string, r.total_users as number])
+      (facilityStatsRes.data ?? []).map((r: any) => [
+        r.facility_value as string,
+        r.total_users as number,
+      ]),
     );
 
     const facilityMessageMap = new Map<string, string>();
@@ -73,7 +85,10 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
       }
     }
 
-    const facilityCategoryMap = new Map<string, Array<{ id: string; name: string; slug: string }>>();
+    const facilityCategoryMap = new Map<
+      string,
+      Array<{ id: string; name: string; slug: string }>
+    >();
     for (const row of catFacRes.data ?? []) {
       const cat = (row as any).categories;
       if (!cat) continue;
@@ -83,7 +98,10 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
       facilityCategoryMap.set(fv, arr);
     }
 
-    const facilityContentMap = new Map<string, Array<{ id: string; title: string; categoryId: string; categoryName: string }>>();
+    const facilityContentMap = new Map<
+      string,
+      Array<{ id: string; title: string; categoryId: string; categoryName: string }>
+    >();
     for (const row of cifRes.data ?? []) {
       const item = (row as any).content_items;
       if (!item) continue;
@@ -116,9 +134,7 @@ export const listFacilitiesWithStats = createServerFn({ method: "GET" })
 /** Server-side facility lookup by site ID. Hashes the incoming value before querying
  *  so the plaintext never reaches the DB layer. Safe to call from public routes. */
 export const getFacilityBySiteId = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
-    z.object({ siteId: z.string().min(1).max(64) }).parse(input),
-  )
+  .inputValidator((input) => z.object({ siteId: z.string().min(1).max(64) }).parse(input))
   .handler(async ({ data }) => {
     const hmac = hashSiteId(data.siteId);
     const { data: facility } = await (supabaseAdmin as any)
@@ -164,14 +180,24 @@ export const addFacilities = createServerFn({ method: "POST" })
       .from("facilities")
       .select("value, label, sort_order, site_id_hmac");
     const usedValues = new Set((existing ?? []).map((r: any) => r.value as string));
-    const usedLabels = new Set((existing ?? []).map((r: any) => (r.label as string).trim().toLowerCase()));
-    const usedHmacs = new Set((existing ?? []).map((r: any) => r.site_id_hmac as string).filter(Boolean));
+    const usedLabels = new Set(
+      (existing ?? []).map((r: any) => (r.label as string).trim().toLowerCase()),
+    );
+    const usedHmacs = new Set(
+      (existing ?? []).map((r: any) => r.site_id_hmac as string).filter(Boolean),
+    );
     const maxOrder = (existing ?? []).reduce(
       (m: number, r: any) => Math.max(m, (r.sort_order as number) ?? 0),
       -1,
     );
 
-    const rows: { value: string; label: string; sort_order: number; site_id_hmac: string; site_id_encrypted: string }[] = [];
+    const rows: {
+      value: string;
+      label: string;
+      sort_order: number;
+      site_id_hmac: string;
+      site_id_encrypted: string;
+    }[] = [];
     const duplicates: string[] = [];
     let next = maxOrder + 1;
     for (const f of data.facilities) {
@@ -203,7 +229,6 @@ export const addFacilities = createServerFn({ method: "POST" })
     return { ok: true, inserted: rows.length, duplicates };
   });
 
-
 export const updateFacility = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -227,7 +252,11 @@ export const updateFacility = createServerFn({ method: "POST" })
     if (conflict) throw new Error("That Site ID is already in use by another facility.");
     const { error } = await (supabaseAdmin as any)
       .from("facilities")
-      .update({ label: data.label, site_id_hmac: hmac, site_id_encrypted: encryptSiteId(data.siteId) })
+      .update({
+        label: data.label,
+        site_id_hmac: hmac,
+        site_id_encrypted: encryptSiteId(data.siteId),
+      })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -235,15 +264,10 @@ export const updateFacility = createServerFn({ method: "POST" })
 
 export const deleteFacility = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ id: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
-    const { error } = await supabaseAdmin
-      .from("facilities")
-      .delete()
-      .eq("id", data.id);
+    const { error } = await supabaseAdmin.from("facilities").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -255,10 +279,7 @@ export const deleteFacilities = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
-    const { error } = await supabaseAdmin
-      .from("facilities")
-      .delete()
-      .in("id", data.ids);
+    const { error } = await supabaseAdmin.from("facilities").delete().in("id", data.ids);
     if (error) throw new Error(error.message);
     return { ok: true, deleted: data.ids.length };
   });

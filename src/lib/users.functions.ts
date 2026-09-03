@@ -5,8 +5,6 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { recordAdminAudit } from "@/lib/admin-audit.server";
 import { assertAdmin } from "@/lib/server-auth";
 
-
-
 type Role = "admin" | "contributor" | "tester" | "user" | "facilityUser";
 
 // The facility slug assigned to all tester accounts. Override via TESTER_FACILITY env var
@@ -48,11 +46,27 @@ async function assertCanManageUser(
     // Fetch caller's facility, target's facility, and (when needed) target's role
     // all in parallel — they are independent of each other.
     const [callerProf, targetProf, targetRoleRow] = await Promise.all([
-      supabaseAdmin.from("user_profiles").select("facility").eq("user_id", callerId).maybeSingle().then((r) => r.data),
-      supabaseAdmin.from("user_profiles").select("facility").eq("user_id", targetUserId).maybeSingle().then((r) => r.data),
+      supabaseAdmin
+        .from("user_profiles")
+        .select("facility")
+        .eq("user_id", callerId)
+        .maybeSingle()
+        .then((r) => r.data),
+      supabaseAdmin
+        .from("user_profiles")
+        .select("facility")
+        .eq("user_id", targetUserId)
+        .maybeSingle()
+        .then((r) => r.data),
       allowFacilityUserTarget
         ? Promise.resolve(null)
-        : supabaseAdmin.from("user_roles").select("role").eq("user_id", targetUserId).eq("role", "facilityUser").maybeSingle().then((r) => r.data),
+        : supabaseAdmin
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", targetUserId)
+            .eq("role", "facilityUser")
+            .maybeSingle()
+            .then((r) => r.data),
     ]);
 
     if (!callerProf?.facility || callerProf.facility !== targetProf?.facility) {
@@ -82,15 +96,34 @@ type ListedUser = {
   last_sign_in_at: string | null;
   email_confirmed_at: string | null;
   roles: Role[];
-  profile: { username: string; facility: string; first_name: string; last_name: string; inmatePin: string | null } | null;
+  profile: {
+    username: string;
+    facility: string;
+    first_name: string;
+    last_name: string;
+    inmatePin: string | null;
+  } | null;
 };
 
 async function hydrateAuthFields(userIds: string[]): Promise<
-  Map<string, { email: string; created_at: string; last_sign_in_at: string | null; email_confirmed_at: string | null }>
+  Map<
+    string,
+    {
+      email: string;
+      created_at: string;
+      last_sign_in_at: string | null;
+      email_confirmed_at: string | null;
+    }
+  >
 > {
   const map = new Map<
     string,
-    { email: string; created_at: string; last_sign_in_at: string | null; email_confirmed_at: string | null }
+    {
+      email: string;
+      created_at: string;
+      last_sign_in_at: string | null;
+      email_confirmed_at: string | null;
+    }
   >();
   if (userIds.length === 0) return map;
 
@@ -112,7 +145,7 @@ async function hydrateAuthFields(userIds: string[]): Promise<
         map.set(p.user_id as string, {
           email: p.email as string,
           created_at: p.created_at as string,
-          last_sign_in_at: null,   // not stored in profiles; use user_logins where needed
+          last_sign_in_at: null, // not stored in profiles; use user_logins where needed
           email_confirmed_at: null, // always confirmed for inmate/facility accounts
         });
       }
@@ -146,12 +179,25 @@ async function hydrateAuthFields(userIds: string[]): Promise<
 }
 
 async function fetchRolesAndProfiles(userIds: string[]) {
-  if (userIds.length === 0) return { rolesByUser: new Map<string, Role[]>(), profileByUser: new Map<string, ListedUser["profile"]>() };
+  if (userIds.length === 0)
+    return {
+      rolesByUser: new Map<string, Role[]>(),
+      profileByUser: new Map<string, ListedUser["profile"]>(),
+    };
   const CHUNK = 500;
   const chunks = chunkArray(userIds, CHUNK);
   const [roleChunks, profileChunks] = await Promise.all([
-    Promise.all(chunks.map((c) => supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", c))),
-    Promise.all(chunks.map((c) => (supabaseAdmin as any).from("user_profiles").select("user_id, username, facility, first_name, last_name").in("user_id", c))),
+    Promise.all(
+      chunks.map((c) => supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", c)),
+    ),
+    Promise.all(
+      chunks.map((c) =>
+        (supabaseAdmin as any)
+          .from("user_profiles")
+          .select("user_id, username, facility, first_name, last_name")
+          .in("user_id", c),
+      ),
+    ),
   ]);
   const roleRows = roleChunks.flatMap((r) => r.data ?? []);
   const profileRows = profileChunks.flatMap((r) => r.data ?? []);
@@ -238,9 +284,7 @@ export const listTesterUsers = createServerFn({ method: "GET" })
  */
 export const listFacilityAdminUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ facilityValue: z.string().optional() }).parse(input),
-  )
+  .inputValidator((input) => z.object({ facilityValue: z.string().optional() }).parse(input))
   .handler(async ({ context, data }) => {
     await assertUserManagementAdmin(context.userId);
     const { data: roleRows, error } = await supabaseAdmin
@@ -291,7 +335,8 @@ export const listRegularUsers = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .in("role", ["admin", "facilityUser"]);
     const callerIsAdmin = (callerRoles ?? []).some((r: any) => r.role === "admin");
-    const callerIsFacilityOnly = !callerIsAdmin && (callerRoles ?? []).some((r: any) => r.role === "facilityUser");
+    const callerIsFacilityOnly =
+      !callerIsAdmin && (callerRoles ?? []).some((r: any) => r.role === "facilityUser");
     if (callerIsFacilityOnly) {
       const { data: callerProfile } = await supabaseAdmin
         .from("user_profiles")
@@ -315,16 +360,20 @@ export const listRegularUsers = createServerFn({ method: "POST" })
     if (data.search) {
       // Strip PostgREST operator characters before embedding in the query string.
       // PostgREST ilike filters are not parameterised — sanitising prevents filter injection.
-      const term = data.search.replace(/[^a-zA-Z0-9 _\-'.@]/g, "").trim().slice(0, 50).toLowerCase();
+      const term = data.search
+        .replace(/[^a-zA-Z0-9 _\-'.@]/g, "")
+        .trim()
+        .slice(0, 50)
+        .toLowerCase();
       if (term) {
         const pat = `%${term}%`;
-        q = q.or(
-          `username.ilike.${pat},first_name.ilike.${pat},last_name.ilike.${pat}`,
-        );
+        q = q.or(`username.ilike.${pat},first_name.ilike.${pat},last_name.ilike.${pat}`);
       }
     }
 
-    q = q.order("created_at", { ascending: false }).range(data.offset, data.offset + data.limit - 1);
+    q = q
+      .order("created_at", { ascending: false })
+      .range(data.offset, data.offset + data.limit - 1);
 
     const { data: rows, error, count } = await q;
     if (error) throw new Error(error.message);
@@ -446,7 +495,11 @@ export const createFacilityUser = createServerFn({ method: "POST" })
       // Store facility in user_profiles so facility-scoped queries work
       const { error: profErr } = await (supabaseAdmin as any).from("user_profiles").insert({
         user_id: userId,
-        username: data.email.split("@")[0].slice(0, 32).replace(/[^a-z0-9_]/gi, "_").toLowerCase(),
+        username: data.email
+          .split("@")[0]
+          .slice(0, 32)
+          .replace(/[^a-z0-9_]/gi, "_")
+          .toLowerCase(),
         facility: data.facilityValue,
         first_name: "",
         last_name: "",
@@ -459,7 +512,10 @@ export const createFacilityUser = createServerFn({ method: "POST" })
       throw err;
     }
     // Send verification email
-    const { error: resendErr } = await supabaseAdmin.auth.resend({ type: "signup", email: data.email });
+    const { error: resendErr } = await supabaseAdmin.auth.resend({
+      type: "signup",
+      email: data.email,
+    });
     if (resendErr) console.warn("createFacilityUser: resend failed", resendErr.message);
     await recordAdminAudit({
       actorUserId: context.userId,
@@ -490,7 +546,9 @@ export const createTesterUser = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
 
-    const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
+    const { data: exists } = await supabaseAdmin.rpc("username_exists", {
+      _username: data.username,
+    });
     if (exists) throw new Error("That username is already taken.");
 
     const email = userSyntheticEmail(data.username);
@@ -521,15 +579,13 @@ export const createTesterUser = createServerFn({ method: "POST" })
 
     // Grant all roles so the tester can simulate any role client-side.
     // is_synthetic = true on the profile ensures they stay excluded from analytics.
-    const { error: roleErr } = await supabaseAdmin
-      .from("user_roles")
-      .insert([
-        { user_id: userId, role: "tester" },
-        { user_id: userId, role: "user" },
-        { user_id: userId, role: "admin" },
-        { user_id: userId, role: "contributor" },
-        { user_id: userId, role: "facilityUser" },
-      ]);
+    const { error: roleErr } = await supabaseAdmin.from("user_roles").insert([
+      { user_id: userId, role: "tester" },
+      { user_id: userId, role: "user" },
+      { user_id: userId, role: "admin" },
+      { user_id: userId, role: "contributor" },
+      { user_id: userId, role: "facilityUser" },
+    ]);
     if (roleErr) {
       await supabaseAdmin.from("user_profiles").delete().eq("user_id", userId);
       await supabaseAdmin.auth.admin.deleteUser(userId);
@@ -580,8 +636,8 @@ export const upgradeTesterRoles = createServerFn({ method: "POST" })
       allRoles.map((role) =>
         supabaseAdmin
           .from("user_roles")
-          .upsert({ user_id: data.userId, role }, { onConflict: "user_id,role" })
-      )
+          .upsert({ user_id: data.userId, role }, { onConflict: "user_id,role" }),
+      ),
     );
 
     await supabaseAdmin
@@ -600,11 +656,11 @@ export const upgradeTesterRoles = createServerFn({ method: "POST" })
  */
 export const clearMustResetPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ newPassword: z.string().min(8).max(72) }).parse(input),
-  )
+  .inputValidator((input) => z.object({ newPassword: z.string().min(8).max(72) }).parse(input))
   .handler(async ({ context, data }) => {
-    const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(
+      context.userId,
+    );
     if (getErr) {
       console.error("[clearMustResetPassword] getUserById failed:", getErr.message);
       throw new Error("Unable to update password. Please try again.");
@@ -624,9 +680,7 @@ export const clearMustResetPassword = createServerFn({ method: "POST" })
 
 export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ userId: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
     if (data.userId === context.userId) {
@@ -724,12 +778,12 @@ export const deleteUsers = createServerFn({ method: "POST" })
       ),
     );
 
-    return { deleted: succeededIds.length, failed, skippedSelf: data.userIds.length - targets.length };
+    return {
+      deleted: succeededIds.length,
+      failed,
+      skippedSelf: data.userIds.length - targets.length,
+    };
   });
-
-
-
-
 
 export const updateUserEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -784,10 +838,12 @@ export const setUserPassword = createServerFn({ method: "POST" })
 export const sendPasswordResetEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({
-      email: z.string().trim().email().max(255),
-      userId: z.string().uuid().optional(),
-    }).parse(input),
+    z
+      .object({
+        email: z.string().trim().email().max(255),
+        userId: z.string().uuid().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ context, data }) => {
     // userId is supplied by the client from the already-loaded user list — use it
@@ -811,10 +867,12 @@ export const sendPasswordResetEmail = createServerFn({ method: "POST" })
 export const resendVerificationEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({
-      email: z.string().trim().email().max(255),
-      userId: z.string().uuid().optional(),
-    }).parse(input),
+    z
+      .object({
+        email: z.string().trim().email().max(255),
+        userId: z.string().uuid().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ context, data }) => {
     if (data.userId) {
@@ -895,9 +953,7 @@ export const setUserRole = createServerFn({ method: "POST" })
 
 export const clearUserSecurityAnswers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ userId: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     await assertCanManageUser(context.userId, data.userId);
     const { error } = await supabaseAdmin
@@ -912,4 +968,3 @@ export const clearUserSecurityAnswers = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
-

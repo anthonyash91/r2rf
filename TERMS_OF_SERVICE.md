@@ -75,6 +75,7 @@ General usage events — such as which categories you visit — are collected in
 We do not collect payment information, location data, biometric data, or any information from third-party advertising or tracking services. The Platform does not use third-party advertising.
 
 **How we use your information**
+
 - To provide and display your personal progress dashboard
 - To calculate engagement tiers and facility rankings (anonymized)
 - To generate program reports for facility administrators and grant reporting
@@ -182,4 +183,4 @@ If you have questions about these Terms, your account, or how your data is handl
 
 ---
 
-*This document is a draft. It should be reviewed by a licensed attorney before publication.*
+_This document is a draft. It should be reviewed by a licensed attorney before publication._

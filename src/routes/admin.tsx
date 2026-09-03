@@ -15,7 +15,9 @@ export const Route = createFileRoute("/admin")({
     // getSession() always returns null there. The component-level useAuth()
     // hook handles the real auth check on the client.
     if (typeof window === "undefined") return {};
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session?.user) {
       throw redirect({ to: "/signup", search: { redirect: location.href } });
     }

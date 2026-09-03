@@ -62,12 +62,12 @@ The ring uses **weighted progress** — a video watched 50% contributes 50%, a c
 
 Four cards appear below the ring:
 
-| Card | What It Shows |
-|---|---|
-| **Items Completed** | Total content items fully completed, out of all available items |
-| **Categories Completed** | Number of full categories finished, out of all available |
-| **Time Spent** | Total accumulated real session time |
-| **Day Streak** | Number of consecutive days logged in |
+| Card                     | What It Shows                                                   |
+| ------------------------ | --------------------------------------------------------------- |
+| **Items Completed**      | Total content items fully completed, out of all available items |
+| **Categories Completed** | Number of full categories finished, out of all available        |
+| **Time Spent**           | Total accumulated real session time                             |
+| **Day Streak**           | Number of consecutive days logged in                            |
 
 ---
 
@@ -101,12 +101,14 @@ This gives users context on where they stand relative to peers at the same facil
 A list of every content category the user has access to, each as a collapsible accordion row:
 
 **In the header:**
+
 - A **circular progress ring** showing weighted completion for that category (same weighted logic as the overall ring; exempt items excluded)
 - The **category name** — on larger screens (≥640px), a "New content added" badge appears inline to the right of the name when recent items exist
 - **Completion and time pills** — on larger screens these are connected as a single horizontal control (joined border, rounded ends). On smaller screens all badge groups stack vertically on the right side of the header.
 - On smaller screens, the "New content added" badge moves into the right column and stacks below the completion pills
 
 **When expanded:**
+
 - A list of every content item in that category
 - Each item shows its type badge (Video, PDF, Worksheet, etc.) and estimated duration on the left, and action/bookmark/rating badges on the right — these two groups never overlap, even on narrow mobile screens
 
@@ -117,28 +119,35 @@ A list of every content category the user has access to, each as a collapsible a
 Each content item in the expanded category view has a badge showing its current status. The badge behavior depends on content type:
 
 **Video / Audio**
+
 - Not started → dimmed badge with a tooltip prompting the user to watch
 - In progress (5–94% watched) → a progress fill badge showing the exact percentage watched (e.g., "52% watched") — cannot be manually marked
 - Completed → "Watched" or "Listened" badge
 
 **PDF**
+
 - Not yet opened → dimmed badge
 - In progress → a progress fill badge showing reading percentage
 - Completed → "Read" badge (or "Read manually at X%" if the user marked it complete before finishing)
 
 **Image**
+
 - Opens and auto-marks complete when viewed
 
 **External Link**
+
 - Clicks the link and auto-marks complete
 
 **Worksheet / Article / Guide / Resource**
+
 - "Mark as read" button — manually marked by the user
 
 **Article / Guide / Resource / Information**
+
 - "Mark as read" button — manually marked by the user
 
 **Exempt (informational) items**
+
 - Show an "Acknowledge" button before the user has tapped it, and "Acknowledged" after
 - A small disclaimer reads "Doesn't count toward your progress" beneath the button
 - An info icon (ⓘ) next to the item title explains it is informational
@@ -181,19 +190,23 @@ The Achievements tab shows all 13 milestones a user can earn, organized into fou
 ### Groups
 
 **First steps**
+
 - **First resource** — Complete your first content item
 - **Explorer** — Start your first category
 
 **Completion**
+
 - **10 / 25 / 50 / 100 resources** — Complete that many content items
 - **Category graduate** — Finish every item in a category
 - **5 categories finished** — Finish every item in 5 categories
 
 **Streaks**
+
 - **7-day streak** — Log in 7 consecutive days
 - **30-day streak** — Log in 30 consecutive days
 
 **Time spent**
+
 - **5 / 10 / 50 hours in** — Accumulate that many hours of active learning
 
 ### Display

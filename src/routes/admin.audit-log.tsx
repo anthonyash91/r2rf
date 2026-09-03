@@ -5,7 +5,17 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { ScrollText, UserPlus, UserMinus, KeyRound, ShieldCheck, ShieldOff, Trash2, HelpCircle, Filter } from "lucide-react";
+import {
+  ScrollText,
+  UserPlus,
+  UserMinus,
+  KeyRound,
+  ShieldCheck,
+  ShieldOff,
+  Trash2,
+  HelpCircle,
+  Filter,
+} from "lucide-react";
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
 import { PageHeader } from "@/components/PageHeader";
 import { FilterField } from "@/components/FilterField";
@@ -40,13 +50,21 @@ const ACTION_OPTIONS: { value: ActionType; label: string }[] = [
 ];
 
 const ACTION_META: Record<ActionType, { label: string; icon: typeof UserPlus; color: string }> = {
-  "user.create":                  { label: "User created",              icon: UserPlus,    color: "oklch(0.52 0.12 165)" },
-  "user.delete":                  { label: "User deleted",              icon: Trash2,      color: "oklch(0.55 0.15 25)"  },
-  "user.password_reset":          { label: "Password reset",            icon: KeyRound,    color: "oklch(0.60 0.12 80)"  },
-  "user.role_grant":              { label: "Role granted",              icon: ShieldCheck, color: "oklch(0.52 0.12 165)" },
-  "user.role_revoke":             { label: "Role revoked",              icon: ShieldOff,   color: "oklch(0.55 0.15 25)"  },
-  "user.security_answers_clear":  { label: "Security answers cleared",  icon: UserMinus,   color: "oklch(0.60 0.12 80)"  },
-  "user.security_answers_change": { label: "Security answers changed",  icon: HelpCircle,  color: "oklch(0.52 0.04 250)" },
+  "user.create": { label: "User created", icon: UserPlus, color: "oklch(0.52 0.12 165)" },
+  "user.delete": { label: "User deleted", icon: Trash2, color: "oklch(0.55 0.15 25)" },
+  "user.password_reset": { label: "Password reset", icon: KeyRound, color: "oklch(0.60 0.12 80)" },
+  "user.role_grant": { label: "Role granted", icon: ShieldCheck, color: "oklch(0.52 0.12 165)" },
+  "user.role_revoke": { label: "Role revoked", icon: ShieldOff, color: "oklch(0.55 0.15 25)" },
+  "user.security_answers_clear": {
+    label: "Security answers cleared",
+    icon: UserMinus,
+    color: "oklch(0.60 0.12 80)",
+  },
+  "user.security_answers_change": {
+    label: "Security answers changed",
+    icon: HelpCircle,
+    color: "oklch(0.52 0.04 250)",
+  },
 };
 
 function formatDate(s: string) {
@@ -64,7 +82,10 @@ function describeUser(username: string | null, email: string | null, id: string 
   return "—";
 }
 
-function describeDetails(action: ActionType, details: Record<string, string | number | boolean | null>) {
+function describeDetails(
+  action: ActionType,
+  details: Record<string, string | number | boolean | null>,
+) {
   const parts: string[] = [];
   if (action === "user.create" || action === "user.role_grant" || action === "user.role_revoke") {
     if (details.role) parts.push(`role: ${String(details.role)}`);
@@ -128,12 +149,14 @@ function AdminAuditLogPage() {
 
   const allEntries = query.data?.entries ?? [];
   // facilityUser: only show entries that involve a user at their facility
-  const all = isFacilityUser && facilityUserIds
-    ? allEntries.filter((e) =>
-        (e.actor_user_id && facilityUserIds.has(e.actor_user_id)) ||
-        (e.target_user_id && facilityUserIds.has(e.target_user_id))
-      )
-    : allEntries;
+  const all =
+    isFacilityUser && facilityUserIds
+      ? allEntries.filter(
+          (e) =>
+            (e.actor_user_id && facilityUserIds.has(e.actor_user_id)) ||
+            (e.target_user_id && facilityUserIds.has(e.target_user_id)),
+        )
+      : allEntries;
   const s = search.trim().toLowerCase();
   const filtered = s
     ? all.filter((e) => {
@@ -159,8 +182,16 @@ function AdminAuditLogPage() {
         <PageHeader
           icon={ScrollText}
           title="Audit Log"
-          count={!query.isLoading ? `${filtered.length}${s || action ? ` of ${all.length}` : ""}` : undefined}
-          description={isFacilityUser ? "Actions affecting users at your facility. Read-only." : "Sensitive admin actions, written server-side. Read-only."}
+          count={
+            !query.isLoading
+              ? `${filtered.length}${s || action ? ` of ${all.length}` : ""}`
+              : undefined
+          }
+          description={
+            isFacilityUser
+              ? "Actions affecting users at your facility. Read-only."
+              : "Sensitive admin actions, written server-side. Read-only."
+          }
         />
       </div>
 
@@ -170,7 +201,10 @@ function AdminAuditLogPage() {
             <FilterField label="Search" className="flex-1 min-w-[180px]">
               <input
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(0);
+                }}
                 placeholder="username, email, ip, details…"
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
@@ -178,12 +212,17 @@ function AdminAuditLogPage() {
             <FilterField label="Action" className="min-w-[200px]">
               <select
                 value={action}
-                onChange={(e) => { setAction((e.target.value as ActionType) || ""); setPage(0); }}
+                onChange={(e) => {
+                  setAction((e.target.value as ActionType) || "");
+                  setPage(0);
+                }}
                 className="w-full sm:w-auto rounded-md border border-input bg-background px-4 py-2 text-sm"
               >
                 <option value="">All actions</option>
                 {ACTION_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
                 ))}
               </select>
             </FilterField>
@@ -191,13 +230,21 @@ function AdminAuditLogPage() {
               <input
                 type="datetime-local"
                 value={since}
-                onChange={(e) => { setSince(e.target.value); setPage(0); }}
+                onChange={(e) => {
+                  setSince(e.target.value);
+                  setPage(0);
+                }}
                 className="w-full sm:w-auto rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </FilterField>
             {(action || search || since) && (
               <button
-                onClick={() => { setAction(""); setSearch(""); setSince(""); setPage(0); }}
+                onClick={() => {
+                  setAction("");
+                  setSearch("");
+                  setSince("");
+                  setPage(0);
+                }}
                 className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
               >
                 <Filter className="h-3.5 w-3.5" />
@@ -246,7 +293,11 @@ function AdminAuditLogPage() {
                                 {" "}
                                 <span className="text-muted-foreground">on</span>{" "}
                                 <span className="font-medium">
-                                  {describeUser(e.target_username, e.target_email, e.target_user_id)}
+                                  {describeUser(
+                                    e.target_username,
+                                    e.target_email,
+                                    e.target_user_id,
+                                  )}
                                 </span>
                               </>
                             )}
@@ -256,7 +307,12 @@ function AdminAuditLogPage() {
                           </div>
                           <p className="text-xs text-muted-foreground mt-0.5">
                             by {describeUser(e.actor_username, e.actor_email, e.actor_user_id)}
-                            {e.ip_address && <>{" · "}{e.ip_address}</>}
+                            {e.ip_address && (
+                              <>
+                                {" · "}
+                                {e.ip_address}
+                              </>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -270,7 +326,14 @@ function AdminAuditLogPage() {
             </ul>
           )}
         </div>
-        <Pager page={page} total={filtered.length} pageSize={25} onPage={setPage} itemLabel="entry" itemLabelPlural="entries" />
+        <Pager
+          page={page}
+          total={filtered.length}
+          pageSize={25}
+          onPage={setPage}
+          itemLabel="entry"
+          itemLabelPlural="entries"
+        />
       </section>
     </div>
   );

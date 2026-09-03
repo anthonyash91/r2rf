@@ -71,17 +71,20 @@ When you use the Platform, our hosting infrastructure may automatically log stan
 We use the information we collect for the following purposes:
 
 **To provide the service:**
+
 - Display your personal progress dashboard, including completion rings, stat cards, category progress, bookmarks, ratings, and achievements
 - Allow you to reset your password using your security questions
 - Remember where you left off in video and audio content
 
 **For program reporting and improvement:**
+
 - Generate aggregate reports for facility administrators showing overall engagement, completion rates, time spent, and content ratings across all users — without identifying individual users in those reports
 - Produce individual user progress reports accessible to facility administrators and our non-profit staff for program oversight, case notes, and grant reporting
 - Identify which content is most and least effective based on aggregate engagement data
 - Report program outcomes to funders and grant agencies using anonymized or aggregate statistics
 
 **For security:**
+
 - Verify your identity at login and ensure only authorized users access accounts
 - Detect and prevent abuse or unauthorized access to the Platform
 - Apply rate limits to protect against automated attacks on account creation and password recovery
@@ -91,17 +94,22 @@ We use the information we collect for the following purposes:
 ## 4. Who Can See Your Information
 
 ### You
+
 Your personal dashboard shows your own progress, time spent, ratings, bookmarks, and achievements. Only you can see your own dashboard when logged in.
 
 ### Facility Administrators
+
 Staff accounts at your participating facility ("facilityUser" role) can access:
+
 - Aggregate engagement reports for their facility (total users, completion rates, time spent, rating counts — no individual attribution for ratings in aggregate reports)
 - Individual user progress reports showing your completed items, time spent per item, media progress percentages, bookmark status, and your specific ratings per item
 
 Facility administrators cannot access your password, security question answers, or the accounts of users at other facilities.
 
 ### Non-Profit Staff
+
 Administrators and contributors at our non-profit organization can access:
+
 - All data available to facility administrators, across all facilities
 - Individual user progress reports for any user, for program evaluation, technical support, and grant reporting
 - Aggregate analytics across all facilities and programs
@@ -109,9 +117,11 @@ Administrators and contributors at our non-profit organization can access:
 Non-profit staff cannot access passwords or security question answers in readable form, as these are cryptographically protected.
 
 ### Other Users
+
 Other users of the Platform cannot see your account, your progress, your ratings, or any other personal information.
 
 ### Third-Party Service Providers
+
 We use the following third-party services to operate the Platform:
 
 - **Supabase** — Our database and authentication provider. Your account data, content progress, and all platform data is stored in Supabase's secure cloud infrastructure. Supabase acts as a data processor under our direction and does not independently use your data.
@@ -178,4 +188,4 @@ If you have questions about this Privacy Policy, how your data is handled, or wi
 
 ---
 
-*This Privacy Policy was drafted based on the actual data practices of the Reentry to Recovery Content Library platform. It should be reviewed by a licensed attorney before publication.*
+_This Privacy Policy was drafted based on the actual data practices of the Reentry to Recovery Content Library platform. It should be reviewed by a licensed attorney before publication._

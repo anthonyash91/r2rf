@@ -42,7 +42,7 @@ export function reportError(error: unknown, context?: Record<string, unknown>): 
   if (typeof window === "undefined") return;
   const message =
     error instanceof Error ? error.message : typeof error === "string" ? error : String(error);
-  const stack = error instanceof Error ? error.stack ?? null : null;
+  const stack = error instanceof Error ? (error.stack ?? null) : null;
   const sig = `${message}\n${stack ?? ""}`.slice(0, 500);
   if (!shouldSend(sig)) return;
   void send({

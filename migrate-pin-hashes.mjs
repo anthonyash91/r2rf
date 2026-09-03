@@ -66,7 +66,10 @@ async function run() {
       .is("inmate_pin_hmac", null)
       .range(offset, offset + BATCH - 1);
 
-    if (error) { console.error("Fetch error:", error.message); process.exit(1); }
+    if (error) {
+      console.error("Fetch error:", error.message);
+      process.exit(1);
+    }
     if (!rows || rows.length === 0) break;
 
     total += rows.length;
@@ -80,7 +83,10 @@ async function run() {
           .from("user_profiles")
           .update({ inmate_pin_hmac: hmac })
           .eq("user_id", row.user_id);
-        if (upErr) { console.error(`  Update failed for ${row.user_id}:`, upErr.message); continue; }
+        if (upErr) {
+          console.error(`  Update failed for ${row.user_id}:`, upErr.message);
+          continue;
+        }
       }
       updated++;
     }
@@ -92,7 +98,12 @@ async function run() {
   console.log(`\nDone. Processed ${total} rows, updated ${updated}.`);
   if (DRY_RUN) console.log("(Dry run — no changes written.)");
   else console.log("\nNext step: verify all PINs have HMACs, then clear plaintext column:");
-  console.log("  UPDATE public.user_profiles SET inmate_pin = NULL WHERE inmate_pin_hmac IS NOT NULL;");
+  console.log(
+    "  UPDATE public.user_profiles SET inmate_pin = NULL WHERE inmate_pin_hmac IS NOT NULL;",
+  );
 }
 
-run().catch((e) => { console.error(e); process.exit(1); });
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

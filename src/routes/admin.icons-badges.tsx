@@ -77,7 +77,7 @@ const VARIANT_LABELS: Record<BadgeVariantKey, string> = {
   user: "User",
   facility: "Facility",
   "facility-user": "Facility User",
-  "exempt": "Exempt",
+  exempt: "Exempt",
 };
 
 const TYPE_LABELS: Record<KnownTypeKey, string> = {
@@ -91,9 +91,9 @@ const TYPE_LABELS: Record<KnownTypeKey, string> = {
   link: "Link",
 };
 
-const REGEN_BTN_CLASS = "cursor-pointer select-none inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] border-border bg-background text-foreground hover:bg-muted transition-colors shrink-0 flex-1 @[26rem]:flex-initial";
+const REGEN_BTN_CLASS =
+  "cursor-pointer select-none inline-flex items-center border px-2.5 py-[5px] text-xs font-medium flex-shrink-0 justify-center gap-1 rounded-[8px] border-border bg-background text-foreground hover:bg-muted transition-colors shrink-0 flex-1 @[26rem]:flex-initial";
 const REGEN_ALL_BTN_CLASS = "px-4 py-2 text-sm w-full sm:w-auto !shadow-none";
-
 
 type CategoryRow = {
   id: string;
@@ -101,7 +101,6 @@ type CategoryRow = {
   icon_name: string | null;
   icon_color: string | null;
 };
-
 
 /** Pick `count` palette indices, preferring those not in `excluded`, starting from offset. */
 function pickAvoiding(count: number, excluded: Set<number>, startOffset: number): number[] {
@@ -133,7 +132,8 @@ function AdminIconsBadgesPage() {
       const result = await translateFn({
         data: {
           fields: { name: capitalizedKey },
-          context: "Content type label for a learning content library. Keep it very short — 1 to 2 words. Capitalize the first letter.",
+          context:
+            "Content type label for a learning content library. Keep it very short — 1 to 2 words. Capitalize the first letter.",
         },
       });
       const raw = result.fields?.name?.trim();
@@ -148,7 +148,11 @@ function AdminIconsBadgesPage() {
     } catch {
       toast.error("Translation failed");
     } finally {
-      setTranslatingTypes((prev) => { const next = new Set(prev); next.delete(typeKey); return next; });
+      setTranslatingTypes((prev) => {
+        const next = new Set(prev);
+        next.delete(typeKey);
+        return next;
+      });
     }
   }
 
@@ -210,9 +214,7 @@ function AdminIconsBadgesPage() {
     // the latest settled state — not a stale closure from a concurrent setDraft(saved).
     let assignedNewColors = false;
     setDraft((d) => {
-      const newTypes = allTypes.filter(
-        (t) => (d.types as Record<string, number>)[t] === undefined,
-      );
+      const newTypes = allTypes.filter((t) => (d.types as Record<string, number>)[t] === undefined);
       if (newTypes.length === 0) return d;
       const used = new Set<number>();
       for (const idx of Object.values(d.types as Record<string, number>)) {
@@ -237,10 +239,16 @@ function AdminIconsBadgesPage() {
       // without the user having to manually click Save Changes.
       Promise.resolve(
         supabase.from("site_settings").upsert(
-          { key: BADGE_STYLES_KEY, value: next as unknown as never, updated_at: new Date().toISOString() },
+          {
+            key: BADGE_STYLES_KEY,
+            value: next as unknown as never,
+            updated_at: new Date().toISOString(),
+          },
           { onConflict: "key" },
-        )
-      ).then(() => qc.invalidateQueries({ queryKey: [...badgeStylesQueryKey] })).catch(() => {});
+        ),
+      )
+        .then(() => qc.invalidateQueries({ queryKey: [...badgeStylesQueryKey] }))
+        .catch(() => {});
       return next;
     });
   }, [allTypes.join(",")]);
@@ -270,23 +278,18 @@ function AdminIconsBadgesPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (dirtyStyles) {
-        const { error } = await supabase
-          .from("site_settings")
-          .upsert(
-            {
-              key: BADGE_STYLES_KEY,
-              value: draft as unknown as never,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "key" },
-          );
+        const { error } = await supabase.from("site_settings").upsert(
+          {
+            key: BADGE_STYLES_KEY,
+            value: draft as unknown as never,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "key" },
+        );
         if (error) throw error;
       }
       // Build per-category updates (color and/or icon_name) and apply with one update per row.
-      const catIds = new Set<string>([
-        ...Object.keys(catDraft),
-        ...Object.keys(catIconDraft),
-      ]);
+      const catIds = new Set<string>([...Object.keys(catDraft), ...Object.keys(catIconDraft)]);
       for (const id of catIds) {
         const colorChanged = (catDraft[id] ?? null) !== (originalCatMap[id] ?? null);
         const iconChanged = (catIconDraft[id] ?? null) !== (originalCatIconMap[id] ?? null);
@@ -321,7 +324,11 @@ function AdminIconsBadgesPage() {
     }
     for (const k of allTypes) {
       if (skip?.kind === "type" && skip.key === k) continue;
-      out.push((d.types as Record<string, number>)[k] ?? (DEFAULT_BADGE_STYLES.types as Record<string, number>)[k] ?? indexForType(k, d));
+      out.push(
+        (d.types as Record<string, number>)[k] ??
+          (DEFAULT_BADGE_STYLES.types as Record<string, number>)[k] ??
+          indexForType(k, d),
+      );
     }
     for (const [id, v] of Object.entries(cd)) {
       if (skip?.kind === "category" && skip.key === id) continue;
@@ -400,7 +407,10 @@ function AdminIconsBadgesPage() {
   function cycleTypeIcon(key: string) {
     setDraft((d) => {
       const cur = d.typeIcons?.[key] ?? null;
-      const next = pickRelevantIcon({ title: (TYPE_LABELS as Record<string, string>)[key] ?? key, exclude: cur });
+      const next = pickRelevantIcon({
+        title: (TYPE_LABELS as Record<string, string>)[key] ?? key,
+        exclude: cur,
+      });
       return { ...d, typeIcons: { ...(d.typeIcons ?? {}), [key]: next } };
     });
   }
@@ -413,7 +423,6 @@ function AdminIconsBadgesPage() {
   }
 
   // -------- Per-category color --------
-
 
   function cycleCategory(id: string) {
     setCatDraft((d) => {
@@ -447,7 +456,6 @@ function AdminIconsBadgesPage() {
     setCatDraft({ ...originalCatMap });
     setCatIconDraft({ ...originalCatIconMap });
   }
-
 
   return (
     <div>
@@ -483,7 +491,8 @@ function AdminIconsBadgesPage() {
           <div>
             <h2 className="font-display text-lg font-semibold">Badge Variants</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Each variant uses a single curated color combination. Click Regenerate to cycle through the palette.
+              Each variant uses a single curated color combination. Click Regenerate to cycle
+              through the palette.
             </p>
           </div>
           <Button variant="outline" onClick={regenerateAllVariants} className={REGEN_ALL_BTN_CLASS}>
@@ -492,41 +501,43 @@ function AdminIconsBadgesPage() {
           </Button>
         </div>
         <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {[...BADGE_VARIANTS].sort((a, b) => a.localeCompare(b)).map((v) => {
-            const idx = draft.variants[v] ?? 0;
-            const palette = PALETTES[((idx % PALETTES.length) + PALETTES.length) % PALETTES.length];
-            const dup = isDup(idx);
-            return (
-              <li
-                key={v}
-                className={`@container flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <BadgePreview variant={v} draft={draft} />
-                  <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">
-                      {VARIANT_LABELS[v]}
-                      <span className="mx-1.5 text-muted-foreground">·</span>
-                      <span className="font-normal text-muted-foreground">{palette.label}</span>
-                      {dup && <span className="ml-1.5 text-amber-500">· duplicate</span>}
+          {[...BADGE_VARIANTS]
+            .sort((a, b) => a.localeCompare(b))
+            .map((v) => {
+              const idx = draft.variants[v] ?? 0;
+              const palette =
+                PALETTES[((idx % PALETTES.length) + PALETTES.length) % PALETTES.length];
+              const dup = isDup(idx);
+              return (
+                <li
+                  key={v}
+                  className={`@container flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background/40 p-3 ${dup ? "border-amber-500/60 ring-1 ring-amber-500/40" : "border-border"}`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <BadgePreview variant={v} draft={draft} />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">
+                        {VARIANT_LABELS[v]}
+                        <span className="mx-1.5 text-muted-foreground">·</span>
+                        <span className="font-normal text-muted-foreground">{palette.label}</span>
+                        {dup && <span className="ml-1.5 text-amber-500">· duplicate</span>}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex w-full @[26rem]:w-auto items-center gap-2">
-                  <span onClick={() => cycleVariant(v)} className={REGEN_BTN_CLASS}>
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Color
-                  </span>
-                  <span onClick={() => cycleVariantIcon(v)} className={REGEN_BTN_CLASS}>
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Icon
-                  </span>
-                </div>
-              </li>
-            );
-          })}
+                  <div className="flex w-full @[26rem]:w-auto items-center gap-2">
+                    <span onClick={() => cycleVariant(v)} className={REGEN_BTN_CLASS}>
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Color
+                    </span>
+                    <span onClick={() => cycleVariantIcon(v)} className={REGEN_BTN_CLASS}>
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Icon
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
         </ul>
-
       </SectionCard>
 
       <SectionCard className="mt-8 pt-[18px]">
@@ -550,8 +561,7 @@ function AdminIconsBadgesPage() {
             const idx = (draft.types as Record<string, number>)[t] ?? indexForType(t, draft);
             const palette = PALETTES[((idx % PALETTES.length) + PALETTES.length) % PALETTES.length];
             const overrideIconName = draft.typeIcons?.[t];
-            const Icon =
-              (overrideIconName && ICON_REGISTRY[overrideIconName]) || iconForType(t);
+            const Icon = (overrideIconName && ICON_REGISTRY[overrideIconName]) || iconForType(t);
             const ps = paletteStyle(idx);
             const dup = isDup(idx);
             return (
@@ -565,7 +575,9 @@ function AdminIconsBadgesPage() {
                     style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
                   >
                     <Icon className="h-3.5 w-3.5" strokeWidth={2} />
-                    <span className="capitalize">{(TYPE_LABELS as Record<string, string>)[t] ?? t}</span>
+                    <span className="capitalize">
+                      {(TYPE_LABELS as Record<string, string>)[t] ?? t}
+                    </span>
                   </span>
                   <div className="min-w-0">
                     <div className="text-xs text-muted-foreground truncate">
@@ -577,15 +589,22 @@ function AdminIconsBadgesPage() {
                 <div className="flex w-full @[26rem]:w-auto items-center gap-2">
                   <span
                     title="AI translate to Spanish"
-                    onClick={() => { if (!translatingTypes.has(t)) translateTypeName(t); }}
+                    onClick={() => {
+                      if (!translatingTypes.has(t)) translateTypeName(t);
+                    }}
                     className={`cursor-pointer select-none inline-flex items-center justify-between gap-1 w-28 rounded-[8px] border border-input bg-background px-2.5 py-[5px] text-xs font-medium transition-colors hover:bg-muted ${translatingTypes.has(t) ? "opacity-40 pointer-events-none" : ""}`}
                   >
-                    <span className={`truncate ${(draft.typeNamesEs as Record<string, string> | undefined)?.[t] ? "text-foreground" : "text-muted-foreground"}`}>
-                      {(draft.typeNamesEs as Record<string, string> | undefined)?.[t] || "Translate"}
+                    <span
+                      className={`truncate ${(draft.typeNamesEs as Record<string, string> | undefined)?.[t] ? "text-foreground" : "text-muted-foreground"}`}
+                    >
+                      {(draft.typeNamesEs as Record<string, string> | undefined)?.[t] ||
+                        "Translate"}
                     </span>
-                    {translatingTypes.has(t)
-                      ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-                      : <Languages className="h-3.5 w-3.5 shrink-0" />}
+                    {translatingTypes.has(t) ? (
+                      <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                    ) : (
+                      <Languages className="h-3.5 w-3.5 shrink-0" />
+                    )}
                   </span>
                   <span onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
                     <RefreshCw className="h-3.5 w-3.5" />
@@ -600,7 +619,6 @@ function AdminIconsBadgesPage() {
             );
           })}
         </ul>
-
       </SectionCard>
 
       <SectionCard className="mt-8 pt-[18px]">
@@ -608,7 +626,8 @@ function AdminIconsBadgesPage() {
           <div>
             <h2 className="font-display text-lg font-semibold">Category Icons</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Per-category icon colors. Regenerate cycles each through the palette without repeating.
+              Per-category icon colors. Regenerate cycles each through the palette without
+              repeating.
             </p>
           </div>
           <Button
@@ -650,7 +669,10 @@ function AdminIconsBadgesPage() {
                       <RefreshCw className="h-3.5 w-3.5" />
                       Color
                     </span>
-                    <span onClick={() => cycleCategoryIconFor(c.id, c.name)} className={REGEN_BTN_CLASS}>
+                    <span
+                      onClick={() => cycleCategoryIconFor(c.id, c.name)}
+                      className={REGEN_BTN_CLASS}
+                    >
                       <RefreshCw className="h-3.5 w-3.5" />
                       Icon
                     </span>
@@ -660,7 +682,6 @@ function AdminIconsBadgesPage() {
             })}
           </ul>
         )}
-
       </SectionCard>
 
       <SectionCard className="mt-8 pt-[18px]">
@@ -682,7 +703,10 @@ function AdminIconsBadgesPage() {
                   style={{ color: ps.color, backgroundColor: ps.bg, borderColor: ps.border }}
                   title={used ? `Used ${count}×` : "Unused"}
                 >
-                  <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: ps.color }} />
+                  <span
+                    className="inline-block h-3 w-3 rounded-full"
+                    style={{ backgroundColor: ps.color }}
+                  />
                   <span className="flex-1 truncate">{label}</span>
                   {used && (
                     <span className="inline-flex items-center gap-0.5 shrink-0">
@@ -715,7 +739,7 @@ const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   user: User,
   facility: Building2,
   "facility-user": HeartHandshake,
-  "exempt": Info,
+  exempt: Info,
 };
 
 function BadgePreview({ variant, draft }: { variant: BadgeVariantKey; draft: BadgeStyles }) {

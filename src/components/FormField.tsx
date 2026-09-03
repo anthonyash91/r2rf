@@ -1,11 +1,12 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-const INPUT_CLASSES =
-  "mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm";
+const INPUT_CLASSES = "mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm";
 
-interface LabeledInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
+interface LabeledInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange" | "value"
+> {
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -58,15 +59,15 @@ export function LabeledInput({
           ))}
         </datalist>
       )}
-      {description && (
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-      )}
+      {description && <p className="mt-1 text-xs text-muted-foreground">{description}</p>}
     </label>
   );
 }
 
-interface LabeledTextareaProps
-  extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "onChange" | "value"> {
+interface LabeledTextareaProps extends Omit<
+  React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "onChange" | "value"
+> {
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -95,9 +96,7 @@ export function LabeledTextarea({
         onChange={(e) => onChange(e.target.value)}
         className={cn(INPUT_CLASSES, inputClassName)}
       />
-      {description && (
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-      )}
+      {description && <p className="mt-1 text-xs text-muted-foreground">{description}</p>}
     </label>
   );
 }
@@ -119,9 +118,7 @@ export function LabeledField({ label, children, description, className }: Labele
     <label className={cn("block", className)}>
       <span className="text-sm font-medium">{label}</span>
       <div className="mt-1">{children}</div>
-      {description && (
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-      )}
+      {description && <p className="mt-1 text-xs text-muted-foreground">{description}</p>}
     </label>
   );
 }

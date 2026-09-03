@@ -5,7 +5,13 @@ import {
   pickRandomQuestionKeys,
   questionLabel,
 } from "@/lib/security-questions";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useKeyboardInput } from "@/components/OnScreenKeyboard";
 
 export type SecurityAnswerInput = { key: string; value: string };

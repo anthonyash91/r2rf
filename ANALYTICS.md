@@ -51,15 +51,15 @@ For PDF documents:
 
 Each content item can be marked complete. The method depends on content type:
 
-| Content Type | How Completion Is Recorded |
-|---|---|
-| Video / Audio | Auto-marked at 95% playback |
-| PDF | Auto-marked at 95% reading time, or manually |
-| Image | Auto-marked when opened |
-| External Link | Auto-marked when clicked |
-| Worksheet | Manually marked by the user |
-| Meeting / Call | Manually marked as "Attended" |
-| Article / Guide / Resource | Manually marked by the user |
+| Content Type               | How Completion Is Recorded                                             |
+| -------------------------- | ---------------------------------------------------------------------- |
+| Video / Audio              | Auto-marked at 95% playback                                            |
+| PDF                        | Auto-marked at 95% reading time, or manually                           |
+| Image                      | Auto-marked when opened                                                |
+| External Link              | Auto-marked when clicked                                               |
+| Worksheet                  | Manually marked by the user                                            |
+| Meeting / Call             | Manually marked as "Attended"                                          |
+| Article / Guide / Resource | Manually marked by the user                                            |
 | **Exempt (informational)** | User taps "Acknowledge" — recorded but **excluded from all analytics** |
 
 **Exempt items:** Content items can be marked "Exempt from tracking" in the admin editor. Exempt items appear in the category and user-facing pages but do not count toward any completion metrics, progress rings, monthly summaries, achievement milestones, or pre-computed statistics. See [USER_ROLES.md](USER_ROLES.md) for full details.
@@ -151,13 +151,13 @@ Rating totals are maintained by a database trigger (`SECURITY DEFINER`) in real 
 
 The platform aggregates engagement data by content format across all items:
 
-| Metric | Per type (Video, PDF, Audio, Worksheet, etc.) |
-|---|---|
-| Total items | How many items of this type exist |
-| Opens | How many times items of this type were opened |
-| Completions | How many times items of this type were completed |
-| Completion rate | Completions / opens × 100 |
-| Time spent | Total accumulated time across all users and items |
+| Metric          | Per type (Video, PDF, Audio, Worksheet, etc.)     |
+| --------------- | ------------------------------------------------- |
+| Total items     | How many items of this type exist                 |
+| Opens           | How many times items of this type were opened     |
+| Completions     | How many times items of this type were completed  |
+| Completion rate | Completions / opens × 100                         |
+| Time spent      | Total accumulated time across all users and items |
 
 This reveals which formats resonate with the population. Example: "Users complete 78% of videos but only 38% of worksheets, informing our content production strategy."
 
@@ -167,12 +167,12 @@ This reveals which formats resonate with the population. Example: "Users complet
 
 Each user is ranked within their facility based on total time spent:
 
-| Tier | Percentile |
-|---|---|
-| Top Reader | Top 20% of facility |
-| Active Reader | Top 50% |
-| Getting Started | Top 80% |
-| Just Joined | Bottom 20% |
+| Tier            | Percentile          |
+| --------------- | ------------------- |
+| Top Reader      | Top 20% of facility |
+| Active Reader   | Top 50%             |
+| Getting Started | Top 80%             |
+| Just Joined     | Bottom 20%          |
 
 For facilities with 10+ users, the exact percentile is shown (e.g., "top 12% of readers"). Tiers update nightly and appear on the user's dashboard, in admin user reports, and in CSV exports.
 
@@ -223,18 +223,18 @@ This distinguishes between facilities where most registered users are actively l
 
 The admin analytics page includes a ranked comparison table of all facilities:
 
-| Column | Description |
-|---|---|
-| Users | Total registered users |
-| Active (7d) | Users active in the last 7 days |
-| Active (30d) | Users active in the last 30 days |
-| Participation | Active (30d) / total users |
-| Avg completion | Average item completion rate across all content |
-| Items completed | Total items completed by facility users |
-| Time spent | Total accumulated session time |
-| Bookmarks | Total content items bookmarked by users at this facility |
-| Helpful | Total thumbs-up ratings given by users at this facility |
-| Not helpful | Total thumbs-down ratings given by users at this facility |
+| Column          | Description                                               |
+| --------------- | --------------------------------------------------------- |
+| Users           | Total registered users                                    |
+| Active (7d)     | Users active in the last 7 days                           |
+| Active (30d)    | Users active in the last 30 days                          |
+| Participation   | Active (30d) / total users                                |
+| Avg completion  | Average item completion rate across all content           |
+| Items completed | Total items completed by facility users                   |
+| Time spent      | Total accumulated session time                            |
+| Bookmarks       | Total content items bookmarked by users at this facility  |
+| Helpful         | Total thumbs-up ratings given by users at this facility   |
+| Not helpful     | Total thumbs-down ratings given by users at this facility |
 
 This table is horizontally scrollable and is exportable as a CSV. It is useful for identifying which facilities are thriving, which content is resonating, and which may need outreach or support.
 
@@ -297,12 +297,12 @@ The full user list with engagement data is exportable as CSV.
 
 Every major analytics surface includes a CSV export:
 
-| Export | Contents |
-|---|---|
-| Usage report | Summary metrics, content type breakdown, per-category and per-item detail including completion rate, drop-offs, openers, completions, avg time spent, helpful ratings, not-helpful ratings, bookmark count |
-| Facility comparison | All facilities with users, active counts, participation rate, completion rate, time spent, total bookmarks, total helpful ratings, total not-helpful ratings |
-| User progress | Full per-user report with per-category and per-item breakdown. Columns: Category, Item Title, Read, Read On, Progress, Time Spent, Bookmarked, Rating. Each category appears once as a summary row (showing aggregate read count and total time); individual item rows leave the category column blank to avoid repetition. |
-| Facility users | User list with signup date, last login, engagement tier, percentile |
+| Export                     | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Usage report               | Summary metrics, content type breakdown, per-category and per-item detail including completion rate, drop-offs, openers, completions, avg time spent, helpful ratings, not-helpful ratings, bookmark count                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Facility comparison        | All facilities with users, active counts, participation rate, completion rate, time spent, total bookmarks, total helpful ratings, total not-helpful ratings                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| User progress              | Full per-user report with per-category and per-item breakdown. Columns: Category, Item Title, Read, Read On, Progress, Time Spent, Bookmarked, Rating. Each category appears once as a summary row (showing aggregate read count and total time); individual item rows leave the category column blank to avoid repetition.                                                                                                                                                                                                                                                                                                                          |
+| Facility users             | User list with signup date, last login, engagement tier, percentile                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | **Bulk facility progress** | All users × all items for a facility in a single flat CSV — one row per user+item. Columns: First Name, Last Name, Username, PIN, Last Login, Items Completed, Time Spent (hrs), Category, Item Title, Completed, Completed On, Progress %, Time on Item (min), Bookmarked, Rating. Items are grouped by category in display order. User-level fields (name, PIN, totals) and the Category column are shown only on the first row of each user/category group — subsequent rows leave them blank to keep the sheet readable. Includes all published items visible to the facility — even items with no progress — so gaps in engagement are visible. |
 
 The bulk facility progress export is particularly useful for program reviews, parole board documentation, and grant reporting where an overview of an entire cohort's engagement is needed. Available to Admin and Facility User roles. Requires a specific facility to be selected — "all facilities" is not supported to keep file sizes manageable.
@@ -313,17 +313,17 @@ CSV exports are suitable for import into spreadsheet tools, grant reporting temp
 
 ## How Data Updates
 
-| Data | Frequency |
-|---|---|
-| Session time, completion status, media progress | Real-time (within 5 seconds of user activity) |
-| Visit and click counts (usage report) | Real-time via database trigger |
-| Engagement tier, facility percentile | Nightly at 2am UTC |
-| Retention rates | Nightly at 2am UTC |
-| Weekly growth data | Nightly at 2am UTC |
-| Program completion rates | Nightly at 2am UTC |
-| Facility comparison stats | Nightly at 2am UTC |
-| Content item aggregate stats | Nightly at 2am UTC |
-| Raw event cleanup | Nightly at 2:30am UTC (events older than 90 days pruned; aggregate data retained indefinitely) |
+| Data                                            | Frequency                                                                                      |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Session time, completion status, media progress | Real-time (within 5 seconds of user activity)                                                  |
+| Visit and click counts (usage report)           | Real-time via database trigger                                                                 |
+| Engagement tier, facility percentile            | Nightly at 2am UTC                                                                             |
+| Retention rates                                 | Nightly at 2am UTC                                                                             |
+| Weekly growth data                              | Nightly at 2am UTC                                                                             |
+| Program completion rates                        | Nightly at 2am UTC                                                                             |
+| Facility comparison stats                       | Nightly at 2am UTC                                                                             |
+| Content item aggregate stats                    | Nightly at 2am UTC                                                                             |
+| Raw event cleanup                               | Nightly at 2:30am UTC (events older than 90 days pruned; aggregate data retained indefinitely) |
 
 ---
 

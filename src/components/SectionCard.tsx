@@ -18,11 +18,7 @@ export const SectionCard = forwardRef<HTMLElement, SectionCardProps>(
     return (
       <Tag
         ref={ref}
-        className={cn(
-          "rounded-2xl border border-border bg-card",
-          padded && "p-6",
-          className,
-        )}
+        className={cn("rounded-2xl border border-border bg-card", padded && "p-6", className)}
         {...rest}
       />
     );

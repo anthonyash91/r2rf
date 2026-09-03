@@ -92,7 +92,7 @@ The main content of the home page — a responsive grid of category cards (4 col
 
 **"New content" badge** — appears when items have been added to the category within the last 7 days that the user has not yet opened. Disappears once those items are opened or engaged with.
 
-**Progress bar** *(signed-in users only)* — a thin bar at the bottom of the card showing how many items the user has completed out of the total trackable items. Exempt (informational) items are excluded from the denominator. Updates in real time as the user works through content.
+**Progress bar** _(signed-in users only)_ — a thin bar at the bottom of the card showing how many items the user has completed out of the total trackable items. Exempt (informational) items are excluded from the denominator. Updates in real time as the user works through content.
 
 Tapping a card opens that category's full content page.
 
@@ -223,12 +223,12 @@ At 100% completion, the ring fills solid and displays a **checkmark icon** inste
 
 Four cards below the ring:
 
-| Card | What It Shows |
-|---|---|
-| **Items Completed** | Fully completed items out of all trackable items |
-| **Categories Completed** | Full categories finished out of all available |
-| **Time Spent** | Accumulated real session time (not estimated) |
-| **Day Streak** | Consecutive login days |
+| Card                     | What It Shows                                    |
+| ------------------------ | ------------------------------------------------ |
+| **Items Completed**      | Fully completed items out of all trackable items |
+| **Categories Completed** | Full categories finished out of all available    |
+| **Time Spent**           | Accumulated real session time (not estimated)    |
+| **Day Streak**           | Consecutive login days                           |
 
 ---
 
@@ -262,6 +262,7 @@ Tiers are based on total time spent relative to other users at the same facility
 A list of every category the user can access, each as a collapsible accordion row.
 
 **Header row shows:**
+
 - **Circular progress ring** — weighted category completion (same logic as the overall ring; exempt items excluded)
 - **Category name** — on wider screens, a "New content" badge sits inline beside the name
 - **Completion + time pills** — connected horizontal control on desktop; stacks vertically with the New badge on mobile, all right-aligned
@@ -269,16 +270,17 @@ A list of every category the user can access, each as a collapsible accordion ro
 
 **When expanded, each item shows:**
 
-| Content Type | Action / Status |
-|---|---|
-| **Video / Audio** | Not started (dimmed) → In progress ("52% watched" fill badge) → Completed ("Watched"/"Listened") |
-| **PDF** | Not started (dimmed) → In progress (reading % fill badge) → Completed ("Read") |
-| **Image** | Auto-marks complete on view |
-| **External Link** | Auto-marks complete on click |
-| **Worksheet / Article / Guide** | "Mark as read" button — manually marked |
-| **Exempt (informational)** | "Acknowledge" → "Acknowledged" + disclaimer |
+| Content Type                    | Action / Status                                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Video / Audio**               | Not started (dimmed) → In progress ("52% watched" fill badge) → Completed ("Watched"/"Listened") |
+| **PDF**                         | Not started (dimmed) → In progress (reading % fill badge) → Completed ("Read")                   |
+| **Image**                       | Auto-marks complete on view                                                                      |
+| **External Link**               | Auto-marks complete on click                                                                     |
+| **Worksheet / Article / Guide** | "Mark as read" button — manually marked                                                          |
+| **Exempt (informational)**      | "Acknowledge" → "Acknowledged" + disclaimer                                                      |
 
 **Additional per-item elements:**
+
 - **New badge** — shown for items added within 7 days that the user hasn't opened yet; disappears once engaged
 - **Read date** — completed items show when they were read
 - **Ratings** — after completing an item, a thumbs-up / thumbs-down pill appears. Tapping records or toggles the rating. Ratings are anonymous.
@@ -336,19 +338,23 @@ A count badge on the tab trigger shows the number of saved items. Empty state pr
 Shows all 13 earnable milestones organized into four groups.
 
 **First Steps**
+
 - First Resource — complete your first item
 - Explorer — start your first category
 
 **Completion**
+
 - 10 / 25 / 50 / 100 Resources — complete that many items
 - Category Graduate — finish every item in a category
 - 5 Categories Finished — complete all items in 5 categories
 
 **Streaks**
+
 - 7-Day Streak — log in 7 consecutive days
 - 30-Day Streak — log in 30 consecutive days
 
 **Time Spent**
+
 - 5 / 10 / 50 Hours In — accumulate that much active learning time
 
 **Display:** All 13 badges are always visible. Earned badges show in full color with the earned date. Unearned badges are dimmed. A count ("4 of 13 earned") appears at the top of the tab.
@@ -385,13 +391,13 @@ The admin panel (`/admin`) is accessible to admin, contributor, and facility use
 
 ## User Roles
 
-| Role | Who They Are | Admin Access |
-|---|---|---|
-| **Regular User** | Incarcerated individuals using the library | None |
-| **Tester** | QA accounts with a role switcher to simulate any account type. Lands on the regular user dashboard with an embedded Testing tab for QA runs. Excluded from analytics by default; can enable analytics tracking via the Role Switcher to appear in facility-scoped reports for testing. The Role Switcher is a fixed bottom-left widget with a solid background, always visible above page content and footer. | None (user dashboard + Testing tab only) |
-| **Contributor** | Content editors | Content editing only |
-| **Facility User** | Facility staff (counselors, administrators) | Analytics + user management for their own facility |
-| **Admin** | Platform administrators | Full unrestricted access |
+| Role              | Who They Are                                                                                                                                                                                                                                                                                                                                                                                                  | Admin Access                                       |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| **Regular User**  | Incarcerated individuals using the library                                                                                                                                                                                                                                                                                                                                                                    | None                                               |
+| **Tester**        | QA accounts with a role switcher to simulate any account type. Lands on the regular user dashboard with an embedded Testing tab for QA runs. Excluded from analytics by default; can enable analytics tracking via the Role Switcher to appear in facility-scoped reports for testing. The Role Switcher is a fixed bottom-left widget with a solid background, always visible above page content and footer. | None (user dashboard + Testing tab only)           |
+| **Contributor**   | Content editors                                                                                                                                                                                                                                                                                                                                                                                               | Content editing only                               |
+| **Facility User** | Facility staff (counselors, administrators)                                                                                                                                                                                                                                                                                                                                                                   | Analytics + user management for their own facility |
+| **Admin**         | Platform administrators                                                                                                                                                                                                                                                                                                                                                                                       | Full unrestricted access                           |
 
 **Enforcement:** Access is enforced at two independent layers. Route guards check the role on the client side before the page loads. Server functions independently verify the caller's role using the service-role Supabase client — server functions are the real security boundary.
 
@@ -399,7 +405,7 @@ The admin panel (`/admin`) is accessible to admin, contributor, and facility use
 
 ## Content Management — `/admin/`
 
-*Admin, Contributor*
+_Admin, Contributor_
 
 ### Categories
 
@@ -421,6 +427,7 @@ The main workspace for organizing the content library.
 Each category on the admin home shows its items nested inline. The full item editor is at `/admin/category/$id`.
 
 **Item fields:**
+
 - Title (English and Spanish)
 - Type — built-in types (Video, Audio, Podcast, PDF, Image, Link, Worksheet, Article, Guide) plus any custom types added by admins. Custom types can be created directly from the type dropdown and deleted from the Icons & Badges page.
 - URL — external link or uploaded file URL
@@ -434,6 +441,7 @@ Each category on the admin home shows its items nested inline. The full item edi
 - Translation status badge — complete, partial, or missing Spanish
 
 **Per-item AI features:**
+
 - **AI-generate description** — drafts a description from the title and content type
 - **AI-translate** — translates all English fields to Spanish in one click; also available at the category level to translate all category metadata
 
@@ -445,7 +453,7 @@ Each category on the admin home shows its items nested inline. The full item edi
 
 ## Users — `/admin/users`
 
-*Admin (all users), Facility User (own facility only)*
+_Admin (all users), Facility User (own facility only)_
 
 ### User Sections
 
@@ -456,18 +464,18 @@ Each category on the admin home shows its items nested inline. The full item edi
 
 ### Per-User Actions
 
-| Action | Admin | Facility User |
-|---|---|---|
-| View profile | ✓ | ✓ (own facility) |
-| Set password manually | ✓ | ✓ (own facility) |
-| Send password reset email | ✓ | ✓ (own facility) |
-| Resend verification email | ✓ | ✓ (own facility) |
-| Clear security questions | ✓ | ✓ (own facility) |
-| Edit email address | ✓ | — |
-| Change role | ✓ | — |
-| Create user (any type) | ✓ | — |
-| Delete user | ✓ | — |
-| Bulk delete users | ✓ | — |
+| Action                    | Admin | Facility User    |
+| ------------------------- | ----- | ---------------- |
+| View profile              | ✓     | ✓ (own facility) |
+| Set password manually     | ✓     | ✓ (own facility) |
+| Send password reset email | ✓     | ✓ (own facility) |
+| Resend verification email | ✓     | ✓ (own facility) |
+| Clear security questions  | ✓     | ✓ (own facility) |
+| Edit email address        | ✓     | —                |
+| Change role               | ✓     | —                |
+| Create user (any type)    | ✓     | —                |
+| Delete user               | ✓     | —                |
+| Bulk delete users         | ✓     | —                |
 
 **New user badge:** The admin nav shows a badge count for users who signed up since the admin last visited the Users page. The badge clears when the page is opened.
 
@@ -479,7 +487,7 @@ Each category on the admin home shows its items nested inline. The full item edi
 
 ## Analytics — `/admin/analytics`
 
-*Admin (all facilities), Facility User (own facility only)*
+_Admin (all facilities), Facility User (own facility only)_
 
 The analytics page has three tabs: **Overall**, **By Facility**, and **Users**.
 
@@ -487,17 +495,17 @@ The analytics page has three tabs: **Overall**, **By Facility**, and **Users**.
 
 ### What Gets Tracked
 
-| Signal | Method |
-|---|---|
-| **Session time** | Real-time timer; counts active engagement (pauses after 90s of no activity); writes every 5 seconds and on close |
-| **Video/audio progress** | Furthest playback position; 95% = auto-complete |
-| **PDF progress** | Session time vs. estimated reading time; 95% = auto-complete |
-| **Content opens** | Click/open events per item and category |
-| **Category visits** | Page view events per category |
-| **Bookmarks** | Toggle events; per-item and per-user |
-| **Ratings** | Thumbs up / thumbs down; per-item and per-user |
-| **Login dates** | One record per user per day; used for streaks and retention |
-| **Achievement unlocks** | Checked after each item completion; 13 possible achievements |
+| Signal                   | Method                                                                                                           |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| **Session time**         | Real-time timer; counts active engagement (pauses after 90s of no activity); writes every 5 seconds and on close |
+| **Video/audio progress** | Furthest playback position; 95% = auto-complete                                                                  |
+| **PDF progress**         | Session time vs. estimated reading time; 95% = auto-complete                                                     |
+| **Content opens**        | Click/open events per item and category                                                                          |
+| **Category visits**      | Page view events per category                                                                                    |
+| **Bookmarks**            | Toggle events; per-item and per-user                                                                             |
+| **Ratings**              | Thumbs up / thumbs down; per-item and per-user                                                                   |
+| **Login dates**          | One record per user per day; used for streaks and retention                                                      |
+| **Achievement unlocks**  | Checked after each item completion; 13 possible achievements                                                     |
 
 **Exempt items** — items flagged "exempt from tracking" are excluded from every metric: progress rings, completion rates, monthly summaries, achievement counts, and all pre-computed nightly statistics.
 
@@ -508,6 +516,7 @@ The analytics page has three tabs: **Overall**, **By Facility**, and **Users**.
 ### Overall Tab
 
 **Summary cards** — five top-level metrics for the selected time range (Last month, Last 7 days, Last 30 days, Last 90 days, All time):
+
 - Completion rate, time spent, visits, opens, total registered users
 
 **Category list** — every category as an expandable accordion showing visits, opens, completion rate, avg depth, and time spent. Expanded view shows per-item stats: open count, completion rate, drop-off count, avg time on item, helpful ratings, not-helpful ratings, and bookmark count. Exempt items are excluded.
@@ -522,9 +531,9 @@ The analytics page has three tabs: **Overall**, **By Facility**, and **Users**.
 
 **Weekly Growth** — a 12-week chart of new signups and active users per week.
 
-**Facility Comparison** *(Admin only)* — all facilities ranked by average completion rate, with user counts, active users (7d/30d), participation rate, items completed, time spent, total bookmarks, helpful ratings, and not-helpful ratings. Exportable as CSV.
+**Facility Comparison** _(Admin only)_ — all facilities ranked by average completion rate, with user counts, active users (7d/30d), participation rate, items completed, time spent, total bookmarks, helpful ratings, and not-helpful ratings. Exportable as CSV.
 
-**Manual Refresh** *(Admin only)* — a button triggers the nightly analytics job immediately without waiting for the 2am UTC schedule.
+**Manual Refresh** _(Admin only)_ — a button triggers the nightly analytics job immediately without waiting for the 2am UTC schedule.
 
 ---
 
@@ -556,37 +565,38 @@ The report shows the user's PIN next to their name for identification.
 
 ### CSV Exports
 
-| Export | Contents |
-|---|---|
-| **Usage report** | Summary metrics, content type breakdown, per-category and per-item detail: completion rate, drop-offs, openers, completions, avg time, helpful/not-helpful ratings, bookmark count |
-| **Facility comparison** | All facilities: user counts, active counts, participation rate, avg completion %, items completed, time spent, total bookmarks, helpful ratings, not-helpful ratings |
-| **Individual user progress** | Per-user CSV with category summary rows and individual item rows. Columns: Category, Item Title, Read, Read On, Progress, Time Spent, Bookmarked, Rating. Category name appears once per group (on the summary row); item rows leave that column blank. |
-| **Facility users list** | All users in a facility with signup date, last login, engagement tier, percentile |
-| **Bulk facility progress** | All users × all items for a selected facility — one row per user+item. Columns: First Name, Last Name, Username, PIN, Last Login, Items Completed, Time Spent (hrs), Category, Item Title, Completed, Completed On, Progress %, Time on Item (min), Bookmarked, Rating. Items are grouped by category in display order. User fields and the Category column are shown only on the first row of each user/category group; subsequent rows leave them blank to keep the sheet readable. Requires a specific facility to be selected — "all facilities" is not supported. |
+| Export                       | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Usage report**             | Summary metrics, content type breakdown, per-category and per-item detail: completion rate, drop-offs, openers, completions, avg time, helpful/not-helpful ratings, bookmark count                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Facility comparison**      | All facilities: user counts, active counts, participation rate, avg completion %, items completed, time spent, total bookmarks, helpful ratings, not-helpful ratings                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **Individual user progress** | Per-user CSV with category summary rows and individual item rows. Columns: Category, Item Title, Read, Read On, Progress, Time Spent, Bookmarked, Rating. Category name appears once per group (on the summary row); item rows leave that column blank.                                                                                                                                                                                                                                                                                                                |
+| **Facility users list**      | All users in a facility with signup date, last login, engagement tier, percentile                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **Bulk facility progress**   | All users × all items for a selected facility — one row per user+item. Columns: First Name, Last Name, Username, PIN, Last Login, Items Completed, Time Spent (hrs), Category, Item Title, Completed, Completed On, Progress %, Time on Item (min), Bookmarked, Rating. Items are grouped by category in display order. User fields and the Category column are shown only on the first row of each user/category group; subsequent rows leave them blank to keep the sheet readable. Requires a specific facility to be selected — "all facilities" is not supported. |
 
 ---
 
 ### How Data Updates
 
-| Data | Frequency |
-|---|---|
+| Data                                            | Frequency                                |
+| ----------------------------------------------- | ---------------------------------------- |
 | Session time, completion status, media progress | Real-time (within 5 seconds of activity) |
-| Visit and click counts | Real-time via database trigger |
-| Engagement tier, facility percentile | Nightly at 2am UTC |
-| Retention rates | Nightly at 2am UTC |
-| Weekly growth | Nightly at 2am UTC |
-| Facility comparison stats | Nightly at 2am UTC |
-| Content item aggregate stats | Nightly at 2am UTC |
+| Visit and click counts                          | Real-time via database trigger           |
+| Engagement tier, facility percentile            | Nightly at 2am UTC                       |
+| Retention rates                                 | Nightly at 2am UTC                       |
+| Weekly growth                                   | Nightly at 2am UTC                       |
+| Facility comparison stats                       | Nightly at 2am UTC                       |
+| Content item aggregate stats                    | Nightly at 2am UTC                       |
 
 ---
 
 ## Messages — `/admin/messages`
 
-*Admin (all facilities), Facility User (own facility only)*
+_Admin (all facilities), Facility User (own facility only)_
 
-**Site-wide message** *(Admin only)* — a dismissible banner shown to all users on the home page. Supports English and Spanish. Enabled/disabled with a toggle.
+**Site-wide message** _(Admin only)_ — a dismissible banner shown to all users on the home page. Supports English and Spanish. Enabled/disabled with a toggle.
 
 **Facility messages** — one configurable message per facility. Admins can set messages for any facility. Facility Users see only their own facility's editor. Includes:
+
 - Enable/disable toggle
 - English and Spanish message fields
 - AI-assisted "Regenerate" translation button
@@ -598,7 +608,7 @@ When a message is updated, it reappears to all users who previously dismissed it
 
 ## Facilities — `/admin/facilities`
 
-*Admin only*
+_Admin only_
 
 - **View all facilities** — list with site ID, user count, assigned categories, custom content items, and active message preview
 - **Add facilities** — label and Site ID per facility; value (URL slug) is derived automatically from the Site ID. Bulk import supported.
@@ -612,7 +622,7 @@ When a message is updated, it reappears to all users who previously dismissed it
 
 ## Audit Log — `/admin/audit-log`
 
-*Admin only*
+_Admin only_
 
 A read-only chronological log of sensitive admin actions:
 
@@ -627,7 +637,7 @@ Each entry shows: action type, actor (name + email), affected user (name + email
 
 ## Error Log — `/admin/errors`
 
-*Admin only*
+_Admin only_
 
 Server and client-side errors caught by the platform's global error boundary:
 
@@ -639,7 +649,7 @@ Server and client-side errors caught by the platform's global error boundary:
 
 ## Home Page Editor — `/admin/home`
 
-*Admin only*
+_Admin only_
 
 Edit the main hero section — eyebrow label, headline, and subheading — in English and Spanish. Changes go live immediately.
 
@@ -647,7 +657,7 @@ Edit the main hero section — eyebrow label, headline, and subheading — in En
 
 ## Certificate Page Editor — `/admin/certificate`
 
-*Admin only*
+_Admin only_
 
 Edit the hero section of the certificate program landing page — headline and subheading in English and Spanish.
 
@@ -655,7 +665,7 @@ Edit the hero section of the certificate program landing page — headline and s
 
 ## Privacy Policy & Terms of Service
 
-`/admin/privacy` and `/admin/terms` — *Admin, Contributor*
+`/admin/privacy` and `/admin/terms` — _Admin, Contributor_
 
 Rich text editors for the platform's legal pages. Both support English and Spanish with AI-assisted translation.
 
@@ -663,7 +673,7 @@ Rich text editors for the platform's legal pages. Both support English and Spani
 
 ## Icons & Badges — `/admin/icons-badges`
 
-*Admin only*
+_Admin only_
 
 Visual design tool for customizing the platform's badge and icon appearance:
 
@@ -679,7 +689,7 @@ Save Changes must be clicked to persist any badge/icon changes.
 
 ## IP Allowlist — `/admin/ip-allowlist`
 
-*Admin only*
+_Admin only_
 
 Controls which IP addresses can access the platform.
 
@@ -695,7 +705,7 @@ Controls which IP addresses can access the platform.
 
 ## Seed Content — `/admin/seed`
 
-*Admin only*
+_Admin only_
 
 Bulk import tool for adding many content items at once via CSV upload:
 
@@ -708,7 +718,7 @@ Bulk import tool for adding many content items at once via CSV upload:
 
 ## Test Results — `/admin/test-results`
 
-*Admin only*
+_Admin only_
 
 A read-only dashboard showing every QA test run submitted by tester accounts.
 
@@ -724,23 +734,23 @@ A read-only dashboard showing every QA test run submitted by tester accounts.
 
 ## Role Summary by Page
 
-| Page | Admin | Contributor | Facility User |
-|---|---|---|---|
-| Content home (`/admin/`) | ✓ Full | ✓ Full | — |
-| Category & item editor | ✓ Full | ✓ Full | — |
-| Users | ✓ All | — | Own facility |
-| Analytics | ✓ All facilities | — | Own facility |
-| Messages | ✓ All facilities | — | Own facility |
-| Facilities | ✓ Full | — | — |
-| Audit log | ✓ | — | Scoped |
-| Error log | ✓ | — | — |
-| Home page editor | ✓ | — | — |
-| Certificate editor | ✓ | — | — |
-| Privacy / Terms | ✓ | ✓ | — |
-| Icons & Badges | ✓ | — | — |
-| IP Allowlist | ✓ | — | — |
-| Seed content | ✓ | — | — |
-| Test Results | ✓ | — | — |
+| Page                     | Admin            | Contributor | Facility User |
+| ------------------------ | ---------------- | ----------- | ------------- |
+| Content home (`/admin/`) | ✓ Full           | ✓ Full      | —             |
+| Category & item editor   | ✓ Full           | ✓ Full      | —             |
+| Users                    | ✓ All            | —           | Own facility  |
+| Analytics                | ✓ All facilities | —           | Own facility  |
+| Messages                 | ✓ All facilities | —           | Own facility  |
+| Facilities               | ✓ Full           | —           | —             |
+| Audit log                | ✓                | —           | Scoped        |
+| Error log                | ✓                | —           | —             |
+| Home page editor         | ✓                | —           | —             |
+| Certificate editor       | ✓                | —           | —             |
+| Privacy / Terms          | ✓                | ✓           | —             |
+| Icons & Badges           | ✓                | —           | —             |
+| IP Allowlist             | ✓                | —           | —             |
+| Seed content             | ✓                | —           | —             |
+| Test Results             | ✓                | —           | —             |
 
 ---
 
@@ -749,6 +759,7 @@ A read-only dashboard showing every QA test run submitted by tester accounts.
 **Authentication:** Username-based login (no email required for regular users). Internally, a synthetic email format (`username@users.local`) is used so the Supabase auth system functions normally.
 
 **Authorization — two independent layers:**
+
 1. **Route guards (client-side):** Each admin route has a `beforeLoad` hook that checks the session and role before the page renders. Unauthorized users are redirected.
 2. **Server functions (server-side):** Every data-fetching and mutation function re-checks the caller's role using the service-role Supabase client. Route guards can be bypassed — server functions cannot.
 
@@ -776,9 +787,9 @@ npm run test:coverage # with v8 coverage report
 
 ### What is tested
 
-| File | Coverage |
-|---|---|
-| `server-auth.test.ts` | `assertAnalyticsAdmin` and `isFacilityScoped` — every role combination, admin short-circuit, tester dual-role edge case |
+| File                           | Coverage                                                                                                                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `server-auth.test.ts`          | `assertAnalyticsAdmin` and `isFacilityScoped` — every role combination, admin short-circuit, tester dual-role edge case                                               |
 | `reports-scope-guards.test.ts` | Facility scope guard logic for all three analytics handlers — admin pass-through, facilityUser own-facility allow, cross-facility reject, no-facility-assigned reject |
 
 ### Adding tests
@@ -789,13 +800,13 @@ npm run test:coverage # with v8 coverage report
 
 ## Additional Documentation
 
-| File | Description |
-|---|---|
-| [ANALYTICS.md](ANALYTICS.md) | Complete analytics and data tracking reference — every metric tracked, how it's measured, and what it means for grant reporting |
-| [USER_DASHBOARD.md](USER_DASHBOARD.md) | Full feature guide for the user-facing dashboard — all tabs, sections, badges, and behaviors |
-| [ADMIN.md](ADMIN.md) | Detailed admin panel feature guide — every page and action available to admin, contributor, and facility user accounts |
-| [USER_ROLES.md](USER_ROLES.md) | Full role and permission breakdown — what each role can do, where access is enforced, and how facility scoping works |
-| [MAIN_PAGE.md](MAIN_PAGE.md) | Feature guide for the public home page — category grid, search, banners, and signed-in vs. anonymous differences |
-| [SIGNUP_AND_LOGIN.md](SIGNUP_AND_LOGIN.md) | Security reference for the sign-up and login flow — captcha, PIN gating, rate limiting, and password reset |
-| [PRIVACY_POLICY.md](PRIVACY_POLICY.md) | Platform privacy policy |
-| [TERMS_OF_SERVICE.md](TERMS_OF_SERVICE.md) | Platform terms of service |
+| File                                       | Description                                                                                                                     |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| [ANALYTICS.md](ANALYTICS.md)               | Complete analytics and data tracking reference — every metric tracked, how it's measured, and what it means for grant reporting |
+| [USER_DASHBOARD.md](USER_DASHBOARD.md)     | Full feature guide for the user-facing dashboard — all tabs, sections, badges, and behaviors                                    |
+| [ADMIN.md](ADMIN.md)                       | Detailed admin panel feature guide — every page and action available to admin, contributor, and facility user accounts          |
+| [USER_ROLES.md](USER_ROLES.md)             | Full role and permission breakdown — what each role can do, where access is enforced, and how facility scoping works            |
+| [MAIN_PAGE.md](MAIN_PAGE.md)               | Feature guide for the public home page — category grid, search, banners, and signed-in vs. anonymous differences                |
+| [SIGNUP_AND_LOGIN.md](SIGNUP_AND_LOGIN.md) | Security reference for the sign-up and login flow — captcha, PIN gating, rate limiting, and password reset                      |
+| [PRIVACY_POLICY.md](PRIVACY_POLICY.md)     | Platform privacy policy                                                                                                         |
+| [TERMS_OF_SERVICE.md](TERMS_OF_SERVICE.md) | Platform terms of service                                                                                                       |

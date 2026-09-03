@@ -144,7 +144,7 @@ const VARIANT_ICONS: Record<BadgeVariantKey, LucideIcon> = {
   user: User,
   facility: Building2,
   "facility-user": HeartHandshake,
-  "exempt": Info,
+  exempt: Info,
 };
 
 const TYPE_ICONS: Record<string, LucideIcon> = {
@@ -303,16 +303,23 @@ export function iconForType(type: string | null | undefined): LucideIcon {
   return File;
 }
 
-export function Badge({ variant, type, hideIcon, children, className, style, title, onClick, size = "md" }: BadgeProps) {
+export function Badge({
+  variant,
+  type,
+  hideIcon,
+  children,
+  className,
+  style,
+  title,
+  onClick,
+  size = "md",
+}: BadgeProps) {
   const styles = useBadgeStyles();
 
   // Determine the palette index: "type" badges derive their index from the type
   // string (with optional per-type override); all other variants use their stored
   // palette index, defaulting to 0 if not yet configured.
-  const idx =
-    variant === "type"
-      ? indexForType(type, styles)
-      : (styles.variants[variant] ?? 0);
+  const idx = variant === "type" ? indexForType(type, styles) : (styles.variants[variant] ?? 0);
 
   const ps = paletteStyle(idx);
 

@@ -2,7 +2,13 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import { getAllowedIps, getClientIp, getCustomHomeRestrictions, isIpRestrictionEnabled, renderBlockedPage } from "./lib/ip-allowlist";
+import {
+  getAllowedIps,
+  getClientIp,
+  getCustomHomeRestrictions,
+  isIpRestrictionEnabled,
+  renderBlockedPage,
+} from "./lib/ip-allowlist";
 import { logServerError } from "./lib/error-logger.server";
 
 type ServerEntry = {
@@ -18,7 +24,7 @@ async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
       // server-entry may export its handler as `default` or as the module itself.
-      (m) => ((m as { default?: ServerEntry }).default ?? (m as unknown as ServerEntry)),
+      (m) => (m as { default?: ServerEntry }).default ?? (m as unknown as ServerEntry),
     );
   }
   return serverEntryPromise;
@@ -33,7 +39,8 @@ const SECURITY_HEADERS: Record<string, string> = {
   "x-content-type-options": "nosniff",
   "x-frame-options": "SAMEORIGIN",
   "referrer-policy": "strict-origin-when-cross-origin",
-  "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+  "permissions-policy":
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
   "cross-origin-opener-policy": "same-origin",
   "x-xss-protection": "0",
   "content-security-policy": [
@@ -52,7 +59,6 @@ const SECURITY_HEADERS: Record<string, string> = {
     "worker-src 'self' blob:",
   ].join("; "),
 };
-
 
 function applySecurityHeaders(response: Response): Response {
   // Clone headers so we don't mutate frozen response headers from upstream.
@@ -107,7 +113,10 @@ function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boole
 
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
-async function normalizeCatastrophicSsrResponse(response: Response, request: Request): Promise<Response> {
+async function normalizeCatastrophicSsrResponse(
+  response: Response,
+  request: Request,
+): Promise<Response> {
   if (response.status < 500) return response;
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) return response;
@@ -171,14 +180,13 @@ export default {
         console.error("[ip-allowlist] check failed:", err);
       }
       if (!allowed) {
-        return applySecurityHeaders(new Response(renderBlockedPage(ip, "site"), {
-          status: 403,
-          headers: { "content-type": "text/html; charset=utf-8" },
-        }));
+        return applySecurityHeaders(
+          new Response(renderBlockedPage(ip, "site"), {
+            status: 403,
+            headers: { "content-type": "text/html; charset=utf-8" },
+          }),
+        );
       }
-
-
-
 
       // Per-custom-home-page IP restriction. The slug is the first path segment
       // (TanStack catch-all route `/$customHome`). Only enforce if the slug
@@ -189,10 +197,12 @@ export default {
           const restrictions = await getCustomHomeRestrictions();
           const allowedForSlug = restrictions.get(firstSegment);
           if (allowedForSlug && (!ip || !allowedForSlug.has(ip))) {
-            return applySecurityHeaders(new Response(renderBlockedPage(ip, "custom-home"), {
-              status: 403,
-              headers: { "content-type": "text/html; charset=utf-8" },
-            }));
+            return applySecurityHeaders(
+              new Response(renderBlockedPage(ip, "custom-home"), {
+                status: 403,
+                headers: { "content-type": "text/html; charset=utf-8" },
+              }),
+            );
           }
         } catch (err) {
           console.error("[custom-home-restrictions] check failed:", err);

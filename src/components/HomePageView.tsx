@@ -46,7 +46,8 @@ function useUserProgress(userId: string | null, categoryIds: string[]) {
         const isExempt = exemptIds.has(row.content_item_id as string);
         reads[row.category_id as string] = (reads[row.category_id as string] ?? 0) + 1;
         if (!isExempt) {
-          trackableReads[row.category_id as string] = (trackableReads[row.category_id as string] ?? 0) + 1;
+          trackableReads[row.category_id as string] =
+            (trackableReads[row.category_id as string] ?? 0) + 1;
         }
         readSet.add(row.content_item_id as string);
       }
@@ -59,7 +60,10 @@ function useUserProgress(userId: string | null, categoryIds: string[]) {
 function useCategoryItemStats(categoryIds: string[], userFacility: string | null | undefined) {
   const facilityKey = userFacility === undefined ? "admin" : (userFacility ?? "anon");
   return useQuery({
-    queryKey: QK.categoryItemStats([...categoryIds].sort().join(","), facilityKey as unknown as number),
+    queryKey: QK.categoryItemStats(
+      [...categoryIds].sort().join(","),
+      facilityKey as unknown as number,
+    ),
     enabled: categoryIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -79,7 +83,10 @@ function useCategoryItemStats(categoryIds: string[], userFacility: string | null
             .from("content_item_facilities")
             .select("content_item_id, facility_value")
             .in("content_item_id", itemIds);
-          for (const row of (cifData ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+          for (const row of (cifData ?? []) as Array<{
+            content_item_id: string;
+            facility_value: string;
+          }>) {
             if (!facilityMap[row.content_item_id]) facilityMap[row.content_item_id] = [];
             facilityMap[row.content_item_id].push(row.facility_value);
           }
@@ -88,12 +95,21 @@ function useCategoryItemStats(categoryIds: string[], userFacility: string | null
 
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const stats: Record<string, CategoryStats> = {};
-      for (const row of (data ?? []) as { id: string; category_id: string; created_at: string; exempt_from_progress?: boolean }[]) {
+      for (const row of (data ?? []) as {
+        id: string;
+        category_id: string;
+        created_at: string;
+        exempt_from_progress?: boolean;
+      }[]) {
         const facilities = facilityMap[row.id] ?? [];
         if (facilities.length > 0) {
           if (!userFacility || !facilities.includes(userFacility)) continue;
         }
-        const s = stats[row.category_id] ?? { count: 0, trackableCount: 0, recentItemIds: new Set<string>() };
+        const s = stats[row.category_id] ?? {
+          count: 0,
+          trackableCount: 0,
+          recentItemIds: new Set<string>(),
+        };
         s.count += 1;
         if (!row.exempt_from_progress) s.trackableCount += 1;
         if (new Date(row.created_at).getTime() >= cutoff) s.recentItemIds.add(row.id);
@@ -146,7 +162,10 @@ function SearchResults({
   return (
     <div>
       <p className="text-sm text-muted-foreground mb-5">
-        {t(results.length === 1 ? "home.searchResult" : "home.searchResults", { count: results.length, query })}
+        {t(results.length === 1 ? "home.searchResult" : "home.searchResults", {
+          count: results.length,
+          query,
+        })}
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {results.map((item: any) => {
@@ -159,7 +178,12 @@ function SearchResults({
             <a
               key={item.id}
               href={`/category/${cat.slug}#item-${item.id}`}
-              style={{ "--card-color": color, "--card-border": `color-mix(in oklab, ${color} 35%, transparent)` } as React.CSSProperties}
+              style={
+                {
+                  "--card-color": color,
+                  "--card-border": `color-mix(in oklab, ${color} 35%, transparent)`,
+                } as React.CSSProperties
+              }
               className="group flex flex-col gap-3 rounded-xl border border-border bg-card p-5 hover:-translate-y-0.5 hover:border-[var(--card-border)] hover:shadow-[var(--shadow-card)] transition-all"
             >
               <div className="flex items-center gap-2">
@@ -181,7 +205,11 @@ function SearchResults({
                           <button
                             type="button"
                             aria-label={isBookmarked ? t("bookmark.remove") : t("bookmark.save")}
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(item.id); }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggle(item.id);
+                            }}
                             className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 transition-colors hover:bg-muted"
                           >
                             <Bookmark
@@ -202,7 +230,9 @@ function SearchResults({
                   )}
                 </div>
               </div>
-              <p className="text-sm font-medium text-foreground leading-snug line-clamp-2">{item.title}</p>
+              <p className="text-sm font-medium text-foreground leading-snug line-clamp-2">
+                {item.title}
+              </p>
             </a>
           );
         })}
@@ -211,7 +241,15 @@ function SearchResults({
   );
 }
 
-function MasonryCategories({ categories, lang, facilityContext }: { categories: Category[]; lang: Language; facilityContext?: string }) {
+function MasonryCategories({
+  categories,
+  lang,
+  facilityContext,
+}: {
+  categories: Category[];
+  lang: Language;
+  facilityContext?: string;
+}) {
   const cols = useColumnCount();
   const { isAdmin, isFacilityUser, user } = useAuth();
   const { t } = useI18n();
@@ -235,13 +273,19 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
       const f = c.facilities ?? [];
       if (f.length === 0) return true;
       if (userFacility === undefined) return true; // admin on non-facility page: show all
-      if (!userFacility) return false;             // no facility: hide restricted
+      if (!userFacility) return false; // no facility: hide restricted
       return f.includes(userFacility);
     });
   }, [categories, userFacility]);
 
-  const { data: stats = {} } = useCategoryItemStats(visibleCategories.map((c) => c.id), userFacility);
-  const { data: progress } = useUserProgress(user?.id ?? null, visibleCategories.map((c) => c.id));
+  const { data: stats = {} } = useCategoryItemStats(
+    visibleCategories.map((c) => c.id),
+    userFacility,
+  );
+  const { data: progress } = useUserProgress(
+    user?.id ?? null,
+    visibleCategories.map((c) => c.id),
+  );
   const reads = progress?.reads ?? {};
   const trackableReads = progress?.trackableReads ?? {};
   const readSet = progress?.readSet ?? new Set<string>();
@@ -257,84 +301,98 @@ function MasonryCategories({ categories, lang, facilityContext }: { categories: 
             const hasRecent = Array.from(s.recentItemIds).some((id) => !readSet.has(id));
             const cardColor = c.icon_color || "var(--color-accent)";
             return (
-            <div key={c.id} className="relative">
-              <Link
-                to="/category/$slug"
-                params={{ slug: c.slug }}
-                style={{ "--card-color": cardColor, "--card-border": `color-mix(in oklab, ${cardColor} 35%, transparent)` } as React.CSSProperties}
-                className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 transition-all hover:-translate-y-1 hover:border-[var(--card-border)] hover:shadow-[var(--shadow-card)]"
-              >
-                {/* Arrow circle — aligned to the top of the category icon, same border color scheme */}
-                <span
-                  className="absolute top-4 right-4 flex items-center justify-center h-8 w-8 rounded-[8px] border transition-colors"
-                  style={{
-                    backgroundColor: `color-mix(in oklab, ${cardColor} 15%, transparent)`,
-                    borderColor: `color-mix(in oklab, ${cardColor} 25%, transparent)`,
-                    color: cardColor,
-                  }}
+              <div key={c.id} className="relative">
+                <Link
+                  to="/category/$slug"
+                  params={{ slug: c.slug }}
+                  style={
+                    {
+                      "--card-color": cardColor,
+                      "--card-border": `color-mix(in oklab, ${cardColor} 35%, transparent)`,
+                    } as React.CSSProperties
+                  }
+                  className="group relative flex flex-col rounded-2xl border border-border bg-card p-8 sm:p-10 transition-all hover:-translate-y-1 hover:border-[var(--card-border)] hover:shadow-[var(--shadow-card)]"
                 >
-                  <ArrowRight className="h-4 w-4 -rotate-45" />
-                </span>
-                <div className="flex">
-                  {(() => {
-                    const Icon = resolveCategoryIcon(c.icon_name);
-                    return (
-                      <div
-                        className="flex h-16 w-16 sm:h-18 sm:w-18 items-center justify-center rounded-xl border"
-                        style={{
-                          backgroundColor: `color-mix(in oklab, ${cardColor} 12%, transparent)`,
-                          borderColor: `color-mix(in oklab, ${cardColor} 25%, transparent)`,
-                        }}
-                      >
-                        <Icon className="h-7 w-7 sm:h-8 sm:w-8" style={{ color: cardColor }} strokeWidth={1.75} />
-                      </div>
-                    );
-                  })()}
-                </div>
-                <div className="mt-5 text-left">
-                  <h3 className="font-display text-base sm:text-lg font-semibold text-foreground leading-tight">
-                    {pickLang(lang, c.name, c.name_es)}
-                  </h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{pickLang(lang, c.tagline, c.tagline_es)}</p>
-                  <div className="mt-3">
-                    <ResponsiveBadgeGroup>
-                      <Badge
-                        variant="count"
-                        className="rounded-[8px]"
-                        style={{
-                          color: cardColor,
-                          backgroundColor: `color-mix(in oklab, ${cardColor} 15%, transparent)`,
-                          borderColor: `color-mix(in oklab, ${cardColor} 25%, transparent)`,
-                        }}
-                      >
-                        {count} {t(count === 1 ? "home.item" : "home.items")}
-                      </Badge>
-                      {hasRecent && (
-                        <Badge variant="new" className="rounded-[8px]">{t("category.newContentAdded")}</Badge>
-                      )}
-                    </ResponsiveBadgeGroup>
+                  {/* Arrow circle — aligned to the top of the category icon, same border color scheme */}
+                  <span
+                    className="absolute top-4 right-4 flex items-center justify-center h-8 w-8 rounded-[8px] border transition-colors"
+                    style={{
+                      backgroundColor: `color-mix(in oklab, ${cardColor} 15%, transparent)`,
+                      borderColor: `color-mix(in oklab, ${cardColor} 25%, transparent)`,
+                      color: cardColor,
+                    }}
+                  >
+                    <ArrowRight className="h-4 w-4 -rotate-45" />
+                  </span>
+                  <div className="flex">
+                    {(() => {
+                      const Icon = resolveCategoryIcon(c.icon_name);
+                      return (
+                        <div
+                          className="flex h-16 w-16 sm:h-18 sm:w-18 items-center justify-center rounded-xl border"
+                          style={{
+                            backgroundColor: `color-mix(in oklab, ${cardColor} 12%, transparent)`,
+                            borderColor: `color-mix(in oklab, ${cardColor} 25%, transparent)`,
+                          }}
+                        >
+                          <Icon
+                            className="h-7 w-7 sm:h-8 sm:w-8"
+                            style={{ color: cardColor }}
+                            strokeWidth={1.75}
+                          />
+                        </div>
+                      );
+                    })()}
                   </div>
+                  <div className="mt-5 text-left">
+                    <h3 className="font-display text-base sm:text-lg font-semibold text-foreground leading-tight">
+                      {pickLang(lang, c.name, c.name_es)}
+                    </h3>
+                    <p className="mt-1.5 text-sm text-muted-foreground">
+                      {pickLang(lang, c.tagline, c.tagline_es)}
+                    </p>
+                    <div className="mt-3">
+                      <ResponsiveBadgeGroup>
+                        <Badge
+                          variant="count"
+                          className="rounded-[8px]"
+                          style={{
+                            color: cardColor,
+                            backgroundColor: `color-mix(in oklab, ${cardColor} 15%, transparent)`,
+                            borderColor: `color-mix(in oklab, ${cardColor} 25%, transparent)`,
+                          }}
+                        >
+                          {count} {t(count === 1 ? "home.item" : "home.items")}
+                        </Badge>
+                        {hasRecent && (
+                          <Badge variant="new" className="rounded-[8px]">
+                            {t("category.newContentAdded")}
+                          </Badge>
+                        )}
+                      </ResponsiveBadgeGroup>
+                    </div>
 
-
-
-
-                  {user && !isAdmin && !isFacilityUser && s.trackableCount > 0 && (() => {
-                    const read = Math.min(trackableReads[c.id] ?? 0, s.trackableCount);
-                    const pct = Math.round((read / s.trackableCount) * 100);
-                    return (
-                      <div className="mt-4 space-y-1.5">
-                        <Progress value={pct} className="h-1.5" />
-                        <p className="text-[11px] text-muted-foreground">
-                          {t("dashboard.progressItems")
-                            .replace("{done}", String(read))
-                            .replace("{total}", String(s.trackableCount))}
-                        </p>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </Link>
-            </div>
+                    {user &&
+                      !isAdmin &&
+                      !isFacilityUser &&
+                      s.trackableCount > 0 &&
+                      (() => {
+                        const read = Math.min(trackableReads[c.id] ?? 0, s.trackableCount);
+                        const pct = Math.round((read / s.trackableCount) * 100);
+                        return (
+                          <div className="mt-4 space-y-1.5">
+                            <Progress value={pct} className="h-1.5" />
+                            <p className="text-[11px] text-muted-foreground">
+                              {t("dashboard.progressItems")
+                                .replace("{done}", String(read))
+                                .replace("{total}", String(s.trackableCount))}
+                            </p>
+                          </div>
+                        );
+                      })()}
+                  </div>
+                </Link>
+              </div>
             );
           })}
         </div>
@@ -441,7 +499,11 @@ export function HomePageView({
   const { data: stats = {} } = useCategoryItemStats(visibleCategoryIds, userFacility);
 
   const { data: searchResults = [], isFetching: searchFetching } = useQuery({
-    queryKey: QK.homeSearch(debouncedQuery, [...visibleCategoryIds].sort().join(","), facilityKey as unknown as number),
+    queryKey: QK.homeSearch(
+      debouncedQuery,
+      [...visibleCategoryIds].sort().join(","),
+      facilityKey as unknown as number,
+    ),
     enabled: debouncedQuery.length >= 2,
     staleTime: 30 * 1000,
     queryFn: async () => {
@@ -449,7 +511,9 @@ export function HomePageView({
       const safe = debouncedQuery.replace(/%/g, "\\%").replace(/_/g, "\\_");
       const { data, error } = await (supabase as any)
         .from("content_items")
-        .select("id, title, description, type, category_id, categories!inner(id, name, name_es, slug, icon_name, icon_color)")
+        .select(
+          "id, title, description, type, category_id, categories!inner(id, name, name_es, slug, icon_name, icon_color)",
+        )
         .eq("published", true)
         .in("category_id", visibleCategoryIds)
         .or(`title.ilike.%${safe}%,description.ilike.%${safe}%`)
@@ -464,7 +528,10 @@ export function HomePageView({
         .select("content_item_id, facility_value")
         .in("content_item_id", itemIds);
       const facilityMap: Record<string, string[]> = {};
-      for (const row of (cifData ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+      for (const row of (cifData ?? []) as Array<{
+        content_item_id: string;
+        facility_value: string;
+      }>) {
         if (!facilityMap[row.content_item_id]) facilityMap[row.content_item_id] = [];
         facilityMap[row.content_item_id].push(row.facility_value);
       }
@@ -528,7 +595,8 @@ export function HomePageView({
               {heroEyebrow}
             </div>
             <h1 className="mt-6 font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-              {heroPrefix} <span className="italic text-[var(--color-accent)]">{heroEmphasis}</span> {heroSuffix}
+              {heroPrefix} <span className="italic text-[var(--color-accent)]">{heroEmphasis}</span>{" "}
+              {heroSuffix}
             </h1>
             <p className="mt-6 text-lg text-muted-foreground leading-relaxed">{heroSubheading}</p>
           </div>
@@ -551,11 +619,16 @@ export function HomePageView({
               />
             </div>
             <span className="text-sm text-muted-foreground shrink-0">
-              {isLoading ? t("home.loading") : (() => {
-                const catCount = visibleCategories.length;
-                const itemCount = visibleCategories.reduce((sum, c) => sum + (stats[c.id]?.count ?? 0), 0);
-                return `${catCount} ${t(catCount === 1 ? "home.category" : "home.categories")} / ${itemCount} ${t(itemCount === 1 ? "home.item" : "home.items")}`;
-              })()}
+              {isLoading
+                ? t("home.loading")
+                : (() => {
+                    const catCount = visibleCategories.length;
+                    const itemCount = visibleCategories.reduce(
+                      (sum, c) => sum + (stats[c.id]?.count ?? 0),
+                      0,
+                    );
+                    return `${catCount} ${t(catCount === 1 ? "home.category" : "home.categories")} / ${itemCount} ${t(itemCount === 1 ? "home.item" : "home.items")}`;
+                  })()}
             </span>
           </div>
 
@@ -569,7 +642,11 @@ export function HomePageView({
             />
           ) : (
             <>
-              <MasonryCategories categories={categories} lang={lang} facilityContext={facilityContext} />
+              <MasonryCategories
+                categories={categories}
+                lang={lang}
+                facilityContext={facilityContext}
+              />
               {!isLoading && visibleCategories.length === 0 && (
                 <p className="text-muted-foreground">{t("home.empty")}</p>
               )}
@@ -585,7 +662,9 @@ export function HomePageView({
                 {certEyebrow}
               </div>
               <h2 className="mt-6 font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-                {certPrefix} <span className="italic text-[var(--color-accent)]">{certEmphasis}</span> {certSuffix}
+                {certPrefix}{" "}
+                <span className="italic text-[var(--color-accent)]">{certEmphasis}</span>{" "}
+                {certSuffix}
               </h2>
               <p className="mt-6 text-lg text-muted-foreground leading-relaxed">{certSubheading}</p>
             </div>

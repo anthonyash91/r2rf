@@ -1,10 +1,23 @@
-import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, closestCenter, type DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-
 
 export function SortableList<T extends { id: string }>({
   items,
@@ -19,7 +32,6 @@ export function SortableList<T extends { id: string }>({
   className?: string;
   dragHandleClassName?: string;
 }) {
-
   const sensors = useSensors(
     // 4px activation distance prevents accidental drags when the user intends a click.
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -47,14 +59,23 @@ export function SortableList<T extends { id: string }>({
             </SortableRow>
           ))}
         </ul>
-
       </SortableContext>
     </DndContext>
   );
 }
 
-function SortableRow({ id, children, handleClassName }: { id: string; children: ReactNode; handleClassName?: string }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+function SortableRow({
+  id,
+  children,
+  handleClassName,
+}: {
+  id: string;
+  children: ReactNode;
+  handleClassName?: string;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -66,7 +87,10 @@ function SortableRow({ id, children, handleClassName }: { id: string; children: 
         type="button"
         {...attributes}
         {...listeners}
-        className={cn("flex items-center pl-5 pr-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none", handleClassName)}
+        className={cn(
+          "flex items-center pl-5 pr-0 cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none",
+          handleClassName,
+        )}
         aria-label="Drag to reorder"
       >
         <GripVertical className="h-4 w-4" />
@@ -75,4 +99,3 @@ function SortableRow({ id, children, handleClassName }: { id: string; children: 
     </li>
   );
 }
-

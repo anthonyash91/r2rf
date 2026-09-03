@@ -7,7 +7,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, type Category } from "@/lib/categories";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2, Eye, EyeOff, Sparkles, RefreshCw, ExternalLink, LayoutGrid, GripVertical, X } from "lucide-react";
+import {
+  Pencil,
+  Plus,
+  Trash2,
+  Eye,
+  EyeOff,
+  Sparkles,
+  RefreshCw,
+  ExternalLink,
+  LayoutGrid,
+  GripVertical,
+  X,
+} from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { BackToTopButton } from "@/components/BackToTopButton";
@@ -31,7 +43,7 @@ function categoryTranslationStatus(c: Category): "complete" | "partial" | "missi
   return "complete";
 }
 const SortableList = lazy(() =>
-  import("@/components/SortableList").then((m) => ({ default: m.SortableList }))
+  import("@/components/SortableList").then((m) => ({ default: m.SortableList })),
 );
 
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
@@ -48,7 +60,6 @@ import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { paletteStyle } from "@/lib/badge-styles";
 import { QK } from "@/lib/query-keys";
 
-
 export const Route = createFileRoute("/admin/")({
   component: AdminCategoriesPage,
 });
@@ -61,11 +72,12 @@ function AdminCategoriesPage() {
     if (rolesLoaded && isFacilityUser) navigate({ to: "/admin/users" });
   }, [isFacilityUser, rolesLoaded, navigate]);
 
-  if (!rolesLoaded || isFacilityUser) return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-    </div>
-  );
+  if (!rolesLoaded || isFacilityUser)
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   return <AdminCategoriesContent />;
 }
 
@@ -84,9 +96,9 @@ function AdminCategoriesContent() {
     qc.invalidateQueries({ queryKey: QK.adminCategories });
     qc.invalidateQueries({ queryKey: QK.adminCategoryFacilityMap });
     qc.invalidateQueries({ queryKey: QK.adminCategoryItems });
-    qc.invalidateQueries({ queryKey: QK.categories });           // home page (["categories", "public"])
+    qc.invalidateQueries({ queryKey: QK.categories }); // home page (["categories", "public"])
     qc.invalidateQueries({ queryKey: QK.dashboardCategories }); // user dashboard (all facility variants)
-    qc.invalidateQueries({ queryKey: QK.facilityCategoriesBase });  // facility home pages
+    qc.invalidateQueries({ queryKey: QK.facilityCategoriesBase }); // facility home pages
   };
   const [creating, setCreating] = useState(false);
   const [expandedCourses, setExpandedCourses] = useState(new Set<string>());
@@ -104,25 +116,40 @@ function AdminCategoriesContent() {
     },
   });
 
-
   const { data: itemsByCategory = {} } = useQuery({
     queryKey: QK.adminCategoryItems,
     staleTime: 5 * 60 * 1000,
-    queryFn: async (): Promise<Record<string, { id: string; title: string; published: boolean; sort_order: number }[]>> => {
+    queryFn: async (): Promise<
+      Record<string, { id: string; title: string; published: boolean; sort_order: number }[]>
+    > => {
       const { data, error } = await supabase
         .from("content_items")
         .select("id, category_id, title, published, sort_order")
         .order("sort_order", { ascending: true });
       if (error) throw error;
-      const map: Record<string, { id: string; title: string; published: boolean; sort_order: number }[]> = {};
-      for (const row of (data ?? []) as { id: string; category_id: string; title: string; published: boolean; sort_order: number }[]) {
-        (map[row.category_id] ??= []).push({ id: row.id, title: row.title, published: row.published, sort_order: row.sort_order });
+      const map: Record<
+        string,
+        { id: string; title: string; published: boolean; sort_order: number }[]
+      > = {};
+      for (const row of (data ?? []) as {
+        id: string;
+        category_id: string;
+        title: string;
+        published: boolean;
+        sort_order: number;
+      }[]) {
+        (map[row.category_id] ??= []).push({
+          id: row.id,
+          title: row.title,
+          published: row.published,
+          sort_order: row.sort_order,
+        });
       }
       return map;
     },
   });
   const itemCountsByCategory: Record<string, number> = Object.fromEntries(
-    Object.entries(itemsByCategory).map(([k, v]) => [k, v.length])
+    Object.entries(itemsByCategory).map(([k, v]) => [k, v.length]),
   );
 
   const { data: itemFacilityMap = {} } = useQuery({
@@ -209,25 +236,29 @@ function AdminCategoriesContent() {
         iconName = generated.icon_name;
         iconColor = generated.icon_color;
       }
-      const { data: inserted, error } = await supabase.from("categories").insert({
-        name: input.name,
-        slug: input.slug,
-        tagline: input.tagline,
-        description: input.description,
-        icon_url: null,
-        icon_name: iconName,
-        icon_color: iconColor,
-        published: input.published,
-        name_es: input.name_es,
-        tagline_es: input.tagline_es,
-        description_es: input.description_es,
-        sort_order: (categories.at(-1)?.sort_order ?? 0) + 1,
-      }).select("id").single();
+      const { data: inserted, error } = await supabase
+        .from("categories")
+        .insert({
+          name: input.name,
+          slug: input.slug,
+          tagline: input.tagline,
+          description: input.description,
+          icon_url: null,
+          icon_name: iconName,
+          icon_color: iconColor,
+          published: input.published,
+          name_es: input.name_es,
+          tagline_es: input.tagline_es,
+          description_es: input.description_es,
+          sort_order: (categories.at(-1)?.sort_order ?? 0) + 1,
+        })
+        .select("id")
+        .single();
       if (error) throw error;
       if (input.facilities.length > 0 && inserted?.id) {
-        await (supabase as any).from("category_facilities").insert(
-          input.facilities.map((f) => ({ category_id: inserted.id, facility_value: f }))
-        );
+        await (supabase as any)
+          .from("category_facilities")
+          .insert(input.facilities.map((f) => ({ category_id: inserted.id, facility_value: f })));
       }
     },
     onSuccess: () => {
@@ -237,7 +268,6 @@ function AdminCategoriesContent() {
     },
     onError: (e: any) => toast.error(e.message),
   });
-
 
   const togglePublish = useMutation({
     mutationFn: async (cat: Category) => {
@@ -280,13 +310,18 @@ function AdminCategoriesContent() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [order, setOrder] = useState<Category[]>([]);
-  useEffect(() => { setOrder(categories); }, [categories]);
+  useEffect(() => {
+    setOrder(categories);
+  }, [categories]);
 
   const reorderMut = useMutation({
     mutationFn: async (next: Category[]) => {
       await Promise.all(
         next.map((c, i) =>
-          supabase.from("categories").update({ sort_order: i + 1 }).eq("id", c.id),
+          supabase
+            .from("categories")
+            .update({ sort_order: i + 1 })
+            .eq("id", c.id),
         ),
       );
     },
@@ -315,345 +350,408 @@ function AdminCategoriesContent() {
       </div>
 
       <section className="mt-8">
-      {creating && (
-        <NewCategoryForm
-          onCancel={() => setCreating(false)}
-          onSubmit={(values) => createMut.mutate(values)}
-          busy={createMut.isPending}
-          usedIconNames={categories.map((c) => c.icon_name)}
-          usedIconColors={categories.map((c) => c.icon_color)}
-        />
-      )}
+        {creating && (
+          <NewCategoryForm
+            onCancel={() => setCreating(false)}
+            onSubmit={(values) => createMut.mutate(values)}
+            busy={createMut.isPending}
+            usedIconNames={categories.map((c) => c.icon_name)}
+            usedIconColors={categories.map((c) => c.icon_color)}
+          />
+        )}
 
-      {(() => {
-        const q = searchQuery.trim().toLowerCase();
-        const filteredOrder = q
-          ? order.filter((c) =>
-              [c.name, c.slug, c.tagline, c.description]
-                .filter(Boolean)
-                .some((v) => String(v).toLowerCase().includes(q)),
-            )
-          : order;
-        return (
-          <>
-      {categories.length > 0 && (
-        <BulkActionBar
-          bulk={bulk}
-          filteredCount={filteredOrder.length}
-          totalCount={categories.length}
-          isFiltered={Boolean(q)}
-          noun={{ singular: "category", plural: "categories" }}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          searchPlaceholder="Search categories…"
-          onDeleteSelected={async (ids) =>
-            confirmDelete({
-              title: `Delete ${ids.length} ${ids.length === 1 ? "category" : "categories"}?`,
-              description: `This will permanently delete ${ids.length === 1 ? "the selected category" : `${ids.length} selected categories`} and all their content.`,
-              onConfirm: () => deleteManyMut.mutateAsync(ids),
-            })
-          }
-        />
-      )}
-          </>
-        );
-      })()}
+        {(() => {
+          const q = searchQuery.trim().toLowerCase();
+          const filteredOrder = q
+            ? order.filter((c) =>
+                [c.name, c.slug, c.tagline, c.description]
+                  .filter(Boolean)
+                  .some((v) => String(v).toLowerCase().includes(q)),
+              )
+            : order;
+          return (
+            <>
+              {categories.length > 0 && (
+                <BulkActionBar
+                  bulk={bulk}
+                  filteredCount={filteredOrder.length}
+                  totalCount={categories.length}
+                  isFiltered={Boolean(q)}
+                  noun={{ singular: "category", plural: "categories" }}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Search categories…"
+                  onDeleteSelected={async (ids) =>
+                    confirmDelete({
+                      title: `Delete ${ids.length} ${ids.length === 1 ? "category" : "categories"}?`,
+                      description: `This will permanently delete ${ids.length === 1 ? "the selected category" : `${ids.length} selected categories`} and all their content.`,
+                      onConfirm: () => deleteManyMut.mutateAsync(ids),
+                    })
+                  }
+                />
+              )}
+            </>
+          );
+        })()}
 
-      {(() => {
-        const renderCategoryRow = (c: Category) => (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 pt-[17px] pr-6 pb-[24px] sm:pb-[19px] pl-3">
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-              {(() => {
-                const Icon = resolveCategoryIcon(c.icon_name);
-                const color = c.icon_color || "var(--color-accent)";
-                return (
-                  <div
-                    className="flex h-12 w-12 items-center justify-center rounded-lg border shrink-0"
-                    style={{
-                      backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
-                      borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
-                    }}
-                  >
-                    <Icon className="h-5 w-5" style={{ color }} strokeWidth={1.75} />
-                  </div>
-                );
-              })()}
-              <div className="@container flex-1 min-w-0">
-                <div className="flex flex-col-reverse gap-y-1 pt-[7px] @lg:pt-0 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
-                  <h3 className="font-display text-lg font-semibold break-words min-w-0">{c.name}</h3>
-                  {(() => {
-                    const s = categoryTranslationStatus(c);
-                    const trLabel = s === "missing" ? "Needs ES" : "Partially translated";
-                    const trTitle = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
-                    return (
-                      <BadgeGroup>
-                        <Badge variant="count" title="Content items in this category" className="tabular-nums rounded-[8px]">
-                          {itemCountsByCategory[c.id] ?? 0} {((itemCountsByCategory[c.id] ?? 0) === 1) ? "item" : "items"}
-                        </Badge>
-                        {(categoryFacilityMap[c.id]?.length ?? 0) > 0 && (
-                          <Badge variant="facility" title={`Facility: ${(categoryFacilityMap[c.id] ?? []).map((v) => facilityLabelMap[v] ?? v).join("; ")}`} className="rounded-[8px]">
-                            {categoryFacilityMap[c.id]!.length === 1
-                              ? (facilityLabelMap[categoryFacilityMap[c.id]![0]] ?? categoryFacilityMap[c.id]![0])
-                              : `${categoryFacilityMap[c.id]!.length} facilities`}
-                          </Badge>
-                        )}
-                        {categoriesWithFacilityContent.has(c.id) && (() => {
-                          const customCount = (itemsByCategory[c.id] ?? []).filter((item) => !!itemFacilityMap[item.id]?.length).length;
-                          return (
-                            <Badge variant="custom-content" title="This category has facility-restricted content items" className="rounded-[8px]">
-                              {customCount} Custom {customCount === 1 ? "item" : "items"}
-                            </Badge>
-                          );
-                        })()}
-                        {!c.published && <Badge variant="draft" className="rounded-[8px]">Draft</Badge>}
-                        {s !== "complete" && (
-                          <Badge variant="translation" title={trTitle} className="rounded-[8px]">
-                            {trLabel}
-                          </Badge>
-                        )}
-                      </BadgeGroup>
-                    );
-                  })()}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground break-words">/{c.slug} · {c.tagline}</p>
-                {c.description && (
-                  <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{c.description}</p>
-                )}
-                {(itemsByCategory[c.id]?.length ?? 0) > 0 && (() => {
-                  const allItems = itemsByCategory[c.id] ?? [];
-                  const standardItems = allItems.filter((item) => !itemFacilityMap[item.id]?.length);
-                  const customItems = allItems.filter((item) => !!itemFacilityMap[item.id]?.length);
-                  const isOpen = expandedCourses.has(c.id);
-                  const renderLink = (item: typeof allItems[0], i: number) => (
-                    <span key={item.id}>
-                      {i > 0 && ", "}
-                      {c.published && item.published ? (
-                        <Link
-                          to="/category/$slug"
-                          params={{ slug: c.slug }}
-                          hash={`item-${item.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[var(--color-accent)] hover:underline"
-                        >
-                          {item.title}
-                        </Link>
-                      ) : (
-                        <span>
-                          {item.title}
-                          {!item.published && <span className="ml-1 text-xs italic">(draft)</span>}
-                        </span>
-                      )}
-                    </span>
-                  );
+        {(() => {
+          const renderCategoryRow = (c: Category) => (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-3 pt-[17px] pr-6 pb-[24px] sm:pb-[19px] pl-3">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                {(() => {
+                  const Icon = resolveCategoryIcon(c.icon_name);
+                  const color = c.icon_color || "var(--color-accent)";
                   return (
-                    <div className="mt-2">
-                      <button
-                        type="button"
-                        onClick={() => setExpandedCourses((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(c.id)) next.delete(c.id);
-                          else next.add(c.id);
-                          return next;
-                        })}
-                        className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-                      >
-                        {isOpen ? "Hide courses" : "Show courses"} ({allItems.length})
-                      </button>
-                      {isOpen && (
-                        <div className="mt-1.5 space-y-1.5">
-                          {standardItems.length > 0 && (
-                            <p className="text-sm text-muted-foreground">
-                              <span className="font-medium text-foreground">Courses:</span>{" "}
-                              {standardItems.map((item, i) => renderLink(item, i))}
-                            </p>
-                          )}
-                          {customItems.length > 0 && (
-                            <p className="text-sm text-muted-foreground">
-                              <span className="font-medium text-foreground">Custom content:</span>{" "}
-                              <TooltipProvider delayDuration={150}>
-                                {customItems.map((item, i) => {
-                                  const facilityLabel = (itemFacilityMap[item.id] ?? [])
-                                    .map((v) => facilityLabelMap[v] ?? v)
-                                    .join("; ");
-                                  return (
-                                    <span key={item.id}>
-                                      {i > 0 && ", "}
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span className="cursor-help">
-                                            {c.published && item.published ? (
-                                              <Link
-                                                to="/category/$slug"
-                                                params={{ slug: c.slug }}
-                                                hash={`item-${item.id}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-[var(--color-accent)] hover:underline"
-                                              >
-                                                {item.title}
-                                              </Link>
-                                            ) : (
-                                              <span>
-                                                {item.title}
-                                                {!item.published && <span className="ml-1 text-xs italic">(draft)</span>}
-                                              </span>
-                                            )}
-                                          </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="top" className="text-xs">
-                                          {facilityLabel}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </span>
-                                  );
-                                })}
-                              </TooltipProvider>
-                            </p>
-                          )}
-                        </div>
-                      )}
+                    <div
+                      className="flex h-12 w-12 items-center justify-center rounded-lg border shrink-0"
+                      style={{
+                        backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
+                        borderColor: `color-mix(in oklab, ${color} 25%, transparent)`,
+                      }}
+                    >
+                      <Icon className="h-5 w-5" style={{ color }} strokeWidth={1.75} />
                     </div>
                   );
                 })()}
-
+                <div className="@container flex-1 min-w-0">
+                  <div className="flex flex-col-reverse gap-y-1 pt-[7px] @lg:pt-0 @lg:flex-row @lg:flex-nowrap @lg:items-center @lg:gap-x-2">
+                    <h3 className="font-display text-lg font-semibold break-words min-w-0">
+                      {c.name}
+                    </h3>
+                    {(() => {
+                      const s = categoryTranslationStatus(c);
+                      const trLabel = s === "missing" ? "Needs ES" : "Partially translated";
+                      const trTitle =
+                        s === "missing"
+                          ? "Missing Spanish translation"
+                          : "Some Spanish fields are missing";
+                      return (
+                        <BadgeGroup>
+                          <Badge
+                            variant="count"
+                            title="Content items in this category"
+                            className="tabular-nums rounded-[8px]"
+                          >
+                            {itemCountsByCategory[c.id] ?? 0}{" "}
+                            {(itemCountsByCategory[c.id] ?? 0) === 1 ? "item" : "items"}
+                          </Badge>
+                          {(categoryFacilityMap[c.id]?.length ?? 0) > 0 && (
+                            <Badge
+                              variant="facility"
+                              title={`Facility: ${(categoryFacilityMap[c.id] ?? []).map((v) => facilityLabelMap[v] ?? v).join("; ")}`}
+                              className="rounded-[8px]"
+                            >
+                              {categoryFacilityMap[c.id]!.length === 1
+                                ? (facilityLabelMap[categoryFacilityMap[c.id]![0]] ??
+                                  categoryFacilityMap[c.id]![0])
+                                : `${categoryFacilityMap[c.id]!.length} facilities`}
+                            </Badge>
+                          )}
+                          {categoriesWithFacilityContent.has(c.id) &&
+                            (() => {
+                              const customCount = (itemsByCategory[c.id] ?? []).filter(
+                                (item) => !!itemFacilityMap[item.id]?.length,
+                              ).length;
+                              return (
+                                <Badge
+                                  variant="custom-content"
+                                  title="This category has facility-restricted content items"
+                                  className="rounded-[8px]"
+                                >
+                                  {customCount} Custom {customCount === 1 ? "item" : "items"}
+                                </Badge>
+                              );
+                            })()}
+                          {!c.published && (
+                            <Badge variant="draft" className="rounded-[8px]">
+                              Draft
+                            </Badge>
+                          )}
+                          {s !== "complete" && (
+                            <Badge variant="translation" title={trTitle} className="rounded-[8px]">
+                              {trLabel}
+                            </Badge>
+                          )}
+                        </BadgeGroup>
+                      );
+                    })()}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground break-words">
+                    /{c.slug} · {c.tagline}
+                  </p>
+                  {c.description && (
+                    <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
+                      {c.description}
+                    </p>
+                  )}
+                  {(itemsByCategory[c.id]?.length ?? 0) > 0 &&
+                    (() => {
+                      const allItems = itemsByCategory[c.id] ?? [];
+                      const standardItems = allItems.filter(
+                        (item) => !itemFacilityMap[item.id]?.length,
+                      );
+                      const customItems = allItems.filter(
+                        (item) => !!itemFacilityMap[item.id]?.length,
+                      );
+                      const isOpen = expandedCourses.has(c.id);
+                      const renderLink = (item: (typeof allItems)[0], i: number) => (
+                        <span key={item.id}>
+                          {i > 0 && ", "}
+                          {c.published && item.published ? (
+                            <Link
+                              to="/category/$slug"
+                              params={{ slug: c.slug }}
+                              hash={`item-${item.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[var(--color-accent)] hover:underline"
+                            >
+                              {item.title}
+                            </Link>
+                          ) : (
+                            <span>
+                              {item.title}
+                              {!item.published && (
+                                <span className="ml-1 text-xs italic">(draft)</span>
+                              )}
+                            </span>
+                          )}
+                        </span>
+                      );
+                      return (
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedCourses((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(c.id)) next.delete(c.id);
+                                else next.add(c.id);
+                                return next;
+                              })
+                            }
+                            className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                          >
+                            {isOpen ? "Hide courses" : "Show courses"} ({allItems.length})
+                          </button>
+                          {isOpen && (
+                            <div className="mt-1.5 space-y-1.5">
+                              {standardItems.length > 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                  <span className="font-medium text-foreground">Courses:</span>{" "}
+                                  {standardItems.map((item, i) => renderLink(item, i))}
+                                </p>
+                              )}
+                              {customItems.length > 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                  <span className="font-medium text-foreground">
+                                    Custom content:
+                                  </span>{" "}
+                                  <TooltipProvider delayDuration={150}>
+                                    {customItems.map((item, i) => {
+                                      const facilityLabel = (itemFacilityMap[item.id] ?? [])
+                                        .map((v) => facilityLabelMap[v] ?? v)
+                                        .join("; ");
+                                      return (
+                                        <span key={item.id}>
+                                          {i > 0 && ", "}
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <span className="cursor-help">
+                                                {c.published && item.published ? (
+                                                  <Link
+                                                    to="/category/$slug"
+                                                    params={{ slug: c.slug }}
+                                                    hash={`item-${item.id}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-[var(--color-accent)] hover:underline"
+                                                  >
+                                                    {item.title}
+                                                  </Link>
+                                                ) : (
+                                                  <span>
+                                                    {item.title}
+                                                    {!item.published && (
+                                                      <span className="ml-1 text-xs italic">
+                                                        (draft)
+                                                      </span>
+                                                    )}
+                                                  </span>
+                                                )}
+                                              </span>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top" className="text-xs">
+                                              {facilityLabel}
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </span>
+                                      );
+                                    })}
+                                  </TooltipProvider>
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                </div>
               </div>
-            </div>
-            <TooltipProvider delayDuration={150}>
-              <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
-                {/* Left connected group */}
-                <div className="flex items-center [&>*:not(:first-child)]:-ml-px [&>:first-child]:rounded-r-none [&>:not(:first-child):not(:last-child)]:rounded-none [&>:last-child]:rounded-l-none">
-                  <IconButton
-                    aria-label={c.published ? "Unpublish" : "Publish"}
-                    tooltip={c.published ? "Unpublish" : "Publish"}
-                    icon={
-                      togglePublish.isPending && (togglePublish.variables as any)?.id === c.id
-                        ? Eye
-                        : c.published
-                        ? Eye
-                        : EyeOff
-                    }
-                    pending={togglePublish.isPending && (togglePublish.variables as any)?.id === c.id}
-                    onClick={() => togglePublish.mutate(c)}
-                  />
-                  {c.published ? (
-                    <TooltipWrap tooltip="View on site">
+              <TooltipProvider delayDuration={150}>
+                <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0 pt-2 sm:pt-0 w-full sm:w-auto justify-end">
+                  {/* Left connected group */}
+                  <div className="flex items-center [&>*:not(:first-child)]:-ml-px [&>:first-child]:rounded-r-none [&>:not(:first-child):not(:last-child)]:rounded-none [&>:last-child]:rounded-l-none">
+                    <IconButton
+                      aria-label={c.published ? "Unpublish" : "Publish"}
+                      tooltip={c.published ? "Unpublish" : "Publish"}
+                      icon={
+                        togglePublish.isPending && (togglePublish.variables as any)?.id === c.id
+                          ? Eye
+                          : c.published
+                            ? Eye
+                            : EyeOff
+                      }
+                      pending={
+                        togglePublish.isPending && (togglePublish.variables as any)?.id === c.id
+                      }
+                      onClick={() => togglePublish.mutate(c)}
+                    />
+                    {c.published ? (
+                      <TooltipWrap tooltip="View on site">
+                        <Link
+                          to="/category/$slug"
+                          params={{ slug: c.slug }}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="View on site"
+                          className={iconButtonClassName()}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                      </TooltipWrap>
+                    ) : (
+                      <TooltipWrap tooltip="Unavailable while draft">
+                        <span
+                          aria-label="View on site (unavailable for drafts)"
+                          aria-disabled="true"
+                          className={iconButtonClassName(
+                            "default",
+                            "opacity-50 cursor-not-allowed",
+                          )}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </span>
+                      </TooltipWrap>
+                    )}
+                    <TooltipWrap tooltip="Edit">
                       <Link
-                        to="/category/$slug"
-                        params={{ slug: c.slug }}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="View on site"
+                        to="/admin/category/$id"
+                        params={{ id: c.id }}
+                        search={{ edit: undefined }}
+                        aria-label="Edit"
                         className={iconButtonClassName()}
                       >
-                        <ExternalLink className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                       </Link>
                     </TooltipWrap>
-                  ) : (
-                    <TooltipWrap tooltip="Unavailable while draft">
-                      <span
-                        aria-label="View on site (unavailable for drafts)"
-                        aria-disabled="true"
-                        className={iconButtonClassName("default", "opacity-50 cursor-not-allowed")}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </span>
-                    </TooltipWrap>
-                  )}
-                  <TooltipWrap tooltip="Edit">
-                    <Link
-                      to="/admin/category/$id"
-                      params={{ id: c.id }}
-                      search={{ edit: undefined }}
-                      aria-label="Edit"
-                      className={iconButtonClassName()}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Link>
-                  </TooltipWrap>
+                  </div>
+                  <div className="mx-1 h-6 w-px bg-border" aria-hidden />
+                  <IconButton
+                    aria-label="Delete"
+                    tooltip="Delete"
+                    pendingTooltip="Deleting…"
+                    variant="destructive"
+                    icon={Trash2}
+                    pending={isMutationPendingFor(deleteMut, c.id)}
+                    onClick={async () => {
+                      await confirmDelete({
+                        title: `Delete "${c.name}"?`,
+                        description:
+                          "This will permanently delete the category and all its content.",
+                        onConfirm: () => deleteMut.mutateAsync(c.id),
+                      });
+                    }}
+                  />
                 </div>
-                <div className="mx-1 h-6 w-px bg-border" aria-hidden />
-                <IconButton
-                  aria-label="Delete"
-                  tooltip="Delete"
-                  pendingTooltip="Deleting…"
-                  variant="destructive"
-                  icon={Trash2}
-                  pending={isMutationPendingFor(deleteMut, c.id)}
-                  onClick={async () => {
-                    await confirmDelete({
-                      title: `Delete "${c.name}"?`,
-                      description: "This will permanently delete the category and all its content.",
-                      onConfirm: () => deleteMut.mutateAsync(c.id),
-                    });
-                  }}
-                />
-              </div>
-            </TooltipProvider>
-          </div>
-        );
+              </TooltipProvider>
+            </div>
+          );
 
-        const q = searchQuery.trim().toLowerCase();
-        const filteredOrder = q
-          ? order.filter((c) =>
-              [c.name, c.slug, c.tagline, c.description]
-                .filter(Boolean)
-                .some((v) => String(v).toLowerCase().includes(q)),
-            )
-          : order;
-        return (
-          <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${categories.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
-            {isLoading ? (
-              <EmptyState>Loading…</EmptyState>
-            ) : categories.length === 0 ? (
-              <EmptyState>No categories yet.</EmptyState>
-            ) : filteredOrder.length === 0 ? (
-              <EmptyState>No categories match your search.</EmptyState>
-            ) : bulk.editMode || q ? (
-              // In edit mode OR during search, swap the SortableList for a plain
-              // <ul> so drag-and-drop is disabled. Reordering filtered results or
-              // while selecting rows would produce an inconsistent sort order.
-              <ul className="divide-y divide-border">
-                {filteredOrder.map((c) => {
-                  const selected = bulk.has(c.id);
-                  const isInteractive = bulk.editMode;
-                  return (
-                    <li
-                      key={c.id}
-                      onClick={isInteractive ? () => bulk.toggle(c.id) : undefined}
-                      className={`flex items-stretch transition-colors ${
-                        isInteractive ? "cursor-pointer " : ""
-                      }${
-                        selected ? "bg-destructive/10 hover:bg-destructive/15" : isInteractive ? "hover:bg-muted/50" : ""
-                      }`}
-                    >
-                      {(bulk.editMode || q) && (
+          const q = searchQuery.trim().toLowerCase();
+          const filteredOrder = q
+            ? order.filter((c) =>
+                [c.name, c.slug, c.tagline, c.description]
+                  .filter(Boolean)
+                  .some((v) => String(v).toLowerCase().includes(q)),
+              )
+            : order;
+          return (
+            <div
+              className={`rounded-b-2xl border border-border bg-card overflow-hidden ${categories.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}
+            >
+              {isLoading ? (
+                <EmptyState>Loading…</EmptyState>
+              ) : categories.length === 0 ? (
+                <EmptyState>No categories yet.</EmptyState>
+              ) : filteredOrder.length === 0 ? (
+                <EmptyState>No categories match your search.</EmptyState>
+              ) : bulk.editMode || q ? (
+                // In edit mode OR during search, swap the SortableList for a plain
+                // <ul> so drag-and-drop is disabled. Reordering filtered results or
+                // while selecting rows would produce an inconsistent sort order.
+                <ul className="divide-y divide-border">
+                  {filteredOrder.map((c) => {
+                    const selected = bulk.has(c.id);
+                    const isInteractive = bulk.editMode;
+                    return (
+                      <li
+                        key={c.id}
+                        onClick={isInteractive ? () => bulk.toggle(c.id) : undefined}
+                        className={`flex items-stretch transition-colors ${
+                          isInteractive ? "cursor-pointer " : ""
+                        }${
+                          selected
+                            ? "bg-destructive/10 hover:bg-destructive/15"
+                            : isInteractive
+                              ? "hover:bg-muted/50"
+                              : ""
+                        }`}
+                      >
+                        {(bulk.editMode || q) && (
+                          <div
+                            className={`flex items-center pl-5 pr-0 ${bulk.editMode ? "text-muted-foreground/50" : "text-muted-foreground/30 cursor-not-allowed"}`}
+                            aria-disabled={!bulk.editMode}
+                          >
+                            <GripVertical className="h-4 w-4" />
+                          </div>
+                        )}
+
                         <div
-                          className={`flex items-center pl-5 pr-0 ${bulk.editMode ? "text-muted-foreground/50" : "text-muted-foreground/30 cursor-not-allowed"}`}
-                          aria-disabled={!bulk.editMode}
+                          className={`flex-1 min-w-0 ${bulk.editMode ? "pointer-events-none" : ""}`}
                         >
-                          <GripVertical className="h-4 w-4" />
+                          {renderCategoryRow(c)}
                         </div>
-                      )}
-
-                      <div className={`flex-1 min-w-0 ${bulk.editMode ? "pointer-events-none" : ""}`}>{renderCategoryRow(c)}</div>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <Suspense fallback={null}>
-                <SortableList
-                  className="divide-y divide-border"
-                  items={order}
-                  onReorder={(next) => { setOrder(next as Category[]); reorderMut.mutate(next as Category[]); }}
-                  renderItem={(c) => renderCategoryRow(c as Category)}
-                />
-              </Suspense>
-            )}
-          </div>
-        );
-      })()}
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <Suspense fallback={null}>
+                  <SortableList
+                    className="divide-y divide-border"
+                    items={order}
+                    onReorder={(next) => {
+                      setOrder(next as Category[]);
+                      reorderMut.mutate(next as Category[]);
+                    }}
+                    renderItem={(c) => renderCategoryRow(c as Category)}
+                  />
+                </Suspense>
+              )}
+            </div>
+          );
+        })()}
       </section>
       <BackToTopButton />
     </div>
@@ -728,7 +826,6 @@ function NewCategoryForm({
     setIconColor(next.icon_color);
   }
 
-
   async function handleAutoGenerate() {
     const trimmed = name.trim();
     if (!trimmed) {
@@ -785,7 +882,10 @@ function NewCategoryForm({
           <input
             required
             value={slug}
-            onChange={(e) => { setSlug(slugify(e.target.value)); setSlugTouched(true); }}
+            onChange={(e) => {
+              setSlug(slugify(e.target.value));
+              setSlugTouched(true);
+            }}
             className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
           />
         </Field>
@@ -794,11 +894,17 @@ function NewCategoryForm({
           <div className="mt-1">
             <FacilityCombobox
               value=""
-              onChange={(v) => { if (v && !facilities.includes(v)) setFacilities((prev) => [...prev, v]); }}
+              onChange={(v) => {
+                if (v && !facilities.includes(v)) setFacilities((prev) => [...prev, v]);
+              }}
               options={allFacilitiesForForm.filter((a) => !facilities.includes(a.value))}
               placeholder="Add facility…"
               searchPlaceholder="Search facilities…"
-              emptyMessage={allFacilitiesForForm.length === 0 ? "No facilities found." : "All facilities selected."}
+              emptyMessage={
+                allFacilitiesForForm.length === 0
+                  ? "No facilities found."
+                  : "All facilities selected."
+              }
             />
           </div>
           {facilities.length > 0 && (
@@ -806,9 +912,21 @@ function NewCategoryForm({
               {facilities.map((f) => {
                 const label = allFacilitiesForForm.find((a) => a.value === f)?.label ?? f;
                 return (
-                  <span key={f} className="inline-flex items-center gap-1 leading-none rounded-[8px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0" style={{ color: formFacilityPs.color, backgroundColor: formFacilityPs.bg, borderColor: formFacilityPs.border }}>
+                  <span
+                    key={f}
+                    className="inline-flex items-center gap-1 leading-none rounded-[8px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0"
+                    style={{
+                      color: formFacilityPs.color,
+                      backgroundColor: formFacilityPs.bg,
+                      borderColor: formFacilityPs.border,
+                    }}
+                  >
                     {label}
-                    <button type="button" onClick={() => setFacilities((prev) => prev.filter((x) => x !== f))} className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10">
+                    <button
+                      type="button"
+                      onClick={() => setFacilities((prev) => prev.filter((x) => x !== f))}
+                      className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
+                    >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
@@ -829,7 +947,9 @@ function NewCategoryForm({
         >
           Auto-generate tagline & description
         </LoadingButton>
-        <p className="mt-1 text-xs text-muted-foreground">Uses the Name to draft copy. You can edit the result.</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Uses the Name to draft copy. You can edit the result.
+        </p>
       </div>
       <Field label="Tagline">
         <input
@@ -871,13 +991,13 @@ function NewCategoryForm({
                 {hasIcon ? (
                   <Icon className="h-7 w-7" style={{ color }} strokeWidth={1.75} />
                 ) : (
-                  <span className="text-[10px] text-muted-foreground text-center px-1">No icon yet</span>
+                  <span className="text-[10px] text-muted-foreground text-center px-1">
+                    No icon yet
+                  </span>
                 )}
               </div>
             );
           })()}
-
-
 
           <div className="flex flex-col gap-2 flex-1 min-w-0">
             <input
@@ -896,17 +1016,11 @@ function NewCategoryForm({
               >
                 {iconName ? "Regenerate icon" : "Generate icon"}
               </LoadingButton>
-              <p className="text-xs text-muted-foreground">
-                Generate an icon preview.
-              </p>
-
+              <p className="text-xs text-muted-foreground">Generate an icon preview.</p>
             </div>
           </div>
         </div>
       </div>
-
-
-
 
       <label className="inline-flex items-center gap-2 text-sm">
         <Checkbox checked={published} onCheckedChange={(v) => setPublished(Boolean(v))} />
@@ -918,7 +1032,9 @@ function NewCategoryForm({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="font-display text-base font-semibold">Spanish translation</h3>
-              <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
+              <p className="text-xs text-muted-foreground">
+                Leave blank to fall back to English when Spanish is selected.
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <LoadingButton
@@ -1001,17 +1117,10 @@ function NewCategoryForm({
       )}
 
       <div className="flex justify-end gap-2">
-        <LoadingButton
-          variant="secondary"
-          onClick={onCancel}
-        >
+        <LoadingButton variant="secondary" onClick={onCancel}>
           Cancel
         </LoadingButton>
-        <LoadingButton
-          type="submit"
-          pending={busy}
-          pendingText="Creating…"
-        >
+        <LoadingButton type="submit" pending={busy} pendingText="Creating…">
           Create
         </LoadingButton>
       </div>

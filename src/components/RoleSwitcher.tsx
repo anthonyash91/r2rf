@@ -2,16 +2,40 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth, setSimulatedRole, type SimulatedRole } from "@/hooks/use-auth";
 import { setTesterAnalyticsTracking } from "@/lib/users.functions";
-import { FlaskConical, ChevronDown, User, Shield, PenLine, HeartHandshake, Wrench, BarChart3 } from "lucide-react";
+import {
+  FlaskConical,
+  ChevronDown,
+  User,
+  Shield,
+  PenLine,
+  HeartHandshake,
+  Wrench,
+  BarChart3,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { QK } from "@/lib/query-keys";
 
 const ROLES: { value: SimulatedRole; label: string; icon: typeof User; description: string }[] = [
-  { value: "user",         label: "Regular User",   icon: User,           description: "User dashboard, no admin access" },
-  { value: "admin",        label: "Admin",          icon: Shield,         description: "Full admin panel" },
-  { value: "contributor",  label: "Contributor",    icon: PenLine,        description: "Content editing only" },
-  { value: "facilityUser", label: "Facility User",  icon: HeartHandshake, description: "Facility-scoped analytics & users" },
+  {
+    value: "user",
+    label: "Regular User",
+    icon: User,
+    description: "User dashboard, no admin access",
+  },
+  { value: "admin", label: "Admin", icon: Shield, description: "Full admin panel" },
+  {
+    value: "contributor",
+    label: "Contributor",
+    icon: PenLine,
+    description: "Content editing only",
+  },
+  {
+    value: "facilityUser",
+    label: "Facility User",
+    icon: HeartHandshake,
+    description: "Facility-scoped analytics & users",
+  },
 ];
 
 export function RoleSwitcher() {
@@ -70,7 +94,9 @@ export function RoleSwitcher() {
       {open && (
         <div className="mb-2 rounded-2xl border border-border bg-card overflow-hidden w-64">
           <div className="px-4 py-3 border-b border-border/60">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Testing as</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Testing as
+            </p>
           </div>
           {ROLES.map(({ value, label, icon: Icon, description }) => {
             const active = simulatedRole === value;
@@ -83,16 +109,28 @@ export function RoleSwitcher() {
               >
                 <span
                   className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border"
-                  style={active ? {
-                    color: "var(--color-accent)",
-                    backgroundColor: "color-mix(in oklab, var(--color-accent) 12%, transparent)",
-                    borderColor: "color-mix(in oklab, var(--color-accent) 25%, transparent)",
-                  } : { color: "var(--color-muted-foreground)", borderColor: "var(--color-border)" }}
+                  style={
+                    active
+                      ? {
+                          color: "var(--color-accent)",
+                          backgroundColor:
+                            "color-mix(in oklab, var(--color-accent) 12%, transparent)",
+                          borderColor: "color-mix(in oklab, var(--color-accent) 25%, transparent)",
+                        }
+                      : {
+                          color: "var(--color-muted-foreground)",
+                          borderColor: "var(--color-border)",
+                        }
+                  }
                 >
                   <Icon className="h-3.5 w-3.5" />
                 </span>
                 <div className="min-w-0">
-                  <p className={`text-sm font-medium ${active ? "text-[var(--color-accent)]" : "text-foreground"}`}>{label}</p>
+                  <p
+                    className={`text-sm font-medium ${active ? "text-[var(--color-accent)]" : "text-foreground"}`}
+                  >
+                    {label}
+                  </p>
                   <p className="text-xs text-muted-foreground">{description}</p>
                 </div>
               </button>
@@ -105,7 +143,9 @@ export function RoleSwitcher() {
               <BarChart3 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               <div className="min-w-0">
                 <p className="text-xs font-medium text-foreground">Track analytics</p>
-                <p className="text-[10px] text-muted-foreground truncate">{tracking ? "Activity counted in CPC Sales" : "Excluded from analytics"}</p>
+                <p className="text-[10px] text-muted-foreground truncate">
+                  {tracking ? "Activity counted in CPC Sales" : "Excluded from analytics"}
+                </p>
               </div>
             </div>
             <button

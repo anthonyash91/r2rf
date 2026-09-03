@@ -21,16 +21,26 @@ import { readPlatformIdentity } from "@/lib/platform-identity";
 export const Route = createFileRoute("/")({
   validateSearch: z.object({
     site: z.coerce.string().optional(),
-    user: z.coerce.string().optional().transform((v) => v?.replace(/^"+|"+$/g, "") || undefined),
+    user: z.coerce
+      .string()
+      .optional()
+      .transform((v) => v?.replace(/^"+|"+$/g, "") || undefined),
     language: z.coerce.string().optional(),
   }),
   loader: async () => readPlatformIdentity(),
   head: () => ({
     meta: [
       { title: "Reentry to Recovery — Content Library" },
-      { name: "description", content: "A curated library of resources for health, parenting, employment, and recovery after reentry." },
+      {
+        name: "description",
+        content:
+          "A curated library of resources for health, parenting, employment, and recovery after reentry.",
+      },
       { property: "og:title", content: "Reentry to Recovery — Content Library" },
-      { property: "og:description", content: "Resources for the road back — wellness, family, work, and recovery." },
+      {
+        property: "og:description",
+        content: "Resources for the road back — wellness, family, work, and recovery.",
+      },
     ],
   }),
   component: Index,
@@ -54,11 +64,12 @@ function Index() {
     }
   }, [rolesLoaded, isFacilityUser, facilityData, navigate]);
 
-  if (isFacilityUser) return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-    </div>
-  );
+  if (isFacilityUser)
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
 
   return <IndexContent />;
 }
@@ -100,9 +111,8 @@ function IndexContent() {
     if (!site) return;
     if (!siteFacility) return;
 
-    const prevSlug = typeof window !== "undefined"
-      ? window.sessionStorage.getItem("active-facility-slug")
-      : null;
+    const prevSlug =
+      typeof window !== "undefined" ? window.sessionStorage.getItem("active-facility-slug") : null;
 
     setActiveFacilitySlug(site);
 

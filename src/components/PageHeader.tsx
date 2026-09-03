@@ -39,8 +39,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   const Heading = as;
   const resolvedSize = size ?? (as === "h1" ? "lg" : "md");
-  const headingSize =
-    resolvedSize === "lg" ? "text-3xl" : "text-2xl";
+  const headingSize = resolvedSize === "lg" ? "text-3xl" : "text-2xl";
   const iconSize = resolvedSize === "lg" ? "h-7 w-7" : "h-6 w-6";
 
   return (
@@ -58,9 +57,7 @@ export function PageHeader({
           <span className="text-muted-foreground font-normal">({count})</span>
         )}
       </Heading>
-      {description && (
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      )}
+      {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
     </div>
   );
 }

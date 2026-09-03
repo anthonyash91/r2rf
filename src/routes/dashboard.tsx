@@ -1,7 +1,16 @@
 import { createFileRoute, redirect, Link, useBlocker } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { setSecurityLock } from "@/lib/security-lock";
 import { toast } from "sonner";
 import { Badge } from "@/components/Badge";
@@ -20,13 +29,25 @@ import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-re
 import { clearMustResetPassword } from "@/lib/users.functions";
 import { getMyEngagementTier } from "@/lib/analytics-stats.functions";
 import { questionLabel } from "@/lib/security-questions";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
 import { useKeyboardInput } from "@/components/OnScreenKeyboard";
-import { useI18n, pickLang, translateDuration, translateType, type TranslationKey } from "@/lib/i18n";
+import {
+  useI18n,
+  pickLang,
+  translateDuration,
+  translateType,
+  type TranslationKey,
+} from "@/lib/i18n";
 import { QK } from "@/lib/query-keys";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { weightedCompletionPct } from "@/lib/content-progress";
@@ -43,26 +64,72 @@ import { getMyMonthlySummary } from "@/lib/monthly-summary.functions";
 // downloaded by tester accounts, not by every user visiting the dashboard.
 const TestingTab = lazy(() => import("@/components/TestingTab"));
 
-import { SecurityQuestionsForm, type SecurityAnswerInput } from "@/components/SecurityQuestionsForm";
+import {
+  SecurityQuestionsForm,
+  type SecurityAnswerInput,
+} from "@/components/SecurityQuestionsForm";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
-import { User as UserIcon, Building2, Calendar, Shield, ChevronDown, BookOpen, CheckCircle2, Loader2, Clock, Flame, Trophy, Circle, Bookmark, ThumbsUp, ThumbsDown, Award, Compass, GraduationCap, Medal, Lock, Info, ArrowRight, ClipboardCheck } from "lucide-react";
+import {
+  User as UserIcon,
+  Building2,
+  Calendar,
+  Shield,
+  ChevronDown,
+  BookOpen,
+  CheckCircle2,
+  Loader2,
+  Clock,
+  Flame,
+  Trophy,
+  Circle,
+  Bookmark,
+  ThumbsUp,
+  ThumbsDown,
+  Award,
+  Compass,
+  GraduationCap,
+  Medal,
+  Lock,
+  Info,
+  ArrowRight,
+  ClipboardCheck,
+} from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { SpotlightTutorial, type TutorialStep } from "@/components/SpotlightTutorial";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Category } from "@/lib/categories";
-
-
-
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Reentry to Recovery" }] }),
   validateSearch: (search: Record<string, unknown>) => ({
-    tab: search.tab === "account" ? "account" : search.tab === "saved" ? "saved" : search.tab === "achievements" ? "achievements" : search.tab === "testing" ? "testing" : undefined,
+    tab:
+      search.tab === "account"
+        ? "account"
+        : search.tab === "saved"
+          ? "saved"
+          : search.tab === "achievements"
+            ? "achievements"
+            : search.tab === "testing"
+              ? "testing"
+              : undefined,
   }),
   beforeLoad: async ({ location }) => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session?.user) {
       throw redirect({ to: "/signup", search: { redirect: location.href } as any });
     }
@@ -74,7 +141,9 @@ export const Route = createFileRoute("/dashboard")({
       <main className="flex-1 flex items-center justify-center px-6 py-20">
         <div className="max-w-sm text-center">
           <p className="font-semibold text-foreground">Dashboard didn't load</p>
-          <p className="mt-1 text-sm text-muted-foreground">{error.message ?? "Something went wrong."}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {error.message ?? "Something went wrong."}
+          </p>
           <button
             onClick={reset}
             className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
@@ -97,11 +166,12 @@ function DashboardRoute() {
 function DashboardRouter() {
   const { rolesLoaded } = useAuth();
 
-  if (!rolesLoaded) return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-    </div>
-  );
+  if (!rolesLoaded)
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   return <DashboardPage />;
 }
 
@@ -145,7 +215,9 @@ function DashboardPage() {
       // Fetch all published categories + their facility assignments
       const { data: cats, error } = await supabase
         .from("categories")
-        .select("id, slug, name, tagline, description, icon_url, icon_name, icon_color, sort_order, published, home_page_mode, name_es, tagline_es, description_es")
+        .select(
+          "id, slug, name, tagline, description, icon_url, icon_name, icon_color, sort_order, published, home_page_mode, name_es, tagline_es, description_es",
+        )
         .eq("published", true)
         .order("sort_order", { ascending: true });
       if (error) throw error;
@@ -211,35 +283,37 @@ function DashboardPage() {
     enabled: !!userId && categoryIds.length > 0,
     staleTime: 30 * 1000, // progress should feel near-live; 30s is enough
     queryFn: async () => {
-      const [itemsRes, readRes, seenRes, engRes, ratingsRes, chapterProgressRes] = await Promise.all([
-        supabase
-          .from("content_items")
-          .select("id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at, url, file_url, exempt_from_progress")
-          .eq("published", true)
-          .in("category_id", categoryIds)
-          .order("sort_order", { ascending: true }),
-        supabase
-          .from("user_content_progress")
-          .select("content_item_id, category_id, created_at")
-          .eq("user_id", userId!)
-          .in("category_id", categoryIds),
-        supabase
-          .from("user_content_seen")
-          .select("content_item_id")
-          .eq("user_id", userId!),
-        (supabase as any)
-          .from("user_content_engagement")
-          .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct")
-          .eq("user_id", userId!),
-        (supabase as any)
-          .from("user_content_ratings")
-          .select("content_item_id, rating")
-          .eq("user_id", userId!),
-        (supabase as any)
-          .from("user_chapter_progress")
-          .select("content_item_id, furthest_seconds")
-          .eq("user_id", userId!),
-      ]);
+      const [itemsRes, readRes, seenRes, engRes, ratingsRes, chapterProgressRes] =
+        await Promise.all([
+          supabase
+            .from("content_items")
+            .select(
+              "id, category_id, title, title_es, description, description_es, type, duration, sort_order, created_at, url, file_url, exempt_from_progress",
+            )
+            .eq("published", true)
+            .in("category_id", categoryIds)
+            .order("sort_order", { ascending: true }),
+          supabase
+            .from("user_content_progress")
+            .select("content_item_id, category_id, created_at")
+            .eq("user_id", userId!)
+            .in("category_id", categoryIds),
+          supabase.from("user_content_seen").select("content_item_id").eq("user_id", userId!),
+          (supabase as any)
+            .from("user_content_engagement")
+            .select(
+              "content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct",
+            )
+            .eq("user_id", userId!),
+          (supabase as any)
+            .from("user_content_ratings")
+            .select("content_item_id, rating")
+            .eq("user_id", userId!),
+          (supabase as any)
+            .from("user_chapter_progress")
+            .select("content_item_id, furthest_seconds")
+            .eq("user_id", userId!),
+        ]);
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
 
@@ -251,14 +325,31 @@ function DashboardPage() {
           .from("content_item_facilities")
           .select("content_item_id, facility_value")
           .in("content_item_id", allItemIds);
-        for (const row of (cifData ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+        for (const row of (cifData ?? []) as Array<{
+          content_item_id: string;
+          facility_value: string;
+        }>) {
           if (!facilityMap[row.content_item_id]) facilityMap[row.content_item_id] = [];
           facilityMap[row.content_item_id].push(row.facility_value);
         }
       }
 
-      const seenSet = new Set<string>((seenRes.data ?? []).map((r: any) => r.content_item_id as string));
-      type CatItem = { id: string; title: string; title_es: string | null; description: string; description_es: string | null; type: string; duration: string | null; created_at: string | null; url: string | null; file_url: string | null; exempt_from_progress?: boolean };
+      const seenSet = new Set<string>(
+        (seenRes.data ?? []).map((r: any) => r.content_item_id as string),
+      );
+      type CatItem = {
+        id: string;
+        title: string;
+        title_es: string | null;
+        description: string;
+        description_es: string | null;
+        type: string;
+        duration: string | null;
+        created_at: string | null;
+        url: string | null;
+        file_url: string | null;
+        exempt_from_progress?: boolean;
+      };
       const itemsByCat = new Map<string, CatItem[]>();
       const totals = new Map<string, number>();
       const recentCats = new Set<string>();
@@ -283,7 +374,11 @@ function DashboardPage() {
           totals.set(row.category_id as string, (totals.get(row.category_id as string) ?? 0) + 1);
         }
         itemDuration.set(row.id as string, (row as any).duration ?? null);
-        if (row.created_at && new Date(row.created_at as string).getTime() >= cutoff && !seenSet.has(row.id as string)) {
+        if (
+          row.created_at &&
+          new Date(row.created_at as string).getTime() >= cutoff &&
+          !seenSet.has(row.id as string)
+        ) {
           recentCats.add(row.category_id as string);
           newItemSet.add(row.id as string);
         }
@@ -298,7 +393,8 @@ function DashboardPage() {
         if (exemptItemIds.has(row.content_item_id as string)) {
           // Still add to readSet so the "Acknowledged" badge shows correctly
           readSet.add(row.content_item_id as string);
-          if ((row as any).created_at) readAtMap.set(row.content_item_id as string, (row as any).created_at as string);
+          if ((row as any).created_at)
+            readAtMap.set(row.content_item_id as string, (row as any).created_at as string);
           continue;
         }
         reads.set(row.category_id as string, (reads.get(row.category_id as string) ?? 0) + 1);
@@ -311,9 +407,18 @@ function DashboardPage() {
       }
       // Real session seconds + per-item media progress from engagement tracking
       const totalSeconds = ((engRes.data ?? []) as any[]).reduce(
-        (sum: number, r: any) => sum + ((r.session_seconds as number) || 0), 0,
+        (sum: number, r: any) => sum + ((r.session_seconds as number) || 0),
+        0,
       );
-      const engagementMap = new Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null; manualCompletionPct: number | null }>();
+      const engagementMap = new Map<
+        string,
+        {
+          sessionSeconds: number;
+          mediaProgressSeconds: number | null;
+          mediaDurationSeconds: number | null;
+          manualCompletionPct: number | null;
+        }
+      >();
       for (const r of (engRes.data ?? []) as any[]) {
         engagementMap.set(r.content_item_id as string, {
           sessionSeconds: (r.session_seconds as number) || 0,
@@ -324,19 +429,34 @@ function DashboardPage() {
       }
       const ratingsMap = new Map<string, 1 | -1>();
       for (const r of (ratingsRes.data ?? []) as any[]) {
-        if (r.rating === 1 || r.rating === -1) ratingsMap.set(r.content_item_id as string, r.rating as 1 | -1);
+        if (r.rating === 1 || r.rating === -1)
+          ratingsMap.set(r.content_item_id as string, r.rating as 1 | -1);
       }
       const itemChapterProgressMap = new Map<string, number>();
       for (const r of (chapterProgressRes.data ?? []) as any[]) {
         const id = r.content_item_id as string;
-        itemChapterProgressMap.set(id, (itemChapterProgressMap.get(id) ?? 0) + (r.furthest_seconds as number));
+        itemChapterProgressMap.set(
+          id,
+          (itemChapterProgressMap.get(id) ?? 0) + (r.furthest_seconds as number),
+        );
       }
 
-      return { totals, reads, itemsByCat, readSet, readAtMap, recentCats, newItemSet, totalSeconds, readDays, engagementMap, ratingsMap, itemChapterProgressMap };
+      return {
+        totals,
+        reads,
+        itemsByCat,
+        readSet,
+        readAtMap,
+        recentCats,
+        newItemSet,
+        totalSeconds,
+        readDays,
+        engagementMap,
+        ratingsMap,
+        itemChapterProgressMap,
+      };
     },
   });
-
-
 
   const { bookmarkIds, toggle: toggleBookmarkItem } = useBookmarks();
   const fetchMonthlySummary = useServerFn(getMyMonthlySummary);
@@ -353,14 +473,20 @@ function DashboardPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("user_content_engagement")
-        .select("content_item_id, category_id, last_updated_at, session_seconds, media_progress_seconds, media_duration_seconds")
+        .select(
+          "content_item_id, category_id, last_updated_at, session_seconds, media_progress_seconds, media_duration_seconds",
+        )
         .eq("user_id", user!.id)
         .order("last_updated_at", { ascending: false })
         .limit(20);
       if (error) throw error;
       return (data ?? []) as Array<{
-        content_item_id: string; category_id: string; last_updated_at: string;
-        session_seconds: number; media_progress_seconds: number | null; media_duration_seconds: number | null;
+        content_item_id: string;
+        category_id: string;
+        last_updated_at: string;
+        session_seconds: number;
+        media_progress_seconds: number | null;
+        media_duration_seconds: number | null;
       }>;
     },
   });
@@ -379,7 +505,8 @@ function DashboardPage() {
   const [busy, setBusy] = useState(false);
 
   // Forced password reset for tester first sign-in.
-  const mustResetPassword = (user?.user_metadata as Record<string, unknown> | undefined)?.must_reset_password === true;
+  const mustResetPassword =
+    (user?.user_metadata as Record<string, unknown> | undefined)?.must_reset_password === true;
   const clearMustResetFn = useServerFn(clearMustResetPassword);
   const [resetPw, setResetPw] = useState("");
   const [resetPw2, setResetPw2] = useState("");
@@ -389,8 +516,14 @@ function DashboardPage() {
   const [resetDone, setResetDone] = useState(false);
   async function handleForcedReset(e: React.FormEvent) {
     e.preventDefault();
-    if (resetPw.length < 8) { toast.error("Password must be at least 8 characters"); return; }
-    if (resetPw !== resetPw2) { toast.error("Passwords do not match"); return; }
+    if (resetPw.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    if (resetPw !== resetPw2) {
+      toast.error("Passwords do not match");
+      return;
+    }
     setResetBusy(true);
     try {
       // Server-side atomic update: rotates the password AND clears
@@ -400,14 +533,14 @@ function DashboardPage() {
       await clearMustResetFn({ data: { newPassword: resetPw } });
       await supabase.auth.refreshSession();
       toast.success("Password updated");
-      setResetPw(""); setResetPw2("");
+      setResetPw("");
+      setResetPw2("");
       setResetDone(true);
     } catch (err: any) {
       toast.error(err.message ?? "Failed to update password");
     } finally {
       setResetBusy(false);
     }
-
   }
 
   const profile = data?.profile;
@@ -430,11 +563,13 @@ function DashboardPage() {
     disabled: !mustSetup,
   });
 
-
   const handleDashTutorialDone = async () => {
     if (!user?.id) return;
     try {
-      await (supabase as any).from("user_profiles").update({ dashboard_tutorial_seen: true }).eq("user_id", user.id);
+      await (supabase as any)
+        .from("user_profiles")
+        .update({ dashboard_tutorial_seen: true })
+        .eq("user_id", user.id);
       queryClient.setQueryData(QK.myProfile, (old: any) => ({
         ...old,
         profile: old?.profile ? { ...old.profile, dashboard_tutorial_seen: true } : null,
@@ -444,64 +579,66 @@ function DashboardPage() {
 
   const [accordionOpenId, setAccordionOpenId] = useState<string | null>(null);
 
-  const dashTutorialSteps: TutorialStep[] = useMemo(() => [
-    {
-      Icon: BookOpen,
-      title: t("tutorial.dash.welcomeTitle"),
-      body: t("tutorial.dash.welcomeBody"),
-      targetId: null,
-    },
-    {
-      Icon: CheckCircle2,
-      title: t("tutorial.dash.progressTitle"),
-      body: t("tutorial.dash.progressBody"),
-      targetId: "dash-progress-card",
-    },
-    {
-      Icon: Trophy,
-      title: t("tutorial.dash.statsTitle"),
-      body: t("tutorial.dash.statsBody"),
-      targetId: "dash-stats-grid",
-    },
-    {
-      Icon: Compass,
-      title: t("tutorial.dash.tabsTitle"),
-      body: t("tutorial.dash.tabsBody"),
-      targetId: "dash-tab-bar",
-    },
-    {
-      Icon: BookOpen,
-      title: t("tutorial.dash.categoriesTitle"),
-      body: t("tutorial.dash.categoriesBody"),
-      targetId: "dash-first-cat",
-      onEnter: () => {
-        const firstId = categoriesQuery.data?.[0]?.id ?? null;
-        setAccordionOpenId(firstId);
+  const dashTutorialSteps: TutorialStep[] = useMemo(
+    () => [
+      {
+        Icon: BookOpen,
+        title: t("tutorial.dash.welcomeTitle"),
+        body: t("tutorial.dash.welcomeBody"),
+        targetId: null,
       },
-    },
-    {
-      Icon: Bookmark,
-      title: t("tutorial.dash.savedTitle"),
-      body: t("tutorial.dash.savedBody"),
-      targetId: "dash-saved-content",
-      onEnter: () => setActiveTab("saved"),
-    },
-    {
-      Icon: Trophy,
-      title: t("tutorial.dash.achievementsTitle"),
-      body: t("tutorial.dash.achievementsBody"),
-      targetId: "dash-first-achievement",
-      onEnter: () => setActiveTab("achievements"),
-    },
-    {
-      Icon: UserIcon,
-      title: t("tutorial.dash.accountTitle"),
-      body: t("tutorial.dash.accountBody"),
-      targetId: "dash-account-content",
-      onEnter: () => setActiveTab("account"),
-    },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [categoriesQuery.data]);
+      {
+        Icon: CheckCircle2,
+        title: t("tutorial.dash.progressTitle"),
+        body: t("tutorial.dash.progressBody"),
+        targetId: "dash-progress-card",
+      },
+      {
+        Icon: Trophy,
+        title: t("tutorial.dash.statsTitle"),
+        body: t("tutorial.dash.statsBody"),
+        targetId: "dash-stats-grid",
+      },
+      {
+        Icon: Compass,
+        title: t("tutorial.dash.tabsTitle"),
+        body: t("tutorial.dash.tabsBody"),
+        targetId: "dash-tab-bar",
+      },
+      {
+        Icon: BookOpen,
+        title: t("tutorial.dash.categoriesTitle"),
+        body: t("tutorial.dash.categoriesBody"),
+        targetId: "dash-first-cat",
+        onEnter: () => {
+          const firstId = categoriesQuery.data?.[0]?.id ?? null;
+          setAccordionOpenId(firstId);
+        },
+      },
+      {
+        Icon: Bookmark,
+        title: t("tutorial.dash.savedTitle"),
+        body: t("tutorial.dash.savedBody"),
+        targetId: "dash-saved-content",
+        onEnter: () => setActiveTab("saved"),
+      },
+      {
+        Icon: Trophy,
+        title: t("tutorial.dash.achievementsTitle"),
+        body: t("tutorial.dash.achievementsBody"),
+        targetId: "dash-first-achievement",
+        onEnter: () => setActiveTab("achievements"),
+      },
+      {
+        Icon: UserIcon,
+        title: t("tutorial.dash.accountTitle"),
+        body: t("tutorial.dash.accountBody"),
+        targetId: "dash-account-content",
+        onEnter: () => setActiveTab("account"),
+      },
+    ],
+    [categoriesQuery.data],
+  );
 
   async function handleSave() {
     if (pending.length < 2) {
@@ -513,7 +650,9 @@ function DashboardPage() {
       // Ensure the session token is fresh before the server call — a recent
       // password reset / refreshSession() can briefly leave getSession() null,
       // which causes attachSupabaseAuth to send an empty Authorization header.
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) await supabase.auth.refreshSession();
       const wasFirstSetup = mustSetup;
       await submitUpdate({ data: { answers: pending.slice(0, 2) } });
@@ -535,21 +674,31 @@ function DashboardPage() {
   const effectiveTab = mustSetup ? "account" : activeTab;
 
   const showDashTutorial =
-    !!user && !isAdmin && !isTester && !mustSetup &&
-    !!categoriesQuery.data && !!progressQuery.data &&
+    !!user &&
+    !isAdmin &&
+    !isTester &&
+    !mustSetup &&
+    !!categoriesQuery.data &&
+    !!progressQuery.data &&
     (profile as any)?.dashboard_tutorial_seen === false;
 
   const tabContainerRef = useRef<HTMLDivElement | null>(null);
   const tabMeasureRef = useRef<HTMLUListElement | null>(null);
   const [visibleTabCount, setVisibleTabCount] = useState(5);
 
-  const TAB_NAV_CLS = "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors";
+  const TAB_NAV_CLS =
+    "inline-flex items-center gap-1 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors";
 
   const tabItems: Array<{ value: string; label: React.ReactNode; disabled?: boolean }> = [
     {
       value: "categories",
       disabled: mustSetup,
-      label: <><BookOpen className="h-3.5 w-3.5" />{t("dashboard.tabProgress")}</>,
+      label: (
+        <>
+          <BookOpen className="h-3.5 w-3.5" />
+          {t("dashboard.tabProgress")}
+        </>
+      ),
     },
     {
       value: "saved",
@@ -581,8 +730,28 @@ function DashboardPage() {
         </>
       ),
     },
-    { value: "account", label: <><UserIcon className="h-3.5 w-3.5" />{t("dashboard.tabAccount")}</> },
-    ...(isTester ? [{ value: "testing", label: <><ClipboardCheck className="h-3.5 w-3.5" />Testing</> }] : []),
+    {
+      value: "account",
+      label: (
+        <>
+          <UserIcon className="h-3.5 w-3.5" />
+          {t("dashboard.tabAccount")}
+        </>
+      ),
+    },
+    ...(isTester
+      ? [
+          {
+            value: "testing",
+            label: (
+              <>
+                <ClipboardCheck className="h-3.5 w-3.5" />
+                Testing
+              </>
+            ),
+          },
+        ]
+      : []),
   ];
 
   const recomputeTabs = () => {
@@ -596,7 +765,10 @@ function DashboardPage() {
     const moreWidth = moreEl.getBoundingClientRect().width;
     const available = container.clientWidth - 16;
     const totalAll = itemWidths.reduce((sum, w, i) => sum + w + (i > 0 ? 4 : 0), 0);
-    if (totalAll <= available) { setVisibleTabCount(itemWidths.length); return; }
+    if (totalAll <= available) {
+      setVisibleTabCount(itemWidths.length);
+      return;
+    }
     let used = moreWidth;
     let count = 0;
     for (let i = 0; i < itemWidths.length; i++) {
@@ -633,7 +805,10 @@ function DashboardPage() {
   // Memoize the heavy cross-category aggregations that run on every render.
   const dashboardStats = useMemo(() => {
     if (!categoriesQuery.data || !progressQuery.data) return null;
-    let totalAll = 0, readAll = 0, activeCats = 0, completedCats = 0;
+    let totalAll = 0,
+      readAll = 0,
+      activeCats = 0,
+      completedCats = 0;
     for (const c of categoriesQuery.data) {
       const t2 = progressQuery.data.totals.get(c.id) ?? 0;
       const r2 = progressQuery.data.reads.get(c.id) ?? 0;
@@ -642,9 +817,15 @@ function DashboardPage() {
       if (r2 > 0) activeCats += 1;
       if (t2 > 0 && r2 >= t2) completedCats += 1;
     }
-    const allItems = categoriesQuery.data.flatMap((c) => progressQuery.data!.itemsByCat.get(c.id) ?? []);
+    const allItems = categoriesQuery.data.flatMap(
+      (c) => progressQuery.data!.itemsByCat.get(c.id) ?? [],
+    );
     const allTrackableItems = allItems.filter((it) => !it.exempt_from_progress);
-    const pctAll = weightedCompletionPct(allTrackableItems, progressQuery.data.readSet ?? new Set(), progressQuery.data.engagementMap ?? new Map());
+    const pctAll = weightedCompletionPct(
+      allTrackableItems,
+      progressQuery.data.readSet ?? new Set(),
+      progressQuery.data.engagementMap ?? new Map(),
+    );
     const totalSeconds = progressQuery.data.totalSeconds ?? 0;
     return { totalAll, readAll, activeCats, completedCats, pctAll, totalSeconds };
   }, [categoriesQuery.data, progressQuery.data]);
@@ -659,7 +840,7 @@ function DashboardPage() {
       return `${y}-${m}-${dd}`;
     };
     let streak = 0;
-    let cursor = new Date();
+    const cursor = new Date();
     if (!loginDays.has(fmt(cursor))) cursor.setDate(cursor.getDate() - 1);
     while (loginDays.has(fmt(cursor))) {
       streak += 1;
@@ -671,7 +852,7 @@ function DashboardPage() {
   const achievementsGrouped = useMemo(() => {
     const cats = ["first_steps", "completion", "streaks", "time"] as const;
     const byCategory = Object.fromEntries(
-      cats.map((cat) => [cat, ACHIEVEMENTS.filter((a) => a.category === cat)])
+      cats.map((cat) => [cat, ACHIEVEMENTS.filter((a) => a.category === cat)]),
     );
     const earnedCount = ACHIEVEMENTS.filter((a) => !!earnedAchievements[a.key]).length;
     return { cats, byCategory, earnedCount };
@@ -689,7 +870,12 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Dialog open={mustResetPassword && !resetDone} onOpenChange={() => { /* non-dismissible */ }}>
+      <Dialog
+        open={mustResetPassword && !resetDone}
+        onOpenChange={() => {
+          /* non-dismissible */
+        }}
+      >
         <DialogContent
           className="sm:max-w-md pt-[22px] [&>button.absolute]:hidden"
           onPointerDownOutside={(e) => e.preventDefault()}
@@ -702,27 +888,27 @@ function DashboardPage() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleForcedReset} className="mt-[-4px] space-y-3">
-              <div>
-                <PasswordInput
-                  {...kbResetPw}
-                  autoComplete="new-password"
-                  required
-                  value={resetPw}
-                  onChange={(e) => setResetPw(e.target.value)}
-                  placeholder="New password (min 8 chars)"
-                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-                />
-                <PasswordStrengthMeter password={resetPw} />
-              </div>
+            <div>
               <PasswordInput
-                {...kbResetPw2}
+                {...kbResetPw}
                 autoComplete="new-password"
                 required
-                value={resetPw2}
-                onChange={(e) => setResetPw2(e.target.value)}
-                placeholder="Confirm new password"
+                value={resetPw}
+                onChange={(e) => setResetPw(e.target.value)}
+                placeholder="New password (min 8 chars)"
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
+              <PasswordStrengthMeter password={resetPw} />
+            </div>
+            <PasswordInput
+              {...kbResetPw2}
+              autoComplete="new-password"
+              required
+              value={resetPw2}
+              onChange={(e) => setResetPw2(e.target.value)}
+              placeholder="Confirm new password"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+            />
             <div className="flex justify-end">
               <LoadingButton type="submit" pending={resetBusy} pendingText="Saving…">
                 Save password
@@ -746,31 +932,49 @@ function DashboardPage() {
                 const firstName = ((data as any)?.profile?.first_name ?? "").trim();
                 return (
                   <h1 className="font-display text-3xl font-semibold">
-                    {firstName ? t("dashboard.greeting", { name: firstName }) : t("dashboard.greetingNoName")}
+                    {firstName
+                      ? t("dashboard.greeting", { name: firstName })
+                      : t("dashboard.greetingNoName")}
                   </h1>
                 );
               })()}
               <p className="mt-1 text-sm text-muted-foreground">{t("dashboard.subtitle")}</p>
             </div>
-            <div ref={tabContainerRef} className="relative w-full sm:w-auto overflow-hidden self-stretch sm:self-center">
+            <div
+              ref={tabContainerRef}
+              className="relative w-full sm:w-auto overflow-hidden self-stretch sm:self-center"
+            >
               {/* Hidden measurement row — renders off-screen to measure item widths */}
-              <ul ref={tabMeasureRef} aria-hidden="true" className="invisible pointer-events-none absolute inset-0 flex items-center gap-1 p-2">
+              <ul
+                ref={tabMeasureRef}
+                aria-hidden="true"
+                className="invisible pointer-events-none absolute inset-0 flex items-center gap-1 p-2"
+              >
                 {tabItems.map((tab) => (
                   <li key={tab.value} data-tab-measure className="shrink-0">
                     <span className={TAB_NAV_CLS}>{tab.label}</span>
                   </li>
                 ))}
                 <li data-more-tab-measure className="shrink-0">
-                  <span className={TAB_NAV_CLS}>More <ChevronDown className="h-3.5 w-3.5 opacity-60" /></span>
+                  <span className={TAB_NAV_CLS}>
+                    More <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                  </span>
                 </li>
               </ul>
               {/* Visible tab row */}
-              <ul id="dash-tab-bar" className="flex w-full items-center justify-center gap-1 rounded-lg border border-border bg-muted/40 p-2 text-muted-foreground">
+              <ul
+                id="dash-tab-bar"
+                className="flex w-full items-center justify-center gap-1 rounded-lg border border-border bg-muted/40 p-2 text-muted-foreground"
+              >
                 {primaryTabs.map((tab) => (
                   <li key={tab.value} className="shrink-0">
                     <button
                       type="button"
-                      onClick={() => tab.disabled ? toast.error(t("dashboard.lockedNav")) : setActiveTab(tab.value)}
+                      onClick={() =>
+                        tab.disabled
+                          ? toast.error(t("dashboard.lockedNav"))
+                          : setActiveTab(tab.value)
+                      }
                       className={[
                         TAB_NAV_CLS,
                         effectiveTab === tab.value
@@ -791,7 +995,9 @@ function DashboardPage() {
                         className={[
                           TAB_NAV_CLS,
                           "outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 data-[state=open]:bg-background data-[state=open]:text-foreground",
-                          overflowTabActive ? "bg-background text-foreground" : "hover:bg-background hover:text-foreground",
+                          overflowTabActive
+                            ? "bg-background text-foreground"
+                            : "hover:bg-background hover:text-foreground",
                         ].join(" ")}
                       >
                         More
@@ -801,7 +1007,11 @@ function DashboardPage() {
                         {overflowTabs.map((tab) => (
                           <DropdownMenuItem
                             key={tab.value}
-                            onSelect={() => tab.disabled ? toast.error(t("dashboard.lockedNav")) : setActiveTab(tab.value)}
+                            onSelect={() =>
+                              tab.disabled
+                                ? toast.error(t("dashboard.lockedNav"))
+                                : setActiveTab(tab.value)
+                            }
                             className={`cursor-pointer ${effectiveTab === tab.value ? "bg-muted" : ""}`}
                           >
                             {tab.label}
@@ -814,8 +1024,6 @@ function DashboardPage() {
               </ul>
             </div>
           </div>
-
-
 
           <TabsContent value="categories" className="mt-6">
             {categoriesQuery.isLoading ? (
@@ -842,12 +1050,27 @@ function DashboardPage() {
                     const catItems = itemsByCat.get(eng.category_id) ?? [];
                     const item = catItems.find((i: any) => i.id === eng.content_item_id);
                     if (!item || (item as any).exempt_from_progress) continue;
-                    const category = (categoriesQuery.data ?? []).find((c: any) => c.id === eng.category_id);
+                    const category = (categoriesQuery.data ?? []).find(
+                      (c: any) => c.id === eng.category_id,
+                    );
                     if (!category) continue;
-                    const isAV = item.type && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("audio") || item.type.toLowerCase().includes("podcast"));
-                    const mediaPct = isAV && eng.media_progress_seconds && eng.media_duration_seconds && eng.media_duration_seconds > 0
-                      ? Math.min(99, Math.round((eng.media_progress_seconds / eng.media_duration_seconds) * 100))
-                      : null;
+                    const isAV =
+                      item.type &&
+                      (item.type.toLowerCase().includes("video") ||
+                        item.type.toLowerCase().includes("audio") ||
+                        item.type.toLowerCase().includes("podcast"));
+                    const mediaPct =
+                      isAV &&
+                      eng.media_progress_seconds &&
+                      eng.media_duration_seconds &&
+                      eng.media_duration_seconds > 0
+                        ? Math.min(
+                            99,
+                            Math.round(
+                              (eng.media_progress_seconds / eng.media_duration_seconds) * 100,
+                            ),
+                          )
+                        : null;
                     const isPdf = item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url as string);
                     const pdfMins = isPdf ? parseMinutes(item.duration) : 0;
                     const sessionMins = Math.round((eng.session_seconds ?? 0) / 60);
@@ -875,7 +1098,10 @@ function DashboardPage() {
                             </p>
                             {mediaPct !== null && mediaPct >= 5 && (
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {mediaPct}% {item.type?.toLowerCase().includes("video") ? t("category.markedWatched").toLowerCase() : t("category.markedListened").toLowerCase()}
+                                {mediaPct}%{" "}
+                                {item.type?.toLowerCase().includes("video")
+                                  ? t("category.markedWatched").toLowerCase()
+                                  : t("category.markedListened").toLowerCase()}
                               </p>
                             )}
                             {isPdf && pdfMins > 0 && sessionMins > 0 && (
@@ -885,7 +1111,9 @@ function DashboardPage() {
                             )}
                           </div>
                           <div className="flex-shrink-0 flex items-center gap-4">
-                            <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">{t("dashboard.resumeLabel")}</span>
+                            <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">
+                              {t("dashboard.resumeLabel")}
+                            </span>
                             <span
                               className="flex items-center justify-center h-8 w-8 rounded-[8px] border transition-colors"
                               style={{
@@ -904,179 +1132,310 @@ function DashboardPage() {
                   return null;
                 })()}
 
-                {!isAdmin && dashboardStats && (() => {
-                  const { totalAll, readAll, completedCats, pctAll, totalSeconds } = dashboardStats;
-                  const streak = loginStreak;
-                  const totalCats = (categoriesQuery.data ?? []).length;
-                  const fraction = (done: number, total: number) => (
-                    <span className="inline-flex items-center gap-1.5">
-                      <span>{done.toLocaleString()}</span>
-                      <span className="font-serif italic text-base font-normal text-[var(--color-accent)] lowercase tracking-wide">of</span>
-                      <span>{total.toLocaleString()}</span>
-                    </span>
-                  );
-                  const stats: Array<{ icon: typeof BookOpen; label: string; value: ReactNode }> = [
-                    { icon: CheckCircle2, label: t("dashboard.statCompleted"), value: fraction(readAll, totalAll) },
-                    { icon: Trophy, label: t("dashboard.statCategoriesCompleted"), value: fraction(completedCats, totalCats) },
-                    { icon: Clock, label: t("dashboard.statHours"), value: formatTimeSpent(totalSeconds) },
-                    { icon: Flame, label: t("dashboard.statStreak"), value: streak.toLocaleString() },
-                  ];
-                  return (
-                    <>
-                      <div id="dash-progress-card" className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6 flex items-center gap-6">
-                        <CircleProgress value={pctAll} size={96} stroke={8} />
-                        <div className="min-w-0">
-                          <h2 className="font-display text-xl sm:text-2xl font-semibold">{t("dashboard.overallProgress")}</h2>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {t("dashboard.overallSummary", { done: readAll.toLocaleString(), total: totalAll.toLocaleString() } as any)}
-                          </p>
+                {!isAdmin &&
+                  dashboardStats &&
+                  (() => {
+                    const { totalAll, readAll, completedCats, pctAll, totalSeconds } =
+                      dashboardStats;
+                    const streak = loginStreak;
+                    const totalCats = (categoriesQuery.data ?? []).length;
+                    const fraction = (done: number, total: number) => (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span>{done.toLocaleString()}</span>
+                        <span className="font-serif italic text-base font-normal text-[var(--color-accent)] lowercase tracking-wide">
+                          of
+                        </span>
+                        <span>{total.toLocaleString()}</span>
+                      </span>
+                    );
+                    const stats: Array<{ icon: typeof BookOpen; label: string; value: ReactNode }> =
+                      [
+                        {
+                          icon: CheckCircle2,
+                          label: t("dashboard.statCompleted"),
+                          value: fraction(readAll, totalAll),
+                        },
+                        {
+                          icon: Trophy,
+                          label: t("dashboard.statCategoriesCompleted"),
+                          value: fraction(completedCats, totalCats),
+                        },
+                        {
+                          icon: Clock,
+                          label: t("dashboard.statHours"),
+                          value: formatTimeSpent(totalSeconds),
+                        },
+                        {
+                          icon: Flame,
+                          label: t("dashboard.statStreak"),
+                          value: streak.toLocaleString(),
+                        },
+                      ];
+                    return (
+                      <>
+                        <div
+                          id="dash-progress-card"
+                          className="rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6 flex items-center gap-6"
+                        >
+                          <CircleProgress value={pctAll} size={96} stroke={8} />
+                          <div className="min-w-0">
+                            <h2 className="font-display text-xl sm:text-2xl font-semibold">
+                              {t("dashboard.overallProgress")}
+                            </h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {t("dashboard.overallSummary", {
+                                done: readAll.toLocaleString(),
+                                total: totalAll.toLocaleString(),
+                              } as any)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
 
-                      <div id="dash-stats-grid" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
-                        {stats.map((s) => (
-                          <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
-                        ))}
-                      </div>
+                        <div
+                          id="dash-stats-grid"
+                          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mb-6"
+                        >
+                          {stats.map((s) => (
+                            <StatCard key={s.label} icon={s.icon} value={s.value} label={s.label} />
+                          ))}
+                        </div>
 
-                      {(() => {
-                        const ms = monthlySummaryQuery.data;
-                        if (!ms?.hasActivity) return null;
-                        const MONTH_NAMES_EN = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-                        const MONTH_NAMES_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-                        const monthName = lang === "es" ? MONTH_NAMES_ES[ms.monthIndex] : MONTH_NAMES_EN[ms.monthIndex];
-                        const msgIdx = ms.dayOfMonth % 15;
-                        const message = t(`monthly.msg${msgIdx}` as any);
-                        const itemsDelta = ms.itemsThisMonth - ms.itemsLastMonth;
-                        const timeDelta = ms.secondsThisMonth - ms.secondsLastMonth;
-                        const itemsDeltaLabel = ms.itemsLastMonth === 0
-                          ? t("monthly.newThisMonth" as any)
-                          : itemsDelta > 0 ? t("monthly.more" as any, { n: itemsDelta })
-                          : itemsDelta < 0 ? t("monthly.fewer" as any, { n: Math.abs(itemsDelta) })
-                          : t("monthly.same" as any);
-                        const timeDeltaLabel = ms.secondsLastMonth === 0
-                          ? t("monthly.newThisMonth" as any)
-                          : timeDelta > 0 ? t("monthly.more" as any, { n: formatTimeSpent(timeDelta) })
-                          : timeDelta < 0 ? t("monthly.fewer" as any, { n: formatTimeSpent(Math.abs(timeDelta)) })
-                          : t("monthly.same" as any);
-                        return (
-                          <details className="group mb-6 rounded-2xl border border-border bg-card overflow-hidden">
-                            <summary className="flex cursor-pointer items-center justify-between px-5 py-4 sm:px-6 list-none hover:bg-muted/20 transition-colors">
-                              <div className="flex items-center gap-3">
-                                <p className="font-display text-sm font-semibold">{monthName} {ms.year}</p>
-                                <span className="text-xs text-muted-foreground tabular-nums">
-                                  {ms.itemsThisMonth} {t("monthly.items" as any)} · {formatTimeSpent(ms.secondsThisMonth)}
-                                  {(ms as any).achievementKeysThisMonth?.length > 0 && <> · {(ms as any).achievementKeysThisMonth.length} {t("monthly.achievements" as any)}</>}
-                                </span>
+                        {(() => {
+                          const ms = monthlySummaryQuery.data;
+                          if (!ms?.hasActivity) return null;
+                          const MONTH_NAMES_EN = [
+                            "January",
+                            "February",
+                            "March",
+                            "April",
+                            "May",
+                            "June",
+                            "July",
+                            "August",
+                            "September",
+                            "October",
+                            "November",
+                            "December",
+                          ];
+                          const MONTH_NAMES_ES = [
+                            "Enero",
+                            "Febrero",
+                            "Marzo",
+                            "Abril",
+                            "Mayo",
+                            "Junio",
+                            "Julio",
+                            "Agosto",
+                            "Septiembre",
+                            "Octubre",
+                            "Noviembre",
+                            "Diciembre",
+                          ];
+                          const monthName =
+                            lang === "es"
+                              ? MONTH_NAMES_ES[ms.monthIndex]
+                              : MONTH_NAMES_EN[ms.monthIndex];
+                          const msgIdx = ms.dayOfMonth % 15;
+                          const message = t(`monthly.msg${msgIdx}` as any);
+                          const itemsDelta = ms.itemsThisMonth - ms.itemsLastMonth;
+                          const timeDelta = ms.secondsThisMonth - ms.secondsLastMonth;
+                          const itemsDeltaLabel =
+                            ms.itemsLastMonth === 0
+                              ? t("monthly.newThisMonth" as any)
+                              : itemsDelta > 0
+                                ? t("monthly.more" as any, { n: itemsDelta })
+                                : itemsDelta < 0
+                                  ? t("monthly.fewer" as any, { n: Math.abs(itemsDelta) })
+                                  : t("monthly.same" as any);
+                          const timeDeltaLabel =
+                            ms.secondsLastMonth === 0
+                              ? t("monthly.newThisMonth" as any)
+                              : timeDelta > 0
+                                ? t("monthly.more" as any, { n: formatTimeSpent(timeDelta) })
+                                : timeDelta < 0
+                                  ? t("monthly.fewer" as any, {
+                                      n: formatTimeSpent(Math.abs(timeDelta)),
+                                    })
+                                  : t("monthly.same" as any);
+                          return (
+                            <details className="group mb-6 rounded-2xl border border-border bg-card overflow-hidden">
+                              <summary className="flex cursor-pointer items-center justify-between px-5 py-4 sm:px-6 list-none hover:bg-muted/20 transition-colors">
+                                <div className="flex items-center gap-3">
+                                  <p className="font-display text-sm font-semibold">
+                                    {monthName} {ms.year}
+                                  </p>
+                                  <span className="text-xs text-muted-foreground tabular-nums">
+                                    {ms.itemsThisMonth} {t("monthly.items" as any)} ·{" "}
+                                    {formatTimeSpent(ms.secondsThisMonth)}
+                                    {(ms as any).achievementKeysThisMonth?.length > 0 && (
+                                      <>
+                                        {" "}
+                                        · {(ms as any).achievementKeysThisMonth.length}{" "}
+                                        {t("monthly.achievements" as any)}
+                                      </>
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                  {ms.achievementsThisMonth > 0 && (
+                                    <span className="inline-flex items-center gap-1 text-xs text-[var(--color-accent)] font-medium">
+                                      <Trophy className="h-3.5 w-3.5" />
+                                      {ms.achievementsThisMonth}
+                                    </span>
+                                  )}
+                                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
+                                </div>
+                              </summary>
+                              <div className="px-5 pb-5 sm:px-6 sm:pb-6 pt-1 border-t border-border/40">
+                                {(() => {
+                                  const ICON_MAP: Record<
+                                    string,
+                                    React.ComponentType<{ className?: string }>
+                                  > = {
+                                    BookOpen,
+                                    Compass,
+                                    CheckCircle2,
+                                    Award,
+                                    Trophy,
+                                    GraduationCap,
+                                    Medal,
+                                    Flame,
+                                    Clock,
+                                  };
+                                  const earnedThisMonth = ACHIEVEMENTS.filter((a) =>
+                                    (ms as any).achievementKeysThisMonth?.includes(a.key),
+                                  );
+                                  const hasAchievements = earnedThisMonth.length > 0;
+                                  return (
+                                    <div
+                                      className={`grid gap-4 mb-4 pt-4 ${hasAchievements ? "grid-cols-3" : "grid-cols-2"}`}
+                                    >
+                                      <div>
+                                        <p className="font-display text-2xl font-semibold tabular-nums">
+                                          {ms.itemsThisMonth.toLocaleString()}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                          {t("monthly.items" as any)}
+                                        </p>
+                                        <p className="text-xs mt-1 text-muted-foreground/70">
+                                          {itemsDeltaLabel}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="font-display text-2xl font-semibold tabular-nums">
+                                          {formatTimeSpent(ms.secondsThisMonth)}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                          {t("monthly.timeSpent" as any)}
+                                        </p>
+                                        <p className="text-xs mt-1 text-muted-foreground/70">
+                                          {timeDeltaLabel}
+                                        </p>
+                                      </div>
+                                      {hasAchievements && (
+                                        <div>
+                                          <div className="flex flex-wrap gap-1.5 mb-1.5">
+                                            {earnedThisMonth.map((a) => {
+                                              const Icon = ICON_MAP[a.icon] ?? Trophy;
+                                              return (
+                                                <TooltipProvider key={a.key} delayDuration={150}>
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <div
+                                                        className="flex h-7 w-7 items-center justify-center rounded-md border cursor-default"
+                                                        style={{
+                                                          backgroundColor:
+                                                            "color-mix(in oklab, var(--color-accent) 12%, transparent)",
+                                                          borderColor:
+                                                            "color-mix(in oklab, var(--color-accent) 25%, transparent)",
+                                                          color: "var(--color-accent)",
+                                                        }}
+                                                      >
+                                                        <Icon className="h-3.5 w-3.5" />
+                                                      </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent
+                                                      side="top"
+                                                      className="text-xs max-w-[180px] text-center"
+                                                    >
+                                                      <p className="font-semibold">
+                                                        {t(`achievement.${a.key}.title` as any)}
+                                                      </p>
+                                                      <p>{t(`achievement.${a.key}.desc` as any)}</p>
+                                                    </TooltipContent>
+                                                  </Tooltip>
+                                                </TooltipProvider>
+                                              );
+                                            })}
+                                          </div>
+                                          <p className="text-xs text-muted-foreground mt-0.5">
+                                            {t("monthly.achievements" as any)}
+                                          </p>
+                                          <p className="text-xs mt-1 text-muted-foreground/70">
+                                            {t("monthly.achievementsEarned" as any)}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
+                                <p className="text-xs text-muted-foreground/80 italic leading-relaxed border-t border-border/40 pt-3">
+                                  {message}
+                                </p>
                               </div>
-                              <div className="flex items-center gap-3 shrink-0">
-                                {ms.achievementsThisMonth > 0 && (
-                                  <span className="inline-flex items-center gap-1 text-xs text-[var(--color-accent)] font-medium">
-                                    <Trophy className="h-3.5 w-3.5" />
-                                    {ms.achievementsThisMonth}
+                            </details>
+                          );
+                        })()}
+
+                        {tierQuery.data?.tier && (
+                          <div className="mb-6 rounded-2xl border border-border bg-card px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
+                            <div>
+                              <p className="text-sm font-medium text-foreground">
+                                {t("dashboard.tierLabel")}{" "}
+                                <span className="text-[var(--color-accent)] font-semibold">
+                                  {t(`dashboard.tierName.${tierQuery.data.tier}` as any) ||
+                                    tierQuery.data.tier}
+                                </span>
+                                {tierQuery.data.percentile != null && (
+                                  <span className="text-muted-foreground font-normal">
+                                    {" "}
+                                    ·{" "}
+                                    {t("dashboard.tierTopReaders", {
+                                      pct: String(Math.round(100 - tierQuery.data.percentile)),
+                                    })}
                                   </span>
                                 )}
-                                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
-                              </div>
-                            </summary>
-                            <div className="px-5 pb-5 sm:px-6 sm:pb-6 pt-1 border-t border-border/40">
-                              {(() => {
-                                const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-                                  BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
-                                };
-                                const earnedThisMonth = ACHIEVEMENTS.filter((a) => (ms as any).achievementKeysThisMonth?.includes(a.key));
-                                const hasAchievements = earnedThisMonth.length > 0;
-                                return (
-                                  <div className={`grid gap-4 mb-4 pt-4 ${hasAchievements ? "grid-cols-3" : "grid-cols-2"}`}>
-                                    <div>
-                                      <p className="font-display text-2xl font-semibold tabular-nums">{ms.itemsThisMonth.toLocaleString()}</p>
-                                      <p className="text-xs text-muted-foreground mt-0.5">{t("monthly.items" as any)}</p>
-                                      <p className="text-xs mt-1 text-muted-foreground/70">{itemsDeltaLabel}</p>
-                                    </div>
-                                    <div>
-                                      <p className="font-display text-2xl font-semibold tabular-nums">{formatTimeSpent(ms.secondsThisMonth)}</p>
-                                      <p className="text-xs text-muted-foreground mt-0.5">{t("monthly.timeSpent" as any)}</p>
-                                      <p className="text-xs mt-1 text-muted-foreground/70">{timeDeltaLabel}</p>
-                                    </div>
-                                    {hasAchievements && (
-                                      <div>
-                                        <div className="flex flex-wrap gap-1.5 mb-1.5">
-                                          {earnedThisMonth.map((a) => {
-                                            const Icon = ICON_MAP[a.icon] ?? Trophy;
-                                            return (
-                                              <TooltipProvider key={a.key} delayDuration={150}>
-                                                <Tooltip>
-                                                  <TooltipTrigger asChild>
-                                                    <div
-                                                      className="flex h-7 w-7 items-center justify-center rounded-md border cursor-default"
-                                                      style={{
-                                                        backgroundColor: "color-mix(in oklab, var(--color-accent) 12%, transparent)",
-                                                        borderColor: "color-mix(in oklab, var(--color-accent) 25%, transparent)",
-                                                        color: "var(--color-accent)",
-                                                      }}
-                                                    >
-                                                      <Icon className="h-3.5 w-3.5" />
-                                                    </div>
-                                                  </TooltipTrigger>
-                                                  <TooltipContent side="top" className="text-xs max-w-[180px] text-center">
-                                                    <p className="font-semibold">{t(`achievement.${a.key}.title` as any)}</p>
-                                                    <p>{t(`achievement.${a.key}.desc` as any)}</p>
-                                                  </TooltipContent>
-                                                </Tooltip>
-                                              </TooltipProvider>
-                                            );
-                                          })}
-                                        </div>
-                                        <p className="text-xs text-muted-foreground mt-0.5">{t("monthly.achievements" as any)}</p>
-                                        <p className="text-xs mt-1 text-muted-foreground/70">{t("monthly.achievementsEarned" as any)}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                              <p className="text-xs text-muted-foreground/80 italic leading-relaxed border-t border-border/40 pt-3">{message}</p>
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {t("dashboard.tierMeta")}
+                                {tierQuery.data.updatedAt && (
+                                  <>
+                                    {" "}
+                                    ·{" "}
+                                    {t("dashboard.tierUpdated", {
+                                      date: new Date(tierQuery.data.updatedAt).toLocaleDateString(),
+                                    })}
+                                  </>
+                                )}
+                              </p>
                             </div>
-                          </details>
-                        );
-                      })()}
-
-                      {tierQuery.data?.tier && (
-                        <div className="mb-6 rounded-2xl border border-border bg-card px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              {t("dashboard.tierLabel")}{" "}
-                              <span className="text-[var(--color-accent)] font-semibold">
-                                {t(`dashboard.tierName.${tierQuery.data.tier}` as any) || tierQuery.data.tier}
-                              </span>
-                              {tierQuery.data.percentile != null && (
-                                <span className="text-muted-foreground font-normal">
-                                  {" "}· {t("dashboard.tierTopReaders", { pct: String(Math.round(100 - tierQuery.data.percentile)) })}
-                                </span>
-                              )}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {t("dashboard.tierMeta")}
-                              {tierQuery.data.updatedAt && (
-                                <> · {t("dashboard.tierUpdated", { date: new Date(tierQuery.data.updatedAt).toLocaleDateString() })}</>
-                              )}
-                            </p>
+                            <div className="text-right shrink-0">
+                              <p className="text-xs text-muted-foreground">
+                                {t("dashboard.tierStats", {
+                                  completed: String(tierQuery.data.itemsCompleted ?? 0),
+                                  started: String(tierQuery.data.itemsStarted ?? 0),
+                                })}
+                              </p>
+                            </div>
                           </div>
-                          <div className="text-right shrink-0">
-                            <p className="text-xs text-muted-foreground">
-                              {t("dashboard.tierStats", {
-                                completed: String(tierQuery.data.itemsCompleted ?? 0),
-                                started: String(tierQuery.data.itemsStarted ?? 0),
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      )}
+                        )}
+                      </>
+                    );
+                  })()}
 
-                    </>
-                  );
-                })()}
-
-                <h2 className="font-display text-lg font-semibold mb-3">{t("dashboard.categoryProgress")}</h2>
+                <h2 className="font-display text-lg font-semibold mb-3">
+                  {t("dashboard.categoryProgress")}
+                </h2>
                 <CategoryAccordion
                   categories={categoriesQuery.data ?? []}
                   progress={progressQuery.data}
@@ -1087,11 +1446,9 @@ function DashboardPage() {
                   openId={accordionOpenId}
                   onOpenIdChange={setAccordionOpenId}
                 />
-
               </>
             )}
           </TabsContent>
-
 
           <TabsContent value="saved" className="mt-6" id="dash-saved-content">
             {bookmarkedItemsQuery.isLoading ? (
@@ -1100,7 +1457,9 @@ function DashboardPage() {
               <div className="rounded-2xl border border-border bg-card p-10 flex flex-col items-center gap-3 text-center">
                 <Bookmark className="h-8 w-8 text-muted-foreground/40" />
                 <p className="font-medium text-foreground">{t("dashboard.savedEmpty")}</p>
-                <p className="text-sm text-muted-foreground max-w-xs">{t("dashboard.savedEmptyHint")}</p>
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  {t("dashboard.savedEmptyHint")}
+                </p>
               </div>
             ) : (
               <ul className="rounded-2xl border border-border bg-card overflow-hidden divide-y divide-border">
@@ -1112,11 +1471,7 @@ function DashboardPage() {
                   const isBookmarked = bookmarkIds.has(item.id);
                   return (
                     <li key={item.id} className="flex items-center gap-4 p-5">
-                      <CategoryIcon
-                        name={cat.icon_name}
-                        color={cat.icon_color}
-                        size="sm"
-                      />
+                      <CategoryIcon name={cat.icon_name} color={cat.icon_color} size="sm" />
                       <div className="flex-1 min-w-0 flex flex-col justify-center">
                         <a
                           href={`/category/${cat.slug}#item-${item.id}`}
@@ -1164,15 +1519,28 @@ function DashboardPage() {
           <TabsContent value="achievements" className="mt-6" id="dash-achievements-content">
             {(() => {
               const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-                BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
+                BookOpen,
+                Compass,
+                CheckCircle2,
+                Award,
+                Trophy,
+                GraduationCap,
+                Medal,
+                Flame,
+                Clock,
               };
               const { cats, byCategory, earnedCount } = achievementsGrouped;
               return (
                 <div>
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="font-display text-lg font-semibold">{t("dashboard.tabAchievements")}</h2>
+                    <h2 className="font-display text-lg font-semibold">
+                      {t("dashboard.tabAchievements")}
+                    </h2>
                     <span className="text-sm text-muted-foreground tabular-nums">
-                      {t("dashboard.achievementsCount", { earned: earnedCount, total: ACHIEVEMENTS.length })}
+                      {t("dashboard.achievementsCount", {
+                        earned: earnedCount,
+                        total: ACHIEVEMENTS.length,
+                      })}
                     </span>
                   </div>
                   <div className="space-y-6">
@@ -1189,7 +1557,11 @@ function DashboardPage() {
                             return (
                               <div
                                 key={a.key}
-                                id={cats[0] === cat && aIdx === 0 ? "dash-first-achievement" : undefined}
+                                id={
+                                  cats[0] === cat && aIdx === 0
+                                    ? "dash-first-achievement"
+                                    : undefined
+                                }
                                 className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all ${
                                   earned
                                     ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5"
@@ -1198,21 +1570,26 @@ function DashboardPage() {
                               >
                                 <div
                                   className="flex h-10 w-10 items-center justify-center rounded-xl border"
-                                  style={earned
-                                    ? {
-                                        backgroundColor: "color-mix(in oklab, var(--color-accent) 12%, transparent)",
-                                        borderColor: "color-mix(in oklab, var(--color-accent) 25%, transparent)",
-                                        color: "var(--color-accent)",
-                                      }
-                                    : {
-                                        backgroundColor: "var(--muted)",
-                                        borderColor: "var(--border)",
-                                      }}
-                                >
-                                  {earned
-                                    ? <Icon className="h-5 w-5" />
-                                    : <Lock className="h-4 w-4 text-muted-foreground" />
+                                  style={
+                                    earned
+                                      ? {
+                                          backgroundColor:
+                                            "color-mix(in oklab, var(--color-accent) 12%, transparent)",
+                                          borderColor:
+                                            "color-mix(in oklab, var(--color-accent) 25%, transparent)",
+                                          color: "var(--color-accent)",
+                                        }
+                                      : {
+                                          backgroundColor: "var(--muted)",
+                                          borderColor: "var(--border)",
+                                        }
                                   }
+                                >
+                                  {earned ? (
+                                    <Icon className="h-5 w-5" />
+                                  ) : (
+                                    <Lock className="h-4 w-4 text-muted-foreground" />
+                                  )}
                                 </div>
                                 <div>
                                   <p className="text-xs font-semibold leading-tight">
@@ -1246,7 +1623,9 @@ function DashboardPage() {
               ) : !profile ? (
                 <div>
                   <p className="text-muted-foreground">{t("dashboard.noProfile")}</p>
-                  <Link to="/" className="mt-3 inline-block text-sm underline">{t("dashboard.backHome")}</Link>
+                  <Link to="/" className="mt-3 inline-block text-sm underline">
+                    {t("dashboard.backHome")}
+                  </Link>
                 </div>
               ) : (
                 <dl className="grid gap-5 sm:grid-cols-2">
@@ -1273,7 +1652,9 @@ function DashboardPage() {
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                       <Building2 className="h-3.5 w-3.5" /> {t("signup.facility")}
                     </dt>
-                    <dd className="mt-1 font-medium">{facilityNameMap.get(profile.facility) ?? facilityLabel(profile.facility)}</dd>
+                    <dd className="mt-1 font-medium">
+                      {facilityNameMap.get(profile.facility) ?? facilityLabel(profile.facility)}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
@@ -1331,7 +1712,10 @@ function DashboardPage() {
                   <div className="flex justify-end gap-2">
                     {!mustSetup && (
                       <button
-                        onClick={() => { setEditing(false); setPending([]); }}
+                        onClick={() => {
+                          setEditing(false);
+                          setPending([]);
+                        }}
                         className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:border-[var(--color-accent)] transition-colors"
                       >
                         {t("security.cancel")}
@@ -1354,14 +1738,16 @@ function DashboardPage() {
           {/* ── Testing Tab (tester role only) ─────────────────────────────── */}
           {isTester && (
             <TabsContent value="testing" className="mt-6">
-              <Suspense fallback={<div className="py-12 text-center text-sm text-muted-foreground">Loading…</div>}>
+              <Suspense
+                fallback={
+                  <div className="py-12 text-center text-sm text-muted-foreground">Loading…</div>
+                }
+              >
                 <TestingTab />
               </Suspense>
             </TabsContent>
           )}
         </Tabs>
-
-
       </main>
 
       <SiteFooter />
@@ -1483,7 +1869,15 @@ function CategoryProgressSection({
   isAdmin: boolean;
   lang: "en" | "es";
   t: (key: TranslationKey, vars?: Record<string, string | number>) => string;
-  engagementMap: Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null; manualCompletionPct: number | null }>;
+  engagementMap: Map<
+    string,
+    {
+      sessionSeconds: number;
+      mediaProgressSeconds: number | null;
+      mediaDurationSeconds: number | null;
+      manualCompletionPct: number | null;
+    }
+  >;
   itemChapterProgressMap: Map<string, number>;
   bookmarkIds: Set<string>;
   ratingsMap: Map<string, 1 | -1>;
@@ -1512,7 +1906,11 @@ function CategoryProgressSection({
   }, [isOpen]);
 
   return (
-    <section id={id} ref={sectionRef} className={`scroll-mt-24 rounded-2xl bg-[#fffdf8] overflow-hidden transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "border-2 border-[var(--color-accent)]" : "border border-border"}`}>
+    <section
+      id={id}
+      ref={sectionRef}
+      className={`scroll-mt-24 rounded-2xl bg-[#fffdf8] overflow-hidden transition-all duration-200 ${dimmed ? "opacity-40" : "opacity-100"} ${open ? "border-2 border-[var(--color-accent)]" : "border border-border"}`}
+    >
       <button
         type="button"
         onClick={onToggle}
@@ -1537,31 +1935,42 @@ function CategoryProgressSection({
               <p className="mt-0.5 text-xs text-muted-foreground truncate">{tagline}</p>
             )}
           </div>
-          {!isAdmin && (() => {
-            const catSecs = items.reduce((sum, it) => sum + (engagementMap.get(it.id)?.sessionSeconds ?? 0), 0);
-            return (
-              <div className="flex items-center gap-0 flex-shrink-0">
-                <span className={[
-                  "inline-flex items-center gap-1 border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums",
-                  catSecs > 0 ? "rounded-l-[8px] rounded-r-none" : "rounded-[8px]",
-                ].join(" ")}>
-                  <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
-                  {t("dashboard.itemsCompleted", { done: read.toLocaleString(), total: total.toLocaleString() } as any)}
-                </span>
-                {catSecs > 0 && (
-                  <span className="inline-flex items-center gap-1 border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums rounded-r-[8px] -ml-px">
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                    {formatTimeSpent(catSecs)}
+          {!isAdmin &&
+            (() => {
+              const catSecs = items.reduce(
+                (sum, it) => sum + (engagementMap.get(it.id)?.sessionSeconds ?? 0),
+                0,
+              );
+              return (
+                <div className="flex items-center gap-0 flex-shrink-0">
+                  <span
+                    className={[
+                      "inline-flex items-center gap-1 border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums",
+                      catSecs > 0 ? "rounded-l-[8px] rounded-r-none" : "rounded-[8px]",
+                    ].join(" ")}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+                    {t("dashboard.itemsCompleted", {
+                      done: read.toLocaleString(),
+                      total: total.toLocaleString(),
+                    } as any)}
                   </span>
-                )}
-              </div>
-            );
-          })()}
+                  {catSecs > 0 && (
+                    <span className="inline-flex items-center gap-1 border border-input bg-background px-2.5 py-[5px] text-xs font-medium tabular-nums rounded-r-[8px] -ml-px">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                      {formatTimeSpent(catSecs)}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
         </div>
-        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
+        <ChevronDown
+          className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`}
+        />
       </button>
-      {open && (
-        items.length === 0 ? (
+      {open &&
+        (items.length === 0 ? (
           <p className="p-5 text-sm text-muted-foreground">{t("category.noContent")}</p>
         ) : (
           <ul className="divide-y divide-border">
@@ -1574,7 +1983,9 @@ function CategoryProgressSection({
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <BadgeGroup className="shrink-0">
                         {newItemSet.has(it.id) && !isRead && (
-                          <Badge variant="new" className="rounded-[8px]">{t("category.newContent")}</Badge>
+                          <Badge variant="new" className="rounded-[8px]">
+                            {t("category.newContent")}
+                          </Badge>
                         )}
                         <Badge variant="type" type={it.type} className="rounded-[8px]">
                           {translateType(lang, it.type, badgeStyles.typeNamesEs)}
@@ -1587,107 +1998,156 @@ function CategoryProgressSection({
                       )}
                     </div>
 
-                    {!isAdmin && (() => {
-                      const labels = readStatusLabels(t, it);
-                      const eng = engagementMap.get(it.id);
-                      const isBookmarked = bookmarkIds.has(it.id);
-                      const myRating = ratingsMap.get(it.id) ?? null;
+                    {!isAdmin &&
+                      (() => {
+                        const labels = readStatusLabels(t, it);
+                        const eng = engagementMap.get(it.id);
+                        const isBookmarked = bookmarkIds.has(it.id);
+                        const myRating = ratingsMap.get(it.id) ?? null;
 
-                      // Determine action badge
-                      let actionBadge: React.ReactNode;
-                      const isAV = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
-                      const chapterListened = itemChapterProgressMap.get(it.id);
-                      const listenedSeconds = chapterListened !== undefined
-                        ? Math.max(chapterListened, eng?.mediaProgressSeconds ?? 0)
-                        : (eng?.mediaProgressSeconds ?? 0);
-                      const mediaPct = !isRead && isAV && eng?.mediaDurationSeconds && eng.mediaDurationSeconds > 0 && listenedSeconds > 0
-                        ? Math.min(100, Math.round((listenedSeconds / eng.mediaDurationSeconds) * 100))
-                        : null;
-                      const isPdf = (it.file_url && /\.pdf(\?|#|$)/i.test(it.file_url)) || (it.url && /\.pdf(\?|#|$)/i.test(it.url));
-                      const pdfMins = isPdf ? parseMinutes(it.duration) : 0;
-                      const pdfEstSec = pdfMins * 60;
-                      const pdfPct = !isRead && isPdf && pdfEstSec > 0 && eng && eng.sessionSeconds > 0
-                        ? Math.min(100, Math.round((eng.sessionSeconds / (pdfEstSec * 0.95)) * 100))
-                        : null;
+                        // Determine action badge
+                        let actionBadge: React.ReactNode;
+                        const isAV =
+                          it.type &&
+                          (it.type.toLowerCase().includes("video") ||
+                            it.type.toLowerCase().includes("audio") ||
+                            it.type.toLowerCase().includes("podcast"));
+                        const chapterListened = itemChapterProgressMap.get(it.id);
+                        const listenedSeconds =
+                          chapterListened !== undefined
+                            ? Math.max(chapterListened, eng?.mediaProgressSeconds ?? 0)
+                            : (eng?.mediaProgressSeconds ?? 0);
+                        const mediaPct =
+                          !isRead &&
+                          isAV &&
+                          eng?.mediaDurationSeconds &&
+                          eng.mediaDurationSeconds > 0 &&
+                          listenedSeconds > 0
+                            ? Math.min(
+                                100,
+                                Math.round((listenedSeconds / eng.mediaDurationSeconds) * 100),
+                              )
+                            : null;
+                        const isPdf =
+                          (it.file_url && /\.pdf(\?|#|$)/i.test(it.file_url)) ||
+                          (it.url && /\.pdf(\?|#|$)/i.test(it.url));
+                        const pdfMins = isPdf ? parseMinutes(it.duration) : 0;
+                        const pdfEstSec = pdfMins * 60;
+                        const pdfPct =
+                          !isRead && isPdf && pdfEstSec > 0 && eng && eng.sessionSeconds > 0
+                            ? Math.min(
+                                100,
+                                Math.round((eng.sessionSeconds / (pdfEstSec * 0.95)) * 100),
+                              )
+                            : null;
 
-                      if (mediaPct !== null && mediaPct >= 5) {
-                        const watchedLabel = it.type.toLowerCase().includes("video")
-                          ? t("category.markedWatched").toLowerCase()
-                          : t("category.markedListened").toLowerCase();
-                        actionBadge = (
-                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
-                            <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
-                            <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
-                            <span className="relative">{mediaPct}% {watchedLabel}</span>
-                          </span>
-                        );
-                      } else if (pdfPct !== null && pdfPct >= 1) {
-                        actionBadge = (
-                          <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
-                            <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
-                            <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
-                            <span className="relative">{pdfPct}% {t("category.markedRead").toLowerCase()}</span>
-                          </span>
-                        );
-                      } else if (it.exempt_from_progress) {
-                        actionBadge = (
-                          <span className={`inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ${
-                            isRead
-                              ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
-                              : "border-input bg-background text-foreground"
-                          }`}>
-                            {isRead ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" /> : <Circle className="h-3.5 w-3.5 flex-shrink-0" />}
-                            {isRead ? t("category.acknowledged") : t("category.acknowledge")}
-                          </span>
-                        );
-                      } else {
-                        actionBadge = (
-                          <ReadStatusBadge
-                            read={isRead}
-                            readLabel={
-                              isRead && isPdf && eng?.manualCompletionPct != null
-                                ? `${labels.read} at ${eng.manualCompletionPct}%`
-                                : labels.read
-                            }
-                            unreadLabel={labels.unread}
-                            readAt={isRead ? (fmtDateShort(readAtMap.get(it.id)) || null) : null}
-                          />
-                        );
-                      }
-
-                      return (
-                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                          <div className="flex items-center gap-1.5">
-                            {myRating !== null && (
-                              <span className={`inline-flex items-center justify-center rounded-[8px] border px-2 py-1.5 ${
-                                myRating === 1
+                        if (mediaPct !== null && mediaPct >= 5) {
+                          const watchedLabel = it.type.toLowerCase().includes("video")
+                            ? t("category.markedWatched").toLowerCase()
+                            : t("category.markedListened").toLowerCase();
+                          actionBadge = (
+                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
+                              <span
+                                className="absolute inset-y-0 left-0 pointer-events-none"
+                                style={{
+                                  width: `${mediaPct}%`,
+                                  background:
+                                    "color-mix(in oklab, var(--color-accent) 22%, transparent)",
+                                }}
+                              />
+                              <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
+                              <span className="relative">
+                                {mediaPct}% {watchedLabel}
+                              </span>
+                            </span>
+                          );
+                        } else if (pdfPct !== null && pdfPct >= 1) {
+                          actionBadge = (
+                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
+                              <span
+                                className="absolute inset-y-0 left-0 pointer-events-none"
+                                style={{
+                                  width: `${pdfPct}%`,
+                                  background:
+                                    "color-mix(in oklab, var(--color-accent) 22%, transparent)",
+                                }}
+                              />
+                              <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
+                              <span className="relative">
+                                {pdfPct}% {t("category.markedRead").toLowerCase()}
+                              </span>
+                            </span>
+                          );
+                        } else if (it.exempt_from_progress) {
+                          actionBadge = (
+                            <span
+                              className={`inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ${
+                                isRead
                                   ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
-                                  : "border-destructive/30 bg-destructive/10 text-destructive"
-                              }`}>
-                                {myRating === 1
-                                  ? <ThumbsUp className="h-3.5 w-3.5 fill-[var(--color-accent)]" />
-                                  : <ThumbsDown className="h-3.5 w-3.5 fill-destructive" />}
-                              </span>
-                            )}
-                            {isBookmarked && (
-                              <span className="inline-flex items-center justify-center rounded-[8px] border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] px-2 py-1.5">
-                                <Bookmark className="h-3.5 w-3.5 fill-[var(--color-accent)]" />
-                              </span>
-                            )}
-                            {actionBadge}
-                          </div>
-                          {it.exempt_from_progress && (
-                            // Zero-height wrapper: disclaimer renders visually but doesn't
-                            // contribute to the column's flex height, so the action column
-                            // stays the same height as the type badge and both top-align naturally.
-                            <div className="h-0 overflow-visible flex items-start justify-end">
-                              <p className="text-[10px] text-muted-foreground leading-tight">{t("category.exemptDisclaimer")}</p>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
+                                  : "border-input bg-background text-foreground"
+                              }`}
+                            >
+                              {isRead ? (
+                                <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
+                              ) : (
+                                <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                              )}
+                              {isRead ? t("category.acknowledged") : t("category.acknowledge")}
+                            </span>
+                          );
+                        } else {
+                          actionBadge = (
+                            <ReadStatusBadge
+                              read={isRead}
+                              readLabel={
+                                isRead && isPdf && eng?.manualCompletionPct != null
+                                  ? `${labels.read} at ${eng.manualCompletionPct}%`
+                                  : labels.read
+                              }
+                              unreadLabel={labels.unread}
+                              readAt={isRead ? fmtDateShort(readAtMap.get(it.id)) || null : null}
+                            />
+                          );
+                        }
 
+                        return (
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            <div className="flex items-center gap-1.5">
+                              {myRating !== null && (
+                                <span
+                                  className={`inline-flex items-center justify-center rounded-[8px] border px-2 py-1.5 ${
+                                    myRating === 1
+                                      ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+                                      : "border-destructive/30 bg-destructive/10 text-destructive"
+                                  }`}
+                                >
+                                  {myRating === 1 ? (
+                                    <ThumbsUp className="h-3.5 w-3.5 fill-[var(--color-accent)]" />
+                                  ) : (
+                                    <ThumbsDown className="h-3.5 w-3.5 fill-destructive" />
+                                  )}
+                                </span>
+                              )}
+                              {isBookmarked && (
+                                <span className="inline-flex items-center justify-center rounded-[8px] border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] px-2 py-1.5">
+                                  <Bookmark className="h-3.5 w-3.5 fill-[var(--color-accent)]" />
+                                </span>
+                              )}
+                              {actionBadge}
+                            </div>
+                            {it.exempt_from_progress && (
+                              // Zero-height wrapper: disclaimer renders visually but doesn't
+                              // contribute to the column's flex height, so the action column
+                              // stays the same height as the type badge and both top-align naturally.
+                              <div className="h-0 overflow-visible flex items-start justify-end">
+                                <p className="text-[10px] text-muted-foreground leading-tight">
+                                  {t("category.exemptDisclaimer")}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                   </div>
 
                   <div className="min-w-0">
@@ -1708,7 +2168,10 @@ function CategoryProgressSection({
                                 <Info className="h-4 w-4" />
                               </span>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="text-xs max-w-[220px] text-center">
+                            <TooltipContent
+                              side="top"
+                              className="text-xs max-w-[220px] text-center"
+                            >
                               {t("category.exemptTooltip")}
                             </TooltipContent>
                           </Tooltip>
@@ -1716,17 +2179,16 @@ function CategoryProgressSection({
                       )}
                     </div>
                     {description && (
-                      <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{description}</p>
+                      <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
+                        {description}
+                      </p>
                     )}
                   </div>
                 </li>
-
               );
             })}
           </ul>
-        )
-      )}
+        ))}
     </section>
   );
 }
-

@@ -12,10 +12,7 @@ export const Route = createFileRoute("/api/health")({
         try {
           // Verify DB connectivity with a minimal indexed read.
           // facilities is a small, public-read table — this never blocks real traffic.
-          const { error } = await supabaseAdmin
-            .from("facilities")
-            .select("id")
-            .limit(1);
+          const { error } = await supabaseAdmin.from("facilities").select("id").limit(1);
           if (error) {
             console.error("[health] DB check failed:", error.message);
             return new Response(JSON.stringify({ ok: false, error: error.message }), {

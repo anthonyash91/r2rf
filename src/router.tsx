@@ -8,7 +8,9 @@ import { routeTree } from "./routeTree.gen";
 function parseSearch(search: string): Record<string, unknown> {
   const params = new URLSearchParams(search);
   const result: Record<string, unknown> = {};
-  params.forEach((value, key) => { result[key] = value; });
+  params.forEach((value, key) => {
+    result[key] = value;
+  });
   return result;
 }
 

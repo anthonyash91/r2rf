@@ -67,4 +67,3 @@ export async function verifyAnswer(answer: string, stored: string): Promise<bool
     return false;
   }
 }
-

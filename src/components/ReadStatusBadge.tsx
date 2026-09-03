@@ -62,5 +62,9 @@ export function ReadStatusBadge({
     );
   }
 
-  return <span className={`${baseClass} flex-shrink-0`} style={readStyle}>{content}</span>;
+  return (
+    <span className={`${baseClass} flex-shrink-0`} style={readStyle}>
+      {content}
+    </span>
+  );
 }

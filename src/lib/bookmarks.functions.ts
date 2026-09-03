@@ -44,14 +44,16 @@ export const getMyBookmarkedItems = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await (context.supabase as any)
       .from("user_content_bookmarks")
-      .select(`
+      .select(
+        `
         content_item_id,
         created_at,
         content_items!inner(
           id, title, type, description, url, file_url,
           categories!inner(id, name, name_es, slug, icon_name, icon_color)
         )
-      `)
+      `,
+      )
       .order("created_at", { ascending: false });
     if (error) throw error;
     return { items: (data ?? []) as any[] };

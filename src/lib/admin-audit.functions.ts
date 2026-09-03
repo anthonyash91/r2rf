@@ -105,7 +105,10 @@ export const listAuditLog = createServerFn({ method: "POST" })
     const emailMap = new Map<string, string | null>();
     if (idList.length > 0) {
       const idSet = new Set(idList);
-      const { data: authData } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const { data: authData } = await supabaseAdmin.auth.admin.listUsers({
+        page: 1,
+        perPage: 1000,
+      });
       for (const u of authData?.users ?? []) {
         if (idSet.has(u.id)) emailMap.set(u.id, u.email ?? null);
       }
@@ -126,13 +129,13 @@ export const listAuditLog = createServerFn({ method: "POST" })
       actor_user_id: r.actor_user_id,
       actor_username:
         r.actor_username ??
-        (r.actor_user_id ? profileMap.get(r.actor_user_id)?.username ?? null : null),
-      actor_email: r.actor_user_id ? emailMap.get(r.actor_user_id) ?? null : null,
+        (r.actor_user_id ? (profileMap.get(r.actor_user_id)?.username ?? null) : null),
+      actor_email: r.actor_user_id ? (emailMap.get(r.actor_user_id) ?? null) : null,
       target_user_id: r.target_user_id,
       target_username:
         r.target_username ??
-        (r.target_user_id ? profileMap.get(r.target_user_id)?.username ?? null : null),
-      target_email: r.target_user_id ? emailMap.get(r.target_user_id) ?? null : null,
+        (r.target_user_id ? (profileMap.get(r.target_user_id)?.username ?? null) : null),
+      target_email: r.target_user_id ? (emailMap.get(r.target_user_id) ?? null) : null,
       details: (r.details ?? {}) as Record<string, string | number | boolean | null>,
       ip_address: r.ip_address,
       user_agent: r.user_agent,

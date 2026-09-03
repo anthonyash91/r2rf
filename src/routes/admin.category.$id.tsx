@@ -11,7 +11,28 @@ import { BadgeGroup } from "@/components/BadgeGroup";
 import { withActionWord } from "@/lib/duration";
 import { useI18n, translateDuration } from "@/lib/i18n";
 import { toast } from "sonner";
-import { Plus, Trash2, Eye, EyeOff, Save, X, Sparkles, RefreshCw, ExternalLink, Pencil, FolderOpen, GripVertical, Info, Tag, ChevronDown, ChevronUp, Languages, Upload, BookOpen, ShieldOff } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Eye,
+  EyeOff,
+  Save,
+  X,
+  Sparkles,
+  RefreshCw,
+  ExternalLink,
+  Pencil,
+  FolderOpen,
+  GripVertical,
+  Info,
+  Tag,
+  ChevronDown,
+  ChevronUp,
+  Languages,
+  Upload,
+  BookOpen,
+  ShieldOff,
+} from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateCategoryCopy, generateContentDescription } from "@/lib/category-ai.functions";
 import { listFacilities } from "@/lib/facilities.functions";
@@ -31,18 +52,37 @@ import {
 import { useTranslateToSpanish } from "@/components/TranslateButton";
 import { TranslationPanel } from "@/components/TranslationPanel";
 const SortableList = lazy(() =>
-  import("@/components/SortableList").then((m) => ({ default: m.SortableList }))
+  import("@/components/SortableList").then((m) => ({ default: m.SortableList })),
 );
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { IconButton, TooltipWrap, iconButtonClassName } from "@/components/IconButton";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
-import { paletteStyle, nextUnusedIndex, paletteIndexOfColor, DEFAULT_BADGE_STYLES, BADGE_VARIANTS, type BadgeStyles } from "@/lib/badge-styles";
+import {
+  paletteStyle,
+  nextUnusedIndex,
+  paletteIndexOfColor,
+  DEFAULT_BADGE_STYLES,
+  BADGE_VARIANTS,
+  type BadgeStyles,
+} from "@/lib/badge-styles";
 import { badgeStylesQueryKey, BADGE_STYLES_KEY } from "@/hooks/use-badge-styles";
 import { BulkActionBar } from "@/components/BulkActionBar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { LabeledInput } from "@/components/FormField";
 import { FacilityCombobox } from "@/components/FacilityCombobox";
 import { LoadingButton, actionButtonClassName } from "@/components/LoadingButton";
@@ -53,7 +93,6 @@ import { isMutationPendingFor } from "@/hooks/use-row-pending";
 import { PageHeader } from "@/components/PageHeader";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { QK } from "@/lib/query-keys";
-
 
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
@@ -68,7 +107,6 @@ function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "mis
   if (translated < required.length) return "partial";
   return "complete";
 }
-
 
 export const Route = createFileRoute("/admin/category/$id")({
   beforeLoad: requireContentAdminBeforeLoad,
@@ -98,13 +136,19 @@ function AdminCategoryPageContent() {
   const { data, isLoading } = useQuery({
     queryKey: QK.adminCategory(id),
     queryFn: async () => {
-      const { data: cat, error: e1 } = await supabase.from("categories").select("*").eq("id", id).single();
+      const { data: cat, error: e1 } = await supabase
+        .from("categories")
+        .select("*")
+        .eq("id", id)
+        .single();
       if (e1) throw e1;
       const { data: catFacLinks } = await (supabase as any)
         .from("category_facilities")
         .select("facility_value")
         .eq("category_id", id);
-      const catFacilities = ((catFacLinks ?? []) as { facility_value: string }[]).map((r) => r.facility_value);
+      const catFacilities = ((catFacLinks ?? []) as { facility_value: string }[]).map(
+        (r) => r.facility_value,
+      );
       const { data: items, error: e2 } = await supabase
         .from("content_items")
         .select("*")
@@ -121,7 +165,10 @@ function AdminCategoryPageContent() {
         if (linksError) {
           console.error("[admin category] facility restrictions fetch failed:", linksError.message);
         } else {
-          for (const link of (links ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+          for (const link of (links ?? []) as Array<{
+            content_item_id: string;
+            facility_value: string;
+          }>) {
             if (!facilityMap[link.content_item_id]) facilityMap[link.content_item_id] = [];
             facilityMap[link.content_item_id].push(link.facility_value);
           }
@@ -149,9 +196,9 @@ function AdminCategoryPageContent() {
       // Sync category_facilities
       await (supabase as any).from("category_facilities").delete().eq("category_id", id);
       if (facilities && facilities.length > 0) {
-        await (supabase as any).from("category_facilities").insert(
-          facilities.map((f) => ({ category_id: id, facility_value: f }))
-        );
+        await (supabase as any)
+          .from("category_facilities")
+          .insert(facilities.map((f) => ({ category_id: id, facility_value: f })));
       }
       // Turning exemption ON cascades to every current item in the category —
       // a one-time bulk action, not a live-inherited flag. Turning it OFF
@@ -188,7 +235,11 @@ function AdminCategoryPageContent() {
               description="Update the category name, copy, icon, and visibility settings."
             />
           </div>
-          <CategoryEditor category={data.category} onSave={(v) => saveCategory.mutate(v)} busy={saveCategory.isPending} />
+          <CategoryEditor
+            category={data.category}
+            onSave={(v) => saveCategory.mutate(v)}
+            busy={saveCategory.isPending}
+          />
           <ContentManager
             categoryId={id}
             categoryName={data.category.name}
@@ -235,7 +286,6 @@ function CategoryEditor({
   );
   const [iconKeywords, setIconKeywords] = useState("");
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
-
 
   useEffect(() => {
     setName(category.name);
@@ -286,9 +336,7 @@ function CategoryEditor({
   }
 
   async function handleRegenerateIcon() {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("id, icon_name, icon_color");
+    const { data, error } = await supabase.from("categories").select("id, icon_name, icon_color");
     if (error) {
       toast.error(error.message);
       return;
@@ -305,7 +353,6 @@ function CategoryEditor({
     setIconColor(next.icon_color);
     toast.success("New icon generated. Save to apply.");
   }
-
 
   return (
     <SectionCard className="mt-8 pt-[18px]">
@@ -338,12 +385,16 @@ function CategoryEditor({
               <TooltipProvider delayDuration={150}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" className="text-muted-foreground hover:text-foreground rounded-sm focus:outline-none">
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-foreground rounded-sm focus:outline-none"
+                    >
                       <Info className="h-3.5 w-3.5" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-[240px] text-xs">
-                    Restrict this category to specific facilities. Only users whose profile matches a selected facility will see it. Leave empty to show to everyone.
+                    Restrict this category to specific facilities. Only users whose profile matches
+                    a selected facility will see it. Leave empty to show to everyone.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -351,11 +402,15 @@ function CategoryEditor({
             <div className="mt-1">
               <FacilityCombobox
                 value=""
-                onChange={(v) => { if (v && !catFacilities.includes(v)) setCatFacilities((prev) => [...prev, v]); }}
+                onChange={(v) => {
+                  if (v && !catFacilities.includes(v)) setCatFacilities((prev) => [...prev, v]);
+                }}
                 options={allFacilities.filter((a) => !catFacilities.includes(a.value))}
                 placeholder="Add facility…"
                 searchPlaceholder="Search facilities…"
-                emptyMessage={allFacilities.length === 0 ? "No facilities found." : "All facilities selected."}
+                emptyMessage={
+                  allFacilities.length === 0 ? "No facilities found." : "All facilities selected."
+                }
               />
             </div>
             {catFacilities.length > 0 && (
@@ -363,9 +418,21 @@ function CategoryEditor({
                 {catFacilities.map((f) => {
                   const label = allFacilities.find((a) => a.value === f)?.label ?? f;
                   return (
-                    <span key={f} className="inline-flex items-center gap-1 leading-none rounded-[8px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0" style={{ color: facilityPs.color, backgroundColor: facilityPs.bg, borderColor: facilityPs.border }}>
+                    <span
+                      key={f}
+                      className="inline-flex items-center gap-1 leading-none rounded-[8px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0"
+                      style={{
+                        color: facilityPs.color,
+                        backgroundColor: facilityPs.bg,
+                        borderColor: facilityPs.border,
+                      }}
+                    >
                       {label}
-                      <button type="button" onClick={() => setCatFacilities((prev) => prev.filter((x) => x !== f))} className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10">
+                      <button
+                        type="button"
+                        onClick={() => setCatFacilities((prev) => prev.filter((x) => x !== f))}
+                        className="rounded-[2px] p-0.5 hover:bg-black/10 dark:hover:bg-white/10"
+                      >
                         <X className="h-3 w-3" />
                       </button>
                     </span>
@@ -386,7 +453,9 @@ function CategoryEditor({
           >
             Auto-generate tagline & description
           </LoadingButton>
-          <p className="mt-1 text-xs text-muted-foreground">Uses the Name to draft copy. You can edit the result.</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Uses the Name to draft copy. You can edit the result.
+          </p>
         </div>
         <LabeledInput label="Tagline" value={tagline} onChange={setTagline} />
         <label className="block">
@@ -1141,7 +1210,9 @@ function ContentManager({
   const [order, setOrder] = useState<ContentItem[]>([]);
   const editorRef = useRef<HTMLDivElement | null>(null);
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
-  useEffect(() => { setOrder(items); }, [items]);
+  useEffect(() => {
+    setOrder(items);
+  }, [items]);
   const didAutoOpenRef = useRef(false);
   useEffect(() => {
     if (!initialEditId || didAutoOpenRef.current) return;
@@ -1163,7 +1234,7 @@ function ContentManager({
     if (!items.some((it) => it.id === pendingScrollId)) return;
     const t = setTimeout(() => {
       const inner = document.querySelector<HTMLElement>(`[data-item-id="${pendingScrollId}"]`);
-      const el = inner?.closest("li") as HTMLElement | null ?? inner;
+      const el = (inner?.closest("li") as HTMLElement | null) ?? inner;
       if (el) {
         el.scrollIntoView({ behavior: "instant", block: "center" });
         el.classList.add("bg-[var(--color-accent)]/15", "transition-colors", "duration-700");
@@ -1203,44 +1274,54 @@ function ContentManager({
       let savedId: string;
       if (itemValues.id) {
         const { id: itemId, ...rest } = itemValues;
-        const { error } = await (supabase as any).from("content_items").update(rest).eq("id", itemId!);
+        const { error } = await (supabase as any)
+          .from("content_items")
+          .update(rest)
+          .eq("id", itemId!);
         if (error) throw error;
         savedId = itemId!;
       } else {
         // storage_folder isn't in the generated Database types yet — (supabase as any)
         // here matches the existing pattern used for the update branch above.
-        const { data, error } = await (supabase as any).from("content_items").insert({
-          id: pregeneratedId,
-          category_id: categoryId,
-          title: itemValues.title!,
-          type: itemValues.type ?? "Article",
-          source: itemValues.source ?? "",
-          duration: itemValues.duration ?? "",
-          description: itemValues.description ?? "",
-          url: itemValues.url ?? null,
-          file_url: itemValues.file_url ?? null,
-          file_name: itemValues.file_name ?? null,
-          title_es: itemValues.title_es ?? null,
-          description_es: itemValues.description_es ?? null,
-          source_es: itemValues.source_es ?? null,
-          file_url_es: itemValues.file_url_es ?? null,
-          file_name_es: itemValues.file_name_es ?? null,
-          published: itemValues.published ?? true,
-          exempt_from_progress: itemValues.exempt_from_progress ?? false,
-          storage_folder: itemValues.storage_folder ?? null,
-          section: itemValues.section ?? null,
-          section_es: itemValues.section_es ?? null,
-          sort_order: (items.at(-1)?.sort_order ?? 0) + 1,
-        }).select("id").single();
+        const { data, error } = await (supabase as any)
+          .from("content_items")
+          .insert({
+            id: pregeneratedId,
+            category_id: categoryId,
+            title: itemValues.title!,
+            type: itemValues.type ?? "Article",
+            source: itemValues.source ?? "",
+            duration: itemValues.duration ?? "",
+            description: itemValues.description ?? "",
+            url: itemValues.url ?? null,
+            file_url: itemValues.file_url ?? null,
+            file_name: itemValues.file_name ?? null,
+            title_es: itemValues.title_es ?? null,
+            description_es: itemValues.description_es ?? null,
+            source_es: itemValues.source_es ?? null,
+            file_url_es: itemValues.file_url_es ?? null,
+            file_name_es: itemValues.file_name_es ?? null,
+            published: itemValues.published ?? true,
+            exempt_from_progress: itemValues.exempt_from_progress ?? false,
+            storage_folder: itemValues.storage_folder ?? null,
+            section: itemValues.section ?? null,
+            section_es: itemValues.section_es ?? null,
+            sort_order: (items.at(-1)?.sort_order ?? 0) + 1,
+          })
+          .select("id")
+          .single();
         if (error) throw error;
         savedId = data.id as string;
       }
       // Sync facility restrictions: delete existing, reinsert selected
-      await (supabase as any).from("content_item_facilities").delete().eq("content_item_id", savedId);
+      await (supabase as any)
+        .from("content_item_facilities")
+        .delete()
+        .eq("content_item_id", savedId);
       if (facilities && facilities.length > 0) {
-        const { error: fErr } = await (supabase as any).from("content_item_facilities").insert(
-          facilities.map((f: string) => ({ content_item_id: savedId, facility_value: f }))
-        );
+        const { error: fErr } = await (supabase as any)
+          .from("content_item_facilities")
+          .insert(facilities.map((f: string) => ({ content_item_id: savedId, facility_value: f })));
         if (fErr) throw fErr;
       }
       // Sync chapters: replace all existing rows then reinsert in order
@@ -1288,7 +1369,14 @@ function ContentManager({
         pendingBadgeStylesRef.current = null;
         supabase
           .from("site_settings")
-          .upsert({ key: BADGE_STYLES_KEY, value: pendingStyles as unknown as never, updated_at: new Date().toISOString() }, { onConflict: "key" })
+          .upsert(
+            {
+              key: BADGE_STYLES_KEY,
+              value: pendingStyles as unknown as never,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "key" },
+          )
           .then(() => qc.invalidateQueries({ queryKey: [...badgeStylesQueryKey] }));
       }
       // Fire-and-forget cleanup of old storage files now that the new URL is
@@ -1318,7 +1406,10 @@ function ContentManager({
       const { error } = await supabase.from("content_items").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Deleted"); invalidate(); },
+    onSuccess: () => {
+      toast.success("Deleted");
+      invalidate();
+    },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -1466,7 +1557,10 @@ function ContentManager({
     mutationFn: async (next: ContentItem[]) => {
       await Promise.all(
         next.map((it, i) =>
-          supabase.from("content_items").update({ sort_order: i + 1 }).eq("id", it.id),
+          supabase
+            .from("content_items")
+            .update({ sort_order: i + 1 })
+            .eq("id", it.id),
         ),
       );
     },
@@ -1679,7 +1773,9 @@ function ContentManager({
   return (
     <section className="mt-8">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <h2 className="font-display text-2xl font-semibold">Content <span className="text-muted-foreground font-normal">({order.length})</span></h2>
+        <h2 className="font-display text-2xl font-semibold">
+          Content <span className="text-muted-foreground font-normal">({order.length})</span>
+        </h2>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={bulkType} onValueChange={setBulkType}>
             <SelectTrigger
@@ -1775,7 +1871,12 @@ function ContentManager({
         </div>
       )}
 
-      <SectionsPanel categoryId={categoryId} items={items} sectionOrder={sectionOrder} onReordered={invalidate} />
+      <SectionsPanel
+        categoryId={categoryId}
+        items={items}
+        sectionOrder={sectionOrder}
+        onReordered={invalidate}
+      />
 
       <BulkReviewPanel
         ids={bulkReviewIds}
@@ -1805,8 +1906,12 @@ function ContentManager({
             busy={saveMut.isPending}
             categoryFacilities={categoryFacilities}
             existingSections={existingSections}
-            onPendingDelete={(url) => { pendingDeletesRef.current.push(url); }}
-            onNewTypeBadgeStyle={(styles) => { pendingBadgeStylesRef.current = styles; }}
+            onPendingDelete={(url) => {
+              pendingDeletesRef.current.push(url);
+            }}
+            onNewTypeBadgeStyle={(styles) => {
+              pendingBadgeStylesRef.current = styles;
+            }}
           />
         </div>
       )}
@@ -1822,360 +1927,442 @@ function ContentManager({
           : order;
         return (
           <>
-      {order.length > 0 && (
-        <BulkActionBar
-          bulk={bulk}
-          filteredCount={filteredOrder.length}
-          totalCount={order.length}
-          isFiltered={Boolean(q)}
-          noun={{ singular: "item", plural: "items" }}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          searchPlaceholder="Search content…"
-          emptyEditHint="Click items to select for deletion"
-          allIds={filteredOrder.map((i) => i.id)}
-          onEnterEditMode={() => setEditing(null)}
-          onDeleteSelected={async (ids) =>
-            confirmDelete({
-              title: `Delete ${ids.length} ${ids.length === 1 ? "item" : "items"}?`,
-              description: `Permanently delete ${ids.length === 1 ? "the selected item" : `${ids.length} selected items`}?`,
-              onConfirm: () => deleteManyMut.mutateAsync(ids),
-            })
-          }
-          extraSelectionActions={(ids) => (
-            <>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <LoadingButton
-                    variant="secondary"
-                    pending={updateTypeMut.isPending}
-                    pendingText="Updating…"
-                    icon={<Tag className="h-4 w-4" />}
-                  >
-                    Change type ({ids.length})
-                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
-                  </LoadingButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" collisionPadding={16} className="max-h-[80vh]">
-                  {bulkTypeOptions.map((t) => (
-                    <DropdownMenuItem
-                      key={t}
-                      onSelect={() => updateTypeMut.mutate({ ids, type: t })}
-                    >
-                      {t}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu
-                onOpenChange={(open) => {
-                  if (!open) {
-                    setAddingBulkSection(false);
-                    setNewBulkSection("");
-                  }
-                }}
-              >
-                <DropdownMenuTrigger asChild>
-                  <LoadingButton
-                    variant="secondary"
-                    pending={updateSectionMut.isPending}
-                    pendingText="Updating…"
-                    icon={<FolderOpen className="h-4 w-4" />}
-                  >
-                    Change section ({ids.length})
-                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
-                  </LoadingButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" collisionPadding={16} className="max-h-[80vh]">
-                  {addingBulkSection ? (
-                    <div className="flex items-center gap-2 p-1.5">
-                      <input
-                        autoFocus
-                        value={newBulkSection}
-                        onChange={(e) => setNewBulkSection(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const v = newBulkSection.trim();
-                            if (!v) return;
-                            updateSectionMut.mutate({ ids, section: v });
-                            setAddingBulkSection(false);
-                            setNewBulkSection("");
-                          }
-                          if (e.key === "Escape") {
-                            e.preventDefault();
-                            setAddingBulkSection(false);
-                            setNewBulkSection("");
-                          }
-                        }}
-                        placeholder="New section name"
-                        className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
-                      />
-                      <button
-                        type="button"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => {
-                          const v = newBulkSection.trim();
-                          if (!v) return;
-                          updateSectionMut.mutate({ ids, section: v });
+            {order.length > 0 && (
+              <BulkActionBar
+                bulk={bulk}
+                filteredCount={filteredOrder.length}
+                totalCount={order.length}
+                isFiltered={Boolean(q)}
+                noun={{ singular: "item", plural: "items" }}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search content…"
+                emptyEditHint="Click items to select for deletion"
+                allIds={filteredOrder.map((i) => i.id)}
+                onEnterEditMode={() => setEditing(null)}
+                onDeleteSelected={async (ids) =>
+                  confirmDelete({
+                    title: `Delete ${ids.length} ${ids.length === 1 ? "item" : "items"}?`,
+                    description: `Permanently delete ${ids.length === 1 ? "the selected item" : `${ids.length} selected items`}?`,
+                    onConfirm: () => deleteManyMut.mutateAsync(ids),
+                  })
+                }
+                extraSelectionActions={(ids) => (
+                  <>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <LoadingButton
+                          variant="secondary"
+                          pending={updateTypeMut.isPending}
+                          pendingText="Updating…"
+                          icon={<Tag className="h-4 w-4" />}
+                        >
+                          Change type ({ids.length})
+                          <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                        </LoadingButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        collisionPadding={16}
+                        className="max-h-[80vh]"
+                      >
+                        {bulkTypeOptions.map((t) => (
+                          <DropdownMenuItem
+                            key={t}
+                            onSelect={() => updateTypeMut.mutate({ ids, type: t })}
+                          >
+                            {t}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu
+                      onOpenChange={(open) => {
+                        if (!open) {
                           setAddingBulkSection(false);
                           setNewBulkSection("");
-                        }}
-                        className="shrink-0 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <DropdownMenuItem onSelect={() => updateSectionMut.mutate({ ids, section: null })}>
-                        Uncategorized
-                      </DropdownMenuItem>
-                      {existingSections.length > 0 && <DropdownMenuSeparator />}
-                      {existingSections.map((s) => (
-                        <DropdownMenuItem
-                          key={s}
-                          onSelect={() => updateSectionMut.mutate({ ids, section: s })}
-                        >
-                          {s}
-                        </DropdownMenuItem>
-                      ))}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setAddingBulkSection(true); }}>
-                        + New section…
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu onOpenChange={(open) => { if (!open) setBulkChangeSource(""); }}>
-                <DropdownMenuTrigger asChild>
-                  <LoadingButton
-                    variant="secondary"
-                    pending={updateSourceMut.isPending}
-                    pendingText="Updating…"
-                    icon={<BookOpen className="h-4 w-4" />}
-                  >
-                    Change source ({ids.length})
-                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
-                  </LoadingButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" collisionPadding={16} className="max-h-[80vh]">
-                  {sourceSuggestions.length > 0 && (
-                    <>
-                      {sourceSuggestions.map((s) => (
-                        <DropdownMenuItem
-                          key={s}
-                          onSelect={() => updateSourceMut.mutate({ ids, source: s })}
-                        >
-                          {s}
-                        </DropdownMenuItem>
-                      ))}
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <div className="flex items-center gap-2 p-1.5">
-                    <input
-                      autoFocus
-                      value={bulkChangeSource}
-                      onChange={(e) => setBulkChangeSource(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          const v = bulkChangeSource.trim();
-                          if (!v) return;
-                          updateSourceMut.mutate({ ids, source: v });
-                          setBulkChangeSource("");
                         }
                       }}
-                      placeholder="Source name"
-                      className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
-                    />
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        const v = bulkChangeSource.trim();
-                        if (!v) return;
-                        updateSourceMut.mutate({ ids, source: v });
-                        setBulkChangeSource("");
-                      }}
-                      className="shrink-0 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
                     >
-                      Apply
-                    </button>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <LoadingButton
-                    variant="secondary"
-                    pending={updateExemptMut.isPending}
-                    pendingText="Updating…"
-                    icon={<ShieldOff className="h-4 w-4" />}
-                  >
-                    Exempt from tracking ({ids.length})
-                    <ChevronDown className="ml-1 h-3.5 w-3.5" />
-                  </LoadingButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" collisionPadding={16}>
-                  <DropdownMenuItem onSelect={() => updateExemptMut.mutate({ ids, exempt: true })}>
-                    Mark as exempt
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => updateExemptMut.mutate({ ids, exempt: false })}>
-                    Remove exemption
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          )}
-        />
-      )}
-
-      <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${order.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
-        {(() => {
-          const renderItemRow = (item: ContentItem) => {
-            const isEditingThis = editing !== null && editing !== "new" && editing.id === item.id;
-            const isDimmed = editing !== null && !isEditingThis;
-            return (
-              <div data-item-id={item.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 p-6 pl-3 pb-6 sm:pb-5 transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}>
-                <div className="flex-1 min-w-0 flex flex-col gap-4">
-                  {(() => {
-                    const s = itemTranslationStatus(item);
-                    const trLabel = s === "missing" ? "Needs ES" : "Partially translated";
-                    const trTitle = s === "missing" ? "Missing Spanish translation" : "Some Spanish fields are missing";
-                    return (
-                      <BadgeGroup trailing={item.duration ? translateDuration(lang, withActionWord(item.duration, item.type)) : undefined}>
-                        <Badge variant="type" type={item.type} className="rounded-[8px]">{item.type}</Badge>
-                        {!item.published && <Badge variant="draft" className="rounded-[8px]">Draft</Badge>}
-                        {item.exempt_from_progress && <Badge variant="exempt" className="rounded-[8px]">Exempt</Badge>}
-                        {s !== "complete" && (
-                          <Badge variant="translation" className="rounded-[8px]" title={trTitle}>
-                            {trLabel}
-                          </Badge>
+                      <DropdownMenuTrigger asChild>
+                        <LoadingButton
+                          variant="secondary"
+                          pending={updateSectionMut.isPending}
+                          pendingText="Updating…"
+                          icon={<FolderOpen className="h-4 w-4" />}
+                        >
+                          Change section ({ids.length})
+                          <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                        </LoadingButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        collisionPadding={16}
+                        className="max-h-[80vh]"
+                      >
+                        {addingBulkSection ? (
+                          <div className="flex items-center gap-2 p-1.5">
+                            <input
+                              autoFocus
+                              value={newBulkSection}
+                              onChange={(e) => setNewBulkSection(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  const v = newBulkSection.trim();
+                                  if (!v) return;
+                                  updateSectionMut.mutate({ ids, section: v });
+                                  setAddingBulkSection(false);
+                                  setNewBulkSection("");
+                                }
+                                if (e.key === "Escape") {
+                                  e.preventDefault();
+                                  setAddingBulkSection(false);
+                                  setNewBulkSection("");
+                                }
+                              }}
+                              placeholder="New section name"
+                              className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
+                            />
+                            <button
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => {
+                                const v = newBulkSection.trim();
+                                if (!v) return;
+                                updateSectionMut.mutate({ ids, section: v });
+                                setAddingBulkSection(false);
+                                setNewBulkSection("");
+                              }}
+                              className="shrink-0 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <DropdownMenuItem
+                              onSelect={() => updateSectionMut.mutate({ ids, section: null })}
+                            >
+                              Uncategorized
+                            </DropdownMenuItem>
+                            {existingSections.length > 0 && <DropdownMenuSeparator />}
+                            {existingSections.map((s) => (
+                              <DropdownMenuItem
+                                key={s}
+                                onSelect={() => updateSectionMut.mutate({ ids, section: s })}
+                              >
+                                {s}
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                setAddingBulkSection(true);
+                              }}
+                            >
+                              + New section…
+                            </DropdownMenuItem>
+                          </>
                         )}
-                        {(item.facilities?.length ?? 0) > 0 && (
-                          <FacilityBadge
-                            facilities={item.facilities!}
-                            facilityLabelMap={facilityLabelMap}
-                            className="rounded-[8px]"
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu
+                      onOpenChange={(open) => {
+                        if (!open) setBulkChangeSource("");
+                      }}
+                    >
+                      <DropdownMenuTrigger asChild>
+                        <LoadingButton
+                          variant="secondary"
+                          pending={updateSourceMut.isPending}
+                          pendingText="Updating…"
+                          icon={<BookOpen className="h-4 w-4" />}
+                        >
+                          Change source ({ids.length})
+                          <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                        </LoadingButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        collisionPadding={16}
+                        className="max-h-[80vh]"
+                      >
+                        {sourceSuggestions.length > 0 && (
+                          <>
+                            {sourceSuggestions.map((s) => (
+                              <DropdownMenuItem
+                                key={s}
+                                onSelect={() => updateSourceMut.mutate({ ids, source: s })}
+                              >
+                                {s}
+                              </DropdownMenuItem>
+                            ))}
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
+                        <div className="flex items-center gap-2 p-1.5">
+                          <input
+                            autoFocus
+                            value={bulkChangeSource}
+                            onChange={(e) => setBulkChangeSource(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                const v = bulkChangeSource.trim();
+                                if (!v) return;
+                                updateSourceMut.mutate({ ids, source: v });
+                                setBulkChangeSource("");
+                              }
+                            }}
+                            placeholder="Source name"
+                            className="min-w-0 flex-1 rounded-md border border-input bg-background px-2 py-1 text-sm"
                           />
-                        )}
-                      </BadgeGroup>
-                    );
-                  })()}
-                  <div className="min-w-0">
-                    <h3 className="font-display text-lg font-semibold text-foreground leading-snug truncate">{item.title}</h3>
-                    {item.description && <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed line-clamp-2">{item.description}</p>}
-                    {item.source && <p className="mt-2 text-xs text-muted-foreground/80">Source · {item.source}</p>}
-                  </div>
-                </div>
-                <TooltipProvider delayDuration={150}>
-                  <div className="flex items-center shrink-0 self-end sm:self-auto gap-1.5">
-                    {/* Left connected group */}
-                    <div className="flex items-center [&>*:not(:first-child)]:-ml-px [&>:first-child]:rounded-r-none [&>:not(:first-child):not(:last-child)]:rounded-none [&>:last-child]:rounded-l-none">
-                      <IconButton
-                        aria-label={item.published ? "Unpublish" : "Publish"}
-                        tooltip={item.published ? "Unpublish" : "Publish"}
-                        icon={item.published ? Eye : EyeOff}
-                        pending={togglePublish.isPending && (togglePublish.variables as any)?.id === item.id}
-                        onClick={() => togglePublish.mutate(item)}
-                      />
-                      <TooltipWrap tooltip="View on site">
-                        <Link
-                          to="/category/$slug"
-                          params={{ slug: categorySlug }}
-                          hash={`item-${item.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label="View on site"
-                          className={iconButtonClassName()}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
-                      </TooltipWrap>
-                      <IconButton
-                        aria-label="Edit"
-                        tooltip="Edit"
-                        icon={Pencil}
-                        onClick={() => setEditing(item)}
-                      />
-                    </div>
-                    <div className="mx-1 h-6 w-px bg-border" aria-hidden />
-                    <IconButton
-                      aria-label="Delete"
-                      tooltip="Delete"
-                      pendingTooltip="Deleting…"
-                      variant="destructive"
-                      icon={Trash2}
-                      pending={isMutationPendingFor(deleteMut, item.id)}
-                      onClick={async () => {
-                        await confirmDelete({
-                          title: `Delete "${item.title}"?`,
-                          description: "This content will be permanently removed.",
-                          onConfirm: () => deleteMut.mutateAsync(item.id),
-                        });
-                      }}
-                    />
-                  </div>
-                </TooltipProvider>
-              </div>
-            );
-          };
-
-          if (order.length === 0) {
-            return <EmptyState>No items yet.</EmptyState>;
-          }
-          if (filteredOrder.length === 0) {
-            return <EmptyState>No items match your search.</EmptyState>;
-          }
-          if (bulk.editMode || q) {
-            return (
-              <ul className="divide-y divide-border">
-                {filteredOrder.map((item) => {
-                  const selected = bulk.has(item.id);
-                  const isInteractive = bulk.editMode;
-                  return (
-                    <li
-                      key={item.id}
-                      onClick={isInteractive ? () => bulk.toggle(item.id) : undefined}
-                      className={`flex items-stretch transition-colors ${
-                        isInteractive ? "cursor-pointer " : ""
-                      }${
-                        selected ? "bg-destructive/10 hover:bg-destructive/15" : isInteractive ? "hover:bg-muted/50" : ""
-                      }`}
-                    >
-                      {(bulk.editMode || q) && (
-                        <div
-                          className={`flex items-center pl-5 pr-0 ${bulk.editMode ? "text-muted-foreground/50" : "text-muted-foreground/30 cursor-not-allowed"}`}
-                          aria-disabled={!bulk.editMode}
-                        >
-                          <GripVertical className="h-4 w-4" />
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              const v = bulkChangeSource.trim();
+                              if (!v) return;
+                              updateSourceMut.mutate({ ids, source: v });
+                              setBulkChangeSource("");
+                            }}
+                            className="shrink-0 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                          >
+                            Apply
+                          </button>
                         </div>
-                      )}
-
-                      <div className={`flex-1 min-w-0 ${bulk.editMode ? "pointer-events-none" : ""}`}>{renderItemRow(item)}</div>
-                    </li>
-                  );
-                })}
-              </ul>
-            );
-          }
-          return (
-            <Suspense fallback={null}>
-              <SortableList
-                className="divide-y divide-border"
-                dragHandleClassName="pl-5"
-                items={order}
-                onReorder={(next) => { setOrder(next as ContentItem[]); reorderMut.mutate(next as ContentItem[]); }}
-                renderItem={(item) => renderItemRow(item as ContentItem)}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <LoadingButton
+                          variant="secondary"
+                          pending={updateExemptMut.isPending}
+                          pendingText="Updating…"
+                          icon={<ShieldOff className="h-4 w-4" />}
+                        >
+                          Exempt from tracking ({ids.length})
+                          <ChevronDown className="ml-1 h-3.5 w-3.5" />
+                        </LoadingButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" collisionPadding={16}>
+                        <DropdownMenuItem
+                          onSelect={() => updateExemptMut.mutate({ ids, exempt: true })}
+                        >
+                          Mark as exempt
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => updateExemptMut.mutate({ ids, exempt: false })}
+                        >
+                          Remove exemption
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                )}
               />
-            </Suspense>
+            )}
 
-          );
-        })()}
-      </div>
+            <div
+              className={`rounded-b-2xl border border-border bg-card overflow-hidden ${order.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}
+            >
+              {(() => {
+                const renderItemRow = (item: ContentItem) => {
+                  const isEditingThis =
+                    editing !== null && editing !== "new" && editing.id === item.id;
+                  const isDimmed = editing !== null && !isEditingThis;
+                  return (
+                    <div
+                      data-item-id={item.id}
+                      className={`flex flex-col sm:flex-row sm:items-center gap-3 p-6 pl-3 pb-6 sm:pb-5 transition-opacity ${isDimmed ? "opacity-40 pointer-events-none" : ""}`}
+                    >
+                      <div className="flex-1 min-w-0 flex flex-col gap-4">
+                        {(() => {
+                          const s = itemTranslationStatus(item);
+                          const trLabel = s === "missing" ? "Needs ES" : "Partially translated";
+                          const trTitle =
+                            s === "missing"
+                              ? "Missing Spanish translation"
+                              : "Some Spanish fields are missing";
+                          return (
+                            <BadgeGroup
+                              trailing={
+                                item.duration
+                                  ? translateDuration(
+                                      lang,
+                                      withActionWord(item.duration, item.type),
+                                    )
+                                  : undefined
+                              }
+                            >
+                              <Badge variant="type" type={item.type} className="rounded-[8px]">
+                                {item.type}
+                              </Badge>
+                              {!item.published && (
+                                <Badge variant="draft" className="rounded-[8px]">
+                                  Draft
+                                </Badge>
+                              )}
+                              {item.exempt_from_progress && (
+                                <Badge variant="exempt" className="rounded-[8px]">
+                                  Exempt
+                                </Badge>
+                              )}
+                              {s !== "complete" && (
+                                <Badge
+                                  variant="translation"
+                                  className="rounded-[8px]"
+                                  title={trTitle}
+                                >
+                                  {trLabel}
+                                </Badge>
+                              )}
+                              {(item.facilities?.length ?? 0) > 0 && (
+                                <FacilityBadge
+                                  facilities={item.facilities!}
+                                  facilityLabelMap={facilityLabelMap}
+                                  className="rounded-[8px]"
+                                />
+                              )}
+                            </BadgeGroup>
+                          );
+                        })()}
+                        <div className="min-w-0">
+                          <h3 className="font-display text-lg font-semibold text-foreground leading-snug truncate">
+                            {item.title}
+                          </h3>
+                          {item.description && (
+                            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                              {item.description}
+                            </p>
+                          )}
+                          {item.source && (
+                            <p className="mt-2 text-xs text-muted-foreground/80">
+                              Source · {item.source}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <TooltipProvider delayDuration={150}>
+                        <div className="flex items-center shrink-0 self-end sm:self-auto gap-1.5">
+                          {/* Left connected group */}
+                          <div className="flex items-center [&>*:not(:first-child)]:-ml-px [&>:first-child]:rounded-r-none [&>:not(:first-child):not(:last-child)]:rounded-none [&>:last-child]:rounded-l-none">
+                            <IconButton
+                              aria-label={item.published ? "Unpublish" : "Publish"}
+                              tooltip={item.published ? "Unpublish" : "Publish"}
+                              icon={item.published ? Eye : EyeOff}
+                              pending={
+                                togglePublish.isPending &&
+                                (togglePublish.variables as any)?.id === item.id
+                              }
+                              onClick={() => togglePublish.mutate(item)}
+                            />
+                            <TooltipWrap tooltip="View on site">
+                              <Link
+                                to="/category/$slug"
+                                params={{ slug: categorySlug }}
+                                hash={`item-${item.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="View on site"
+                                className={iconButtonClassName()}
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </Link>
+                            </TooltipWrap>
+                            <IconButton
+                              aria-label="Edit"
+                              tooltip="Edit"
+                              icon={Pencil}
+                              onClick={() => setEditing(item)}
+                            />
+                          </div>
+                          <div className="mx-1 h-6 w-px bg-border" aria-hidden />
+                          <IconButton
+                            aria-label="Delete"
+                            tooltip="Delete"
+                            pendingTooltip="Deleting…"
+                            variant="destructive"
+                            icon={Trash2}
+                            pending={isMutationPendingFor(deleteMut, item.id)}
+                            onClick={async () => {
+                              await confirmDelete({
+                                title: `Delete "${item.title}"?`,
+                                description: "This content will be permanently removed.",
+                                onConfirm: () => deleteMut.mutateAsync(item.id),
+                              });
+                            }}
+                          />
+                        </div>
+                      </TooltipProvider>
+                    </div>
+                  );
+                };
+
+                if (order.length === 0) {
+                  return <EmptyState>No items yet.</EmptyState>;
+                }
+                if (filteredOrder.length === 0) {
+                  return <EmptyState>No items match your search.</EmptyState>;
+                }
+                if (bulk.editMode || q) {
+                  return (
+                    <ul className="divide-y divide-border">
+                      {filteredOrder.map((item) => {
+                        const selected = bulk.has(item.id);
+                        const isInteractive = bulk.editMode;
+                        return (
+                          <li
+                            key={item.id}
+                            onClick={isInteractive ? () => bulk.toggle(item.id) : undefined}
+                            className={`flex items-stretch transition-colors ${
+                              isInteractive ? "cursor-pointer " : ""
+                            }${
+                              selected
+                                ? "bg-destructive/10 hover:bg-destructive/15"
+                                : isInteractive
+                                  ? "hover:bg-muted/50"
+                                  : ""
+                            }`}
+                          >
+                            {(bulk.editMode || q) && (
+                              <div
+                                className={`flex items-center pl-5 pr-0 ${bulk.editMode ? "text-muted-foreground/50" : "text-muted-foreground/30 cursor-not-allowed"}`}
+                                aria-disabled={!bulk.editMode}
+                              >
+                                <GripVertical className="h-4 w-4" />
+                              </div>
+                            )}
+
+                            <div
+                              className={`flex-1 min-w-0 ${bulk.editMode ? "pointer-events-none" : ""}`}
+                            >
+                              {renderItemRow(item)}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  );
+                }
+                return (
+                  <Suspense fallback={null}>
+                    <SortableList
+                      className="divide-y divide-border"
+                      dragHandleClassName="pl-5"
+                      items={order}
+                      onReorder={(next) => {
+                        setOrder(next as ContentItem[]);
+                        reorderMut.mutate(next as ContentItem[]);
+                      }}
+                      renderItem={(item) => renderItemRow(item as ContentItem)}
+                    />
+                  </Suspense>
+                );
+              })()}
+            </div>
           </>
         );
       })()}
@@ -2331,7 +2518,7 @@ function ItemEditor({
   const [titleEs, setTitleEs] = useState(item?.title_es ?? "");
   const [descriptionEs, setDescriptionEs] = useState(item?.description_es ?? "");
   const [sourceEs, setSourceEs] = useState(item?.source_es ?? item?.source ?? "");
-  
+
   const [fileUrlEs, setFileUrlEs] = useState<string | null>(item?.file_url_es ?? null);
   const [fileNameEs, setFileNameEs] = useState<string | null>(item?.file_name_es ?? null);
   const [showEs, setShowEs] = useState(
@@ -2409,7 +2596,9 @@ function ItemEditor({
         if (!cancelled) setDurationEstimating(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [url, type]);
 
   // Auto-recalculate duration when the content type changes (after initial mount).
@@ -2606,8 +2795,9 @@ function ItemEditor({
 
   // Include the current item's type even if it's not in the list yet
   // (e.g. a just-added type before the cache refreshes).
-  const typeOptions = Array.from(new Set([...existingTypes, type].filter(Boolean)))
-    .sort((a, b) => a.localeCompare(b));
+  const typeOptions = Array.from(new Set([...existingTypes, type].filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b),
+  );
 
   const commitNewType = () => {
     const v = newType.trim();
@@ -2618,11 +2808,14 @@ function ItemEditor({
     setNewType("");
     // Optimistically add to cache, then persist to DB and confirm
     qc.setQueryData<string[]>(QK.contentTypes as unknown as string[], (old = []) =>
-      Array.from(new Set([...old, v]))
+      Array.from(new Set([...old, v])),
     );
-    supabase.from("content_types" as any).insert({ value: v }).then(() => {
-      qc.invalidateQueries({ queryKey: QK.contentTypes });
-    });
+    supabase
+      .from("content_types" as any)
+      .insert({ value: v })
+      .then(() => {
+        qc.invalidateQueries({ queryKey: QK.contentTypes });
+      });
     // Assign a unique palette color using all currently-in-use indices across
     // variants, all types, and category icon colors.
     const currentStyles = qc.getQueryData<BadgeStyles>(badgeStylesQueryKey) ?? DEFAULT_BADGE_STYLES;
@@ -2647,10 +2840,17 @@ function ItemEditor({
     qc.setQueryData(badgeStylesQueryKey, updatedStyles);
     // Save badge styles to DB immediately so any other page (e.g. icons & badges)
     // reads the correct color without assigning a conflicting one.
-    (supabase as any).from("site_settings").upsert(
-      { key: BADGE_STYLES_KEY, value: updatedStyles as unknown as never, updated_at: new Date().toISOString() },
-      { onConflict: "key" },
-    ).then(() => qc.invalidateQueries({ queryKey: [...badgeStylesQueryKey] }));
+    (supabase as any)
+      .from("site_settings")
+      .upsert(
+        {
+          key: BADGE_STYLES_KEY,
+          value: updatedStyles as unknown as never,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "key" },
+      )
+      .then(() => qc.invalidateQueries({ queryKey: [...badgeStylesQueryKey] }));
     onNewTypeBadgeStyle?.(updatedStyles);
   };
 
@@ -2670,8 +2870,9 @@ function ItemEditor({
 
     // RPC reassigns all items of this type to "Article" AND deletes the
     // type from content_types — both in one SECURITY DEFINER call.
-    const { error: rpcError } = await (supabase as any)
-      .rpc("reassign_content_type", { old_type: t });
+    const { error: rpcError } = await (supabase as any).rpc("reassign_content_type", {
+      old_type: t,
+    });
     if (rpcError) {
       toast.error(rpcError.message);
       return;
@@ -2679,12 +2880,14 @@ function ItemEditor({
 
     if (type === t) setType("Article");
     toast.success(`Deleted type "${t}"`);
-    qc.setQueryData<string[]>(QK.contentTypes as unknown as string[], (old = []) => old.filter((x) => x !== t));
+    qc.setQueryData<string[]>(QK.contentTypes as unknown as string[], (old = []) =>
+      old.filter((x) => x !== t),
+    );
     qc.setQueryData(QK.adminCategory(categoryId), (old: any) => {
       if (!old) return old;
       return {
         ...old,
-        items: (old.items ?? []).map((i: any) => i.type === t ? { ...i, type: "Article" } : i),
+        items: (old.items ?? []).map((i: any) => (i.type === t ? { ...i, type: "Article" } : i)),
       };
     });
     qc.invalidateQueries({ queryKey: QK.contentTypes });
@@ -2725,7 +2928,11 @@ function ItemEditor({
     >
       <div className="flex items-center justify-between">
         <h3 className="font-display text-lg font-semibold">{item ? "Edit item" : "New item"}</h3>
-        <button type="button" onClick={onCancel} className="p-1 rounded-md hover:bg-muted text-muted-foreground">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="p-1 rounded-md hover:bg-muted text-muted-foreground"
+        >
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -2740,8 +2947,13 @@ function ItemEditor({
                 value={newType}
                 onChange={(e) => setNewType(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") { e.preventDefault(); commitNewType(); }
-                  if (e.key === "Escape") { cancelNewType(); }
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitNewType();
+                  }
+                  if (e.key === "Escape") {
+                    cancelNewType();
+                  }
                 }}
                 onBlur={cancelNewType}
                 placeholder="New type name"
@@ -2799,7 +3011,12 @@ function ItemEditor({
             </Select>
           )}
         </label>
-        <LabeledInput label="Source" value={source} onChange={setSource} suggestions={sourceSuggestions} />
+        <LabeledInput
+          label="Source"
+          value={source}
+          onChange={setSource}
+          suggestions={sourceSuggestions}
+        />
         <label className="block">
           <span className="text-sm font-medium">Duration</span>
           <div className="relative mt-1">
@@ -2832,13 +3049,20 @@ function ItemEditor({
             )}
           </div>
         </label>
-        <div className={categoryFacilities.length > 0 ? "opacity-40 pointer-events-none select-none" : ""}>
+        <div
+          className={
+            categoryFacilities.length > 0 ? "opacity-40 pointer-events-none select-none" : ""
+          }
+        >
           <span className="inline-flex items-center gap-1.5 text-sm font-medium">
             Facility
             <TooltipProvider delayDuration={150}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button type="button" className="text-muted-foreground hover:text-foreground rounded-sm focus:outline-none">
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground rounded-sm focus:outline-none"
+                  >
                     <Info className="h-3.5 w-3.5" />
                   </button>
                 </TooltipTrigger>
@@ -2861,7 +3085,11 @@ function ItemEditor({
               options={availableFacilities.filter((a) => !facilities.includes(a.value))}
               placeholder="Add facility…"
               searchPlaceholder="Search facilities…"
-              emptyMessage={availableFacilities.length === 0 ? "No facilities found." : "All facilities selected."}
+              emptyMessage={
+                availableFacilities.length === 0
+                  ? "No facilities found."
+                  : "All facilities selected."
+              }
             />
           </div>
           {facilities.length > 0 && (
@@ -2872,7 +3100,11 @@ function ItemEditor({
                   <span
                     key={f}
                     className="inline-flex items-center gap-1 leading-none rounded-[8px] border px-2.5 py-[5px] text-xs font-medium flex-shrink-0"
-                    style={{ color: facilityPs.color, backgroundColor: facilityPs.bg, borderColor: facilityPs.border }}
+                    style={{
+                      color: facilityPs.color,
+                      backgroundColor: facilityPs.bg,
+                      borderColor: facilityPs.border,
+                    }}
                   >
                     {label}
                     <button
@@ -2987,7 +3219,9 @@ function ItemEditor({
             multiple
             accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.flac,.opus"
             className="hidden"
-            onChange={(e) => { if (e.target.files?.length) handleMultipleFiles(e.target.files); }}
+            onChange={(e) => {
+              if (e.target.files?.length) handleMultipleFiles(e.target.files);
+            }}
           />
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
@@ -2996,7 +3230,9 @@ function ItemEditor({
                 onClick={() => setChaptersOpen((o) => !o)}
                 className="flex items-center gap-1.5 text-sm font-medium hover:text-foreground/70 transition-colors"
               >
-                <ChevronDown className={`h-4 w-4 transition-transform ${chaptersOpen ? "" : "-rotate-90"}`} />
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${chaptersOpen ? "" : "-rotate-90"}`}
+                />
                 Audio Files
                 {chapters.length > 0 && (
                   <span className="ml-0.5 text-xs text-muted-foreground font-normal">
@@ -3007,12 +3243,18 @@ function ItemEditor({
               <TooltipProvider delayDuration={150}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button type="button" className="text-muted-foreground hover:text-foreground rounded-sm focus:outline-none">
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-foreground rounded-sm focus:outline-none"
+                    >
                       <Info className="h-3.5 w-3.5" />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-[260px] text-xs">
-                    Use this section to break an audio post into multiple chapters — one file per chapter. Users can jump between chapters in the audio player. This is different from the URL field above, which is for a single standalone audio file with no chapters.
+                    Use this section to break an audio post into multiple chapters — one file per
+                    chapter. Users can jump between chapters in the audio player. This is different
+                    from the URL field above, which is for a single standalone audio file with no
+                    chapters.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -3405,7 +3647,10 @@ function ItemEditor({
               Published
             </label>
             <div className="inline-flex items-center gap-2 text-sm">
-              <Checkbox checked={exemptFromProgress} onCheckedChange={(v) => setExemptFromProgress(Boolean(v))} />
+              <Checkbox
+                checked={exemptFromProgress}
+                onCheckedChange={(v) => setExemptFromProgress(Boolean(v))}
+              />
               <span>Exempt from tracking</span>
               <TooltipProvider delayDuration={150}>
                 <Tooltip>
@@ -3413,7 +3658,8 @@ function ItemEditor({
                     <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help flex-shrink-0" />
                   </TooltipTrigger>
                   <TooltipContent side="top" className="text-xs max-w-[240px] text-center">
-                    Exempt items (e.g. "How to take this course") show an "Acknowledged" button but don't count toward user progress, completion rates, or monthly summaries.
+                    Exempt items (e.g. "How to take this course") show an "Acknowledged" button but
+                    don't count toward user progress, completion rates, or monthly summaries.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -3518,8 +3764,6 @@ function ItemEditor({
   );
 }
 
-
-
 function formatMediaDuration(seconds: number): string {
   if (!isFinite(seconds) || seconds <= 0) return "";
   if (seconds < 60) return `${Math.round(seconds)} sec`;
@@ -3535,7 +3779,10 @@ function probeMediaDuration(url: string, kind: "audio" | "video"): Promise<numbe
     const el = document.createElement(kind);
     el.preload = "metadata";
     el.src = url;
-    const done = (v: number) => { el.src = ""; resolve(v); };
+    const done = (v: number) => {
+      el.src = "";
+      resolve(v);
+    };
     el.onloadedmetadata = () => done(el.duration);
     el.onerror = () => done(0);
     setTimeout(() => done(0), 15000);
@@ -3621,9 +3868,25 @@ async function estimatePdfReadMinutes(url: string): Promise<number> {
 
 function filenameToTitle(name: string): string {
   const SMALL_WORDS = new Set([
-    "a", "an", "the",
-    "and", "but", "or", "nor", "for", "so", "yet",
-    "at", "by", "in", "of", "on", "to", "up", "as", "via",
+    "a",
+    "an",
+    "the",
+    "and",
+    "but",
+    "or",
+    "nor",
+    "for",
+    "so",
+    "yet",
+    "at",
+    "by",
+    "in",
+    "of",
+    "on",
+    "to",
+    "up",
+    "as",
+    "via",
   ]);
   const words = name
     .replace(/\.[^.]+$/, "")

@@ -19,7 +19,33 @@ import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n"
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { fmtDateShort } from "@/lib/date-format";
-import { ArrowLeft, ExternalLink, Download, ArrowUpRight, PlayCircle, Headphones, FileText, Image as ImageIcon, Circle, CheckCircle2, Bookmark, ThumbsUp, ThumbsDown, Info, Search, BookOpen, TrendingUp, List, Play, Pause, SkipBack, SkipForward, RotateCcw, RotateCw, ChevronDown } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Download,
+  ArrowUpRight,
+  PlayCircle,
+  Headphones,
+  FileText,
+  Image as ImageIcon,
+  Circle,
+  CheckCircle2,
+  Bookmark,
+  ThumbsUp,
+  ThumbsDown,
+  Info,
+  Search,
+  BookOpen,
+  TrendingUp,
+  List,
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  RotateCcw,
+  RotateCw,
+  ChevronDown,
+} from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
@@ -30,19 +56,29 @@ import { ReadStatusBadge } from "@/components/ReadStatusBadge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext, type CarouselApi } from "@/components/ui/carousel";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 import AutoHeight from "embla-carousel-auto-height";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue, getMyProfile } from "@/lib/user-signup.functions";
 import { SpotlightTutorial, type TutorialStep } from "@/components/SpotlightTutorial";
 
 import { listFacilities } from "@/lib/facilities.functions";
-import { useContentEngagement, getSessionProgress, type EngagementRecord } from "@/hooks/use-content-engagement";
+import {
+  useContentEngagement,
+  getSessionProgress,
+  type EngagementRecord,
+} from "@/hooks/use-content-engagement";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { useRatings } from "@/hooks/use-ratings";
 import { useAchievements } from "@/hooks/use-achievements";
 import { useKeyboardInput } from "@/components/OnScreenKeyboard";
-
 
 function IdlePrompt({ countdown, onStillHere }: { countdown: number; onStillHere: () => void }) {
   return (
@@ -55,9 +91,16 @@ function IdlePrompt({ countdown, onStillHere }: { countdown: number; onStillHere
     >
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-xl p-6 flex flex-col gap-4">
         <div>
-          <p id="idle-prompt-title" className="font-display text-base font-semibold text-foreground">Are you still here?</p>
+          <p
+            id="idle-prompt-title"
+            className="font-display text-base font-semibold text-foreground"
+          >
+            Are you still here?
+          </p>
           <p id="idle-prompt-desc" className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-            Your session will stop tracking in <span className="font-semibold tabular-nums text-foreground">{countdown}s</span>. Tap or scroll any time to keep the timer running automatically without this prompt appearing.
+            Your session will stop tracking in{" "}
+            <span className="font-semibold tabular-nums text-foreground">{countdown}s</span>. Tap or
+            scroll any time to keep the timer running automatically without this prompt appearing.
           </p>
         </div>
         <button
@@ -70,8 +113,14 @@ function IdlePrompt({ countdown, onStillHere }: { countdown: number; onStillHere
             backgroundColor: "color-mix(in oklab, var(--color-accent) 12%, transparent)",
             borderColor: "color-mix(in oklab, var(--color-accent) 25%, transparent)",
           }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "color-mix(in oklab, var(--color-accent) 20%, transparent)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "color-mix(in oklab, var(--color-accent) 12%, transparent)"; }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+              "color-mix(in oklab, var(--color-accent) 20%, transparent)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+              "color-mix(in oklab, var(--color-accent) 12%, transparent)";
+          }}
         >
           Yes, I'm still here
         </button>
@@ -80,7 +129,6 @@ function IdlePrompt({ countdown, onStillHere }: { countdown: number; onStillHere
   );
 }
 
-
 function CategoryError({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="min-h-screen flex flex-col">
@@ -88,7 +136,9 @@ function CategoryError({ error, reset }: { error: Error; reset: () => void }) {
       <main className="flex-1 flex items-center justify-center px-6 py-20">
         <div className="max-w-sm text-center">
           <p className="font-semibold text-foreground">This page didn't load</p>
-          <p className="mt-1 text-sm text-muted-foreground">{error.message ?? "Something went wrong."}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {error.message ?? "Something went wrong."}
+          </p>
           <button
             onClick={reset}
             className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
@@ -124,25 +174,63 @@ function CategoryPage() {
     queryFn: () => fetchProfile(),
   });
 
-  const catTutorialSteps: TutorialStep[] = useMemo(() => [
-    { Icon: BookOpen,     title: t("tutorial.cat.welcomeTitle"),   body: t("tutorial.cat.welcomeBody"),   targetId: null },
-    { Icon: TrendingUp,   title: t("tutorial.cat.progressTitle"),  body: t("tutorial.cat.progressBody"),  targetId: "cat-progress" },
-    { Icon: List,         title: t("tutorial.cat.resourcesTitle"), body: t("tutorial.cat.resourcesBody"), targetId: "cat-first-item" },
-    { Icon: CheckCircle2, title: t("tutorial.cat.completeTitle"),  body: t("tutorial.cat.completeBody"),  targetId: "cat-first-actions" },
-    { Icon: Bookmark,     title: t("tutorial.cat.bookmarkTitle"),  body: t("tutorial.cat.bookmarkBody"),  targetId: "cat-first-bookmark" },
-    { Icon: ThumbsUp,     title: t("tutorial.cat.ratingsTitle"),   body: t("tutorial.cat.ratingsBody"),   targetId: null },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [t]);
+  const catTutorialSteps: TutorialStep[] = useMemo(
+    () => [
+      {
+        Icon: BookOpen,
+        title: t("tutorial.cat.welcomeTitle"),
+        body: t("tutorial.cat.welcomeBody"),
+        targetId: null,
+      },
+      {
+        Icon: TrendingUp,
+        title: t("tutorial.cat.progressTitle"),
+        body: t("tutorial.cat.progressBody"),
+        targetId: "cat-progress",
+      },
+      {
+        Icon: List,
+        title: t("tutorial.cat.resourcesTitle"),
+        body: t("tutorial.cat.resourcesBody"),
+        targetId: "cat-first-item",
+      },
+      {
+        Icon: CheckCircle2,
+        title: t("tutorial.cat.completeTitle"),
+        body: t("tutorial.cat.completeBody"),
+        targetId: "cat-first-actions",
+      },
+      {
+        Icon: Bookmark,
+        title: t("tutorial.cat.bookmarkTitle"),
+        body: t("tutorial.cat.bookmarkBody"),
+        targetId: "cat-first-bookmark",
+      },
+      {
+        Icon: ThumbsUp,
+        title: t("tutorial.cat.ratingsTitle"),
+        body: t("tutorial.cat.ratingsBody"),
+        targetId: null,
+      },
+    ],
+    [t],
+  );
 
   const showCatTutorial =
-    !!user && !isAdmin && !isFacilityUser && !isTester &&
+    !!user &&
+    !isAdmin &&
+    !isFacilityUser &&
+    !isTester &&
     profileQuery.data !== undefined &&
     (profileQuery.data?.profile as any)?.category_tutorial_seen === false;
 
   const handleCatTutorialDone = async () => {
     if (!user?.id) return;
     try {
-      await (supabase as any).from("user_profiles").update({ category_tutorial_seen: true }).eq("user_id", user.id);
+      await (supabase as any)
+        .from("user_profiles")
+        .update({ category_tutorial_seen: true })
+        .eq("user_id", user.id);
       queryClient.setQueryData(QK.myProfile, (old: any) => ({
         ...old,
         profile: old?.profile ? { ...old.profile, category_tutorial_seen: true } : null,
@@ -162,12 +250,17 @@ function CategoryPage() {
     for (const f of facilitiesData?.facilities ?? []) map[f.value] = f.label;
     return map;
   }, [facilitiesData]);
-  type ActiveMedia = { type: "video" | "audio" | "pdf" | "image"; url: string; title: string; itemId: string } | null;
+  type ActiveMedia = {
+    type: "video" | "audio" | "pdf" | "image";
+    url: string;
+    title: string;
+    itemId: string;
+  } | null;
   const [activeMedia, setActiveMedia] = useState<ActiveMedia>(null);
-  const videoPlayer  = activeMedia?.type === "video"  ? activeMedia : null;
-  const audioPlayer  = activeMedia?.type === "audio"  ? activeMedia : null;
-  const pdfViewer    = activeMedia?.type === "pdf"    ? activeMedia : null;
-  const imageViewer  = activeMedia?.type === "image"  ? activeMedia : null;
+  const videoPlayer = activeMedia?.type === "video" ? activeMedia : null;
+  const audioPlayer = activeMedia?.type === "audio" ? activeMedia : null;
+  const pdfViewer = activeMedia?.type === "pdf" ? activeMedia : null;
+  const imageViewer = activeMedia?.type === "image" ? activeMedia : null;
 
   // Chapter playback state (only relevant when audioPlayer is open)
   const [currentChapterIdx, setCurrentChapterIdx] = useState(0);
@@ -192,7 +285,9 @@ function CategoryPage() {
   const hasChapters = audioChapters.length > 0;
   const activeChapter = hasChapters ? (audioChapters[currentChapterIdx] ?? null) : null;
   const activeChapterUrl = activeChapter
-    ? (lang === "es" && activeChapter.file_url_es ? activeChapter.file_url_es : activeChapter.file_url)
+    ? lang === "es" && activeChapter.file_url_es
+      ? activeChapter.file_url_es
+      : activeChapter.file_url
     : null;
   const totalChapterDuration = hasChapters
     ? audioChapters.reduce((s, ch) => s + (ch.duration_seconds ?? 0), 0)
@@ -214,11 +309,11 @@ function CategoryPage() {
   useHlsSource(audioEl, hasChapters ? activeChapterUrl : audioPlayer?.url);
 
   // Custom audio player UI state
-  const [isPlaying, setIsPlaying]     = useState(false);
-  const [playerTime, setPlayerTime]   = useState(0);   // displayed current position (seconds)
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playerTime, setPlayerTime] = useState(0); // displayed current position (seconds)
   const [playerDuration, setPlayerDuration] = useState(0);
-  const isScrubbing = useRef(false);                   // true while user is dragging the seek bar
-  const wantPlayRef = useRef(false);                   // user intent: true = should be playing
+  const isScrubbing = useRef(false); // true while user is dragging the seek bar
+  const wantPlayRef = useRef(false); // user intent: true = should be playing
   const SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const;
   const [playbackRate, setPlaybackRate] = useState(1);
   const playbackRateRef = useRef(1);
@@ -245,7 +340,9 @@ function CategoryPage() {
       setOthersCount(othersApi.scrollSnapList().length);
       setOthersCurrent(othersApi.selectedScrollSnap());
     });
-    return () => { othersApi.off("select", onSelect); };
+    return () => {
+      othersApi.off("select", onSelect);
+    };
   }, [othersApi]);
 
   const { data, isLoading, error } = useQuery({
@@ -272,7 +369,9 @@ function CategoryPage() {
       if (e2) throw e2;
       const { data: others, error: e3 } = await supabase
         .from("categories")
-        .select("id, slug, name, tagline, description, icon_url, icon_name, icon_color, sort_order, published, home_page_mode, name_es, tagline_es, description_es")
+        .select(
+          "id, slug, name, tagline, description, icon_url, icon_name, icon_color, sort_order, published, home_page_mode, name_es, tagline_es, description_es",
+        )
         .eq("published", true)
         .neq("id", cat.id)
         .order("sort_order", { ascending: true });
@@ -288,10 +387,16 @@ function CategoryPage() {
           .select("content_item_id, facility_value")
           .in("content_item_id", itemIds);
         if (facilityLinksError) {
-          console.error("[category] facility restrictions fetch failed:", facilityLinksError.message);
+          console.error(
+            "[category] facility restrictions fetch failed:",
+            facilityLinksError.message,
+          );
           facilityFetchFailed = true;
         } else {
-          for (const link of (facilityLinks ?? []) as Array<{ content_item_id: string; facility_value: string }>) {
+          for (const link of (facilityLinks ?? []) as Array<{
+            content_item_id: string;
+            facility_value: string;
+          }>) {
             if (!facilityMap[link.content_item_id]) facilityMap[link.content_item_id] = [];
             facilityMap[link.content_item_id].push(link.facility_value);
           }
@@ -357,7 +462,6 @@ function CategoryPage() {
     return () => window.clearTimeout(t);
   }, [data?.items]);
 
-
   const categoryId = data?.category.id;
   const progressQuery = useQuery({
     queryKey: QK.contentProgress(user?.id, categoryId),
@@ -404,7 +508,9 @@ function CategoryPage() {
     if (!data) return [];
     if (isAdmin) return data.items;
     if (facilityQuery.isLoading && !!user?.id) {
-      return data.items.filter((item) => item.facilities !== null && (item.facilities?.length ?? 0) === 0);
+      return data.items.filter(
+        (item) => item.facilities !== null && (item.facilities?.length ?? 0) === 0,
+      );
     }
     const facility = facilityQuery.data?.facility ?? null;
     return data.items.filter((item) => {
@@ -440,7 +546,10 @@ function CategoryPage() {
     onMutate: async (vars) => {
       const key = ["content-progress", user?.id, categoryId];
       await queryClient.cancelQueries({ queryKey: key });
-      const prev = queryClient.getQueryData<{ readSet: Set<string>; readAtMap: Map<string, string> }>(key);
+      const prev = queryClient.getQueryData<{
+        readSet: Set<string>;
+        readAtMap: Map<string, string>;
+      }>(key);
       const nextReadSet = new Set(prev?.readSet ?? []);
       const nextReadAtMap = new Map(prev?.readAtMap ?? []);
       if (vars.markRead) {
@@ -479,7 +588,9 @@ function CategoryPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("user_content_engagement")
-        .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct")
+        .select(
+          "content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct",
+        )
         .eq("user_id", user!.id);
       if (error) throw error;
       const map = new Map<string, EngagementRecord>();
@@ -507,7 +618,7 @@ function CategoryPage() {
       return;
     }
     if (audioChapters.length === 0) return; // wait for chapters to load
-    if (resumeChapterDone.current) return;  // already initialised for this open
+    if (resumeChapterDone.current) return; // already initialised for this open
     resumeChapterDone.current = true;
 
     // Session cache is always fresher than the DB for same-page reopens
@@ -546,17 +657,25 @@ function CategoryPage() {
     if (wantPlayRef.current) el.play().catch(() => {});
     el.playbackRate = playbackRateRef.current;
 
-    const onPlay      = () => { setIsPlaying(true);  wantPlayRef.current = true;  };
-    const onPause     = () => { setIsPlaying(false); wantPlayRef.current = false; };
-    const onTimeUpdate = () => { if (!isScrubbing.current) setPlayerTime(el.currentTime); };
-    const onDuration   = () => setPlayerDuration(isFinite(el.duration) ? el.duration : 0);
-    const onMeta       = () => {
+    const onPlay = () => {
+      setIsPlaying(true);
+      wantPlayRef.current = true;
+    };
+    const onPause = () => {
+      setIsPlaying(false);
+      wantPlayRef.current = false;
+    };
+    const onTimeUpdate = () => {
+      if (!isScrubbing.current) setPlayerTime(el.currentTime);
+    };
+    const onDuration = () => setPlayerDuration(isFinite(el.duration) ? el.duration : 0);
+    const onMeta = () => {
       setPlayerDuration(isFinite(el.duration) ? el.duration : 0);
       setPlayerTime(el.currentTime);
     };
-    el.addEventListener("play",           onPlay);
-    el.addEventListener("pause",          onPause);
-    el.addEventListener("timeupdate",     onTimeUpdate);
+    el.addEventListener("play", onPlay);
+    el.addEventListener("pause", onPause);
+    el.addEventListener("timeupdate", onTimeUpdate);
     el.addEventListener("durationchange", onDuration);
     el.addEventListener("loadedmetadata", onMeta);
     // Sync immediately if element already has data (e.g. same-session chapter revisit)
@@ -564,9 +683,9 @@ function CategoryPage() {
     setPlayerTime(el.currentTime);
     if (isFinite(el.duration)) setPlayerDuration(el.duration);
     return () => {
-      el.removeEventListener("play",           onPlay);
-      el.removeEventListener("pause",          onPause);
-      el.removeEventListener("timeupdate",     onTimeUpdate);
+      el.removeEventListener("play", onPlay);
+      el.removeEventListener("pause", onPause);
+      el.removeEventListener("timeupdate", onTimeUpdate);
       el.removeEventListener("durationchange", onDuration);
       el.removeEventListener("loadedmetadata", onMeta);
     };
@@ -587,7 +706,11 @@ function CategoryPage() {
         .eq("user_id", user!.id)
         .in("content_item_id", itemIds);
       if (error) throw error;
-      return (rows ?? []) as { chapter_id: string; content_item_id: string; furthest_seconds: number }[];
+      return (rows ?? []) as {
+        chapter_id: string;
+        content_item_id: string;
+        furthest_seconds: number;
+      }[];
     },
   });
   const chapterProgressRows = chapterProgressQuery.data ?? [];
@@ -632,7 +755,6 @@ function CategoryPage() {
     return map;
   }, [chapterDurationsQuery.data]);
 
-
   // Derive which item is currently open and its media kind
   const activeItemId = activeMedia?.itemId ?? null;
 
@@ -665,7 +787,7 @@ function CategoryPage() {
     audioEl.currentTime = Math.max(0, Math.min(s, audioEl.duration || 0));
   };
   const cycleSpeed = () => {
-    const idx = SPEEDS.indexOf(playbackRate as typeof SPEEDS[number]);
+    const idx = SPEEDS.indexOf(playbackRate as (typeof SPEEDS)[number]);
     const next = SPEEDS[(idx + 1) % SPEEDS.length];
     playbackRateRef.current = next;
     setPlaybackRate(next);
@@ -700,13 +822,19 @@ function CategoryPage() {
   const debugLastActivityRef = useRef(Date.now());
   useEffect(() => {
     if (!isTester) return;
-    const reset = () => { debugLastActivityRef.current = Date.now(); setDebugIdleSecs(0); };
+    const reset = () => {
+      debugLastActivityRef.current = Date.now();
+      setDebugIdleSecs(0);
+    };
     const events = ["touchstart", "touchmove", "click", "keydown", "scroll", "mousemove"];
     events.forEach((e) => document.addEventListener(e, reset, { passive: true }));
     const t = setInterval(() => {
       setDebugIdleSecs(Math.floor((Date.now() - debugLastActivityRef.current) / 1000));
     }, 500);
-    return () => { clearInterval(t); events.forEach((e) => document.removeEventListener(e, reset)); };
+    return () => {
+      clearInterval(t);
+      events.forEach((e) => document.removeEventListener(e, reset));
+    };
   }, [isTester]);
 
   // PDFs are marked read manually (see the "Mark as read" button in the PDF
@@ -732,7 +860,8 @@ function CategoryPage() {
   // Progressive idle thresholds: 90s → 3min → 5min cap
   const IDLE_THRESHOLDS_MS = [90_000, 180_000, 300_000];
   const [idleConfirmCount, setIdleConfirmCount] = useState(0);
-  const currentIdleMs = IDLE_THRESHOLDS_MS[Math.min(idleConfirmCount, IDLE_THRESHOLDS_MS.length - 1)];
+  const currentIdleMs =
+    IDLE_THRESHOLDS_MS[Math.min(idleConfirmCount, IDLE_THRESHOLDS_MS.length - 1)];
 
   // "Are you still here?" idle prompt state
   const [showIdlePrompt, setShowIdlePrompt] = useState(false);
@@ -747,8 +876,18 @@ function CategoryPage() {
   };
 
   // Engagement tracking hook: timer (all types) + media progress (video/audio) + PDF auto-mark
-  const isMediaItem = !!(videoEl || audioEl || activeMedia?.type === "video" || activeMedia?.type === "audio");
-  const { resetIdle, chapterFurthestSeconds, getSessionChapterFurthest, debugRefs: engDebug } = useContentEngagement({
+  const isMediaItem = !!(
+    videoEl ||
+    audioEl ||
+    activeMedia?.type === "video" ||
+    activeMedia?.type === "audio"
+  );
+  const {
+    resetIdle,
+    chapterFurthestSeconds,
+    getSessionChapterFurthest,
+    debugRefs: engDebug,
+  } = useContentEngagement({
     idleMs: currentIdleMs,
     contentItemId: activeItemId,
     categoryId: categoryId ?? null,
@@ -765,21 +904,23 @@ function CategoryPage() {
       ? () => toggleRead.mutate({ itemId: activeItemId, markRead: true })
       : undefined,
     // Only show idle prompt for static content — video/audio use position tracking
-    onIdle: isMediaItem ? undefined : () => {
-      setIdleCountdown(20);
-      setShowIdlePrompt(true);
-      clearIdleCountdown();
-      idleCountdownRef.current = setInterval(() => {
-        setIdleCountdown((n) => {
-          if (n <= 1) {
-            clearIdleCountdown();
-            setShowIdlePrompt(false);
-            return 0;
-          }
-          return n - 1;
-        });
-      }, 1000);
-    },
+    onIdle: isMediaItem
+      ? undefined
+      : () => {
+          setIdleCountdown(20);
+          setShowIdlePrompt(true);
+          clearIdleCountdown();
+          idleCountdownRef.current = setInterval(() => {
+            setIdleCountdown((n) => {
+              if (n <= 1) {
+                clearIdleCountdown();
+                setShowIdlePrompt(false);
+                return 0;
+              }
+              return n - 1;
+            });
+          }, 1000);
+        },
   });
 
   // Clean up countdown on unmount or when item closes
@@ -835,7 +976,10 @@ function CategoryPage() {
       {error && !isLoading && (
         <div className="flex-1 mx-auto max-w-2xl px-6 py-24 text-center">
           <h1 className="font-display text-4xl font-semibold">{t("category.notFound")}</h1>
-          <Link to="/" className="mt-6 inline-flex items-center gap-2 text-[var(--color-accent)] font-medium">
+          <Link
+            to="/"
+            className="mt-6 inline-flex items-center gap-2 text-[var(--color-accent)] font-medium"
+          >
             <ArrowLeft className="h-4 w-4" /> {t("category.backToAll")}
           </Link>
         </div>
@@ -854,34 +998,51 @@ function CategoryPage() {
                   iconClassName="h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20"
                 />
                 <div className="max-w-3xl flex-1">
-                  <p className="text-sm font-medium text-[var(--color-accent)]">{pickLang(lang, data.category.tagline, data.category.tagline_es)}</p>
-                  <h1 className="mt-2 font-display font-bold tracking-tight text-4xl">{pickLang(lang, data.category.name, data.category.name_es)}</h1>
-                  <p className="mt-4 text-lg text-muted-foreground leading-relaxed">{pickLang(lang, data.category.description, data.category.description_es)}</p>
-                  {user && !isAdmin && !isFacilityUser && visibleItems.length > 0 && (() => {
-                    const normEngMap = new Map(
-                      Array.from(engagementMap.entries()).map(([id, r]) => [id, {
-                        sessionSeconds: r.session_seconds,
-                        mediaProgressSeconds: r.media_progress_seconds,
-                        mediaDurationSeconds: r.media_duration_seconds,
-                        manualCompletionPct: r.manual_completion_pct,
-                      }])
-                    );
-                    const trackableItems = visibleItems.filter((it) => !(it as any).exempt_from_progress);
-                    const completedCount = trackableItems.filter((it) => readSet.has(it.id)).length;
-                    return (
-                      <div id="cat-progress" className="mt-6 max-w-md space-y-1.5">
-                        <Progress
-                          value={weightedCompletionPct(trackableItems, readSet, normEngMap)}
-                          className="h-2"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          {t("dashboard.progressItems")
-                            .replace("{done}", String(completedCount))
-                            .replace("{total}", String(trackableItems.length))}
-                        </p>
-                      </div>
-                    );
-                  })()}
+                  <p className="text-sm font-medium text-[var(--color-accent)]">
+                    {pickLang(lang, data.category.tagline, data.category.tagline_es)}
+                  </p>
+                  <h1 className="mt-2 font-display font-bold tracking-tight text-4xl">
+                    {pickLang(lang, data.category.name, data.category.name_es)}
+                  </h1>
+                  <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+                    {pickLang(lang, data.category.description, data.category.description_es)}
+                  </p>
+                  {user &&
+                    !isAdmin &&
+                    !isFacilityUser &&
+                    visibleItems.length > 0 &&
+                    (() => {
+                      const normEngMap = new Map(
+                        Array.from(engagementMap.entries()).map(([id, r]) => [
+                          id,
+                          {
+                            sessionSeconds: r.session_seconds,
+                            mediaProgressSeconds: r.media_progress_seconds,
+                            mediaDurationSeconds: r.media_duration_seconds,
+                            manualCompletionPct: r.manual_completion_pct,
+                          },
+                        ]),
+                      );
+                      const trackableItems = visibleItems.filter(
+                        (it) => !(it as any).exempt_from_progress,
+                      );
+                      const completedCount = trackableItems.filter((it) =>
+                        readSet.has(it.id),
+                      ).length;
+                      return (
+                        <div id="cat-progress" className="mt-6 max-w-md space-y-1.5">
+                          <Progress
+                            value={weightedCompletionPct(trackableItems, readSet, normEngMap)}
+                            className="h-2"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            {t("dashboard.progressItems")
+                              .replace("{done}", String(completedCount))
+                              .replace("{total}", String(trackableItems.length))}
+                          </p>
+                        </div>
+                      );
+                    })()}
                 </div>
               </div>
             </div>
@@ -1198,7 +1359,11 @@ function CategoryPage() {
                                               type={item.type}
                                               className="rounded-[8px]"
                                             >
-                                              {translateType(lang, item.type, badgeStyles.typeNamesEs)}
+                                              {translateType(
+                                                lang,
+                                                item.type,
+                                                badgeStyles.typeNamesEs,
+                                              )}
                                             </Badge>
                                             {isAdmin && (item.facilities?.length ?? 0) > 0 && (
                                               <FacilityBadge
@@ -1774,40 +1939,56 @@ function CategoryPage() {
             {shuffledOthers.length > 0 && (
               <section className="mx-auto max-w-5xl px-6 pb-20">
                 <div className="border-t border-border/60 pt-20">
-                  <h2 className="font-display text-xl font-semibold mb-6">{t("category.exploreOthers")}</h2>
-                  <Carousel setApi={setOthersApi} opts={{ align: "start", loop: false }} plugins={[AutoHeight()]} className="relative">
+                  <h2 className="font-display text-xl font-semibold mb-6">
+                    {t("category.exploreOthers")}
+                  </h2>
+                  <Carousel
+                    setApi={setOthersApi}
+                    opts={{ align: "start", loop: false }}
+                    plugins={[AutoHeight()]}
+                    className="relative"
+                  >
                     <CarouselContent className="items-start transition-[height] duration-300 ease-out">
-                      {Array.from({ length: Math.ceil(shuffledOthers.length / 9) }).map((_, slideIdx) => {
-                        const slide = shuffledOthers.slice(slideIdx * 9, slideIdx * 9 + 9);
-                        return (
-                          <CarouselItem key={slideIdx}>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                              {slide.map((other) => (
-                                <Link
-                                  key={other.id}
-                                  to="/category/$slug"
-                                  params={{ slug: other.slug }}
-                                  style={{ "--card-color": other.icon_color || "var(--color-accent)", "--card-border": `color-mix(in oklab, ${other.icon_color || "var(--color-accent)"} 35%, transparent)` } as React.CSSProperties}
-                                  className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--card-border)] hover:shadow-[var(--shadow-card)]"
-                                >
-                                  <CategoryIcon
-                                    name={other.icon_name}
-                                    color={other.icon_color}
-                                    className="h-14 w-14 rounded-xl"
-                                  />
-                                  <div className="min-w-0 flex-1">
-                                    <h3 className="font-display text-base font-semibold text-foreground leading-tight truncate">
-                                      {pickLang(lang, other.name, other.name_es)}
-                                    </h3>
-                                    <p className="mt-0.5 text-xs text-muted-foreground truncate">{pickLang(lang, other.tagline, other.tagline_es)}</p>
-                                  </div>
-                                  <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--card-color)] flex-shrink-0" />
-                                </Link>
-                              ))}
-                            </div>
-                          </CarouselItem>
-                        );
-                      })}
+                      {Array.from({ length: Math.ceil(shuffledOthers.length / 9) }).map(
+                        (_, slideIdx) => {
+                          const slide = shuffledOthers.slice(slideIdx * 9, slideIdx * 9 + 9);
+                          return (
+                            <CarouselItem key={slideIdx}>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {slide.map((other) => (
+                                  <Link
+                                    key={other.id}
+                                    to="/category/$slug"
+                                    params={{ slug: other.slug }}
+                                    style={
+                                      {
+                                        "--card-color": other.icon_color || "var(--color-accent)",
+                                        "--card-border": `color-mix(in oklab, ${other.icon_color || "var(--color-accent)"} 35%, transparent)`,
+                                      } as React.CSSProperties
+                                    }
+                                    className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 transition-all hover:border-[var(--card-border)] hover:shadow-[var(--shadow-card)]"
+                                  >
+                                    <CategoryIcon
+                                      name={other.icon_name}
+                                      color={other.icon_color}
+                                      className="h-14 w-14 rounded-xl"
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <h3 className="font-display text-base font-semibold text-foreground leading-tight truncate">
+                                        {pickLang(lang, other.name, other.name_es)}
+                                      </h3>
+                                      <p className="mt-0.5 text-xs text-muted-foreground truncate">
+                                        {pickLang(lang, other.tagline, other.tagline_es)}
+                                      </p>
+                                    </div>
+                                    <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--card-color)] flex-shrink-0" />
+                                  </Link>
+                                ))}
+                              </div>
+                            </CarouselItem>
+                          );
+                        },
+                      )}
                     </CarouselContent>
                     {othersCount > 1 && (
                       <div className="mt-6 flex items-center justify-center gap-4">
@@ -1836,8 +2017,22 @@ function CategoryPage() {
 
       <SiteFooter />
 
-      <Dialog open={!!videoPlayer} onOpenChange={(open) => { if (!open) { setActiveMedia(null); setVideoEl(null); invalidateEngagement(); } }}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]" onInteractOutside={(e) => { if (showIdlePrompt) e.preventDefault(); }}>
+      <Dialog
+        open={!!videoPlayer}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveMedia(null);
+            setVideoEl(null);
+            invalidateEngagement();
+          }
+        }}
+      >
+        <DialogContent
+          className="max-w-4xl p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]"
+          onInteractOutside={(e) => {
+            if (showIdlePrompt) e.preventDefault();
+          }}
+        >
           <DialogTitle className="sr-only">{videoPlayer?.title ?? "Video"}</DialogTitle>
           {videoPlayer && (
             <video
@@ -1851,22 +2046,32 @@ function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!audioPlayer} onOpenChange={(open) => {
-        if (!open) {
-          wantPlayRef.current = false;
-          setActiveMedia(null);
-          setAudioEl(null);
-          setCurrentChapterIdx(0);
-          setChapterOffset(0);
-          playbackRateRef.current = 1;
-          setPlaybackRate(1);
-          invalidateEngagement();
-        }
-      }}>
-        <DialogContent className="max-w-xl p-0 max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col" onInteractOutside={(e) => { if (showIdlePrompt) e.preventDefault(); }}>
+      <Dialog
+        open={!!audioPlayer}
+        onOpenChange={(open) => {
+          if (!open) {
+            wantPlayRef.current = false;
+            setActiveMedia(null);
+            setAudioEl(null);
+            setCurrentChapterIdx(0);
+            setChapterOffset(0);
+            playbackRateRef.current = 1;
+            setPlaybackRate(1);
+            invalidateEngagement();
+          }
+        }}
+      >
+        <DialogContent
+          className="max-w-xl p-0 max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col"
+          onInteractOutside={(e) => {
+            if (showIdlePrompt) e.preventDefault();
+          }}
+        >
           {/* Sticky header: title + custom audio player */}
           <div className="flex-shrink-0 px-6 pt-[18px] pb-4 border-b space-y-3">
-            <DialogTitle className="text-base font-semibold pr-8 break-words">{audioPlayer?.title ?? "Audio"}</DialogTitle>
+            <DialogTitle className="text-base font-semibold pr-8 break-words">
+              {audioPlayer?.title ?? "Audio"}
+            </DialogTitle>
             {hasChapters && activeChapter && (
               <p className="text-sm text-muted-foreground -mt-2 truncate">
                 {pickLang(lang, activeChapter.title, activeChapter.title_es)}
@@ -1904,7 +2109,9 @@ function CategoryPage() {
                     style={{
                       background: `linear-gradient(to right, var(--color-accent) ${playerDuration ? (playerTime / playerDuration) * 100 : 0}%, var(--color-border) 0%)`,
                     }}
-                    onPointerDown={() => { isScrubbing.current = true; }}
+                    onPointerDown={() => {
+                      isScrubbing.current = true;
+                    }}
                     onChange={(e) => setPlayerTime(Number(e.target.value))}
                     onPointerUp={(e) => {
                       isScrubbing.current = false;
@@ -1949,9 +2156,11 @@ function CategoryPage() {
                     aria-label={isPlaying ? "Pause" : "Play"}
                     className="mx-2 h-12 w-12 rounded-full bg-[var(--color-accent)] text-white flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all"
                   >
-                    {isPlaying
-                      ? <Pause className="h-5 w-5" />
-                      : <Play className="h-5 w-5 translate-x-px" />}
+                    {isPlaying ? (
+                      <Pause className="h-5 w-5" />
+                    ) : (
+                      <Play className="h-5 w-5 translate-x-px" />
+                    )}
                   </button>
 
                   {/* Forward 15s */}
@@ -1984,7 +2193,9 @@ function CategoryPage() {
                     aria-label={`Playback speed: ${playbackRate}×`}
                     className="absolute right-0 flex flex-col items-center gap-0.5 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   >
-                    <span className="text-xs font-semibold tabular-nums leading-none">{playbackRate}×</span>
+                    <span className="text-xs font-semibold tabular-nums leading-none">
+                      {playbackRate}×
+                    </span>
                     <span className="text-[9px] font-medium">Speed</span>
                   </button>
                 </div>
@@ -2003,12 +2214,17 @@ function CategoryPage() {
                   const isActive = idx === currentChapterIdx;
                   const f = isActive
                     ? Math.max(chapterFurthestSeconds, perChapterProgressMap.get(ch.id) ?? 0)
-                    : Math.max(getSessionChapterFurthest(ch.id), perChapterProgressMap.get(ch.id) ?? 0);
+                    : Math.max(
+                        getSessionChapterFurthest(ch.id),
+                        perChapterProgressMap.get(ch.id) ?? 0,
+                      );
                   return sum + f;
                 }, 0);
                 return (
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center justify-between">
-                    <span>{t("audio.chapters")} ({audioChapters.length})</span>
+                    <span>
+                      {t("audio.chapters")} ({audioChapters.length})
+                    </span>
                     {totalChapterDuration > 0 && (
                       <span className="font-normal normal-case tracking-normal tabular-nums">
                         {totalListened > 0 && <>{fmtSecs(totalListened)} / </>}
@@ -2106,7 +2322,15 @@ function CategoryPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!pdfViewer} onOpenChange={(open) => { if (!open) { setActiveMedia(null); invalidateEngagement(); } }}>
+      <Dialog
+        open={!!pdfViewer}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveMedia(null);
+            invalidateEngagement();
+          }
+        }}
+      >
         <DialogContent className="w-[95vw] min-w-0 max-w-[95vw] sm:max-w-[95vw] p-0 overflow-hidden max-h-[calc(100dvh-2rem)] top-[1rem] translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
           <DialogTitle className="sr-only">{pdfViewer?.title ?? "PDF"}</DialogTitle>
           {pdfViewer && (
@@ -2153,11 +2377,29 @@ function CategoryPage() {
               })()}
             </div>
           )}
-          {showIdlePrompt && <IdlePrompt countdown={idleCountdown} onStillHere={() => { clearIdleCountdown(); setShowIdlePrompt(false); setIdleConfirmCount((n) => n + 1); resetIdle(); }} />}
+          {showIdlePrompt && (
+            <IdlePrompt
+              countdown={idleCountdown}
+              onStillHere={() => {
+                clearIdleCountdown();
+                setShowIdlePrompt(false);
+                setIdleConfirmCount((n) => n + 1);
+                resetIdle();
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!imageViewer} onOpenChange={(open) => { if (!open) { setActiveMedia(null); invalidateEngagement(); } }}>
+      <Dialog
+        open={!!imageViewer}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveMedia(null);
+            invalidateEngagement();
+          }
+        }}
+      >
         <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
           <DialogTitle className="sr-only">{imageViewer?.title ?? "Image"}</DialogTitle>
           {imageViewer && (
@@ -2168,15 +2410,33 @@ function CategoryPage() {
               className="w-full h-auto max-h-[calc(100dvh-2rem)] object-contain bg-black"
             />
           )}
-          {showIdlePrompt && <IdlePrompt countdown={idleCountdown} onStillHere={() => { clearIdleCountdown(); setShowIdlePrompt(false); setIdleConfirmCount((n) => n + 1); resetIdle(); }} />}
+          {showIdlePrompt && (
+            <IdlePrompt
+              countdown={idleCountdown}
+              onStillHere={() => {
+                clearIdleCountdown();
+                setShowIdlePrompt(false);
+                setIdleConfirmCount((n) => n + 1);
+                resetIdle();
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
 
       {/* Category completion celebration */}
-      <Dialog open={categoryComplete} onOpenChange={(open) => { if (!open) setCategoryComplete(false); }}>
+      <Dialog
+        open={categoryComplete}
+        onOpenChange={(open) => {
+          if (!open) setCategoryComplete(false);
+        }}
+      >
         <DialogContent className="max-w-sm w-[calc(100vw-2rem)] text-center rounded-2xl border border-border bg-card p-8 shadow-xl">
           <DialogTitle className="sr-only">
-            {t("category.completedHeadline").replace("{name}", pickLang(lang, data?.category?.name ?? "", data?.category?.name_es))}
+            {t("category.completedHeadline").replace(
+              "{name}",
+              pickLang(lang, data?.category?.name ?? "", data?.category?.name_es),
+            )}
           </DialogTitle>
           {data?.category && (
             <>
@@ -2193,7 +2453,10 @@ function CategoryPage() {
                 </div>
               </div>
               <h2 className="font-display text-2xl font-bold leading-tight">
-                {t("category.completedHeadline").replace("{name}", pickLang(lang, data.category.name, data.category.name_es))}
+                {t("category.completedHeadline").replace(
+                  "{name}",
+                  pickLang(lang, data.category.name, data.category.name_es),
+                )}
               </h2>
               <p className="mt-1 text-muted-foreground leading-relaxed">
                 {t("category.completedMessage")}
@@ -2211,31 +2474,74 @@ function CategoryPage() {
       </Dialog>
 
       {/* Debug overlay — only shown for tester accounts */}
-      {isTester && createPortal(
-        <div className="fixed top-4 right-4 z-[200] rounded-md border border-border bg-card px-3 py-2 text-xs font-mono shadow-lg leading-loose w-64">
-          <div className="font-semibold text-foreground mb-1">⏱ Engagement Debug</div>
-          <div>idle: <span className={debugIdleSecs >= Math.floor(currentIdleMs / 1000) ? "text-red-600 font-bold" : "text-foreground"}>{debugIdleSecs}s</span> / {currentIdleMs / 1000}s trigger</div>
-          <div>hook active: {!!activeItemId && !isAdmin && !isFacilityUser ? <span className="text-green-600">✓ yes</span> : <span className="text-red-600">✗ no — open a PDF/image</span>}</div>
-          <div>idle fired: {engDebug.isIdle.current ? <span className="text-amber-600">yes</span> : "no"}</div>
-          <div>confirmations: {idleConfirmCount} → next: {IDLE_THRESHOLDS_MS[Math.min(idleConfirmCount, IDLE_THRESHOLDS_MS.length - 1)] / 1000}s {idleConfirmCount >= IDLE_THRESHOLDS_MS.length - 1 ? "(capped)" : ""}</div>
-          <div className="border-t border-border/40 mt-1 pt-1">
-            <div>base (DB): {engDebug.baseSeconds.current}s</div>
-            <div>this session: <span className="text-green-600 font-semibold">{engDebug.accSeconds.current}s</span></div>
-            <div>total (will save): <span className="font-semibold">{engDebug.baseSeconds.current + engDebug.accSeconds.current}s</span></div>
-          </div>
-          {engDebug.durationSeconds.current > 0 && (
-            <div className="border-t border-border/40 mt-1 pt-1">
-              <div>media pos: {Math.round(engDebug.furthestSeconds.current)}s / {Math.round(engDebug.durationSeconds.current)}s</div>
-              <div>media %: {Math.round((engDebug.furthestSeconds.current / engDebug.durationSeconds.current) * 100)}%</div>
+      {isTester &&
+        createPortal(
+          <div className="fixed top-4 right-4 z-[200] rounded-md border border-border bg-card px-3 py-2 text-xs font-mono shadow-lg leading-loose w-64">
+            <div className="font-semibold text-foreground mb-1">⏱ Engagement Debug</div>
+            <div>
+              idle:{" "}
+              <span
+                className={
+                  debugIdleSecs >= Math.floor(currentIdleMs / 1000)
+                    ? "text-red-600 font-bold"
+                    : "text-foreground"
+                }
+              >
+                {debugIdleSecs}s
+              </span>{" "}
+              / {currentIdleMs / 1000}s trigger
             </div>
-          )}
-          <div className="border-t border-border/40 mt-1 pt-1 text-muted-foreground">
-            item: {activeItemId ? (isMediaItem ? "media (no modal)" : "static ✓ modal") : "none"}
-          </div>
-        </div>,
-        document.body
-      )}
-
+            <div>
+              hook active:{" "}
+              {!!activeItemId && !isAdmin && !isFacilityUser ? (
+                <span className="text-green-600">✓ yes</span>
+              ) : (
+                <span className="text-red-600">✗ no — open a PDF/image</span>
+              )}
+            </div>
+            <div>
+              idle fired:{" "}
+              {engDebug.isIdle.current ? <span className="text-amber-600">yes</span> : "no"}
+            </div>
+            <div>
+              confirmations: {idleConfirmCount} → next:{" "}
+              {IDLE_THRESHOLDS_MS[Math.min(idleConfirmCount, IDLE_THRESHOLDS_MS.length - 1)] / 1000}
+              s {idleConfirmCount >= IDLE_THRESHOLDS_MS.length - 1 ? "(capped)" : ""}
+            </div>
+            <div className="border-t border-border/40 mt-1 pt-1">
+              <div>base (DB): {engDebug.baseSeconds.current}s</div>
+              <div>
+                this session:{" "}
+                <span className="text-green-600 font-semibold">{engDebug.accSeconds.current}s</span>
+              </div>
+              <div>
+                total (will save):{" "}
+                <span className="font-semibold">
+                  {engDebug.baseSeconds.current + engDebug.accSeconds.current}s
+                </span>
+              </div>
+            </div>
+            {engDebug.durationSeconds.current > 0 && (
+              <div className="border-t border-border/40 mt-1 pt-1">
+                <div>
+                  media pos: {Math.round(engDebug.furthestSeconds.current)}s /{" "}
+                  {Math.round(engDebug.durationSeconds.current)}s
+                </div>
+                <div>
+                  media %:{" "}
+                  {Math.round(
+                    (engDebug.furthestSeconds.current / engDebug.durationSeconds.current) * 100,
+                  )}
+                  %
+                </div>
+              </div>
+            )}
+            <div className="border-t border-border/40 mt-1 pt-1 text-muted-foreground">
+              item: {activeItemId ? (isMediaItem ? "media (no modal)" : "static ✓ modal") : "none"}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

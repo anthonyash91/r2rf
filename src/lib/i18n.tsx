@@ -53,9 +53,9 @@ const translations = {
     "home.items": "Items",
     "home.allTypes": "All types",
     "home.searchPlaceholder": "Search resources…",
-    "home.searchResult": "{count} result for \"{query}\"",
-    "home.searchResults": "{count} results for \"{query}\"",
-    "home.searchNoResults": "No results found for \"{query}\"",
+    "home.searchResult": '{count} result for "{query}"',
+    "home.searchResults": '{count} results for "{query}"',
+    "home.searchNoResults": 'No results found for "{query}"',
     "home.searchIn": "in {category}",
 
     "bookmark.save": "Save for later",
@@ -226,21 +226,30 @@ const translations = {
     "signup.loadingVerification": "Loading verification, please wait.",
     "signup.answerVerification": "Please answer the verification question.",
     "signup.invalidLogin": "Incorrect username or password.",
-    "signup.facilityMismatch": "The account you're trying to sign into's PIN doesn't match the PIN used to sign in to this device. Please sign in with your own account or sign out of this device and sign back in using your PIN.",
-    "signup.pinAlreadyRegistered": "The PIN signed into this device already has an account associated with it. Please sign in with your username and password. If you feel this is an error, please contact tech support.",
-    "signup.pinMismatch": "In order to login with this PIN, log out of your tablet and log back in with the PIN you're attempting to use.",
-    "signup.noFacilityBlock": "Sign up is only available when you access the website through the service on your device.",
-    "signup.wrongLinkBlock": "Looks like you're trying to login using the wrong link. Make sure you're accessing this website through the service on your device.",
+    "signup.facilityMismatch":
+      "The account you're trying to sign into's PIN doesn't match the PIN used to sign in to this device. Please sign in with your own account or sign out of this device and sign back in using your PIN.",
+    "signup.pinAlreadyRegistered":
+      "The PIN signed into this device already has an account associated with it. Please sign in with your username and password. If you feel this is an error, please contact tech support.",
+    "signup.pinMismatch":
+      "In order to login with this PIN, log out of your tablet and log back in with the PIN you're attempting to use.",
+    "signup.noFacilityBlock":
+      "Sign up is only available when you access the website through the service on your device.",
+    "signup.wrongLinkBlock":
+      "Looks like you're trying to login using the wrong link. Make sure you're accessing this website through the service on your device.",
     "signup.genericError": "Something went wrong.",
     "signup.disclosureHeading": "Before you sign up — tap to read",
-    "signup.disclosureBody": "The Reentry to Recovery library is free and your participation is completely voluntary. Creating an account has no effect on your status or privileges at your facility.\n\nWhat we save about you:\n• Your name, username, and password (your password is encrypted — we cannot read it)\n• Your facility and inmate PIN — used to connect your account to your device\n• Two security questions and answers — used only if you need to reset your password\n• Which resources you open, how far you get, and when you complete them\n• How much time you actively spend on each resource\n• Ratings you give to resources (\"Helpful\" / \"Not Helpful\") — visible to your facility staff in your individual progress report\n• Resources you bookmark for later\n• The dates you log in\n\nWhy we save it:\n• To show you your personal progress dashboard\n• To let facility staff and our organization see how the program is being used\n• To report outcomes to the organizations that fund this program\n\nWe do not sell your information. We do not use advertising.",
-    "signup.disclosureCheckbox": "I understand what information is collected and agree to the Terms of Service and Privacy Policy.",
+    "signup.disclosureBody":
+      'The Reentry to Recovery library is free and your participation is completely voluntary. Creating an account has no effect on your status or privileges at your facility.\n\nWhat we save about you:\n• Your name, username, and password (your password is encrypted — we cannot read it)\n• Your facility and inmate PIN — used to connect your account to your device\n• Two security questions and answers — used only if you need to reset your password\n• Which resources you open, how far you get, and when you complete them\n• How much time you actively spend on each resource\n• Ratings you give to resources ("Helpful" / "Not Helpful") — visible to your facility staff in your individual progress report\n• Resources you bookmark for later\n• The dates you log in\n\nWhy we save it:\n• To show you your personal progress dashboard\n• To let facility staff and our organization see how the program is being used\n• To report outcomes to the organizations that fund this program\n\nWe do not sell your information. We do not use advertising.',
+    "signup.disclosureCheckbox":
+      "I understand what information is collected and agree to the Terms of Service and Privacy Policy.",
     "facility.pennington_sd": "Pennington, SD",
     "facility.campbell_ky": "Campbell, KY",
 
     "security.heading": "Security questions",
-    "security.intro": "Choose 2 questions and provide answers. You'll use these to reset your password.",
-    "security.setupPrompt": "Please choose and answer two security questions. These security questions will be used to reset your password if ever needed.",
+    "security.intro":
+      "Choose 2 questions and provide answers. You'll use these to reset your password.",
+    "security.setupPrompt":
+      "Please choose and answer two security questions. These security questions will be used to reset your password if ever needed.",
     "security.chooseQuestion": "Choose a question",
     "security.yourAnswer": "Your answer",
     "security.update": "Update security questions",
@@ -281,34 +290,48 @@ const translations = {
     "tutorial.getStarted": "Get started",
 
     "tutorial.dash.welcomeTitle": "Welcome to your dashboard",
-    "tutorial.dash.welcomeBody": "This is your personal learning hub. Here you can track your progress, pick up where you left off, and explore all available resources.",
+    "tutorial.dash.welcomeBody":
+      "This is your personal learning hub. Here you can track your progress, pick up where you left off, and explore all available resources.",
     "tutorial.dash.progressTitle": "Your overall progress",
-    "tutorial.dash.progressBody": "This card shows how much of the full library you've completed — across every category.",
+    "tutorial.dash.progressBody":
+      "This card shows how much of the full library you've completed — across every category.",
     "tutorial.dash.statsTitle": "Key stats",
-    "tutorial.dash.statsBody": "Track items completed, categories finished, total time spent, and your daily learning streak.",
+    "tutorial.dash.statsBody":
+      "Track items completed, categories finished, total time spent, and your daily learning streak.",
     "tutorial.dash.tabsTitle": "Navigation tabs",
-    "tutorial.dash.tabsBody": "Use these tabs to jump between your category progress, saved items, achievements, and account settings.",
+    "tutorial.dash.tabsBody":
+      "Use these tabs to jump between your category progress, saved items, achievements, and account settings.",
     "tutorial.dash.categoriesTitle": "Category progress",
-    "tutorial.dash.categoriesBody": "Each row is a learning category. Tap one to expand it and see the individual resources inside.",
+    "tutorial.dash.categoriesBody":
+      "Each row is a learning category. Tap one to expand it and see the individual resources inside.",
     "tutorial.dash.savedTitle": "Saved items",
-    "tutorial.dash.savedBody": "Any resource you bookmark from a category page appears here so you can find it quickly later.",
+    "tutorial.dash.savedBody":
+      "Any resource you bookmark from a category page appears here so you can find it quickly later.",
     "tutorial.dash.achievementsTitle": "Achievements",
-    "tutorial.dash.achievementsBody": "Earn badges as you make progress — completing categories, building a streak, and reaching time milestones.",
+    "tutorial.dash.achievementsBody":
+      "Earn badges as you make progress — completing categories, building a streak, and reaching time milestones.",
     "tutorial.dash.accountTitle": "Account settings",
-    "tutorial.dash.accountBody": "View your profile, update your security questions, or change your password here.",
+    "tutorial.dash.accountBody":
+      "View your profile, update your security questions, or change your password here.",
 
     "tutorial.cat.welcomeTitle": "Welcome to this category",
-    "tutorial.cat.welcomeBody": "Each category contains a set of learning resources — articles, videos, audio, and more. Here's a quick look at how it works.",
+    "tutorial.cat.welcomeBody":
+      "Each category contains a set of learning resources — articles, videos, audio, and more. Here's a quick look at how it works.",
     "tutorial.cat.progressTitle": "Your progress",
-    "tutorial.cat.progressBody": "This bar tracks how many items you've completed in this category. It updates as you work through the content.",
+    "tutorial.cat.progressBody":
+      "This bar tracks how many items you've completed in this category. It updates as you work through the content.",
     "tutorial.cat.resourcesTitle": "Learning resources",
-    "tutorial.cat.resourcesBody": "Each row is one resource. Tap or click to open it — videos and audio play inline, PDFs open in a viewer, and links open in a new tab.",
+    "tutorial.cat.resourcesBody":
+      "Each row is one resource. Tap or click to open it — videos and audio play inline, PDFs open in a viewer, and links open in a new tab.",
     "tutorial.cat.completeTitle": "Mark as complete",
-    "tutorial.cat.completeBody": "Use the status button on the right of each item to mark it as read, watched, or listened to. Your progress updates automatically.",
+    "tutorial.cat.completeBody":
+      "Use the status button on the right of each item to mark it as read, watched, or listened to. Your progress updates automatically.",
     "tutorial.cat.bookmarkTitle": "Save for later",
-    "tutorial.cat.bookmarkBody": "Tap the bookmark icon to save any item to your Saved list on the dashboard.",
+    "tutorial.cat.bookmarkBody":
+      "Tap the bookmark icon to save any item to your Saved list on the dashboard.",
     "tutorial.cat.ratingsTitle": "Rate resources",
-    "tutorial.cat.ratingsBody": "After marking an item as complete, a thumbs up / thumbs down appears so you can rate whether it was helpful. Your ratings help improve the library.",
+    "tutorial.cat.ratingsBody":
+      "After marking an item as complete, a thumbs up / thumbs down appears so you can rate whether it was helpful. Your ratings help improve the library.",
   },
   es: {
     "nav.categories": "Categorías",
@@ -329,7 +352,8 @@ const translations = {
     "dashboard.tabProgress": "Progreso",
     "dashboard.tabAccount": "Configuración de la cuenta",
     "dashboard.overallProgress": "Progreso general",
-    "dashboard.overallSummary": "Has completado {done} de {total} recursos disponibles. ¡Sigue así!",
+    "dashboard.overallSummary":
+      "Has completado {done} de {total} recursos disponibles. ¡Sigue así!",
     "dashboard.statCompleted": "Recursos completados",
     "dashboard.statCategories": "Categorías iniciadas",
     "dashboard.statCategoriesCompleted": "Categorías terminadas",
@@ -339,7 +363,8 @@ const translations = {
     "dashboard.resumeLabel": "Continúa Donde Lo Dejaste",
     "dashboard.resumeContinue": "Continuar",
     "dashboard.itemsCompleted": "{done} de {total} completados",
-    "dashboard.lockedNav": "Por favor configure sus preguntas de seguridad antes de salir de esta página.",
+    "dashboard.lockedNav":
+      "Por favor configure sus preguntas de seguridad antes de salir de esta página.",
     "dashboard.saving": "Guardando…",
     "nav.adminSignIn": "Administrador",
     "nav.adminSignOut": "Cerrar sesión",
@@ -360,9 +385,9 @@ const translations = {
     "home.item": "Recurso",
     "home.items": "Recursos",
     "home.searchPlaceholder": "Buscar recursos…",
-    "home.searchResult": "{count} resultado para \"{query}\"",
-    "home.searchResults": "{count} resultados para \"{query}\"",
-    "home.searchNoResults": "No se encontraron resultados para \"{query}\"",
+    "home.searchResult": '{count} resultado para "{query}"',
+    "home.searchResults": '{count} resultados para "{query}"',
+    "home.searchNoResults": 'No se encontraron resultados para "{query}"',
     "home.searchIn": "en {category}",
 
     "bookmark.save": "Guardar para después",
@@ -399,7 +424,8 @@ const translations = {
 
     "dashboard.tabSaved": "Guardados",
     "dashboard.savedEmpty": "Aún no hay recursos guardados.",
-    "dashboard.savedEmptyHint": "Toca el ícono de marcador en cualquier recurso para guardarlo aquí.",
+    "dashboard.savedEmptyHint":
+      "Toca el ícono de marcador en cualquier recurso para guardarlo aquí.",
 
     "dashboard.tabAchievements": "Logros",
     "dashboard.achievementsCount": "{earned} de {total} obtenidos",
@@ -503,7 +529,8 @@ const translations = {
 
     "signup.title": "Crea tu cuenta",
     "signup.signInTitle": "Iniciar sesión",
-    "signup.subtitleSignUp": "Regístrese con un nombre de usuario y contraseña. No se requiere correo electrónico.",
+    "signup.subtitleSignUp":
+      "Regístrese con un nombre de usuario y contraseña. No se requiere correo electrónico.",
     "signup.subtitleSignIn": "Inicie sesión con su nombre de usuario y contraseña.",
     "signup.username": "Nombre de usuario",
     "signup.usernameOrEmail": "Nombre de usuario o correo electrónico",
@@ -533,21 +560,30 @@ const translations = {
     "signup.loadingVerification": "Cargando verificación, por favor espere.",
     "signup.answerVerification": "Por favor responda la pregunta de verificación.",
     "signup.invalidLogin": "Nombre de usuario o contraseña incorrectos.",
-    "signup.facilityMismatch": "El PIN de la cuenta en la que intentas iniciar sesión no coincide con el PIN utilizado para iniciar sesión en este dispositivo. Por favor inicia sesión con tu propia cuenta o cierra sesión en este dispositivo y vuelve a iniciar sesión con tu PIN.",
-    "signup.pinAlreadyRegistered": "El PIN ingresado en este dispositivo ya tiene una cuenta asociada. Por favor inicia sesión con tu nombre de usuario y contraseña. Si sientes que esto es un error, comunícate con soporte técnico.",
-    "signup.pinMismatch": "Para iniciar sesión con este PIN, cierra sesión en tu tableta y vuelve a iniciar sesión con el PIN que intentas utilizar.",
-    "signup.noFacilityBlock": "El registro solo está disponible cuando accedes al sitio web a través del servicio en tu dispositivo.",
-    "signup.wrongLinkBlock": "Parece que estás intentando iniciar sesión con el enlace incorrecto. Asegúrate de acceder a este sitio web a través del servicio en tu dispositivo.",
+    "signup.facilityMismatch":
+      "El PIN de la cuenta en la que intentas iniciar sesión no coincide con el PIN utilizado para iniciar sesión en este dispositivo. Por favor inicia sesión con tu propia cuenta o cierra sesión en este dispositivo y vuelve a iniciar sesión con tu PIN.",
+    "signup.pinAlreadyRegistered":
+      "El PIN ingresado en este dispositivo ya tiene una cuenta asociada. Por favor inicia sesión con tu nombre de usuario y contraseña. Si sientes que esto es un error, comunícate con soporte técnico.",
+    "signup.pinMismatch":
+      "Para iniciar sesión con este PIN, cierra sesión en tu tableta y vuelve a iniciar sesión con el PIN que intentas utilizar.",
+    "signup.noFacilityBlock":
+      "El registro solo está disponible cuando accedes al sitio web a través del servicio en tu dispositivo.",
+    "signup.wrongLinkBlock":
+      "Parece que estás intentando iniciar sesión con el enlace incorrecto. Asegúrate de acceder a este sitio web a través del servicio en tu dispositivo.",
     "signup.genericError": "Algo salió mal.",
     "signup.disclosureHeading": "Antes de registrarte — toca para leer",
-    "signup.disclosureBody": "La biblioteca Reentry to Recovery es gratuita y tu participación es completamente voluntaria. Crear una cuenta no afecta tu estatus ni tus privilegios en tu instalación.\n\nLo que guardamos sobre ti:\n• Tu nombre, nombre de usuario y contraseña (encriptada — no podemos leerla)\n• Tu instalación y PIN de recluso — para conectar tu cuenta a tu dispositivo\n• Dos preguntas de seguridad y respuestas — solo usadas si necesitas restablecer tu contraseña\n• Qué recursos abres, qué tan lejos llegas y cuándo los completas\n• Cuánto tiempo activo pasas en cada recurso\n• Calificaciones que das a los recursos (visibles al personal de tu instalación)\n• Recursos que guardas para después\n• Las fechas en que inicias sesión\n\nPor qué lo guardamos:\n• Para mostrarte tu tablero de progreso personal\n• Para que el personal de tu instalación vea cómo se usa el programa\n• Para reportar resultados a las organizaciones que financian este programa\n\nNo vendemos tu información. No usamos publicidad.",
-    "signup.disclosureCheckbox": "Entiendo qué información se recopila y acepto los Términos de Servicio y la Política de Privacidad.",
+    "signup.disclosureBody":
+      "La biblioteca Reentry to Recovery es gratuita y tu participación es completamente voluntaria. Crear una cuenta no afecta tu estatus ni tus privilegios en tu instalación.\n\nLo que guardamos sobre ti:\n• Tu nombre, nombre de usuario y contraseña (encriptada — no podemos leerla)\n• Tu instalación y PIN de recluso — para conectar tu cuenta a tu dispositivo\n• Dos preguntas de seguridad y respuestas — solo usadas si necesitas restablecer tu contraseña\n• Qué recursos abres, qué tan lejos llegas y cuándo los completas\n• Cuánto tiempo activo pasas en cada recurso\n• Calificaciones que das a los recursos (visibles al personal de tu instalación)\n• Recursos que guardas para después\n• Las fechas en que inicias sesión\n\nPor qué lo guardamos:\n• Para mostrarte tu tablero de progreso personal\n• Para que el personal de tu instalación vea cómo se usa el programa\n• Para reportar resultados a las organizaciones que financian este programa\n\nNo vendemos tu información. No usamos publicidad.",
+    "signup.disclosureCheckbox":
+      "Entiendo qué información se recopila y acepto los Términos de Servicio y la Política de Privacidad.",
     "facility.pennington_sd": "Pennington, SD",
     "facility.campbell_ky": "Campbell, KY",
 
     "security.heading": "Preguntas de seguridad",
-    "security.intro": "Elija 2 preguntas y proporcione respuestas. Las usará para restablecer su contraseña.",
-    "security.setupPrompt": "Por favor elija y responda dos preguntas de seguridad. Estas preguntas se usarán para restablecer su contraseña si alguna vez lo necesita.",
+    "security.intro":
+      "Elija 2 preguntas y proporcione respuestas. Las usará para restablecer su contraseña.",
+    "security.setupPrompt":
+      "Por favor elija y responda dos preguntas de seguridad. Estas preguntas se usarán para restablecer su contraseña si alguna vez lo necesita.",
     "security.chooseQuestion": "Elija una pregunta",
     "security.yourAnswer": "Su respuesta",
     "security.update": "Actualizar preguntas de seguridad",
@@ -588,34 +624,48 @@ const translations = {
     "tutorial.getStarted": "Comenzar",
 
     "tutorial.dash.welcomeTitle": "Bienvenido a tu panel",
-    "tutorial.dash.welcomeBody": "Este es tu centro de aprendizaje personal. Aquí puedes ver tu progreso, continuar donde lo dejaste y explorar todos los recursos disponibles.",
+    "tutorial.dash.welcomeBody":
+      "Este es tu centro de aprendizaje personal. Aquí puedes ver tu progreso, continuar donde lo dejaste y explorar todos los recursos disponibles.",
     "tutorial.dash.progressTitle": "Tu progreso general",
-    "tutorial.dash.progressBody": "Esta tarjeta muestra qué parte de la biblioteca completa has terminado — en todas las categorías.",
+    "tutorial.dash.progressBody":
+      "Esta tarjeta muestra qué parte de la biblioteca completa has terminado — en todas las categorías.",
     "tutorial.dash.statsTitle": "Estadísticas clave",
-    "tutorial.dash.statsBody": "Sigue los recursos completados, categorías terminadas, tiempo total dedicado y tu racha diaria de aprendizaje.",
+    "tutorial.dash.statsBody":
+      "Sigue los recursos completados, categorías terminadas, tiempo total dedicado y tu racha diaria de aprendizaje.",
     "tutorial.dash.tabsTitle": "Pestañas de navegación",
-    "tutorial.dash.tabsBody": "Usa estas pestañas para ir a tu progreso por categoría, elementos guardados, logros y configuración de la cuenta.",
+    "tutorial.dash.tabsBody":
+      "Usa estas pestañas para ir a tu progreso por categoría, elementos guardados, logros y configuración de la cuenta.",
     "tutorial.dash.categoriesTitle": "Progreso por categoría",
-    "tutorial.dash.categoriesBody": "Cada fila es una categoría de aprendizaje. Tócala para expandirla y ver los recursos individuales dentro.",
+    "tutorial.dash.categoriesBody":
+      "Cada fila es una categoría de aprendizaje. Tócala para expandirla y ver los recursos individuales dentro.",
     "tutorial.dash.savedTitle": "Elementos guardados",
-    "tutorial.dash.savedBody": "Cualquier recurso que marques en una página de categoría aparece aquí para encontrarlo fácilmente más adelante.",
+    "tutorial.dash.savedBody":
+      "Cualquier recurso que marques en una página de categoría aparece aquí para encontrarlo fácilmente más adelante.",
     "tutorial.dash.achievementsTitle": "Logros",
-    "tutorial.dash.achievementsBody": "Gana insignias a medida que avanzas — completando categorías, construyendo una racha y alcanzando metas de tiempo.",
+    "tutorial.dash.achievementsBody":
+      "Gana insignias a medida que avanzas — completando categorías, construyendo una racha y alcanzando metas de tiempo.",
     "tutorial.dash.accountTitle": "Configuración de la cuenta",
-    "tutorial.dash.accountBody": "Aquí puedes ver tu perfil, actualizar tus preguntas de seguridad o cambiar tu contraseña.",
+    "tutorial.dash.accountBody":
+      "Aquí puedes ver tu perfil, actualizar tus preguntas de seguridad o cambiar tu contraseña.",
 
     "tutorial.cat.welcomeTitle": "Bienvenido a esta categoría",
-    "tutorial.cat.welcomeBody": "Cada categoría contiene recursos de aprendizaje — artículos, videos, audio y más. Aquí te explicamos cómo funciona.",
+    "tutorial.cat.welcomeBody":
+      "Cada categoría contiene recursos de aprendizaje — artículos, videos, audio y más. Aquí te explicamos cómo funciona.",
     "tutorial.cat.progressTitle": "Tu progreso",
-    "tutorial.cat.progressBody": "Esta barra muestra cuántos elementos has completado en esta categoría. Se actualiza a medida que avanzas.",
+    "tutorial.cat.progressBody":
+      "Esta barra muestra cuántos elementos has completado en esta categoría. Se actualiza a medida que avanzas.",
     "tutorial.cat.resourcesTitle": "Recursos de aprendizaje",
-    "tutorial.cat.resourcesBody": "Cada fila es un recurso. Tócalo para abrirlo — los videos y audios se reproducen en línea, los PDFs se abren en un visor y los enlaces se abren en una nueva pestaña.",
+    "tutorial.cat.resourcesBody":
+      "Cada fila es un recurso. Tócalo para abrirlo — los videos y audios se reproducen en línea, los PDFs se abren en un visor y los enlaces se abren en una nueva pestaña.",
     "tutorial.cat.completeTitle": "Marcar como completado",
-    "tutorial.cat.completeBody": "Usa el botón de estado a la derecha de cada elemento para marcarlo como leído, visto o escuchado. Tu progreso se actualiza automáticamente.",
+    "tutorial.cat.completeBody":
+      "Usa el botón de estado a la derecha de cada elemento para marcarlo como leído, visto o escuchado. Tu progreso se actualiza automáticamente.",
     "tutorial.cat.bookmarkTitle": "Guardar para después",
-    "tutorial.cat.bookmarkBody": "Toca el ícono de marcador para guardar cualquier elemento en tu lista de Guardados en el panel.",
+    "tutorial.cat.bookmarkBody":
+      "Toca el ícono de marcador para guardar cualquier elemento en tu lista de Guardados en el panel.",
     "tutorial.cat.ratingsTitle": "Califica los recursos",
-    "tutorial.cat.ratingsBody": "Al marcar un elemento como completado, aparecen pulgares arriba y abajo para que lo califiques. Tus calificaciones ayudan a mejorar la biblioteca.",
+    "tutorial.cat.ratingsBody":
+      "Al marcar un elemento como completado, aparecen pulgares arriba y abajo para que lo califiques. Tus calificaciones ayudan a mejorar la biblioteca.",
   },
 };
 
@@ -638,7 +688,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       // URL parameter takes priority over localStorage.
       // Fix malformed `?user=1234?language=es` (two `?` characters) by converting
       // the second `?` to `&` so URLSearchParams can parse it correctly.
-      const search = window.location.search.replace(/\?(?=.*=)/g, (m, o) => o === 0 ? m : "&");
+      const search = window.location.search.replace(/\?(?=.*=)/g, (m, o) => (o === 0 ? m : "&"));
       const params = new URLSearchParams(search);
       const urlLang = params.get("language") as Language | null;
       if (urlLang === "en" || urlLang === "es") {

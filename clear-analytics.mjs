@@ -25,10 +25,10 @@ const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 async function main() {
   const tables = [
-    { name: "analytics_events",        col: "id",         sentinel: null,       method: "not_null" },
-    { name: "analytics_daily_counts",  col: "event_type", sentinel: "__never__", method: "neq"      },
-    { name: "user_content_progress",   col: "user_id",    sentinel: null,       method: "not_null" },
-    { name: "user_content_seen",       col: "user_id",    sentinel: null,       method: "not_null" },
+    { name: "analytics_events", col: "id", sentinel: null, method: "not_null" },
+    { name: "analytics_daily_counts", col: "event_type", sentinel: "__never__", method: "neq" },
+    { name: "user_content_progress", col: "user_id", sentinel: null, method: "not_null" },
+    { name: "user_content_seen", col: "user_id", sentinel: null, method: "not_null" },
   ];
 
   for (const t of tables) {

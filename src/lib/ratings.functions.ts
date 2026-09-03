@@ -19,10 +19,12 @@ export const getMyRatings = createServerFn({ method: "GET" })
 export const rateItem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({
-      contentItemId: z.string().uuid(),
-      rating: z.union([z.literal(1), z.literal(-1), z.null()]),
-    }).parse(input)
+    z
+      .object({
+        contentItemId: z.string().uuid(),
+        rating: z.union([z.literal(1), z.literal(-1), z.null()]),
+      })
+      .parse(input),
   )
   .handler(async ({ context, data }) => {
     const db = context.supabase as any;

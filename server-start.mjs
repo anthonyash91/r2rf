@@ -74,20 +74,20 @@ import { resolve } from "node:path";
 const CLIENT_DIR = resolve(join(fileURLToPath(import.meta.url), "../dist/client"));
 
 const MIME = {
-  ".js":    "application/javascript; charset=utf-8",
-  ".mjs":   "application/javascript; charset=utf-8",
-  ".css":   "text/css; charset=utf-8",
-  ".html":  "text/html; charset=utf-8",
-  ".json":  "application/json; charset=utf-8",
-  ".svg":   "image/svg+xml",
-  ".png":   "image/png",
-  ".jpg":   "image/jpeg",
-  ".jpeg":  "image/jpeg",
-  ".ico":   "image/x-icon",
-  ".woff":  "font/woff",
+  ".js": "application/javascript; charset=utf-8",
+  ".mjs": "application/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".html": "text/html; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
   ".woff2": "font/woff2",
-  ".ttf":   "font/ttf",
-  ".webp":  "image/webp",
+  ".ttf": "font/ttf",
+  ".webp": "image/webp",
 };
 
 const server = createServer(async (req, res) => {
@@ -101,7 +101,9 @@ const server = createServer(async (req, res) => {
       // URL normalization already strips ../  sequences before this point, but
       // this explicit check is defense-in-depth against any edge case.
       if (!filePath.startsWith(CLIENT_DIR + "/") && filePath !== CLIENT_DIR) {
-        res.writeHead(403); res.end(); return;
+        res.writeHead(403);
+        res.end();
+        return;
       }
       const content = await readFile(filePath);
       const ext = extname(filePath);
@@ -124,9 +126,13 @@ const server = createServer(async (req, res) => {
   // TRUSTED_IP_XFF_POSITION docs on getClientIp in src/lib/ip-allowlist.ts.
   const xff = req.headers["x-forwarded-for"];
   const clientIp = xff
-    ? (process.env.TRUSTED_IP_XFF_POSITION === "rightmost"
-        ? xff.split(",").map((s) => s.trim()).filter(Boolean).pop()
-        : xff.split(",")[0].trim())
+    ? process.env.TRUSTED_IP_XFF_POSITION === "rightmost"
+      ? xff
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .pop()
+      : xff.split(",")[0].trim()
     : req.socket.remoteAddress;
   if (checkRateLimit(clientIp)) {
     res.writeHead(429, { "content-type": "text/plain", "retry-after": "1" });
@@ -147,7 +153,7 @@ const server = createServer(async (req, res) => {
 
   // Issue 3: refuse new requests while draining after SIGTERM
   if (isShuttingDown) {
-    res.writeHead(503, { "content-type": "text/plain", "connection": "close" });
+    res.writeHead(503, { "content-type": "text/plain", connection: "close" });
     res.end("Service Unavailable");
     return;
   }
@@ -200,7 +206,10 @@ const server = createServer(async (req, res) => {
   res.statusCode = response.status;
   for (const [key, value] of response.headers.entries()) res.setHeader(key, value);
 
-  if (!response.body) { res.end(); return; }
+  if (!response.body) {
+    res.end();
+    return;
+  }
   // Issue 2: proper streaming with error handling on both the reader and the socket.
   // The old recursive callback approach had no error handler — a client disconnect
   // or SSR stream failure would throw an unhandled rejection and crash the process.
@@ -210,7 +219,10 @@ const server = createServer(async (req, res) => {
     try {
       while (true) {
         const { done, value } = await reader.read();
-        if (done) { res.end(); break; }
+        if (done) {
+          res.end();
+          break;
+        }
         // Respect backpressure: pause reading if the socket buffer is full.
         if (!res.write(value)) {
           await new Promise((resolve) => res.once("drain", resolve));

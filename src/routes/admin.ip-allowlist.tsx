@@ -30,7 +30,8 @@ type IpRow = {
 // Full IPv4 dotted-decimal validation. Each octet alternates from 250-255, 200-249,
 // 100-199, and 0-99/single-digit to keep all values within 0-255 without a simple
 // \d+ that would accept out-of-range values like 999.
-const IP_REGEX = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
+const IP_REGEX =
+  /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/;
 
 function AdminIpAllowlistPage() {
   return (
@@ -68,13 +69,22 @@ function AllowlistSection() {
       const parsed = lines.map((line) => {
         const commaIdx = line.indexOf(",");
         const ip = (commaIdx === -1 ? line : line.slice(0, commaIdx)).trim();
-        const label = commaIdx === -1 ? "" : line.slice(commaIdx + 1).trim().slice(0, 80);
+        const label =
+          commaIdx === -1
+            ? ""
+            : line
+                .slice(commaIdx + 1)
+                .trim()
+                .slice(0, 80);
         return { ip_address: ip, label };
       });
       const invalid = parsed.filter((p) => !IP_REGEX.test(p.ip_address));
       if (invalid.length > 0) {
         throw new Error(
-          `Invalid IPv4 address(es): ${invalid.slice(0, 3).map((p) => p.ip_address).join(", ")}${invalid.length > 3 ? "…" : ""}`,
+          `Invalid IPv4 address(es): ${invalid
+            .slice(0, 3)
+            .map((p) => p.ip_address)
+            .join(", ")}${invalid.length > 3 ? "…" : ""}`,
         );
       }
       const seen = new Set<string>();
@@ -346,11 +356,7 @@ function AllowlistRow({
             >
               Cancel
             </LoadingButton>
-            <LoadingButton
-              type="submit"
-              pending={updateMut.isPending}
-              pendingText="Saving…"
-            >
+            <LoadingButton type="submit" pending={updateMut.isPending} pendingText="Saving…">
               Update
             </LoadingButton>
           </div>
@@ -382,15 +388,14 @@ function IpRestrictionToggle() {
     mutationFn: async (enabled: boolean) => {
       const { error } = await supabase
         .from("site_settings")
-        .upsert(
-          { key: "ip_restriction_enabled", value: { enabled } },
-          { onConflict: "key" },
-        );
+        .upsert({ key: "ip_restriction_enabled", value: { enabled } }, { onConflict: "key" });
       if (error) throw error;
       return enabled;
     },
     onSuccess: (enabled) => {
-      toast.success(enabled ? "IP restrictions enabled" : "IP restrictions disabled — site is open to all");
+      toast.success(
+        enabled ? "IP restrictions enabled" : "IP restrictions disabled — site is open to all",
+      );
       qc.invalidateQueries({ queryKey });
     },
     onError: (e: any) => toast.error(e.message),
@@ -399,13 +404,19 @@ function IpRestrictionToggle() {
   const enabled = data ?? true;
 
   return (
-    <section className={`mt-8 rounded-2xl border bg-card p-6 flex items-start gap-3 transition-all ${enabled ? "border-[var(--color-accent)] shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--color-accent)_45%,transparent)]" : "border-border"}`}>
-      <Power className={`h-6 w-6 mt-0.5 shrink-0 ${enabled ? "text-[var(--color-accent)]" : "text-muted-foreground"}`} />
+    <section
+      className={`mt-8 rounded-2xl border bg-card p-6 flex items-start gap-3 transition-all ${enabled ? "border-[var(--color-accent)] shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--color-accent)_45%,transparent)]" : "border-border"}`}
+    >
+      <Power
+        className={`h-6 w-6 mt-0.5 shrink-0 ${enabled ? "text-[var(--color-accent)]" : "text-muted-foreground"}`}
+      />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-display text-xl font-semibold">IP restriction</h2>
           <div className="flex items-center gap-3 shrink-0">
-            <span className={`text-sm font-medium ${enabled ? "text-foreground" : "text-muted-foreground"}`}>
+            <span
+              className={`text-sm font-medium ${enabled ? "text-foreground" : "text-muted-foreground"}`}
+            >
               {isLoading ? "Loading…" : enabled ? "On" : "Off"}
             </span>
             <Switch
@@ -417,7 +428,8 @@ function IpRestrictionToggle() {
           </div>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          When off, anyone can access any part of the site regardless of IP address. When on, only IPs on the allowlist can access the site. Changes take effect within ~30 seconds.
+          When off, anyone can access any part of the site regardless of IP address. When on, only
+          IPs on the allowlist can access the site. Changes take effect within ~30 seconds.
         </p>
       </div>
     </section>

@@ -116,9 +116,9 @@ describe("listFacilityUsers — facility scope guard", () => {
 
   it("facilityUser: request for different facility is rejected", async () => {
     mockIsFacilityScoped.mockResolvedValue({ scoped: true, facility: "facility_a" });
-    await expect(
-      listFacilityUsersGuard("fuser-uid", "facility_b"),
-    ).rejects.toThrow("Forbidden: user is not in your facility");
+    await expect(listFacilityUsersGuard("fuser-uid", "facility_b")).rejects.toThrow(
+      "Forbidden: user is not in your facility",
+    );
   });
 
   it("facilityUser: request with no facilityValue is scoped to their own facility", async () => {
@@ -130,9 +130,9 @@ describe("listFacilityUsers — facility scope guard", () => {
 
   it("facilityUser with no facility assigned throws immediately", async () => {
     mockIsFacilityScoped.mockResolvedValue({ scoped: true, facility: null });
-    await expect(
-      listFacilityUsersGuard("fuser-no-facility-uid", null),
-    ).rejects.toThrow("Forbidden: no facility assigned");
+    await expect(listFacilityUsersGuard("fuser-no-facility-uid", null)).rejects.toThrow(
+      "Forbidden: no facility assigned",
+    );
   });
 });
 
@@ -143,37 +143,33 @@ describe("listFacilityUsers — facility scope guard", () => {
 describe("getUserProgressReport — facility scope guard", () => {
   it("admin caller: can view any user regardless of facility", async () => {
     mockIsFacilityScoped.mockResolvedValue({ scoped: false, facility: null });
-    await expect(
-      getUserProgressGuard("admin-uid", "facility_b"),
-    ).resolves.toBeUndefined();
+    await expect(getUserProgressGuard("admin-uid", "facility_b")).resolves.toBeUndefined();
   });
 
   it("facilityUser: can view a user who belongs to their facility", async () => {
     mockIsFacilityScoped.mockResolvedValue({ scoped: true, facility: "facility_a" });
-    await expect(
-      getUserProgressGuard("fuser-uid", "facility_a"),
-    ).resolves.toBeUndefined();
+    await expect(getUserProgressGuard("fuser-uid", "facility_a")).resolves.toBeUndefined();
   });
 
   it("facilityUser: cannot view a user from a different facility", async () => {
     mockIsFacilityScoped.mockResolvedValue({ scoped: true, facility: "facility_a" });
-    await expect(
-      getUserProgressGuard("fuser-uid", "facility_b"),
-    ).rejects.toThrow("Forbidden: user is not in your facility");
+    await expect(getUserProgressGuard("fuser-uid", "facility_b")).rejects.toThrow(
+      "Forbidden: user is not in your facility",
+    );
   });
 
   it("facilityUser: cannot view a user with no facility (safety catch)", async () => {
     mockIsFacilityScoped.mockResolvedValue({ scoped: true, facility: "facility_a" });
-    await expect(
-      getUserProgressGuard("fuser-uid", null),
-    ).rejects.toThrow("Forbidden: user is not in your facility");
+    await expect(getUserProgressGuard("fuser-uid", null)).rejects.toThrow(
+      "Forbidden: user is not in your facility",
+    );
   });
 
   it("facilityUser with no assigned facility cannot view any user", async () => {
     mockIsFacilityScoped.mockResolvedValue({ scoped: true, facility: null });
-    await expect(
-      getUserProgressGuard("fuser-no-facility-uid", "facility_a"),
-    ).rejects.toThrow("Forbidden: user is not in your facility");
+    await expect(getUserProgressGuard("fuser-no-facility-uid", "facility_a")).rejects.toThrow(
+      "Forbidden: user is not in your facility",
+    );
   });
 });
 
@@ -184,29 +180,25 @@ describe("getUserProgressReport — facility scope guard", () => {
 describe("getBulkFacilityProgressReport — facility scope guard", () => {
   it("admin caller: can request any facility's bulk export", async () => {
     mockIsFacilityScoped.mockResolvedValue({ scoped: false, facility: null });
-    await expect(
-      getBulkProgressGuard("admin-uid", "facility_b"),
-    ).resolves.toBeUndefined();
+    await expect(getBulkProgressGuard("admin-uid", "facility_b")).resolves.toBeUndefined();
   });
 
   it("facilityUser: can request bulk export for their own facility", async () => {
     mockIsFacilityScoped.mockResolvedValue({ scoped: true, facility: "facility_a" });
-    await expect(
-      getBulkProgressGuard("fuser-uid", "facility_a"),
-    ).resolves.toBeUndefined();
+    await expect(getBulkProgressGuard("fuser-uid", "facility_a")).resolves.toBeUndefined();
   });
 
   it("facilityUser: cannot request bulk export for a different facility", async () => {
     mockIsFacilityScoped.mockResolvedValue({ scoped: true, facility: "facility_a" });
-    await expect(
-      getBulkProgressGuard("fuser-uid", "facility_b"),
-    ).rejects.toThrow("Forbidden: user is not in your facility");
+    await expect(getBulkProgressGuard("fuser-uid", "facility_b")).rejects.toThrow(
+      "Forbidden: user is not in your facility",
+    );
   });
 
   it("facilityUser with no assigned facility is rejected", async () => {
     mockIsFacilityScoped.mockResolvedValue({ scoped: true, facility: null });
-    await expect(
-      getBulkProgressGuard("fuser-no-facility-uid", "facility_a"),
-    ).rejects.toThrow("Forbidden: no facility assigned");
+    await expect(getBulkProgressGuard("fuser-no-facility-uid", "facility_a")).rejects.toThrow(
+      "Forbidden: no facility assigned",
+    );
   });
 });

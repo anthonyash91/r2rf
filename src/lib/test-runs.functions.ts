@@ -26,9 +26,7 @@ export async function assertRunOwner(runId: string, userId: string) {
 
 export const createTestRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ label: z.string().trim().min(1).max(200) }).parse(input),
-  )
+  .inputValidator((input) => z.object({ label: z.string().trim().min(1).max(200) }).parse(input))
   .handler(async ({ context, data }) => {
     await assertTester(context.userId);
     const { data: run, error } = await db
@@ -58,7 +56,11 @@ export const getRunResults = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ runId: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     // Allow the run's owner OR an admin to read results.
-    const { data: run } = await db.from("test_runs").select("tester_id").eq("id", data.runId).maybeSingle();
+    const { data: run } = await db
+      .from("test_runs")
+      .select("tester_id")
+      .eq("id", data.runId)
+      .maybeSingle();
     if (!run) throw new Error("Run not found");
     if (run.tester_id !== context.userId) {
       await assertAdmin(context.userId);
@@ -76,10 +78,10 @@ export const upsertTestResult = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
-        runId:         z.string().uuid(),
-        testId:        z.string().min(1).max(20),
-        status:        z.enum(["untested", "pass", "fail", "blocked", "skipped"]),
-        notes:         z.string().max(2000).optional(),
+        runId: z.string().uuid(),
+        testId: z.string().min(1).max(20),
+        status: z.enum(["untested", "pass", "fail", "blocked", "skipped"]),
+        notes: z.string().max(2000).optional(),
         // Pass undefined to leave the existing screenshot_url unchanged;
         // pass null to explicitly clear it; pass a URL string to set it.
         screenshotUrl: z.string().url().nullable().optional(),
@@ -89,14 +91,16 @@ export const upsertTestResult = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertRunOwner(data.runId, context.userId);
     const payload: Record<string, unknown> = {
-      run_id:     data.runId,
-      test_id:    data.testId,
-      status:     data.status,
-      notes:      data.notes ?? null,
+      run_id: data.runId,
+      test_id: data.testId,
+      status: data.status,
+      notes: data.notes ?? null,
       updated_at: new Date().toISOString(),
     };
     if (data.screenshotUrl !== undefined) payload.screenshot_url = data.screenshotUrl;
-    const { error } = await db.from("test_run_results").upsert(payload, { onConflict: "run_id,test_id" });
+    const { error } = await db
+      .from("test_run_results")
+      .upsert(payload, { onConflict: "run_id,test_id" });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -177,13 +181,13 @@ export const listAllTestRuns = createServerFn({ method: "GET" })
 
     return {
       runs: ((runs ?? []) as any[]).map((r: any) => ({
-        id:             r.id,
-        label:          r.label,
-        tester_id:      r.tester_id,
+        id: r.id,
+        label: r.label,
+        tester_id: r.tester_id,
         testerUsername: profileMap.get(r.tester_id) ?? r.tester_id,
-        created_at:     r.created_at,
-        completed_at:   r.completed_at ?? null,
-        statusCounts:   countMap.get(r.id) ?? {},
+        created_at: r.created_at,
+        completed_at: r.completed_at ?? null,
+        statusCounts: countMap.get(r.id) ?? {},
       })),
     };
   });

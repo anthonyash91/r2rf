@@ -8,11 +8,7 @@ import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { toast } from "sonner";
 import { useI18n, type TranslationKey } from "@/lib/i18n";
 import { QK } from "@/lib/query-keys";
-import {
-  getSignupChallenge,
-  signupUser,
-  checkInmatePin,
-} from "@/lib/user-signup.functions";
+import { getSignupChallenge, signupUser, checkInmatePin } from "@/lib/user-signup.functions";
 import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
 import { syntheticEmail } from "@/lib/user-signup";
 import { listFacilities, getFacilityBySiteId } from "@/lib/facilities.functions";
@@ -29,8 +25,24 @@ import { readPlatformIdentity } from "@/lib/platform-identity";
 import { questionLabel } from "@/lib/security-questions";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown, KeyRound, Lock, Loader2, LogIn, UserPlus, ChevronDown } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Check,
+  ChevronsUpDown,
+  KeyRound,
+  Lock,
+  Loader2,
+  LogIn,
+  UserPlus,
+  ChevronDown,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { PasswordInput } from "@/components/PasswordInput";
@@ -48,7 +60,13 @@ export const Route = createFileRoute("/signup")({
 });
 
 type Mode = "sign-up" | "sign-in" | "reset";
-type Facility = { id: string; value: string; label: string; sort_order: number; siteId: string | null };
+type Facility = {
+  id: string;
+  value: string;
+  label: string;
+  sort_order: number;
+  siteId: string | null;
+};
 
 function SignupPage() {
   return <SignupPageContent />;
@@ -106,7 +124,13 @@ function SignupPageContent() {
   });
   // Map server result to the Facility shape the form expects
   const lockedFacility: Facility | null = lockedFacilityQuery.data
-    ? { id: "", value: lockedFacilityQuery.data.value, label: lockedFacilityQuery.data.label, sort_order: 0, siteId: null }
+    ? {
+        id: "",
+        value: lockedFacilityQuery.data.value,
+        label: lockedFacilityQuery.data.label,
+        sort_order: 0,
+        siteId: null,
+      }
     : null;
   const lockedFacilityResolved = !activeFacilitySlug || !lockedFacilityQuery.isLoading;
 
@@ -120,9 +144,11 @@ function SignupPageContent() {
       .then(({ data }) => {
         const roles = (data ?? []).map((r: any) => r.role as string);
         const isTester = roles.includes("tester");
-        const goesAdmin = !isTester && (
-          roles.includes("admin") || roles.includes("contributor") || roles.includes("facilityUser")
-        );
+        const goesAdmin =
+          !isTester &&
+          (roles.includes("admin") ||
+            roles.includes("contributor") ||
+            roles.includes("facilityUser"));
         const safeRedirect =
           typeof redirectTo === "string" &&
           redirectTo.startsWith("/") &&
@@ -199,9 +225,12 @@ function SignInSignUpForm({
   const { setIsChecking: setCheckingSignIn } = useAuthChecking();
   // When arriving via a facility link, auto-derive the username from
   // facilityValue + PIN so the user never has to choose or see it.
-  const derivedUsername = lockedFacility && activeInmatePin
-    ? `${lockedFacility.value.slice(0, 20)}_${activeInmatePin}`.toLowerCase().replace(/[^a-z0-9_]/g, "_")
-    : null;
+  const derivedUsername =
+    lockedFacility && activeInmatePin
+      ? `${lockedFacility.value.slice(0, 20)}_${activeInmatePin}`
+          .toLowerCase()
+          .replace(/[^a-z0-9_]/g, "_")
+      : null;
 
   const [signinPin, setSigninPin] = useState("");
   const kbSigninPin = useKeyboardInput(signinPin, setSigninPin);
@@ -249,23 +278,30 @@ function SignInSignUpForm({
     }
   }, [facilities, facility, lockedFacility]);
 
-
   const pinCheckQuery = useQuery({
     queryKey: QK.inmatePinCheck(lockedFacility?.value, activeInmatePin),
     enabled: !!lockedFacility?.value && !!activeInmatePin,
     staleTime: 30 * 1000,
-    queryFn: () => checkPin({ data: { facilityValue: lockedFacility!.value, inmatePin: activeInmatePin! } }),
+    queryFn: () =>
+      checkPin({ data: { facilityValue: lockedFacility!.value, inmatePin: activeInmatePin! } }),
   });
 
   const signupBlockReason: "no-facility" | "no-pin" | "pin-checking" | "pin-taken" | null =
-    mode !== "sign-up" ? null
-    : !activeFacilitySlug ? "no-facility"
-    : !lockedFacilityResolved ? "pin-checking"
-    : !lockedFacility ? "no-facility"
-    : !activeInmatePin ? "no-pin"
-    : pinCheckQuery.isLoading ? "pin-checking"
-    : pinCheckQuery.data?.available === false ? "pin-taken"
-    : null;
+    mode !== "sign-up"
+      ? null
+      : !activeFacilitySlug
+        ? "no-facility"
+        : !lockedFacilityResolved
+          ? "pin-checking"
+          : !lockedFacility
+            ? "no-facility"
+            : !activeInmatePin
+              ? "no-pin"
+              : pinCheckQuery.isLoading
+                ? "pin-checking"
+                : pinCheckQuery.data?.available === false
+                  ? "pin-taken"
+                  : null;
 
   const challengeQuery = useQuery({
     queryKey: QK.signupChallenge,
@@ -276,14 +312,26 @@ function SignInSignUpForm({
 
   // Debounced username availability check (sign-up only)
   useEffect(() => {
-    if (mode !== "sign-up") { setUsernameStatus("idle"); return; }
+    if (mode !== "sign-up") {
+      setUsernameStatus("idle");
+      return;
+    }
     const uname = username.trim().toLowerCase();
-    if (!uname) { setUsernameStatus("idle"); return; }
-    if (!/^[A-Za-z0-9_]{3,32}$/.test(uname)) { setUsernameStatus("invalid"); return; }
+    if (!uname) {
+      setUsernameStatus("idle");
+      return;
+    }
+    if (!/^[A-Za-z0-9_]{3,32}$/.test(uname)) {
+      setUsernameStatus("invalid");
+      return;
+    }
     setUsernameStatus("checking");
     const handle = setTimeout(async () => {
       const { data, error } = await supabase.rpc("username_exists", { _username: uname });
-      if (error) { setUsernameStatus("idle"); return; }
+      if (error) {
+        setUsernameStatus("idle");
+        return;
+      }
       setUsernameStatus(data ? "taken" : "available");
     }, 400);
     return () => clearTimeout(handle);
@@ -331,7 +379,11 @@ function SignInSignUpForm({
         let id: string;
         if (lockedFacility) {
           const input = signinPin.trim();
-          if (!input) { toast.error("PIN or email is required"); setBusy(false); return; }
+          if (!input) {
+            toast.error("PIN or email is required");
+            setBusy(false);
+            return;
+          }
           if (input.includes("@")) {
             // Admin email login — bypass facility/PIN logic entirely
             id = input.toLowerCase();
@@ -341,7 +393,9 @@ function SignInSignUpForm({
               setBusy(false);
               return;
             }
-            id = `${lockedFacility.value.slice(0, 20)}_${input}`.toLowerCase().replace(/[^a-z0-9_]/g, "_");
+            id = `${lockedFacility.value.slice(0, 20)}_${input}`
+              .toLowerCase()
+              .replace(/[^a-z0-9_]/g, "_");
           }
         } else {
           id = username.trim();
@@ -351,7 +405,9 @@ function SignInSignUpForm({
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(t("signup.invalidLogin"));
 
-        const { data: { user: authedUser } } = await supabase.auth.getUser();
+        const {
+          data: { user: authedUser },
+        } = await supabase.auth.getUser();
         if (authedUser) {
           const { data: roleRows } = await supabase
             .from("user_roles")
@@ -401,10 +457,11 @@ function SignInSignUpForm({
     <>
       <div className="mb-8">
         <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
-          {mode === "sign-up"
-            ? <UserPlus className="h-7 w-7 text-[var(--color-accent)]" />
-            : <LogIn className="h-7 w-7 text-[var(--color-accent)]" />
-          }
+          {mode === "sign-up" ? (
+            <UserPlus className="h-7 w-7 text-[var(--color-accent)]" />
+          ) : (
+            <LogIn className="h-7 w-7 text-[var(--color-accent)]" />
+          )}
           {mode === "sign-up" ? t("signup.title") : t("signup.signInTitle")}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -412,7 +469,12 @@ function SignInSignUpForm({
         </p>
       </div>
 
-      <div className={cn("rounded-lg border border-border bg-[#fffdf8] px-6 pb-2", mode === "sign-up" ? "pt-6" : "pt-4")}>
+      <div
+        className={cn(
+          "rounded-lg border border-border bg-[#fffdf8] px-6 pb-2",
+          mode === "sign-up" ? "pt-6" : "pt-4",
+        )}
+      >
         {/* Block messages — sign-up only */}
         {mode === "sign-up" && !!signupBlockReason ? (
           <div className="pt-2 pb-6 space-y-2">
@@ -423,7 +485,8 @@ function SignInSignUpForm({
             )}
             {signupBlockReason === "no-pin" && (
               <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
-                A valid inmate PIN is required to sign up. Please use the link provided by your facility.
+                A valid inmate PIN is required to sign up. Please use the link provided by your
+                facility.
               </div>
             )}
             {signupBlockReason === "no-facility" && (
@@ -438,290 +501,370 @@ function SignInSignUpForm({
             )}
           </div>
         ) : (
-        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
-          {mode === "sign-up" && !signupBlockReason && (
-            <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
-              Please sign up using your <strong>correct, real information</strong>. Accurate details ensure you can receive credit in the future for participating in this program.
-            </div>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+            {mode === "sign-up" && !signupBlockReason && (
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
+                Please sign up using your <strong>correct, real information</strong>. Accurate
+                details ensure you can receive credit in the future for participating in this
+                program.
+              </div>
+            )}
 
-          {!(mode === "sign-up" && (signupBlockReason === "pin-taken" || signupBlockReason === "no-facility" || signupBlockReason === "no-pin" || signupBlockReason === "pin-checking")) && (
-            <>
-              {/* Username: hidden for sign-up (auto-derived) and facility sign-in (PIN field shown instead) */}
-              {derivedUsername && mode === "sign-up" ? null
-              : mode === "sign-in" && lockedFacility ? (
-              <div>
-                <label htmlFor="signin-pin" className="text-sm font-medium">PIN or email</label>
-                <input
-                  id="signin-pin"
-                  type="text"
-                  required
-                  value={signinPin}
-                  onChange={(e) => { setSigninPin(e.target.value); setFacilityErrorKey(null); }}
-                  {...kbSigninPin}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="Enter your PIN or email"
-                  autoComplete="off"
-                />
-              </div>
-              ) : (
-              <div>
-                <label htmlFor="signup-username" className="text-sm font-medium">
-                  {mode === "sign-up" ? t("signup.username") : t("signup.usernameOrEmail")}
-                </label>
-                <input
-                  id="signup-username"
-                  type="text"
-                  required
-                  minLength={3}
-                  maxLength={mode === "sign-up" ? 32 : 254}
-                  pattern={mode === "sign-up" ? "[A-Za-z0-9_]{3,32}" : undefined}
-                  value={username}
-                  onChange={(e) => { setUsername(e.target.value); setFacilityErrorKey(null); }} {...kbUsername}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder={mode === "sign-up" ? t("signup.usernamePlaceholder") : undefined}
-                  autoComplete={mode === "sign-up" ? "username" : "username email"}
-                />
-                {mode === "sign-up" && usernameStatus === "checking" && (
-                  <p className="mt-1 text-xs text-muted-foreground">{t("signup.usernameChecking")}</p>
-                )}
-                {mode === "sign-up" && usernameStatus === "available" && (
-                  <p className="mt-1 text-xs text-[var(--color-accent)]">{t("signup.usernameAvailable")}</p>
-                )}
-                {mode === "sign-up" && usernameStatus === "taken" && (
-                  <p className="mt-1 text-xs text-destructive">{t("signup.usernameTaken")}</p>
-                )}
-              </div>
-              )}
-
-              <div>
-                <label htmlFor="signup-password" className="text-sm font-medium">{t("signup.password")}</label>
-                <PasswordInput
-                  id="signup-password"
-                  required
-                  minLength={8}
-                  maxLength={72}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)} {...kbPassword}
-                  autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
-                  wrapperClassName="mt-1"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                />
-                {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
-              </div>
-            </>
-          )}
-
-          {mode === "sign-up" && !signupBlockReason && (
-            <>
-              <div>
-                <label htmlFor="signup-confirm-password" className="text-sm font-medium">{t("signup.confirmPassword")}</label>
-                <PasswordInput
-                  id="signup-confirm-password"
-                  required
-                  minLength={8}
-                  maxLength={72}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)} {...kbConfirm}
-                  autoComplete="new-password"
-                  wrapperClassName="mt-1"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                />
-                {confirmPassword.length > 0 && confirmPassword !== password && (
-                  <p className="mt-1 text-xs text-destructive">{t("signup.passwordMismatch")}</p>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="signup-first-name" className="text-sm font-medium">First name</label>
-                  {lockedFirstName ? (
-                    <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
-                      <span>{firstName}</span>
-                      <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    </div>
-                  ) : (
+            {!(
+              mode === "sign-up" &&
+              (signupBlockReason === "pin-taken" ||
+                signupBlockReason === "no-facility" ||
+                signupBlockReason === "no-pin" ||
+                signupBlockReason === "pin-checking")
+            ) && (
+              <>
+                {/* Username: hidden for sign-up (auto-derived) and facility sign-in (PIN field shown instead) */}
+                {derivedUsername && mode === "sign-up" ? null : mode === "sign-in" &&
+                  lockedFacility ? (
+                  <div>
+                    <label htmlFor="signin-pin" className="text-sm font-medium">
+                      PIN or email
+                    </label>
                     <input
-                      id="signup-first-name"
+                      id="signin-pin"
                       type="text"
                       required
-                      minLength={1}
-                      maxLength={100}
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)} {...kbFirst}
+                      value={signinPin}
+                      onChange={(e) => {
+                        setSigninPin(e.target.value);
+                        setFacilityErrorKey(null);
+                      }}
+                      {...kbSigninPin}
                       className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      placeholder="Enter your PIN or email"
+                      autoComplete="off"
                     />
-                  )}
-                </div>
-                <div>
-                  <label htmlFor="signup-last-name" className="text-sm font-medium">Last name</label>
-                  {lockedLastName ? (
-                    <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
-                      <span>{lastName}</span>
-                      <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    </div>
-                  ) : (
-                    <input
-                      id="signup-last-name"
-                      type="text"
-                      required
-                      minLength={1}
-                      maxLength={100}
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)} {...kbLast}
-                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    />
-                  )}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium">{t("signup.facility")}</label>
-                {lockedFacility ? (
-                  <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
-                    <span>{lockedFacility.label}</span>
-                    <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   </div>
                 ) : (
-                  <Popover open={facilityOpen} onOpenChange={setFacilityOpen}>
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        role="combobox"
-                        aria-expanded={facilityOpen}
-                        className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm font-normal hover:bg-muted/40"
-                      >
-                        <span className={cn(!facility && "text-muted-foreground")}>
-                          {(() => {
-                            const sel = facilities.find((f) => f.value === facility);
-                            if (!sel) return "Search and select your facility";
-                            const k = `facility.${sel.value}`;
-                            const tr = t(k as TranslationKey);
-                            return tr === k ? sel.label : tr;
-                          })()}
-                        </span>
-                        <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search facilities..." className="focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0" />
-                        <CommandList>
-                          <CommandEmpty>No facility found.</CommandEmpty>
-                          <CommandGroup>
-                            {facilities.map((f) => {
-                              const i18nKey = `facility.${f.value}`;
-                              const translated = t(i18nKey as TranslationKey);
-                              const display = translated === i18nKey ? f.label : translated;
-                              return (
-                                <CommandItem
-                                  key={f.value}
-                                  value={display}
-                                  onSelect={() => { setFacility(f.value); setFacilityOpen(false); }}
-                                >
-                                  <Check className={cn("mr-2 h-4 w-4", facility === f.value ? "opacity-100" : "opacity-0")} />
-                                  {display}
-                                </CommandItem>
-                              );
-                            })}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <div>
+                    <label htmlFor="signup-username" className="text-sm font-medium">
+                      {mode === "sign-up" ? t("signup.username") : t("signup.usernameOrEmail")}
+                    </label>
+                    <input
+                      id="signup-username"
+                      type="text"
+                      required
+                      minLength={3}
+                      maxLength={mode === "sign-up" ? 32 : 254}
+                      pattern={mode === "sign-up" ? "[A-Za-z0-9_]{3,32}" : undefined}
+                      value={username}
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+                        setFacilityErrorKey(null);
+                      }}
+                      {...kbUsername}
+                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      placeholder={mode === "sign-up" ? t("signup.usernamePlaceholder") : undefined}
+                      autoComplete={mode === "sign-up" ? "username" : "username email"}
+                    />
+                    {mode === "sign-up" && usernameStatus === "checking" && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t("signup.usernameChecking")}
+                      </p>
+                    )}
+                    {mode === "sign-up" && usernameStatus === "available" && (
+                      <p className="mt-1 text-xs text-[var(--color-accent)]">
+                        {t("signup.usernameAvailable")}
+                      </p>
+                    )}
+                    {mode === "sign-up" && usernameStatus === "taken" && (
+                      <p className="mt-1 text-xs text-destructive">{t("signup.usernameTaken")}</p>
+                    )}
+                  </div>
                 )}
+
+                <div>
+                  <label htmlFor="signup-password" className="text-sm font-medium">
+                    {t("signup.password")}
+                  </label>
+                  <PasswordInput
+                    id="signup-password"
+                    required
+                    minLength={8}
+                    maxLength={72}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    {...kbPassword}
+                    autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
+                    wrapperClassName="mt-1"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                  {mode === "sign-up" && <PasswordStrengthMeter password={password} />}
+                </div>
+              </>
+            )}
+
+            {mode === "sign-up" && !signupBlockReason && (
+              <>
+                <div>
+                  <label htmlFor="signup-confirm-password" className="text-sm font-medium">
+                    {t("signup.confirmPassword")}
+                  </label>
+                  <PasswordInput
+                    id="signup-confirm-password"
+                    required
+                    minLength={8}
+                    maxLength={72}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    {...kbConfirm}
+                    autoComplete="new-password"
+                    wrapperClassName="mt-1"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  />
+                  {confirmPassword.length > 0 && confirmPassword !== password && (
+                    <p className="mt-1 text-xs text-destructive">{t("signup.passwordMismatch")}</p>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="signup-first-name" className="text-sm font-medium">
+                      First name
+                    </label>
+                    {lockedFirstName ? (
+                      <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
+                        <span>{firstName}</span>
+                        <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <input
+                        id="signup-first-name"
+                        type="text"
+                        required
+                        minLength={1}
+                        maxLength={100}
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        {...kbFirst}
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <label htmlFor="signup-last-name" className="text-sm font-medium">
+                      Last name
+                    </label>
+                    {lockedLastName ? (
+                      <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
+                        <span>{lastName}</span>
+                        <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <input
+                        id="signup-last-name"
+                        type="text"
+                        required
+                        minLength={1}
+                        maxLength={100}
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        {...kbLast}
+                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      />
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">{t("signup.facility")}</label>
+                  {lockedFacility ? (
+                    <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
+                      <span>{lockedFacility.label}</span>
+                      <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <Popover open={facilityOpen} onOpenChange={setFacilityOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          role="combobox"
+                          aria-expanded={facilityOpen}
+                          className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm font-normal hover:bg-muted/40"
+                        >
+                          <span className={cn(!facility && "text-muted-foreground")}>
+                            {(() => {
+                              const sel = facilities.find((f) => f.value === facility);
+                              if (!sel) return "Search and select your facility";
+                              const k = `facility.${sel.value}`;
+                              const tr = t(k as TranslationKey);
+                              return tr === k ? sel.label : tr;
+                            })()}
+                          </span>
+                          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-[--radix-popover-trigger-width] p-0"
+                        align="start"
+                      >
+                        <Command>
+                          <CommandInput
+                            placeholder="Search facilities..."
+                            className="focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                          />
+                          <CommandList>
+                            <CommandEmpty>No facility found.</CommandEmpty>
+                            <CommandGroup>
+                              {facilities.map((f) => {
+                                const i18nKey = `facility.${f.value}`;
+                                const translated = t(i18nKey as TranslationKey);
+                                const display = translated === i18nKey ? f.label : translated;
+                                return (
+                                  <CommandItem
+                                    key={f.value}
+                                    value={display}
+                                    onSelect={() => {
+                                      setFacility(f.value);
+                                      setFacilityOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        facility === f.value ? "opacity-100" : "opacity-0",
+                                      )}
+                                    />
+                                    {display}
+                                  </CommandItem>
+                                );
+                              })}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Inmate PIN</label>
+                  <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
+                    <span className="font-mono">{activeInmatePin}</span>
+                    <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="signup-verification" className="text-sm font-medium">
+                    {t("signup.verification")}{" "}
+                    {challengeQuery.data
+                      ? t("signup.verificationQuestion", {
+                          a: challengeQuery.data.a,
+                          b: challengeQuery.data.b,
+                        })
+                      : t("signup.loading")}
+                  </label>
+                  <input
+                    id="signup-verification"
+                    type="number"
+                    required
+                    value={answer}
+                    onChange={(e) => {
+                      setAnswer(e.target.value);
+                      setAnswerError(null);
+                    }}
+                    {...kbAnswer}
+                    className={`mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm ${answerError ? "border-destructive" : "border-input"}`}
+                  />
+                  {answerError && <p className="mt-1 text-xs text-destructive">{answerError}</p>}
+                </div>
+              </>
+            )}
+
+            {facilityErrorKey && mode === "sign-in" && (
+              <div className="!mt-6 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
+                {t(facilityErrorKey as any)}
               </div>
-              <div>
-                <label className="text-sm font-medium">Inmate PIN</label>
-                <div className="mt-1 w-full inline-flex items-center justify-between rounded-md border border-input bg-muted/40 px-3 py-2 text-sm cursor-not-allowed opacity-80">
-                  <span className="font-mono">{activeInmatePin}</span>
-                  <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            )}
+
+            {(!signupBlockReason || mode !== "sign-up") && (
+              <div className="!mt-6 space-y-4">
+                {mode === "sign-up" && (
+                  <details className="group rounded-md border border-border bg-muted/30">
+                    <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors list-none">
+                      {t("signup.disclosureHeading")}
+                      <ChevronDown className="h-3.5 w-3.5 flex-shrink-0 transition-transform group-open:rotate-180" />
+                    </summary>
+                    <div className="px-4 pb-4 pt-1">
+                      <p className="whitespace-pre-wrap text-xs text-muted-foreground leading-relaxed">
+                        {t("signup.disclosureBody")}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-3 text-xs">
+                        <a
+                          href="/privacy"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[var(--color-accent)] hover:underline"
+                        >
+                          {t("footer.privacy")}
+                        </a>
+                        <a
+                          href="/terms"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[var(--color-accent)] hover:underline"
+                        >
+                          {t("footer.terms")}
+                        </a>
+                      </div>
+                    </div>
+                  </details>
+                )}
+                {mode === "sign-up" && (
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={disclosureChecked}
+                      onChange={(e) => setDisclosureChecked(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-[var(--color-accent)] cursor-pointer"
+                    />
+                    <span className="text-xs text-muted-foreground leading-snug">
+                      {t("signup.disclosureCheckbox")}
+                    </span>
+                  </label>
+                )}
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={
+                      busy ||
+                      (mode === "sign-up" &&
+                        (!challengeQuery.data ||
+                          (!derivedUsername &&
+                            (usernameStatus === "taken" || usernameStatus === "checking")) ||
+                          !disclosureChecked))
+                    }
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  >
+                    {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {busy
+                      ? "Saving…"
+                      : mode === "sign-up"
+                        ? t("signup.createAccount")
+                        : t("signup.signIn")}
+                  </button>
                 </div>
               </div>
-              <div>
-                <label htmlFor="signup-verification" className="text-sm font-medium">
-                  {t("signup.verification")}{" "}
-                  {challengeQuery.data
-                    ? t("signup.verificationQuestion", { a: challengeQuery.data.a, b: challengeQuery.data.b })
-                    : t("signup.loading")}
-                </label>
+            )}
+            {/* honeypot — anchored off-screen so it never adds layout space */}
+            <div
+              className="!mt-0 absolute top-0 -left-[9999px] h-px w-px overflow-hidden"
+              aria-hidden
+            >
+              <label>
+                {t("signup.honeypot")}
                 <input
-                  id="signup-verification"
-                  type="number"
-                  required
-                  value={answer}
-                  onChange={(e) => { setAnswer(e.target.value); setAnswerError(null); }} {...kbAnswer}
-                  className={`mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm ${answerError ? "border-destructive" : "border-input"}`}
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
                 />
-                {answerError && (
-                  <p className="mt-1 text-xs text-destructive">{answerError}</p>
-                )}
-              </div>
-            </>
-          )}
-
-          {facilityErrorKey && mode === "sign-in" && (
-            <div className="!mt-6 rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
-              {t(facilityErrorKey as any)}
+              </label>
             </div>
-          )}
-
-          {(!signupBlockReason || mode !== "sign-up") && (
-            <div className="!mt-6 space-y-4">
-              {mode === "sign-up" && (
-                <details className="group rounded-md border border-border bg-muted/30">
-                  <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors list-none">
-                    {t("signup.disclosureHeading")}
-                    <ChevronDown className="h-3.5 w-3.5 flex-shrink-0 transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="px-4 pb-4 pt-1">
-                    <p className="whitespace-pre-wrap text-xs text-muted-foreground leading-relaxed">
-                      {t("signup.disclosureBody")}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-3 text-xs">
-                      <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] hover:underline">{t("footer.privacy")}</a>
-                      <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-[var(--color-accent)] hover:underline">{t("footer.terms")}</a>
-                    </div>
-                  </div>
-                </details>
-              )}
-              {mode === "sign-up" && (
-                <label className="flex items-start gap-2.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={disclosureChecked}
-                    onChange={(e) => setDisclosureChecked(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-[var(--color-accent)] cursor-pointer"
-                  />
-                  <span className="text-xs text-muted-foreground leading-snug">
-                    {t("signup.disclosureCheckbox")}
-                  </span>
-                </label>
-              )}
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={busy || (mode === "sign-up" && (!challengeQuery.data || (!derivedUsername && (usernameStatus === "taken" || usernameStatus === "checking")) || !disclosureChecked))}
-                  className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-                >
-                  {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {busy ? "Saving…" : mode === "sign-up" ? t("signup.createAccount") : t("signup.signIn")}
-                </button>
-              </div>
-            </div>
-          )}
-          {/* honeypot — anchored off-screen so it never adds layout space */}
-          <div className="!mt-0 absolute top-0 -left-[9999px] h-px w-px overflow-hidden" aria-hidden>
-            <label>
-              {t("signup.honeypot")}
-              <input
-                type="text"
-                tabIndex={-1}
-                autoComplete="off"
-                value={honeypot}
-                onChange={(e) => setHoneypot(e.target.value)}
-              />
-            </label>
-          </div>
-        </form>
+          </form>
         )}
       </div>
 
@@ -856,7 +999,9 @@ function ResetPasswordForm({
         {resetStep === 1 ? (
           <form onSubmit={handleResetStart} className="space-y-4">
             <div>
-              <label htmlFor="reset-username" className="text-sm font-medium">{t("signup.username")}</label>
+              <label htmlFor="reset-username" className="text-sm font-medium">
+                {t("signup.username")}
+              </label>
               <input
                 id="reset-username"
                 type="text"
@@ -865,7 +1010,11 @@ function ResetPasswordForm({
                 maxLength={32}
                 pattern="[A-Za-z0-9_]{3,32}"
                 value={resetUsername}
-                onChange={(e) => { setResetUsername(e.target.value); setResetErrorKey(null); }} {...kbResetUsername}
+                onChange={(e) => {
+                  setResetUsername(e.target.value);
+                  setResetErrorKey(null);
+                }}
+                {...kbResetUsername}
                 autoComplete="username"
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
@@ -899,7 +1048,8 @@ function ResetPasswordForm({
                 minLength={2}
                 maxLength={200}
                 value={resetAnswer1}
-                onChange={(e) => setResetAnswer1(e.target.value)} {...kbResetA1}
+                onChange={(e) => setResetAnswer1(e.target.value)}
+                {...kbResetA1}
                 autoComplete="off"
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
@@ -915,20 +1065,24 @@ function ResetPasswordForm({
                 minLength={2}
                 maxLength={200}
                 value={resetAnswer2}
-                onChange={(e) => setResetAnswer2(e.target.value)} {...kbResetA2}
+                onChange={(e) => setResetAnswer2(e.target.value)}
+                {...kbResetA2}
                 autoComplete="off"
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label htmlFor="reset-new-password" className="text-sm font-medium">{t("security.newPassword")}</label>
+              <label htmlFor="reset-new-password" className="text-sm font-medium">
+                {t("security.newPassword")}
+              </label>
               <PasswordInput
                 id="reset-new-password"
                 required
                 minLength={8}
                 maxLength={72}
                 value={resetNewPassword}
-                onChange={(e) => setResetNewPassword(e.target.value)} {...kbResetNew}
+                onChange={(e) => setResetNewPassword(e.target.value)}
+                {...kbResetNew}
                 autoComplete="new-password"
                 wrapperClassName="mt-1"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -936,14 +1090,17 @@ function ResetPasswordForm({
               <PasswordStrengthMeter password={resetNewPassword} />
             </div>
             <div>
-              <label htmlFor="reset-confirm-password" className="text-sm font-medium">{t("signup.confirmPassword")}</label>
+              <label htmlFor="reset-confirm-password" className="text-sm font-medium">
+                {t("signup.confirmPassword")}
+              </label>
               <PasswordInput
                 id="reset-confirm-password"
                 required
                 minLength={8}
                 maxLength={72}
                 value={resetConfirmPassword}
-                onChange={(e) => setResetConfirmPassword(e.target.value)} {...kbResetConfirm}
+                onChange={(e) => setResetConfirmPassword(e.target.value)}
+                {...kbResetConfirm}
                 autoComplete="new-password"
                 wrapperClassName="mt-1"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"

@@ -77,7 +77,7 @@ Shows how many content items are in the category (e.g., "8 items"). Only counts 
 **New content badge**
 If any items have been added to the category within the last 7 days and the user hasn't opened them yet, a "New content added" badge appears on the card. Once the user has opened those items, the badge disappears.
 
-**Progress bar** *(signed-in users only)*
+**Progress bar** _(signed-in users only)_
 For users who are logged in, a thin progress bar appears at the bottom of each card showing how many items in that category they have completed (e.g., "3 of 8 items"). The denominator reflects only trackable items — exempt informational items are excluded. This updates as they work through the content.
 
 Clicking anywhere on a category card takes the user into that category's content page.
@@ -121,17 +121,17 @@ The Privacy and Terms of Service links are in the footer rather than the main na
 
 When a user signs in, the main page gains additional features:
 
-| Feature | Not signed in | Signed in |
-|---|---|---|
-| Browse categories | ✓ | ✓ |
-| Search content | ✓ | ✓ |
-| See item counts | ✓ | ✓ |
-| See "New content" badges | ✓ | ✓ |
-| See progress bars on cards | — | ✓ |
-| Earn achievements | — | ✓ |
-| Bookmark resources | — | ✓ |
-| Rate resources (helpful / not helpful) | — | ✓ (after completing item) |
-| Access My Dashboard | — | ✓ |
-| Track content completion | — | ✓ |
-| See facility-specific messages | — | ✓ |
-| Sign out | — | ✓ |
+| Feature                                | Not signed in | Signed in                 |
+| -------------------------------------- | ------------- | ------------------------- |
+| Browse categories                      | ✓             | ✓                         |
+| Search content                         | ✓             | ✓                         |
+| See item counts                        | ✓             | ✓                         |
+| See "New content" badges               | ✓             | ✓                         |
+| See progress bars on cards             | —             | ✓                         |
+| Earn achievements                      | —             | ✓                         |
+| Bookmark resources                     | —             | ✓                         |
+| Rate resources (helpful / not helpful) | —             | ✓ (after completing item) |
+| Access My Dashboard                    | —             | ✓                         |
+| Track content completion               | —             | ✓                         |
+| See facility-specific messages         | —             | ✓                         |
+| Sign out                               | —             | ✓                         |

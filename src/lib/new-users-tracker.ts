@@ -34,5 +34,9 @@ function subscribe(fn: () => void) {
 }
 
 export function useLastSeenUsersAt(): string {
-  return useSyncExternalStore(subscribe, () => current, () => current);
+  return useSyncExternalStore(
+    subscribe,
+    () => current,
+    () => current,
+  );
 }

@@ -85,8 +85,14 @@ async function run() {
     .select("id, title, url, file_url, file_url_es, category_id")
     .eq("id", itemId)
     .maybeSingle();
-  if (error) { console.error("Failed to fetch item:", error.message); process.exit(1); }
-  if (!item) { console.error(`No content item found with id ${itemId}`); process.exit(1); }
+  if (error) {
+    console.error("Failed to fetch item:", error.message);
+    process.exit(1);
+  }
+  if (!item) {
+    console.error(`No content item found with id ${itemId}`);
+    process.exit(1);
+  }
 
   const { data: category } = await db
     .from("categories")
@@ -99,7 +105,10 @@ async function run() {
     .select("title, file_url, file_url_es, sort_order")
     .eq("content_item_id", itemId)
     .order("sort_order", { ascending: true });
-  if (chErr) { console.error("Failed to fetch chapters:", chErr.message); process.exit(1); }
+  if (chErr) {
+    console.error("Failed to fetch chapters:", chErr.message);
+    process.exit(1);
+  }
 
   const outRoot = process.argv[3] || "./downloads";
   const folderName = `${slugify(category?.slug ?? "category")}--${slugify(item.title)}`;
@@ -117,15 +126,19 @@ async function run() {
   const jobs = [];
   if (item.file_url) jobs.push({ label: "Main file", url: item.file_url, dir: enDir, index: 0 });
   else if (item.url) jobs.push({ label: "Main file", url: item.url, dir: enDir, index: 0 });
-  if (item.file_url_es) jobs.push({ label: "Main file (ES)", url: item.file_url_es, dir: esDir, index: 0 });
+  if (item.file_url_es)
+    jobs.push({ label: "Main file (ES)", url: item.file_url_es, dir: esDir, index: 0 });
 
   chapters.forEach((ch, i) => {
     const n = ch.sort_order ?? i + 1;
     if (ch.file_url) jobs.push({ label: ch.title, url: ch.file_url, dir: enDir, index: n });
-    if (ch.file_url_es) jobs.push({ label: `${ch.title} (ES)`, url: ch.file_url_es, dir: esDir, index: n });
+    if (ch.file_url_es)
+      jobs.push({ label: `${ch.title} (ES)`, url: ch.file_url_es, dir: esDir, index: n });
   });
 
-  let downloaded = 0, skipped = 0, failed = 0;
+  let downloaded = 0,
+    skipped = 0,
+    failed = 0;
 
   for (const job of jobs) {
     const filename = `${String(job.index).padStart(2, "0")}-${slugify(job.label)}.${extensionOf(job.url)}`;
@@ -151,4 +164,7 @@ async function run() {
   console.log(`Files saved under: ${outDir}`);
 }
 
-run().catch((e) => { console.error(e); process.exit(1); });
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

@@ -15,7 +15,6 @@ export type ContentChapter = {
   section_es: string | null;
 };
 
-
 export type HomePageMode = "default" | "custom";
 
 export type Category = {

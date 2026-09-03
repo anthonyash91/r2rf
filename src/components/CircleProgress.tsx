@@ -23,7 +23,14 @@ export function CircleProgress({
       {/* SVG is rotated -90° so the ring starts at 12 o'clock instead of 3 o'clock. */}
       <svg width={size} height={size} className="-rotate-90">
         {/* Track ring — always full circle at 15% accent opacity. */}
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} style={{ stroke: "color-mix(in oklab, var(--color-accent) 15%, transparent)" }} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          strokeWidth={stroke}
+          style={{ stroke: "color-mix(in oklab, var(--color-accent) 15%, transparent)" }}
+        />
         {/* Progress ring — dashoffset drives how much of the circumference is visible. */}
         <circle
           cx={size / 2}

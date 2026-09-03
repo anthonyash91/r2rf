@@ -33,7 +33,9 @@ export const listErrorLogs = createServerFn({ method: "POST" })
     if (error) throw new Error("Failed to load error logs");
 
     // Optionally enrich with usernames
-    const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id).filter(Boolean) as string[]));
+    const userIds = Array.from(
+      new Set((rows ?? []).map((r) => r.user_id).filter(Boolean) as string[]),
+    );
     let usernameById = new Map<string, string>();
     if (userIds.length) {
       const { data: profiles } = await supabaseAdmin
@@ -46,7 +48,7 @@ export const listErrorLogs = createServerFn({ method: "POST" })
     return {
       entries: (rows ?? []).map((r) => ({
         ...r,
-        username: r.user_id ? usernameById.get(r.user_id) ?? null : null,
+        username: r.user_id ? (usernameById.get(r.user_id) ?? null) : null,
       })),
     };
   });

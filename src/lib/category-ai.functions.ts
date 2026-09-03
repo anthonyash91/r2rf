@@ -21,37 +21,42 @@ function checkApiKey() {
 
 export const generateCategoryCopy = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ name: z.string().min(1).max(200) }).parse(input),
-  )
+  .inputValidator((input) => z.object({ name: z.string().min(1).max(200) }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdminOrContributor(context.userId);
     checkApiKey();
 
-    const msg = await anthropic.messages.create({
-      model: "claude-opus-4-7",
-      max_tokens: 512,
-      system: [
-        {
-          type: "text",
-          // User-supplied data is kept in the user turn below, never inline here,
-          // so injected instructions are treated as data rather than commands.
-          text: 'You write concise, polished copy for a content library\'s categories. The user will provide a category name. Always respond with strict JSON: {"tagline": string, "description": string}. The tagline is a short punchy line (max ~10 words). The description is 1–2 sentences (max ~240 chars). No quotes, no markdown.',
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-      messages: [
-        { role: "user", content: "Generate a tagline and description for this category name:" },
-        { role: "assistant", content: "Understood. Please provide the category name." },
-        { role: "user", content: data.name.slice(0, 300) },
-      ],
-    }).catch((err) => {
-      if (err instanceof Anthropic.RateLimitError) throw new Error("Rate limit reached. Try again in a moment.");
-      throw new Error(`AI error: ${err instanceof Error ? err.message : String(err)}`);
-    });
+    const msg = await anthropic.messages
+      .create({
+        model: "claude-opus-4-7",
+        max_tokens: 512,
+        system: [
+          {
+            type: "text",
+            // User-supplied data is kept in the user turn below, never inline here,
+            // so injected instructions are treated as data rather than commands.
+            text: 'You write concise, polished copy for a content library\'s categories. The user will provide a category name. Always respond with strict JSON: {"tagline": string, "description": string}. The tagline is a short punchy line (max ~10 words). The description is 1–2 sentences (max ~240 chars). No quotes, no markdown.',
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+        messages: [
+          { role: "user", content: "Generate a tagline and description for this category name:" },
+          { role: "assistant", content: "Understood. Please provide the category name." },
+          { role: "user", content: data.name.slice(0, 300) },
+        ],
+      })
+      .catch((err) => {
+        if (err instanceof Anthropic.RateLimitError)
+          throw new Error("Rate limit reached. Try again in a moment.");
+        throw new Error(`AI error: ${err instanceof Error ? err.message : String(err)}`);
+      });
 
     let parsed: { tagline?: string; description?: string } = {};
-    try { parsed = JSON.parse(extractText(msg)); } catch { parsed = {}; }
+    try {
+      parsed = JSON.parse(extractText(msg));
+    } catch {
+      parsed = {};
+    }
     return {
       tagline: (parsed.tagline ?? "").toString().trim(),
       description: (parsed.description ?? "").toString().trim(),
@@ -61,11 +66,13 @@ export const generateCategoryCopy = createServerFn({ method: "POST" })
 export const generateContentDescription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({
-      title: z.string().min(1).max(300),
-      type: z.string().max(100).optional(),
-      categoryName: z.string().max(200).optional(),
-    }).parse(input),
+    z
+      .object({
+        title: z.string().min(1).max(300),
+        type: z.string().max(100).optional(),
+        categoryName: z.string().max(200).optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context: ctx }) => {
     await assertAdminOrContributor(ctx.userId);
@@ -74,36 +81,45 @@ export const generateContentDescription = createServerFn({ method: "POST" })
     const context = [
       data.categoryName ? `Category: "${data.categoryName}".` : "",
       data.type ? `Content type: ${data.type}.` : "",
-    ].filter(Boolean).join(" ");
+    ]
+      .filter(Boolean)
+      .join(" ");
 
-    const msg = await anthropic.messages.create({
-      model: "claude-opus-4-7",
-      max_tokens: 512,
-      system: [
-        {
-          type: "text",
-          // User-supplied title and context are in the user turn, not the system prompt.
-          text: 'You write concise, polished descriptions for items in a content library. The user will provide an item title and optional context. Always respond with strict JSON: {"description": string}. The description is 1–2 sentences (max ~240 chars) summarizing what the item is about. No quotes, no markdown.',
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: "Generate a description for this content item." },
-            { type: "text", text: `Title: ${data.title.slice(0, 300)}` },
-            ...(context ? [{ type: "text" as const, text: context.slice(0, 300) }] : []),
-          ],
-        },
-      ],
-    }).catch((err) => {
-      if (err instanceof Anthropic.RateLimitError) throw new Error("Rate limit reached. Try again in a moment.");
-      throw new Error(`AI error: ${err instanceof Error ? err.message : String(err)}`);
-    });
+    const msg = await anthropic.messages
+      .create({
+        model: "claude-opus-4-7",
+        max_tokens: 512,
+        system: [
+          {
+            type: "text",
+            // User-supplied title and context are in the user turn, not the system prompt.
+            text: 'You write concise, polished descriptions for items in a content library. The user will provide an item title and optional context. Always respond with strict JSON: {"description": string}. The description is 1–2 sentences (max ~240 chars) summarizing what the item is about. No quotes, no markdown.',
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Generate a description for this content item." },
+              { type: "text", text: `Title: ${data.title.slice(0, 300)}` },
+              ...(context ? [{ type: "text" as const, text: context.slice(0, 300) }] : []),
+            ],
+          },
+        ],
+      })
+      .catch((err) => {
+        if (err instanceof Anthropic.RateLimitError)
+          throw new Error("Rate limit reached. Try again in a moment.");
+        throw new Error(`AI error: ${err instanceof Error ? err.message : String(err)}`);
+      });
 
     let parsed: { description?: string } = {};
-    try { parsed = JSON.parse(extractText(msg)); } catch { parsed = {}; }
+    try {
+      parsed = JSON.parse(extractText(msg));
+    } catch {
+      parsed = {};
+    }
     return {
       description: (parsed.description ?? "").toString().trim(),
     };
@@ -112,10 +128,12 @@ export const generateContentDescription = createServerFn({ method: "POST" })
 export const translateToSpanish = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({
-      fields: z.record(z.string().min(1).max(200), z.string().max(5000)),
-      context: z.string().max(500).optional(),
-    }).parse(input),
+    z
+      .object({
+        fields: z.record(z.string().min(1).max(200), z.string().max(5000)),
+        context: z.string().max(500).optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     // facilityUsers can translate their own facility banner messages, so
@@ -135,35 +153,49 @@ export const translateToSpanish = createServerFn({ method: "POST" })
 
     const payload = Object.fromEntries(entries);
 
-    const msg = await anthropic.messages.create({
-      model: "claude-opus-4-7",
-      max_tokens: 2048,
-      system: [
-        {
-          type: "text",
-          // User-supplied context and field values are in separate user turns so
-          // injected instructions are treated as data, not commands.
-          text: 'You are a professional translator. Translate English text values into natural, polished Latin American Spanish. Preserve tone, punctuation, capitalization style, and approximate length. Do not translate proper nouns, brand names, or URLs. Respond with strict JSON of the form {"fields": { <sameKey>: <spanishTranslation>, ... }} using the exact same keys you received. No markdown, no commentary.',
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: "Translate each value to Spanish. Keep the keys identical." },
-            ...(data.context ? [{ type: "text" as const, text: `Context (for tone reference only): ${data.context.slice(0, 500)}` }] : []),
-            { type: "text", text: JSON.stringify(payload) },
-          ],
-        },
-      ],
-    }).catch((err) => {
-      if (err instanceof Anthropic.RateLimitError) throw new Error("Rate limit reached. Try again in a moment.");
-      throw new Error(`AI error: ${err instanceof Error ? err.message : String(err)}`);
-    });
+    const msg = await anthropic.messages
+      .create({
+        model: "claude-opus-4-7",
+        max_tokens: 2048,
+        system: [
+          {
+            type: "text",
+            // User-supplied context and field values are in separate user turns so
+            // injected instructions are treated as data, not commands.
+            text: 'You are a professional translator. Translate English text values into natural, polished Latin American Spanish. Preserve tone, punctuation, capitalization style, and approximate length. Do not translate proper nouns, brand names, or URLs. Respond with strict JSON of the form {"fields": { <sameKey>: <spanishTranslation>, ... }} using the exact same keys you received. No markdown, no commentary.',
+            cache_control: { type: "ephemeral" },
+          },
+        ],
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Translate each value to Spanish. Keep the keys identical." },
+              ...(data.context
+                ? [
+                    {
+                      type: "text" as const,
+                      text: `Context (for tone reference only): ${data.context.slice(0, 500)}`,
+                    },
+                  ]
+                : []),
+              { type: "text", text: JSON.stringify(payload) },
+            ],
+          },
+        ],
+      })
+      .catch((err) => {
+        if (err instanceof Anthropic.RateLimitError)
+          throw new Error("Rate limit reached. Try again in a moment.");
+        throw new Error(`AI error: ${err instanceof Error ? err.message : String(err)}`);
+      });
 
     let parsed: any = {};
-    try { parsed = JSON.parse(extractText(msg)); } catch { parsed = {}; }
+    try {
+      parsed = JSON.parse(extractText(msg));
+    } catch {
+      parsed = {};
+    }
 
     const source: Record<string, unknown> =
       parsed && typeof parsed === "object" && parsed.fields && typeof parsed.fields === "object"
@@ -182,4 +214,3 @@ export const translateToSpanish = createServerFn({ method: "POST" })
     }
     return { fields: out };
   });
-

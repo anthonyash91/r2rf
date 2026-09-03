@@ -21,9 +21,8 @@ import appCss from "../styles.css?url";
 function NotFoundComponent() {
   // Preserve ?site= so the "Go home" link keeps the user inside their facility's context
   // rather than landing on the generic homepage.
-  const activeSite = typeof window !== "undefined"
-    ? window.sessionStorage.getItem("active-facility-slug")
-    : null;
+  const activeSite =
+    typeof window !== "undefined" ? window.sessionStorage.getItem("active-facility-slug") : null;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -51,7 +50,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   // Report the error to the server-side error log in addition to the console.
   // Effect runs on every new error so each distinct crash is recorded once.
-  useEffect(() => { reportError(error, { kind: "react.errorBoundary" }); }, [error]);
+  useEffect(() => {
+    reportError(error, { kind: "react.errorBoundary" });
+  }, [error]);
   const router = useRouter();
 
   return (
@@ -91,13 +92,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1" },
       { title: "Reentry to Recovery Content Library" },
-      { name: "description", content: "A content library app organizing resources into categories like health, parenting, and recovery." },
+      {
+        name: "description",
+        content:
+          "A content library app organizing resources into categories like health, parenting, and recovery.",
+      },
       { property: "og:title", content: "Reentry to Recovery Content Library" },
-      { property: "og:description", content: "A content library app organizing resources into categories like health, parenting, and recovery." },
+      {
+        property: "og:description",
+        content:
+          "A content library app organizing resources into categories like health, parenting, and recovery.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Reentry to Recovery Content Library" },
-      { name: "twitter:description", content: "A content library app organizing resources into categories like health, parenting, and recovery." },
+      {
+        name: "twitter:description",
+        content:
+          "A content library app organizing resources into categories like health, parenting, and recovery.",
+      },
     ],
     links: [
       {
@@ -129,20 +142,22 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   // Install window.onerror + unhandledrejection listeners exactly once at app boot.
-  useEffect(() => { installGlobalErrorReporter(); }, []);
+  useEffect(() => {
+    installGlobalErrorReporter();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthCheckingProvider>
-      <I18nProvider>
-        <OnScreenKeyboardProvider>
-          <ConfirmDialogProvider>
-            <Outlet />
-            <Toaster />
-            <RoleSwitcher />
-          </ConfirmDialogProvider>
-        </OnScreenKeyboardProvider>
-      </I18nProvider>
+        <I18nProvider>
+          <OnScreenKeyboardProvider>
+            <ConfirmDialogProvider>
+              <Outlet />
+              <Toaster />
+              <RoleSwitcher />
+            </ConfirmDialogProvider>
+          </OnScreenKeyboardProvider>
+        </I18nProvider>
       </AuthCheckingProvider>
     </QueryClientProvider>
   );

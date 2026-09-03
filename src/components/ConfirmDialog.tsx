@@ -77,8 +77,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const pendingLabel =
-    opts.pendingLabel ?? (opts.destructive ? "Deleting" : "Saving");
+  const pendingLabel = opts.pendingLabel ?? (opts.destructive ? "Deleting" : "Saving");
 
   return (
     <ConfirmContext.Provider value={confirm}>
@@ -121,7 +120,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
               )}
             >
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {pending ? `${pendingLabel}…` : opts.confirmLabel ?? "Confirm"}
+              {pending ? `${pendingLabel}…` : (opts.confirmLabel ?? "Confirm")}
             </button>
           </AlertDialogFooter>
         </AlertDialogContent>

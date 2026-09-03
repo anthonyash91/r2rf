@@ -23,11 +23,9 @@ try {
   }
 } catch {}
 
-const db = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
+const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
 
 const now = new Date().toISOString();
 const daysAgo = (n) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
@@ -47,10 +45,16 @@ async function fetchAll(table, columns, filters = {}) {
   const PAGE = 1000;
   const all = [];
   for (let from = 0; ; from += PAGE) {
-    let q = db.from(table).select(columns).range(from, from + PAGE - 1);
+    let q = db
+      .from(table)
+      .select(columns)
+      .range(from, from + PAGE - 1);
     for (const [col, val] of Object.entries(filters)) q = q.eq(col, val);
     const { data, error } = await q;
-    if (error) { console.error(`  ❌ fetchAll(${table}): ${error.message}`); break; }
+    if (error) {
+      console.error(`  ❌ fetchAll(${table}): ${error.message}`);
+      break;
+    }
     if (!data?.length) break;
     all.push(...data);
     if (data.length < PAGE) break;
@@ -62,20 +66,23 @@ async function fetchAll(table, columns, filters = {}) {
 async function loadAll() {
   console.log("Loading source data...");
 
-  const [facUserRows, profiles, logins, progress, engagement, items, categories] = await Promise.all([
-    fetchAll("user_roles", "user_id", { role: "facilityUser" }),
-    fetchAll("user_profiles", "user_id, facility, created_at", { is_synthetic: false }),
-    fetchAll("user_logins", "user_id, login_date"),
-    fetchAll("user_content_progress", "user_id, content_item_id, category_id"),
-    fetchAll("user_content_engagement", "user_id, category_id, session_seconds"),
-    fetchAll("content_items", "id, category_id", { published: true }),
-    fetchAll("categories", "id", { published: true }),
-  ]);
+  const [facUserRows, profiles, logins, progress, engagement, items, categories] =
+    await Promise.all([
+      fetchAll("user_roles", "user_id", { role: "facilityUser" }),
+      fetchAll("user_profiles", "user_id, facility, created_at", { is_synthetic: false }),
+      fetchAll("user_logins", "user_id, login_date"),
+      fetchAll("user_content_progress", "user_id, content_item_id, category_id"),
+      fetchAll("user_content_engagement", "user_id, category_id, session_seconds"),
+      fetchAll("content_items", "id, category_id", { published: true }),
+      fetchAll("categories", "id", { published: true }),
+    ]);
 
   const facilityUserSet = new Set(facUserRows.map((r) => r.user_id));
   const realProfiles = profiles.filter((p) => !facilityUserSet.has(p.user_id));
 
-  console.log(`  Profiles: ${realProfiles.length}, Logins: ${logins.length}, Progress: ${progress.length}, Engagement: ${engagement.length}`);
+  console.log(
+    `  Profiles: ${realProfiles.length}, Logins: ${logins.length}, Progress: ${progress.length}, Engagement: ${engagement.length}`,
+  );
 
   return { realProfiles, logins, progress, engagement, items, categories, facilityUserSet };
 }
@@ -84,7 +91,7 @@ async function loadAll() {
 async function refreshFacilityStats({ realProfiles, logins, progress, engagement }) {
   console.log("\n📊 Refreshing facility_stats...");
 
-  const d7  = daysAgo(7);
+  const d7 = daysAgo(7);
   const d30 = daysAgo(30);
 
   // Index logins by user
@@ -109,7 +116,10 @@ async function refreshFacilityStats({ realProfiles, logins, progress, engagement
   }
 
   // Total items per category (for completion rate)
-  const { data: catItems } = await db.from("content_items").select("id, category_id").eq("published", true);
+  const { data: catItems } = await db
+    .from("content_items")
+    .select("id, category_id")
+    .eq("published", true);
   const itemsInCat = {};
   for (const ci of catItems ?? []) {
     itemsInCat[ci.category_id] = (itemsInCat[ci.category_id] ?? 0) + 1;
@@ -138,15 +148,18 @@ async function refreshFacilityStats({ realProfiles, logins, progress, engagement
     const userIds = fProfiles.map((p) => p.user_id);
     const totalUsers = userIds.length;
 
-    let active7 = 0, active30 = 0, totalSession = 0, totalCompletions = 0;
+    let active7 = 0,
+      active30 = 0,
+      totalSession = 0,
+      totalCompletions = 0;
     const completionRates = [];
 
     for (const uid of userIds) {
       const userLogins = loginsByUser[uid] ?? [];
-      if (userLogins.some((d) => d >= d7))  active7++;
+      if (userLogins.some((d) => d >= d7)) active7++;
       if (userLogins.some((d) => d >= d30)) active30++;
 
-      totalSession     += sessionByUser[uid] ?? 0;
+      totalSession += sessionByUser[uid] ?? 0;
       totalCompletions += progressByUser[uid] ?? 0;
 
       // Per-user completion rate (items completed / total available)
@@ -157,18 +170,18 @@ async function refreshFacilityStats({ realProfiles, logins, progress, engagement
     }
 
     const avgCompletionRate = completionRates.length
-      ? Math.round(completionRates.reduce((a, b) => a + b, 0) / completionRates.length * 10) / 10
+      ? Math.round((completionRates.reduce((a, b) => a + b, 0) / completionRates.length) * 10) / 10
       : null;
 
     rows.push({
-      facility_value:       facilityValue,
-      total_users:          totalUsers,
-      active_users_7d:      active7,
-      active_users_30d:     active30,
-      avg_completion_rate:  avgCompletionRate,
+      facility_value: facilityValue,
+      total_users: totalUsers,
+      active_users_7d: active7,
+      active_users_30d: active30,
+      avg_completion_rate: avgCompletionRate,
       total_session_seconds: totalSession,
       items_completed_total: totalCompletions,
-      updated_at:           now,
+      updated_at: now,
     });
   }
 
@@ -209,12 +222,12 @@ async function refreshUserStats({ realProfiles, logins, progress, engagement }) 
   }
 
   const rows = realProfiles.map((p) => ({
-    user_id:               p.user_id,
-    items_completed:       completedByUser[p.user_id] ?? 0,
-    items_started:         startedCatsByUser[p.user_id]?.size ?? 0,
+    user_id: p.user_id,
+    items_completed: completedByUser[p.user_id] ?? 0,
+    items_started: startedCatsByUser[p.user_id]?.size ?? 0,
     total_session_seconds: sessionByUser[p.user_id] ?? 0,
-    facility_percentile:   percentileMap[p.user_id] ?? 0,
-    updated_at:            now,
+    facility_percentile: percentileMap[p.user_id] ?? 0,
+    updated_at: now,
   }));
 
   await upsertAll("user_stats", rows, "user_id");
@@ -251,11 +264,11 @@ async function refreshRetention({ realProfiles, logins }) {
 
   const rows = Object.entries(byFacility).map(([facilityValue, fProfs]) => ({
     facility_value: facilityValue === "__all__" ? null : facilityValue,
-    total_users:    fProfs.length,
-    day7_rate:      retentionRate(fProfs, 7),
-    day30_rate:     retentionRate(fProfs, 30),
-    day60_rate:     retentionRate(fProfs, 60),
-    updated_at:     now,
+    total_users: fProfs.length,
+    day7_rate: retentionRate(fProfs, 7),
+    day30_rate: retentionRate(fProfs, 30),
+    day60_rate: retentionRate(fProfs, 60),
+    updated_at: now,
   }));
 
   await db.from("analytics_retention").delete().gte("updated_at", "2000-01-01");
@@ -272,11 +285,11 @@ async function refreshWeeklyGrowth({ realProfiles, logins }) {
   // Last 12 weeks
   const weeks = [];
   for (let i = 11; i >= 0; i--) {
-    const end   = new Date(Date.now() - i * 7 * 86_400_000);
+    const end = new Date(Date.now() - i * 7 * 86_400_000);
     const start = new Date(end.getTime() - 7 * 86_400_000);
     weeks.push({
       week_start: start.toISOString().slice(0, 10),
-      week_end:   end.toISOString().slice(0, 10),
+      week_end: end.toISOString().slice(0, 10),
     });
   }
 
@@ -296,19 +309,19 @@ async function refreshWeeklyGrowth({ realProfiles, logins }) {
   for (const [facilityValue, fProfs] of Object.entries(byFacility)) {
     for (const { week_start, week_end } of weeks) {
       const newSignups = fProfs.filter(
-        (p) => p.created_at?.slice(0, 10) >= week_start && p.created_at?.slice(0, 10) < week_end
+        (p) => p.created_at?.slice(0, 10) >= week_start && p.created_at?.slice(0, 10) < week_end,
       ).length;
 
       const activeUsers = fProfs.filter((p) =>
-        (loginsByUser[p.user_id] ?? []).some((d) => d >= week_start && d < week_end)
+        (loginsByUser[p.user_id] ?? []).some((d) => d >= week_start && d < week_end),
       ).length;
 
       rows.push({
         facility_value: facilityValue === "__all__" ? null : facilityValue,
-        week_ending:  week_end,
-        signups:      newSignups,
+        week_ending: week_end,
+        signups: newSignups,
         active_users: activeUsers,
-        updated_at:   now,
+        updated_at: now,
       });
     }
   }
@@ -362,7 +375,8 @@ async function refreshProgramCompletion({ realProfiles, progress, items, categor
 
     for (const [facilityValue, fProfs] of Object.entries(byFacility)) {
       const userIds = fProfs.map((p) => p.user_id);
-      let engaged = 0, completed = 0;
+      let engaged = 0,
+        completed = 0;
 
       for (const uid of userIds) {
         const key = `${uid}__${cat.id}`;
@@ -375,14 +389,14 @@ async function refreshProgramCompletion({ realProfiles, progress, items, categor
       if (!engaged) continue;
 
       rows.push({
-        category_id:    cat.id,
+        category_id: cat.id,
         facility_value: facilityValue === "__all__" ? null : facilityValue,
-        name:           catNames[cat.id] ?? null,
-        total_items:    catItemSet.size,
-        users_engaged:  engaged,
+        name: catNames[cat.id] ?? null,
+        total_items: catItemSet.size,
+        users_engaged: engaged,
         users_completed: completed,
         completion_rate: Math.round((completed / engaged) * 1000) / 10,
-        updated_at:     now,
+        updated_at: now,
       });
     }
   }
@@ -420,4 +434,7 @@ async function main() {
   console.log("\n✅ Nightly refresh complete.");
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

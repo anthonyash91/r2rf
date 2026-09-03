@@ -14,7 +14,9 @@ const USER_ID_CACHE_KEY = "auth_current_user_id";
 let simulatedRole: SimulatedRole | null = null;
 try {
   simulatedRole = (localStorage.getItem(SIM_KEY) as SimulatedRole) ?? null;
-} catch { /* SSR / no window */ }
+} catch {
+  /* SSR / no window */
+}
 
 // Read roles from sessionStorage synchronously — eliminates the blank flash
 // between page load and the first async DB roles fetch completing.
@@ -22,23 +24,35 @@ function readCachedRoles(): AppRole[] {
   try {
     const raw = sessionStorage.getItem(ROLES_CACHE_KEY);
     return raw ? (JSON.parse(raw) as AppRole[]) : [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 function writeCachedRoles(roles: AppRole[]) {
-  try { sessionStorage.setItem(ROLES_CACHE_KEY, JSON.stringify(roles)); } catch { /* ignore */ }
+  try {
+    sessionStorage.setItem(ROLES_CACHE_KEY, JSON.stringify(roles));
+  } catch {
+    /* ignore */
+  }
 }
 
 function clearCachedRoles() {
   try {
     sessionStorage.removeItem(ROLES_CACHE_KEY);
     sessionStorage.removeItem(USER_ID_CACHE_KEY);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 /** Read the logged-in user's ID synchronously from sessionStorage. */
 export function getCachedUserId(): string | null {
-  try { return sessionStorage.getItem(USER_ID_CACHE_KEY); } catch { return null; }
+  try {
+    return sessionStorage.getItem(USER_ID_CACHE_KEY);
+  } catch {
+    return null;
+  }
 }
 
 const listeners = new Set<() => void>();
@@ -48,7 +62,9 @@ export function setSimulatedRole(role: SimulatedRole | null) {
   try {
     if (role) localStorage.setItem(SIM_KEY, role);
     else localStorage.removeItem(SIM_KEY);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   listeners.forEach((fn) => fn());
 }
 
@@ -71,7 +87,9 @@ export function useAuth() {
 
   useEffect(() => {
     listeners.add(forceUpdate);
-    return () => { listeners.delete(forceUpdate); };
+    return () => {
+      listeners.delete(forceUpdate);
+    };
   }, []);
 
   function loadRoles(userId: string) {
@@ -80,18 +98,26 @@ export function useAuth() {
       .select("role")
       .eq("user_id", userId)
       .then(({ data }) => {
-        const userRoles = ((data ?? []).map((r: any) => r.role)) as AppRole[];
+        const userRoles = (data ?? []).map((r: any) => r.role) as AppRole[];
         setRoles(userRoles);
         setRolesLoaded(true);
         writeCachedRoles(userRoles);
-        try { sessionStorage.setItem(USER_ID_CACHE_KEY, userId); } catch { /* ignore */ }
+        try {
+          sessionStorage.setItem(USER_ID_CACHE_KEY, userId);
+        } catch {
+          /* ignore */
+        }
         if (userRoles.includes("admin") || userRoles.includes("contributor")) {
           setActiveFacilitySlug(null);
         }
         // If this user is not a tester, erase any leftover simulation key so
         // it can never grant elevated access to a non-tester account.
         if (!userRoles.includes("tester")) {
-          try { localStorage.removeItem(SIM_KEY); } catch { /* ignore */ }
+          try {
+            localStorage.removeItem(SIM_KEY);
+          } catch {
+            /* ignore */
+          }
           simulatedRole = null;
           listeners.forEach((fn) => fn());
         }
@@ -107,19 +133,25 @@ export function useAuth() {
     const key = `login-logged:${userId}:${login_date}`;
     try {
       if (typeof window !== "undefined" && window.sessionStorage.getItem(key)) return;
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     supabase
       .from("user_logins")
       .upsert({ user_id: userId, login_date }, { onConflict: "user_id,login_date" })
       .then(() => {
         try {
           if (typeof window !== "undefined") window.sessionStorage.setItem(key, "1");
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       });
   }
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       if (s?.user) {
         setTimeout(() => loadRoles(s.user.id), 0);
@@ -150,17 +182,18 @@ export function useAuth() {
   const isTester = roles.includes("tester");
   const sim = isTester ? simulatedRole : null;
 
-  const isAdmin        = sim ? sim === "admin"        : (!isTester && roles.includes("admin"));
-  const isContributor  = sim ? sim === "contributor"  : (!isTester && roles.includes("contributor"));
-  const isUser         = sim ? sim === "user"         : (!isTester && roles.includes("user"));
-  const isFacilityUser = sim ? sim === "facilityUser" : (!isTester && roles.includes("facilityUser"));
+  const isAdmin = sim ? sim === "admin" : !isTester && roles.includes("admin");
+  const isContributor = sim ? sim === "contributor" : !isTester && roles.includes("contributor");
+  const isUser = sim ? sim === "user" : !isTester && roles.includes("user");
+  const isFacilityUser = sim ? sim === "facilityUser" : !isTester && roles.includes("facilityUser");
 
   const simFromStorage = simulatedRole;
-  const storageGrantsAdmin = isTester && !!session?.user && (
-    simFromStorage === "admin" ||
-    simFromStorage === "contributor" ||
-    simFromStorage === "facilityUser"
-  );
+  const storageGrantsAdmin =
+    isTester &&
+    !!session?.user &&
+    (simFromStorage === "admin" ||
+      simFromStorage === "contributor" ||
+      simFromStorage === "facilityUser");
 
   return {
     session,

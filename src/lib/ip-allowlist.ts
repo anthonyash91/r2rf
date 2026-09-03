@@ -15,13 +15,14 @@ type EnabledCache = { enabled: boolean; expiresAt: number };
 let enabledCache: EnabledCache | null = null;
 let enabledInflight: Promise<boolean> | null = null;
 
-
 async function fetchTable(table: string): Promise<Set<string>> {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     // Config error — not transient. Fail closed; do not use stale cache.
-    console.error(`[ip-allowlist] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY (table=${table})`);
+    console.error(
+      `[ip-allowlist] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY (table=${table})`,
+    );
     return new Set();
   }
   const res = await fetch(`${url}/rest/v1/${table}?select=ip_address`, {
@@ -35,7 +36,6 @@ async function fetchTable(table: string): Promise<Set<string>> {
   const rows = (await res.json()) as Array<{ ip_address: string }>;
   return new Set(rows.map((r) => r.ip_address.trim()));
 }
-
 
 export async function getAllowedIps(): Promise<Set<string>> {
   const now = Date.now();
@@ -60,8 +60,6 @@ export async function getAllowedIps(): Promise<Set<string>> {
   return siteInflight;
 }
 
-
-
 export function invalidateAllowlistCache() {
   siteCache = null;
   customHomeCache = null;
@@ -78,7 +76,11 @@ async function fetchIpRestrictionEnabled(): Promise<boolean> {
       { headers: { apikey: key, Authorization: `Bearer ${key}` } },
     );
     if (!res.ok) {
-      console.error("[ip-allowlist] Fetch ip_restriction_enabled failed:", res.status, await res.text());
+      console.error(
+        "[ip-allowlist] Fetch ip_restriction_enabled failed:",
+        res.status,
+        await res.text(),
+      );
       return true;
     }
     const rows = (await res.json()) as Array<{ value: { enabled?: boolean } | null }>;
@@ -106,13 +108,14 @@ export async function isIpRestrictionEnabled(): Promise<boolean> {
   return enabledInflight;
 }
 
-
 async function fetchCustomHomeRestrictions(): Promise<Map<string, Set<string>>> {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
     // Config error — not transient. Do not use stale cache.
-    console.error("[ip-allowlist] Missing SUPABASE_URL/SERVICE_ROLE_KEY for custom-home restrictions");
+    console.error(
+      "[ip-allowlist] Missing SUPABASE_URL/SERVICE_ROLE_KEY for custom-home restrictions",
+    );
     return new Map();
   }
   const res = await fetch(`${url}/rest/v1/custom_home_pages?select=slug,allowed_ips`, {
@@ -163,7 +166,10 @@ export async function getCustomHomeRestrictions(): Promise<Map<string, Set<strin
  * match whichever platform this is actually deployed on.
  */
 function pickXffEntry(headerValue: string): string | null {
-  const parts = headerValue.split(",").map((s) => s.trim()).filter(Boolean);
+  const parts = headerValue
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
   if (!parts.length) return null;
   const position = process.env.TRUSTED_IP_XFF_POSITION === "rightmost" ? "rightmost" : "leftmost";
   return position === "rightmost" ? parts[parts.length - 1] : parts[0];
@@ -198,11 +204,12 @@ export function renderBlockedPage(
   scope: "site" | "auth" | "custom-home" = "site",
 ): string {
   const safeIp = (ip ?? "unknown").replace(/[<>&"']/g, "");
-  const message = scope === "auth"
-    ? "The login page is only available from approved IP addresses."
-    : scope === "custom-home"
-    ? "This page is only available from approved IP addresses. Contact the administrator to request access."
-    : "This site is only available from approved IP addresses. Contact your administrator to request access.";
+  const message =
+    scope === "auth"
+      ? "The login page is only available from approved IP addresses."
+      : scope === "custom-home"
+        ? "This page is only available from approved IP addresses. Contact the administrator to request access."
+        : "This site is only available from approved IP addresses. Contact your administrator to request access.";
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>Access restricted</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>
   body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0b0b0c;color:#e8e8ea;padding:24px}

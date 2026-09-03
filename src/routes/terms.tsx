@@ -24,7 +24,10 @@ export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
       { title: "Terms of Service — Reentry to Recovery" },
-      { name: "description", content: "Terms of Service for the Reentry to Recovery Content Library." },
+      {
+        name: "description",
+        content: "Terms of Service for the Reentry to Recovery Content Library.",
+      },
     ],
   }),
   component: TermsPage,

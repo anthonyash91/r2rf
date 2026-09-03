@@ -113,7 +113,10 @@ function AdminCertificatePage() {
         ) : (
           <form
             className="space-y-4"
-            onSubmit={(e) => { e.preventDefault(); saveMut.mutate(hero); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              saveMut.mutate(hero);
+            }}
           >
             <LabeledField label="Eyebrow (small pill above headline)">
               <input
@@ -165,7 +168,9 @@ function AdminCertificatePage() {
             <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5 mb-[30px]">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Preview</p>
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">EN</span>
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  EN
+                </span>
               </div>
               <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
@@ -189,7 +194,9 @@ function AdminCertificatePage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="font-display text-lg font-semibold">Spanish translation</h2>
-                    <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Leave blank to fall back to English when Spanish is selected.
+                    </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <LoadingButton
@@ -284,7 +291,9 @@ function AdminCertificatePage() {
                 <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5 mb-[30px]">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Preview</p>
-                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">ES</span>
+                    <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                      ES
+                    </span>
                   </div>
                   <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
@@ -292,10 +301,14 @@ function AdminCertificatePage() {
                   </div>
                   <h2 className="mt-4 font-display text-3xl font-bold tracking-tight">
                     {hero.heading_prefix_es || hero.heading_prefix}{" "}
-                    <span className="italic text-[var(--color-accent)]">{hero.heading_emphasis_es || hero.heading_emphasis}</span>{" "}
+                    <span className="italic text-[var(--color-accent)]">
+                      {hero.heading_emphasis_es || hero.heading_emphasis}
+                    </span>{" "}
                     {hero.heading_suffix_es || hero.heading_suffix}
                   </h2>
-                  <p className="mt-3 text-muted-foreground">{hero.subheading_es || hero.subheading}</p>
+                  <p className="mt-3 text-muted-foreground">
+                    {hero.subheading_es || hero.subheading}
+                  </p>
                   {(hero.callout_es || hero.callout) && (
                     <div className="mt-4 rounded-2xl border border-border bg-card px-5 py-4 text-sm font-medium text-foreground">
                       {hero.callout_es || hero.callout}
@@ -355,4 +368,3 @@ function AdminCertificatePage() {
     </div>
   );
 }
-

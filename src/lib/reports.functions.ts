@@ -41,20 +41,26 @@ async function fetchOpenersData(
   }
   if (userIdFilter !== null) {
     // Chunk large facility user lists to stay under URL length limits
-    const chunkRows = await Promise.all(chunkIds(userIdFilter).map(async (chunk) => {
-      const PAGE = 1000; const rows: any[] = [];
-      for (let from = 0; ; from += PAGE) {
-        let q = supabaseAdmin.from("analytics_events").select("user_id, content_id")
-          .eq("event_type", "content_click").not("user_id", "is", null)
-          .range(from, from + PAGE - 1);
-        if (sinceIso) q = (q as any).gte("created_at", sinceIso);
-        const { data } = await (q as any).in("user_id", chunk);
-        if (!data?.length) break;
-        rows.push(...data);
-        if (data.length < PAGE) break;
-      }
-      return rows;
-    }));
+    const chunkRows = await Promise.all(
+      chunkIds(userIdFilter).map(async (chunk) => {
+        const PAGE = 1000;
+        const rows: any[] = [];
+        for (let from = 0; ; from += PAGE) {
+          let q = supabaseAdmin
+            .from("analytics_events")
+            .select("user_id, content_id")
+            .eq("event_type", "content_click")
+            .not("user_id", "is", null)
+            .range(from, from + PAGE - 1);
+          if (sinceIso) q = (q as any).gte("created_at", sinceIso);
+          const { data } = await (q as any).in("user_id", chunk);
+          if (!data?.length) break;
+          rows.push(...data);
+          if (data.length < PAGE) break;
+        }
+        return rows;
+      }),
+    );
     return { precomputed: false, rows: chunkRows.flat() };
   }
   // Overall + date filter: paginate with staff exclusion
@@ -63,10 +69,14 @@ async function fetchOpenersData(
     ...Array.from(ctx.syntheticIds),
     "00000000-0000-0000-0000-000000000000",
   ];
-  const PAGE = 1000; const allRows: any[] = [];
+  const PAGE = 1000;
+  const allRows: any[] = [];
   for (let from = 0; ; from += PAGE) {
-    let q = supabaseAdmin.from("analytics_events").select("user_id, content_id")
-      .eq("event_type", "content_click").not("user_id", "is", null)
+    let q = supabaseAdmin
+      .from("analytics_events")
+      .select("user_id, content_id")
+      .eq("event_type", "content_click")
+      .not("user_id", "is", null)
       .range(from, from + PAGE - 1);
     if (sinceIso) q = (q as any).gte("created_at", sinceIso);
     if (excludeAll.length > 0) q = (q as any).not("user_id", "in", `(${excludeAll.join(",")})`);
@@ -96,19 +106,25 @@ async function fetchTimeData(
   }
   // Facility scope: chunk user IDs, fetch all sessions in parallel
   if (userIdFilter !== null) {
-    const chunkRows = await Promise.all(chunkIds(userIdFilter).map(async (chunk) => {
-      const PAGE = 1000; const rows: any[] = [];
-      for (let from = 0; ; from += PAGE) {
-        let q = (supabaseAdmin as any).from("user_content_sessions")
-          .select("user_id, content_item_id, session_seconds")
-          .in("user_id", chunk).range(from, from + PAGE - 1);
-        if (sinceIso) q = q.gte("recorded_at", sinceIso);
-        const { data, error } = await q;
-        if (error || !data || data.length === 0) break;
-        rows.push(...data); if (data.length < PAGE) break;
-      }
-      return rows;
-    }));
+    const chunkRows = await Promise.all(
+      chunkIds(userIdFilter).map(async (chunk) => {
+        const PAGE = 1000;
+        const rows: any[] = [];
+        for (let from = 0; ; from += PAGE) {
+          let q = (supabaseAdmin as any)
+            .from("user_content_sessions")
+            .select("user_id, content_item_id, session_seconds")
+            .in("user_id", chunk)
+            .range(from, from + PAGE - 1);
+          if (sinceIso) q = q.gte("recorded_at", sinceIso);
+          const { data, error } = await q;
+          if (error || !data || data.length === 0) break;
+          rows.push(...data);
+          if (data.length < PAGE) break;
+        }
+        return rows;
+      }),
+    );
     return { precomputed: false, rows: chunkRows.flat() };
   }
   // Overall date-filtered: paginate with staff exclusion
@@ -117,7 +133,8 @@ async function fetchTimeData(
     ...Array.from(ctx.syntheticIds),
     "00000000-0000-0000-0000-000000000000",
   ];
-  const PAGE = 1000; const all: any[] = [];
+  const PAGE = 1000;
+  const all: any[] = [];
   for (let from = 0; ; from += PAGE) {
     let q = (supabaseAdmin as any)
       .from("user_content_sessions")
@@ -127,7 +144,8 @@ async function fetchTimeData(
     if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
     const { data, error } = await q;
     if (error || !data || data.length === 0) break;
-    all.push(...data); if (data.length < PAGE) break;
+    all.push(...data);
+    if (data.length < PAGE) break;
   }
   return { precomputed: false, rows: all };
 }
@@ -140,20 +158,27 @@ async function fetchAllProgress(
 ): Promise<any[]> {
   if (userIdFilter !== null) {
     if (userIdFilter.length === 0) return [];
-    const chunkRows = await Promise.all(chunkIds(userIdFilter).map(async (chunk) => {
-      const PAGE = 1000; const rows: any[] = [];
-      for (let from = 0; ; from += PAGE) {
-        let q = (supabaseAdmin as any).from("user_content_progress")
-          .select("content_item_id, user_id")
-          .in("user_id", chunk).range(from, from + PAGE - 1);
-        if (sinceIso) q = q.gte("created_at", sinceIso);
-        if (exemptItemIds.length > 0) q = q.not("content_item_id", "in", `(${exemptItemIds.join(",")})`);
-        const { data, error } = await q;
-        if (error || !data || data.length === 0) break;
-        rows.push(...data); if (data.length < PAGE) break;
-      }
-      return rows;
-    }));
+    const chunkRows = await Promise.all(
+      chunkIds(userIdFilter).map(async (chunk) => {
+        const PAGE = 1000;
+        const rows: any[] = [];
+        for (let from = 0; ; from += PAGE) {
+          let q = (supabaseAdmin as any)
+            .from("user_content_progress")
+            .select("content_item_id, user_id")
+            .in("user_id", chunk)
+            .range(from, from + PAGE - 1);
+          if (sinceIso) q = q.gte("created_at", sinceIso);
+          if (exemptItemIds.length > 0)
+            q = q.not("content_item_id", "in", `(${exemptItemIds.join(",")})`);
+          const { data, error } = await q;
+          if (error || !data || data.length === 0) break;
+          rows.push(...data);
+          if (data.length < PAGE) break;
+        }
+        return rows;
+      }),
+    );
     return chunkRows.flat();
   }
   // Overall: paginate with staff exclusion
@@ -162,23 +187,24 @@ async function fetchAllProgress(
     ...Array.from(ctx.syntheticIds),
     "00000000-0000-0000-0000-000000000000",
   ];
-  const PAGE = 1000; const all: any[] = [];
+  const PAGE = 1000;
+  const all: any[] = [];
   for (let from = 0; ; from += PAGE) {
     let q = (supabaseAdmin as any)
       .from("user_content_progress")
       .select("content_item_id, user_id")
       .range(from, from + PAGE - 1);
     if (sinceIso) q = q.gte("created_at", sinceIso);
-    if (exemptItemIds.length > 0) q = q.not("content_item_id", "in", `(${exemptItemIds.join(",")})`);
+    if (exemptItemIds.length > 0)
+      q = q.not("content_item_id", "in", `(${exemptItemIds.join(",")})`);
     if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
     const { data, error } = await q;
     if (error || !data || data.length === 0) break;
-    all.push(...data); if (data.length < PAGE) break;
+    all.push(...data);
+    if (data.length < PAGE) break;
   }
   return all;
 }
-
-
 
 /**
  * Overall + facility-scoped report. When facilityValue is provided, only
@@ -223,16 +249,18 @@ export const getUsageReport = createServerFn({ method: "POST" })
       .select("user_id, role")
       .in("role", ["admin", "contributor", "tester", "facilityUser"]);
     const facilityUserAccountIds = new Set<string>(
-      (staffRoles ?? []).filter((r: any) => r.role === "facilityUser").map((r: any) => r.user_id as string)
+      (staffRoles ?? [])
+        .filter((r: any) => r.role === "facilityUser")
+        .map((r: any) => r.user_id as string),
     );
-    const staffUserIds = new Set<string>(
-      (staffRoles ?? []).map((r: any) => r.user_id as string)
-    );
+    const staffUserIds = new Set<string>((staffRoles ?? []).map((r: any) => r.user_id as string));
     // Testers may have the facilityUser role for admin access, but when their
     // is_synthetic flag is false (analytics tracking on), their engagement should
     // count in the facility report just like a regular user's would.
     const testerIds = new Set<string>(
-      (staffRoles ?? []).filter((r: any) => r.role === "tester").map((r: any) => r.user_id as string)
+      (staffRoles ?? [])
+        .filter((r: any) => r.role === "tester")
+        .map((r: any) => r.user_id as string),
     );
 
     let userIdFilter: string[] | null = null;
@@ -252,36 +280,57 @@ export const getUsageReport = createServerFn({ method: "POST" })
       facilityUserCount = userIdFilter.length;
     }
 
-    const [catsRes, itemsRes, totalUsersRes, catFacRes, itemFacRes, ratingsRes, bookmarksRes] = await Promise.all([
-      supabaseAdmin
-        .from("categories")
-        .select("id, name, slug, icon_name, icon_color, sort_order, published, created_at")
-        .order("sort_order", { ascending: true }),
-      supabaseAdmin
-        .from("content_items")
-        .select("id, category_id, title, type, duration, description, url, file_url, published, sort_order, created_at, exempt_from_progress")
-        .order("sort_order", { ascending: true }),
-      supabaseAdmin
-        .from("user_profiles")
-        .select("user_id", { count: "exact", head: true })
-        .eq("is_synthetic", false)
-        .not("user_id", "in", `(${[...facilityUserAccountIds, "00000000-0000-0000-0000-000000000000"].join(",")})`),
-      (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
-      (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
-      // Ratings: scope to facility users when a facility is selected (same as every
-      // other metric); use global pre-computed totals only for the overall view.
-      userIdFilter !== null
-        ? userIdFilter.length > 0
-          ? (supabaseAdmin as any).from("user_content_ratings").select("content_item_id, rating").in("user_id", userIdFilter)
-          : Promise.resolve({ data: [] as any[] })
-        : (supabaseAdmin as any).from("content_item_rating_totals").select("content_item_id, thumbs_up, thumbs_down").range(0, 4999),
-      // Bookmarks: same scoping logic
-      userIdFilter !== null
-        ? userIdFilter.length > 0
-          ? (supabaseAdmin as any).from("user_content_bookmarks").select("content_item_id").in("user_id", userIdFilter)
-          : Promise.resolve({ data: [] as any[] })
-        : (supabaseAdmin as any).from("content_item_bookmark_totals").select("content_item_id, bookmark_count").range(0, 4999),
-    ]);
+    const [catsRes, itemsRes, totalUsersRes, catFacRes, itemFacRes, ratingsRes, bookmarksRes] =
+      await Promise.all([
+        supabaseAdmin
+          .from("categories")
+          .select("id, name, slug, icon_name, icon_color, sort_order, published, created_at")
+          .order("sort_order", { ascending: true }),
+        supabaseAdmin
+          .from("content_items")
+          .select(
+            "id, category_id, title, type, duration, description, url, file_url, published, sort_order, created_at, exempt_from_progress",
+          )
+          .order("sort_order", { ascending: true }),
+        supabaseAdmin
+          .from("user_profiles")
+          .select("user_id", { count: "exact", head: true })
+          .eq("is_synthetic", false)
+          .not(
+            "user_id",
+            "in",
+            `(${[...facilityUserAccountIds, "00000000-0000-0000-0000-000000000000"].join(",")})`,
+          ),
+        (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
+        (supabaseAdmin as any)
+          .from("content_item_facilities")
+          .select("content_item_id, facility_value"),
+        // Ratings: scope to facility users when a facility is selected (same as every
+        // other metric); use global pre-computed totals only for the overall view.
+        userIdFilter !== null
+          ? userIdFilter.length > 0
+            ? (supabaseAdmin as any)
+                .from("user_content_ratings")
+                .select("content_item_id, rating")
+                .in("user_id", userIdFilter)
+            : Promise.resolve({ data: [] as any[] })
+          : (supabaseAdmin as any)
+              .from("content_item_rating_totals")
+              .select("content_item_id, thumbs_up, thumbs_down")
+              .range(0, 4999),
+        // Bookmarks: same scoping logic
+        userIdFilter !== null
+          ? userIdFilter.length > 0
+            ? (supabaseAdmin as any)
+                .from("user_content_bookmarks")
+                .select("content_item_id")
+                .in("user_id", userIdFilter)
+            : Promise.resolve({ data: [] as any[] })
+          : (supabaseAdmin as any)
+              .from("content_item_bookmark_totals")
+              .select("content_item_id, bookmark_count")
+              .range(0, 4999),
+      ]);
     if (catsRes.error) throw new Error(catsRes.error.message);
     if (itemsRes.error) throw new Error(itemsRes.error.message);
 
@@ -292,7 +341,10 @@ export const getUsageReport = createServerFn({ method: "POST" })
       catFacMap[r.category_id].push(r.facility_value);
     }
     const itemFacMap: Record<string, string[]> = {};
-    for (const r of (itemFacRes.data ?? []) as { content_item_id: string; facility_value: string }[]) {
+    for (const r of (itemFacRes.data ?? []) as {
+      content_item_id: string;
+      facility_value: string;
+    }[]) {
       if (!itemFacMap[r.content_item_id]) itemFacMap[r.content_item_id] = [];
       itemFacMap[r.content_item_id].push(r.facility_value);
     }
@@ -303,12 +355,13 @@ export const getUsageReport = createServerFn({ method: "POST" })
           return f.length === 0 || f.includes(facilityValue);
         })
       : (catsRes.data ?? []);
-    const filteredItems = (facilityValue
-      ? (itemsRes.data ?? []).filter((i: any) => {
-          const f = itemFacMap[i.id] ?? [];
-          return f.length === 0 || f.includes(facilityValue);
-        })
-      : (itemsRes.data ?? [])
+    const filteredItems = (
+      facilityValue
+        ? (itemsRes.data ?? []).filter((i: any) => {
+            const f = itemFacMap[i.id] ?? [];
+            return f.length === 0 || f.includes(facilityValue);
+          })
+        : (itemsRes.data ?? [])
     ).filter((i: any) => !i.exempt_from_progress);
     const totalUsers = totalUsersRes.count ?? 0;
 
@@ -317,10 +370,17 @@ export const getUsageReport = createServerFn({ method: "POST" })
       return {
         categories: filteredCategories,
         items: filteredItems,
-        catViews: {}, catClicks: {}, itemClicks: {},
-        totalViews: 0, totalClicks: 0,
-        facilityUserCount, totalUsers, hoursSpent: 0,
-        itemStats: {}, catCompletionRate: {}, overallCompletionRate: null,
+        catViews: {},
+        catClicks: {},
+        itemClicks: {},
+        totalViews: 0,
+        totalClicks: 0,
+        facilityUserCount,
+        totalUsers,
+        hoursSpent: 0,
+        itemStats: {},
+        catCompletionRate: {},
+        overallCompletionRate: null,
       };
     }
 
@@ -416,24 +476,38 @@ export const getUsageReport = createServerFn({ method: "POST" })
     }
 
     // Build per-item stats. Completion rate only shown when click-event open data exists.
-    const itemStats: Record<string, { openCount: number; completeCount: number; completionRate: number | null; avgSessionSeconds: number | null }> = {};
+    const itemStats: Record<
+      string,
+      {
+        openCount: number;
+        completeCount: number;
+        completionRate: number | null;
+        avgSessionSeconds: number | null;
+      }
+    > = {};
     let aggOpens = 0;
     let aggCompletes = 0;
     for (const itemId of visibleItemIds) {
       const trackedOpens = itemOpenerCounts[itemId] ?? 0;
       const completes = itemCompleters[itemId]?.size ?? 0;
       const openCount = Math.max(trackedOpens, completes);
-      const completionRate = trackedOpens > 0 ? Math.round(completes / openCount * 100) : null;
-      const avgSessionSeconds = itemTotalSeconds[itemId] && itemEngagerCount[itemId]
-        ? Math.round(itemTotalSeconds[itemId] / itemEngagerCount[itemId])
-        : null;
-      itemStats[itemId] = { openCount, completeCount: completes, completionRate, avgSessionSeconds };
+      const completionRate = trackedOpens > 0 ? Math.round((completes / openCount) * 100) : null;
+      const avgSessionSeconds =
+        itemTotalSeconds[itemId] && itemEngagerCount[itemId]
+          ? Math.round(itemTotalSeconds[itemId] / itemEngagerCount[itemId])
+          : null;
+      itemStats[itemId] = {
+        openCount,
+        completeCount: completes,
+        completionRate,
+        avgSessionSeconds,
+      };
       if (trackedOpens > 0) {
         aggOpens += openCount;
         aggCompletes += completes;
       }
     }
-    const overallCompletionRate = aggOpens > 0 ? Math.round(aggCompletes / aggOpens * 100) : null;
+    const overallCompletionRate = aggOpens > 0 ? Math.round((aggCompletes / aggOpens) * 100) : null;
 
     // Build lookup maps for per-category and per-type aggregation
     const itemCatMap = new Map<string, string>();
@@ -441,7 +515,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
     const catItemMap: Record<string, string[]> = {};
     for (const it of filteredItems as any[]) {
       itemCatMap.set(it.id as string, it.category_id as string);
-      itemTypeMap.set(it.id as string, ((it.type as string) ?? 'other').toLowerCase());
+      itemTypeMap.set(it.id as string, ((it.type as string) ?? "other").toLowerCase());
       if (!catItemMap[it.category_id]) catItemMap[it.category_id] = [];
       catItemMap[it.category_id].push(it.id as string);
     }
@@ -458,17 +532,23 @@ export const getUsageReport = createServerFn({ method: "POST" })
       const catId = itemCatMap.get(id);
       if (!catId) continue;
       if (!catUserCompletions[catId]) catUserCompletions[catId] = {};
-      catUserCompletions[catId][r.user_id as string] = (catUserCompletions[catId][r.user_id as string] ?? 0) + 1;
+      catUserCompletions[catId][r.user_id as string] =
+        (catUserCompletions[catId][r.user_id as string] ?? 0) + 1;
     }
     const catDepth: Record<string, number | null> = {};
     for (const cat of filteredCategories as any[]) {
-      let opens = 0, completes = 0, catSecs = 0;
+      let opens = 0,
+        completes = 0,
+        catSecs = 0;
       for (const itemId of catItemMap[cat.id] ?? []) {
         const s = itemStats[itemId];
-        if (s && s.completionRate !== null) { opens += s.openCount; completes += s.completeCount; }
+        if (s && s.completionRate !== null) {
+          opens += s.openCount;
+          completes += s.completeCount;
+        }
         catSecs += itemTotalSeconds[itemId] ?? 0;
       }
-      catCompletionRate[cat.id] = opens > 0 ? Math.round(completes / opens * 100) : null;
+      catCompletionRate[cat.id] = opens > 0 ? Math.round((completes / opens) * 100) : null;
       catTotalSeconds[cat.id] = catSecs;
 
       const userMap = catUserCompletions[cat.id];
@@ -476,23 +556,43 @@ export const getUsageReport = createServerFn({ method: "POST" })
         catDepth[cat.id] = null;
       } else {
         const counts = Object.values(userMap);
-        catDepth[cat.id] = Math.round((counts.reduce((a, b) => a + b, 0) / counts.length) * 10) / 10;
+        catDepth[cat.id] =
+          Math.round((counts.reduce((a, b) => a + b, 0) / counts.length) * 10) / 10;
       }
     }
 
     // Content type preference stats
-    const typeStatsRaw: Record<string, { itemCount: number; opens: number; completions: number; totalSeconds: number }> = {};
+    const typeStatsRaw: Record<
+      string,
+      { itemCount: number; opens: number; completions: number; totalSeconds: number }
+    > = {};
     for (const itemId of visibleItemIds) {
-      const type = itemTypeMap.get(itemId) ?? 'other';
-      if (!typeStatsRaw[type]) typeStatsRaw[type] = { itemCount: 0, opens: 0, completions: 0, totalSeconds: 0 };
+      const type = itemTypeMap.get(itemId) ?? "other";
+      if (!typeStatsRaw[type])
+        typeStatsRaw[type] = { itemCount: 0, opens: 0, completions: 0, totalSeconds: 0 };
       typeStatsRaw[type].itemCount += 1;
       const s = itemStats[itemId];
-      if (s) { typeStatsRaw[type].opens += s.openCount; typeStatsRaw[type].completions += s.completeCount; }
+      if (s) {
+        typeStatsRaw[type].opens += s.openCount;
+        typeStatsRaw[type].completions += s.completeCount;
+      }
       typeStatsRaw[type].totalSeconds += itemTotalSeconds[itemId] ?? 0;
     }
-    const typeStats: Record<string, { itemCount: number; opens: number; completions: number; completionRate: number | null; totalSeconds: number }> = {};
+    const typeStats: Record<
+      string,
+      {
+        itemCount: number;
+        opens: number;
+        completions: number;
+        completionRate: number | null;
+        totalSeconds: number;
+      }
+    > = {};
     for (const [type, t] of Object.entries(typeStatsRaw)) {
-      typeStats[type] = { ...t, completionRate: t.opens > 0 ? Math.round(t.completions / t.opens * 100) : null };
+      typeStats[type] = {
+        ...t,
+        completionRate: t.opens > 0 ? Math.round((t.completions / t.opens) * 100) : null,
+      };
     }
 
     // Aggregate ratings — shape differs: raw rows (facility) vs pre-aggregated (overall)
@@ -506,7 +606,10 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     } else {
       for (const r of (ratingsRes.data ?? []) as any[]) {
-        itemRatings[r.content_item_id as string] = { thumbs_up: r.thumbs_up as number, thumbs_down: r.thumbs_down as number };
+        itemRatings[r.content_item_id as string] = {
+          thumbs_up: r.thumbs_up as number,
+          thumbs_down: r.thumbs_down as number,
+        };
       }
     }
 
@@ -525,14 +628,25 @@ export const getUsageReport = createServerFn({ method: "POST" })
     return {
       categories: filteredCategories,
       items: filteredItems,
-      catViews, catClicks, itemClicks,
-      totalViews, totalClicks,
-      facilityUserCount, totalUsers, hoursSpent, totalSeconds,
-      itemStats, catCompletionRate, catTotalSeconds, catDepth, typeStats, overallCompletionRate,
-      itemRatings, itemBookmarks,
+      catViews,
+      catClicks,
+      itemClicks,
+      totalViews,
+      totalClicks,
+      facilityUserCount,
+      totalUsers,
+      hoursSpent,
+      totalSeconds,
+      itemStats,
+      catCompletionRate,
+      catTotalSeconds,
+      catDepth,
+      typeStats,
+      overallCompletionRate,
+      itemRatings,
+      itemBookmarks,
     };
   });
-
 
 /**
  * List users belonging to a facility, with names/email/username.
@@ -573,7 +687,9 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
       .from("user_roles")
       .select("user_id")
       .eq("role", "facilityUser");
-    const facilityUserIdSet = new Set((facilityUserRoles ?? []).map((r: any) => r.user_id as string));
+    const facilityUserIdSet = new Set(
+      (facilityUserRoles ?? []).map((r: any) => r.user_id as string),
+    );
     const excludeIds = [...facilityUserIdSet, "00000000-0000-0000-0000-000000000000"];
 
     // Build base query filter helper
@@ -602,7 +718,6 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     const profs = profileRows ?? [];
     const ids = profs.map((p: any) => p.user_id as string);
 
-
     // Fetch most recent login date per user from user_logins (more accurate than auth last_sign_in_at)
     const lastLoginById = new Map<string, string | null>();
     if (ids.length > 0) {
@@ -619,11 +734,9 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
     }
 
     // Fetch facility labels so we can show names instead of slugs
-    const { data: facilitiesData } = await supabaseAdmin
-      .from("facilities")
-      .select("value, label");
+    const { data: facilitiesData } = await supabaseAdmin.from("facilities").select("value, label");
     const facilityLabelMap = new Map<string, string>(
-      (facilitiesData ?? []).map((f: any) => [f.value as string, f.label as string])
+      (facilitiesData ?? []).map((f: any) => [f.value as string, f.label as string]),
     );
 
     // Fetch engagement tiers from pre-computed user_stats
@@ -635,11 +748,16 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
         .in("user_id", ids);
       for (const r of (statsRows ?? []) as any[]) {
         const pctVal: number | null = r.facility_percentile ?? null;
-        const tierVal = pctVal === null ? null
-          : pctVal >= 80 ? "Top Reader"
-          : pctVal >= 50 ? "Active Reader"
-          : pctVal >= 20 ? "Getting Started"
-          : "Just Joined";
+        const tierVal =
+          pctVal === null
+            ? null
+            : pctVal >= 80
+              ? "Top Reader"
+              : pctVal >= 50
+                ? "Active Reader"
+                : pctVal >= 20
+                  ? "Getting Started"
+                  : "Just Joined";
         tierById.set(r.user_id as string, { tier: tierVal, percentile: pctVal });
       }
     }
@@ -659,7 +777,6 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
         facility_percentile: tierById.get(p.user_id as string)?.percentile ?? null,
       })),
     };
-
   });
 
 /**
@@ -668,22 +785,39 @@ export const listFacilityUsers = createServerFn({ method: "POST" })
  */
 export const getUserProgressReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ userId: z.string().uuid() }).parse(input),
-  )
+  .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     await assertAnalyticsAdmin(context.userId);
 
     // facilityUser callers may only view users within their own facility (admins see all)
     const { scoped, facility: callerFacility } = await isFacilityScoped(context.userId);
     if (scoped) {
-      const { data: targetProf } = await supabaseAdmin.from("user_profiles").select("facility").eq("user_id", data.userId).maybeSingle();
+      const { data: targetProf } = await supabaseAdmin
+        .from("user_profiles")
+        .select("facility")
+        .eq("user_id", data.userId)
+        .maybeSingle();
       if (!callerFacility || callerFacility !== targetProf?.facility) {
         throw new Error("Forbidden: user is not in your facility");
       }
     }
 
-    const [profRes, catsRes, itemsRes, progRes, loginsRes, catViewsRes, contentClicksRes, catFacRes, itemFacRes, engRes, statsRes, userBookmarksRes, userRatingsRes, userAchievementsRes] = await Promise.all([
+    const [
+      profRes,
+      catsRes,
+      itemsRes,
+      progRes,
+      loginsRes,
+      catViewsRes,
+      contentClicksRes,
+      catFacRes,
+      itemFacRes,
+      engRes,
+      statsRes,
+      userBookmarksRes,
+      userRatingsRes,
+      userAchievementsRes,
+    ] = await Promise.all([
       supabaseAdmin
         .from("user_profiles")
         .select("user_id, username, first_name, last_name, facility, created_at")
@@ -695,17 +829,16 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         .order("sort_order", { ascending: true }),
       supabaseAdmin
         .from("content_items")
-        .select("id, category_id, title, description, type, duration, url, file_url, sort_order, published, exempt_from_progress")
+        .select(
+          "id, category_id, title, description, type, duration, url, file_url, sort_order, published, exempt_from_progress",
+        )
         .eq("published", true)
         .order("sort_order", { ascending: true }),
       supabaseAdmin
         .from("user_content_progress")
         .select("content_item_id, category_id, created_at")
         .eq("user_id", data.userId),
-      supabaseAdmin
-        .from("user_logins")
-        .select("login_date")
-        .eq("user_id", data.userId),
+      supabaseAdmin.from("user_logins").select("login_date").eq("user_id", data.userId),
       supabaseAdmin
         .from("analytics_events")
         .select("*", { count: "exact", head: true })
@@ -717,14 +850,20 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         .eq("user_id", data.userId)
         .eq("event_type", "content_click"),
       (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value"),
-      (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value"),
+      (supabaseAdmin as any)
+        .from("content_item_facilities")
+        .select("content_item_id, facility_value"),
       (supabaseAdmin as any)
         .from("user_content_engagement")
-        .select("content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct")
+        .select(
+          "content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct",
+        )
         .eq("user_id", data.userId),
       (supabaseAdmin as any)
         .from("user_stats")
-        .select("facility_percentile, items_completed, items_started, total_session_seconds, updated_at")
+        .select(
+          "facility_percentile, items_completed, items_started, total_session_seconds, updated_at",
+        )
         .eq("user_id", data.userId)
         .maybeSingle(),
       (supabaseAdmin as any)
@@ -748,8 +887,15 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
     if (catViewsRes.error) throw new Error(catViewsRes.error.message);
     if (contentClicksRes.error) throw new Error(contentClicksRes.error.message);
 
-    const userBookmarkSet = new Set<string>((userBookmarksRes.data ?? []).map((r: any) => r.content_item_id as string));
-    const userRatingMap = new Map<string, 1 | -1>((userRatingsRes.data ?? []).map((r: any) => [r.content_item_id as string, r.rating as 1 | -1]));
+    const userBookmarkSet = new Set<string>(
+      (userBookmarksRes.data ?? []).map((r: any) => r.content_item_id as string),
+    );
+    const userRatingMap = new Map<string, 1 | -1>(
+      (userRatingsRes.data ?? []).map((r: any) => [
+        r.content_item_id as string,
+        r.rating as 1 | -1,
+      ]),
+    );
     const userAchievements: Record<string, string> = {};
     for (const r of (userAchievementsRes.data ?? []) as any[]) {
       userAchievements[r.achievement_key as string] = r.earned_at as string;
@@ -766,7 +912,10 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
       catFacMap[r.category_id].push(r.facility_value);
     }
     const itemFacMap: Record<string, string[]> = {};
-    for (const r of (itemFacRes.data ?? []) as { content_item_id: string; facility_value: string }[]) {
+    for (const r of (itemFacRes.data ?? []) as {
+      content_item_id: string;
+      facility_value: string;
+    }[]) {
       if (!itemFacMap[r.content_item_id]) itemFacMap[r.content_item_id] = [];
       itemFacMap[r.content_item_id].push(r.facility_value);
     }
@@ -794,7 +943,15 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
     }
 
     // Build engagement map: contentItemId → { sessionSeconds, mediaProgressSeconds, mediaDurationSeconds, manualCompletionPct }
-    const engagementByItem = new Map<string, { sessionSeconds: number; mediaProgressSeconds: number | null; mediaDurationSeconds: number | null; manualCompletionPct: number | null }>();
+    const engagementByItem = new Map<
+      string,
+      {
+        sessionSeconds: number;
+        mediaProgressSeconds: number | null;
+        mediaDurationSeconds: number | null;
+        manualCompletionPct: number | null;
+      }
+    >();
     for (const r of (engRes?.data ?? []) as any[]) {
       engagementByItem.set(r.content_item_id as string, {
         sessionSeconds: (r.session_seconds as number) || 0,
@@ -803,16 +960,24 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
         manualCompletionPct: r.manual_completion_pct as number | null,
       });
     }
-    const totalSessionSeconds = Array.from(engagementByItem.values()).reduce((s, e) => s + e.sessionSeconds, 0);
+    const totalSessionSeconds = Array.from(engagementByItem.values()).reduce(
+      (s, e) => s + e.sessionSeconds,
+      0,
+    );
 
     // Engagement tier from pre-computed user_stats
     const userStatsRow = statsRes?.data as any;
     const facilityPercentile: number | null = userStatsRow?.facility_percentile ?? null;
-    const engagementTier = facilityPercentile === null ? null
-      : facilityPercentile >= 80 ? "Top Reader"
-      : facilityPercentile >= 50 ? "Active Reader"
-      : facilityPercentile >= 20 ? "Getting Started"
-      : "Just Joined";
+    const engagementTier =
+      facilityPercentile === null
+        ? null
+        : facilityPercentile >= 80
+          ? "Top Reader"
+          : facilityPercentile >= 50
+            ? "Active Reader"
+            : facilityPercentile >= 20
+              ? "Getting Started"
+              : "Just Joined";
     const statsUpdatedAt: string | null = userStatsRow?.updated_at ?? null;
     const hoursSpent = Math.round((totalSessionSeconds / 3600) * 10) / 10;
 
@@ -838,15 +1003,19 @@ export const getUserProgressReport = createServerFn({ method: "POST" })
       })),
       items: visibleItems.map((i: any) => {
         const eng = engagementByItem.get(i.id as string);
-        const mediaPct = eng?.mediaProgressSeconds && eng?.mediaDurationSeconds && eng.mediaDurationSeconds > 0
-          ? Math.min(100, Math.round((eng.mediaProgressSeconds / eng.mediaDurationSeconds) * 100))
-          : null;
-        const isPdfItem = ((i.file_url && /\.pdf(\?|#|$)/i.test(i.file_url as string)) || (i.url && /\.pdf(\?|#|$)/i.test(i.url as string)));
+        const mediaPct =
+          eng?.mediaProgressSeconds && eng?.mediaDurationSeconds && eng.mediaDurationSeconds > 0
+            ? Math.min(100, Math.round((eng.mediaProgressSeconds / eng.mediaDurationSeconds) * 100))
+            : null;
+        const isPdfItem =
+          (i.file_url && /\.pdf(\?|#|$)/i.test(i.file_url as string)) ||
+          (i.url && /\.pdf(\?|#|$)/i.test(i.url as string));
         const pdfEstSec = isPdfItem ? parseMinutes(i.duration) * 60 : 0;
         const sessionSecs = eng?.sessionSeconds ?? 0;
-        const pdfProgressPct = !readSet.has(i.id) && isPdfItem && pdfEstSec > 0 && sessionSecs > 0
-          ? Math.min(100, Math.round((sessionSecs / (pdfEstSec * 0.95)) * 100))
-          : null;
+        const pdfProgressPct =
+          !readSet.has(i.id) && isPdfItem && pdfEstSec > 0 && sessionSecs > 0
+            ? Math.min(100, Math.round((sessionSecs / (pdfEstSec * 0.95)) * 100))
+            : null;
         return {
           id: i.id,
           category_id: i.category_id,
@@ -899,11 +1068,12 @@ export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
     await assertAnalyticsAdmin(context.userId);
 
     // Enforce facility scope for facilityUser callers (admins see all)
-    let facilityValue = data.facilityValue;
+    const facilityValue = data.facilityValue;
     const { scoped, facility: callerFacility } = await isFacilityScoped(context.userId);
     if (scoped) {
       if (!callerFacility) throw new Error("Forbidden: no facility assigned");
-      if (facilityValue !== callerFacility) throw new Error("Forbidden: user is not in your facility");
+      if (facilityValue !== callerFacility)
+        throw new Error("Forbidden: user is not in your facility");
     }
 
     // Staff IDs to exclude from the user list
@@ -924,14 +1094,34 @@ export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
     const userIds = facilityUsers.map((u: any) => u.user_id as string);
 
     if (userIds.length === 0) {
-      return { users: [], categories: [], items: [], progress: [], engagement: [], bookmarks: [], ratings: [], logins: [], userStats: [] };
+      return {
+        users: [],
+        categories: [],
+        items: [],
+        progress: [],
+        engagement: [],
+        bookmarks: [],
+        ratings: [],
+        logins: [],
+        userStats: [],
+      };
     }
 
     // Facility-visible categories and items
     const [catFacRes, itemFacRes, catsRes] = await Promise.all([
-      (supabaseAdmin as any).from("category_facilities").select("category_id, facility_value").range(0, 4999),
-      (supabaseAdmin as any).from("content_item_facilities").select("content_item_id, facility_value").range(0, 4999),
-      supabaseAdmin.from("categories").select("id, name, slug, sort_order").eq("published", true).order("sort_order"),
+      (supabaseAdmin as any)
+        .from("category_facilities")
+        .select("category_id, facility_value")
+        .range(0, 4999),
+      (supabaseAdmin as any)
+        .from("content_item_facilities")
+        .select("content_item_id, facility_value")
+        .range(0, 4999),
+      supabaseAdmin
+        .from("categories")
+        .select("id, name, slug, sort_order")
+        .eq("published", true)
+        .order("sort_order"),
     ]);
     const catFacMap: Record<string, string[]> = {};
     for (const r of (catFacRes.data ?? []) as any[]) {
@@ -951,7 +1141,9 @@ export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
 
     const itemsRes = await supabaseAdmin
       .from("content_items")
-      .select("id, category_id, title, type, duration, url, file_url, exempt_from_progress, sort_order")
+      .select(
+        "id, category_id, title, type, duration, url, file_url, exempt_from_progress, sort_order",
+      )
       .eq("published", true)
       .in("category_id", visibleCatIds)
       .order("sort_order");
@@ -983,7 +1175,10 @@ export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
 
     const [progress, engagement, bookmarks, ratings, logins, userStats] = await Promise.all([
       fetchChunked("user_content_progress", "user_id, content_item_id, created_at"),
-      fetchChunked("user_content_engagement", "user_id, content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct"),
+      fetchChunked(
+        "user_content_engagement",
+        "user_id, content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct",
+      ),
       fetchChunked("user_content_bookmarks", "user_id, content_item_id"),
       fetchChunked("user_content_ratings", "user_id, content_item_id, rating"),
       (async () => {
@@ -1005,7 +1200,10 @@ export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
         }
         return all;
       })(),
-      fetchChunked("user_stats", "user_id, items_completed, total_session_seconds, facility_percentile"),
+      fetchChunked(
+        "user_stats",
+        "user_id, items_completed, total_session_seconds, facility_percentile",
+      ),
     ]);
 
     return {

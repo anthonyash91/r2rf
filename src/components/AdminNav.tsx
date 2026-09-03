@@ -3,7 +3,24 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
-import { LayoutGrid, Users, Shield, BarChart3, Home, Award, Building2, MessageSquare, ChevronDown, MoreHorizontal, Palette, Sprout, ScrollText, AlertOctagon, FileText, ClipboardCheck } from "lucide-react";
+import {
+  LayoutGrid,
+  Users,
+  Shield,
+  BarChart3,
+  Home,
+  Award,
+  Building2,
+  MessageSquare,
+  ChevronDown,
+  MoreHorizontal,
+  Palette,
+  Sprout,
+  ScrollText,
+  AlertOctagon,
+  FileText,
+  ClipboardCheck,
+} from "lucide-react";
 import { countNewUsers } from "@/lib/users.functions";
 import { useLastSeenUsersAt } from "@/lib/new-users-tracker";
 import { QK } from "@/lib/query-keys";
@@ -27,18 +44,43 @@ type NavLink = {
 };
 
 const links: NavLink[] = [
-  { to: "/admin", label: "Categories", icon: LayoutGrid, exact: true, matchPrefixes: ["/admin/category"], adminOnly: true },
+  {
+    to: "/admin",
+    label: "Categories",
+    icon: LayoutGrid,
+    exact: true,
+    matchPrefixes: ["/admin/category"],
+    adminOnly: true,
+  },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true, facilityUserVisible: true },
   { to: "/admin/facilities", label: "Facilities", icon: Building2, adminOnly: true },
   { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
-  { to: "/admin/analytics", label: "Reports", icon: BarChart3, adminOnly: true, facilityUserVisible: true },
+  {
+    to: "/admin/analytics",
+    label: "Reports",
+    icon: BarChart3,
+    adminOnly: true,
+    facilityUserVisible: true,
+  },
   { to: "/admin/home", label: "Header Hero", icon: Home, adminOnly: true },
-  { to: "/admin/messages", label: "Messages", icon: MessageSquare, adminOnly: true, facilityUserVisible: true },
+  {
+    to: "/admin/messages",
+    label: "Messages",
+    icon: MessageSquare,
+    adminOnly: true,
+    facilityUserVisible: true,
+  },
   { to: "/admin/privacy", label: "Privacy Policy", icon: FileText, adminOnly: true },
   { to: "/admin/terms", label: "Terms of Service", icon: FileText, adminOnly: true },
   { to: "/admin/icons-badges", label: "Icons & Badges", icon: Palette, adminOnly: true },
   { to: "/admin/certificate", label: "Footer Hero", icon: Award, adminOnly: true },
-  { to: "/admin/audit-log", label: "Audit Log", icon: ScrollText, adminOnly: true, facilityUserVisible: true },
+  {
+    to: "/admin/audit-log",
+    label: "Audit Log",
+    icon: ScrollText,
+    adminOnly: true,
+    facilityUserVisible: true,
+  },
   { to: "/admin/errors", label: "Errors", icon: AlertOctagon, adminOnly: true },
   { to: "/admin/seed", label: "Seed Content", icon: Sprout, adminOnly: true },
   { to: "/admin/test-results", label: "Test Results", icon: ClipboardCheck, adminOnly: true },
@@ -63,8 +105,8 @@ export function AdminNav() {
   // Filters the full link list down to what the current user is allowed to see:
   // admins and contributors see everything, facilityUsers only see pages marked facilityUserVisible.
   const visible = links.filter((l) => {
-    if (!l.adminOnly) return true;                          // always visible
-    if (isAdmin || isContributor) return true;              // full admin access
+    if (!l.adminOnly) return true; // always visible
+    if (isAdmin || isContributor) return true; // full admin access
     if (isFacilityUser && l.facilityUserVisible) return true; // facility-scoped pages
     return false;
   });
@@ -80,7 +122,7 @@ export function AdminNav() {
     refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   });
-  const newUsersCount = isAdmin ? newUsersQuery.data?.count ?? 0 : 0;
+  const newUsersCount = isAdmin ? (newUsersQuery.data?.count ?? 0) : 0;
 
   const renderLabel = (l: NavLink) => {
     if (l.to !== "/admin/users" || newUsersCount <= 0) return l.label;
@@ -89,13 +131,15 @@ export function AdminNav() {
     return (
       <>
         {l.label}
-        <span className="ml-0.5 inline-flex h-[1.0625rem] min-w-[1.0625rem] shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] px-[3px] text-[10px] font-bold tabular-nums text-white" style={{ lineHeight: 1 }}>
+        <span
+          className="ml-0.5 inline-flex h-[1.0625rem] min-w-[1.0625rem] shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] px-[3px] text-[10px] font-bold tabular-nums text-white"
+          style={{ lineHeight: 1 }}
+        >
           {newUsersCount > 99 ? "99+" : newUsersCount}
         </span>
       </>
     );
   };
-
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLUListElement | null>(null);
@@ -220,7 +264,9 @@ export function AdminNav() {
                   to={l.to as any}
                   className={[
                     LINK_CLASS_BASE,
-                    active ? "bg-background text-foreground" : "hover:bg-background hover:text-foreground",
+                    active
+                      ? "bg-background text-foreground"
+                      : "hover:bg-background hover:text-foreground",
                   ].join(" ")}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -236,10 +282,11 @@ export function AdminNav() {
                   className={[
                     LINK_CLASS_BASE,
                     "outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 data-[state=open]:bg-background data-[state=open]:text-foreground",
-                    overflowActive ? "bg-background text-foreground" : "hover:bg-background hover:text-foreground",
+                    overflowActive
+                      ? "bg-background text-foreground"
+                      : "hover:bg-background hover:text-foreground",
                   ].join(" ")}
                 >
-
                   <MoreHorizontal className="h-3.5 w-3.5" />
                   More
                   <ChevronDown className="h-3.5 w-3.5 opacity-60" />

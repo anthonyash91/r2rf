@@ -1,7 +1,11 @@
 import { Badge } from "@/components/Badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export function FacilityBadge({ facilities, facilityLabelMap, className }: {
+export function FacilityBadge({
+  facilities,
+  facilityLabelMap,
+  className,
+}: {
   facilities: string[];
   facilityLabelMap: Record<string, string>;
   className?: string;

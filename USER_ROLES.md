@@ -6,13 +6,13 @@ This document describes every role in the Reentry to Recovery platform, what eac
 
 ## Role Overview
 
-| Role | Who they are | Admin panel access |
-|---|---|---|
-| **Regular User** | Incarcerated individuals using the content library | None |
-| **Tester** | QA/testing accounts | None |
-| **Contributor** | Content editors and writers | Content editing only |
-| **Facility User** | Facility staff (counselors, administrators) | Analytics + user management for their facility |
-| **Admin** | Platform administrators | Full unrestricted access |
+| Role              | Who they are                                       | Admin panel access                             |
+| ----------------- | -------------------------------------------------- | ---------------------------------------------- |
+| **Regular User**  | Incarcerated individuals using the content library | None                                           |
+| **Tester**        | QA/testing accounts                                | None                                           |
+| **Contributor**   | Content editors and writers                        | Content editing only                           |
+| **Facility User** | Facility staff (counselors, administrators)        | Analytics + user management for their facility |
+| **Admin**         | Platform administrators                            | Full unrestricted access                       |
 
 ---
 
@@ -21,6 +21,7 @@ This document describes every role in the Reentry to Recovery platform, what eac
 Regular users are the primary audience — incarcerated individuals working through the content library.
 
 **What they can do:**
+
 - Browse all published categories and content items available to their facility
 - Track their own progress (completed items, session time, media position)
 - Earn achievements as they reach milestones
@@ -32,6 +33,7 @@ Regular users are the primary audience — incarcerated individuals working thro
 - Clear their own forced-reset password flag (`clearMustResetPassword` — self-service)
 
 **What they cannot do:**
+
 - See any other user's data
 - Access any admin page or tool
 - Modify content, categories, or settings
@@ -45,6 +47,7 @@ Regular users are the primary audience — incarcerated individuals working thro
 Tester accounts are dedicated QA accounts. Rather than seeing the regular user dashboard, testers see an entirely separate **QA Testing interface** — no progress rings, categories, achievements, bookmarks, or account settings.
 
 **The key distinction:** All tester activity is **excluded from every analytics calculation** at the database query level:
+
 - Not counted in completion rates, open counts, or drop-off rates
 - Not counted in facility user totals, active user counts, or participation rates
 - Not counted in growth charts, retention rates, or program completion stats
@@ -57,12 +60,12 @@ Testers are marked with `is_synthetic = true` in the database and carry all five
 
 A floating **Role Switcher** (flask icon, bottom-left of every page) is visible only to tester accounts. It lets the tester simulate any role without creating additional accounts:
 
-| Simulated role | What the tester sees |
-|---|---|
-| Regular User | Normal user dashboard, no admin access |
-| Admin | Full admin panel |
-| Contributor | Content editing admin pages only |
-| Facility User | Analytics and user management scoped to CPC Sales facility |
+| Simulated role | What the tester sees                                       |
+| -------------- | ---------------------------------------------------------- |
+| Regular User   | Normal user dashboard, no admin access                     |
+| Admin          | Full admin panel                                           |
+| Contributor    | Content editing admin pages only                           |
+| Facility User  | Analytics and user management scoped to CPC Sales facility |
 
 Switching role updates the UI immediately and navigates to the appropriate landing page. The selected role is persisted in `localStorage` so it survives page refreshes. The tester always remains excluded from analytics regardless of the simulated role.
 
@@ -102,11 +105,13 @@ After each confirmation the idle threshold progressively extends — 90 seconds 
 Contributors are content editors. Their role is to build and maintain the content library. They have no access to user data or analytics.
 
 **Admin pages accessible:**
+
 - `/admin/category/$id` — full content editing (categories and items)
 - `/admin/privacy` — privacy policy editor
 - `/admin/terms` — terms of service editor
 
 **What they can do:**
+
 - Create, edit, publish, and delete categories and content items
 - Set category and item facility restrictions
 - Upload and manage files (images, PDFs, audio, video)
@@ -115,6 +120,7 @@ Contributors are content editors. Their role is to build and maintain the conten
 - Configure the item's "Exempt from tracking" flag
 
 **What they cannot do:**
+
 - Access analytics or any reporting — no usage reports, no user progress reports, no facility comparison
 - Access the user management page (`/admin/users`)
 - Access messages, facilities, home page editor, icons & badges, IP allowlist, audit log, error log, seed tool, or certificate editor
@@ -128,20 +134,23 @@ Contributors are content editors. Their role is to build and maintain the conten
 Facility Users are staff accounts created by administrators for specific facilities (e.g., a prison counselor). Every action they take is scoped to their assigned facility and enforced server-side — client-side input for the facility value is ignored if it doesn't match their assigned facility.
 
 **Admin pages accessible:**
+
 - `/admin/analytics` — analytics, reports, and user progress for their facility only
 - `/admin/users` — user list and management for their facility only
 - `/admin/messages` — facility message editor (their facility only; they see only their facility's editor, not others)
 
 **What they can do:**
 
-*Analytics (own facility only):*
+_Analytics (own facility only):_
+
 - View usage report for their facility
 - View growth stats, retention rates, facility-scoped program completion
 - View the facility user list with engagement tiers
 - View individual user progress reports for users in their facility
 - Export all reports as CSV
 
-*User management (own facility's regular users only):*
+_User management (own facility's regular users only):_
+
 - View the list of registered users at their facility
 - View list of facility staff accounts at their facility
 - Set a user's password
@@ -149,10 +158,12 @@ Facility Users are staff accounts created by administrators for specific facilit
 - Resend a verification email
 - Clear a user's security questions
 
-*Messaging:*
+_Messaging:_
+
 - View and edit their facility's message banner
 
 **What they cannot do:**
+
 - See any data from other facilities
 - Manage users at other facilities or any admin/contributor/tester accounts
 - Create or delete user accounts
@@ -171,6 +182,7 @@ Admins have unrestricted access to every feature on the platform.
 **Admin pages accessible:** All of them.
 
 **What they can do:**
+
 - Everything a Contributor and Facility User can do
 - Access analytics for all facilities without scoping
 - Create, edit, and delete users of all types (regular users, testers, contributors, facility users)
@@ -184,6 +196,7 @@ Admins have unrestricted access to every feature on the platform.
 - Trigger the nightly analytics refresh manually
 
 **Protections:**
+
 - An admin cannot delete their own account
 - An admin cannot remove their own admin role
 
@@ -195,23 +208,23 @@ Access is enforced at two independent layers:
 
 **Route level (client-side guard):** Each admin route has a `beforeLoad` guard that checks the user's role before the page loads. A user without the required role is immediately redirected.
 
-| Guard | Roles allowed | Used by |
-|---|---|---|
-| `requireStrictAdminBeforeLoad` | Admin only | home, icons-badges, facilities, audit-log, errors, ip-allowlist, seed, certificate |
-| `requireContentAdminBeforeLoad` | Admin, Contributor | category editor, privacy, terms |
-| `requireAnalyticsAdminBeforeLoad` | Admin, Facility User | analytics, messages |
-| `requireUserManagementAdminBeforeLoad` | Admin, Facility User | users |
+| Guard                                  | Roles allowed        | Used by                                                                            |
+| -------------------------------------- | -------------------- | ---------------------------------------------------------------------------------- |
+| `requireStrictAdminBeforeLoad`         | Admin only           | home, icons-badges, facilities, audit-log, errors, ip-allowlist, seed, certificate |
+| `requireContentAdminBeforeLoad`        | Admin, Contributor   | category editor, privacy, terms                                                    |
+| `requireAnalyticsAdminBeforeLoad`      | Admin, Facility User | analytics, messages                                                                |
+| `requireUserManagementAdminBeforeLoad` | Admin, Facility User | users                                                                              |
 
 **Server function level (server-side auth):** Every server function independently verifies the caller's role using `supabaseAdmin`. Route guards can be bypassed by a determined user — the server functions are the real security boundary.
 
-| Assertion | Roles checked | Used for |
-|---|---|---|
-| `assertStrictAdmin` | Admin only | Nightly refresh trigger |
-| `assertAnalyticsAdmin` | Admin, Facility User | All analytics and reporting functions |
-| `assertUserManagementAdmin` | Admin, Facility User | User list functions |
-| `assertCanManageUser` | Admin, Facility User (scoped) | Per-user password and security operations |
-| `assertAdmin` (strict) | Admin only | User creation, deletion, role management, facility management |
-| `assertAdminOrContributor` | Admin, Contributor | Content AI generation, file storage |
+| Assertion                   | Roles checked                 | Used for                                                      |
+| --------------------------- | ----------------------------- | ------------------------------------------------------------- |
+| `assertStrictAdmin`         | Admin only                    | Nightly refresh trigger                                       |
+| `assertAnalyticsAdmin`      | Admin, Facility User          | All analytics and reporting functions                         |
+| `assertUserManagementAdmin` | Admin, Facility User          | User list functions                                           |
+| `assertCanManageUser`       | Admin, Facility User (scoped) | Per-user password and security operations                     |
+| `assertAdmin` (strict)      | Admin only                    | User creation, deletion, role management, facility management |
+| `assertAdminOrContributor`  | Admin, Contributor            | Content AI generation, file storage                           |
 
 ---
 
@@ -233,6 +246,7 @@ The following are excluded from all analytics data and pre-computed statistics:
 Any content item can be marked **Exempt from tracking** in the content editor. This is intended for informational items that are not educational in the Reentry to Recovery sense — e.g., "How to take this course" or "How to set up payments."
 
 **Effect of exemption:**
+
 - The item still appears in the category list and is accessible to users
 - Users see an "Acknowledge" button instead of the normal completion button; after acknowledging, it shows "Acknowledged"
 - A disclaimer reads "Doesn't count toward your progress" beneath the button

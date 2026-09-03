@@ -55,11 +55,7 @@ export function ResponsiveBadgeGroup({
   return (
     <div
       ref={containerRef}
-      className={cn(
-        "flex flex-wrap items-center",
-        wrapped ? "gap-1.5" : "gap-0",
-        className,
-      )}
+      className={cn("flex flex-wrap items-center", wrapped ? "gap-1.5" : "gap-0", className)}
     >
       {items.map((child, i) => {
         const isFirst = i === 0;

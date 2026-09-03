@@ -31,9 +31,11 @@ export const readPlatformIdentity = createIsomorphicFn()
       lastName: request?.headers.get("lastName") || null,
     };
   })
-  .client((): PlatformIdentity => ({
-    facilityId: null,
-    residentId: null,
-    firstName: null,
-    lastName: null,
-  }));
+  .client(
+    (): PlatformIdentity => ({
+      facilityId: null,
+      residentId: null,
+      firstName: null,
+      lastName: null,
+    }),
+  );

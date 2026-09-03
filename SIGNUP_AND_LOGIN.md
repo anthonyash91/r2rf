@@ -22,15 +22,15 @@ Before completing sign-up, users are presented with two consent elements:
 
 All sign-up fields are validated server-side before any account is created:
 
-| Field | Rules |
-|---|---|
-| Username | 3–32 characters, letters/numbers/underscore only (`[a-z0-9_]`), lowercased |
-| First name | Required, max 100 characters |
-| Last name | Required, max 100 characters |
-| Password | 8–72 characters |
-| Facility | Required, max 64 characters, must exist in the facilities table |
-| Inmate PIN | Numbers only, **required** |
-| Security answers | Min 2 characters each, max 200, must choose two different questions |
+| Field            | Rules                                                                      |
+| ---------------- | -------------------------------------------------------------------------- |
+| Username         | 3–32 characters, letters/numbers/underscore only (`[a-z0-9_]`), lowercased |
+| First name       | Required, max 100 characters                                               |
+| Last name        | Required, max 100 characters                                               |
+| Password         | 8–72 characters                                                            |
+| Facility         | Required, max 64 characters, must exist in the facilities table            |
+| Inmate PIN       | Numbers only, **required**                                                 |
+| Security answers | Min 2 characters each, max 200, must choose two different questions        |
 
 ### Honeypot Bot Detection
 
@@ -65,6 +65,7 @@ IP-based rate limiting for sign-up is intentionally not applied. Every inmate at
 ### Security Questions
 
 Users are required to set up 2 security questions during sign-up (or immediately after). Answers are:
+
 - Trimmed and normalized before hashing
 - Hashed using a server-side secret before storage — raw answers are never saved
 - Required before the user can access the rest of the app (the dashboard and other tabs are locked until questions are set)
@@ -85,7 +86,7 @@ Regular users can only sign in when both a **facility** and a **PIN** are presen
 2. Supabase verifies the credentials (standard auth)
 3. The server checks the user's role:
    - **Privileged roles** (admin, contributor, facilityUser) → allowed through regardless of session state; facility/PIN context cleared from session so staff nav links don't include those parameters
-   - **Regular user, no facility+PIN in session** → immediately signed out, inline error shown: *"Looks like you're trying to login using the wrong link. Make sure you're accessing this website through the service on your device."*
+   - **Regular user, no facility+PIN in session** → immediately signed out, inline error shown: _"Looks like you're trying to login using the wrong link. Make sure you're accessing this website through the service on your device."_
    - **Regular user, facility+PIN in session** → proceeds to the match check below
 
 ### Facility + PIN Match Check
@@ -114,6 +115,7 @@ When a user signs out, they are redirected back to the full original URL includi
 ### Username Enumeration Prevention
 
 The "forgot password" flow uses security questions instead of email. When fetching questions for a username:
+
 - If the username does not exist, **fake stable question keys are returned** derived deterministically from the username — the response looks identical to a valid username response
 - This prevents an attacker from probing which usernames are registered
 
@@ -136,16 +138,16 @@ This prevents one inmate from initiating a password reset for another inmate's a
 
 Two separate rate limits apply:
 
-| Action | Limit |
-|---|---|
-| Fetching security questions (probing) | 30 attempts per IP per hour |
-| Submitting reset answers + new password | 8 attempts per IP per hour |
+| Action                                  | Limit                       |
+| --------------------------------------- | --------------------------- |
+| Fetching security questions (probing)   | 30 attempts per IP per hour |
+| Submitting reset answers + new password | 8 attempts per IP per hour  |
 
 The reset attempt check uses a **Postgres advisory lock** (`pg_advisory_xact_lock`) to make the count-check and insert atomic — concurrent requests cannot race past the limit.
 
 ### Generic Error Messages
 
-All reset errors ("username not found", "wrong answers", etc.) use the same generic message: *"Username or security answers are incorrect."* This prevents leaking whether the username exists or whether the answers were partially correct.
+All reset errors ("username not found", "wrong answers", etc.) use the same generic message: _"Username or security answers are incorrect."_ This prevents leaking whether the username exists or whether the answers were partially correct.
 
 ### Answer Verification
 

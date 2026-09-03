@@ -40,12 +40,8 @@ try {
   }
 } catch {}
 
-const {
-  SUPABASE_URL,
-  SUPABASE_SERVICE_ROLE_KEY,
-  BUNNY_STREAM_LIBRARY_ID,
-  BUNNY_STREAM_API_KEY,
-} = process.env;
+const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, BUNNY_STREAM_LIBRARY_ID, BUNNY_STREAM_API_KEY } =
+  process.env;
 
 for (const [name, v] of Object.entries({
   SUPABASE_URL,
@@ -66,7 +62,8 @@ const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-const STREAM_VIDEO_ID_RE = /\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/playlist\.m3u8(?:\?|#|$)/i;
+const STREAM_VIDEO_ID_RE =
+  /\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/playlist\.m3u8(?:\?|#|$)/i;
 
 function extractStreamVideoId(url) {
   const m = url?.match(STREAM_VIDEO_ID_RE);
@@ -111,24 +108,43 @@ function withActionWord(duration, type) {
 
 async function run() {
   console.log(dryRun ? "DRY RUN — no writes will be made.\n" : "Applying fixes.\n");
-  if (force) console.log("--force: also recalculating chapters/items that already have a duration.\n");
+  if (force)
+    console.log("--force: also recalculating chapters/items that already have a duration.\n");
 
   // ── Chapters ──────────────────────────────────────────────────────────
-  let chapterQuery = db.from("content_chapters").select("id, title, file_url").not("file_url", "is", null);
+  let chapterQuery = db
+    .from("content_chapters")
+    .select("id, title, file_url")
+    .not("file_url", "is", null);
   if (!force) chapterQuery = chapterQuery.is("duration_seconds", null);
   const { data: chapters, error: chErr } = await chapterQuery;
-  if (chErr) { console.error("Failed to fetch chapters:", chErr.message); process.exit(1); }
+  if (chErr) {
+    console.error("Failed to fetch chapters:", chErr.message);
+    process.exit(1);
+  }
 
-  let chFixed = 0, chSkippedNotStream = 0, chFailed = 0;
+  let chFixed = 0,
+    chSkippedNotStream = 0,
+    chFailed = 0;
   for (const ch of chapters ?? []) {
     const videoId = extractStreamVideoId(ch.file_url);
-    if (!videoId) { chSkippedNotStream++; continue; } // not a Stream URL — unrelated to this bug
+    if (!videoId) {
+      chSkippedNotStream++;
+      continue;
+    } // not a Stream URL — unrelated to this bug
     try {
       const seconds = await getBunnyDurationSeconds(videoId);
-      if (!seconds) { console.log(`  SKIP (Bunny reports no duration yet): "${ch.title}"`); chFailed++; continue; }
+      if (!seconds) {
+        console.log(`  SKIP (Bunny reports no duration yet): "${ch.title}"`);
+        chFailed++;
+        continue;
+      }
       console.log(`  Chapter "${ch.title}": ${seconds}s`);
       if (!dryRun) {
-        const { error } = await db.from("content_chapters").update({ duration_seconds: seconds }).eq("id", ch.id);
+        const { error } = await db
+          .from("content_chapters")
+          .update({ duration_seconds: seconds })
+          .eq("id", ch.id);
         if (error) throw error;
       }
       chFixed++;
@@ -143,20 +159,39 @@ async function run() {
     .from("content_items")
     .select("id, title, type, url, duration")
     .not("url", "is", null);
-  if (itErr) { console.error("Failed to fetch items:", itErr.message); process.exit(1); }
+  if (itErr) {
+    console.error("Failed to fetch items:", itErr.message);
+    process.exit(1);
+  }
 
-  let itFixed = 0, itSkippedNotStream = 0, itSkippedHasDuration = 0, itFailed = 0;
+  let itFixed = 0,
+    itSkippedNotStream = 0,
+    itSkippedHasDuration = 0,
+    itFailed = 0;
   for (const item of items ?? []) {
-    if (!force && item.duration && item.duration.trim()) { itSkippedHasDuration++; continue; }
+    if (!force && item.duration && item.duration.trim()) {
+      itSkippedHasDuration++;
+      continue;
+    }
     const videoId = extractStreamVideoId(item.url);
-    if (!videoId) { itSkippedNotStream++; continue; }
+    if (!videoId) {
+      itSkippedNotStream++;
+      continue;
+    }
     try {
       const seconds = await getBunnyDurationSeconds(videoId);
-      if (!seconds) { console.log(`  SKIP (Bunny reports no duration yet): "${item.title}"`); itFailed++; continue; }
+      if (!seconds) {
+        console.log(`  SKIP (Bunny reports no duration yet): "${item.title}"`);
+        itFailed++;
+        continue;
+      }
       const formatted = withActionWord(formatMediaDuration(seconds), item.type);
       console.log(`  Item "${item.title}": ${formatted}`);
       if (!dryRun) {
-        const { error } = await db.from("content_items").update({ duration: formatted }).eq("id", item.id);
+        const { error } = await db
+          .from("content_items")
+          .update({ duration: formatted })
+          .eq("id", item.id);
         if (error) throw error;
       }
       itFixed++;
@@ -166,9 +201,16 @@ async function run() {
     }
   }
 
-  console.log(`\nChapters: ${chFixed} fixed, ${chSkippedNotStream} not Stream-hosted, ${chFailed} failed/no-duration-yet.`);
-  console.log(`Items: ${itFixed} fixed, ${itSkippedHasDuration} already had a duration, ${itSkippedNotStream} not Stream-hosted, ${itFailed} failed/no-duration-yet.`);
+  console.log(
+    `\nChapters: ${chFixed} fixed, ${chSkippedNotStream} not Stream-hosted, ${chFailed} failed/no-duration-yet.`,
+  );
+  console.log(
+    `Items: ${itFixed} fixed, ${itSkippedHasDuration} already had a duration, ${itSkippedNotStream} not Stream-hosted, ${itFailed} failed/no-duration-yet.`,
+  );
   if (dryRun) console.log("\nRe-run without --dry-run to apply.");
 }
 
-run().catch((e) => { console.error(e); process.exit(1); });
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

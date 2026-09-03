@@ -6,7 +6,7 @@ export const FACILITY_OPTIONS = [
 export type FacilityValue = (typeof FACILITY_OPTIONS)[number]["value"];
 
 export function facilityLabel(value: string | null | undefined): string {
-  return FACILITY_OPTIONS.find((f) => f.value === value)?.label ?? (value ?? "");
+  return FACILITY_OPTIONS.find((f) => f.value === value)?.label ?? value ?? "";
 }
 
 export const USER_EMAIL_DOMAIN = "users.local";

@@ -33,7 +33,6 @@ function isPinCheckRateLimited(ip: string): boolean {
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
 const USER_EMAIL_DOMAIN = "users.local";
 
-
 function syntheticEmailLocal(username: string): string {
   return `${username.toLowerCase()}@${USER_EMAIL_DOMAIN}`;
 }
@@ -43,7 +42,7 @@ function getSecret(): string {
   if (secret && secret.length >= 32) return secret;
   throw new Error(
     "Server misconfiguration: SIGNUP_CHALLENGE_SECRET must be set (min 32 chars). " +
-    "Generate one with: openssl rand -hex 32"
+      "Generate one with: openssl rand -hex 32",
   );
 }
 
@@ -62,7 +61,9 @@ function verifyChallenge(token: string, answer: number): boolean {
     const parts = decoded.split(":");
     if (parts.length !== 4) return false;
     const [aStr, bStr, expStr, sig] = parts;
-    const a = Number(aStr), b = Number(bStr), exp = Number(expStr);
+    const a = Number(aStr),
+      b = Number(bStr),
+      exp = Number(expStr);
     if (!Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(exp)) return false;
     // Reject expired tokens — CHALLENGE_TTL_MS = 5 minutes from issue time.
     if (Date.now() > exp) return false;
@@ -77,9 +78,6 @@ function verifyChallenge(token: string, answer: number): boolean {
     return false;
   }
 }
-
-
-
 
 export const getSignupChallenge = createServerFn({ method: "GET" }).handler(async () => {
   // Rate-limit challenge generation using an advisory-lock RPC so concurrent
@@ -107,10 +105,12 @@ export const getSignupChallenge = createServerFn({ method: "GET" }).handler(asyn
 /** Checks whether an inmate PIN is already registered for a given facility. */
 export const checkInmatePin = createServerFn({ method: "POST" })
   .inputValidator((input) =>
-    z.object({
-      facilityValue: z.string().min(1).max(64),
-      inmatePin: z.string().min(1),
-    }).parse(input),
+    z
+      .object({
+        facilityValue: z.string().min(1).max(64),
+        inmatePin: z.string().min(1),
+      })
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const ip = getClientIp(getRequest());
@@ -131,7 +131,11 @@ export const signupUser = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
-        username: z.string().trim().toLowerCase().regex(/^[a-z0-9_]{3,32}$/, "Username must be 3–32 chars, letters/numbers/underscore"),
+        username: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(/^[a-z0-9_]{3,32}$/, "Username must be 3–32 chars, letters/numbers/underscore"),
         firstName: z.string().trim().min(1, "First name is required").max(100),
         lastName: z.string().trim().min(1, "Last name is required").max(100),
         password: z.string().min(8).max(72),
@@ -143,7 +147,12 @@ export const signupUser = createServerFn({ method: "POST" })
         securityAnswers: z
           .array(
             z.object({
-              key: z.string().refine((v) => (SECURITY_QUESTION_KEYS as readonly string[]).includes(v), "Invalid question"),
+              key: z
+                .string()
+                .refine(
+                  (v) => (SECURITY_QUESTION_KEYS as readonly string[]).includes(v),
+                  "Invalid question",
+                ),
               value: z.string().trim().min(2).max(200),
             }),
           )
@@ -175,7 +184,9 @@ export const signupUser = createServerFn({ method: "POST" })
     if (!facilityRow) throw new Error("Invalid facility. Please select a valid facility.");
 
     // Username availability
-    const { data: exists } = await supabaseAdmin.rpc("username_exists", { _username: data.username });
+    const { data: exists } = await supabaseAdmin.rpc("username_exists", {
+      _username: data.username,
+    });
     if (exists) throw new Error("That username is already taken.");
 
     // Server-side PIN uniqueness check — guards the race condition where two
@@ -183,8 +194,11 @@ export const signupUser = createServerFn({ method: "POST" })
     if (data.inmatePin) {
       const pinHmac = hashPin(data.inmatePin);
       const { data: byHmac } = await supabaseAdmin
-        .from("user_profiles" as any).select("user_id")
-        .eq("facility", data.facility).eq("inmate_pin_hmac", pinHmac).maybeSingle();
+        .from("user_profiles" as any)
+        .select("user_id")
+        .eq("facility", data.facility)
+        .eq("inmate_pin_hmac", pinHmac)
+        .maybeSingle();
       if (byHmac) throw new Error("That PIN is already registered at this facility.");
     }
 
@@ -202,17 +216,15 @@ export const signupUser = createServerFn({ method: "POST" })
     }
     const userId = created.user.id;
 
-    const { error: profErr } = await supabaseAdmin
-      .from("user_profiles" as any)
-      .insert({
-        user_id: userId,
-        username: data.username,
-        facility: data.facility,
-        first_name: data.firstName,
-        last_name: data.lastName,
-        email,
-        inmate_pin_hmac: data.inmatePin ? hashPin(data.inmatePin) : null,
-      });
+    const { error: profErr } = await supabaseAdmin.from("user_profiles" as any).insert({
+      user_id: userId,
+      username: data.username,
+      facility: data.facility,
+      first_name: data.firstName,
+      last_name: data.lastName,
+      email,
+      inmate_pin_hmac: data.inmatePin ? hashPin(data.inmatePin) : null,
+    });
     if (profErr) {
       console.error("[signup] user_profiles insert failed:", profErr.message);
       // Roll back the auth user so the username + PIN can be retried.
@@ -239,7 +251,9 @@ export const signupUser = createServerFn({ method: "POST" })
           answer_hash: await hashAnswer(a.value),
         })),
       );
-      const { error: secErr } = await supabaseAdmin.from("user_security_answers").insert(securityRows);
+      const { error: secErr } = await supabaseAdmin
+        .from("user_security_answers")
+        .insert(securityRows);
       if (secErr) {
         console.error("[signup] user_security_answers insert failed:", secErr.message);
         await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
@@ -252,7 +266,6 @@ export const signupUser = createServerFn({ method: "POST" })
     return { ok: true as const, email };
   });
 
-
 export const getMyProfile = createServerFn({ method: "GET" }).handler(async () => {
   // Read auth from header manually since this is public-callable
   const request = getRequest();
@@ -263,21 +276,21 @@ export const getMyProfile = createServerFn({ method: "GET" }).handler(async () =
   if (!userRes?.user) return { profile: null };
   const { data: profile } = await supabaseAdmin
     .from("user_profiles")
-    .select("username, facility, created_at, first_name, last_name, dashboard_tutorial_seen, category_tutorial_seen")
+    .select(
+      "username, facility, created_at, first_name, last_name, dashboard_tutorial_seen, category_tutorial_seen",
+    )
     .eq("user_id", userRes.user.id)
     .maybeSingle();
   return {
-    profile: profile
-      ? { ...(profile as any), email: userRes.user.email ?? null }
-      : null,
+    profile: profile ? { ...(profile as any), email: userRes.user.email ?? null } : null,
   };
 });
-
 
 export const getMyFacilityValue = createServerFn({ method: "GET" }).handler(async () => {
   const request = getRequest();
   const auth = request.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return { facility: null as string | null, slug: null as string | null };
+  if (!auth?.startsWith("Bearer "))
+    return { facility: null as string | null, slug: null as string | null };
   const token = auth.slice("Bearer ".length);
   const { data: userRes } = await supabaseAdmin.auth.getUser(token);
   if (!userRes?.user) return { facility: null, slug: null };
@@ -302,18 +315,19 @@ export const getMyFacilityValue = createServerFn({ method: "GET" }).handler(asyn
   return { facility: facilityValue, slug };
 });
 
-
 export const saveFacilityMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({
-      facilityValue: z.string().min(1).max(64),
-      value: z.object({
-        enabled: z.boolean(),
-        message: z.string(),
-        message_es: z.string(),
-      }),
-    }).parse(input),
+    z
+      .object({
+        facilityValue: z.string().min(1).max(64),
+        value: z.object({
+          enabled: z.boolean(),
+          message: z.string(),
+          message_es: z.string(),
+        }),
+      })
+      .parse(input),
   )
   .handler(async ({ context, data }) => {
     // Allow admin or facilityUser writing their own facility key.
@@ -342,7 +356,10 @@ export const saveFacilityMessage = createServerFn({ method: "POST" })
     const key = `facility_message_${data.facilityValue}`;
     const { error } = await supabaseAdmin
       .from("site_settings")
-      .upsert({ key, value: data.value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+      .upsert(
+        { key, value: data.value, updated_at: new Date().toISOString() },
+        { onConflict: "key" },
+      );
     if (error) throw new Error(error.message);
     return { ok: true };
   });

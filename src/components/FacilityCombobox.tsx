@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +45,7 @@ export function FacilityCombobox({
   const sel = options.find((o) => o.value === value);
   // When allowClear is on, an empty value means "All facilities" — show that label
   // instead of the placeholder so the trigger never reads as "unset".
-  const display = sel ? sel.label : (allowClear ? clearLabel : placeholder);
+  const display = sel ? sel.label : allowClear ? clearLabel : placeholder;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -52,13 +59,18 @@ export function FacilityCombobox({
             triggerClassName,
           )}
         >
-          <span className={cn(!sel && !allowClear && "text-muted-foreground", "truncate text-left")}>
+          <span
+            className={cn(!sel && !allowClear && "text-muted-foreground", "truncate text-left")}
+          >
             {display}
           </span>
           <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className={cn("w-[--radix-popover-trigger-width] p-0", className)} align="start">
+      <PopoverContent
+        className={cn("w-[--radix-popover-trigger-width] p-0", className)}
+        align="start"
+      >
         <Command>
           <CommandInput
             placeholder={searchPlaceholder}
@@ -71,7 +83,10 @@ export function FacilityCombobox({
               {allowClear && (
                 <CommandItem
                   value={clearLabel}
-                  onSelect={() => { onChange(""); setOpen(false); }}
+                  onSelect={() => {
+                    onChange("");
+                    setOpen(false);
+                  }}
                 >
                   <Check className={cn("mr-2 h-4 w-4", !value ? "opacity-100" : "opacity-0")} />
                   {clearLabel}
@@ -89,9 +104,12 @@ export function FacilityCombobox({
                   }}
                 >
                   {/* Checkmark is always rendered but hidden via opacity so column width stays stable. */}
-                  <Check className={cn("mr-2 h-4 w-4", value === o.value ? "opacity-100" : "opacity-0")} />
+                  <Check
+                    className={cn("mr-2 h-4 w-4", value === o.value ? "opacity-100" : "opacity-0")}
+                  />
                   <span className={cn(o.disabled && "text-muted-foreground")}>
-                    {o.label}{o.suffix ? ` ${o.suffix}` : ""}
+                    {o.label}
+                    {o.suffix ? ` ${o.suffix}` : ""}
                   </span>
                 </CommandItem>
               ))}

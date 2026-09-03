@@ -48,6 +48,11 @@ export function trackCategoryView(categoryId: string) {
 }
 
 export function trackContentClick(contentId: string, categoryId: string | null) {
-  buffer.push({ event_type: "content_click", content_id: contentId, category_id: categoryId, user_id: getCachedUserId() });
+  buffer.push({
+    event_type: "content_click",
+    content_id: contentId,
+    category_id: categoryId,
+    user_id: getCachedUserId(),
+  });
   scheduleFlush();
 }

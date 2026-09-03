@@ -48,7 +48,11 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
       const result: { value: string; message: string }[] = [];
       for (const row of data ?? []) {
         const text = ((row.value as any)?.message as string | undefined)?.trim();
-        if (text) result.push({ value: (row.key as string).replace(/^facility_message_/, ""), message: text });
+        if (text)
+          result.push({
+            value: (row.key as string).replace(/^facility_message_/, ""),
+            message: text,
+          });
       }
       return result;
     },
@@ -74,7 +78,8 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
       <section className="mt-8">
         <h2 className="font-display text-xl font-semibold">Facility Message</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Shown as a banner under the navigation for users whose account is attached to a specific facility.
+          Shown as a banner under the navigation for users whose account is attached to a specific
+          facility.
         </p>
         <SectionCard className="mt-3 pt-4">
           <MessageEditor
@@ -85,7 +90,9 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
             icon={<Building2 className="h-5 w-5 text-[var(--color-accent)]" />}
             context="Facility banner message"
             embedded
-            onSaved={() => qc.invalidateQueries({ queryKey: QK.siteSettings("facility-messages-list") })}
+            onSaved={() =>
+              qc.invalidateQueries({ queryKey: QK.siteSettings("facility-messages-list") })
+            }
             overrideSave={async (v) => {
               await saveFacilityMsgFn({ data: { facilityValue: preselectedFacility, value: v } });
             }}
@@ -100,7 +107,8 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
     <section className="mt-8">
       <h2 className="font-display text-xl font-semibold">Facility Message</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Shown as a banner under the navigation for users whose account is attached to a specific facility.
+        Shown as a banner under the navigation for users whose account is attached to a specific
+        facility.
       </p>
       <SectionCard className="mt-3 pt-4 space-y-4">
         {configuredFacilities.length > 0 && (
@@ -109,7 +117,11 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
             {configuredFacilities.map((f, i) => (
               <span key={f.value}>
                 {i > 0 && "; "}
-                <button type="button" onClick={() => selectFacility(f.value)} className="text-[var(--color-accent)] hover:underline">
+                <button
+                  type="button"
+                  onClick={() => selectFacility(f.value)}
+                  className="text-[var(--color-accent)] hover:underline"
+                >
                   {f.label}
                 </button>
               </span>
@@ -143,7 +155,9 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
             icon={<Building2 className="h-5 w-5 text-[var(--color-accent)]" />}
             context={`Facility banner message for ${selected.label}`}
             embedded
-            onSaved={() => qc.invalidateQueries({ queryKey: QK.siteSettings("facility-messages-list") })}
+            onSaved={() =>
+              qc.invalidateQueries({ queryKey: QK.siteSettings("facility-messages-list") })
+            }
             overrideSave={async (v) => {
               await saveFacilityMsgFn({ data: { facilityValue: selected.value, value: v } });
             }}
@@ -172,9 +186,11 @@ function AdminMessagesPage() {
         className="mt-6"
         icon={MessageSquare}
         title="Messages"
-        description={isFacilityUser
-          ? "Manage the message banner shown to users at your facility."
-          : "Show a banner under the navigation on the home page or user dashboard."}
+        description={
+          isFacilityUser
+            ? "Manage the message banner shown to users at your facility."
+            : "Show a banner under the navigation on the home page or user dashboard."
+        }
       />
       {!isFacilityUser && (
         <MessageEditor
@@ -289,138 +305,145 @@ function MessageEditor({
   ) : (
     <form
       className="space-y-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            saveMut.mutate(value);
-          }}
-        >
-          <label className="block">
-            <span className="text-sm font-medium">Message (English)</span>
-            <textarea
-              rows={4}
-              value={value.message}
-              onChange={(e) =>
-                setValue({ ...value, message: e.target.value, enabled: e.target.value.trim().length > 0 })
-              }
-              placeholder="Enter the message to display in the banner…"
-              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-            />
-            <p className="mt-1 text-xs text-muted-foreground">
-              The banner will appear as long as there is a saved message. Clear the message to hide it.
-            </p>
-          </label>
+      onSubmit={(e) => {
+        e.preventDefault();
+        saveMut.mutate(value);
+      }}
+    >
+      <label className="block">
+        <span className="text-sm font-medium">Message (English)</span>
+        <textarea
+          rows={4}
+          value={value.message}
+          onChange={(e) =>
+            setValue({
+              ...value,
+              message: e.target.value,
+              enabled: e.target.value.trim().length > 0,
+            })
+          }
+          placeholder="Enter the message to display in the banner…"
+          className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+        />
+        <p className="mt-1 text-xs text-muted-foreground">
+          The banner will appear as long as there is a saved message. Clear the message to hide it.
+        </p>
+      </label>
 
-          {showEs ? (
-            <div className="space-y-2">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                <div>
-                  <span className="text-sm font-medium">Message (Spanish)</span>
-                  <p className="text-xs text-muted-foreground">Leave blank to fall back to English when Spanish is selected.</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <LoadingButton
-                    variant="secondary"
-                    pending={addEsBusy}
-                    pendingText="Translating…"
-                    disabled={!value.message.trim()}
-                    icon={<RefreshCw className="h-3 w-3" />}
-                    className="gap-1.5"
-                    onClick={() =>
-                      runAddEs(
-                        { message: value.message },
-                        (t) => setValue((prev) => ({ ...prev, message_es: t.message ?? prev.message_es })),
-                        context,
-                      )
-                    }
-                  >
-                    Regenerate
-                  </LoadingButton>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowEs(false);
-                      setValue((prev) => ({ ...prev, message_es: "" }));
-                    }}
-                    className="text-xs text-muted-foreground hover:text-foreground underline"
-                  >
-                    Hide
-                  </button>
-                </div>
-              </div>
-              {addEsBusy && <TranslatingIndicator />}
-              <textarea
-                rows={4}
-                value={value.message_es}
-                onChange={(e) => setValue({ ...value, message_es: e.target.value })}
-                placeholder="Spanish translation (shown to Spanish-language visitors)…"
-                className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-              />
-            </div>
-          ) : (
+      {showEs ? (
+        <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
             <div>
+              <span className="text-sm font-medium">Message (Spanish)</span>
+              <p className="text-xs text-muted-foreground">
+                Leave blank to fall back to English when Spanish is selected.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
               <LoadingButton
                 variant="secondary"
                 pending={addEsBusy}
                 pendingText="Translating…"
                 disabled={!value.message.trim()}
-                onClick={() => {
-                  setShowEs(true);
+                icon={<RefreshCw className="h-3 w-3" />}
+                className="gap-1.5"
+                onClick={() =>
                   runAddEs(
                     { message: value.message },
-                    (t) => setValue((prev) => ({ ...prev, message_es: t.message ?? prev.message_es })),
+                    (t) =>
+                      setValue((prev) => ({ ...prev, message_es: t.message ?? prev.message_es })),
                     context,
-                  );
-                }}
+                  )
+                }
               >
-                + Add Spanish translation
+                Regenerate
               </LoadingButton>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEs(false);
+                  setValue((prev) => ({ ...prev, message_es: "" }));
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground underline"
+              >
+                Hide
+              </button>
             </div>
-          )}
-
-          {value.message.trim() && (
-            <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 space-y-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Preview</p>
-              <div className="rounded-md border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-4 py-3 flex items-start gap-3 text-sm">
-                <Megaphone className="h-4 w-4 mt-0.5 shrink-0 text-[var(--color-accent)]" />
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">English</p>
-                  <p className="whitespace-pre-wrap leading-relaxed">{value.message}</p>
-                </div>
-              </div>
-              {value.message_es.trim() && (
-                <div className="rounded-md border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-4 py-3 flex items-start gap-3 text-sm">
-                  <Megaphone className="h-4 w-4 mt-0.5 shrink-0 text-[var(--color-accent)]" />
-                  <div className="space-y-1">
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Spanish</p>
-                    <p className="whitespace-pre-wrap leading-relaxed">{value.message_es}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-            <LoadingButton
-              variant="secondary"
-              className="w-full sm:w-auto"
-              onClick={() => clearMut.mutate()}
-              pending={clearMut.isPending}
-              pendingText="Clearing…"
-              disabled={saveMut.isPending}
-            >
-              Clear message
-            </LoadingButton>
-            <LoadingButton
-              type="submit"
-              variant="primary"
-              className="w-full sm:w-auto"
-              pending={saveMut.isPending}
-              icon={<Save className="h-4 w-4" />}
-            >
-              Save
-            </LoadingButton>
           </div>
-      </form>
+          {addEsBusy && <TranslatingIndicator />}
+          <textarea
+            rows={4}
+            value={value.message_es}
+            onChange={(e) => setValue({ ...value, message_es: e.target.value })}
+            placeholder="Spanish translation (shown to Spanish-language visitors)…"
+            className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+          />
+        </div>
+      ) : (
+        <div>
+          <LoadingButton
+            variant="secondary"
+            pending={addEsBusy}
+            pendingText="Translating…"
+            disabled={!value.message.trim()}
+            onClick={() => {
+              setShowEs(true);
+              runAddEs(
+                { message: value.message },
+                (t) => setValue((prev) => ({ ...prev, message_es: t.message ?? prev.message_es })),
+                context,
+              );
+            }}
+          >
+            + Add Spanish translation
+          </LoadingButton>
+        </div>
+      )}
+
+      {value.message.trim() && (
+        <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 space-y-3">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Preview</p>
+          <div className="rounded-md border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-4 py-3 flex items-start gap-3 text-sm">
+            <Megaphone className="h-4 w-4 mt-0.5 shrink-0 text-[var(--color-accent)]" />
+            <div className="space-y-1">
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">English</p>
+              <p className="whitespace-pre-wrap leading-relaxed">{value.message}</p>
+            </div>
+          </div>
+          {value.message_es.trim() && (
+            <div className="rounded-md border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 px-4 py-3 flex items-start gap-3 text-sm">
+              <Megaphone className="h-4 w-4 mt-0.5 shrink-0 text-[var(--color-accent)]" />
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Spanish</p>
+                <p className="whitespace-pre-wrap leading-relaxed">{value.message_es}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+        <LoadingButton
+          variant="secondary"
+          className="w-full sm:w-auto"
+          onClick={() => clearMut.mutate()}
+          pending={clearMut.isPending}
+          pendingText="Clearing…"
+          disabled={saveMut.isPending}
+        >
+          Clear message
+        </LoadingButton>
+        <LoadingButton
+          type="submit"
+          variant="primary"
+          className="w-full sm:w-auto"
+          pending={saveMut.isPending}
+          icon={<Save className="h-4 w-4" />}
+        >
+          Save
+        </LoadingButton>
+      </div>
+    </form>
   );
 
   if (embedded) return formContent;
@@ -429,9 +452,7 @@ function MessageEditor({
     <section className="mt-8">
       <h2 className="font-display text-xl font-semibold">{title}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      <SectionCard className="mt-3 pt-4">
-        {formContent}
-      </SectionCard>
+      <SectionCard className="mt-3 pt-4">{formContent}</SectionCard>
     </section>
   );
 }

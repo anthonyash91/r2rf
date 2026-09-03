@@ -46,16 +46,12 @@ beforeEach(() => {
 
 describe("assertAnalyticsAdmin", () => {
   it("resolves for a user with the admin role", async () => {
-    mockSupabase.from.mockReturnValue(
-      mockQuery({ data: [{ role: "admin" }] }),
-    );
+    mockSupabase.from.mockReturnValue(mockQuery({ data: [{ role: "admin" }] }));
     await expect(assertAnalyticsAdmin("admin-uid")).resolves.toBeUndefined();
   });
 
   it("resolves for a user with the facilityUser role", async () => {
-    mockSupabase.from.mockReturnValue(
-      mockQuery({ data: [{ role: "facilityUser" }] }),
-    );
+    mockSupabase.from.mockReturnValue(mockQuery({ data: [{ role: "facilityUser" }] }));
     await expect(assertAnalyticsAdmin("facility-uid")).resolves.toBeUndefined();
   });
 
@@ -78,9 +74,7 @@ describe("assertAnalyticsAdmin", () => {
 
 describe("isFacilityScoped", () => {
   it("returns unscoped for an admin user", async () => {
-    mockSupabase.from.mockReturnValue(
-      mockQuery({ data: [{ role: "admin" }] }),
-    );
+    mockSupabase.from.mockReturnValue(mockQuery({ data: [{ role: "admin" }] }));
     const result = await isFacilityScoped("admin-uid");
     expect(result).toEqual({ scoped: false, facility: null });
     // Should not query user_profiles — admin scope check short-circuits
@@ -102,9 +96,7 @@ describe("isFacilityScoped", () => {
     // Second call: user_profiles → facility value
     mockSupabase.from
       .mockReturnValueOnce(mockQuery({ data: [{ role: "facilityUser" }] }))
-      .mockReturnValueOnce(
-        mockQuery({ data: { facility: "facility_abc" } }),
-      );
+      .mockReturnValueOnce(mockQuery({ data: { facility: "facility_abc" } }));
     const result = await isFacilityScoped("fuser-uid");
     expect(result).toEqual({ scoped: true, facility: "facility_abc" });
     expect(mockSupabase.from).toHaveBeenCalledTimes(2);

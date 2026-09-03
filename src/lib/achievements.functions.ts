@@ -17,10 +17,7 @@ export const checkAndGrantAchievements = createServerFn({ method: "POST" })
         .from("user_content_engagement")
         .select("session_seconds")
         .eq("user_id", userId),
-      supabaseAdmin
-        .from("user_logins")
-        .select("login_date")
-        .eq("user_id", userId),
+      supabaseAdmin.from("user_logins").select("login_date").eq("user_id", userId),
       supabaseAdmin
         .from("content_items")
         .select("id, category_id, exempt_from_progress")
@@ -33,9 +30,13 @@ export const checkAndGrantAchievements = createServerFn({ method: "POST" })
 
     // Build set of exempt item IDs so they're excluded from all achievement counts
     const exemptItemIds = new Set<string>(
-      (allItemsRes.data ?? []).filter((r: any) => r.exempt_from_progress).map((r: any) => r.id as string),
+      (allItemsRes.data ?? [])
+        .filter((r: any) => r.exempt_from_progress)
+        .map((r: any) => r.id as string),
     );
-    const nonExemptProgress = (progressRes.data ?? []).filter((r: any) => !exemptItemIds.has(r.content_item_id as string));
+    const nonExemptProgress = (progressRes.data ?? []).filter(
+      (r: any) => !exemptItemIds.has(r.content_item_id as string),
+    );
 
     // Items completed (excluding exempt items)
     const itemsCompleted = nonExemptProgress.length;
@@ -61,7 +62,8 @@ export const checkAndGrantAchievements = createServerFn({ method: "POST" })
 
     // Total active session time
     const totalSeconds = (engagementRes.data ?? []).reduce(
-      (sum: number, r: any) => sum + ((r.session_seconds as number) || 0), 0,
+      (sum: number, r: any) => sum + ((r.session_seconds as number) || 0),
+      0,
     );
 
     // Current login streak (consecutive days ending today or yesterday).
@@ -74,7 +76,11 @@ export const checkAndGrantAchievements = createServerFn({ method: "POST" })
     const todayStr = today.toISOString().slice(0, 10);
     const yest = new Date(today);
     yest.setDate(yest.getDate() - 1);
-    const startOffset = loginDates.has(todayStr) ? 0 : loginDates.has(yest.toISOString().slice(0, 10)) ? 1 : null;
+    const startOffset = loginDates.has(todayStr)
+      ? 0
+      : loginDates.has(yest.toISOString().slice(0, 10))
+        ? 1
+        : null;
     if (startOffset !== null) {
       for (let i = startOffset; i < 400; i++) {
         const d = new Date(today);
@@ -99,9 +105,9 @@ export const checkAndGrantAchievements = createServerFn({ method: "POST" })
     }
 
     if (newlyEarned.length > 0) {
-      await (supabaseAdmin as any).from("user_achievements").insert(
-        newlyEarned.map((key) => ({ user_id: userId, achievement_key: key })),
-      );
+      await (supabaseAdmin as any)
+        .from("user_achievements")
+        .insert(newlyEarned.map((key) => ({ user_id: userId, achievement_key: key })));
     }
 
     const allEarned: Record<string, string> = {};

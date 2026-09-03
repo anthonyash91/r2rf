@@ -5,7 +5,17 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Building2, Plus, Pencil, Trash2, Users, Blocks, Link2, LayoutGrid, MessageSquare } from "lucide-react";
+import {
+  Building2,
+  Plus,
+  Pencil,
+  Trash2,
+  Users,
+  Blocks,
+  Link2,
+  LayoutGrid,
+  MessageSquare,
+} from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
@@ -26,8 +36,6 @@ import { IconButton } from "@/components/IconButton";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { QK } from "@/lib/query-keys";
-
-
 
 export const Route = createFileRoute("/admin/facilities")({
   beforeLoad: requireStrictAdminBeforeLoad,
@@ -56,7 +64,6 @@ function AdminFacilitiesPage() {
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
 
-
   const facilitiesQuery = useQuery({
     queryKey: QK.facilitiesWithStats,
     staleTime: 10 * 60 * 1000,
@@ -71,12 +78,12 @@ function AdminFacilitiesPage() {
     : allFacilities;
   const visibleFacilities = facilities.slice(page * 10, (page + 1) * 10);
 
-
   const facilitiesKey = ["facilities", "with-stats"] as const;
   const invalidate = () => qc.invalidateQueries({ queryKey: facilitiesKey });
 
   const addMut = useToastMutation({
-    mutationFn: (input: { facilities: { label: string; siteId: string }[] }) => addFacilitiesFn({ data: input }),
+    mutationFn: (input: { facilities: { label: string; siteId: string }[] }) =>
+      addFacilitiesFn({ data: input }),
     invalidate: facilitiesKey,
     successMessage: null,
     onSuccess: (res) => {
@@ -101,7 +108,8 @@ function AdminFacilitiesPage() {
   });
 
   const updateMut = useToastMutation({
-    mutationFn: (input: { id: string; label: string; siteId?: string | null }) => updateFacilityFn({ data: input }),
+    mutationFn: (input: { id: string; label: string; siteId?: string | null }) =>
+      updateFacilityFn({ data: input }),
     successMessage: "Facility updated",
     invalidate: facilitiesKey,
     onSuccess: () => setEditingId(null),
@@ -113,11 +121,11 @@ function AdminFacilitiesPage() {
   });
   const deleteManyMut = useToastMutation({
     mutationFn: (input: { ids: string[] }) => deleteFacilitiesFn({ data: input }),
-    successMessage: (res) => `Deleted ${res.deleted} ${res.deleted === 1 ? "facility" : "facilities"}`,
+    successMessage: (res) =>
+      `Deleted ${res.deleted} ${res.deleted === 1 ? "facility" : "facilities"}`,
     invalidate: facilitiesKey,
     onSuccess: () => bulk.clear(),
   });
-
 
   return (
     <div>
@@ -134,7 +142,10 @@ function AdminFacilitiesPage() {
         />
         <div className="flex flex-col min-[400px]:flex-row gap-2 w-full sm:w-auto shrink-0">
           <LoadingButton
-            onClick={() => { setShowAdd(true); setShowBulkAdd(false); }}
+            onClick={() => {
+              setShowAdd(true);
+              setShowBulkAdd(false);
+            }}
             disabled={showAdd}
             icon={<Plus className="h-4 w-4" />}
             className="w-full min-[400px]:flex-1 whitespace-nowrap"
@@ -143,7 +154,10 @@ function AdminFacilitiesPage() {
           </LoadingButton>
           <LoadingButton
             variant="secondary"
-            onClick={() => { setShowBulkAdd(true); setShowAdd(false); }}
+            onClick={() => {
+              setShowBulkAdd(true);
+              setShowAdd(false);
+            }}
             disabled={showBulkAdd}
             icon={<Plus className="h-4 w-4" />}
             className="w-full min-[400px]:flex-1 whitespace-nowrap"
@@ -154,17 +168,20 @@ function AdminFacilitiesPage() {
       </div>
 
       <section className="mt-8">
-
-
-
         {showAdd && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
               const label = newLabel.trim();
               const siteId = newSiteId.trim();
-              if (!label) { toast.error("Facility name is required"); return; }
-              if (!siteId) { toast.error("Site ID is required"); return; }
+              if (!label) {
+                toast.error("Facility name is required");
+                return;
+              }
+              if (!siteId) {
+                toast.error("Site ID is required");
+                return;
+              }
               addMut.mutate({ facilities: [{ label, siteId }] });
             }}
             className="mt-3 mb-8 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-3"
@@ -193,80 +210,99 @@ function AdminFacilitiesPage() {
             <div className="flex gap-2 justify-end">
               <LoadingButton
                 variant="secondary"
-                onClick={() => { setShowAdd(false); setNewLabel(""); setNewSiteId(""); }}
+                onClick={() => {
+                  setShowAdd(false);
+                  setNewLabel("");
+                  setNewSiteId("");
+                }}
               >
                 Cancel
               </LoadingButton>
-              <LoadingButton
-                type="submit"
-                pending={addMut.isPending}
-                pendingText="Adding…"
-              >
+              <LoadingButton type="submit" pending={addMut.isPending} pendingText="Adding…">
                 Add
               </LoadingButton>
             </div>
           </form>
         )}
 
-        {showBulkAdd && (() => {
-          const parsedRows = bulkText
-            .split("\n")
-            .map((line) => line.trim())
-            .filter(Boolean)
-            .map((line) => {
-              const stripLabel = (s: string) => s.trim().replace(/,+$/, "").trim();
-              if (line.includes("\t")) {
-                const idx = line.indexOf("\t");
-                return { label: stripLabel(line.slice(0, idx)), siteId: line.slice(idx + 1).trim() };
-              }
-              const idx = line.lastIndexOf(",");
-              if (idx === -1) return { label: stripLabel(line), siteId: "" };
-              return { label: stripLabel(line.slice(0, idx)), siteId: line.slice(idx + 1).trim() };
-            })
-            .filter((r) => r.label && r.siteId);
-          return (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!parsedRows.length) { toast.error("No valid rows found"); return; }
-                addMut.mutate({ facilities: parsedRows });
-              }}
-              className="mt-3 mb-8 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-3"
-            >
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Facilities</label>
-                <p className="text-xs text-muted-foreground">One facility per line: <span className="font-mono">Facility Name, Site ID</span></p>
-                <textarea
-                  value={bulkText}
-                  onChange={(e) => setBulkText(e.target.value)}
-                  rows={8}
-                  placeholder={"Campbell, KY, S002001001\nSpringfield, IL, S002001002"}
-                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono resize-y"
-                  autoFocus
-                />
-                {parsedRows.length > 0 && (
-                  <p className="text-xs text-muted-foreground">{parsedRows.length} {parsedRows.length === 1 ? "facility" : "facilities"} ready to add</p>
-                )}
-              </div>
-              <div className="flex gap-2 justify-end">
-                <LoadingButton
-                  variant="secondary"
-                  onClick={() => { setShowBulkAdd(false); setBulkText(""); }}
-                >
-                  Cancel
-                </LoadingButton>
-                <LoadingButton
-                  type="submit"
-                  pending={addMut.isPending}
-                  pendingText="Adding…"
-                  disabled={parsedRows.length === 0}
-                >
-                  Add {parsedRows.length > 0 ? parsedRows.length : ""} {parsedRows.length === 1 ? "facility" : "facilities"}
-                </LoadingButton>
-              </div>
-            </form>
-          );
-        })()}
+        {showBulkAdd &&
+          (() => {
+            const parsedRows = bulkText
+              .split("\n")
+              .map((line) => line.trim())
+              .filter(Boolean)
+              .map((line) => {
+                const stripLabel = (s: string) => s.trim().replace(/,+$/, "").trim();
+                if (line.includes("\t")) {
+                  const idx = line.indexOf("\t");
+                  return {
+                    label: stripLabel(line.slice(0, idx)),
+                    siteId: line.slice(idx + 1).trim(),
+                  };
+                }
+                const idx = line.lastIndexOf(",");
+                if (idx === -1) return { label: stripLabel(line), siteId: "" };
+                return {
+                  label: stripLabel(line.slice(0, idx)),
+                  siteId: line.slice(idx + 1).trim(),
+                };
+              })
+              .filter((r) => r.label && r.siteId);
+            return (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!parsedRows.length) {
+                    toast.error("No valid rows found");
+                    return;
+                  }
+                  addMut.mutate({ facilities: parsedRows });
+                }}
+                className="mt-3 mb-8 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-3"
+              >
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Facilities</label>
+                  <p className="text-xs text-muted-foreground">
+                    One facility per line: <span className="font-mono">Facility Name, Site ID</span>
+                  </p>
+                  <textarea
+                    value={bulkText}
+                    onChange={(e) => setBulkText(e.target.value)}
+                    rows={8}
+                    placeholder={"Campbell, KY, S002001001\nSpringfield, IL, S002001002"}
+                    className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono resize-y"
+                    autoFocus
+                  />
+                  {parsedRows.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {parsedRows.length} {parsedRows.length === 1 ? "facility" : "facilities"}{" "}
+                      ready to add
+                    </p>
+                  )}
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <LoadingButton
+                    variant="secondary"
+                    onClick={() => {
+                      setShowBulkAdd(false);
+                      setBulkText("");
+                    }}
+                  >
+                    Cancel
+                  </LoadingButton>
+                  <LoadingButton
+                    type="submit"
+                    pending={addMut.isPending}
+                    pendingText="Adding…"
+                    disabled={parsedRows.length === 0}
+                  >
+                    Add {parsedRows.length > 0 ? parsedRows.length : ""}{" "}
+                    {parsedRows.length === 1 ? "facility" : "facilities"}
+                  </LoadingButton>
+                </div>
+              </form>
+            );
+          })()}
 
         {allFacilities.length > 0 && (
           <BulkActionBar
@@ -276,7 +312,10 @@ function AdminFacilitiesPage() {
             isFiltered={Boolean(q)}
             noun={{ singular: "facility", plural: "facilities" }}
             searchQuery={searchQuery}
-            onSearchChange={(v) => { setSearchQuery(v); setPage(0); }}
+            onSearchChange={(v) => {
+              setSearchQuery(v);
+              setPage(0);
+            }}
             searchPlaceholder="Search facilities…"
             onEnterEditMode={() => setEditingId(null)}
             onDeleteSelected={async (ids) =>
@@ -289,7 +328,9 @@ function AdminFacilitiesPage() {
           />
         )}
 
-        <div className={`rounded-b-2xl border border-border bg-card overflow-hidden ${allFacilities.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}>
+        <div
+          className={`rounded-b-2xl border border-border bg-card overflow-hidden ${allFacilities.length > 0 ? "" : "mt-3 rounded-t-2xl"}`}
+        >
           {facilitiesQuery.isLoading ? (
             <EmptyState size="sm">Loading…</EmptyState>
           ) : facilities.length ? (
@@ -308,7 +349,9 @@ function AdminFacilitiesPage() {
                         : ""
                     }`}
                   >
-                    <div className={`flex flex-col gap-5 md:flex-row md:items-center md:justify-between ${editable ? "pointer-events-none" : ""}`}>
+                    <div
+                      className={`flex flex-col gap-5 md:flex-row md:items-center md:justify-between ${editable ? "pointer-events-none" : ""}`}
+                    >
                       {isEditing ? (
                         <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2">
                           <input
@@ -332,8 +375,14 @@ function AdminFacilitiesPage() {
                               onClick={() => {
                                 const label = editingLabel.trim();
                                 const siteId = editingSiteId.trim();
-                                if (!label) { toast.error("Facility name is required"); return; }
-                                if (!siteId) { toast.error("Site ID is required"); return; }
+                                if (!label) {
+                                  toast.error("Facility name is required");
+                                  return;
+                                }
+                                if (!siteId) {
+                                  toast.error("Site ID is required");
+                                  return;
+                                }
                                 updateMut.mutate({ id: f.id, label, siteId });
                               }}
                               pending={updateMut.isPending}
@@ -349,7 +398,9 @@ function AdminFacilitiesPage() {
                             <div className="flex items-center gap-3 min-w-0 flex-wrap">
                               <span className="text-sm font-medium truncate">{f.label}</span>
                               {f.siteId && (
-                                <code className="text-xs text-muted-foreground font-mono truncate leading-none self-center">{f.siteId}</code>
+                                <code className="text-xs text-muted-foreground font-mono truncate leading-none self-center">
+                                  {f.siteId}
+                                </code>
                               )}
                             </div>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -386,7 +437,9 @@ function AdminFacilitiesPage() {
                                         className="text-xs text-muted-foreground hover:text-foreground hover:underline"
                                       >
                                         {cat.name}
-                                        <span className="ml-1 text-muted-foreground/60">— /{cat.slug}</span>
+                                        <span className="ml-1 text-muted-foreground/60">
+                                          — /{cat.slug}
+                                        </span>
                                       </Link>
                                     </li>
                                   ))}
@@ -409,7 +462,9 @@ function AdminFacilitiesPage() {
                                         className="text-xs text-muted-foreground hover:text-foreground hover:underline"
                                       >
                                         {item.title}
-                                        <span className="ml-1 text-muted-foreground/60">— {item.categoryName}</span>
+                                        <span className="ml-1 text-muted-foreground/60">
+                                          — {item.categoryName}
+                                        </span>
                                       </Link>
                                     </li>
                                   ))}
@@ -443,7 +498,11 @@ function AdminFacilitiesPage() {
                                 aria-label="Edit"
                                 tooltip="Edit"
                                 icon={Pencil}
-                                onClick={() => { setEditingId(f.id); setEditingLabel(f.label); setEditingSiteId(f.siteId ?? ""); }}
+                                onClick={() => {
+                                  setEditingId(f.id);
+                                  setEditingLabel(f.label);
+                                  setEditingSiteId(f.siteId ?? "");
+                                }}
                               />
                               <div className="mx-1 h-6 w-px bg-border" aria-hidden />
                               <IconButton
@@ -471,11 +530,19 @@ function AdminFacilitiesPage() {
               })}
             </ul>
           ) : (
-            <EmptyState size="sm">{q ? "No facilities match your search." : "No facilities yet."}</EmptyState>
+            <EmptyState size="sm">
+              {q ? "No facilities match your search." : "No facilities yet."}
+            </EmptyState>
           )}
         </div>
-        <Pager page={page} total={facilities.length} pageSize={10} onPage={setPage} itemLabel="facility" itemLabelPlural="facilities" />
-
+        <Pager
+          page={page}
+          total={facilities.length}
+          pageSize={10}
+          onPage={setPage}
+          itemLabel="facility"
+          itemLabelPlural="facilities"
+        />
       </section>
     </div>
   );

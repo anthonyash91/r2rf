@@ -37,15 +37,27 @@ function dismissalCacheKey(dismissalKind: string, userId: string) {
 }
 
 function readDismissalCache(dismissalKind: string, userId: string): string | null {
-  try { return sessionStorage.getItem(dismissalCacheKey(dismissalKind, userId)); } catch { return null; }
+  try {
+    return sessionStorage.getItem(dismissalCacheKey(dismissalKind, userId));
+  } catch {
+    return null;
+  }
 }
 
 function writeDismissalCache(dismissalKind: string, userId: string, value: string) {
-  try { sessionStorage.setItem(dismissalCacheKey(dismissalKind, userId), value); } catch { /* ignore */ }
+  try {
+    sessionStorage.setItem(dismissalCacheKey(dismissalKind, userId), value);
+  } catch {
+    /* ignore */
+  }
 }
 
 function clearDismissalCache(dismissalKind: string, userId: string) {
-  try { sessionStorage.removeItem(dismissalCacheKey(dismissalKind, userId)); } catch { /* ignore */ }
+  try {
+    sessionStorage.removeItem(dismissalCacheKey(dismissalKind, userId));
+  } catch {
+    /* ignore */
+  }
 }
 
 export function SiteMessageBanner({
@@ -70,15 +82,17 @@ export function SiteMessageBanner({
     staleTime: Infinity,
     queryFn: () => fetchFacility(),
   });
-  const facilityValue = kind === "facility"
-    ? (facilityValueProp ?? facilityData?.facility ?? null)
-    : null;
+  const facilityValue =
+    kind === "facility" ? (facilityValueProp ?? facilityData?.facility ?? null) : null;
 
   // Build the site_settings lookup key. Facility banners use a per-facility key;
   // other kinds use the fixed map above.
-  const settingsKey = kind === "facility"
-    ? (facilityValue ? `facility_message_${facilityValue}` : null)
-    : KEY_FOR_KIND[kind as Exclude<SiteMessageKind, "facility">];
+  const settingsKey =
+    kind === "facility"
+      ? facilityValue
+        ? `facility_message_${facilityValue}`
+        : null
+      : KEY_FOR_KIND[kind as Exclude<SiteMessageKind, "facility">];
 
   const { data } = useQuery({
     queryKey: QK.siteSettings(settingsKey ?? ""),
@@ -171,9 +185,7 @@ export function SiteMessageBanner({
   }
 
   const text =
-    lang === "es" && data.message_es && data.message_es.trim()
-      ? data.message_es
-      : data.message;
+    lang === "es" && data.message_es && data.message_es.trim() ? data.message_es : data.message;
 
   const onDismiss = async () => {
     if (userId) {
@@ -190,7 +202,10 @@ export function SiteMessageBanner({
       if (error) qc.invalidateQueries({ queryKey: dismissalQueryKey });
     } else if (typeof window !== "undefined") {
       // Anonymous visitors: store in sessionStorage (clears on tab close).
-      window.sessionStorage.setItem(sessionStorageKey(kind, facilityValue ?? undefined), data.updatedAt);
+      window.sessionStorage.setItem(
+        sessionStorageKey(kind, facilityValue ?? undefined),
+        data.updatedAt,
+      );
     }
   };
 
@@ -198,7 +213,12 @@ export function SiteMessageBanner({
     <div
       role="status"
       className="w-full border-t border-b text-foreground"
-      style={bannerStyle ?? { borderColor: "color-mix(in oklab, var(--color-accent) 30%, transparent)", backgroundColor: "color-mix(in oklab, var(--color-accent) 10%, transparent)" }}
+      style={
+        bannerStyle ?? {
+          borderColor: "color-mix(in oklab, var(--color-accent) 30%, transparent)",
+          backgroundColor: "color-mix(in oklab, var(--color-accent) 10%, transparent)",
+        }
+      }
     >
       <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-start gap-3 text-sm text-left">
         <Megaphone className={iconClassName} style={iconStyle} />

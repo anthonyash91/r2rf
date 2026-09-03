@@ -103,7 +103,9 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
   useEffect(() => {
     if (!show) return;
     document.body.style.overscrollBehaviorY = "none";
-    return () => { document.body.style.overscrollBehaviorY = ""; };
+    return () => {
+      document.body.style.overscrollBehaviorY = "";
+    };
   }, [show]);
 
   // Pin keyboard to the visual viewport bottom using transform instead of
@@ -129,7 +131,6 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
       el.style.transform = "";
     };
   }, [show]);
-
 
   // When the keyboard opens or the target changes, scroll the page just enough
   // to bring the active input above the keyboard.
@@ -259,7 +260,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </KeyboardCtx.Provider>
   );

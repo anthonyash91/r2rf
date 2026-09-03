@@ -30,7 +30,9 @@ const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 async function main() {
   console.log("=".repeat(60));
-  console.log(DRY_RUN ? "  DRY RUN — no changes will be made" : "  Deleting all users with role = \"user\"");
+  console.log(
+    DRY_RUN ? "  DRY RUN — no changes will be made" : '  Deleting all users with role = "user"',
+  );
   console.log("=".repeat(60));
 
   // Fetch all user IDs with role "user"

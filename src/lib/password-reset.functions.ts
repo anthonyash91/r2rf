@@ -8,12 +8,10 @@ import { getClientIp } from "./ip-allowlist";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
 import { hashAnswer, verifyAnswer, verifyPin } from "./security-hash.server";
 
-
 const USER_EMAIL_DOMAIN = "users.local";
 const RESET_WINDOW_MS = 60 * 60 * 1000;
 const RESET_MAX_PER_IP = 8;
 const QUESTION_PROBE_MAX_PER_IP = 30;
-
 
 function syntheticEmailLocal(username: string): string {
   return `${username.toLowerCase()}@${USER_EMAIL_DOMAIN}`;
@@ -22,7 +20,12 @@ function syntheticEmailLocal(username: string): string {
 const answersSchema = z
   .array(
     z.object({
-      key: z.string().refine((v) => (SECURITY_QUESTION_KEYS as readonly string[]).includes(v), "Invalid question"),
+      key: z
+        .string()
+        .refine(
+          (v) => (SECURITY_QUESTION_KEYS as readonly string[]).includes(v),
+          "Invalid question",
+        ),
       value: z.string().trim().min(2).max(200),
     }),
   )
@@ -64,11 +67,17 @@ async function checkAndRecordResetAttempt(ip: string | null, username: string) {
  */
 export const getResetQuestions = createServerFn({ method: "POST" })
   .inputValidator((input) =>
-    z.object({
-      username: z.string().trim().toLowerCase().regex(/^[a-z0-9_]{3,32}$/),
-      inmatePin: z.string().optional(),
-      facilityValue: z.string().optional(),
-    }).parse(input),
+    z
+      .object({
+        username: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(/^[a-z0-9_]{3,32}$/),
+        inmatePin: z.string().optional(),
+        facilityValue: z.string().optional(),
+      })
+      .parse(input),
   )
   .handler(async ({ data }) => {
     // Rate-limit username probing per IP using an advisory-lock RPC so concurrent
@@ -130,7 +139,11 @@ export const resetPassword = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
-        username: z.string().trim().toLowerCase().regex(/^[a-z0-9_]{3,32}$/),
+        username: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(/^[a-z0-9_]{3,32}$/),
         answers: answersSchema,
         newPassword: z.string().min(8).max(72),
       })
@@ -198,9 +211,7 @@ export const updateSecurityAnswers = createServerFn({ method: "POST" })
 
     // Insert new answers first. If this fails the user retains their existing
     // answers — no lockout risk. Only delete old answers after the insert succeeds.
-    const { error: insErr } = await supabaseAdmin
-      .from("user_security_answers")
-      .insert(rows);
+    const { error: insErr } = await supabaseAdmin.from("user_security_answers").insert(rows);
     if (insErr) throw new Error(insErr.message);
 
     // Remove any rows whose question_key is NOT among the newly inserted keys
@@ -213,4 +224,3 @@ export const updateSecurityAnswers = createServerFn({ method: "POST" })
 
     return { ok: true as const };
   });
-

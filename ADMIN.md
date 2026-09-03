@@ -6,12 +6,12 @@ This guide covers every feature available in the admin panel at `/admin`. For a 
 
 ## Roles Overview
 
-| Role | Admin panel access | Content editing | Analytics & Reports | User management |
-|---|---|---|---|---|
-| **Admin** | Full | Full | All facilities | Full |
-| **Contributor** | Content editing only | Full | None | None |
-| **Facility User** | Limited | None | Own facility only | Own facility only |
-| **Tester** | None | None | None | None |
+| Role              | Admin panel access   | Content editing | Analytics & Reports | User management   |
+| ----------------- | -------------------- | --------------- | ------------------- | ----------------- |
+| **Admin**         | Full                 | Full            | All facilities      | Full              |
+| **Contributor**   | Content editing only | Full            | None                | None              |
+| **Facility User** | Limited              | None            | Own facility only   | Own facility only |
+| **Tester**        | None                 | None            | None                | None              |
 
 ---
 
@@ -25,7 +25,7 @@ The admin panel is accessible via the **Admin** link in the main navigation bar 
 
 ## Content Management — `/admin/`
 
-*Accessible to: Admin, Contributor*
+_Accessible to: Admin, Contributor_
 
 The content management home is the main workspace for building and maintaining the content library.
 
@@ -51,7 +51,7 @@ The content management home is the main workspace for building and maintaining t
 
 ## Category & Content Editor — `/admin/category/$id`
 
-*Accessible to: Admin, Contributor*
+_Accessible to: Admin, Contributor_
 
 ### Category Settings
 
@@ -90,8 +90,8 @@ When uploading a replacement file, the old file is automatically deleted from st
 
 ## Users — `/admin/users`
 
-*Accessible to: Admin, Facility User*
-*Facility Users see only users at their own facility.*
+_Accessible to: Admin, Facility User_
+_Facility Users see only users at their own facility._
 
 ### User Sections
 
@@ -102,20 +102,20 @@ When uploading a replacement file, the old file is automatically deleted from st
 
 ### Per-User Actions
 
-| Action | Admin | Facility User |
-|---|---|---|
-| View profile details | ✓ | ✓ (own facility) |
-| Create new regular user | ✓ | — |
-| Create facility staff account | ✓ | — |
-| Create tester account | ✓ | — |
-| Edit user's email address | ✓ | — |
-| Set user's password manually | ✓ | ✓ (own facility) |
-| Send password reset email | ✓ | ✓ (own facility) |
-| Resend email verification | ✓ | ✓ (own facility) |
-| Reset security questions | ✓ | ✓ (own facility) |
-| Change user role | ✓ | — |
-| Delete single user | ✓ | — |
-| Bulk delete users | ✓ | — |
+| Action                        | Admin | Facility User    |
+| ----------------------------- | ----- | ---------------- |
+| View profile details          | ✓     | ✓ (own facility) |
+| Create new regular user       | ✓     | —                |
+| Create facility staff account | ✓     | —                |
+| Create tester account         | ✓     | —                |
+| Edit user's email address     | ✓     | —                |
+| Set user's password manually  | ✓     | ✓ (own facility) |
+| Send password reset email     | ✓     | ✓ (own facility) |
+| Resend email verification     | ✓     | ✓ (own facility) |
+| Reset security questions      | ✓     | ✓ (own facility) |
+| Change user role              | ✓     | —                |
+| Delete single user            | ✓     | —                |
+| Bulk delete users             | ✓     | —                |
 
 **Facility User restriction:** A Facility User can only perform actions on regular users registered at their own facility. They cannot view or manage users at other facilities, and cannot manage admin, contributor, or tester accounts.
 
@@ -125,15 +125,17 @@ When uploading a replacement file, the old file is automatically deleted from st
 
 ## Analytics — `/admin/analytics`
 
-*Accessible to: Admin, Facility User*
-*Facility Users see data scoped to their own facility only. Contributors have no access to analytics.*
+_Accessible to: Admin, Facility User_
+_Facility Users see data scoped to their own facility only. Contributors have no access to analytics._
 
 The analytics page has three tabs: **Overall**, **By Facility**, and **Users**.
 
 ### Overall Tab
 
 #### Summary Cards
+
 Five top-level metrics for the selected time range (Last month, Last 7 days, Last 30 days, Last 90 days, All time):
+
 - **Completion rate** — percentage of content opens that resulted in completion
 - **Time spent** — total real session time
 - **Visits** — category page views
@@ -141,29 +143,36 @@ Five top-level metrics for the selected time range (Last month, Last 7 days, Las
 - **Users** — total registered users
 
 #### Category List
+
 Every category as an expandable accordion row showing visits, opens, completion rate, avg depth, and time spent. When expanded: each content item with its open count, completion rate, drop-off count, avg time spent, helpful rating count, not-helpful rating count, and bookmark count. Exempt items do not appear in this list.
 
 #### Most & Least Engaged Content
+
 Top 5 and bottom 5 content items by completion rate (among items with sufficient data).
 
 #### Content Type Preference
+
 Engagement breakdown by content format — opens, completions, completion rate, and time spent per type.
 
 #### Category Completion
+
 Per-category table showing users started vs. users who completed every item.
 
 #### User Retention
+
 7-day, 30-day, and 60-day return rates.
 
 #### Growth
+
 A 12-week chart of new signups and active users per week.
 
-#### Facility Comparison *(Admin only)*
+#### Facility Comparison _(Admin only)_
+
 All facilities ranked by average completion rate. Includes user counts, active users, participation rate, items completed, time spent, total bookmarks, helpful ratings, and not-helpful ratings. Exportable as CSV.
 
 ### By Facility Tab
 
-Select a specific facility to view its usage report scoped to that facility's users. Also shows the facility's ranking. *(Admin sees all facilities; Facility Users see their own facility only.)*
+Select a specific facility to view its usage report scoped to that facility's users. Also shows the facility's ranking. _(Admin sees all facilities; Facility Users see their own facility only.)_
 
 ### Users Tab
 
@@ -178,20 +187,22 @@ Select a facility to see registered users with signup date, last login, and enga
 Exempt items appear in the per-item list with an "Acknowledge/Acknowledged" badge and a disclaimer noting they don't count toward this user's progress.
 
 All views exportable as CSV, including:
+
 - **Export CSV** — the user list with signup date, last login, and engagement tier
 - **Export All Progress (CSV)** — a flat CSV with one row per user × item, covering every published item visible to the facility for every user. Columns: First Name, Last Name, Username, PIN, Last Login, Items Completed, Time Spent, Category, Item Title, Completed, Completed On, Progress %, Time on Item, Bookmarked, Rating. Items are grouped by category; repeated user and category values are shown only once. Useful for program reviews, parole documentation, and grant reporting. Only available when a specific facility is selected, not in the "all facilities" view.
 
-#### Manual Refresh *(Admin only)*
+#### Manual Refresh _(Admin only)_
+
 A refresh button triggers the nightly analytics job on demand. Only admins can trigger this.
 
 ---
 
 ## Messages — `/admin/messages`
 
-*Accessible to: Admin, Facility User*
-*Facility Users can only edit the message for their own facility.*
+_Accessible to: Admin, Facility User_
+_Facility Users can only edit the message for their own facility._
 
-**Site-wide message** *(Admin only)* — shown to all users on the home page as a dismissible banner. Supports English and Spanish.
+**Site-wide message** _(Admin only)_ — shown to all users on the home page as a dismissible banner. Supports English and Spanish.
 
 **Facility messages** — a separate message per facility. Admins can set messages for any facility. Facility Users see only their own facility's message editor and cannot edit messages for other facilities.
 
@@ -201,7 +212,7 @@ Messages include a Spanish translation field and an AI-assisted Regenerate optio
 
 ## Facilities — `/admin/facilities`
 
-*Accessible to: Admin only*
+_Accessible to: Admin only_
 
 - **View all facilities** — list with site ID and custom slug
 - **Add a new facility** — label, value, and optional Site ID
@@ -210,13 +221,14 @@ Messages include a Spanish translation field and an AI-assisted Regenerate optio
 - **Reorder facilities** — drag to change dropdown order
 
 ### Site ID System
+
 Each facility can have a Site ID that generates a public URL for automatic facility association at sign-up. Custom slugs create shorter branded URLs.
 
 ---
 
 ## Audit Log — `/admin/audit-log`
 
-*Accessible to: Admin only*
+_Accessible to: Admin only_
 
 A read-only log of sensitive admin actions — password changes, user deletions, role changes, and similar operations. Each entry shows the action, actor, affected user, timestamp, and context. Paginated.
 
@@ -224,7 +236,7 @@ A read-only log of sensitive admin actions — password changes, user deletions,
 
 ## Error Log — `/admin/errors`
 
-*Accessible to: Admin only*
+_Accessible to: Admin only_
 
 Server and client errors caught by the platform. Errors can be cleared individually, in bulk (older than 30 days), or all at once.
 
@@ -232,7 +244,7 @@ Server and client errors caught by the platform. Errors can be cleared individua
 
 ## Home Page Editor — `/admin/home`
 
-*Accessible to: Admin only*
+_Accessible to: Admin only_
 
 Edit the hero section of the main public home page — eyebrow label, headline, and subheading. Supports English and Spanish.
 
@@ -240,7 +252,7 @@ Edit the hero section of the main public home page — eyebrow label, headline, 
 
 ## Certificate Page Editor — `/admin/certificate`
 
-*Accessible to: Admin only*
+_Accessible to: Admin only_
 
 Edit the hero section of the certificate program landing page — headline and subheading in English and Spanish.
 
@@ -248,7 +260,7 @@ Edit the hero section of the certificate program landing page — headline and s
 
 ## Privacy Policy — `/admin/privacy`
 
-*Accessible to: Admin, Contributor*
+_Accessible to: Admin, Contributor_
 
 A rich text editor for the platform's Privacy Policy page. Supports English and Spanish with AI-assisted translation.
 
@@ -256,7 +268,7 @@ A rich text editor for the platform's Privacy Policy page. Supports English and 
 
 ## Terms of Service — `/admin/terms`
 
-*Accessible to: Admin, Contributor*
+_Accessible to: Admin, Contributor_
 
 A rich text editor for the Terms of Service page. Identical in functionality to the Privacy Policy editor.
 
@@ -264,7 +276,7 @@ A rich text editor for the Terms of Service page. Identical in functionality to 
 
 ## Icons & Badges — `/admin/icons-badges`
 
-*Accessible to: Admin only*
+_Accessible to: Admin only_
 
 A visual design tool for customizing the platform's appearance:
 
@@ -278,7 +290,7 @@ Changes affect the entire platform. Save Changes must be clicked to persist.
 
 ## IP Allowlist — `/admin/ip-allowlist`
 
-*Accessible to: Admin only*
+_Accessible to: Admin only_
 
 Manage IP address access control for the platform:
 
@@ -291,7 +303,7 @@ Manage IP address access control for the platform:
 
 ## Seed Content — `/admin/seed`
 
-*Accessible to: Admin only*
+_Accessible to: Admin only_
 
 A bulk content import tool for adding many content items at once via CSV. Supports category slug, title, type, URL, source, and sort order. Shows a preview table with validation errors before importing.
 
@@ -299,13 +311,14 @@ A bulk content import tool for adding many content items at once via CSV. Suppor
 
 ## Test Results — `/admin/test-results`
 
-*Accessible to: Admin only*
+_Accessible to: Admin only_
 
 A read-only dashboard showing QA test runs submitted by tester accounts.
 
 ### Run List
 
 All runs across all testers are shown in a table with:
+
 - **Run label** — the name the tester gave the run (e.g. "Post-deploy June 3")
 - **Tester** — the tester's username
 - **Date** — when the run was created
@@ -334,24 +347,24 @@ Shows all tests organized by section. Each section is a collapsible accordion wi
 
 ## Role Summary by Page
 
-| Page | Admin | Contributor | Facility User |
-|---|---|---|---|
-| Content home (`/admin/`) | ✓ Full | ✓ Full | — |
-| Category editor | ✓ Full | ✓ Full | — |
-| Users | ✓ All users | — | Own facility only |
-| Analytics | ✓ All facilities | — | Own facility only |
-| Messages | ✓ All facilities | — | Own facility (scoped) |
-| Facilities | ✓ Full | — | — |
-| Audit log | ✓ | — | — |
-| Error log | ✓ | — | — |
-| Home page editor | ✓ | — | — |
-| Certificate editor | ✓ | — | — |
-| Privacy policy | ✓ | ✓ | — |
-| Terms of service | ✓ | ✓ | — |
-| Icons & Badges | ✓ | — | — |
-| IP Allowlist | ✓ | — | — |
-| Seed content | ✓ | — | — |
-| Test Results | ✓ | — | — |
+| Page                     | Admin            | Contributor | Facility User         |
+| ------------------------ | ---------------- | ----------- | --------------------- |
+| Content home (`/admin/`) | ✓ Full           | ✓ Full      | —                     |
+| Category editor          | ✓ Full           | ✓ Full      | —                     |
+| Users                    | ✓ All users      | —           | Own facility only     |
+| Analytics                | ✓ All facilities | —           | Own facility only     |
+| Messages                 | ✓ All facilities | —           | Own facility (scoped) |
+| Facilities               | ✓ Full           | —           | —                     |
+| Audit log                | ✓                | —           | —                     |
+| Error log                | ✓                | —           | —                     |
+| Home page editor         | ✓                | —           | —                     |
+| Certificate editor       | ✓                | —           | —                     |
+| Privacy policy           | ✓                | ✓           | —                     |
+| Terms of service         | ✓                | ✓           | —                     |
+| Icons & Badges           | ✓                | —           | —                     |
+| IP Allowlist             | ✓                | —           | —                     |
+| Seed content             | ✓                | —           | —                     |
+| Test Results             | ✓                | —           | —                     |
 
 ---
 

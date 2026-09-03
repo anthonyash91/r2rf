@@ -43,7 +43,12 @@ export function SpotlightTutorial({ steps, onComplete }: SpotlightTutorialProps)
 
     const measure = () => {
       const el = document.getElementById(targetId);
-      if (el) setMeas({ rect: el.getBoundingClientRect(), vw: window.innerWidth, vh: window.innerHeight });
+      if (el)
+        setMeas({
+          rect: el.getBoundingClientRect(),
+          vw: window.innerWidth,
+          vh: window.innerHeight,
+        });
     };
 
     // Give onEnter's state updates time to render before scrolling
@@ -61,7 +66,7 @@ export function SpotlightTutorial({ steps, onComplete }: SpotlightTutorialProps)
       window.removeEventListener("scroll", measure);
       window.removeEventListener("resize", measure);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIdx]);
 
   let spotStyle: React.CSSProperties | undefined;
@@ -131,8 +136,8 @@ export function SpotlightTutorial({ steps, onComplete }: SpotlightTutorialProps)
                   i === stepIdx
                     ? "w-6 bg-primary"
                     : i < stepIdx
-                    ? "w-1.5 bg-primary/40"
-                    : "w-1.5 bg-muted-foreground/25"
+                      ? "w-1.5 bg-primary/40"
+                      : "w-1.5 bg-muted-foreground/25"
                 }`}
               />
             ))}
@@ -162,7 +167,11 @@ export function SpotlightTutorial({ steps, onComplete }: SpotlightTutorialProps)
           onClick={advance}
           className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
         >
-          {isLast ? t("tutorial.getStarted") : isFirst ? t("tutorial.showMeAround") : t("tutorial.next")}
+          {isLast
+            ? t("tutorial.getStarted")
+            : isFirst
+              ? t("tutorial.showMeAround")
+              : t("tutorial.next")}
           {!isLast && <ArrowRight className="h-4 w-4" />}
         </button>
       </div>

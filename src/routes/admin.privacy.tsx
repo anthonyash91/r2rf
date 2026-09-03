@@ -86,7 +86,6 @@ function AdminPrivacyPage() {
       />
 
       <SectionCard className="mt-8 pt-4">
-
         {isLoading ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : (
@@ -143,7 +142,6 @@ function AdminPrivacyPage() {
                   </button>
                 </div>
                 {translating && <TranslatingIndicator />}
-
 
                 <label className="block">
                   <span className="text-sm font-medium">Page title (Spanish)</span>

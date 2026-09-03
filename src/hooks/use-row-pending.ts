@@ -20,11 +20,7 @@ type AnyMutation = Pick<
  * Removes the repeated `mut.isPending && mut.variables?.x === y` boilerplate
  * scattered across per-row admin lists.
  */
-export function isMutationPendingFor<V>(
-  mutation: AnyMutation,
-  value: V,
-  key?: string,
-): boolean {
+export function isMutationPendingFor<V>(mutation: AnyMutation, value: V, key?: string): boolean {
   if (!mutation.isPending) return false;
   // No key: variables is a scalar (e.g. the id string passed directly to mutate()).
   if (key === undefined) {

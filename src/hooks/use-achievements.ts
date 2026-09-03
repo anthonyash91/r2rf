@@ -48,7 +48,7 @@ export function useAchievements() {
   };
 
   return {
-    earned: data ?? {} as Record<string, string>,
+    earned: data ?? ({} as Record<string, string>),
     check,
   };
 }

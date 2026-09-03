@@ -19,11 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  listErrorLogs,
-  clearOldErrorLogs,
-  deleteAllErrorLogs,
-} from "@/lib/error-logs.functions";
+import { listErrorLogs, clearOldErrorLogs, deleteAllErrorLogs } from "@/lib/error-logs.functions";
 import { QK } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/admin/errors")({
@@ -66,9 +62,24 @@ function ErrorRow({ entry }: { entry: any }) {
             </div>
             <p className="text-xs text-muted-foreground">
               <span className="uppercase tracking-wide">{entry.source}</span>
-              {entry.route && <>{" · "}{entry.route}</>}
-              {entry.username && <>{" · "}{capFirst(entry.username)}</>}
-              {entry.ip_address && <>{" · "}{entry.ip_address}</>}
+              {entry.route && (
+                <>
+                  {" · "}
+                  {entry.route}
+                </>
+              )}
+              {entry.username && (
+                <>
+                  {" · "}
+                  {capFirst(entry.username)}
+                </>
+              )}
+              {entry.ip_address && (
+                <>
+                  {" · "}
+                  {entry.ip_address}
+                </>
+              )}
             </p>
             {(entry.stack || (entry.context && Object.keys(entry.context).length > 0)) && (
               <button
@@ -137,7 +148,14 @@ function AdminErrorsPage() {
   const s = search.trim().toLowerCase();
   const filtered = s
     ? all.filter((e: any) => {
-        const blob = [e.message, e.stack, e.route, e.username, e.ip_address, JSON.stringify(e.context)]
+        const blob = [
+          e.message,
+          e.stack,
+          e.route,
+          e.username,
+          e.ip_address,
+          JSON.stringify(e.context),
+        ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
@@ -211,7 +229,10 @@ function AdminErrorsPage() {
             <FilterField label="Search" className="flex-1 min-w-[180px]">
               <input
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(0);
+                }}
                 placeholder="message, stack, route, ip…"
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
@@ -219,7 +240,10 @@ function AdminErrorsPage() {
             <FilterField label="Source" className="w-full sm:w-auto sm:min-w-[180px]">
               <Select
                 value={source || "all"}
-                onValueChange={(v) => { setSource(v === "all" ? "" : (v as SourceFilter)); setPage(0); }}
+                onValueChange={(v) => {
+                  setSource(v === "all" ? "" : (v as SourceFilter));
+                  setPage(0);
+                }}
               >
                 <SelectTrigger className="w-full px-4 py-2 text-sm">
                   <SelectValue />
@@ -235,13 +259,21 @@ function AdminErrorsPage() {
               <input
                 type="datetime-local"
                 value={since}
-                onChange={(e) => { setSince(e.target.value); setPage(0); }}
+                onChange={(e) => {
+                  setSince(e.target.value);
+                  setPage(0);
+                }}
                 className="w-full sm:w-auto rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
             </FilterField>
             {(source || search || since) && (
               <button
-                onClick={() => { setSource(""); setSearch(""); setSince(""); setPage(0); }}
+                onClick={() => {
+                  setSource("");
+                  setSearch("");
+                  setSince("");
+                  setPage(0);
+                }}
                 className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-muted"
               >
                 <Filter className="h-3.5 w-3.5" />
@@ -266,7 +298,14 @@ function AdminErrorsPage() {
             </ul>
           )}
         </div>
-        <Pager page={page} total={filtered.length} pageSize={25} onPage={setPage} itemLabel="error" itemLabelPlural="errors" />
+        <Pager
+          page={page}
+          total={filtered.length}
+          pageSize={25}
+          onPage={setPage}
+          itemLabel="error"
+          itemLabelPlural="errors"
+        />
       </section>
     </div>
   );

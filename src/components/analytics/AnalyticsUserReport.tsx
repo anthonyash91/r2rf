@@ -28,7 +28,13 @@ import { ReadStatusBadge } from "@/components/ReadStatusBadge";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { UserSectionHeader } from "@/components/UserSectionHeader";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Pager } from "@/components/LoadMorePager";
 import { fmtDate, fmtDateShort, formatTimeSpent } from "@/lib/date-format";
 import { withActionWord } from "@/lib/duration";
@@ -36,11 +42,20 @@ import { capFirst } from "@/lib/utils";
 import { waitForNextPaint } from "@/lib/paint";
 import { readStatusLabels } from "@/lib/read-status";
 import { useI18n } from "@/lib/i18n";
-import { listFacilityUsers, getUserProgressReport, getBulkFacilityProgressReport } from "@/lib/reports.functions";
+import {
+  listFacilityUsers,
+  getUserProgressReport,
+  getBulkFacilityProgressReport,
+} from "@/lib/reports.functions";
 import { listFacilityAdminUsers } from "@/lib/users.functions";
 import { getAdminUserMonthlySummary } from "@/lib/monthly-summary.functions";
 import { ACHIEVEMENTS } from "@/lib/achievements";
-import { csvEscape, downloadCsv, exportFacilityUsersCsv, exportBulkFacilityProgressCsv } from "@/lib/csv-utils";
+import {
+  csvEscape,
+  downloadCsv,
+  exportFacilityUsersCsv,
+  exportBulkFacilityProgressCsv,
+} from "@/lib/csv-utils";
 import type { RangeKey } from "./analytics-types";
 import { RANGE_OPTIONS } from "./analytics-types";
 import { QK } from "@/lib/query-keys";
@@ -62,13 +77,16 @@ export function UsersReportTab({
   const [isExporting, setIsExporting] = useState(false);
   const [isBulkExporting, setIsBulkExporting] = useState(false);
   const [page, setPage] = useState(0);
-  useEffect(() => { setPage(0); }, [selected]);
+  useEffect(() => {
+    setPage(0);
+  }, [selected]);
 
   const usersQuery = useQuery({
     queryKey: QK.adminFacilityUsers(selected, page),
     enabled: !!selected,
     staleTime: 5 * 60 * 1000,
-    queryFn: () => fetchUsers({ data: { facilityValue: isAll ? "" : selected, page, pageSize: 10 } }),
+    queryFn: () =>
+      fetchUsers({ data: { facilityValue: isAll ? "" : selected, page, pageSize: 10 } }),
   });
 
   const staffQuery = useQuery({
@@ -162,22 +180,42 @@ export function UsersReportTab({
         <>
           {!isAll && (
             <div className="mt-8">
-              <UserSectionHeader className="mb-3" title="Facility Staff" count={staff.length} description="Facility admin accounts." />
+              <UserSectionHeader
+                className="mb-3"
+                title="Facility Staff"
+                count={staff.length}
+                description="Facility admin accounts."
+              />
               <SectionCard padded={false} className="overflow-hidden">
                 {staff.length === 0 ? (
-                  <p className="px-6 py-4 text-sm text-muted-foreground">No facility staff accounts.</p>
+                  <p className="px-6 py-4 text-sm text-muted-foreground">
+                    No facility staff accounts.
+                  </p>
                 ) : (
                   <ul className="divide-y divide-border">
                     {staff.map((u) => {
-                      const name = [u.profile?.first_name, u.profile?.last_name].filter(Boolean).map(capFirst).join(" ") || u.email || "—";
+                      const name =
+                        [u.profile?.first_name, u.profile?.last_name]
+                          .filter(Boolean)
+                          .map(capFirst)
+                          .join(" ") ||
+                        u.email ||
+                        "—";
                       return (
-                        <li key={u.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 pb-6 sm:pb-4">
+                        <li
+                          key={u.id}
+                          className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 pb-6 sm:pb-4"
+                        >
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{name}</p>
                             <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                             <p className="text-xs text-muted-foreground truncate mt-0.5">
                               Joined {fmtDate(u.created_at) || "—"}
-                              {u.last_sign_in_at && <>{" · "}Last sign-in {fmtDate(u.last_sign_in_at)}</>}
+                              {u.last_sign_in_at && (
+                                <>
+                                  {" · "}Last sign-in {fmtDate(u.last_sign_in_at)}
+                                </>
+                              )}
                             </p>
                           </div>
                           <Badge variant={u.email_confirmed_at ? "verified" : "unverified"}>
@@ -194,7 +232,12 @@ export function UsersReportTab({
 
           <div className={!isAll ? "mt-8" : "mt-0"}>
             {!isAll && (
-              <UserSectionHeader className="mb-3" title="Users" count={users.length} description="Regular user accounts signed up from the public form." />
+              <UserSectionHeader
+                className="mb-3"
+                title="Users"
+                count={users.length}
+                description="Regular user accounts signed up from the public form."
+              />
             )}
             {users.length === 0 ? (
               <p className={`text-muted-foreground ${!isAll ? "" : "mt-8"}`}>
@@ -205,24 +248,38 @@ export function UsersReportTab({
                 <SectionCard padded={false} className={`overflow-hidden ${!isAll ? "" : "mt-8"}`}>
                   <ul className="divide-y divide-border">
                     {(visibleUsers as any[]).map((u) => {
-                      const name = [u.first_name, u.last_name].filter(Boolean).map(capFirst).join(" ") || capFirst(u.username) || "—";
+                      const name =
+                        [u.first_name, u.last_name].filter(Boolean).map(capFirst).join(" ") ||
+                        capFirst(u.username) ||
+                        "—";
                       const meta: string[] = [];
                       if (u.username) meta.push(`@${capFirst(u.username)}`);
                       if (isAll && (u as any).facility_label) meta.push((u as any).facility_label);
                       const lastLoginIso = (u as any).last_login_date || null;
                       return (
-                        <li key={u.user_id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 pb-6 sm:pb-4">
+                        <li
+                          key={u.user_id}
+                          className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-6 py-4 pb-6 sm:pb-4"
+                        >
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{name}</p>
                             {meta.length > 0 && (
-                              <p className="text-xs text-muted-foreground truncate">{meta.join(" · ")}</p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {meta.join(" · ")}
+                              </p>
                             )}
                             <p className="text-xs text-muted-foreground truncate mt-0.5">
                               Signed up {fmtDate(u.created_at) || "—"}
                               {" · "}
                               Last login {lastLoginIso ? fmtDate(lastLoginIso) : "Never"}
                               {(u as any).engagement_tier && (
-                                <> · <span className="text-[var(--color-accent)]">{(u as any).engagement_tier}</span></>
+                                <>
+                                  {" "}
+                                  ·{" "}
+                                  <span className="text-[var(--color-accent)]">
+                                    {(u as any).engagement_tier}
+                                  </span>
+                                </>
                               )}
                             </p>
                           </div>
@@ -238,7 +295,14 @@ export function UsersReportTab({
                     })}
                   </ul>
                 </SectionCard>
-                <Pager page={page} total={totalUsers} pageSize={10} onPage={setPage} itemLabel="user" itemLabelPlural="users" />
+                <Pager
+                  page={page}
+                  total={totalUsers}
+                  pageSize={10}
+                  onPage={setPage}
+                  itemLabel="user"
+                  itemLabelPlural="users"
+                />
               </>
             )}
           </div>
@@ -333,7 +397,9 @@ function UserProgressView({
         </button>
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <h2 className="font-display text-xl font-semibold truncate">{userName}</h2>
-          {userPin && <span className="text-muted-foreground font-normal text-lg shrink-0">({userPin})</span>}
+          {userPin && (
+            <span className="text-muted-foreground font-normal text-lg shrink-0">({userPin})</span>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto mt-4 xl:mt-0">
           <div className="flex-1 xl:flex-none xl:w-40">
@@ -379,9 +445,15 @@ function UserProgressView({
         <>
           {(() => {
             const totalItems = data.items.filter((i: any) => !i.exempt_from_progress).length;
-            const readItems = data.items.filter((i: any) => !i.exempt_from_progress && i.read).length;
-            const totalSessionSeconds = (data as any).totalSeconds
-              ?? data.items.reduce((acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0), 0);
+            const readItems = data.items.filter(
+              (i: any) => !i.exempt_from_progress && i.read,
+            ).length;
+            const totalSessionSeconds =
+              (data as any).totalSeconds ??
+              data.items.reduce(
+                (acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0),
+                0,
+              );
             let totalCats = 0;
             let completedCats = 0;
             for (const g of grouped) {
@@ -409,7 +481,9 @@ function UserProgressView({
             const fraction = (done: number, total: number) => (
               <span className="inline-flex items-center gap-1.5">
                 <span>{done.toLocaleString()}</span>
-                <span className="font-serif italic text-base font-normal text-[var(--color-accent)] lowercase tracking-wide">of</span>
+                <span className="font-serif italic text-base font-normal text-[var(--color-accent)] lowercase tracking-wide">
+                  of
+                </span>
                 <span>{total.toLocaleString()}</span>
               </span>
             );
@@ -418,11 +492,23 @@ function UserProgressView({
               null as string | null,
             );
             const stats = [
-              { icon: CheckCircle2, label: "Items completed", value: fraction(readItems, totalItems) },
-              { icon: Trophy, label: "Categories completed", value: fraction(completedCats, totalCats) },
+              {
+                icon: CheckCircle2,
+                label: "Items completed",
+                value: fraction(readItems, totalItems),
+              },
+              {
+                icon: Trophy,
+                label: "Categories completed",
+                value: fraction(completedCats, totalCats),
+              },
               { icon: Clock, label: "Time spent", value: formatTimeSpent(totalSessionSeconds) },
               { icon: Flame, label: "Day streak", value: streak.toLocaleString() },
-              { icon: Clock, label: "Last login", value: lastLogin ? fmtDateShort(lastLogin) : "Never" },
+              {
+                icon: Clock,
+                label: "Last login",
+                value: lastLogin ? fmtDateShort(lastLogin) : "Never",
+              },
             ];
             return (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mt-8 mb-8">
@@ -436,43 +522,80 @@ function UserProgressView({
           {(() => {
             const ms = monthlySummaryQuery.data;
             if (!ms || (ms.itemsThisMonth === 0 && ms.secondsThisMonth === 0)) return null;
-            const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+            const MONTH_NAMES = [
+              "January",
+              "February",
+              "March",
+              "April",
+              "May",
+              "June",
+              "July",
+              "August",
+              "September",
+              "October",
+              "November",
+              "December",
+            ];
             const monthName = MONTH_NAMES[ms.monthIndex];
             const itemsDelta = ms.itemsThisMonth - ms.itemsLastMonth;
             const timeDelta = ms.secondsThisMonth - ms.secondsLastMonth;
             const deltaLabel = (n: number, formatted?: string) =>
-              n > 0 ? `↑ ${formatted ?? n} more than last month`
-              : n < 0 ? `↓ ${formatted ?? Math.abs(n)} fewer than last month`
-              : "Same as last month";
+              n > 0
+                ? `↑ ${formatted ?? n} more than last month`
+                : n < 0
+                  ? `↓ ${formatted ?? Math.abs(n)} fewer than last month`
+                  : "Same as last month";
             const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-              BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
+              BookOpen,
+              Compass,
+              CheckCircle2,
+              Award,
+              Trophy,
+              GraduationCap,
+              Medal,
+              Flame,
+              Clock,
             };
             const earnedThisMonth = ACHIEVEMENTS.filter((a) =>
-              (ms as any).achievementKeysThisMonth?.includes(a.key)
+              (ms as any).achievementKeysThisMonth?.includes(a.key),
             );
             return (
               <details className="group mb-8 rounded-2xl border border-border bg-card overflow-hidden">
                 <summary className="flex cursor-pointer items-center justify-between px-5 py-4 list-none hover:bg-muted/20 transition-colors">
                   <div className="flex items-center gap-3">
-                    <p className="text-sm font-medium">{monthName} {ms.year}</p>
+                    <p className="text-sm font-medium">
+                      {monthName} {ms.year}
+                    </p>
                     <span className="text-xs text-muted-foreground tabular-nums">
                       {ms.itemsThisMonth} items · {formatTimeSpent(ms.secondsThisMonth)}
-                      {ms.achievementsThisMonth > 0 && <> · {ms.achievementsThisMonth} achievements</>}
+                      {ms.achievementsThisMonth > 0 && (
+                        <> · {ms.achievementsThisMonth} achievements</>
+                      )}
                     </span>
                   </div>
                   <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180 shrink-0" />
                 </summary>
                 <div className="px-5 pb-5 pt-1 border-t border-border/40">
-                  <div className={`grid gap-4 pt-4 ${earnedThisMonth.length > 0 ? "grid-cols-3" : "grid-cols-2"}`}>
+                  <div
+                    className={`grid gap-4 pt-4 ${earnedThisMonth.length > 0 ? "grid-cols-3" : "grid-cols-2"}`}
+                  >
                     <div>
-                      <p className="font-display text-2xl font-semibold tabular-nums">{ms.itemsThisMonth.toLocaleString()}</p>
+                      <p className="font-display text-2xl font-semibold tabular-nums">
+                        {ms.itemsThisMonth.toLocaleString()}
+                      </p>
                       <p className="text-xs text-muted-foreground mt-0.5">items completed</p>
-                      <p className="text-xs mt-1 text-muted-foreground/70">{deltaLabel(itemsDelta)}</p>
+                      <p className="text-xs mt-1 text-muted-foreground/70">
+                        {deltaLabel(itemsDelta)}
+                      </p>
                     </div>
                     <div>
-                      <p className="font-display text-2xl font-semibold tabular-nums">{formatTimeSpent(ms.secondsThisMonth)}</p>
+                      <p className="font-display text-2xl font-semibold tabular-nums">
+                        {formatTimeSpent(ms.secondsThisMonth)}
+                      </p>
                       <p className="text-xs text-muted-foreground mt-0.5">time spent</p>
-                      <p className="text-xs mt-1 text-muted-foreground/70">{deltaLabel(timeDelta, formatTimeSpent(Math.abs(timeDelta)))}</p>
+                      <p className="text-xs mt-1 text-muted-foreground/70">
+                        {deltaLabel(timeDelta, formatTimeSpent(Math.abs(timeDelta)))}
+                      </p>
                     </div>
                     {earnedThisMonth.length > 0 && (
                       <div>
@@ -486,7 +609,10 @@ function UserProgressView({
                                     <Icon className="h-3.5 w-3.5 text-[var(--color-accent)]" />
                                   </div>
                                 </TooltipTrigger>
-                                <TooltipContent side="top" className="text-xs max-w-[180px] text-center">
+                                <TooltipContent
+                                  side="top"
+                                  className="text-xs max-w-[180px] text-center"
+                                >
                                   <p className="font-semibold">{a.title}</p>
                                   <p>{a.description}</p>
                                 </TooltipContent>
@@ -516,12 +642,17 @@ function UserProgressView({
                     Engagement level:{" "}
                     <span className="text-[var(--color-accent)] font-semibold">{tier}</span>
                     {pct != null && (
-                      <span className="text-muted-foreground font-normal"> · top {Math.round(100 - pct)}% of facility readers</span>
+                      <span className="text-muted-foreground font-normal">
+                        {" "}
+                        · top {Math.round(100 - pct)}% of facility readers
+                      </span>
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     Based on time spent · Updates daily
-                    {statsUpdated && <> · Last updated {new Date(statsUpdated).toLocaleDateString()}</>}
+                    {statsUpdated && (
+                      <> · Last updated {new Date(statsUpdated).toLocaleDateString()}</>
+                    )}
                   </p>
                 </div>
               </div>
@@ -529,9 +660,17 @@ function UserProgressView({
           })()}
 
           {(() => {
-            const earned = (data as any).achievements as Record<string, string> | undefined ?? {};
+            const earned = ((data as any).achievements as Record<string, string> | undefined) ?? {};
             const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-              BookOpen, Compass, CheckCircle2, Award, Trophy, GraduationCap, Medal, Flame, Clock,
+              BookOpen,
+              Compass,
+              CheckCircle2,
+              Award,
+              Trophy,
+              GraduationCap,
+              Medal,
+              Flame,
+              Clock,
             };
             return (
               <div className="mb-8 rounded-2xl border border-border bg-card p-5">
@@ -543,12 +682,16 @@ function UserProgressView({
                     return (
                       <Tooltip key={a.key}>
                         <TooltipTrigger asChild>
-                          <span className={`inline-flex items-center justify-center h-12 w-12 rounded-full border cursor-default transition-all ${
-                            isEarned
-                              ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10"
-                              : "border-border bg-muted opacity-40"
-                          }`}>
-                            <Icon className={`h-5 w-5 ${isEarned ? "text-[var(--color-accent)]" : "text-muted-foreground"}`} />
+                          <span
+                            className={`inline-flex items-center justify-center h-12 w-12 rounded-full border cursor-default transition-all ${
+                              isEarned
+                                ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10"
+                                : "border-border bg-muted opacity-40"
+                            }`}
+                          >
+                            <Icon
+                              className={`h-5 w-5 ${isEarned ? "text-[var(--color-accent)]" : "text-muted-foreground"}`}
+                            />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs max-w-[200px] text-center">
@@ -583,8 +726,9 @@ function exportUserProgressCsv(
   const itemsArr = data.items as any[];
   const totalItems = itemsArr.filter((i) => !i.exempt_from_progress).length;
   const readItems = itemsArr.filter((i) => !i.exempt_from_progress && i.read).length;
-  const totalSecondsForUser = (data as any).totalSeconds
-    ?? itemsArr.reduce((acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0), 0);
+  const totalSecondsForUser =
+    (data as any).totalSeconds ??
+    itemsArr.reduce((acc: number, i: any) => acc + ((i.sessionSeconds as number) || 0), 0);
   const itemsByCatForSummary = new Map<string, any[]>();
   for (const it of itemsArr) {
     const arr = itemsByCatForSummary.get(it.category_id) ?? [];
@@ -625,11 +769,22 @@ function exportUserProgressCsv(
   lines.push(["Categories completed", `${completedCats} of ${totalCats}`].map(csvEscape).join(","));
   lines.push(["Time spent", formatTimeSpent(totalSecondsForUser)].map(csvEscape).join(","));
   lines.push(["Day streak", streak].map(csvEscape).join(","));
-  lines.push(["Last login", lastLogin ? fmtDateShort(lastLogin) : "Never"].map(csvEscape).join(","));
-  if (tier) lines.push(["Engagement tier", tier + (pct != null ? ` (top ${Math.round(100 - pct)}% of facility)` : "")].map(csvEscape).join(","));
+  lines.push(
+    ["Last login", lastLogin ? fmtDateShort(lastLogin) : "Never"].map(csvEscape).join(","),
+  );
+  if (tier)
+    lines.push(
+      [
+        "Engagement tier",
+        tier + (pct != null ? ` (top ${Math.round(100 - pct)}% of facility)` : ""),
+      ]
+        .map(csvEscape)
+        .join(","),
+    );
   lines.push("");
 
-  const earnedAchievements = (data as any).achievements as Record<string, string> | undefined ?? {};
+  const earnedAchievements =
+    ((data as any).achievements as Record<string, string> | undefined) ?? {};
   const earnedList = ACHIEVEMENTS.filter((a) => !!earnedAchievements[a.key]);
   lines.push(["Achievements"].map(csvEscape).join(","));
   lines.push(["Achievement", "Description", "Earned on"].map(csvEscape).join(","));
@@ -637,7 +792,9 @@ function exportUserProgressCsv(
     lines.push(["No achievements earned yet", "", ""].map(csvEscape).join(","));
   } else {
     for (const a of earnedList) {
-      lines.push([a.title, a.description, fmtDateShort(earnedAchievements[a.key])].map(csvEscape).join(","));
+      lines.push(
+        [a.title, a.description, fmtDateShort(earnedAchievements[a.key])].map(csvEscape).join(","),
+      );
     }
   }
   lines.push("");
@@ -657,22 +814,41 @@ function exportUserProgressCsv(
     const items = itemsByCat.get(c.id) ?? [];
     const trackable = items.filter((i: any) => !i.exempt_from_progress);
     const read = trackable.filter((i: any) => i.read).length;
-    const catSecs = items.reduce((sum: number, i: any) => sum + ((i.sessionSeconds as number) || 0), 0);
+    const catSecs = items.reduce(
+      (sum: number, i: any) => sum + ((i.sessionSeconds as number) || 0),
+      0,
+    );
     lines.push(
-      [csvEscape(c.name), `${read} of ${trackable.length} read`, "", "", "", catSecs > 0 ? formatTimeSpent(catSecs) : "", "", ""].join(","),
+      [
+        csvEscape(c.name),
+        `${read} of ${trackable.length} read`,
+        "",
+        "",
+        "",
+        catSecs > 0 ? formatTimeSpent(catSecs) : "",
+        "",
+        "",
+      ].join(","),
     );
     for (const it of items) {
-      const isAV = it.type && (it.type.toLowerCase().includes("video") || it.type.toLowerCase().includes("audio") || it.type.toLowerCase().includes("podcast"));
-      const isPdf = ((it as any).file_url && /\.pdf(\?|#|$)/i.test((it as any).file_url)) || ((it as any).url && /\.pdf(\?|#|$)/i.test((it as any).url));
+      const isAV =
+        it.type &&
+        (it.type.toLowerCase().includes("video") ||
+          it.type.toLowerCase().includes("audio") ||
+          it.type.toLowerCase().includes("podcast"));
+      const isPdf =
+        ((it as any).file_url && /\.pdf(\?|#|$)/i.test((it as any).file_url)) ||
+        ((it as any).url && /\.pdf(\?|#|$)/i.test((it as any).url));
       const manualPct: number | null = (it as any).manualCompletionPct ?? null;
       const pdfPct: number | null = (it as any).pdfProgressPct ?? null;
-      const progressStr = isAV && (it as any).mediaProgressPct != null
-        ? `${(it as any).mediaProgressPct}%`
-        : it.read && isPdf && manualPct != null
-          ? `Read manually at ${manualPct}%`
-          : !it.read && pdfPct !== null
-            ? `${pdfPct}%`
-            : "";
+      const progressStr =
+        isAV && (it as any).mediaProgressPct != null
+          ? `${(it as any).mediaProgressPct}%`
+          : it.read && isPdf && manualPct != null
+            ? `Read manually at ${manualPct}%`
+            : !it.read && pdfPct !== null
+              ? `${pdfPct}%`
+              : "";
       const sessionSecs: number = (it as any).sessionSeconds || 0;
       lines.push(
         [
@@ -689,10 +865,7 @@ function exportUserProgressCsv(
     }
   }
   const safeName = userName.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "user";
-  downloadCsv(
-    `user-progress-${safeName}-${new Date().toISOString().slice(0, 10)}.csv`,
-    lines,
-  );
+  downloadCsv(`user-progress-${safeName}-${new Date().toISOString().slice(0, 10)}.csv`, lines);
 }
 
 function UserCategoryList({
@@ -759,20 +932,33 @@ function UserCategorySection({
       >
         {(() => {
           const trackableItems = g.items.filter((item: any) => !item.exempt_from_progress);
-          const weightedPct = trackableItems.length > 0 ? Math.round(
-            trackableItems.reduce((sum: number, item: any) => {
-              if (item.read) return sum + 1;
-              if (item.manualCompletionPct != null) return sum + item.manualCompletionPct / 100;
-              if (item.mediaProgressPct != null && item.mediaProgressPct >= 5) return sum + Math.min(item.mediaProgressPct / 100, 0.95);
-              if (item.pdfProgressPct != null && item.pdfProgressPct >= 1) return sum + Math.min(item.pdfProgressPct / 100, 0.95);
-              return sum;
-            }, 0) / trackableItems.length * 100
-          ) : 0;
-          const catTimeSeconds = g.items.reduce((sum: number, item: any) => sum + ((item.sessionSeconds as number) || 0), 0);
+          const weightedPct =
+            trackableItems.length > 0
+              ? Math.round(
+                  (trackableItems.reduce((sum: number, item: any) => {
+                    if (item.read) return sum + 1;
+                    if (item.manualCompletionPct != null)
+                      return sum + item.manualCompletionPct / 100;
+                    if (item.mediaProgressPct != null && item.mediaProgressPct >= 5)
+                      return sum + Math.min(item.mediaProgressPct / 100, 0.95);
+                    if (item.pdfProgressPct != null && item.pdfProgressPct >= 1)
+                      return sum + Math.min(item.pdfProgressPct / 100, 0.95);
+                    return sum;
+                  }, 0) /
+                    trackableItems.length) *
+                    100,
+                )
+              : 0;
+          const catTimeSeconds = g.items.reduce(
+            (sum: number, item: any) => sum + ((item.sessionSeconds as number) || 0),
+            0,
+          );
           return (
             <>
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`} />
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform flex-shrink-0 ${open ? "" : "-rotate-90"}`}
+                />
                 <CircleProgress value={weightedPct} size={52} stroke={5} />
                 <div className="min-w-0">
                   <h2 className="font-display text-lg font-semibold truncate">{g.category.name}</h2>
@@ -815,95 +1001,138 @@ function UserCategorySection({
                     )}
                     <div className="ml-auto flex flex-col items-end gap-1 shrink-0">
                       <div className="flex items-center gap-1.5">
-                      {item.rating != null && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex items-center rounded-[8px] border border-input overflow-hidden cursor-default">
-                              <span className={`inline-flex items-center justify-center px-2 py-1.5 ${item.rating === 1 ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-background text-muted-foreground"}`}>
-                                <ThumbsUp className={`h-3.5 w-3.5 ${item.rating === 1 ? "fill-[var(--color-accent)]" : ""}`} />
+                        {item.rating != null && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center rounded-[8px] border border-input overflow-hidden cursor-default">
+                                <span
+                                  className={`inline-flex items-center justify-center px-2 py-1.5 ${item.rating === 1 ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]" : "bg-background text-muted-foreground"}`}
+                                >
+                                  <ThumbsUp
+                                    className={`h-3.5 w-3.5 ${item.rating === 1 ? "fill-[var(--color-accent)]" : ""}`}
+                                  />
+                                </span>
+                                <span className="w-px self-stretch bg-border" />
+                                <span
+                                  className={`inline-flex items-center justify-center px-2 py-1.5 ${item.rating === -1 ? "bg-destructive/10 text-destructive" : "bg-background text-muted-foreground"}`}
+                                >
+                                  <ThumbsDown
+                                    className={`h-3.5 w-3.5 ${item.rating === -1 ? "fill-destructive" : ""}`}
+                                  />
+                                </span>
                               </span>
-                              <span className="w-px self-stretch bg-border" />
-                              <span className={`inline-flex items-center justify-center px-2 py-1.5 ${item.rating === -1 ? "bg-destructive/10 text-destructive" : "bg-background text-muted-foreground"}`}>
-                                <ThumbsDown className={`h-3.5 w-3.5 ${item.rating === -1 ? "fill-destructive" : ""}`} />
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="top"
+                              className="text-xs max-w-[180px] text-center"
+                            >
+                              {item.rating === 1
+                                ? "This user rated this item as helpful"
+                                : "This user rated this item as not helpful"}
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {item.bookmarked && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 cursor-default">
+                                <Bookmark className="h-3.5 w-3.5 fill-[var(--color-accent)] text-[var(--color-accent)]" />
                               </span>
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="text-xs max-w-[180px] text-center">
-                            {item.rating === 1 ? "This user rated this item as helpful" : "This user rated this item as not helpful"}
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                      {item.bookmarked && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="inline-flex items-center justify-center rounded-[8px] border border-input bg-background px-2 py-1.5 cursor-default">
-                              <Bookmark className="h-3.5 w-3.5 fill-[var(--color-accent)] text-[var(--color-accent)]" />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="text-xs">
-                            This user has bookmarked this item
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                      {(() => {
-                        if ((item as any).exempt_from_progress) {
-                          return (
-                            <span className={`inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ${
-                              item.read
-                                ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
-                                : "border-input bg-background text-foreground"
-                            }`}>
-                              {item.read
-                                ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
-                                : <Circle className="h-3.5 w-3.5 flex-shrink-0" />}
-                              {item.read ? t("category.acknowledged") : t("category.acknowledge")}
-                            </span>
-                          );
-                        }
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              This user has bookmarked this item
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {(() => {
+                          if ((item as any).exempt_from_progress) {
+                            return (
+                              <span
+                                className={`inline-flex items-center leading-none gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-xs font-medium flex-shrink-0 ${
+                                  item.read
+                                    ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+                                    : "border-input bg-background text-foreground"
+                                }`}
+                              >
+                                {item.read ? (
+                                  <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
+                                ) : (
+                                  <Circle className="h-3.5 w-3.5 flex-shrink-0" />
+                                )}
+                                {item.read ? t("category.acknowledged") : t("category.acknowledge")}
+                              </span>
+                            );
+                          }
 
-                        const mediaPct: number | null = item.mediaProgressPct ?? null;
-                        const isAV = item.type && (item.type.toLowerCase().includes("video") || item.type.toLowerCase().includes("audio") || item.type.toLowerCase().includes("podcast"));
-                        if (!item.read && isAV && mediaPct !== null && mediaPct >= 5) {
-                          const watchedLabel = item.type.toLowerCase().includes("video")
-                            ? t("category.markedWatched").toLowerCase()
-                            : t("category.markedListened").toLowerCase();
-                          return (
-                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
-                              <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${mediaPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
-                              <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
-                              <span className="relative">{mediaPct}% {watchedLabel}</span>
-                            </span>
-                          );
-                        }
+                          const mediaPct: number | null = item.mediaProgressPct ?? null;
+                          const isAV =
+                            item.type &&
+                            (item.type.toLowerCase().includes("video") ||
+                              item.type.toLowerCase().includes("audio") ||
+                              item.type.toLowerCase().includes("podcast"));
+                          if (!item.read && isAV && mediaPct !== null && mediaPct >= 5) {
+                            const watchedLabel = item.type.toLowerCase().includes("video")
+                              ? t("category.markedWatched").toLowerCase()
+                              : t("category.markedListened").toLowerCase();
+                            return (
+                              <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
+                                <span
+                                  className="absolute inset-y-0 left-0 pointer-events-none"
+                                  style={{
+                                    width: `${mediaPct}%`,
+                                    background:
+                                      "color-mix(in oklab, var(--color-accent) 22%, transparent)",
+                                  }}
+                                />
+                                <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
+                                <span className="relative">
+                                  {mediaPct}% {watchedLabel}
+                                </span>
+                              </span>
+                            );
+                          }
 
-                        const isPdf = (item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url)) || (item.url && /\.pdf(\?|#|$)/i.test(item.url));
-                        const pdfPct: number | null = (item as any).pdfProgressPct ?? null;
-                        if (pdfPct !== null && pdfPct >= 1) {
-                          return (
-                            <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
-                              <span className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pdfPct}%`, background: "color-mix(in oklab, var(--color-accent) 22%, transparent)" }} />
-                              <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
-                              <span className="relative">{pdfPct}% {t("category.markedRead").toLowerCase()}</span>
-                            </span>
-                          );
-                        }
+                          const isPdf =
+                            (item.file_url && /\.pdf(\?|#|$)/i.test(item.file_url)) ||
+                            (item.url && /\.pdf(\?|#|$)/i.test(item.url));
+                          const pdfPct: number | null = (item as any).pdfProgressPct ?? null;
+                          if (pdfPct !== null && pdfPct >= 1) {
+                            return (
+                              <span className="relative inline-flex items-center leading-none gap-1.5 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium flex-shrink-0 overflow-hidden">
+                                <span
+                                  className="absolute inset-y-0 left-0 pointer-events-none"
+                                  style={{
+                                    width: `${pdfPct}%`,
+                                    background:
+                                      "color-mix(in oklab, var(--color-accent) 22%, transparent)",
+                                  }}
+                                />
+                                <Circle className="h-3.5 w-3.5 flex-shrink-0 relative" />
+                                <span className="relative">
+                                  {pdfPct}% {t("category.markedRead").toLowerCase()}
+                                </span>
+                              </span>
+                            );
+                          }
 
-                        return (
-                          <ReadStatusBadge
-                            read={item.read}
-                            readLabel={
-                              item.read && isPdf && (item as any).manualCompletionPct != null
-                                ? `${labels.read} at ${(item as any).manualCompletionPct}%`
-                                : labels.read
-                            }
-                            unreadLabel={labels.unread}
-                            readAt={item.read_at ? fmtDateShort(item.read_at) : null}
-                          />
-                        );
-                      })()}
+                          return (
+                            <ReadStatusBadge
+                              read={item.read}
+                              readLabel={
+                                item.read && isPdf && (item as any).manualCompletionPct != null
+                                  ? `${labels.read} at ${(item as any).manualCompletionPct}%`
+                                  : labels.read
+                              }
+                              unreadLabel={labels.unread}
+                              readAt={item.read_at ? fmtDateShort(item.read_at) : null}
+                            />
+                          );
+                        })()}
                       </div>
                       {(item as any).exempt_from_progress && (
-                        <p className="text-[10px] text-muted-foreground leading-tight">Doesn't count toward this user's progress</p>
+                        <p className="text-[10px] text-muted-foreground leading-tight">
+                          Doesn't count toward this user's progress
+                        </p>
                       )}
                     </div>
                   </div>
@@ -918,13 +1147,16 @@ function UserCategorySection({
                             </span>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs px-3 py-2">
-                            Exempt from tracking — doesn't count toward this user's progress or completion stats.
+                            Exempt from tracking — doesn't count toward this user's progress or
+                            completion stats.
                           </TooltipContent>
                         </Tooltip>
                       )}
                     </div>
                     {item.description && (
-                      <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                      <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
+                        {item.description}
+                      </p>
                     )}
                   </div>
                 </li>

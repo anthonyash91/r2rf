@@ -27,7 +27,7 @@ export async function logServerError(input: {
     const err = input.error;
     const message =
       err instanceof Error ? err.message : typeof err === "string" ? err : JSON.stringify(err);
-    const stack = err instanceof Error ? err.stack ?? null : null;
+    const stack = err instanceof Error ? (err.stack ?? null) : null;
     await supabaseAdmin.from("error_logs").insert({
       source: "server",
       level: "error",

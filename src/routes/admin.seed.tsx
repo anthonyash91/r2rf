@@ -92,14 +92,13 @@ function splitCsvLine(line: string): string[] {
   return out;
 }
 
-function normalizeRow(
-  raw: Record<string, unknown>,
-  slugMap: Map<string, string>,
-): ParsedRow {
+function normalizeRow(raw: Record<string, unknown>, slugMap: Map<string, string>): ParsedRow {
   const errors: string[] = [];
-  const slugVal = String(raw.category_slug ?? "").trim().toLowerCase();
+  const slugVal = String(raw.category_slug ?? "")
+    .trim()
+    .toLowerCase();
   const title = String(raw.title ?? "").trim();
-  const type = (String(raw.type ?? "").trim() || "Article");
+  const type = String(raw.type ?? "").trim() || "Article";
   const url = String(raw.url ?? "").trim();
   const source = String(raw.source ?? "").trim();
   const sortRaw = raw.sort_order;
@@ -283,9 +282,7 @@ function AdminSeedPage() {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium">
-            Paste {format.toUpperCase()}
-          </label>
+          <label className="mb-1 block text-sm font-medium">Paste {format.toUpperCase()}</label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -297,11 +294,9 @@ function AdminSeedPage() {
           <p className="mt-2 text-xs text-muted-foreground">
             Required per row: <code className="font-mono">category_slug</code>,{" "}
             <code className="font-mono">title</code>. Optional:{" "}
-            <code className="font-mono">type</code>,{" "}
-            <code className="font-mono">url</code>,{" "}
-            <code className="font-mono">source</code>,{" "}
-            <code className="font-mono">sort_order</code>. Items default to
-            published; <code className="font-mono">type</code> defaults to{" "}
+            <code className="font-mono">type</code>, <code className="font-mono">url</code>,{" "}
+            <code className="font-mono">source</code>, <code className="font-mono">sort_order</code>
+            . Items default to published; <code className="font-mono">type</code> defaults to{" "}
             <code className="font-mono">Article</code>.
           </p>
         </div>
@@ -312,12 +307,8 @@ function AdminSeedPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold">Preview</h2>
-              <Badge variant="count">
-                {validCount} valid
-              </Badge>
-              {errorCount > 0 && (
-                <Badge variant="draft">{errorCount} with errors</Badge>
-              )}
+              <Badge variant="count">{validCount} valid</Badge>
+              {errorCount > 0 && <Badge variant="draft">{errorCount} with errors</Badge>}
             </div>
             <LoadingButton
               onClick={handleInsert}
@@ -358,18 +349,12 @@ function AdminSeedPage() {
                       <td className="px-2 py-2 font-mono text-xs">
                         {String(p.raw.category_slug ?? "")}
                       </td>
-                      <td className="px-2 py-2">
-                        {String(p.raw.title ?? "")}
-                      </td>
-                      <td className="px-2 py-2">
-                        {String(p.raw.type ?? "Article")}
-                      </td>
+                      <td className="px-2 py-2">{String(p.raw.title ?? "")}</td>
+                      <td className="px-2 py-2">{String(p.raw.type ?? "Article")}</td>
                       <td className="px-2 py-2 max-w-[240px] truncate font-mono text-xs">
                         {String(p.raw.url ?? "")}
                       </td>
-                      <td className="px-2 py-2 text-xs text-destructive">
-                        {p.errors.join("; ")}
-                      </td>
+                      <td className="px-2 py-2 text-xs text-destructive">{p.errors.join("; ")}</td>
                     </tr>
                   );
                 })}

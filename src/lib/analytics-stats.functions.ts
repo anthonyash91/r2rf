@@ -38,8 +38,11 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
     const labelMap = new Map<string, { label: string; siteId: string | null }>(
       (facRes.data ?? []).map((f: any) => [
         f.value,
-        { label: f.label, siteId: f.site_id_encrypted ? decryptSiteId(f.site_id_encrypted as string) : null },
-      ])
+        {
+          label: f.label,
+          siteId: f.site_id_encrypted ? decryptSiteId(f.site_id_encrypted as string) : null,
+        },
+      ]),
     );
 
     const rows = (statsRes.data ?? []).map((r: any) => ({
@@ -73,7 +76,9 @@ export const getContentItemStats = createServerFn({ method: "POST" })
 
     let q = (supabaseAdmin as any)
       .from("content_item_stats")
-      .select("content_item_id, open_count, complete_count, completion_rate, avg_session_seconds, avg_media_progress_pct, drop_off_count, updated_at");
+      .select(
+        "content_item_id, open_count, complete_count, completion_rate, avg_session_seconds, avg_media_progress_pct, drop_off_count, updated_at",
+      );
 
     if (data.categoryId) {
       // Filter to items in a specific category
@@ -89,14 +94,17 @@ export const getContentItemStats = createServerFn({ method: "POST" })
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
-    const stats = new Map<string, {
-      openCount: number;
-      completeCount: number;
-      completionRate: number;
-      avgSessionSeconds: number | null;
-      avgMediaProgressPct: number | null;
-      dropOffCount: number;
-    }>(
+    const stats = new Map<
+      string,
+      {
+        openCount: number;
+        completeCount: number;
+        completionRate: number;
+        avgSessionSeconds: number | null;
+        avgMediaProgressPct: number | null;
+        dropOffCount: number;
+      }
+    >(
       (rows ?? []).map((r: any) => [
         r.content_item_id as string,
         {
@@ -107,7 +115,7 @@ export const getContentItemStats = createServerFn({ method: "POST" })
           avgMediaProgressPct: r.avg_media_progress_pct as number | null,
           dropOffCount: r.drop_off_count as number,
         },
-      ])
+      ]),
     );
 
     const updatedAt = rows?.[0]?.updated_at ?? null;
@@ -126,7 +134,7 @@ export const getContentItemStats = createServerFn({ method: "POST" })
 export const getGrowthStats = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ facilityValue: z.string().nullable().optional() }).parse(input ?? {})
+    z.object({ facilityValue: z.string().nullable().optional() }).parse(input ?? {}),
   )
   .handler(async ({ context, data }) => {
     await assertAnalyticsAdmin(context.userId);
@@ -174,11 +182,13 @@ export const getGrowthStats = createServerFn({ method: "POST" })
     const ret = retentionRes.data?.[0] ?? null;
 
     return {
-      retention: ret ? {
-        day7: ret.day7_rate as number | null,
-        day30: ret.day30_rate as number | null,
-        day60: ret.day60_rate as number | null,
-      } : null,
+      retention: ret
+        ? {
+            day7: ret.day7_rate as number | null,
+            day30: ret.day30_rate as number | null,
+            day60: ret.day60_rate as number | null,
+          }
+        : null,
       weeklyData: (weeklyRes.data ?? []).map((r: any) => ({
         weekEnding: r.week_ending as string,
         signups: r.signups as number,
@@ -195,7 +205,9 @@ export const getMyEngagementTier = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await (supabaseAdmin as any)
       .from("user_stats")
-      .select("facility_value, facility_percentile, items_completed, items_started, total_session_seconds, updated_at")
+      .select(
+        "facility_value, facility_percentile, items_completed, items_started, total_session_seconds, updated_at",
+      )
       .eq("user_id", context.userId)
       .maybeSingle();
 
@@ -240,7 +252,6 @@ export const getMyEngagementTier = createServerFn({ method: "GET" })
       updatedAt: data.updated_at as string,
     };
   });
-
 
 /** Manually trigger the nightly analytics refresh via db.rpc('refresh_nightly'). Admin only. */
 export const triggerNightlyRefresh = createServerFn({ method: "POST" })
@@ -291,8 +302,12 @@ export const resetFacilityAnalytics = createServerFn({ method: "POST" })
         db.from("user_content_ratings").select("content_item_id").in("user_id", userIds),
         db.from("user_content_bookmarks").select("content_item_id").in("user_id", userIds),
       ]);
-      affectedRatingItemIds = [...new Set<string>((ratingItems.data ?? []).map((r: any) => r.content_item_id as string))];
-      affectedBookmarkItemIds = [...new Set<string>((bookmarkItems.data ?? []).map((r: any) => r.content_item_id as string))];
+      affectedRatingItemIds = [
+        ...new Set<string>((ratingItems.data ?? []).map((r: any) => r.content_item_id as string)),
+      ];
+      affectedBookmarkItemIds = [
+        ...new Set<string>((bookmarkItems.data ?? []).map((r: any) => r.content_item_id as string)),
+      ];
     }
 
     if (userIds.length > 0) {
@@ -323,7 +338,10 @@ export const resetFacilityAnalytics = createServerFn({ method: "POST" })
         .in("content_item_id", affectedRatingItemIds);
 
       // Delete existing totals rows for affected items, then re-insert with correct counts.
-      await db.from("content_item_rating_totals").delete().in("content_item_id", affectedRatingItemIds);
+      await db
+        .from("content_item_rating_totals")
+        .delete()
+        .in("content_item_id", affectedRatingItemIds);
 
       const toInsert = affectedRatingItemIds
         .map((id) => {
@@ -347,12 +365,16 @@ export const resetFacilityAnalytics = createServerFn({ method: "POST" })
         .select("content_item_id")
         .in("content_item_id", affectedBookmarkItemIds);
 
-      await db.from("content_item_bookmark_totals").delete().in("content_item_id", affectedBookmarkItemIds);
+      await db
+        .from("content_item_bookmark_totals")
+        .delete()
+        .in("content_item_id", affectedBookmarkItemIds);
 
       const toInsert = affectedBookmarkItemIds
         .map((id) => ({
           content_item_id: id,
-          bookmark_count: ((remaining ?? []) as any[]).filter((r: any) => r.content_item_id === id).length,
+          bookmark_count: ((remaining ?? []) as any[]).filter((r: any) => r.content_item_id === id)
+            .length,
         }))
         .filter((r) => r.bookmark_count > 0);
 

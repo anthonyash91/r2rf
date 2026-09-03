@@ -62,9 +62,20 @@ export function BulkActionBar({
   allIds,
   extraSelectionActions,
 }: BulkActionBarProps) {
-  const { editMode, selectedCount, selectedIds, isDeleting, enterEditMode, exitEditMode, runBulkDelete, selectAll, clear } = bulk;
+  const {
+    editMode,
+    selectedCount,
+    selectedIds,
+    isDeleting,
+    enterEditMode,
+    exitEditMode,
+    runBulkDelete,
+    selectAll,
+    clear,
+  } = bulk;
 
-  const allSelected = allIds !== undefined && allIds.length > 0 && allIds.every((id) => selectedIds.has(id));
+  const allSelected =
+    allIds !== undefined && allIds.length > 0 && allIds.every((id) => selectedIds.has(id));
 
   // Build the count label shown when not in edit mode. Shows "X of Y noun"
   // when a search filter is active, plain "X noun" otherwise.
@@ -82,7 +93,7 @@ export function BulkActionBar({
         {editMode
           ? selectedCount > 0
             ? `${selectedCount} selected`
-            : emptyEditHint ?? `Click ${noun.plural} to select for deletion`
+            : (emptyEditHint ?? `Click ${noun.plural} to select for deletion`)
           : countText}
       </span>
       {/* Single unified row: search + buttons always share a row at md+, stack below md. */}
@@ -112,7 +123,10 @@ export function BulkActionBar({
         {!editMode ? (
           <LoadingButton
             variant="secondary"
-            onClick={() => { onEnterEditMode?.(); enterEditMode(); }}
+            onClick={() => {
+              onEnterEditMode?.();
+              enterEditMode();
+            }}
             icon={<Pencil className="h-4 w-4" />}
             className="whitespace-nowrap"
           >
@@ -124,7 +138,7 @@ export function BulkActionBar({
               <LoadingButton
                 variant="secondary"
                 className="whitespace-nowrap"
-                onClick={() => allSelected ? clear() : selectAll(allIds)}
+                onClick={() => (allSelected ? clear() : selectAll(allIds))}
               >
                 {allSelected ? "Deselect all" : "Select all"}
               </LoadingButton>

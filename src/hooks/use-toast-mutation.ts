@@ -1,4 +1,9 @@
-import { useMutation, useQueryClient, type QueryKey, type UseMutationOptions } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  type QueryKey,
+  type UseMutationOptions,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 
 type ToastMutationOptions<TData, TError, TVariables, TContext> = Omit<
@@ -12,7 +17,11 @@ type ToastMutationOptions<TData, TError, TVariables, TContext> = Omit<
   /** Query keys to invalidate on success. */
   invalidate?: QueryKey | QueryKey[];
   /** Extra success handler (runs after toast + invalidate). */
-  onSuccess?: (data: TData, variables: TVariables, context: TContext | undefined) => unknown | Promise<unknown>;
+  onSuccess?: (
+    data: TData,
+    variables: TVariables,
+    context: TContext | undefined,
+  ) => unknown | Promise<unknown>;
   /** Extra error handler (runs after the toast). */
   onError?: (error: TError, variables: TVariables, context: TContext | undefined) => unknown;
 };
@@ -29,9 +38,12 @@ type ToastMutationOptions<TData, TError, TVariables, TContext> = Omit<
  *     invalidate: ["admin", "users"],
  *   });
  */
-export function useToastMutation<TData = unknown, TError = Error, TVariables = void, TContext = unknown>(
-  options: ToastMutationOptions<TData, TError, TVariables, TContext>,
-) {
+export function useToastMutation<
+  TData = unknown,
+  TError = Error,
+  TVariables = void,
+  TContext = unknown,
+>(options: ToastMutationOptions<TData, TError, TVariables, TContext>) {
   const qc = useQueryClient();
   const { successMessage, errorMessage, invalidate, onSuccess, onError, ...rest } = options;
 
@@ -39,14 +51,17 @@ export function useToastMutation<TData = unknown, TError = Error, TVariables = v
     ...rest,
     onSuccess: async (data, variables, context) => {
       if (successMessage !== null && successMessage !== undefined) {
-        const msg = typeof successMessage === "function" ? successMessage(data, variables) : successMessage;
+        const msg =
+          typeof successMessage === "function" ? successMessage(data, variables) : successMessage;
         if (msg) toast.success(msg);
       }
       if (invalidate) {
         // Detect whether the caller passed a single QueryKey or an array of QueryKeys.
         // A QueryKey is itself an array, so we check if the first element is also an
         // array to distinguish `[["users"]]` (multiple keys) from `["users"]` (one key).
-        const keys = Array.isArray(invalidate[0]) ? (invalidate as QueryKey[]) : [invalidate as QueryKey];
+        const keys = Array.isArray(invalidate[0])
+          ? (invalidate as QueryKey[])
+          : [invalidate as QueryKey];
         await Promise.all(keys.map((k) => qc.invalidateQueries({ queryKey: k })));
       }
       if (onSuccess) await onSuccess(data, variables, context);
@@ -56,8 +71,8 @@ export function useToastMutation<TData = unknown, TError = Error, TVariables = v
         const msg =
           typeof errorMessage === "function"
             ? errorMessage(error)
-            // Fall through to the raw error message when no errorMessage override is provided.
-            : errorMessage ?? (error as { message?: string })?.message ?? "Something went wrong";
+            : // Fall through to the raw error message when no errorMessage override is provided.
+              (errorMessage ?? (error as { message?: string })?.message ?? "Something went wrong");
         if (msg) toast.error(msg);
       }
       if (onError) onError(error, variables, context);

@@ -118,7 +118,20 @@ export function useContentEngagement({
   onAutoMarkRead,
   onIdle,
   idleMs = DEFAULT_IDLE_MS,
-}: Params): { mediaProgressPct: number | null; chapterFurthestSeconds: number; getSessionChapterFurthest: (chapterId: string) => number; resetIdle: () => void; debugRefs: { baseSeconds: React.RefObject<number>; accSeconds: React.RefObject<number>; furthestSeconds: React.RefObject<number>; durationSeconds: React.RefObject<number>; isIdle: React.RefObject<boolean>; idleMs: React.RefObject<number> } } {
+}: Params): {
+  mediaProgressPct: number | null;
+  chapterFurthestSeconds: number;
+  getSessionChapterFurthest: (chapterId: string) => number;
+  resetIdle: () => void;
+  debugRefs: {
+    baseSeconds: React.RefObject<number>;
+    accSeconds: React.RefObject<number>;
+    furthestSeconds: React.RefObject<number>;
+    durationSeconds: React.RefObject<number>;
+    isIdle: React.RefObject<boolean>;
+    idleMs: React.RefObject<number>;
+  };
+} {
   // Timer state — all in refs so they never cause re-renders
   const lastActivityRef = useRef(Date.now());
   const accSecondsRef = useRef(0);
@@ -127,14 +140,20 @@ export function useContentEngagement({
   // don't spam the callback every tick while the user remains idle.
   const firedIdleRef = useRef(false);
   const onIdleRef = useRef(onIdle);
-  useEffect(() => { onIdleRef.current = onIdle; }, [onIdle]);
+  useEffect(() => {
+    onIdleRef.current = onIdle;
+  }, [onIdle]);
   const onAutoMarkReadRef = useRef(onAutoMarkRead);
-  useEffect(() => { onAutoMarkReadRef.current = onAutoMarkRead; }, [onAutoMarkRead]);
+  useEffect(() => {
+    onAutoMarkReadRef.current = onAutoMarkRead;
+  }, [onAutoMarkRead]);
   const idleMsRef = useRef(idleMs);
-  useEffect(() => { idleMsRef.current = idleMs; }, [idleMs]);
+  useEffect(() => {
+    idleMsRef.current = idleMs;
+  }, [idleMs]);
 
   // Media state
-  const furthestRef = useRef(0);      // high-watermark: used only for auto-mark-read threshold
+  const furthestRef = useRef(0); // high-watermark: used only for auto-mark-read threshold
   const currentPositionRef = useRef(0); // actual current position: used for resume and DB writes
   const durationRef = useRef(0);
   const autoMarkedRef = useRef(false);
@@ -147,7 +166,9 @@ export function useContentEngagement({
 
   // Per-chapter progress (chapter audio only)
   const chapterIdRef = useRef<string | null>(chapterId);
-  useEffect(() => { chapterIdRef.current = chapterId; }, [chapterId]);
+  useEffect(() => {
+    chapterIdRef.current = chapterId;
+  }, [chapterId]);
   const chapterFurthestRef = useRef(0); // furthest seconds within the current chapter
 
   // Sync base values when a new item opens or when existing data arrives late.
@@ -184,39 +205,39 @@ export function useContentEngagement({
   const write = useCallback(() => {
     if (!userId || !contentItemId || !categoryId) return;
     Promise.resolve(
-      (supabase as any)
-        .from("user_content_engagement")
-        .upsert(
-          {
-            user_id: userId,
-            content_item_id: contentItemId,
-            category_id: categoryId,
-            // Always send base + accumulated so any previous partial write is overwritten.
-            session_seconds: baseSecondsRef.current + accSecondsRef.current,
-            media_progress_seconds: currentPositionRef.current > 0 ? currentPositionRef.current : null,
-            media_duration_seconds: (totalMediaDurationRef.current ?? durationRef.current) > 0 ? (totalMediaDurationRef.current ?? durationRef.current) : null,
-            last_updated_at: new Date().toISOString(),
-          },
-          { onConflict: "user_id,content_item_id" },
-        )
+      (supabase as any).from("user_content_engagement").upsert(
+        {
+          user_id: userId,
+          content_item_id: contentItemId,
+          category_id: categoryId,
+          // Always send base + accumulated so any previous partial write is overwritten.
+          session_seconds: baseSecondsRef.current + accSecondsRef.current,
+          media_progress_seconds:
+            currentPositionRef.current > 0 ? currentPositionRef.current : null,
+          media_duration_seconds:
+            (totalMediaDurationRef.current ?? durationRef.current) > 0
+              ? (totalMediaDurationRef.current ?? durationRef.current)
+              : null,
+          last_updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,content_item_id" },
+      ),
     ).catch(() => {});
 
     // Per-chapter furthest: only write when we actually have progress in this chapter.
     const cId = chapterIdRef.current;
     if (cId && chapterFurthestRef.current > 0) {
       Promise.resolve(
-        (supabase as any)
-          .from("user_chapter_progress")
-          .upsert(
-            {
-              user_id: userId,
-              chapter_id: cId,
-              content_item_id: contentItemId,
-              furthest_seconds: chapterFurthestRef.current,
-              updated_at: new Date().toISOString(),
-            },
-            { onConflict: "user_id,chapter_id" },
-          )
+        (supabase as any).from("user_chapter_progress").upsert(
+          {
+            user_id: userId,
+            chapter_id: cId,
+            content_item_id: contentItemId,
+            furthest_seconds: chapterFurthestRef.current,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id,chapter_id" },
+        ),
       ).catch(() => {});
     }
   }, [userId, contentItemId, categoryId]);
@@ -225,7 +246,9 @@ export function useContentEngagement({
   // idle periods. `passive: true` avoids blocking the browser's scroll/touch pipeline.
   useEffect(() => {
     if (!isActive) return;
-    const refresh = () => { lastActivityRef.current = Date.now(); };
+    const refresh = () => {
+      lastActivityRef.current = Date.now();
+    };
     const events = ["touchstart", "touchmove", "click", "keydown", "scroll", "mousemove"];
     events.forEach((e) => document.addEventListener(e, refresh, { passive: true }));
     return () => events.forEach((e) => document.removeEventListener(e, refresh));
@@ -262,14 +285,12 @@ export function useContentEngagement({
       const sessionSecs = Math.round(accSecondsRef.current);
       if (sessionSecs > 0 && userId && contentItemId && categoryId) {
         Promise.resolve(
-          (supabase as any)
-            .from("user_content_sessions")
-            .insert({
-              user_id: userId,
-              content_item_id: contentItemId,
-              category_id: categoryId,
-              session_seconds: sessionSecs,
-            })
+          (supabase as any).from("user_content_sessions").insert({
+            user_id: userId,
+            content_item_id: contentItemId,
+            category_id: categoryId,
+            session_seconds: sessionSecs,
+          }),
         ).catch(() => {});
       }
     };
@@ -345,7 +366,7 @@ export function useContentEngagement({
       // Non-chapter: use the cumulative position minus offset (always 0 for single files).
       const resumeWithinChapter = chapterId
         ? chapterFurthestRef.current
-        : (currentPositionRef.current - mediaProgressOffset);
+        : currentPositionRef.current - mediaProgressOffset;
       if (resumeWithinChapter > 5 && resumeWithinChapter < (el.duration || Infinity)) {
         el.currentTime = resumeWithinChapter;
       }
@@ -416,7 +437,15 @@ export function useContentEngagement({
       el.removeEventListener("ended", onEnded);
       write();
     };
-  }, [audioEl, mediaProgressOffset, totalMediaDuration, chapterId, existingChapterFurthest, write, contentItemId]);
+  }, [
+    audioEl,
+    mediaProgressOffset,
+    totalMediaDuration,
+    chapterId,
+    existingChapterFurthest,
+    write,
+    contentItemId,
+  ]);
 
   // Exposed so the UI can show a progress bar. Null when no media has been played
   // (non-media content types) or before the player reports a duration.
