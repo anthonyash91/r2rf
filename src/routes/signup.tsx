@@ -18,6 +18,12 @@ import { syntheticEmail } from "@/lib/user-signup";
 import { listFacilities, getFacilityBySiteId } from "@/lib/facilities.functions";
 import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
 import { useActiveInmatePin, setActiveInmatePin } from "@/lib/inmate-pin-context";
+import {
+  useActiveFirstName,
+  setActiveFirstName,
+  useActiveLastName,
+  setActiveLastName,
+} from "@/lib/signup-prefill-context";
 import { useAuthChecking } from "@/lib/auth-checking-context";
 import { readPlatformIdentity } from "@/lib/platform-identity";
 import { questionLabel } from "@/lib/security-questions";
@@ -66,7 +72,12 @@ function SignupPageContent() {
   useEffect(() => {
     if (siteParam) setActiveFacilitySlug(siteParam);
     if (userParam) setActiveInmatePin(userParam);
-  }, [siteParam, userParam]);
+    if (platformIdentity?.firstName) setActiveFirstName(platformIdentity.firstName);
+    if (platformIdentity?.lastName) setActiveLastName(platformIdentity.lastName);
+  }, [siteParam, userParam, platformIdentity?.firstName, platformIdentity?.lastName]);
+
+  const lockedFirstName = useActiveFirstName();
+  const lockedLastName = useActiveLastName();
 
   // Default to sign-up when arriving from a facility device (slug in session),
   // sign-in otherwise (admin/staff using the nav link).
@@ -149,8 +160,8 @@ function SignupPageContent() {
             facilities={facilities}
             activeFacilitySlug={activeFacilitySlug}
             activeInmatePin={activeInmatePin}
-            lockedFirstName={platformIdentity?.firstName ?? null}
-            lockedLastName={platformIdentity?.lastName ?? null}
+            lockedFirstName={lockedFirstName}
+            lockedLastName={lockedLastName}
           />
         )}
       </main>

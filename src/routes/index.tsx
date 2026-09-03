@@ -14,6 +14,7 @@ import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { setActiveFacilitySlug } from "@/lib/facility-context";
 import { setActiveInmatePin } from "@/lib/inmate-pin-context";
+import { setActiveFirstName, setActiveLastName } from "@/lib/signup-prefill-context";
 import { getFacilityBySiteId } from "@/lib/facilities.functions";
 import { readPlatformIdentity } from "@/lib/platform-identity";
 
@@ -83,6 +84,16 @@ function IndexContent() {
     if (!site || !inmatePin) return;
     setActiveInmatePin(inmatePin);
   }, [site, inmatePin]);
+
+  // Same immediate capture for the platform-provided first/last name headers
+  // — these only ever arrive via the loader on whichever page is the true
+  // first page load, so they must be persisted here too, not just read
+  // fresh on /signup (which may be reached by client-side navigation, where
+  // the loader has nothing to read).
+  useEffect(() => {
+    if (platformIdentity?.firstName) setActiveFirstName(platformIdentity.firstName);
+    if (platformIdentity?.lastName) setActiveLastName(platformIdentity.lastName);
+  }, [platformIdentity?.firstName, platformIdentity?.lastName]);
 
   // Set facility context once the server call resolves.
   useEffect(() => {
