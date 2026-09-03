@@ -14,6 +14,6 @@
 -- existing app functionality — it just closes the direct-API gap.
 REVOKE SELECT ON public.facilities FROM anon, authenticated;
 
-GRANT SELECT (id, value, label, sort_order, custom_slug, hidden, created_at, updated_at)
+GRANT SELECT (id, value, label, sort_order, hidden, created_at, updated_at)
   ON public.facilities
   TO anon, authenticated;
