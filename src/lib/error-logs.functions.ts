@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertAdmin } from "@/lib/server-auth";
+import { logServerError } from "@/lib/error-logger.server";
 
 export const listErrorLogs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -63,6 +64,27 @@ export const clearOldErrorLogs = createServerFn({ method: "POST" })
     const cutoff = new Date(Date.now() - data.olderThanDays * 24 * 60 * 60 * 1000).toISOString();
     const { error } = await supabaseAdmin.from("error_logs").delete().lt("created_at", cutoff);
     if (error) throw new Error("Failed to clear old logs");
+    return { ok: true as const };
+  });
+
+// Deliberately triggers logServerError's real insert + ntfy-alert path with a
+// clearly-labeled test entry — a standing way to verify the alert pipeline
+// (env var set correctly, ntfy topic/subscription still working) any time,
+// not just a one-off script. Safe to leave in permanently: admin-gated,
+// side effect is exactly one error_logs row plus one throttled notification.
+export const sendTestAlert = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    // Timestamp in the message keeps each manual test its own signature, so
+    // the 15-minute repeat-alert throttle (meant for real recurring errors)
+    // never silently swallows a deliberate second test click.
+    await logServerError({
+      error: new Error(`Test alert — manually triggered from Admin → Errors at ${new Date().toISOString()}`),
+      route: "/admin/errors",
+      userId: context.userId,
+      context: { kind: "manual.test_alert" },
+    });
     return { ok: true as const };
   });
 

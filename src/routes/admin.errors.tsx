@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { AlertOctagon, Filter, Server, Monitor, Trash2 } from "lucide-react";
+import { AlertOctagon, Filter, Server, Monitor, Trash2, BellRing } from "lucide-react";
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
 import { capFirst } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
@@ -19,7 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { listErrorLogs, clearOldErrorLogs, deleteAllErrorLogs } from "@/lib/error-logs.functions";
+import {
+  listErrorLogs,
+  clearOldErrorLogs,
+  deleteAllErrorLogs,
+  sendTestAlert,
+} from "@/lib/error-logs.functions";
 import { QK } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/admin/errors")({
@@ -122,6 +127,7 @@ function AdminErrorsPage() {
   const fetchErrors = useServerFn(listErrorLogs);
   const clearOld = useServerFn(clearOldErrorLogs);
   const deleteAll = useServerFn(deleteAllErrorLogs);
+  const testAlert = useServerFn(sendTestAlert);
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
 
@@ -177,6 +183,12 @@ function AdminErrorsPage() {
     });
   };
 
+  const handleTestAlert = async () => {
+    await testAlert({ data: undefined as never });
+    toast.success("Test error logged — check your ntfy notification (if NTFY_TOPIC_URL is set)");
+    qc.invalidateQueries({ queryKey: QK.adminErrorLogs });
+  };
+
   const handleDeleteAll = async () => {
     await confirmDelete({
       title: "Delete ALL error logs?",
@@ -204,6 +216,14 @@ function AdminErrorsPage() {
           description="Application errors captured from both server and browser. Read-only."
         />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
+          <LoadingButton
+            variant="secondary"
+            onClick={handleTestAlert}
+            icon={<BellRing className="h-3.5 w-3.5" />}
+            className="w-full sm:w-auto"
+          >
+            Send Test Alert
+          </LoadingButton>
           <LoadingButton
             variant="secondary"
             onClick={handleClearOld}
