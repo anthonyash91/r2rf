@@ -65,63 +65,6 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
     return { facilities: rows, updatedAt };
   });
 
-/** Per-item completion stats for a category or all items. */
-export const getContentItemStats = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ categoryId: z.string().uuid().optional() }).parse(input ?? {}),
-  )
-  .handler(async ({ context, data }) => {
-    await assertAnalyticsAdmin(context.userId);
-
-    let q = (supabaseAdmin as any)
-      .from("content_item_stats")
-      .select(
-        "content_item_id, open_count, complete_count, completion_rate, avg_session_seconds, avg_media_progress_pct, drop_off_count, updated_at",
-      );
-
-    if (data.categoryId) {
-      // Filter to items in a specific category
-      const { data: itemIds } = await supabaseAdmin
-        .from("content_items")
-        .select("id")
-        .eq("category_id", data.categoryId);
-      const ids = (itemIds ?? []).map((r: any) => r.id as string);
-      if (ids.length === 0) return { stats: new Map(), updatedAt: null };
-      q = q.in("content_item_id", ids);
-    }
-
-    const { data: rows, error } = await q;
-    if (error) throw new Error(error.message);
-
-    const stats = new Map<
-      string,
-      {
-        openCount: number;
-        completeCount: number;
-        completionRate: number;
-        avgSessionSeconds: number | null;
-        avgMediaProgressPct: number | null;
-        dropOffCount: number;
-      }
-    >(
-      (rows ?? []).map((r: any) => [
-        r.content_item_id as string,
-        {
-          openCount: r.open_count as number,
-          completeCount: r.complete_count as number,
-          completionRate: r.completion_rate as number,
-          avgSessionSeconds: r.avg_session_seconds as number | null,
-          avgMediaProgressPct: r.avg_media_progress_pct as number | null,
-          dropOffCount: r.drop_off_count as number,
-        },
-      ]),
-    );
-
-    const updatedAt = rows?.[0]?.updated_at ?? null;
-    return { stats, updatedAt };
-  });
-
 /**
  * Retention rates, weekly growth, and program completion rates.
  * Scoped to a facility when facilityValue is provided.

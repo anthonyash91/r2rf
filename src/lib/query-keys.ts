@@ -23,7 +23,8 @@ export const QK = {
   contentTypes: ["content-types"] as const,
   contentProgress: (userId: string | undefined, categoryId: string | undefined) =>
     ["content-progress", userId, categoryId] as const,
-  contentSeen: (userId: string | undefined) => ["content-seen", userId] as const,
+  contentSeen: (userId: string | undefined, categoryId: string | undefined) =>
+    ["content-seen", userId, categoryId] as const,
   engagement: (userId: string | undefined, categoryId: string | undefined) =>
     ["engagement", userId, categoryId] as const,
   ratingTotals: ["rating-totals"] as const,

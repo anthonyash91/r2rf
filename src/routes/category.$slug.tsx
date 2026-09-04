@@ -463,6 +463,8 @@ function CategoryPage() {
   }, [data?.items]);
 
   const categoryId = data?.category.id;
+  const items = data?.items ?? [];
+  const itemIds = useMemo(() => items.map((i) => i.id), [data?.items]);
   const progressQuery = useQuery({
     queryKey: QK.contentProgress(user?.id, categoryId),
     enabled: !!user?.id && !!categoryId,
@@ -485,13 +487,14 @@ function CategoryPage() {
   const readAtMap = progressQuery.data?.readAtMap ?? new Map<string, string>();
 
   const seenQuery = useQuery({
-    queryKey: QK.contentSeen(user?.id),
-    enabled: !!user?.id,
+    queryKey: QK.contentSeen(user?.id, categoryId),
+    enabled: !!user?.id && itemIds.length > 0,
     queryFn: async () => {
       const { data: rows, error } = await supabase
         .from("user_content_seen")
         .select("content_item_id")
-        .eq("user_id", user!.id);
+        .eq("user_id", user!.id)
+        .in("content_item_id", itemIds);
       if (error) throw error;
       return new Set((rows ?? []).map((r) => r.content_item_id as string));
     },
@@ -573,7 +576,7 @@ function CategoryPage() {
     },
     onSettled: (_data, _err, vars) => {
       queryClient.invalidateQueries({ queryKey: QK.contentProgress(user?.id, categoryId) });
-      queryClient.invalidateQueries({ queryKey: QK.contentSeen(user?.id) });
+      queryClient.invalidateQueries({ queryKey: QK.contentSeen(user?.id, categoryId) });
       queryClient.invalidateQueries({ queryKey: QK.homeUserProgress(user?.id) });
       queryClient.invalidateQueries({ queryKey: QK.dashboardProgress });
       if (vars.markRead) checkAchievements();
@@ -583,7 +586,7 @@ function CategoryPage() {
   // Load engagement data for all items in this category (resume positions + progress %)
   const engagementQuery = useQuery({
     queryKey: QK.engagement(user?.id, categoryId),
-    enabled: !!user?.id && !!categoryId && !isAdmin && !isFacilityUser,
+    enabled: !!user?.id && !!categoryId && !isAdmin && !isFacilityUser && itemIds.length > 0,
     staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -591,7 +594,8 @@ function CategoryPage() {
         .select(
           "content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct",
         )
-        .eq("user_id", user!.id);
+        .eq("user_id", user!.id)
+        .in("content_item_id", itemIds);
       if (error) throw error;
       const map = new Map<string, EngagementRecord>();
       for (const r of (data ?? []) as any[]) {
@@ -693,13 +697,11 @@ function CategoryPage() {
 
   // Per-chapter furthest progress — used for accurate progress % on audio items with chapters.
   // One row per (user, chapter). Progress = SUM(furthest_seconds) / total_duration.
-  const items = data?.items ?? [];
   const chapterProgressQuery = useQuery({
     queryKey: ["chapterProgress", categoryId, user?.id],
     enabled: !!user?.id && !!categoryId && !isAdmin && !isFacilityUser && items.length > 0,
     staleTime: 30_000,
     queryFn: async () => {
-      const itemIds = items.map((i) => i.id);
       const { data: rows, error } = await (supabase as any)
         .from("user_chapter_progress")
         .select("chapter_id, content_item_id, furthest_seconds")
@@ -738,7 +740,6 @@ function CategoryPage() {
     enabled: !!categoryId && items.length > 0,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const itemIds = items.map((i) => i.id);
       const { data: rows, error } = await (supabase as any)
         .from("content_chapters")
         .select("content_item_id, duration_seconds")
@@ -1273,7 +1274,7 @@ function CategoryPage() {
                                       )
                                         .then(() => {
                                           queryClient.invalidateQueries({
-                                            queryKey: QK.contentSeen(user.id),
+                                            queryKey: QK.contentSeen(user.id, categoryId),
                                           });
                                         })
                                         .catch(() => {});
