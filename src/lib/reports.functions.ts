@@ -24,130 +24,64 @@ async function fetchDailyCounts(sinceIso: string | null, facilityValue: string |
   return q;
 }
 
+// Both the precomputed tables and the report_content_*() RPCs below return
+// the same shape (content_item_id, opener_count / total_session_seconds +
+// engager_count) — the all-time/no-filter case reads the nightly-refreshed
+// snapshot tables directly; any facility or date filter aggregates on
+// demand via a GROUP BY in Postgres (see the migration of the same name)
+// instead of paginating raw analytics_events/user_content_sessions rows
+// into Node and reducing them in JS. Callers don't need to branch on shape.
+function exclusionList(ctx: ExclusionContext): string[] {
+  return [
+    ...Array.from(ctx.staffUserIds),
+    ...Array.from(ctx.syntheticIds),
+    "00000000-0000-0000-0000-000000000000",
+  ];
+}
+
 async function fetchOpenersData(
   userIdFilter: string[] | null,
   sinceIso: string | null,
   ctx: ExclusionContext,
-): Promise<{ precomputed: boolean; rows: any[] }> {
+): Promise<any[]> {
   if (userIdFilter === null && !sinceIso) {
     const { data } = await (supabaseAdmin as any)
       .from("content_item_openers")
       .select("content_item_id, opener_count")
       .range(0, 4999);
-    return { precomputed: true, rows: data ?? [] };
+    return data ?? [];
   }
-  if (userIdFilter !== null && userIdFilter.length === 0) {
-    return { precomputed: false, rows: [] };
-  }
-  if (userIdFilter !== null) {
-    // Chunk large facility user lists to stay under URL length limits
-    const chunkRows = await Promise.all(
-      chunkIds(userIdFilter).map(async (chunk) => {
-        const PAGE = 1000;
-        const rows: any[] = [];
-        for (let from = 0; ; from += PAGE) {
-          let q = supabaseAdmin
-            .from("analytics_events")
-            .select("user_id, content_id")
-            .eq("event_type", "content_click")
-            .not("user_id", "is", null)
-            .range(from, from + PAGE - 1);
-          if (sinceIso) q = (q as any).gte("created_at", sinceIso);
-          const { data } = await (q as any).in("user_id", chunk);
-          if (!data?.length) break;
-          rows.push(...data);
-          if (data.length < PAGE) break;
-        }
-        return rows;
-      }),
-    );
-    return { precomputed: false, rows: chunkRows.flat() };
-  }
-  // Overall + date filter: paginate with staff exclusion
-  const excludeAll = [
-    ...Array.from(ctx.staffUserIds),
-    ...Array.from(ctx.syntheticIds),
-    "00000000-0000-0000-0000-000000000000",
-  ];
-  const PAGE = 1000;
-  const allRows: any[] = [];
-  for (let from = 0; ; from += PAGE) {
-    let q = supabaseAdmin
-      .from("analytics_events")
-      .select("user_id, content_id")
-      .eq("event_type", "content_click")
-      .not("user_id", "is", null)
-      .range(from, from + PAGE - 1);
-    if (sinceIso) q = (q as any).gte("created_at", sinceIso);
-    if (excludeAll.length > 0) q = (q as any).not("user_id", "in", `(${excludeAll.join(",")})`);
-    const { data } = await q;
-    if (!data?.length) break;
-    allRows.push(...data);
-    if (data.length < PAGE) break;
-  }
-  return { precomputed: false, rows: allRows };
+  if (userIdFilter !== null && userIdFilter.length === 0) return [];
+  const { data, error } = await (supabaseAdmin as any).rpc("report_content_openers", {
+    p_since: sinceIso,
+    p_user_ids: userIdFilter,
+    p_exclude_ids: userIdFilter === null ? exclusionList(ctx) : [],
+  });
+  if (error) throw new Error(error.message);
+  return data ?? [];
 }
 
 async function fetchTimeData(
   userIdFilter: string[] | null,
   sinceIso: string | null,
   ctx: ExclusionContext,
-): Promise<{ precomputed: boolean; rows: any[] }> {
+): Promise<any[]> {
   // Fast path: all-time overall view — single indexed query
   if (userIdFilter === null && !sinceIso) {
     const { data } = await (supabaseAdmin as any)
       .from("content_item_time_totals")
       .select("content_item_id, total_session_seconds, engager_count")
       .range(0, 4999);
-    return { precomputed: true, rows: data ?? [] };
+    return data ?? [];
   }
-  if (userIdFilter !== null && userIdFilter.length === 0) {
-    return { precomputed: false, rows: [] };
-  }
-  // Facility scope: chunk user IDs, fetch all sessions in parallel
-  if (userIdFilter !== null) {
-    const chunkRows = await Promise.all(
-      chunkIds(userIdFilter).map(async (chunk) => {
-        const PAGE = 1000;
-        const rows: any[] = [];
-        for (let from = 0; ; from += PAGE) {
-          let q = (supabaseAdmin as any)
-            .from("user_content_sessions")
-            .select("user_id, content_item_id, session_seconds")
-            .in("user_id", chunk)
-            .range(from, from + PAGE - 1);
-          if (sinceIso) q = q.gte("recorded_at", sinceIso);
-          const { data, error } = await q;
-          if (error || !data || data.length === 0) break;
-          rows.push(...data);
-          if (data.length < PAGE) break;
-        }
-        return rows;
-      }),
-    );
-    return { precomputed: false, rows: chunkRows.flat() };
-  }
-  // Overall date-filtered: paginate with staff exclusion
-  const excludeAll = [
-    ...Array.from(ctx.staffUserIds),
-    ...Array.from(ctx.syntheticIds),
-    "00000000-0000-0000-0000-000000000000",
-  ];
-  const PAGE = 1000;
-  const all: any[] = [];
-  for (let from = 0; ; from += PAGE) {
-    let q = (supabaseAdmin as any)
-      .from("user_content_sessions")
-      .select("user_id, content_item_id, session_seconds")
-      .range(from, from + PAGE - 1);
-    if (sinceIso) q = q.gte("recorded_at", sinceIso);
-    if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
-    const { data, error } = await q;
-    if (error || !data || data.length === 0) break;
-    all.push(...data);
-    if (data.length < PAGE) break;
-  }
-  return { precomputed: false, rows: all };
+  if (userIdFilter !== null && userIdFilter.length === 0) return [];
+  const { data, error } = await (supabaseAdmin as any).rpc("report_content_time_totals", {
+    p_since: sinceIso,
+    p_user_ids: userIdFilter,
+    p_exclude_ids: userIdFilter === null ? exclusionList(ctx) : [],
+  });
+  if (error) throw new Error(error.message);
+  return data ?? [];
 }
 
 async function fetchAllProgress(
@@ -420,47 +354,28 @@ export const getUsageReport = createServerFn({ method: "POST" })
       }
     }
 
-    // Build unique opener counts per item
+    // Build unique opener counts per item. Both the precomputed table and
+    // report_content_openers() return the same (content_item_id,
+    // opener_count) shape, so no branching is needed here — Number(...) is
+    // cheap insurance against either source ever returning a numeric-string.
     const itemOpenerCounts: Record<string, number> = {};
-    if (openersData.precomputed) {
-      for (const row of openersData.rows as any[]) {
-        itemOpenerCounts[row.content_item_id as string] = row.opener_count as number;
-      }
-    } else {
-      const tempSets: Record<string, Set<string>> = {};
-      for (const row of openersData.rows as any[]) {
-        if (row.content_id && row.user_id) {
-          if (!tempSets[row.content_id]) tempSets[row.content_id] = new Set();
-          tempSets[row.content_id].add(row.user_id as string);
-        }
-      }
-      for (const [id, s] of Object.entries(tempSets)) itemOpenerCounts[id] = s.size;
+    for (const row of openersData as any[]) {
+      itemOpenerCounts[row.content_item_id as string] = Number(row.opener_count) || 0;
     }
 
-    // Aggregate time data — shape differs by source
+    // Aggregate time data. Both the precomputed table and
+    // report_content_time_totals() return the same (content_item_id,
+    // total_session_seconds, engager_count) shape, already summed/counted
+    // per item — no per-row reduction needed here anymore.
     const itemTotalSeconds: Record<string, number> = {};
     const itemEngagerCount: Record<string, number> = {};
     let totalSeconds = 0;
-    if (timeData.precomputed) {
-      // content_item_time_totals: one row per item with pre-summed totals
-      for (const r of timeData.rows as any[]) {
-        const id = r.content_item_id as string;
-        const secs = (r.total_session_seconds as number) || 0;
-        itemTotalSeconds[id] = secs;
-        itemEngagerCount[id] = (r.engager_count as number) || 0;
-        totalSeconds += secs;
-      }
-    } else {
-      // user_content_engagement: one row per user per item, need to sum
-      for (const r of timeData.rows as any[]) {
-        const secs = (r.session_seconds as number) || 0;
-        totalSeconds += secs;
-        if (r.content_item_id && secs > 0) {
-          const id = r.content_item_id as string;
-          itemTotalSeconds[id] = (itemTotalSeconds[id] ?? 0) + secs;
-          itemEngagerCount[id] = (itemEngagerCount[id] ?? 0) + 1;
-        }
-      }
+    for (const r of timeData as any[]) {
+      const id = r.content_item_id as string;
+      const secs = Number(r.total_session_seconds) || 0;
+      itemTotalSeconds[id] = secs;
+      itemEngagerCount[id] = Number(r.engager_count) || 0;
+      totalSeconds += secs;
     }
     const hoursSpent = Math.round((totalSeconds / 3600) * 10) / 10;
 
