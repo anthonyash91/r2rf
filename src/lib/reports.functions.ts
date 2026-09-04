@@ -1067,58 +1067,34 @@ export const getBulkFacilityProgressReport = createServerFn({ method: "POST" })
       return f.length === 0 || f.includes(facilityValue);
     });
 
-    // Fetch all per-user data in parallel, chunked to stay under URL limits
-    const chunks = chunkIds(userIds);
-
-    const fetchChunked = async (table: string, select: string): Promise<any[]> => {
+    // Fetch all per-user data in parallel via RPC — each function takes the
+    // full user_id array in its POST body (no URL-length limit to chunk
+    // around, unlike a GET-style .in() filter), so a single .range() loop
+    // per table replaces the old "chunk ids, then paginate each chunk"
+    // nested loop. See the migration of the same name (report_bulk_user_*)
+    // for the actual queries.
+    const fetchAllViaRpc = async (fnName: string): Promise<any[]> => {
       const all: any[] = [];
       const PAGE = 1000;
-      for (const chunk of chunks) {
-        for (let from = 0; ; from += PAGE) {
-          const { data, error } = await (supabaseAdmin as any)
-            .from(table)
-            .select(select)
-            .in("user_id", chunk)
-            .range(from, from + PAGE - 1);
-          if (error || !data?.length) break;
-          all.push(...data);
-          if (data.length < PAGE) break;
-        }
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await (supabaseAdmin as any)
+          .rpc(fnName, { p_user_ids: userIds })
+          .range(from, from + PAGE - 1);
+        if (error) throw new Error(error.message);
+        if (!data?.length) break;
+        all.push(...data);
+        if (data.length < PAGE) break;
       }
       return all;
     };
 
     const [progress, engagement, bookmarks, ratings, logins, userStats] = await Promise.all([
-      fetchChunked("user_content_progress", "user_id, content_item_id, created_at"),
-      fetchChunked(
-        "user_content_engagement",
-        "user_id, content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct",
-      ),
-      fetchChunked("user_content_bookmarks", "user_id, content_item_id"),
-      fetchChunked("user_content_ratings", "user_id, content_item_id, rating"),
-      (async () => {
-        // Last login per user — fetch all logins then deduplicate to most recent
-        const all: any[] = [];
-        const PAGE = 1000;
-        for (const chunk of chunks) {
-          for (let from = 0; ; from += PAGE) {
-            const { data, error } = await supabaseAdmin
-              .from("user_logins")
-              .select("user_id, login_date")
-              .in("user_id", chunk)
-              .order("login_date", { ascending: false })
-              .range(from, from + PAGE - 1);
-            if (error || !data?.length) break;
-            all.push(...data);
-            if (data.length < PAGE) break;
-          }
-        }
-        return all;
-      })(),
-      fetchChunked(
-        "user_stats",
-        "user_id, items_completed, total_session_seconds, facility_percentile",
-      ),
+      fetchAllViaRpc("report_bulk_user_progress"),
+      fetchAllViaRpc("report_bulk_user_engagement"),
+      fetchAllViaRpc("report_bulk_user_bookmarks"),
+      fetchAllViaRpc("report_bulk_user_ratings"),
+      fetchAllViaRpc("report_bulk_user_logins"),
+      fetchAllViaRpc("report_bulk_user_stats"),
     ]);
 
     return {
