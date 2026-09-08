@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { getCachedUserId } from "@/hooks/use-auth";
+import { getActiveFacilitySlug } from "@/lib/facility-context";
 
 // Fire-and-forget. Never throws — analytics should never break the UI.
 
@@ -8,6 +9,9 @@ type AnalyticsEvent = {
   category_id: string | null;
   content_id?: string;
   user_id: string | null;
+  // Only used server-side as a fallback for signed-out events (no user_id to
+  // resolve a facility from) — see analytics_increment_daily_count().
+  facility_value: string | null;
 };
 
 let buffer: AnalyticsEvent[] = [];
@@ -43,7 +47,12 @@ if (typeof window !== "undefined") {
 }
 
 export function trackCategoryView(categoryId: string) {
-  buffer.push({ event_type: "category_view", category_id: categoryId, user_id: getCachedUserId() });
+  buffer.push({
+    event_type: "category_view",
+    category_id: categoryId,
+    user_id: getCachedUserId(),
+    facility_value: getActiveFacilitySlug(),
+  });
   scheduleFlush();
 }
 
@@ -53,6 +62,7 @@ export function trackContentClick(contentId: string, categoryId: string | null) 
     content_id: contentId,
     category_id: categoryId,
     user_id: getCachedUserId(),
+    facility_value: getActiveFacilitySlug(),
   });
   scheduleFlush();
 }
