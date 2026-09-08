@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { assertAnalyticsAdmin } from "@/lib/server-auth";
+import { assertAnalyticsAdmin, isFacilityScoped } from "@/lib/server-auth";
 
 // Fetches exempt IDs as a plain array so we can use NOT IN syntax in
 // progress queries. PostgREST embedded-resource filters (content_items!inner)
@@ -88,6 +88,17 @@ export const getAdminUserMonthlySummary = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAnalyticsAdmin(context.userId);
+    const { scoped, facility } = await isFacilityScoped(context.userId);
+    if (scoped) {
+      const { data: targetProfile } = await supabaseAdmin
+        .from("user_profiles")
+        .select("facility")
+        .eq("user_id", data.userId)
+        .maybeSingle();
+      if (!facility || targetProfile?.facility !== facility) {
+        throw new Error("Forbidden: user is not in your facility");
+      }
+    }
     const now = new Date();
     const firstOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();

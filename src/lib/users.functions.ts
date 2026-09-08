@@ -3,13 +3,13 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { recordAdminAudit } from "@/lib/admin-audit.server";
-import { assertAdmin } from "@/lib/server-auth";
+import { assertAdmin, isFacilityScoped } from "@/lib/server-auth";
 
 type Role = "admin" | "contributor" | "tester" | "user" | "facilityUser";
 
 // The facility slug assigned to all tester accounts. Override via TESTER_FACILITY env var
 // when deploying to an environment that uses a different facility slug.
-const TESTER_FACILITY = process.env.TESTER_FACILITY ?? "s003007001";
+export const TESTER_FACILITY = process.env.TESTER_FACILITY ?? "s003007001";
 
 /** Split an array into chunks to avoid Supabase URL length limits on large IN clauses. */
 function chunkArray<T>(arr: T[], size: number): T[][] {
@@ -287,18 +287,24 @@ export const listFacilityAdminUsers = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ facilityValue: z.string().optional() }).parse(input))
   .handler(async ({ context, data }) => {
     await assertUserManagementAdmin(context.userId);
+    // A facilityUser caller is always scoped to their own facility regardless
+    // of what the client passes — same server-side enforcement as
+    // listRegularUsers above. Admins may pass any facilityValue, or none.
+    const { scoped, facility } = await isFacilityScoped(context.userId);
+    if (scoped && !facility) return { users: [] };
+    const facilityValue = scoped ? facility! : data.facilityValue;
+
     const { data: roleRows, error } = await supabaseAdmin
       .from("user_roles")
       .select("user_id")
       .eq("role", "facilityUser");
     if (error) throw new Error(error.message);
     let ids = Array.from(new Set((roleRows ?? []).map((r) => r.user_id as string)));
-    // If scoped to a facility, filter by profile
-    if (data.facilityValue && ids.length > 0) {
+    if (facilityValue && ids.length > 0) {
       const { data: profs } = await supabaseAdmin
         .from("user_profiles")
         .select("user_id")
-        .eq("facility", data.facilityValue)
+        .eq("facility", facilityValue)
         .in("user_id", ids);
       ids = (profs ?? []).map((p: any) => p.user_id as string);
     }

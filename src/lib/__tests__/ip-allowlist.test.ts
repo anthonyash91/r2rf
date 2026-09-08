@@ -14,37 +14,36 @@ function requestWithHeaders(headers: Record<string, string>): Request {
   return new Request("https://example.com/", { headers });
 }
 
-describe("getClientIp — x-forwarded-for position (Render vs. Heroku)", () => {
-  it("defaults to the LEFTMOST entry when TRUSTED_IP_XFF_POSITION is unset (Render's guarantee)", () => {
-    const req = requestWithHeaders({ "x-forwarded-for": "1.1.1.1, 2.2.2.2, 3.3.3.3" });
-    expect(getClientIp(req)).toBe("1.1.1.1");
-  });
-
-  it("uses the RIGHTMOST entry when TRUSTED_IP_XFF_POSITION=rightmost (Heroku's guarantee)", () => {
-    process.env.TRUSTED_IP_XFF_POSITION = "rightmost";
+describe("getClientIp — x-forwarded-for position (Heroku's the only deployment target)", () => {
+  it("defaults to the RIGHTMOST entry when TRUSTED_IP_XFF_POSITION is unset (Heroku's guarantee)", () => {
     const req = requestWithHeaders({ "x-forwarded-for": "1.1.1.1, 2.2.2.2, 3.3.3.3" });
     expect(getClientIp(req)).toBe("3.3.3.3");
   });
 
-  it("any value other than exactly 'rightmost' falls back to leftmost", () => {
-    process.env.TRUSTED_IP_XFF_POSITION = "leftmost"; // and anything else, e.g. a typo
-    const req = requestWithHeaders({ "x-forwarded-for": "1.1.1.1, 2.2.2.2" });
+  it("uses the LEFTMOST entry when TRUSTED_IP_XFF_POSITION=leftmost (e.g. Render's guarantee)", () => {
+    process.env.TRUSTED_IP_XFF_POSITION = "leftmost";
+    const req = requestWithHeaders({ "x-forwarded-for": "1.1.1.1, 2.2.2.2, 3.3.3.3" });
     expect(getClientIp(req)).toBe("1.1.1.1");
+  });
+
+  it("any value other than exactly 'leftmost' falls back to rightmost", () => {
+    process.env.TRUSTED_IP_XFF_POSITION = "rightmost"; // and anything else, e.g. a typo
+    const req = requestWithHeaders({ "x-forwarded-for": "1.1.1.1, 2.2.2.2" });
+    expect(getClientIp(req)).toBe("2.2.2.2");
   });
 
   it("trims whitespace around each entry", () => {
     const req = requestWithHeaders({ "x-forwarded-for": "  1.1.1.1  ,  2.2.2.2  " });
-    expect(getClientIp(req)).toBe("1.1.1.1");
+    expect(getClientIp(req)).toBe("2.2.2.2");
   });
 
   it("a single-entry header returns that entry regardless of position setting", () => {
-    process.env.TRUSTED_IP_XFF_POSITION = "rightmost";
+    process.env.TRUSTED_IP_XFF_POSITION = "leftmost";
     const req = requestWithHeaders({ "x-forwarded-for": "9.9.9.9" });
     expect(getClientIp(req)).toBe("9.9.9.9");
   });
 
   it("ignores empty entries from a trailing/double comma", () => {
-    process.env.TRUSTED_IP_XFF_POSITION = "rightmost";
     const req = requestWithHeaders({ "x-forwarded-for": "1.1.1.1, ," });
     expect(getClientIp(req)).toBe("1.1.1.1");
   });

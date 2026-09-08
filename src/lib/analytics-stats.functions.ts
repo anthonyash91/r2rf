@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { assertAnalyticsAdmin, isFacilityScoped } from "@/lib/server-auth";
+import { TESTER_FACILITY } from "@/lib/users.functions";
 
 /** Strict admin-only — used for destructive/system operations like nightly refresh. */
 async function assertStrictAdmin(userId: string) {
@@ -20,6 +21,7 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAnalyticsAdmin(context.userId);
+    const { scoped, facility } = await isFacilityScoped(context.userId);
 
     const [statsRes, facRes] = await Promise.all([
       (supabaseAdmin as any)
@@ -45,7 +47,7 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
       ]),
     );
 
-    const rows = (statsRes.data ?? []).map((r: any) => ({
+    let rows = (statsRes.data ?? []).map((r: any) => ({
       facilityValue: r.facility_value as string,
       facilityLabel: labelMap.get(r.facility_value as string)?.label ?? r.facility_value,
       facilitySiteId: labelMap.get(r.facility_value as string)?.siteId ?? null,
@@ -60,6 +62,11 @@ export const getFacilityComparison = createServerFn({ method: "GET" })
       totalThumbsUp: (r.thumbs_up_count as number) ?? 0,
       totalThumbsDown: (r.thumbs_down_count as number) ?? 0,
     }));
+
+    // A facilityUser caller sees only their own facility's row — the
+    // cross-facility comparison (and other facilities' decrypted site IDs)
+    // is admin-only.
+    if (scoped) rows = rows.filter((r: any) => r.facilityValue === facility);
 
     const updatedAt = rows[0]?.updatedAt ?? null;
     return { facilities: rows, updatedAt };
@@ -210,20 +217,28 @@ export const triggerNightlyRefresh = createServerFn({ method: "POST" })
  * Clears all analytics data for a given facility and rebuilds pre-computed stats.
  * Used by testers to reset CPC Sales analytics to a clean state before testing.
  */
-async function assertTesterOrAdmin(userId: string) {
+/** Returns whether the caller holds the admin role (vs. tester-only). */
+async function assertTesterOrAdmin(userId: string): Promise<{ isAdmin: boolean }> {
   const { data } = await supabaseAdmin
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
     .in("role", ["admin", "tester"]);
   if (!data || data.length === 0) throw new Error("Forbidden: tester or admin access required");
+  return { isAdmin: data.some((r: any) => r.role === "admin") };
 }
 
 export const resetFacilityAnalytics = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ facilityValue: z.string().min(1) }).parse(input))
   .handler(async ({ context, data }) => {
-    await assertTesterOrAdmin(context.userId);
+    const { isAdmin } = await assertTesterOrAdmin(context.userId);
+    // A tester (non-admin) may only reset the designated QA facility — this
+    // is a destructive, unscoped-by-default operation, so a tester account
+    // must never be able to wipe out a real facility's analytics.
+    if (!isAdmin && data.facilityValue !== TESTER_FACILITY) {
+      throw new Error("Forbidden: testers may only reset the designated test facility");
+    }
 
     const { facilityValue } = data;
 

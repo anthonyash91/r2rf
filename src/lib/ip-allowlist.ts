@@ -155,15 +155,14 @@ export async function getCustomHomeRestrictions(): Promise<Map<string, Set<strin
 
 /**
  * Picks the non-spoofable entry out of a comma-separated forwarded-IP header,
- * per TRUSTED_IP_XFF_POSITION ("leftmost", the default, or "rightmost").
+ * per TRUSTED_IP_XFF_POSITION ("rightmost", the default, or "leftmost").
  *
- * Different hosts append their own trustworthy IP to a different end of the
- * list: Render strips any client-supplied x-forwarded-for and sets its own
- * value first (leftmost authoritative). Heroku's router instead appends its
- * own value to the right of whatever x-forwarded-for it received — including
- * a client-forged one — so on Heroku the RIGHTMOST entry is the authoritative
- * one and the leftmost is attacker-controlled. Set TRUSTED_IP_XFF_POSITION to
- * match whichever platform this is actually deployed on.
+ * This app is deployed on Heroku, whose router appends its own trustworthy
+ * value to the RIGHT of whatever x-forwarded-for it received — including a
+ * client-forged one — so the rightmost entry is authoritative and the
+ * leftmost is attacker-controlled. Defaulting to "rightmost" matches that
+ * reality; only set TRUSTED_IP_XFF_POSITION=leftmost if this is ever deployed
+ * behind a host that prepends its own value instead (e.g. Render).
  */
 function pickXffEntry(headerValue: string): string | null {
   const parts = headerValue
@@ -171,7 +170,7 @@ function pickXffEntry(headerValue: string): string | null {
     .map((s) => s.trim())
     .filter(Boolean);
   if (!parts.length) return null;
-  const position = process.env.TRUSTED_IP_XFF_POSITION === "rightmost" ? "rightmost" : "leftmost";
+  const position = process.env.TRUSTED_IP_XFF_POSITION === "leftmost" ? "leftmost" : "rightmost";
   return position === "rightmost" ? parts[parts.length - 1] : parts[0];
 }
 
