@@ -504,9 +504,7 @@ function SignInSignUpForm({
           <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             {mode === "sign-up" && !signupBlockReason && (
               <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
-                Please sign up using your <strong>correct, real information</strong>. Accurate
-                details ensure you can receive credit in the future for participating in this
-                program.
+                {t("signup.autoFilledNotice")}
               </div>
             )}
 

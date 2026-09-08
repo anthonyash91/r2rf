@@ -196,6 +196,7 @@ const translations = {
 
     "signup.title": "Create your account",
     "signup.signInTitle": "Sign in",
+    "signup.autoFilledNotice": "Your information has been auto-filled from your tablet account.",
     "signup.subtitleSignUp": "Sign up with a username and password. No email required.",
     "signup.subtitleSignIn": "Sign in with your username and password.",
     "signup.username": "Username",
@@ -529,6 +530,8 @@ const translations = {
 
     "signup.title": "Crea tu cuenta",
     "signup.signInTitle": "Iniciar sesión",
+    "signup.autoFilledNotice":
+      "Tu información se completó automáticamente desde tu cuenta de la tableta.",
     "signup.subtitleSignUp":
       "Regístrese con un nombre de usuario y contraseña. No se requiere correo electrónico.",
     "signup.subtitleSignIn": "Inicie sesión con su nombre de usuario y contraseña.",
