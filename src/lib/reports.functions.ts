@@ -368,13 +368,11 @@ export const getUsageReport = createServerFn({ method: "POST" })
     // total_session_seconds, engager_count) shape, already summed/counted
     // per item — no per-row reduction needed here anymore.
     const itemTotalSeconds: Record<string, number> = {};
-    const itemEngagerCount: Record<string, number> = {};
     let totalSeconds = 0;
     for (const r of timeData as any[]) {
       const id = r.content_item_id as string;
       const secs = Number(r.total_session_seconds) || 0;
       itemTotalSeconds[id] = secs;
-      itemEngagerCount[id] = Number(r.engager_count) || 0;
       totalSeconds += secs;
     }
     const hoursSpent = Math.round((totalSeconds / 3600) * 10) / 10;
@@ -397,7 +395,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
         openCount: number;
         completeCount: number;
         completionRate: number | null;
-        avgSessionSeconds: number | null;
+        totalSessionSeconds: number | null;
       }
     > = {};
     let aggOpens = 0;
@@ -407,15 +405,12 @@ export const getUsageReport = createServerFn({ method: "POST" })
       const completes = itemCompleters[itemId]?.size ?? 0;
       const openCount = Math.max(trackedOpens, completes);
       const completionRate = trackedOpens > 0 ? Math.round((completes / openCount) * 100) : null;
-      const avgSessionSeconds =
-        itemTotalSeconds[itemId] && itemEngagerCount[itemId]
-          ? Math.round(itemTotalSeconds[itemId] / itemEngagerCount[itemId])
-          : null;
+      const totalSessionSeconds = itemTotalSeconds[itemId] || null;
       itemStats[itemId] = {
         openCount,
         completeCount: completes,
         completionRate,
-        avgSessionSeconds,
+        totalSessionSeconds,
       };
       if (trackedOpens > 0) {
         aggOpens += openCount;

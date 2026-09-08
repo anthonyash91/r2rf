@@ -100,7 +100,7 @@ export function UsageReportView({ scope }: { scope: UsageScope }) {
         openCount: number;
         completeCount: number;
         completionRate: number | null;
-        avgSessionSeconds: number | null;
+        totalSessionSeconds: number | null;
       }
     > = d.itemStats ?? {};
     const itemRatings: Record<string, { thumbs_up: number; thumbs_down: number }> =
@@ -136,7 +136,7 @@ export function UsageReportView({ scope }: { scope: UsageScope }) {
             openCount: s?.openCount ?? 0,
             completeCount: s?.completeCount ?? 0,
             completionRate: s?.completionRate ?? null,
-            avgSessionSeconds: s?.avgSessionSeconds ?? null,
+            totalSessionSeconds: s?.totalSessionSeconds ?? null,
             thumbsUp: r?.thumbs_up ?? 0,
             thumbsDown: r?.thumbs_down ?? 0,
             bookmarkCount: itemBookmarks[it.id] ?? 0,
@@ -440,7 +440,7 @@ function exportUsageCsv(
       "Openers",
       "Completions",
       "Drop-offs",
-      "Avg time spent",
+      "Time spent",
       "Helpful",
       "Not helpful",
       "Bookmarks",
@@ -472,7 +472,7 @@ function exportUsageCsv(
       openCount,
       completeCount,
       completionRate,
-      avgSessionSeconds,
+      totalSessionSeconds,
       thumbsUp,
       thumbsDown,
       bookmarkCount,
@@ -491,7 +491,7 @@ function exportUsageCsv(
           openCount || "",
           completeCount || "",
           openCount > 0 ? openCount - completeCount : "",
-          avgSessionSeconds ? formatTimeSpent(avgSessionSeconds) : "",
+          totalSessionSeconds ? formatTimeSpent(totalSessionSeconds) : "",
           thumbsUp || "",
           thumbsDown || "",
           bookmarkCount || "",
@@ -778,7 +778,7 @@ function CategorySection({
                 openCount,
                 completeCount,
                 completionRate,
-                avgSessionSeconds,
+                totalSessionSeconds,
                 thumbsUp,
                 thumbsDown,
                 bookmarkCount,
@@ -856,17 +856,16 @@ function CategorySection({
                           </TooltipContent>
                         </Tooltip>
                       )}
-                      {avgSessionSeconds != null && avgSessionSeconds > 0 && (
+                      {totalSessionSeconds != null && totalSessionSeconds > 0 && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="inline-flex items-center gap-1 border border-border bg-background px-2.5 py-[5px] text-xs font-medium rounded-[8px] tabular-nums cursor-default">
                               <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                              {formatTimeSpent(avgSessionSeconds)} avg
+                              {formatTimeSpent(totalSessionSeconds)}
                             </span>
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs px-3 py-2">
-                            Average time spent — mean session time per user who engaged with this
-                            item in the selected period.
+                            Total time all users spent on this item in the selected period.
                           </TooltipContent>
                         </Tooltip>
                       )}
@@ -908,7 +907,7 @@ function CategorySection({
                       const conditionals = [
                         completionRate != null,
                         openCount > completeCount,
-                        avgSessionSeconds != null && avgSessionSeconds > 0,
+                        totalSessionSeconds != null && totalSessionSeconds > 0,
                         hasRatings,
                         bookmarkCount > 0,
                       ];
@@ -941,13 +940,13 @@ function CategorySection({
                             tooltip="Users who opened this item but did not complete it."
                           />
                         ),
-                        avgSessionSeconds != null && avgSessionSeconds > 0 && (
+                        totalSessionSeconds != null && totalSessionSeconds > 0 && (
                           <StatGridCell
                             key="time"
                             icon={<Clock className="h-3.5 w-3.5" />}
-                            label="avg time"
-                            value={formatTimeSpent(avgSessionSeconds)}
-                            tooltip="Mean session time per user who engaged with this item."
+                            label="time spent"
+                            value={formatTimeSpent(totalSessionSeconds)}
+                            tooltip="Total time all users spent on this item in the selected period."
                           />
                         ),
                         hasRatings && (

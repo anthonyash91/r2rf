@@ -39,7 +39,7 @@ export type AggregatedRow = {
     openCount: number;
     completeCount: number;
     completionRate: number | null;
-    avgSessionSeconds: number | null;
+    totalSessionSeconds: number | null;
     thumbsUp: number;
     thumbsDown: number;
     bookmarkCount: number;
