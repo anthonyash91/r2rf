@@ -1044,6 +1044,19 @@ function UserCategorySection({
                             </TooltipContent>
                           </Tooltip>
                         )}
+                        {(item as any).sessionSeconds > 0 && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center gap-1 rounded-[8px] border border-input bg-background px-2.5 py-1.5 text-xs font-medium tabular-nums cursor-default">
+                                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                {formatTimeSpent((item as any).sessionSeconds)}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              Time this user spent on this item
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
                         {(() => {
                           if ((item as any).exempt_from_progress) {
                             return (
