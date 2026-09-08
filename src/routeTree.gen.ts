@@ -26,7 +26,6 @@ import { Route as AdminTermsRouteImport } from './routes/admin.terms'
 import { Route as AdminSeedRouteImport } from './routes/admin.seed'
 import { Route as AdminPrivacyRouteImport } from './routes/admin.privacy'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
-import { Route as AdminIpAllowlistRouteImport } from './routes/admin.ip-allowlist'
 import { Route as AdminIconsBadgesRouteImport } from './routes/admin.icons-badges'
 import { Route as AdminHomeRouteImport } from './routes/admin.home'
 import { Route as AdminFacilitiesRouteImport } from './routes/admin.facilities'
@@ -124,11 +123,6 @@ const AdminMessagesRoute = AdminMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminIpAllowlistRoute = AdminIpAllowlistRouteImport.update({
-  id: '/ip-allowlist',
-  path: '/ip-allowlist',
-  getParentRoute: () => AdminRoute,
-} as any)
 const AdminIconsBadgesRoute = AdminIconsBadgesRouteImport.update({
   id: '/icons-badges',
   path: '/icons-badges',
@@ -199,7 +193,6 @@ export interface FileRoutesByFullPath {
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
-  '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
@@ -229,7 +222,6 @@ export interface FileRoutesByTo {
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
-  '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
@@ -261,7 +253,6 @@ export interface FileRoutesById {
   '/admin/facilities': typeof AdminFacilitiesRoute
   '/admin/home': typeof AdminHomeRoute
   '/admin/icons-badges': typeof AdminIconsBadgesRoute
-  '/admin/ip-allowlist': typeof AdminIpAllowlistRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/privacy': typeof AdminPrivacyRoute
   '/admin/seed': typeof AdminSeedRoute
@@ -294,7 +285,6 @@ export interface FileRouteTypes {
     | '/admin/facilities'
     | '/admin/home'
     | '/admin/icons-badges'
-    | '/admin/ip-allowlist'
     | '/admin/messages'
     | '/admin/privacy'
     | '/admin/seed'
@@ -324,7 +314,6 @@ export interface FileRouteTypes {
     | '/admin/facilities'
     | '/admin/home'
     | '/admin/icons-badges'
-    | '/admin/ip-allowlist'
     | '/admin/messages'
     | '/admin/privacy'
     | '/admin/seed'
@@ -355,7 +344,6 @@ export interface FileRouteTypes {
     | '/admin/facilities'
     | '/admin/home'
     | '/admin/icons-badges'
-    | '/admin/ip-allowlist'
     | '/admin/messages'
     | '/admin/privacy'
     | '/admin/seed'
@@ -510,13 +498,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMessagesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/ip-allowlist': {
-      id: '/admin/ip-allowlist'
-      path: '/ip-allowlist'
-      fullPath: '/admin/ip-allowlist'
-      preLoaderRoute: typeof AdminIpAllowlistRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/admin/icons-badges': {
       id: '/admin/icons-badges'
       path: '/icons-badges'
@@ -605,7 +586,6 @@ interface AdminRouteChildren {
   AdminFacilitiesRoute: typeof AdminFacilitiesRoute
   AdminHomeRoute: typeof AdminHomeRoute
   AdminIconsBadgesRoute: typeof AdminIconsBadgesRoute
-  AdminIpAllowlistRoute: typeof AdminIpAllowlistRoute
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminPrivacyRoute: typeof AdminPrivacyRoute
   AdminSeedRoute: typeof AdminSeedRoute
@@ -624,7 +604,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminFacilitiesRoute: AdminFacilitiesRoute,
   AdminHomeRoute: AdminHomeRoute,
   AdminIconsBadgesRoute: AdminIconsBadgesRoute,
-  AdminIpAllowlistRoute: AdminIpAllowlistRoute,
   AdminMessagesRoute: AdminMessagesRoute,
   AdminPrivacyRoute: AdminPrivacyRoute,
   AdminSeedRoute: AdminSeedRoute,

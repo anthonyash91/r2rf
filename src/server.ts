@@ -2,13 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import {
-  getAllowedIps,
-  getClientIp,
-  getCustomHomeRestrictions,
-  isIpRestrictionEnabled,
-  renderBlockedPage,
-} from "./lib/ip-allowlist";
+import { getClientIp } from "./lib/ip-allowlist";
 import { logServerError } from "./lib/error-logger.server";
 
 type ServerEntry = {
@@ -142,72 +136,6 @@ async function normalizeCatastrophicSsrResponse(
 export default {
   async fetch(request: Request) {
     try {
-      const ip = getClientIp(request);
-      const pathname = new URL(request.url).pathname;
-
-      // Health check: bypass IP restriction entirely so the host's probe can
-      // reach the endpoint regardless of the allowlist state. This path must
-      // be exempt — the probe's internal IPs are not on the allowlist and are
-      // not known in advance.
-      if (pathname === "/api/health") {
-        const handler = await getServerEntry();
-        const response = await handler.fetch(request);
-        return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response, request));
-      }
-
-      // Global kill switch: when disabled, bypass all IP checks so admins
-      // can temporarily open the site without touching the allowlist.
-      let restrictionsEnabled = true;
-      try {
-        restrictionsEnabled = await isIpRestrictionEnabled();
-      } catch (err) {
-        // Fail safe: if the toggle check throws, keep restrictions enabled.
-        console.error("[ip-restriction-toggle] check failed:", err);
-      }
-      if (!restrictionsEnabled) {
-        const handler = await getServerEntry();
-        const response = await handler.fetch(request);
-        return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response, request));
-      }
-
-      // Fail closed: if the allowlist fetch throws or returns empty,
-      // `allowed` stays false and the request is blocked rather than let through.
-      let allowed = false;
-      try {
-        const allowlist = await getAllowedIps();
-        allowed = !!ip && allowlist.has(ip);
-      } catch (err) {
-        console.error("[ip-allowlist] check failed:", err);
-      }
-      if (!allowed) {
-        return applySecurityHeaders(
-          new Response(renderBlockedPage(ip, "site"), {
-            status: 403,
-            headers: { "content-type": "text/html; charset=utf-8" },
-          }),
-        );
-      }
-
-      // Per-custom-home-page IP restriction. The slug is the first path segment
-      // (TanStack catch-all route `/$customHome`). Only enforce if the slug
-      // has a non-empty allowed_ips list.
-      const firstSegment = pathname.split("/")[1] ?? "";
-      if (firstSegment) {
-        try {
-          const restrictions = await getCustomHomeRestrictions();
-          const allowedForSlug = restrictions.get(firstSegment);
-          if (allowedForSlug && (!ip || !allowedForSlug.has(ip))) {
-            return applySecurityHeaders(
-              new Response(renderBlockedPage(ip, "custom-home"), {
-                status: 403,
-                headers: { "content-type": "text/html; charset=utf-8" },
-              }),
-            );
-          }
-        } catch (err) {
-          console.error("[custom-home-restrictions] check failed:", err);
-        }
-      }
       const handler = await getServerEntry();
       const response = await handler.fetch(request);
       return applySecurityHeaders(await normalizeCatastrophicSsrResponse(response, request));

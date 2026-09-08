@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   LayoutGrid,
   Users,
-  Shield,
   BarChart3,
   Home,
   Award,
@@ -54,7 +53,6 @@ const links: NavLink[] = [
   },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true, facilityUserVisible: true },
   { to: "/admin/facilities", label: "Facilities", icon: Building2, adminOnly: true },
-  { to: "/admin/ip-allowlist", label: "IP Allowlist", icon: Shield, adminOnly: true },
   {
     to: "/admin/analytics",
     label: "Reports",
