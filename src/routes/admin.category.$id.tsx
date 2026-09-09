@@ -3035,6 +3035,20 @@ function ItemEditor({
                 onClick={async () => {
                   setDurationEstimating(true);
                   try {
+                    // Chapter-based playlists have no item-level url to probe —
+                    // sum the chapters' own durations instead of falling
+                    // through to a generic type-based default.
+                    if (isAudioType && chapters.length > 0) {
+                      const total = chapters.reduce((s, ch) => s + (ch.duration_seconds ?? 0), 0);
+                      if (total > 0) {
+                        setDuration(withActionWord(formatMediaDuration(total), type));
+                      } else {
+                        toast.error(
+                          "No chapter durations available yet — recalculate individual chapters first",
+                        );
+                      }
+                      return;
+                    }
                     const result = await recalculateDurationValue(url, type);
                     if (result) setDuration(result);
                     else toast.error("Bunny hasn't reported a duration for this video yet");
