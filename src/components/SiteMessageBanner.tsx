@@ -148,7 +148,7 @@ export function SiteMessageBanner({
   });
 
   // Anonymous: read sessionStorage synchronously (not in useEffect) to avoid flash.
-  const [anonDismissedAt] = useState<string | null>(() => {
+  const [anonDismissedAt, setAnonDismissedAt] = useState<string | null>(() => {
     if (typeof window === "undefined" || userId) return null;
     return window.sessionStorage.getItem(sessionStorageKey(kind, facilityValue ?? undefined));
   });
@@ -201,11 +201,14 @@ export function SiteMessageBanner({
         );
       if (error) qc.invalidateQueries({ queryKey: dismissalQueryKey });
     } else if (typeof window !== "undefined") {
-      // Anonymous visitors: store in sessionStorage (clears on tab close).
+      // Anonymous visitors: store in sessionStorage (clears on tab close), and
+      // update state directly so the banner hides immediately — sessionStorage
+      // alone only takes effect on the next mount, not the current render.
       window.sessionStorage.setItem(
         sessionStorageKey(kind, facilityValue ?? undefined),
         data.updatedAt,
       );
+      setAnonDismissedAt(data.updatedAt);
     }
   };
 
