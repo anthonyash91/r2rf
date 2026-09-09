@@ -88,7 +88,6 @@ async function fetchAllProgress(
   userIdFilter: string[] | null,
   sinceIso: string | null,
   ctx: ExclusionContext,
-  exemptItemIds: string[],
 ): Promise<any[]> {
   if (userIdFilter !== null) {
     if (userIdFilter.length === 0) return [];
@@ -103,8 +102,6 @@ async function fetchAllProgress(
             .in("user_id", chunk)
             .range(from, from + PAGE - 1);
           if (sinceIso) q = q.gte("created_at", sinceIso);
-          if (exemptItemIds.length > 0)
-            q = q.not("content_item_id", "in", `(${exemptItemIds.join(",")})`);
           const { data, error } = await q;
           if (error || !data || data.length === 0) break;
           rows.push(...data);
@@ -129,8 +126,6 @@ async function fetchAllProgress(
       .select("content_item_id, user_id")
       .range(from, from + PAGE - 1);
     if (sinceIso) q = q.gte("created_at", sinceIso);
-    if (exemptItemIds.length > 0)
-      q = q.not("content_item_id", "in", `(${exemptItemIds.join(",")})`);
     if (excludeAll.length > 0) q = q.not("user_id", "in", `(${excludeAll.join(",")})`);
     const { data, error } = await q;
     if (error || !data || data.length === 0) break;
@@ -289,14 +284,15 @@ export const getUsageReport = createServerFn({ method: "POST" })
           return f.length === 0 || f.includes(facilityValue);
         })
       : (catsRes.data ?? []);
-    const filteredItems = (
-      facilityValue
-        ? (itemsRes.data ?? []).filter((i: any) => {
-            const f = itemFacMap[i.id] ?? [];
-            return f.length === 0 || f.includes(facilityValue);
-          })
-        : (itemsRes.data ?? [])
-    ).filter((i: any) => !i.exempt_from_progress);
+    // Exempt-from-progress only affects a resident's own completion percentage
+    // (see category.$slug.tsx) — it has no bearing on admin-facing usage
+    // analytics, so exempt items are included here like any other item.
+    const filteredItems = facilityValue
+      ? (itemsRes.data ?? []).filter((i: any) => {
+          const f = itemFacMap[i.id] ?? [];
+          return f.length === 0 || f.includes(facilityValue);
+        })
+      : (itemsRes.data ?? []);
     const totalUsers = totalUsersRes.count ?? 0;
 
     // Early exit for facility reports with no users
@@ -318,21 +314,13 @@ export const getUsageReport = createServerFn({ method: "POST" })
       };
     }
 
-    // Pre-fetch exempt item IDs so fetchAllProgress can exclude them via NOT IN.
-    // Avoids PostgREST embedded-resource filter syntax which fails in paginated queries.
-    const { data: exemptItemsData } = await (supabaseAdmin as any)
-      .from("content_items")
-      .select("id")
-      .eq("exempt_from_progress", true);
-    const exemptItemIds: string[] = (exemptItemsData ?? []).map((r: any) => r.id as string);
-
     const exclusionCtx: ExclusionContext = { staffUserIds, syntheticIds };
 
     const [dailyCountsRes, openersData, timeData, progressRows] = await Promise.all([
       fetchDailyCounts(sinceIso, facilityValue),
       fetchOpenersData(userIdFilter, sinceIso, exclusionCtx),
       fetchTimeData(userIdFilter, sinceIso, exclusionCtx),
-      fetchAllProgress(userIdFilter, sinceIso, exclusionCtx, exemptItemIds),
+      fetchAllProgress(userIdFilter, sinceIso, exclusionCtx),
     ]);
     if (dailyCountsRes.error) throw new Error(dailyCountsRes.error.message);
 
