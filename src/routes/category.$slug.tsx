@@ -2091,6 +2091,11 @@ function CategoryPage() {
                     if (!hasChapters) return;
                     const nextIdx = currentChapterIdx + 1;
                     if (nextIdx < audioChapters.length) {
+                      // The browser fires "pause" right before "ended", which
+                      // clears wantPlayRef — re-set it so the next chapter's
+                      // freshly-mounted <audio> element (new key) autoplays
+                      // instead of just advancing to a paused state.
+                      wantPlayRef.current = true;
                       setChapterOffset((prev) => prev + (activeChapter?.duration_seconds ?? 0));
                       setCurrentChapterIdx(nextIdx);
                     }
