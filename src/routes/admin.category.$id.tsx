@@ -2272,12 +2272,18 @@ function ContentManager({
                                 <ExternalLink className="h-4 w-4" />
                               </Link>
                             </TooltipWrap>
-                            <IconButton
-                              aria-label="Edit"
-                              tooltip="Edit"
-                              icon={Pencil}
-                              onClick={() => setEditing(item)}
-                            />
+                            <TooltipWrap tooltip="Edit">
+                              <Link
+                                to={Route.fullPath}
+                                params={{ id: categoryId }}
+                                search={(prev: any) => ({ ...prev, edit: item.id })}
+                                onClick={() => setEditing(item)}
+                                aria-label="Edit"
+                                className={iconButtonClassName()}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Link>
+                            </TooltipWrap>
                           </div>
                           <div className="mx-1 h-6 w-px bg-border" aria-hidden />
                           <IconButton
