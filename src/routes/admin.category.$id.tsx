@@ -2527,6 +2527,7 @@ function ItemEditor({
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
   const { run: runChapterTitleEs, busy: chapterTitleEsBusy } = useTranslateToSpanish();
   const [translatingChapterIdx, setTranslatingChapterIdx] = useState<number | null>(null);
+  const [recalcChapterIdx, setRecalcChapterIdx] = useState<number | null>(null);
 
   // Chapters — only relevant for audio/podcast types
   const [chapters, setChapters] = useState<ChapterDraft[]>([]);
@@ -3476,7 +3477,56 @@ function ItemEditor({
                   </div>
 
                   <label className="block">
-                    <span className="text-sm font-medium">Audio file (EN)</span>
+                    <span className="flex items-center justify-between gap-2 text-sm font-medium">
+                      Audio file (EN)
+                      {!!extractStreamVideoId(ch.file_url ?? "") && (
+                        <button
+                          type="button"
+                          disabled={recalcChapterIdx === idx}
+                          onClick={async () => {
+                            setRecalcChapterIdx(idx);
+                            try {
+                              const videoId = extractStreamVideoId(ch.file_url ?? "");
+                              const seconds = videoId
+                                ? await getStreamDurationSeconds(videoId)
+                                : null;
+                              if (seconds && seconds > 0) {
+                                setChapters((prev) =>
+                                  prev.map((c, i) =>
+                                    i === idx ? { ...c, duration_seconds: seconds } : c,
+                                  ),
+                                );
+                                if (ch.id) {
+                                  const { error } = await (supabase as any)
+                                    .from("content_chapters")
+                                    .update({ duration_seconds: seconds })
+                                    .eq("id", ch.id);
+                                  if (error)
+                                    console.error("Failed to patch chapter duration:", error);
+                                }
+                              } else {
+                                toast.error("Bunny hasn't reported a duration for this video yet");
+                              }
+                            } finally {
+                              setRecalcChapterIdx(null);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-muted-foreground border border-transparent hover:border-input hover:bg-muted disabled:opacity-40 transition-colors"
+                          title={
+                            recalcChapterIdx === idx
+                              ? "Calculating duration…"
+                              : "Recalculate duration"
+                          }
+                        >
+                          <RefreshCw
+                            className={`h-3 w-3 ${recalcChapterIdx === idx ? "animate-spin" : ""}`}
+                          />
+                          {ch.duration_seconds
+                            ? formatMediaDuration(ch.duration_seconds)
+                            : "Recalculate"}
+                        </button>
+                      )}
+                    </span>
                     <StreamUploader
                       className="mt-1"
                       existingFileUrl={ch.file_url ?? undefined}
