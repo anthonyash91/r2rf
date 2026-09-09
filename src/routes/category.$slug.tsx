@@ -2345,37 +2345,40 @@ function CategoryPage() {
               >
                 <PdfViewer key={pdfViewer.url} url={pdfViewer.url} />
               </Suspense>
-              {(() => {
-                const isRead = readSet.has(pdfViewer.itemId);
-                const waiting = !isRead && !pdfReadReady;
-                return (
-                  <div className="flex shrink-0 justify-center border-t border-border bg-card p-2">
-                    <button
-                      type="button"
-                      disabled={waiting}
-                      onClick={() => {
-                        if (!isRead)
-                          toggleRead.mutate({ itemId: pdfViewer.itemId, markRead: true });
-                      }}
-                      title={waiting ? "Give it a moment before marking as read" : undefined}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                        isRead
-                          ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
-                          : waiting
-                            ? "border-input bg-background text-muted-foreground cursor-not-allowed"
-                            : "border-input bg-background hover:bg-muted"
-                      }`}
-                    >
-                      {isRead ? (
-                        <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-                      ) : (
-                        <Circle className="h-4 w-4 flex-shrink-0" />
-                      )}
-                      <span>{isRead ? t("category.markedRead") : t("category.markAsRead")}</span>
-                    </button>
-                  </div>
-                );
-              })()}
+              {user &&
+                !isAdmin &&
+                !isFacilityUser &&
+                (() => {
+                  const isRead = readSet.has(pdfViewer.itemId);
+                  const waiting = !isRead && !pdfReadReady;
+                  return (
+                    <div className="flex shrink-0 justify-center border-t border-border bg-card p-2">
+                      <button
+                        type="button"
+                        disabled={waiting}
+                        onClick={() => {
+                          if (!isRead)
+                            toggleRead.mutate({ itemId: pdfViewer.itemId, markRead: true });
+                        }}
+                        title={waiting ? "Give it a moment before marking as read" : undefined}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                          isRead
+                            ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
+                            : waiting
+                              ? "border-input bg-background text-muted-foreground cursor-not-allowed"
+                              : "border-input bg-background hover:bg-muted"
+                        }`}
+                      >
+                        {isRead ? (
+                          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                        ) : (
+                          <Circle className="h-4 w-4 flex-shrink-0" />
+                        )}
+                        <span>{isRead ? t("category.markedRead") : t("category.markAsRead")}</span>
+                      </button>
+                    </div>
+                  );
+                })()}
             </div>
           )}
           {showIdlePrompt && (
