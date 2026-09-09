@@ -3916,8 +3916,10 @@ function defaultDurationForType(type: string): string {
   if (t.includes("podcast") || t.includes("audio")) return "20 min listen";
   if (t.includes("article")) return "Read article";
   if (t.includes("guide")) return "10 min read";
+  if (t.includes("pdf")) return "10 min read";
   if (t.includes("worksheet")) return "10 min complete";
   if (t.includes("meeting")) return "30 min meeting";
+  if (t.includes("resource")) return "Click for more";
   return withActionWord("5 min", type);
 }
 
