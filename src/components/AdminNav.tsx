@@ -1,4 +1,4 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -98,7 +98,6 @@ const LINK_CLASS_BASE =
 export function AdminNav() {
   const { isAdmin, isContributor, isFacilityUser } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const navigate = useNavigate();
 
   // Filters the full link list down to what the current user is allowed to see:
   // admins and contributors see everything, facilityUsers only see pages marked facilityUserVisible.
@@ -296,11 +295,13 @@ export function AdminNav() {
                     return (
                       <DropdownMenuItem
                         key={l.to}
-                        onSelect={() => navigate({ to: l.to as any })}
+                        asChild
                         className={`cursor-pointer ${active ? "bg-muted" : ""}`}
                       >
-                        <Icon className="mr-2 h-4 w-4" />
-                        {renderLabel(l)}
+                        <Link to={l.to as any}>
+                          <Icon className="mr-2 h-4 w-4" />
+                          {renderLabel(l)}
+                        </Link>
                       </DropdownMenuItem>
                     );
                   })}

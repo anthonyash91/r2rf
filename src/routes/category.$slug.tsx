@@ -1283,7 +1283,25 @@ function CategoryPage() {
 
                                   let Wrapper: any = "div";
                                   let wrapperProps: any = {};
-                                  if (isMedia) {
+                                  if (isMedia && mediaSrc) {
+                                    // Real anchor (not a button) so right-click, middle-click,
+                                    // and ctrl/cmd+click can open the underlying file directly —
+                                    // a plain left-click still opens the in-app viewer.
+                                    Wrapper = "a";
+                                    wrapperProps = {
+                                      href: mediaSrc,
+                                      target: "_blank",
+                                      rel: "noopener noreferrer",
+                                      onClick: (e: React.MouseEvent) => {
+                                        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+                                          return;
+                                        e.preventDefault();
+                                        handleActivate();
+                                        openMedia();
+                                      },
+                                    };
+                                  } else if (isMedia) {
+                                    // Chapter-based playlists have no single file to link to.
                                     Wrapper = "button";
                                     wrapperProps = {
                                       type: "button",
