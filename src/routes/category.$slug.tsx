@@ -901,9 +901,10 @@ function CategoryPage() {
     totalMediaDuration: hasChapters && totalChapterDuration > 0 ? totalChapterDuration : undefined,
     chapterId: hasChapters ? (activeChapter?.id ?? null) : null,
     existingChapterFurthest: activeChapter ? (perChapterProgressMap.get(activeChapter.id) ?? 0) : 0,
-    onAutoMarkRead: activeItemId
-      ? () => toggleRead.mutate({ itemId: activeItemId, markRead: true })
-      : undefined,
+    onAutoMarkRead:
+      activeItemId && user?.id && !isAdmin && !isFacilityUser
+        ? () => toggleRead.mutate({ itemId: activeItemId, markRead: true })
+        : undefined,
     // Only show idle prompt for static content — video/audio use position tracking
     onIdle: isMediaItem
       ? undefined
@@ -1236,7 +1237,12 @@ function CategoryPage() {
                                     } else if (mediaKind === "image") {
                                       setActiveMedia({ type: "image", ...payload });
                                       // Opening an image = viewed — auto-mark immediately
-                                      if (!readSet.has(item.id)) {
+                                      if (
+                                        !readSet.has(item.id) &&
+                                        user?.id &&
+                                        !isAdmin &&
+                                        !isFacilityUser
+                                      ) {
                                         toggleRead.mutate({ itemId: item.id, markRead: true });
                                       }
                                     }
