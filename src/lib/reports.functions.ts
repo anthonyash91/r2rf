@@ -65,8 +65,11 @@ async function fetchTimeData(
   userIdFilter: string[] | null,
   sinceIso: string | null,
   ctx: ExclusionContext,
+  facilityValue: string | null,
 ): Promise<any[]> {
-  // Fast path: all-time overall view — single indexed query
+  // Fast path: all-time overall view — single indexed query. Already
+  // correct for anonymous rows too: the trigger that maintains this table
+  // fires on every user_content_sessions insert regardless of user_id.
   if (userIdFilter === null && !sinceIso) {
     const { data } = await (supabaseAdmin as any)
       .from("content_item_time_totals")
@@ -79,6 +82,7 @@ async function fetchTimeData(
     p_since: sinceIso,
     p_user_ids: userIdFilter,
     p_exclude_ids: userIdFilter === null ? exclusionList(ctx) : [],
+    p_facility_value: facilityValue,
   });
   if (error) throw new Error(error.message);
   return data ?? [];
@@ -319,7 +323,7 @@ export const getUsageReport = createServerFn({ method: "POST" })
     const [dailyCountsRes, openersData, timeData, progressRows] = await Promise.all([
       fetchDailyCounts(sinceIso, facilityValue),
       fetchOpenersData(userIdFilter, sinceIso, exclusionCtx),
-      fetchTimeData(userIdFilter, sinceIso, exclusionCtx),
+      fetchTimeData(userIdFilter, sinceIso, exclusionCtx, facilityValue),
       fetchAllProgress(userIdFilter, sinceIso, exclusionCtx),
     ]);
     if (dailyCountsRes.error) throw new Error(dailyCountsRes.error.message);

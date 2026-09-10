@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getActiveFacilitySlug } from "@/lib/facility-context";
 
 /**
  * Module-level cache of furthest playback positions for the current page
@@ -261,9 +262,11 @@ export function useContentEngagement({
     firedIdleRef.current = false;
   }, []);
 
-  // Heartbeat timer
+  // Heartbeat timer. Runs for signed-out visitors too, so anonymous session
+  // time still gets logged (attributed by facility, not by user) — only the
+  // resume-position upsert inside write() actually requires a real userId.
   useEffect(() => {
-    if (!isActive || !userId || !contentItemId) return;
+    if (!isActive || !contentItemId) return;
     const interval = setInterval(() => {
       const idle = Date.now() - lastActivityRef.current > idleMsRef.current;
       if (idle && !firedIdleRef.current) {
@@ -281,15 +284,20 @@ export function useContentEngagement({
     return () => {
       clearInterval(interval);
       write(); // flush cumulative total to user_content_engagement (resume position)
-      // Log this session to user_content_sessions for date-range-filterable analytics
+      // Log this session to user_content_sessions for date-range-filterable
+      // analytics. Logged for signed-out visitors too (user_id: null) — the
+      // report_content_time_totals() RPC only consults facility_value for
+      // rows with no user_id, same as analytics_increment_daily_count() does
+      // for click/view events, so sending it here is harmless either way.
       const sessionSecs = Math.round(accSecondsRef.current);
-      if (sessionSecs > 0 && userId && contentItemId && categoryId) {
+      if (sessionSecs > 0 && contentItemId && categoryId) {
         Promise.resolve(
           (supabase as any).from("user_content_sessions").insert({
             user_id: userId,
             content_item_id: contentItemId,
             category_id: categoryId,
             session_seconds: sessionSecs,
+            facility_value: getActiveFacilitySlug(),
           }),
         ).catch(() => {});
       }

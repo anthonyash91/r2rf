@@ -1449,26 +1449,29 @@ export type Database = {
         Row: {
           category_id: string;
           content_item_id: string;
+          facility_value: string | null;
           id: string;
           recorded_at: string;
           session_seconds: number;
-          user_id: string;
+          user_id: string | null;
         };
         Insert: {
           category_id: string;
           content_item_id: string;
+          facility_value?: string | null;
           id?: string;
           recorded_at?: string;
           session_seconds: number;
-          user_id: string;
+          user_id?: string | null;
         };
         Update: {
           category_id?: string;
           content_item_id?: string;
+          facility_value?: string | null;
           id?: string;
           recorded_at?: string;
           session_seconds?: number;
-          user_id?: string;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -1810,14 +1813,32 @@ export type Database = {
           opener_count: number;
         }[];
       };
-      report_content_time_totals: {
-        Args: { p_exclude_ids: string[]; p_since: string; p_user_ids: string[] };
-        Returns: {
-          content_item_id: string;
-          engager_count: number;
-          total_session_seconds: number;
-        }[];
-      };
+      report_content_time_totals:
+        | {
+            Args: {
+              p_exclude_ids: string[];
+              p_since: string;
+              p_user_ids: string[];
+            };
+            Returns: {
+              content_item_id: string;
+              engager_count: number;
+              total_session_seconds: number;
+            }[];
+          }
+        | {
+            Args: {
+              p_exclude_ids: string[];
+              p_facility_value?: string;
+              p_since: string;
+              p_user_ids: string[];
+            };
+            Returns: {
+              content_item_id: string;
+              engager_count: number;
+              total_session_seconds: number;
+            }[];
+          };
       username_exists: { Args: { _username: string }; Returns: boolean };
     };
     Enums: {
