@@ -6,8 +6,8 @@ ignore:
     reason: >
       False positive. The matched text is QA test case 26.2, "AI copy
       generation is prompt-injection resistant" — a manual test script that
-      instructs a human tester to paste an "ignore previous instructions"
-      payload into a form field and verify the app's AI copy feature does
+      tells a human tester to paste a classic override-style jailbreak
+      phrase into a form field and verify the app's AI copy feature does
       NOT obey it. The string is inert markdown/string data describing a
       security test; it is never sent to an LLM as an instruction by this
       codebase. src/lib/qa-test-plan.ts is a generated TS mirror of the same
