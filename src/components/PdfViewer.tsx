@@ -125,10 +125,17 @@ export default function PdfViewer({
       : 0;
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 max-w-full flex-1 flex-col overflow-hidden bg-background">
+    // Grid instead of flex here: once the PDF canvas renders at a wide native
+    // scale (a small-format document capped by MAX_NATIVE_SCALE, say), a plain
+    // flex column's cross-axis stretch sizing gets "stuck" at that content
+    // width and won't shrink back down on a later resize even though this
+    // container's own parent (the dialog) is now narrower — a well-known
+    // flexbox quirk. grid-cols-1/grid-rows with minmax(0,1fr) tracks pin the
+    // scroll container to the *available* space regardless of content size.
+    <div className="grid h-full min-h-0 w-full min-w-0 max-w-full flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-background">
       <div
         ref={containerRef}
-        className="min-h-0 w-full min-w-0 max-w-full flex-1 overflow-y-auto overflow-x-hidden p-2"
+        className="min-h-0 w-full min-w-0 max-w-full overflow-y-auto overflow-x-hidden p-2"
       >
         <Document
           file={url}
