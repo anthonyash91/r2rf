@@ -19,18 +19,33 @@ import { GripVertical } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+/** Drag-activation props to spread onto whatever element should act as the
+ *  handle — only handed to renderItem when `inlineHandle` is set. */
+export type DragHandleProps = {
+  attributes: ReturnType<typeof useSortable>["attributes"];
+  listeners: ReturnType<typeof useSortable>["listeners"];
+};
+
 export function SortableList<T extends { id: string }>({
   items,
   onReorder,
   renderItem,
   className,
   dragHandleClassName,
+  inlineHandle,
 }: {
   items: T[];
   onReorder: (next: T[]) => void;
-  renderItem: (item: T) => ReactNode;
+  renderItem: (item: T, handle: DragHandleProps) => ReactNode;
   className?: string;
   dragHandleClassName?: string;
+  /**
+   * When true, no grip button is rendered beside the item — renderItem gets
+   * drag-activation props (attributes/listeners) as its second argument to
+   * attach to an element of its own choosing, so the handle can live inside
+   * the item's own card instead of next to it.
+   */
+  inlineHandle?: boolean;
 }) {
   const sensors = useSensors(
     // 4px activation distance prevents accidental drags when the user intends a click.
@@ -54,8 +69,13 @@ export function SortableList<T extends { id: string }>({
       <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
         <ul className={className}>
           {items.map((item) => (
-            <SortableRow key={item.id} id={item.id} handleClassName={dragHandleClassName}>
-              {renderItem(item)}
+            <SortableRow
+              key={item.id}
+              id={item.id}
+              handleClassName={dragHandleClassName}
+              inlineHandle={inlineHandle}
+            >
+              {(handle) => renderItem(item, handle)}
             </SortableRow>
           ))}
         </ul>
@@ -68,10 +88,12 @@ function SortableRow({
   id,
   children,
   handleClassName,
+  inlineHandle,
 }: {
   id: string;
-  children: ReactNode;
+  children: (handle: DragHandleProps) => ReactNode;
   handleClassName?: string;
+  inlineHandle?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -81,6 +103,13 @@ function SortableRow({
     transition,
     opacity: isDragging ? 0.6 : 1,
   };
+  if (inlineHandle) {
+    return (
+      <li ref={setNodeRef} style={style}>
+        {children({ attributes, listeners })}
+      </li>
+    );
+  }
   return (
     <li ref={setNodeRef} style={style} className="flex items-stretch">
       <button
@@ -95,7 +124,7 @@ function SortableRow({
       >
         <GripVertical className="h-4 w-4" />
       </button>
-      <div className="flex-1 min-w-0">{children}</div>
+      <div className="flex-1 min-w-0">{children({ attributes, listeners })}</div>
     </li>
   );
 }

@@ -3365,14 +3365,14 @@ function ItemEditor({
             <Suspense fallback={null}>
               <SortableList
                 className="space-y-3"
-                dragHandleClassName="pl-2 pr-1 self-stretch"
+                inlineHandle
                 items={chapters as Array<ChapterDraft & { id: string }>}
                 onReorder={(next) => {
                   const nextChapters = next as ChapterDraft[];
                   rekeyChapterUploadState(chapters, nextChapters);
                   setChapters(nextChapters);
                 }}
-                renderItem={(chRaw) => {
+                renderItem={(chRaw, handle) => {
                   const ch = chRaw as ChapterDraft;
                   const idx = chapters.findIndex((c) => c.id === ch.id);
                   return (
@@ -3384,12 +3384,23 @@ function ItemEditor({
                       )}
                       <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            Audio File {idx + 1}
-                            {ch.duration_seconds
-                              ? ` · ${formatMediaDuration(ch.duration_seconds)}`
-                              : ""}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              {...handle.attributes}
+                              {...handle.listeners}
+                              className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none"
+                              aria-label="Drag to reorder"
+                            >
+                              <GripVertical className="h-4 w-4" />
+                            </button>
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                              Audio File {idx + 1}
+                              {ch.duration_seconds
+                                ? ` · ${formatMediaDuration(ch.duration_seconds)}`
+                                : ""}
+                            </span>
+                          </div>
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
