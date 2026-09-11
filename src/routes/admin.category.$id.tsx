@@ -2510,16 +2510,18 @@ function ItemEditor({
   // chapter must re-key it in step with the chapters array itself — otherwise
   // an in-progress upload's busy indicator stays pinned to the old index and
   // ends up showing on whichever chapter now occupies that slot instead.
-  const swapChapterUploadIndices = (a: number, b: number) =>
+  // Re-keys by chapter id (stable across a drag reorder) rather than by the
+  // old/new index pair, since a drag can move an item to any position, not
+  // just swap two adjacent ones.
+  const rekeyChapterUploadState = (prevChapters: ChapterDraft[], nextChapters: ChapterDraft[]) =>
     setChapterUploadState((prev) => {
-      if (!prev.has(a) && !prev.has(b)) return prev;
-      const next = new Map(prev);
-      const av = prev.get(a);
-      const bv = prev.get(b);
-      if (bv !== undefined) next.set(a, bv);
-      else next.delete(a);
-      if (av !== undefined) next.set(b, av);
-      else next.delete(b);
+      if (prev.size === 0) return prev;
+      const next = new Map<number, { phase: "uploading" | "processing"; progress: number }>();
+      for (const [oldIdx, value] of prev) {
+        const chapterId = prevChapters[oldIdx]?.id;
+        const newIdx = chapterId ? nextChapters.findIndex((c) => c.id === chapterId) : -1;
+        if (newIdx >= 0) next.set(newIdx, value);
+      }
       return next;
     });
   const removeChapterUploadIndex = (removedIdx: number) =>
@@ -3359,334 +3361,326 @@ function ItemEditor({
             ))}
           </datalist>
 
-          {chaptersOpen &&
-            chapters.map((ch, idx) => (
-              <Fragment key={idx}>
-                {ch.section && ch.section !== chapters[idx - 1]?.section && (
-                  <p className="pt-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground first:pt-0">
-                    {ch.section}
-                  </p>
-                )}
-                <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Audio File {idx + 1}
-                      {ch.duration_seconds ? ` · ${formatMediaDuration(ch.duration_seconds)}` : ""}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        disabled={idx === 0}
-                        onClick={() => {
-                          setChapters((prev) => {
-                            const next = [...prev];
-                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                            return next;
-                          });
-                          swapChapterUploadIndices(idx - 1, idx);
-                        }}
-                        className="p-1 rounded hover:bg-muted disabled:opacity-30"
-                        title="Move up"
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        disabled={idx === chapters.length - 1}
-                        onClick={() => {
-                          setChapters((prev) => {
-                            const next = [...prev];
-                            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                            return next;
-                          });
-                          swapChapterUploadIndices(idx, idx + 1);
-                        }}
-                        className="p-1 rounded hover:bg-muted disabled:opacity-30"
-                        title="Move down"
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const ch = chapters[idx];
-                          // deleteStorageFile re-derives the provider/path from the URL
-                          // itself server-side, so no client-side extraction is needed here.
-                          if (ch.file_url) onPendingDelete(ch.file_url);
-                          if (ch.file_url_es) onPendingDelete(ch.file_url_es);
-                          setChapters((prev) => prev.filter((_, i) => i !== idx));
-                          removeChapterUploadIndex(idx);
-                        }}
-                        className="p-1 rounded hover:bg-destructive/10 text-destructive"
-                        title="Remove audio file"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
+          {chaptersOpen && chapters.length > 0 && (
+            <Suspense fallback={null}>
+              <SortableList
+                className="space-y-3"
+                dragHandleClassName="pl-2 pr-1 self-stretch"
+                items={chapters as Array<ChapterDraft & { id: string }>}
+                onReorder={(next) => {
+                  const nextChapters = next as ChapterDraft[];
+                  rekeyChapterUploadState(chapters, nextChapters);
+                  setChapters(nextChapters);
+                }}
+                renderItem={(chRaw) => {
+                  const ch = chRaw as ChapterDraft;
+                  const idx = chapters.findIndex((c) => c.id === ch.id);
+                  return (
+                    <>
+                      {ch.section && ch.section !== chapters[idx - 1]?.section && (
+                        <p className="pt-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground first:pt-0">
+                          {ch.section}
+                        </p>
+                      )}
+                      <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            Audio File {idx + 1}
+                            {ch.duration_seconds
+                              ? ` · ${formatMediaDuration(ch.duration_seconds)}`
+                              : ""}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const ch = chapters[idx];
+                                // deleteStorageFile re-derives the provider/path from the URL
+                                // itself server-side, so no client-side extraction is needed here.
+                                if (ch.file_url) onPendingDelete(ch.file_url);
+                                if (ch.file_url_es) onPendingDelete(ch.file_url_es);
+                                setChapters((prev) => prev.filter((_, i) => i !== idx));
+                                removeChapterUploadIndex(idx);
+                              }}
+                              className="p-1 rounded hover:bg-destructive/10 text-destructive"
+                              title="Remove audio file"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
 
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <LabeledInput
-                      label="Title"
-                      value={ch.title}
-                      onChange={(v) =>
-                        setChapters((prev) =>
-                          prev.map((c, i) => (i === idx ? { ...c, title: v } : c)),
-                        )
-                      }
-                      required
-                    />
-                    <label className="block">
-                      <span className="flex items-center justify-between gap-2 text-sm font-medium">
-                        Title (ES)
-                        <button
-                          type="button"
-                          disabled={
-                            !ch.title.trim() ||
-                            (chapterTitleEsBusy && translatingChapterIdx === idx)
-                          }
-                          onClick={async () => {
-                            setTranslatingChapterIdx(idx);
-                            await runChapterTitleEs(
-                              { title: ch.title, section: ch.section },
-                              (t) => {
-                                if (t.title || t.section)
-                                  setChapters((prev) =>
-                                    prev.map((c, i) =>
-                                      i === idx
-                                        ? {
-                                            ...c,
-                                            ...(t.title ? { title_es: t.title } : {}),
-                                            ...(t.section ? { section_es: t.section } : {}),
-                                          }
-                                        : c,
-                                    ),
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <LabeledInput
+                            label="Title"
+                            value={ch.title}
+                            onChange={(v) =>
+                              setChapters((prev) =>
+                                prev.map((c, i) => (i === idx ? { ...c, title: v } : c)),
+                              )
+                            }
+                            required
+                          />
+                          <label className="block">
+                            <span className="flex items-center justify-between gap-2 text-sm font-medium">
+                              Title (ES)
+                              <button
+                                type="button"
+                                disabled={
+                                  !ch.title.trim() ||
+                                  (chapterTitleEsBusy && translatingChapterIdx === idx)
+                                }
+                                onClick={async () => {
+                                  setTranslatingChapterIdx(idx);
+                                  await runChapterTitleEs(
+                                    { title: ch.title, section: ch.section },
+                                    (t) => {
+                                      if (t.title || t.section)
+                                        setChapters((prev) =>
+                                          prev.map((c, i) =>
+                                            i === idx
+                                              ? {
+                                                  ...c,
+                                                  ...(t.title ? { title_es: t.title } : {}),
+                                                  ...(t.section ? { section_es: t.section } : {}),
+                                                }
+                                              : c,
+                                          ),
+                                        );
+                                    },
+                                    "Audio chapter title in a recovery education app",
                                   );
-                              },
-                              "Audio chapter title in a recovery education app",
-                            );
-                            setTranslatingChapterIdx(null);
-                          }}
-                          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-muted-foreground border border-transparent hover:border-input hover:bg-muted disabled:opacity-40 transition-colors"
-                          title="Generate Spanish translation of title and section with AI"
-                        >
-                          {chapterTitleEsBusy && translatingChapterIdx === idx ? (
-                            <RefreshCw className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Languages className="h-3 w-3" />
-                          )}
-                          Translate
-                        </button>
-                      </span>
-                      <input
-                        type="text"
-                        value={ch.title_es}
-                        onChange={(e) =>
-                          setChapters((prev) =>
-                            prev.map((c, i) =>
-                              i === idx ? { ...c, title_es: e.target.value } : c,
-                            ),
-                          )
-                        }
-                        className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-                      />
-                    </label>
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <label className="block">
-                      <span className="text-sm font-medium">Section (optional)</span>
-                      <input
-                        type="text"
-                        list="chapter-section-options"
-                        placeholder="e.g. Foreword, Chapters, Appendices"
-                        value={ch.section}
-                        onChange={(e) =>
-                          setChapters((prev) =>
-                            prev.map((c, i) => (i === idx ? { ...c, section: e.target.value } : c)),
-                          )
-                        }
-                        className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm font-medium">Section (ES)</span>
-                      <input
-                        type="text"
-                        value={ch.section_es}
-                        onChange={(e) =>
-                          setChapters((prev) =>
-                            prev.map((c, i) =>
-                              i === idx ? { ...c, section_es: e.target.value } : c,
-                            ),
-                          )
-                        }
-                        className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-                      />
-                    </label>
-                  </div>
-
-                  <label className="block">
-                    <span className="flex items-center justify-between gap-2 text-sm font-medium">
-                      Audio file (EN)
-                      {!!extractStreamVideoId(ch.file_url ?? "") && (
-                        <button
-                          type="button"
-                          disabled={recalcChapterIdx === idx}
-                          onClick={async () => {
-                            setRecalcChapterIdx(idx);
-                            try {
-                              const videoId = extractStreamVideoId(ch.file_url ?? "");
-                              const seconds = videoId
-                                ? await getStreamDurationSeconds(videoId)
-                                : null;
-                              if (seconds && seconds > 0) {
+                                  setTranslatingChapterIdx(null);
+                                }}
+                                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-muted-foreground border border-transparent hover:border-input hover:bg-muted disabled:opacity-40 transition-colors"
+                                title="Generate Spanish translation of title and section with AI"
+                              >
+                                {chapterTitleEsBusy && translatingChapterIdx === idx ? (
+                                  <RefreshCw className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Languages className="h-3 w-3" />
+                                )}
+                                Translate
+                              </button>
+                            </span>
+                            <input
+                              type="text"
+                              value={ch.title_es}
+                              onChange={(e) =>
                                 setChapters((prev) =>
                                   prev.map((c, i) =>
-                                    i === idx ? { ...c, duration_seconds: seconds } : c,
+                                    i === idx ? { ...c, title_es: e.target.value } : c,
                                   ),
-                                );
-                                if (ch.id) {
-                                  const { error } = await (supabase as any)
-                                    .from("content_chapters")
-                                    .update({ duration_seconds: seconds })
-                                    .eq("id", ch.id);
-                                  if (error)
-                                    console.error("Failed to patch chapter duration:", error);
-                                }
-                              } else {
-                                toast.error("Bunny hasn't reported a duration for this video yet");
+                                )
                               }
-                            } finally {
-                              setRecalcChapterIdx(null);
-                            }
-                          }}
-                          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-muted-foreground border border-transparent hover:border-input hover:bg-muted disabled:opacity-40 transition-colors"
-                          title={
-                            recalcChapterIdx === idx
-                              ? "Calculating duration…"
-                              : "Recalculate duration"
-                          }
-                        >
-                          <RefreshCw
-                            className={`h-3 w-3 ${recalcChapterIdx === idx ? "animate-spin" : ""}`}
-                          />
-                          {ch.duration_seconds
-                            ? formatMediaDuration(ch.duration_seconds)
-                            : "Recalculate"}
-                        </button>
-                      )}
-                    </span>
-                    <StreamUploader
-                      className="mt-1"
-                      existingFileUrl={ch.file_url ?? undefined}
-                      onPendingDelete={onPendingDelete}
-                      itemTitle={`${title || "Untitled"} — ${ch.title || `Chapter ${idx + 1}`}`}
-                      collectionName={categorySlug}
-                      collectionId={collectionId}
-                      onCollectionCreated={onCollectionCreated}
-                      externalUpload={chapterUploadState.get(idx) ?? null}
-                      onUploaded={(playbackUrl, name, seconds) => {
-                        setChapters((prev) =>
-                          prev.map((c, i) =>
-                            i === idx
-                              ? {
-                                  ...c,
-                                  file_url: playbackUrl,
-                                  file_name: name ?? null,
-                                  duration_seconds: seconds && seconds > 0 ? seconds : null,
-                                  title: c.title.trim()
-                                    ? c.title
-                                    : name
-                                      ? filenameToTitle(name)
-                                      : c.title,
-                                }
-                              : c,
-                          ),
-                        );
-                        // Save no longer waits on processing to finish, so an
-                        // admin can already have saved the item (and moved on)
-                        // by the time the real duration is known. Patch it
-                        // straight into the DB by id — a no-op if the row
-                        // hasn't been saved yet, in which case the setChapters
-                        // update above is what the next Save will persist.
-                        if (seconds && seconds > 0 && ch.id) {
-                          (supabase as any)
-                            .from("content_chapters")
-                            .update({ duration_seconds: seconds })
-                            .eq("id", ch.id)
-                            .then(({ error }: any) => {
-                              if (error) console.error("Failed to patch chapter duration:", error);
-                            });
-                        }
-                      }}
-                    >
-                      <input
-                        type="url"
-                        placeholder="https://…"
-                        value={ch.file_url ?? ""}
-                        onChange={(e) =>
-                          setChapters((prev) =>
-                            prev.map((c, i) =>
-                              i === idx ? { ...c, file_url: e.target.value || null } : c,
-                            ),
-                          )
-                        }
-                        onBlur={async (e) => {
-                          const v = e.target.value.trim();
-                          if (!v) return;
-                          const seconds = await probeMediaDuration(v, "audio");
-                          if (seconds > 0) {
-                            setChapters((prev) =>
-                              prev.map((c, i) =>
-                                i === idx ? { ...c, duration_seconds: seconds } : c,
-                              ),
-                            );
-                          }
-                        }}
-                        className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
-                      />
-                    </StreamUploader>
-                  </label>
+                              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                            />
+                          </label>
+                        </div>
 
-                  <label className="block">
-                    <span className="text-sm font-medium">Audio file (ES, optional)</span>
-                    <StreamUploader
-                      className="mt-1"
-                      existingFileUrl={ch.file_url_es ?? undefined}
-                      onPendingDelete={onPendingDelete}
-                      itemTitle={`${title || "Untitled"} — ${ch.title || `Chapter ${idx + 1}`} (ES)`}
-                      collectionName={categorySlug}
-                      collectionId={collectionId}
-                      onCollectionCreated={onCollectionCreated}
-                      onUploaded={(playbackUrl, name) =>
-                        setChapters((prev) =>
-                          prev.map((c, i) =>
-                            i === idx
-                              ? { ...c, file_url_es: playbackUrl, file_name_es: name ?? null }
-                              : c,
-                          ),
-                        )
-                      }
-                    >
-                      <input
-                        type="url"
-                        placeholder="https://…"
-                        value={ch.file_url_es ?? ""}
-                        onChange={(e) =>
-                          setChapters((prev) =>
-                            prev.map((c, i) =>
-                              i === idx ? { ...c, file_url_es: e.target.value || null } : c,
-                            ),
-                          )
-                        }
-                        className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
-                      />
-                    </StreamUploader>
-                  </label>
-                </div>
-              </Fragment>
-            ))}
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <label className="block">
+                            <span className="text-sm font-medium">Section (optional)</span>
+                            <input
+                              type="text"
+                              list="chapter-section-options"
+                              placeholder="e.g. Foreword, Chapters, Appendices"
+                              value={ch.section}
+                              onChange={(e) =>
+                                setChapters((prev) =>
+                                  prev.map((c, i) =>
+                                    i === idx ? { ...c, section: e.target.value } : c,
+                                  ),
+                                )
+                              }
+                              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                            />
+                          </label>
+                          <label className="block">
+                            <span className="text-sm font-medium">Section (ES)</span>
+                            <input
+                              type="text"
+                              value={ch.section_es}
+                              onChange={(e) =>
+                                setChapters((prev) =>
+                                  prev.map((c, i) =>
+                                    i === idx ? { ...c, section_es: e.target.value } : c,
+                                  ),
+                                )
+                              }
+                              className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                            />
+                          </label>
+                        </div>
+
+                        <label className="block">
+                          <span className="flex items-center justify-between gap-2 text-sm font-medium">
+                            Audio file (EN)
+                            {!!extractStreamVideoId(ch.file_url ?? "") && (
+                              <button
+                                type="button"
+                                disabled={recalcChapterIdx === idx}
+                                onClick={async () => {
+                                  setRecalcChapterIdx(idx);
+                                  try {
+                                    const videoId = extractStreamVideoId(ch.file_url ?? "");
+                                    const seconds = videoId
+                                      ? await getStreamDurationSeconds(videoId)
+                                      : null;
+                                    if (seconds && seconds > 0) {
+                                      setChapters((prev) =>
+                                        prev.map((c, i) =>
+                                          i === idx ? { ...c, duration_seconds: seconds } : c,
+                                        ),
+                                      );
+                                      if (ch.id) {
+                                        const { error } = await (supabase as any)
+                                          .from("content_chapters")
+                                          .update({ duration_seconds: seconds })
+                                          .eq("id", ch.id);
+                                        if (error)
+                                          console.error("Failed to patch chapter duration:", error);
+                                      }
+                                    } else {
+                                      toast.error(
+                                        "Bunny hasn't reported a duration for this video yet",
+                                      );
+                                    }
+                                  } finally {
+                                    setRecalcChapterIdx(null);
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-muted-foreground border border-transparent hover:border-input hover:bg-muted disabled:opacity-40 transition-colors"
+                                title={
+                                  recalcChapterIdx === idx
+                                    ? "Calculating duration…"
+                                    : "Recalculate duration"
+                                }
+                              >
+                                <RefreshCw
+                                  className={`h-3 w-3 ${recalcChapterIdx === idx ? "animate-spin" : ""}`}
+                                />
+                                {ch.duration_seconds
+                                  ? formatMediaDuration(ch.duration_seconds)
+                                  : "Recalculate"}
+                              </button>
+                            )}
+                          </span>
+                          <StreamUploader
+                            className="mt-1"
+                            existingFileUrl={ch.file_url ?? undefined}
+                            onPendingDelete={onPendingDelete}
+                            itemTitle={`${title || "Untitled"} — ${ch.title || `Chapter ${idx + 1}`}`}
+                            collectionName={categorySlug}
+                            collectionId={collectionId}
+                            onCollectionCreated={onCollectionCreated}
+                            externalUpload={chapterUploadState.get(idx) ?? null}
+                            onUploaded={(playbackUrl, name, seconds) => {
+                              setChapters((prev) =>
+                                prev.map((c, i) =>
+                                  i === idx
+                                    ? {
+                                        ...c,
+                                        file_url: playbackUrl,
+                                        file_name: name ?? null,
+                                        duration_seconds: seconds && seconds > 0 ? seconds : null,
+                                        title: c.title.trim()
+                                          ? c.title
+                                          : name
+                                            ? filenameToTitle(name)
+                                            : c.title,
+                                      }
+                                    : c,
+                                ),
+                              );
+                              // Save no longer waits on processing to finish, so an
+                              // admin can already have saved the item (and moved on)
+                              // by the time the real duration is known. Patch it
+                              // straight into the DB by id — a no-op if the row
+                              // hasn't been saved yet, in which case the setChapters
+                              // update above is what the next Save will persist.
+                              if (seconds && seconds > 0 && ch.id) {
+                                (supabase as any)
+                                  .from("content_chapters")
+                                  .update({ duration_seconds: seconds })
+                                  .eq("id", ch.id)
+                                  .then(({ error }: any) => {
+                                    if (error)
+                                      console.error("Failed to patch chapter duration:", error);
+                                  });
+                              }
+                            }}
+                          >
+                            <input
+                              type="url"
+                              placeholder="https://…"
+                              value={ch.file_url ?? ""}
+                              onChange={(e) =>
+                                setChapters((prev) =>
+                                  prev.map((c, i) =>
+                                    i === idx ? { ...c, file_url: e.target.value || null } : c,
+                                  ),
+                                )
+                              }
+                              onBlur={async (e) => {
+                                const v = e.target.value.trim();
+                                if (!v) return;
+                                const seconds = await probeMediaDuration(v, "audio");
+                                if (seconds > 0) {
+                                  setChapters((prev) =>
+                                    prev.map((c, i) =>
+                                      i === idx ? { ...c, duration_seconds: seconds } : c,
+                                    ),
+                                  );
+                                }
+                              }}
+                              className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+                            />
+                          </StreamUploader>
+                        </label>
+
+                        <label className="block">
+                          <span className="text-sm font-medium">Audio file (ES, optional)</span>
+                          <StreamUploader
+                            className="mt-1"
+                            existingFileUrl={ch.file_url_es ?? undefined}
+                            onPendingDelete={onPendingDelete}
+                            itemTitle={`${title || "Untitled"} — ${ch.title || `Chapter ${idx + 1}`} (ES)`}
+                            collectionName={categorySlug}
+                            collectionId={collectionId}
+                            onCollectionCreated={onCollectionCreated}
+                            onUploaded={(playbackUrl, name) =>
+                              setChapters((prev) =>
+                                prev.map((c, i) =>
+                                  i === idx
+                                    ? { ...c, file_url_es: playbackUrl, file_name_es: name ?? null }
+                                    : c,
+                                ),
+                              )
+                            }
+                          >
+                            <input
+                              type="url"
+                              placeholder="https://…"
+                              value={ch.file_url_es ?? ""}
+                              onChange={(e) =>
+                                setChapters((prev) =>
+                                  prev.map((c, i) =>
+                                    i === idx ? { ...c, file_url_es: e.target.value || null } : c,
+                                  ),
+                                )
+                              }
+                              className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+                            />
+                          </StreamUploader>
+                        </label>
+                      </div>
+                    </>
+                  );
+                }}
+              />
+            </Suspense>
+          )}
 
           {chaptersOpen && chapters.length > 0 && (
             <div className="flex items-center gap-2">
