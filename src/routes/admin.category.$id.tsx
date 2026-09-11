@@ -2506,6 +2506,32 @@ function ItemEditor({
       else next.delete(idx);
       return next;
     });
+  // chapterUploadState is keyed by array index, so reordering or removing a
+  // chapter must re-key it in step with the chapters array itself — otherwise
+  // an in-progress upload's busy indicator stays pinned to the old index and
+  // ends up showing on whichever chapter now occupies that slot instead.
+  const swapChapterUploadIndices = (a: number, b: number) =>
+    setChapterUploadState((prev) => {
+      if (!prev.has(a) && !prev.has(b)) return prev;
+      const next = new Map(prev);
+      const av = prev.get(a);
+      const bv = prev.get(b);
+      if (bv !== undefined) next.set(a, bv);
+      else next.delete(a);
+      if (av !== undefined) next.set(b, av);
+      else next.delete(b);
+      return next;
+    });
+  const removeChapterUploadIndex = (removedIdx: number) =>
+    setChapterUploadState((prev) => {
+      if (prev.size === 0) return prev;
+      const next = new Map<number, { phase: "uploading" | "processing"; progress: number }>();
+      for (const [k, v] of prev) {
+        if (k === removedIdx) continue;
+        next.set(k > removedIdx ? k - 1 : k, v);
+      }
+      return next;
+    });
   const [type, setType] = useState(item?.type ?? "Article");
   const [addingType, setAddingType] = useState(false);
   const [newType, setNewType] = useState("");
@@ -3351,13 +3377,14 @@ function ItemEditor({
                       <button
                         type="button"
                         disabled={idx === 0}
-                        onClick={() =>
+                        onClick={() => {
                           setChapters((prev) => {
                             const next = [...prev];
                             [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
                             return next;
-                          })
-                        }
+                          });
+                          swapChapterUploadIndices(idx - 1, idx);
+                        }}
                         className="p-1 rounded hover:bg-muted disabled:opacity-30"
                         title="Move up"
                       >
@@ -3366,13 +3393,14 @@ function ItemEditor({
                       <button
                         type="button"
                         disabled={idx === chapters.length - 1}
-                        onClick={() =>
+                        onClick={() => {
                           setChapters((prev) => {
                             const next = [...prev];
                             [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
                             return next;
-                          })
-                        }
+                          });
+                          swapChapterUploadIndices(idx, idx + 1);
+                        }}
                         className="p-1 rounded hover:bg-muted disabled:opacity-30"
                         title="Move down"
                       >
@@ -3387,6 +3415,7 @@ function ItemEditor({
                           if (ch.file_url) onPendingDelete(ch.file_url);
                           if (ch.file_url_es) onPendingDelete(ch.file_url_es);
                           setChapters((prev) => prev.filter((_, i) => i !== idx));
+                          removeChapterUploadIndex(idx);
                         }}
                         className="p-1 rounded hover:bg-destructive/10 text-destructive"
                         title="Remove audio file"
