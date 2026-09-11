@@ -2277,6 +2277,7 @@ function ContentManager({
                                 to={Route.fullPath}
                                 params={{ id: categoryId }}
                                 search={(prev: any) => ({ ...prev, edit: item.id })}
+                                resetScroll={false}
                                 onClick={() => setEditing(item)}
                                 aria-label="Edit"
                                 className={iconButtonClassName()}
