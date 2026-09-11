@@ -30,6 +30,7 @@ const translations = {
     "dashboard.statStreak": "Day Streak",
     "dashboard.categoryProgress": "Category Progress",
     "dashboard.resumeLabel": "Pick Up Where You Left Off",
+    "dashboard.pdfLeftOffPage": "Page {page} of {total}",
     "dashboard.resumeContinue": "Continue",
     "dashboard.itemsCompleted": "{done} of {total} completed",
     "dashboard.lockedNav": "Please set up your security questions before leaving this page.",
@@ -161,6 +162,7 @@ const translations = {
     "category.exemptTooltip": "This item is informational and doesn't count toward your progress",
 
     "category.markReadError": "Couldn't update progress.",
+    "category.pdfLeftOff": "Left off on page {page} of {total}",
     "category.completedHeadline": "You completed {name}",
     "category.completedMessage": "You put in the work. That's worth recognizing.",
     "category.completedClose": "Keep going",
@@ -362,6 +364,7 @@ const translations = {
     "dashboard.statStreak": "Días seguidos",
     "dashboard.categoryProgress": "Progreso por categoría",
     "dashboard.resumeLabel": "Continúa Donde Lo Dejaste",
+    "dashboard.pdfLeftOffPage": "Página {page} de {total}",
     "dashboard.resumeContinue": "Continuar",
     "dashboard.itemsCompleted": "{done} de {total} completados",
     "dashboard.lockedNav":
@@ -495,6 +498,7 @@ const translations = {
     "category.exemptTooltip": "Este elemento es informativo y no cuenta para tu progreso",
 
     "category.markReadError": "No se pudo actualizar el progreso.",
+    "category.pdfLeftOff": "Te quedaste en la página {page} de {total}",
     "category.completedHeadline": "Completaste {name}",
     "category.completedMessage": "Hiciste el trabajo. Eso merece reconocimiento.",
     "category.completedClose": "Sigue adelante",

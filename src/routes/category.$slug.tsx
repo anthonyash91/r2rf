@@ -592,7 +592,7 @@ function CategoryPage() {
       const { data, error } = await (supabase as any)
         .from("user_content_engagement")
         .select(
-          "content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct",
+          "content_item_id, session_seconds, media_progress_seconds, media_duration_seconds, manual_completion_pct, pdf_last_page, pdf_total_pages",
         )
         .eq("user_id", user!.id)
         .in("content_item_id", itemIds);
@@ -604,6 +604,8 @@ function CategoryPage() {
           media_progress_seconds: r.media_progress_seconds as number | null,
           media_duration_seconds: r.media_duration_seconds as number | null,
           manual_completion_pct: r.manual_completion_pct as number | null,
+          pdf_last_page: r.pdf_last_page as number | null,
+          pdf_total_pages: r.pdf_total_pages as number | null,
         });
       }
       return map;
@@ -858,6 +860,17 @@ function CategoryPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pdfViewer?.itemId]);
 
+  // Tracks the PDF viewer's current page so useContentEngagement can persist it
+  // (pdf_last_page) on its existing flush/close cycle. Reset when a (possibly
+  // different) PDF opens or closes so a stale page from a previous item is
+  // never sent for the next one.
+  const [pdfCurrentPage, setPdfCurrentPage] = useState<number | null>(null);
+  const [pdfTotalPages, setPdfTotalPages] = useState<number | null>(null);
+  useEffect(() => {
+    setPdfCurrentPage(null);
+    setPdfTotalPages(null);
+  }, [pdfViewer?.itemId]);
+
   // Progressive idle thresholds: 90s → 3min → 5min cap
   const IDLE_THRESHOLDS_MS = [90_000, 180_000, 300_000];
   const [idleConfirmCount, setIdleConfirmCount] = useState(0);
@@ -897,6 +910,15 @@ function CategoryPage() {
     existing: activeItemId ? (engagementMap.get(activeItemId) ?? null) : null,
     videoEl,
     audioEl,
+    // Deliberately NOT gated on `pdfViewer` — closing the dialog nulls
+    // pdfViewer on the same render as the heartbeat's closing flush, and
+    // pdfPageRef is assigned synchronously during render (see
+    // use-content-engagement.ts), so gating here would zero out the value
+    // the flush needs to read a moment later. The separate reset effect
+    // above (keyed on pdfViewer?.itemId) already clears this state before
+    // a different item can pick up a stale page.
+    pdfPage: pdfCurrentPage,
+    pdfTotalPages,
     mediaProgressOffset: hasChapters ? chapterOffset : 0,
     totalMediaDuration: hasChapters && totalChapterDuration > 0 ? totalChapterDuration : undefined,
     chapterId: hasChapters ? (activeChapter?.id ?? null) : null,
@@ -1920,6 +1942,24 @@ function CategoryPage() {
                                               ) : null}
                                             </div>
                                           </div>
+                                          {mediaKind === "pdf" &&
+                                            !readSet.has(item.id) &&
+                                            (() => {
+                                              const pdfEng = engagementMap.get(item.id);
+                                              if (
+                                                !pdfEng?.pdf_last_page ||
+                                                !pdfEng?.pdf_total_pages
+                                              )
+                                                return null;
+                                              return (
+                                                <p className="mt-1.5 text-xs font-medium text-[var(--color-accent)]">
+                                                  {t("category.pdfLeftOff", {
+                                                    page: pdfEng.pdf_last_page,
+                                                    total: pdfEng.pdf_total_pages,
+                                                  })}
+                                                </p>
+                                              );
+                                            })()}
                                           {description && (
                                             <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
                                               {description}
@@ -2372,7 +2412,13 @@ function CategoryPage() {
                   </div>
                 }
               >
-                <PdfViewer key={pdfViewer.url} url={pdfViewer.url} />
+                <PdfViewer
+                  key={pdfViewer.url}
+                  url={pdfViewer.url}
+                  initialPage={engagementMap.get(pdfViewer.itemId)?.pdf_last_page ?? 1}
+                  onPageChange={setPdfCurrentPage}
+                  onDocumentLoad={setPdfTotalPages}
+                />
               </Suspense>
               {user &&
                 !isAdmin &&

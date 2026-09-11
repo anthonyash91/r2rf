@@ -474,7 +474,7 @@ function DashboardPage() {
       const { data, error } = await (supabase as any)
         .from("user_content_engagement")
         .select(
-          "content_item_id, category_id, last_updated_at, session_seconds, media_progress_seconds, media_duration_seconds",
+          "content_item_id, category_id, last_updated_at, session_seconds, media_progress_seconds, media_duration_seconds, pdf_last_page, pdf_total_pages",
         )
         .eq("user_id", user!.id)
         .order("last_updated_at", { ascending: false })
@@ -487,6 +487,8 @@ function DashboardPage() {
         session_seconds: number;
         media_progress_seconds: number | null;
         media_duration_seconds: number | null;
+        pdf_last_page: number | null;
+        pdf_total_pages: number | null;
       }>;
     },
   });
@@ -1104,10 +1106,21 @@ function DashboardPage() {
                                   : t("category.markedListened").toLowerCase()}
                               </p>
                             )}
-                            {isPdf && pdfMins > 0 && sessionMins > 0 && (
+                            {isPdf && eng.pdf_last_page && eng.pdf_total_pages ? (
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {Math.min(sessionMins, pdfMins)} / {pdfMins} min
+                                {t("dashboard.pdfLeftOffPage", {
+                                  page: eng.pdf_last_page,
+                                  total: eng.pdf_total_pages,
+                                })}
                               </p>
+                            ) : (
+                              isPdf &&
+                              pdfMins > 0 &&
+                              sessionMins > 0 && (
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {Math.min(sessionMins, pdfMins)} / {pdfMins} min
+                                </p>
+                              )
                             )}
                           </div>
                           <div className="flex-shrink-0 flex items-center gap-4">

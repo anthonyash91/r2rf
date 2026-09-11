@@ -43,9 +43,23 @@ function PdfError() {
 // wide monitor, where it also keeps standard pages from over-enlarging).
 const MAX_NATIVE_SCALE = 2.5;
 
-export default function PdfViewer({ url }: { url: string }) {
+export default function PdfViewer({
+  url,
+  initialPage,
+  onPageChange,
+  onDocumentLoad,
+}: {
+  url: string;
+  /** Page to open on, e.g. a resumed position. Defaults to 1. */
+  initialPage?: number;
+  /** Fired whenever the displayed page changes (including a load-time clamp). */
+  onPageChange?: (page: number) => void;
+  /** Fired once the document loads, with its total page count. */
+  onDocumentLoad?: (numPages: number) => void;
+}) {
+  const startPage = initialPage && initialPage > 0 ? initialPage : 1;
   const [numPages, setNumPages] = useState<number>(0);
-  const [pageNumber, setPageNumber] = useState(1);
+  const [pageNumber, setPageNumber] = useState(startPage);
   const [width, setWidth] = useState<number>(0);
   // Page 1's native width in PDF points, fetched once via pdf.js after the
   // document loads — null until known, which gates the first Page render so
@@ -84,9 +98,20 @@ export default function PdfViewer({ url }: { url: string }) {
   // Reset to page 1 and clear the previous document's native width whenever
   // the PDF URL changes, so neither carries over when switching documents.
   useEffect(() => {
-    setPageNumber(1);
+    setPageNumber(startPage);
     setNativePageWidth(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
+
+  // Report page changes to the parent from an effect rather than inline
+  // inside the setPageNumber updaters below — calling a parent's setState
+  // synchronously from within this component's own state updater trips
+  // React's "Cannot update a component while rendering a different
+  // component" warning. onPageChange is expected to be a useState setter
+  // (referentially stable), so including it here never causes extra churn.
+  useEffect(() => {
+    onPageChange?.(pageNumber);
+  }, [pageNumber, onPageChange]);
 
   // Subtract 16px padding from the container width; guard against 0 until the
   // ResizeObserver fires so react-pdf doesn't render at zero width. Capped by
@@ -111,6 +136,10 @@ export default function PdfViewer({ url }: { url: string }) {
           className="mx-auto w-fit max-w-none"
           onLoadSuccess={(pdf) => {
             setNumPages(pdf.numPages);
+            onDocumentLoad?.(pdf.numPages);
+            // Clamp in case a previously-saved resume page no longer exists
+            // (e.g. the file was replaced with a shorter document).
+            setPageNumber((p) => Math.min(Math.max(1, p), pdf.numPages));
             // Fetch page 1's native (scale-1) size once, purely to compute
             // the render-width cap above — real-world documents don't vary
             // page size within themselves, so one fetch covers the whole doc.

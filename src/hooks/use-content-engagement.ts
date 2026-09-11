@@ -47,6 +47,8 @@ export type EngagementRecord = {
   media_progress_seconds: number | null;
   media_duration_seconds: number | null;
   manual_completion_pct: number | null;
+  pdf_last_page: number | null;
+  pdf_total_pages: number | null;
 };
 
 type Params = {
@@ -89,6 +91,14 @@ type Params = {
    * revisiting a chapter in a new session never resets saved progress.
    */
   existingChapterFurthest?: number;
+  /**
+   * Current page number for a PDF item. Written to pdf_last_page on the same
+   * flush/close cycle as session_seconds — there's no separate PDF-specific
+   * timer, this just rides along with the existing heartbeat.
+   */
+  pdfPage?: number | null;
+  /** Total page count for a PDF item, captured once on document load. */
+  pdfTotalPages?: number | null;
   /** Called when 95%+ of the media threshold has been reached. */
   onAutoMarkRead?: () => void;
   /** Called once when the idle threshold is crossed (for static content only). */
@@ -116,6 +126,8 @@ export function useContentEngagement({
   totalMediaDuration,
   chapterId = null,
   existingChapterFurthest = 0,
+  pdfPage = null,
+  pdfTotalPages = null,
   onAutoMarkRead,
   onIdle,
   idleMs = DEFAULT_IDLE_MS,
@@ -164,6 +176,13 @@ export function useContentEngagement({
   // run before the next effect's useEffect body executes.
   const totalMediaDurationRef = useRef<number | undefined>(undefined);
   totalMediaDurationRef.current = totalMediaDuration;
+
+  // Same synchronous-during-render pattern as totalMediaDurationRef above —
+  // write() must always see the latest page even during effect cleanup.
+  const pdfPageRef = useRef<number | null>(null);
+  pdfPageRef.current = pdfPage;
+  const pdfTotalPagesRef = useRef<number | null>(null);
+  pdfTotalPagesRef.current = pdfTotalPages;
 
   // Per-chapter progress (chapter audio only)
   const chapterIdRef = useRef<string | null>(chapterId);
@@ -219,6 +238,8 @@ export function useContentEngagement({
             (totalMediaDurationRef.current ?? durationRef.current) > 0
               ? (totalMediaDurationRef.current ?? durationRef.current)
               : null,
+          pdf_last_page: pdfPageRef.current,
+          pdf_total_pages: pdfTotalPagesRef.current,
           last_updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id,content_item_id" },
