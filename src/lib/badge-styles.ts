@@ -152,6 +152,14 @@ export type KnownTypeKey = (typeof KNOWN_TYPES)[number];
 
 // ---------- Defaults (palette index per identifier) ----------
 
+// Every key below must map to a distinct palette index — these are combined
+// into one global uniqueness pool (see collectGlobalIndices in
+// admin.icons-badges.tsx) alongside per-category colors, so a collision here
+// shows up as a permanent "duplicate" on two unrelated badges that nothing
+// short of an explicit admin override can fix. With 89 palette colors and
+// well under half that many default slots needed, there's no reason for any
+// overlap — previously types 0-7 exactly mirrored the first 8 variant
+// values, and three variants doubled up on each other besides.
 export const DEFAULT_VARIANT_INDEX: Record<BadgeVariantKey, number> = {
   new: 0, // emerald
   count: 1, // gold
@@ -159,27 +167,27 @@ export const DEFAULT_VARIANT_INDEX: Record<BadgeVariantKey, number> = {
   custom: 4, // plum (custom accent feel)
   "custom-content": 10, // cyan
   category: 7, // rose
-  translation: 1, // gold
+  translation: 12, // olive
   admin: 6, // indigo
   contributor: 2, // teal
   tester: 9, // amber
   verified: 5, // moss
-  unverified: 9, // amber
-  user: 6, // indigo
+  unverified: 13, // fuchsia
+  user: 14, // stone
   facility: 11, // violet
   "facility-user": 3, // terracotta
   exempt: 27, // periwinkle
 };
 
 export const DEFAULT_TYPE_INDEX: Record<KnownTypeKey, number> = {
-  article: 0,
-  podcast: 1,
-  worksheet: 2,
-  video: 3,
-  guide: 4,
-  audio: 5,
-  pdf: 6,
-  link: 7,
+  article: 15, // sage
+  podcast: 16, // coral
+  worksheet: 17, // sapphire
+  video: 18, // lime
+  guide: 19, // magenta
+  audio: 20, // sky
+  pdf: 21, // mustard
+  link: 22, // crimson
 };
 
 export const DEFAULT_CATEGORY_INDEX = 0; // emerald, matches --color-accent
