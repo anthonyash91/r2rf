@@ -288,8 +288,18 @@ function AdminIconsBadgesPage() {
         );
         if (error) throw error;
       }
-      // Build per-category updates (color and/or icon_name) and apply with one update per row.
+      // Apply per-category updates concurrently rather than one sequential
+      // awaited update() per row — with up to ~21 categories, a sequential
+      // loop took long enough that a navigation, reload, or dropped
+      // connection partway through left some categories saved with their
+      // new (deduplicated) color and others still on the old, colliding
+      // one — a real, reproducible way to end up with a permanently
+      // inconsistent, half-fixed result. (A single batched upsert would
+      // close this further, but categories.name/slug are NOT NULL with no
+      // default, and Postgres validates those on the INSERT branch of
+      // ON CONFLICT DO UPDATE even though it's never actually inserting.)
       const catIds = new Set<string>([...Object.keys(catDraft), ...Object.keys(catIconDraft)]);
+      const updates = [];
       for (const id of catIds) {
         const colorChanged = (catDraft[id] ?? null) !== (originalCatMap[id] ?? null);
         const iconChanged = (catIconDraft[id] ?? null) !== (originalCatIconMap[id] ?? null);
@@ -297,9 +307,11 @@ function AdminIconsBadgesPage() {
         const patch: { icon_color?: string | null; icon_name?: string | null } = {};
         if (colorChanged) patch.icon_color = catDraft[id] ?? null;
         if (iconChanged) patch.icon_name = catIconDraft[id] ?? null;
-        const { error } = await supabase.from("categories").update(patch).eq("id", id);
-        if (error) throw error;
+        updates.push(supabase.from("categories").update(patch).eq("id", id));
       }
+      const results = await Promise.all(updates);
+      const firstError = results.find((r) => r.error)?.error;
+      if (firstError) throw firstError;
     },
     onSuccess: () => {
       qc.setQueryData(badgeStylesQueryKey, draft);
@@ -311,7 +323,14 @@ function AdminIconsBadgesPage() {
   });
 
   // -------- Global usage tracking --------
-  /** All palette indices currently in use across variants, types, default, and categories. */
+  /**
+   * All palette indices currently in use across variants, types, default, and
+   * categories. `skip` with no `key` omits that entire kind (used by the
+   * regenerate-all actions below, which replace every member of one kind at
+   * once) — omitting just the individual current values instead would wrongly
+   * free an index that's still legitimately used by an untouched category or
+   * type that happens to coincide with one of the values being replaced.
+   */
   function collectGlobalIndices(
     d: BadgeStyles,
     cd: Record<string, string | null>,
@@ -319,11 +338,11 @@ function AdminIconsBadgesPage() {
   ): number[] {
     const out: number[] = [];
     for (const k of BADGE_VARIANTS) {
-      if (skip?.kind === "variant" && skip.key === k) continue;
+      if (skip?.kind === "variant" && (skip.key === undefined || skip.key === k)) continue;
       out.push(d.variants[k] ?? DEFAULT_BADGE_STYLES.variants[k] ?? 0);
     }
     for (const k of allTypes) {
-      if (skip?.kind === "type" && skip.key === k) continue;
+      if (skip?.kind === "type" && (skip.key === undefined || skip.key === k)) continue;
       out.push(
         (d.types as Record<string, number>)[k] ??
           (DEFAULT_BADGE_STYLES.types as Record<string, number>)[k] ??
@@ -331,7 +350,7 @@ function AdminIconsBadgesPage() {
       );
     }
     for (const [id, v] of Object.entries(cd)) {
-      if (skip?.kind === "category" && skip.key === id) continue;
+      if (skip?.kind === "category" && (skip.key === undefined || skip.key === id)) continue;
       const idx = paletteIndexOfColor(v);
       if (idx >= 0) out.push(idx);
     }
@@ -359,9 +378,7 @@ function AdminIconsBadgesPage() {
   }
   function regenerateAllVariants() {
     setDraft((d) => {
-      const excluded = new Set<number>(collectGlobalIndices(d, catDraft));
-      // remove this section's own indices from excluded (we're replacing them)
-      for (const k of BADGE_VARIANTS) excluded.delete(d.variants[k] ?? 0);
+      const excluded = new Set<number>(collectGlobalIndices(d, catDraft, { kind: "variant" }));
       const indices = pickAvoiding(
         BADGE_VARIANTS.length,
         excluded,
@@ -383,8 +400,7 @@ function AdminIconsBadgesPage() {
   }
   function regenerateAllTypes() {
     setDraft((d) => {
-      const excluded = new Set<number>(collectGlobalIndices(d, catDraft));
-      for (const k of allTypes) excluded.delete((d.types as any)[k] ?? 0);
+      const excluded = new Set<number>(collectGlobalIndices(d, catDraft, { kind: "type" }));
       const indices = pickAvoiding(
         allTypes.length,
         excluded,
@@ -435,11 +451,7 @@ function AdminIconsBadgesPage() {
   function regenerateAllCategories() {
     setCatDraft((d) => {
       const ids = Object.keys(d);
-      const excluded = new Set<number>(collectGlobalIndices(draft, d));
-      for (const id of ids) {
-        const idx = paletteIndexOfColor(d[id]);
-        if (idx >= 0) excluded.delete(idx);
-      }
+      const excluded = new Set<number>(collectGlobalIndices(draft, d, { kind: "category" }));
       const indices = pickAvoiding(
         ids.length,
         excluded,
