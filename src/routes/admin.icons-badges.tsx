@@ -587,25 +587,36 @@ function AdminIconsBadgesPage() {
                   </div>
                 </div>
                 <div className="flex w-full @[26rem]:w-auto items-center gap-2">
-                  <span
-                    title="AI translate to Spanish"
-                    onClick={() => {
-                      if (!translatingTypes.has(t)) translateTypeName(t);
-                    }}
-                    className={`cursor-pointer select-none inline-flex items-center justify-between gap-1 w-28 rounded-[8px] border border-input bg-background px-2.5 py-[5px] text-xs font-medium transition-colors hover:bg-muted ${translatingTypes.has(t) ? "opacity-40 pointer-events-none" : ""}`}
-                  >
-                    <span
-                      className={`truncate ${(draft.typeNamesEs as Record<string, string> | undefined)?.[t] ? "text-foreground" : "text-muted-foreground"}`}
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      value={draft.typeNamesEs?.[t] ?? ""}
+                      onChange={(e) =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          typeNamesEs: { ...(prev.typeNamesEs ?? {}), [t]: e.target.value },
+                        }))
+                      }
+                      placeholder="Spanish"
+                      title="Spanish name shown for this content type — click to edit"
+                      className="w-24 rounded-[8px] border border-input bg-background px-2 py-[5px] text-xs font-medium placeholder:text-muted-foreground"
+                    />
+                    <button
+                      type="button"
+                      title="AI translate to Spanish"
+                      disabled={translatingTypes.has(t)}
+                      onClick={() => {
+                        if (!translatingTypes.has(t)) translateTypeName(t);
+                      }}
+                      className="shrink-0 rounded-[8px] border border-input bg-background p-[7px] transition-colors hover:bg-muted disabled:opacity-40"
                     >
-                      {(draft.typeNamesEs as Record<string, string> | undefined)?.[t] ||
-                        "Translate"}
-                    </span>
-                    {translatingTypes.has(t) ? (
-                      <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-                    ) : (
-                      <Languages className="h-3.5 w-3.5 shrink-0" />
-                    )}
-                  </span>
+                      {translatingTypes.has(t) ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Languages className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
                   <span onClick={() => cycleType(t)} className={REGEN_BTN_CLASS}>
                     <RefreshCw className="h-3.5 w-3.5" />
                     Color
