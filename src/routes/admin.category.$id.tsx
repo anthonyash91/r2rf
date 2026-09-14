@@ -2392,9 +2392,9 @@ function ContentManager({
                   return <EmptyState>No items match your search.</EmptyState>;
                 }
                 if (bulk.editMode || q) {
-                  return (
+                  const renderFlatList = (list: ContentItem[]) => (
                     <ul className="divide-y divide-border">
-                      {filteredOrder.map((item) => {
+                      {list.map((item) => {
                         const selected = bulk.has(item.id);
                         const isInteractive = bulk.editMode;
                         return (
@@ -2429,6 +2429,58 @@ function ContentManager({
                         );
                       })}
                     </ul>
+                  );
+
+                  // Same section grouping/collapse as the main view — bulk
+                  // select and search shouldn't lose the organizational
+                  // context of which item lives in which section.
+                  const searchGroups = groupItemsBySection(filteredOrder, sectionOrder);
+                  const noSectionsInSearch =
+                    searchGroups.length <= 1 &&
+                    (searchGroups[0]?.key ?? OTHER_CONTENT_SECTION_KEY) ===
+                      OTHER_CONTENT_SECTION_KEY;
+                  if (noSectionsInSearch) {
+                    return renderFlatList(filteredOrder);
+                  }
+                  return (
+                    <div className="divide-y divide-border">
+                      {searchGroups.map((group) => {
+                        const label =
+                          group.key === OTHER_CONTENT_SECTION_KEY
+                            ? "Other Content"
+                            : (group.items[0]?.section ?? group.key);
+                        const isCollapsed = collapsedSections.has(group.key);
+                        return (
+                          <div key={group.key}>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setCollapsedSections((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(group.key)) next.delete(group.key);
+                                  else next.add(group.key);
+                                  return next;
+                                })
+                              }
+                              className="flex w-full items-center gap-2 border-l-4 border-[var(--color-accent)] bg-muted/60 px-5 py-3 text-left"
+                            >
+                              <ChevronDown
+                                className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${isCollapsed ? "-rotate-90" : ""}`}
+                              />
+                              <p className="font-display text-base font-semibold text-foreground">
+                                {label}
+                              </p>
+                              <span className="text-sm text-muted-foreground">
+                                ({group.items.length})
+                              </span>
+                            </button>
+                            <div className={isCollapsed ? "hidden" : ""}>
+                              {renderFlatList(group.items)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   );
                 }
                 // Group by section so the admin list mirrors what a resident
