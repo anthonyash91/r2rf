@@ -871,8 +871,14 @@ function CategoryPage() {
     setPdfTotalPages(null);
   }, [pdfViewer?.itemId]);
 
-  // Progressive idle thresholds: 90s → 3min → 5min cap
-  const IDLE_THRESHOLDS_MS = [90_000, 180_000, 300_000];
+  // Progressive idle thresholds: 3min → 5min cap. Was 90s → 3min → 5min —
+  // 90 seconds is well within how long reading a single page of dense text
+  // can take with zero scrolling/clicking (e.g. a page-sized PDF page, no
+  // scroll needed), so genuinely-engaged readers were being flagged idle
+  // constantly. Combined with the scroll-capture fix in
+  // use-content-engagement.ts, this should track real reading sessions
+  // instead of cutting them off after a page and a half.
+  const IDLE_THRESHOLDS_MS = [180_000, 300_000, 300_000];
   const [idleConfirmCount, setIdleConfirmCount] = useState(0);
   const currentIdleMs =
     IDLE_THRESHOLDS_MS[Math.min(idleConfirmCount, IDLE_THRESHOLDS_MS.length - 1)];

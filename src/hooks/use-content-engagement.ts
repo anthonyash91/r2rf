@@ -298,14 +298,26 @@ export function useContentEngagement({
 
   // Stamp `lastActivityRef` on any user interaction so the heartbeat can detect
   // idle periods. `passive: true` avoids blocking the browser's scroll/touch pipeline.
+  //
+  // `scroll` needs `capture: true` — unlike click/keydown/touch*/mousemove, the
+  // scroll event does not bubble, so a document-level listener in the bubble
+  // phase never sees scrolling inside a nested scrollable element (e.g. the
+  // PDF viewer's own overflow-y-auto container). Reading a page taller than
+  // the viewport is scroll-only activity — without capture, that entire
+  // reading session looked like idle time after 90s, no matter how much the
+  // person was actually scrolling.
   useEffect(() => {
     if (!isActive) return;
     const refresh = () => {
       lastActivityRef.current = Date.now();
     };
-    const events = ["touchstart", "touchmove", "click", "keydown", "scroll", "mousemove"];
-    events.forEach((e) => document.addEventListener(e, refresh, { passive: true }));
-    return () => events.forEach((e) => document.removeEventListener(e, refresh));
+    const bubblingEvents = ["touchstart", "touchmove", "click", "keydown", "mousemove"];
+    bubblingEvents.forEach((e) => document.addEventListener(e, refresh, { passive: true }));
+    document.addEventListener("scroll", refresh, { passive: true, capture: true });
+    return () => {
+      bubblingEvents.forEach((e) => document.removeEventListener(e, refresh));
+      document.removeEventListener("scroll", refresh, { capture: true });
+    };
   }, [isActive]);
 
   // Exposed so the parent can reset the idle state when the user confirms
