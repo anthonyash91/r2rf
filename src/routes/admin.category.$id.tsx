@@ -607,6 +607,12 @@ function SectionsPanel({
   const distinctSections = Array.from(
     new Set(items.map((i) => i.section).filter((s): s is string => !!s?.trim())),
   );
+  // Whether any item has no section at all — the "Other Content" bucket on
+  // the public page. Only made orderable alongside real sections when both
+  // exist — a category with nothing sectioned at all shows no section UI on
+  // the public page either, so there's nothing to order it relative to.
+  const hasUncategorized = items.some((i) => !i.section?.trim());
+  const OTHER_CONTENT_KEY = "uncategorized";
   const orderedLower = sectionOrder.map((s) => s.trim().toLowerCase());
   const bySection = new Map(distinctSections.map((s) => [s.trim().toLowerCase(), s]));
   // First item's section_es for each key — same "first item in the group"
@@ -619,19 +625,29 @@ function SectionsPanel({
       return [key, match?.section_es ?? ""];
     }),
   );
+  const allKeys = new Set(bySection.keys());
+  if (hasUncategorized && distinctSections.length > 0) allKeys.add(OTHER_CONTENT_KEY);
+
+  // displayOrder holds lowercase keys (not display text) — the synthetic
+  // "Other Content" bucket has no corresponding item.section value, so a
+  // text-keyed list could collide with a real section literally named that.
   const seen = new Set<string>();
   const displayOrder: string[] = [];
   for (const k of orderedLower) {
-    const original = bySection.get(k);
-    if (original) {
-      displayOrder.push(original);
+    if (allKeys.has(k) && !seen.has(k)) {
+      displayOrder.push(k);
       seen.add(k);
     }
   }
-  for (const s of distinctSections
-    .filter((s) => !seen.has(s.trim().toLowerCase()))
+  for (const k of Array.from(allKeys)
+    .filter((k) => k !== OTHER_CONTENT_KEY && !seen.has(k))
     .sort((a, b) => a.localeCompare(b))) {
-    displayOrder.push(s);
+    displayOrder.push(k);
+  }
+  // Defaults to last when the admin hasn't explicitly placed it yet — matches
+  // the public page's default when "uncategorized" isn't in section_order.
+  if (allKeys.has(OTHER_CONTENT_KEY) && !seen.has(OTHER_CONTENT_KEY)) {
+    displayOrder.push(OTHER_CONTENT_KEY);
   }
 
   const reorderMut = useMutation({
@@ -705,8 +721,8 @@ function SectionsPanel({
     onError: (e: any) => toast.error(e.message ?? "Failed to delete section"),
   });
 
-  function move(section: string, direction: -1 | 1) {
-    const idx = displayOrder.indexOf(section);
+  function move(key: string, direction: -1 | 1) {
+    const idx = displayOrder.indexOf(key);
     const swapWith = idx + direction;
     if (idx < 0 || swapWith < 0 || swapWith >= displayOrder.length) return;
     const next = [...displayOrder];
@@ -748,16 +764,17 @@ function SectionsPanel({
         Section order (category page)
       </p>
       <ul className="space-y-1">
-        {displayOrder.map((s, idx) => {
-          const key = s.trim().toLowerCase();
+        {displayOrder.map((key, idx) => {
+          const isOther = key === OTHER_CONTENT_KEY;
+          const label = isOther ? "Other Content" : (bySection.get(key) ?? key);
           const editing = editingKey === key;
           return (
-            <li key={s} className="rounded-md px-1 py-0.5 text-sm">
+            <li key={key} className="rounded-md px-1 py-0.5 text-sm">
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   disabled={idx === 0}
-                  onClick={() => move(s, -1)}
+                  onClick={() => move(key, -1)}
                   className="p-1 rounded hover:bg-muted disabled:opacity-30"
                   title="Move up"
                 >
@@ -766,39 +783,50 @@ function SectionsPanel({
                 <button
                   type="button"
                   disabled={idx === displayOrder.length - 1}
-                  onClick={() => move(s, 1)}
+                  onClick={() => move(key, 1)}
                   className="p-1 rounded hover:bg-muted disabled:opacity-30"
                   title="Move down"
                 >
                   <ChevronDown className="h-3.5 w-3.5" />
                 </button>
-                <span className="flex-1 min-w-0 truncate">{s}</span>
-                <button
-                  type="button"
-                  onClick={() => (editing ? cancelEdit() : startEdit(key))}
-                  className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
-                  title={editing ? "Cancel" : "Edit section title"}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    confirmDelete({
-                      title: `Delete section "${s}"?`,
-                      description: `${items.filter((i) => (i.section ?? "").trim().toLowerCase() === key).length} item(s) will become Uncategorized.`,
-                      confirmLabel: "Delete",
-                      pendingLabel: "Deleting",
-                      onConfirm: () => deleteSectionMut.mutateAsync(key),
-                    })
-                  }
-                  className="p-1 rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                  title="Delete section"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                <span className="flex-1 min-w-0 truncate">
+                  {label}
+                  {isOther && (
+                    <span className="ml-1.5 text-xs text-muted-foreground">
+                      (items with no section)
+                    </span>
+                  )}
+                </span>
+                {!isOther && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => (editing ? cancelEdit() : startEdit(key))}
+                      className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                      title={editing ? "Cancel" : "Edit section title"}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        confirmDelete({
+                          title: `Delete section "${label}"?`,
+                          description: `${items.filter((i) => (i.section ?? "").trim().toLowerCase() === key).length} item(s) will become Uncategorized.`,
+                          confirmLabel: "Delete",
+                          pendingLabel: "Deleting",
+                          onConfirm: () => deleteSectionMut.mutateAsync(key),
+                        })
+                      }
+                      className="p-1 rounded text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      title="Delete section"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                )}
               </div>
-              {editing && (
+              {editing && !isOther && (
                 <div className="mt-2 ml-6 space-y-3 rounded-md border border-border bg-card p-4">
                   <LabeledInput label="Section title (EN)" value={enDraft} onChange={setEnDraft} />
                   <div className="flex items-end gap-2">

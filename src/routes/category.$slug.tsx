@@ -983,9 +983,11 @@ function CategoryPage() {
                       });
                 // Group into sections by the item's own independent `section`
                 // field (nothing to do with `type`/badges) — ordered by the
-                // category's admin-managed section_order, with any
-                // used-but-unlisted section appended alphabetically and a
-                // final "uncategorized" bucket (no section set) always last.
+                // category's admin-managed section_order (which may place
+                // "uncategorized" — the Other Content bucket — anywhere, not
+                // just last), with any used-but-unlisted section appended
+                // alphabetically and Other Content defaulting to last only
+                // when the admin hasn't explicitly positioned it.
                 const byKey = new Map<string, typeof displayItems>();
                 for (const item of displayItems) {
                   const key = (item.section ?? "").trim().toLowerCase() || "uncategorized";
@@ -1010,7 +1012,7 @@ function CategoryPage() {
                   .sort((a, b) => a.localeCompare(b))) {
                   groups.push({ key: k, items: byKey.get(k)! });
                 }
-                if (byKey.has("uncategorized")) {
+                if (byKey.has("uncategorized") && !seenKeys.has("uncategorized")) {
                   groups.push({ key: "uncategorized", items: byKey.get("uncategorized")! });
                 }
                 // No item in the category has a section set — don't show any
