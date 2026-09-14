@@ -2476,10 +2476,14 @@ function ContentManager({
                           : (group.items[0]?.section ?? group.key);
                       return (
                         <div key={group.key}>
-                          <p className="px-6 pt-4 pb-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            {label}{" "}
-                            <span className="font-normal normal-case">({group.items.length})</span>
-                          </p>
+                          <div className="flex items-center gap-2 border-l-4 border-[var(--color-accent)] bg-muted/60 px-5 py-3">
+                            <p className="font-display text-base font-semibold text-foreground">
+                              {label}
+                            </p>
+                            <span className="text-sm text-muted-foreground">
+                              ({group.items.length})
+                            </span>
+                          </div>
                           <Suspense fallback={null}>
                             <SortableList
                               className="divide-y divide-border"
