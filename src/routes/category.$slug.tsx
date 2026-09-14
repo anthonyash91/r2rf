@@ -80,55 +80,6 @@ import { useRatings } from "@/hooks/use-ratings";
 import { useAchievements } from "@/hooks/use-achievements";
 import { useKeyboardInput } from "@/components/OnScreenKeyboard";
 
-function IdlePrompt({ countdown, onStillHere }: { countdown: number; onStillHere: () => void }) {
-  return (
-    <div
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby="idle-prompt-title"
-      aria-describedby="idle-prompt-desc"
-      className="absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-6"
-    >
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-xl p-6 flex flex-col gap-4">
-        <div>
-          <p
-            id="idle-prompt-title"
-            className="font-display text-base font-semibold text-foreground"
-          >
-            Are you still here?
-          </p>
-          <p id="idle-prompt-desc" className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-            Your session will stop tracking in{" "}
-            <span className="font-semibold tabular-nums text-foreground">{countdown}s</span>. Tap or
-            scroll any time to keep the timer running automatically without this prompt appearing.
-          </p>
-        </div>
-        <button
-          type="button"
-          autoFocus
-          onClick={onStillHere}
-          className="inline-flex items-center justify-center rounded-[8px] border px-4 py-2 text-sm font-medium transition-colors"
-          style={{
-            color: "var(--color-accent)",
-            backgroundColor: "color-mix(in oklab, var(--color-accent) 12%, transparent)",
-            borderColor: "color-mix(in oklab, var(--color-accent) 25%, transparent)",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-              "color-mix(in oklab, var(--color-accent) 20%, transparent)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-              "color-mix(in oklab, var(--color-accent) 12%, transparent)";
-          }}
-        >
-          Yes, I'm still here
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function CategoryError({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="min-h-screen flex flex-col">
@@ -820,24 +771,13 @@ function CategoryPage() {
     }, 600);
   };
 
-  // Debug idle counter — only runs for tester accounts
-  const [debugIdleSecs, setDebugIdleSecs] = useState(0);
-  const debugLastActivityRef = useRef(Date.now());
+  // Forces the tester-only debug overlay to re-render periodically so it
+  // reflects document.hidden / mediaEnded refs, which don't trigger renders.
+  const [, debugTick] = useState(0);
   useEffect(() => {
     if (!isTester) return;
-    const reset = () => {
-      debugLastActivityRef.current = Date.now();
-      setDebugIdleSecs(0);
-    };
-    const events = ["touchstart", "touchmove", "click", "keydown", "scroll", "mousemove"];
-    events.forEach((e) => document.addEventListener(e, reset, { passive: true }));
-    const t = setInterval(() => {
-      setDebugIdleSecs(Math.floor((Date.now() - debugLastActivityRef.current) / 1000));
-    }, 500);
-    return () => {
-      clearInterval(t);
-      events.forEach((e) => document.removeEventListener(e, reset));
-    };
+    const t = setInterval(() => debugTick((n) => n + 1), 500);
+    return () => clearInterval(t);
   }, [isTester]);
 
   // PDFs are marked read manually (see the "Mark as read" button in the PDF
@@ -871,30 +811,6 @@ function CategoryPage() {
     setPdfTotalPages(null);
   }, [pdfViewer?.itemId]);
 
-  // Progressive idle thresholds: 3min → 5min cap. Was 90s → 3min → 5min —
-  // 90 seconds is well within how long reading a single page of dense text
-  // can take with zero scrolling/clicking (e.g. a page-sized PDF page, no
-  // scroll needed), so genuinely-engaged readers were being flagged idle
-  // constantly. Combined with the scroll-capture fix in
-  // use-content-engagement.ts, this should track real reading sessions
-  // instead of cutting them off after a page and a half.
-  const IDLE_THRESHOLDS_MS = [180_000, 300_000, 300_000];
-  const [idleConfirmCount, setIdleConfirmCount] = useState(0);
-  const currentIdleMs =
-    IDLE_THRESHOLDS_MS[Math.min(idleConfirmCount, IDLE_THRESHOLDS_MS.length - 1)];
-
-  // "Are you still here?" idle prompt state
-  const [showIdlePrompt, setShowIdlePrompt] = useState(false);
-  const [idleCountdown, setIdleCountdown] = useState(20);
-  const idleCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const clearIdleCountdown = () => {
-    if (idleCountdownRef.current) {
-      clearInterval(idleCountdownRef.current);
-      idleCountdownRef.current = null;
-    }
-  };
-
   // Engagement tracking hook: timer (all types) + media progress (video/audio) + PDF auto-mark
   const isMediaItem = !!(
     videoEl ||
@@ -903,12 +819,10 @@ function CategoryPage() {
     activeMedia?.type === "audio"
   );
   const {
-    resetIdle,
     chapterFurthestSeconds,
     getSessionChapterFurthest,
     debugRefs: engDebug,
   } = useContentEngagement({
-    idleMs: currentIdleMs,
     contentItemId: activeItemId,
     categoryId: categoryId ?? null,
     userId: user?.id ?? null,
@@ -933,34 +847,7 @@ function CategoryPage() {
       activeItemId && user?.id && !isAdmin && !isFacilityUser
         ? () => toggleRead.mutate({ itemId: activeItemId, markRead: true })
         : undefined,
-    // Only show idle prompt for static content — video/audio use position tracking
-    onIdle: isMediaItem
-      ? undefined
-      : () => {
-          setIdleCountdown(20);
-          setShowIdlePrompt(true);
-          clearIdleCountdown();
-          idleCountdownRef.current = setInterval(() => {
-            setIdleCountdown((n) => {
-              if (n <= 1) {
-                clearIdleCountdown();
-                setShowIdlePrompt(false);
-                return 0;
-              }
-              return n - 1;
-            });
-          }, 1000);
-        },
   });
-
-  // Clean up countdown on unmount or when item closes
-  useEffect(() => {
-    if (!activeItemId) {
-      clearIdleCountdown();
-      setShowIdlePrompt(false);
-      setIdleConfirmCount(0);
-    }
-  }, [activeItemId]);
 
   const visibleItemIds = useMemo(
     () => (data?.items ?? []).map((i) => i.id as string),
@@ -2098,12 +1985,7 @@ function CategoryPage() {
           }
         }}
       >
-        <DialogContent
-          className="max-w-4xl p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]"
-          onInteractOutside={(e) => {
-            if (showIdlePrompt) e.preventDefault();
-          }}
-        >
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
           <DialogTitle className="sr-only">{videoPlayer?.title ?? "Video"}</DialogTitle>
           {videoPlayer && (
             <video
@@ -2132,12 +2014,7 @@ function CategoryPage() {
           }
         }}
       >
-        <DialogContent
-          className="max-w-xl p-0 max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col"
-          onInteractOutside={(e) => {
-            if (showIdlePrompt) e.preventDefault();
-          }}
-        >
+        <DialogContent className="max-w-xl p-0 max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col">
           {/* Sticky header: title + custom audio player */}
           <div className="flex-shrink-0 px-6 pt-[18px] pb-4 border-b space-y-3">
             <DialogTitle className="text-base font-semibold pr-8 break-words">
@@ -2462,17 +2339,6 @@ function CategoryPage() {
                 })()}
             </div>
           )}
-          {showIdlePrompt && (
-            <IdlePrompt
-              countdown={idleCountdown}
-              onStillHere={() => {
-                clearIdleCountdown();
-                setShowIdlePrompt(false);
-                setIdleConfirmCount((n) => n + 1);
-                resetIdle();
-              }}
-            />
-          )}
         </DialogContent>
       </Dialog>
 
@@ -2493,17 +2359,6 @@ function CategoryPage() {
               src={imageViewer.url}
               alt={imageViewer.title}
               className="w-full h-auto max-h-[calc(100dvh-2rem)] object-contain bg-black"
-            />
-          )}
-          {showIdlePrompt && (
-            <IdlePrompt
-              countdown={idleCountdown}
-              onStillHere={() => {
-                clearIdleCountdown();
-                setShowIdlePrompt(false);
-                setIdleConfirmCount((n) => n + 1);
-                resetIdle();
-              }}
             />
           )}
         </DialogContent>
@@ -2564,19 +2419,6 @@ function CategoryPage() {
           <div className="fixed top-4 right-4 z-[200] rounded-md border border-border bg-card px-3 py-2 text-xs font-mono shadow-lg leading-loose w-64">
             <div className="font-semibold text-foreground mb-1">⏱ Engagement Debug</div>
             <div>
-              idle:{" "}
-              <span
-                className={
-                  debugIdleSecs >= Math.floor(currentIdleMs / 1000)
-                    ? "text-red-600 font-bold"
-                    : "text-foreground"
-                }
-              >
-                {debugIdleSecs}s
-              </span>{" "}
-              / {currentIdleMs / 1000}s trigger
-            </div>
-            <div>
               hook active:{" "}
               {!!activeItemId && !isAdmin && !isFacilityUser ? (
                 <span className="text-green-600">✓ yes</span>
@@ -2585,14 +2427,23 @@ function CategoryPage() {
               )}
             </div>
             <div>
-              idle fired:{" "}
-              {engDebug.isIdle.current ? <span className="text-amber-600">yes</span> : "no"}
+              page visible:{" "}
+              {typeof document !== "undefined" && document.hidden ? (
+                <span className="text-red-600 font-bold">no (paused)</span>
+              ) : (
+                <span className="text-green-600">yes</span>
+              )}
             </div>
-            <div>
-              confirmations: {idleConfirmCount} → next:{" "}
-              {IDLE_THRESHOLDS_MS[Math.min(idleConfirmCount, IDLE_THRESHOLDS_MS.length - 1)] / 1000}
-              s {idleConfirmCount >= IDLE_THRESHOLDS_MS.length - 1 ? "(capped)" : ""}
-            </div>
+            {isMediaItem && (
+              <div>
+                media ended:{" "}
+                {engDebug.mediaEnded.current ? (
+                  <span className="text-amber-600 font-bold">yes (paused)</span>
+                ) : (
+                  "no"
+                )}
+              </div>
+            )}
             <div className="border-t border-border/40 mt-1 pt-1">
               <div>base (DB): {engDebug.baseSeconds.current}s</div>
               <div>
@@ -2622,7 +2473,7 @@ function CategoryPage() {
               </div>
             )}
             <div className="border-t border-border/40 mt-1 pt-1 text-muted-foreground">
-              item: {activeItemId ? (isMediaItem ? "media (no modal)" : "static ✓ modal") : "none"}
+              item: {activeItemId ? (isMediaItem ? "media" : "static") : "none"}
             </div>
           </div>,
           document.body,

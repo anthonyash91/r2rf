@@ -29,8 +29,6 @@ function setSessionProgress(id: string, value: number) {
   sessionProgress.set(id, value);
 }
 
-/** Default idle threshold — overridden per-call via the idleMs param. */
-const DEFAULT_IDLE_MS = 90_000;
 /** Heartbeat interval — how often we check for activity. */
 const TICK_MS = 5_000;
 /** Seconds added per tick (must match TICK_MS). */
@@ -101,10 +99,6 @@ type Params = {
   pdfTotalPages?: number | null;
   /** Called when 95%+ of the media threshold has been reached. */
   onAutoMarkRead?: () => void;
-  /** Called once when the idle threshold is crossed (for static content only). */
-  onIdle?: () => void;
-  /** How many ms of inactivity before idle fires. Defaults to DEFAULT_IDLE_MS. */
-  idleMs?: number;
 };
 
 /**
@@ -129,24 +123,19 @@ export function useContentEngagement({
   pdfPage = null,
   pdfTotalPages = null,
   onAutoMarkRead,
-  onIdle,
-  idleMs = DEFAULT_IDLE_MS,
 }: Params): {
   mediaProgressPct: number | null;
   chapterFurthestSeconds: number;
   getSessionChapterFurthest: (chapterId: string) => number;
-  resetIdle: () => void;
   debugRefs: {
     baseSeconds: React.RefObject<number>;
     accSeconds: React.RefObject<number>;
     furthestSeconds: React.RefObject<number>;
     durationSeconds: React.RefObject<number>;
-    isIdle: React.RefObject<boolean>;
-    idleMs: React.RefObject<number>;
+    mediaEnded: React.RefObject<boolean>;
   };
 } {
   // Timer state — all in refs so they never cause re-renders
-  const lastActivityRef = useRef(Date.now());
   const accSecondsRef = useRef(0);
   const baseSecondsRef = useRef(0);
   // How much of accSecondsRef has already been persisted to
@@ -154,21 +143,15 @@ export function useContentEngagement({
   // each periodic checkpoint instead of re-sending (and double-counting)
   // the whole accumulated total every time.
   const sessionLoggedSecondsRef = useRef(0);
-  // Tracks whether onIdle has already fired for the current idle period so we
-  // don't spam the callback every tick while the user remains idle.
-  const firedIdleRef = useRef(false);
-  const onIdleRef = useRef(onIdle);
-  useEffect(() => {
-    onIdleRef.current = onIdle;
-  }, [onIdle]);
+  // True from the moment the currently-loaded video/audio fires its native
+  // "ended" event until playback resumes (a replay, a chapter advance, or a
+  // new item loading) — lets the heartbeat stop counting time the instant
+  // playback finishes instead of relying on some other idle signal.
+  const mediaEndedRef = useRef(false);
   const onAutoMarkReadRef = useRef(onAutoMarkRead);
   useEffect(() => {
     onAutoMarkReadRef.current = onAutoMarkRead;
   }, [onAutoMarkRead]);
-  const idleMsRef = useRef(idleMs);
-  useEffect(() => {
-    idleMsRef.current = idleMs;
-  }, [idleMs]);
 
   // Media state
   const furthestRef = useRef(0); // high-watermark: used only for auto-mark-read threshold
@@ -212,7 +195,7 @@ export function useContentEngagement({
     durationRef.current = existing?.media_duration_seconds ?? 0;
     accSecondsRef.current = 0;
     sessionLoggedSecondsRef.current = 0;
-    lastActivityRef.current = Date.now();
+    mediaEndedRef.current = false;
     autoMarkedRef.current = false;
 
     // If the element is already loaded, seek immediately; otherwise the
@@ -296,50 +279,37 @@ export function useContentEngagement({
     ).catch(() => {});
   }, [userId, contentItemId, categoryId]);
 
-  // Stamp `lastActivityRef` on any user interaction so the heartbeat can detect
-  // idle periods. `passive: true` avoids blocking the browser's scroll/touch pipeline.
-  //
-  // `scroll` needs `capture: true` — unlike click/keydown/touch*/mousemove, the
-  // scroll event does not bubble, so a document-level listener in the bubble
-  // phase never sees scrolling inside a nested scrollable element (e.g. the
-  // PDF viewer's own overflow-y-auto container). Reading a page taller than
-  // the viewport is scroll-only activity — without capture, that entire
-  // reading session looked like idle time after 90s, no matter how much the
-  // person was actually scrolling.
+  // Pauses tracking immediately when the page/app is backgrounded (tablet
+  // sleeps, app switches away) instead of waiting for the next heartbeat
+  // tick — flushing right away so a tablet that suspends JS shortly after
+  // going hidden doesn't lose the tail of the session.
   useEffect(() => {
     if (!isActive) return;
-    const refresh = () => {
-      lastActivityRef.current = Date.now();
+    const handleVisibility = () => {
+      if (document.hidden) {
+        write();
+        logSessionChunk();
+      }
     };
-    const bubblingEvents = ["touchstart", "touchmove", "click", "keydown", "mousemove"];
-    bubblingEvents.forEach((e) => document.addEventListener(e, refresh, { passive: true }));
-    document.addEventListener("scroll", refresh, { passive: true, capture: true });
-    return () => {
-      bubblingEvents.forEach((e) => document.removeEventListener(e, refresh));
-      document.removeEventListener("scroll", refresh, { capture: true });
-    };
-  }, [isActive]);
-
-  // Exposed so the parent can reset the idle state when the user confirms
-  // they're still present via the "Are you still here?" modal.
-  const resetIdle = useCallback(() => {
-    lastActivityRef.current = Date.now();
-    firedIdleRef.current = false;
-  }, []);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [isActive, write, logSessionChunk]);
 
   // Heartbeat timer. Runs for signed-out visitors too, so anonymous session
   // time still gets logged (attributed by facility, not by user) — only the
   // resume-position upsert inside write() actually requires a real userId.
+  //
+  // Tracking pauses only when the page is hidden (backgrounded/screen off —
+  // there's no interaction requirement, so someone reading a static page or
+  // watching a video without touching anything still counts as engaged) or
+  // once the currently-loaded media has finished playing (mediaEndedRef) —
+  // sitting in a finished video/audio's dialog shouldn't keep the timer
+  // running just because the page is still visible.
   useEffect(() => {
     if (!isActive || !contentItemId) return;
     const interval = setInterval(() => {
-      const idle = Date.now() - lastActivityRef.current > idleMsRef.current;
-      if (idle && !firedIdleRef.current) {
-        firedIdleRef.current = true;
-        onIdleRef.current?.();
-      }
+      const idle = document.hidden || mediaEndedRef.current;
       if (!idle) {
-        firedIdleRef.current = false;
         accSecondsRef.current += TICK_S;
         if (accSecondsRef.current % FLUSH_INTERVAL_S === 0) {
           write(); // flush cumulative total to user_content_engagement (resume position)
@@ -364,6 +334,7 @@ export function useContentEngagement({
   useEffect(() => {
     const el = videoEl;
     if (!el) return;
+    mediaEndedRef.current = false;
 
     const onLoadedMetadata = () => {
       durationRef.current = el.duration || 0;
@@ -392,13 +363,30 @@ export function useContentEngagement({
       }
     };
 
+    // Stops the engagement timer the instant playback finishes — otherwise
+    // someone sitting in a finished video's dialog with the page still
+    // visible would keep accumulating tracked time indefinitely.
+    const onEnded = () => {
+      mediaEndedRef.current = true;
+      write();
+    };
+    // A replay (or seeking back and hitting play) clearly means they're
+    // re-engaging, so resume counting.
+    const onPlay = () => {
+      mediaEndedRef.current = false;
+    };
+
     el.addEventListener("loadedmetadata", onLoadedMetadata);
     el.addEventListener("timeupdate", onTimeUpdate);
+    el.addEventListener("ended", onEnded);
+    el.addEventListener("play", onPlay);
     if (el.readyState >= 1) onLoadedMetadata();
 
     return () => {
       el.removeEventListener("loadedmetadata", onLoadedMetadata);
       el.removeEventListener("timeupdate", onTimeUpdate);
+      el.removeEventListener("ended", onEnded);
+      el.removeEventListener("play", onPlay);
       write();
     };
   }, [videoEl, write, contentItemId]);
@@ -409,6 +397,7 @@ export function useContentEngagement({
   useEffect(() => {
     const el = audioEl;
     if (!el) return;
+    mediaEndedRef.current = false;
 
     // Initialize chapterFurthestRef from DB value or within-session cache, whichever
     // is higher. Handles both first-open and same-session chapter revisits.
@@ -466,8 +455,13 @@ export function useContentEngagement({
     // Fires when the audio element reaches the end of the file. Captures the
     // exact chapter duration so the last 0-5 seconds missed by the sampling
     // interval are always recorded — without this, full listens only credit
-    // ~95-99% depending on chapter length.
+    // ~95-99% depending on chapter length. Also stops the engagement timer —
+    // on a non-final chapter this flips back to false almost immediately when
+    // the next chapter's element mounts; on the final chapter it correctly
+    // stays true so sitting in a finished playlist's dialog doesn't keep
+    // accumulating tracked time.
     const onEnded = () => {
+      mediaEndedRef.current = true;
       const dur = el.duration || 0;
       currentPositionRef.current = mediaProgressOffset + dur;
       furthestRef.current = Math.max(furthestRef.current, currentPositionRef.current);
@@ -487,16 +481,23 @@ export function useContentEngagement({
       }
       write();
     };
+    // A replay, or a chapter advance mounting a fresh element, means they're
+    // still engaged — resume counting.
+    const onPlay = () => {
+      mediaEndedRef.current = false;
+    };
 
     el.addEventListener("loadedmetadata", onLoadedMetadata);
     el.addEventListener("timeupdate", onTimeUpdate);
     el.addEventListener("ended", onEnded);
+    el.addEventListener("play", onPlay);
     if (el.readyState >= 1) onLoadedMetadata();
 
     return () => {
       el.removeEventListener("loadedmetadata", onLoadedMetadata);
       el.removeEventListener("timeupdate", onTimeUpdate);
       el.removeEventListener("ended", onEnded);
+      el.removeEventListener("play", onPlay);
       write();
     };
   }, [
@@ -520,14 +521,12 @@ export function useContentEngagement({
     mediaProgressPct,
     chapterFurthestSeconds: chapterFurthestRef.current,
     getSessionChapterFurthest: (chId: string) => sessionChapterProgress.get(chId) ?? 0,
-    resetIdle,
     debugRefs: {
       baseSeconds: baseSecondsRef,
       accSeconds: accSecondsRef,
       furthestSeconds: furthestRef,
       durationSeconds: durationRef,
-      isIdle: firedIdleRef,
-      idleMs: idleMsRef,
+      mediaEnded: mediaEndedRef,
     },
   };
 }
