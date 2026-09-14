@@ -149,6 +149,11 @@ export function useContentEngagement({
   const lastActivityRef = useRef(Date.now());
   const accSecondsRef = useRef(0);
   const baseSecondsRef = useRef(0);
+  // How much of accSecondsRef has already been persisted to
+  // user_content_sessions — lets logSessionChunk() send only the delta on
+  // each periodic checkpoint instead of re-sending (and double-counting)
+  // the whole accumulated total every time.
+  const sessionLoggedSecondsRef = useRef(0);
   // Tracks whether onIdle has already fired for the current idle period so we
   // don't spam the callback every tick while the user remains idle.
   const firedIdleRef = useRef(false);
@@ -206,6 +211,7 @@ export function useContentEngagement({
     currentPositionRef.current = resumePos;
     durationRef.current = existing?.media_duration_seconds ?? 0;
     accSecondsRef.current = 0;
+    sessionLoggedSecondsRef.current = 0;
     lastActivityRef.current = Date.now();
     autoMarkedRef.current = false;
 
@@ -264,6 +270,32 @@ export function useContentEngagement({
     }
   }, [userId, contentItemId, categoryId]);
 
+  // Logs whatever active time has accumulated since the last checkpoint to
+  // user_content_sessions — called periodically (not just once at cleanup)
+  // so a session survives a hard tab close, a kiosk timeout, or any other
+  // exit that skips React's unmount cleanup. Before this, the entire
+  // session's time lived only in accSecondsRef until a graceful unmount —
+  // closing the tab instead of the in-app close button lost all of it,
+  // silently, since the insert's own failures are swallowed too. Each call
+  // sends only the delta since the last checkpoint (session_seconds rows are
+  // summed, not upserted) so periodic + final calls never double-count.
+  const logSessionChunk = useCallback(() => {
+    if (!contentItemId || !categoryId) return;
+    const totalSecs = Math.round(accSecondsRef.current);
+    const delta = totalSecs - sessionLoggedSecondsRef.current;
+    if (delta <= 0) return;
+    sessionLoggedSecondsRef.current = totalSecs;
+    Promise.resolve(
+      (supabase as any).from("user_content_sessions").insert({
+        user_id: userId,
+        content_item_id: contentItemId,
+        category_id: categoryId,
+        session_seconds: delta,
+        facility_value: getActiveFacilitySlug(),
+      }),
+    ).catch(() => {});
+  }, [userId, contentItemId, categoryId]);
+
   // Stamp `lastActivityRef` on any user interaction so the heartbeat can detect
   // idle periods. `passive: true` avoids blocking the browser's scroll/touch pipeline.
   useEffect(() => {
@@ -298,32 +330,21 @@ export function useContentEngagement({
         firedIdleRef.current = false;
         accSecondsRef.current += TICK_S;
         if (accSecondsRef.current % FLUSH_INTERVAL_S === 0) {
-          write();
+          write(); // flush cumulative total to user_content_engagement (resume position)
+          // Checkpoint user_content_sessions too — logged for signed-out
+          // visitors too (user_id: null). Doing this periodically, not just
+          // at cleanup below, is what lets a session survive a hard tab
+          // close or kiosk timeout.
+          logSessionChunk();
         }
       }
     }, TICK_MS);
     return () => {
       clearInterval(interval);
-      write(); // flush cumulative total to user_content_engagement (resume position)
-      // Log this session to user_content_sessions for date-range-filterable
-      // analytics. Logged for signed-out visitors too (user_id: null) — the
-      // report_content_time_totals() RPC only consults facility_value for
-      // rows with no user_id, same as analytics_increment_daily_count() does
-      // for click/view events, so sending it here is harmless either way.
-      const sessionSecs = Math.round(accSecondsRef.current);
-      if (sessionSecs > 0 && contentItemId && categoryId) {
-        Promise.resolve(
-          (supabase as any).from("user_content_sessions").insert({
-            user_id: userId,
-            content_item_id: contentItemId,
-            category_id: categoryId,
-            session_seconds: sessionSecs,
-            facility_value: getActiveFacilitySlug(),
-          }),
-        ).catch(() => {});
-      }
+      write();
+      logSessionChunk(); // catches whatever's accumulated since the last periodic checkpoint
     };
-  }, [isActive, userId, contentItemId, categoryId, write]);
+  }, [isActive, userId, contentItemId, categoryId, write, logSessionChunk]);
 
   // Video progress tracking + resume.
   // Depends on `videoEl` (the actual element) — re-runs when the element

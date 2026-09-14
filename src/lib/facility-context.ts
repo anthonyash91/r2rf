@@ -12,10 +12,28 @@ function read(): string | null {
   }
 }
 
+// Mirrors deriveValue() in facilities.functions.ts (server-only, so not
+// importable from here) — the canonical `facilities.value` a site ID maps to
+// is always lowercased/slugified there. Every call site that feeds this
+// function a site ID gets it from a different raw source (a platform header,
+// a `?site=` param, a route slug) and none of them reliably arrive already
+// in that canonical casing, so normalizing once here — rather than trusting
+// each caller — is what keeps facility_value consistent with what RLS,
+// reports, and user_profiles.facility actually key off. The transform is
+// idempotent, so re-normalizing an already-canonical value is a no-op.
+function normalizeFacilitySlug(raw: string): string {
+  return raw
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 64);
+}
+
 export function setActiveFacilitySlug(slug: string | null) {
   if (typeof window === "undefined") return;
+  const normalized = slug ? normalizeFacilitySlug(slug) : null;
   try {
-    if (slug) window.sessionStorage.setItem(STORAGE_KEY, slug);
+    if (normalized) window.sessionStorage.setItem(STORAGE_KEY, normalized);
     else window.sessionStorage.removeItem(STORAGE_KEY);
   } catch {
     /* ignore */
