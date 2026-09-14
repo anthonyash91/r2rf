@@ -94,6 +94,49 @@ import { PageHeader } from "@/components/PageHeader";
 import { BackToTopButton } from "@/components/BackToTopButton";
 import { QK } from "@/lib/query-keys";
 
+// Caps how many files' Stream upload+transcode pipeline run at once during a
+// bulk/multi-file upload. Each in-flight video polls waitForStreamProcessing
+// every 6s — with everything running fully parallel, a batch of ~19+ videos
+// sustains more than 3 status-poll requests/sec, which is exactly the
+// server's rate-limit refill rate (server-start.mjs's RATE_REFILL_PER_SEC).
+// Once that bucket drains, polling requests start getting 429'd, each
+// poller's 5-consecutive-failure threshold trips within ~30s of each other,
+// and the whole batch surfaces as "N files failed to upload" — even though
+// the actual video bytes already reached Bunny fine (the TUS transfer goes
+// straight to Bunny from the browser, bypassing this server and its limiter
+// entirely, which is why Bunny's own dashboard shows them as processing).
+// Limiting concurrency keeps sustained polling well under that budget.
+const MAX_CONCURRENT_STREAM_UPLOADS = 5;
+
+// Runs `fn` over `items` with at most `limit` in flight at once, collecting
+// per-item settled results the same shape Promise.allSettled would — a
+// worker-pool implementation since Promise.allSettled itself has no
+// concurrency cap. Each worker claims the next index via a shared counter,
+// so items are still started in array order (just throttled), preserving
+// any "assigned synchronously before starting" ordering guarantee callers
+// rely on (e.g. sort_order assignment in the bulk item uploader).
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    for (;;) {
+      const i = next++;
+      if (i >= items.length) return;
+      try {
+        results[i] = { status: "fulfilled", value: await fn(items[i], i) };
+      } catch (reason) {
+        results[i] = { status: "rejected", reason };
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
     [item.title, item.title_es],
@@ -1628,11 +1671,10 @@ function ContentManager({
         collectionId = created;
         persistCategoryCollectionId(created);
       }
-      const results = await Promise.allSettled(
-        files.map(async (file) => {
-          // .map()'s callback runs synchronously per file before any await,
-          // so this assigns sort_order in file order even though the async
-          // bodies themselves resolve concurrently.
+      const results = await mapWithConcurrency(
+        files,
+        MAX_CONCURRENT_STREAM_UPLOADS,
+        async (file) => {
           const sortOrder = nextSortOrder++;
           const id = crypto.randomUUID();
           const title = filenameToTitle(file.name);
@@ -1731,7 +1773,7 @@ function ContentManager({
               return next;
             });
           }
-        }),
+        },
       );
       return {
         createdIds: results
@@ -2769,51 +2811,50 @@ function ItemEditor({
     }
 
     // Phase 2 — the slow part (byte transfer + transcode wait, which can
-    // each take from seconds to minutes) runs for every file in parallel
+    // each take from seconds to minutes) runs with limited concurrency
     // instead of making chapter 2 wait for chapter 1 to fully finish
-    // processing before it even starts.
-    await Promise.all(
-      sessions.map(async (entry) => {
-        if (!entry) return;
-        const { file, chIdx, chapterId, session } = entry;
-        setChapterUpload(chIdx, { phase: "uploading", progress: 0 });
-        try {
-          const { videoId, playbackUrl } = await runTusUpload(file, session, (pct) =>
-            setChapterUpload(chIdx, { phase: "uploading", progress: pct }),
-          );
-          setChapterUpload(chIdx, { phase: "processing", progress: 0 });
-          const seconds = await waitForStreamProcessing(videoId);
-          setChapters((prev) =>
-            prev.map((c, idx) =>
-              idx === chIdx
-                ? {
-                    ...c,
-                    file_url: playbackUrl,
-                    file_name: file.name,
-                    duration_seconds: seconds && seconds > 0 ? seconds : null,
-                  }
-                : c,
-            ),
-          );
-          // Same reasoning as the single-chapter uploader: Save doesn't wait
-          // on processing, so patch the duration straight into the DB by id
-          // in case the item was already saved while this file was still
-          // transcoding — a no-op if it hasn't been saved yet.
-          if (seconds && seconds > 0) {
-            const { error } = await (supabase as any)
-              .from("content_chapters")
-              .update({ duration_seconds: seconds })
-              .eq("id", chapterId);
-            if (error) console.error("Failed to patch chapter duration:", error);
-          }
-        } catch (err: any) {
-          console.error(`[handleMultipleFiles] "${file.name}" failed:`, err);
-          toast.error(`Failed to upload "${file.name}": ${err.message ?? "Upload failed"}`);
-        } finally {
-          setChapterUpload(chIdx, null);
+    // processing before it even starts — capped (not fully parallel) for the
+    // same reason as the bulk item uploader's MAX_CONCURRENT_STREAM_UPLOADS.
+    await mapWithConcurrency(sessions, MAX_CONCURRENT_STREAM_UPLOADS, async (entry) => {
+      if (!entry) return;
+      const { file, chIdx, chapterId, session } = entry;
+      setChapterUpload(chIdx, { phase: "uploading", progress: 0 });
+      try {
+        const { videoId, playbackUrl } = await runTusUpload(file, session, (pct) =>
+          setChapterUpload(chIdx, { phase: "uploading", progress: pct }),
+        );
+        setChapterUpload(chIdx, { phase: "processing", progress: 0 });
+        const seconds = await waitForStreamProcessing(videoId);
+        setChapters((prev) =>
+          prev.map((c, idx) =>
+            idx === chIdx
+              ? {
+                  ...c,
+                  file_url: playbackUrl,
+                  file_name: file.name,
+                  duration_seconds: seconds && seconds > 0 ? seconds : null,
+                }
+              : c,
+          ),
+        );
+        // Same reasoning as the single-chapter uploader: Save doesn't wait
+        // on processing, so patch the duration straight into the DB by id
+        // in case the item was already saved while this file was still
+        // transcoding — a no-op if it hasn't been saved yet.
+        if (seconds && seconds > 0) {
+          const { error } = await (supabase as any)
+            .from("content_chapters")
+            .update({ duration_seconds: seconds })
+            .eq("id", chapterId);
+          if (error) console.error("Failed to patch chapter duration:", error);
         }
-      }),
-    );
+      } catch (err: any) {
+        console.error(`[handleMultipleFiles] "${file.name}" failed:`, err);
+        toast.error(`Failed to upload "${file.name}": ${err.message ?? "Upload failed"}`);
+      } finally {
+        setChapterUpload(chIdx, null);
+      }
+    });
 
     setMultiUploading(false);
     if (multiUploadInputRef.current) multiUploadInputRef.current.value = "";
