@@ -5,7 +5,14 @@ import { Fragment, lazy, Suspense, useEffect, useMemo, useRef, useState } from "
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { slugify, type Category, type ContentItem, type ContentChapter } from "@/lib/categories";
+import {
+  slugify,
+  groupItemsBySection,
+  OTHER_CONTENT_SECTION_KEY,
+  type Category,
+  type ContentItem,
+  type ContentChapter,
+} from "@/lib/categories";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
 import { withActionWord } from "@/lib/duration";
@@ -655,7 +662,6 @@ function SectionsPanel({
   // exist — a category with nothing sectioned at all shows no section UI on
   // the public page either, so there's nothing to order it relative to.
   const hasUncategorized = items.some((i) => !i.section?.trim());
-  const OTHER_CONTENT_KEY = "uncategorized";
   const orderedLower = sectionOrder.map((s) => s.trim().toLowerCase());
   const bySection = new Map(distinctSections.map((s) => [s.trim().toLowerCase(), s]));
   // First item's section_es for each key — same "first item in the group"
@@ -669,7 +675,7 @@ function SectionsPanel({
     }),
   );
   const allKeys = new Set(bySection.keys());
-  if (hasUncategorized && distinctSections.length > 0) allKeys.add(OTHER_CONTENT_KEY);
+  if (hasUncategorized && distinctSections.length > 0) allKeys.add(OTHER_CONTENT_SECTION_KEY);
 
   // displayOrder holds lowercase keys (not display text) — the synthetic
   // "Other Content" bucket has no corresponding item.section value, so a
@@ -683,14 +689,14 @@ function SectionsPanel({
     }
   }
   for (const k of Array.from(allKeys)
-    .filter((k) => k !== OTHER_CONTENT_KEY && !seen.has(k))
+    .filter((k) => k !== OTHER_CONTENT_SECTION_KEY && !seen.has(k))
     .sort((a, b) => a.localeCompare(b))) {
     displayOrder.push(k);
   }
   // Defaults to last when the admin hasn't explicitly placed it yet — matches
   // the public page's default when "uncategorized" isn't in section_order.
-  if (allKeys.has(OTHER_CONTENT_KEY) && !seen.has(OTHER_CONTENT_KEY)) {
-    displayOrder.push(OTHER_CONTENT_KEY);
+  if (allKeys.has(OTHER_CONTENT_SECTION_KEY) && !seen.has(OTHER_CONTENT_SECTION_KEY)) {
+    displayOrder.push(OTHER_CONTENT_SECTION_KEY);
   }
 
   const reorderMut = useMutation({
@@ -808,7 +814,7 @@ function SectionsPanel({
       </p>
       <ul className="space-y-1">
         {displayOrder.map((key, idx) => {
-          const isOther = key === OTHER_CONTENT_KEY;
+          const isOther = key === OTHER_CONTENT_SECTION_KEY;
           const label = isOther ? "Other Content" : (bySection.get(key) ?? key);
           const editing = editingKey === key;
           return (
@@ -2424,19 +2430,75 @@ function ContentManager({
                     </ul>
                   );
                 }
+                // Group by section so the admin list mirrors what a resident
+                // actually sees — same grouping/order as the public category
+                // page (groupItemsBySection is shared with it). Falls back to
+                // one flat list, unchanged, when the category isn't using
+                // sections at all — matches the public page hiding section UI
+                // entirely in that case.
+                const sectionGroups = groupItemsBySection(order, sectionOrder);
+                const noSectionsUsed =
+                  sectionGroups.length <= 1 &&
+                  (sectionGroups[0]?.key ?? OTHER_CONTENT_SECTION_KEY) ===
+                    OTHER_CONTENT_SECTION_KEY;
+
+                if (noSectionsUsed) {
+                  return (
+                    <Suspense fallback={null}>
+                      <SortableList
+                        className="divide-y divide-border"
+                        dragHandleClassName="pl-5"
+                        items={order}
+                        onReorder={(next) => {
+                          setOrder(next as ContentItem[]);
+                          reorderMut.mutate(next as ContentItem[]);
+                        }}
+                        renderItem={(item) => renderItemRow(item as ContentItem)}
+                      />
+                    </Suspense>
+                  );
+                }
+
+                // Each section gets its own SortableList — dragging reorders
+                // within that section only (section membership itself is
+                // still set by editing the item, not by dragging across
+                // groups). Any drag flattens all groups back into one array,
+                // in the same section order shown here, and renumbers
+                // sort_order for the whole category via the existing
+                // reorderMut — identical to how the single flat list already
+                // renumbers everything on every drag.
                 return (
-                  <Suspense fallback={null}>
-                    <SortableList
-                      className="divide-y divide-border"
-                      dragHandleClassName="pl-5"
-                      items={order}
-                      onReorder={(next) => {
-                        setOrder(next as ContentItem[]);
-                        reorderMut.mutate(next as ContentItem[]);
-                      }}
-                      renderItem={(item) => renderItemRow(item as ContentItem)}
-                    />
-                  </Suspense>
+                  <div className="divide-y divide-border">
+                    {sectionGroups.map((group) => {
+                      const label =
+                        group.key === OTHER_CONTENT_SECTION_KEY
+                          ? "Other Content"
+                          : (group.items[0]?.section ?? group.key);
+                      return (
+                        <div key={group.key}>
+                          <p className="px-6 pt-4 pb-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            {label}{" "}
+                            <span className="font-normal normal-case">({group.items.length})</span>
+                          </p>
+                          <Suspense fallback={null}>
+                            <SortableList
+                              className="divide-y divide-border"
+                              dragHandleClassName="pl-5"
+                              items={group.items}
+                              onReorder={(nextGroupItems) => {
+                                const flattened = sectionGroups.flatMap((g) =>
+                                  g.key === group.key ? (nextGroupItems as ContentItem[]) : g.items,
+                                );
+                                setOrder(flattened);
+                                reorderMut.mutate(flattened);
+                              }}
+                              renderItem={(item) => renderItemRow(item as ContentItem)}
+                            />
+                          </Suspense>
+                        </div>
+                      );
+                    })}
+                  </div>
                 );
               })()}
             </div>

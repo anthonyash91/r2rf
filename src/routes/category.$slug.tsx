@@ -13,7 +13,13 @@ import { detectMedia, mediaKindFromType, type MediaKind } from "@/lib/read-statu
 import { isStreamPlaybackUrl } from "@/lib/storage-url";
 import { useHlsSource } from "@/hooks/use-hls-source";
 import { supabase } from "@/integrations/supabase/client";
-import type { Category, ContentItem, ContentChapter } from "@/lib/categories";
+import {
+  groupItemsBySection,
+  OTHER_CONTENT_SECTION_KEY,
+  type Category,
+  type ContentItem,
+  type ContentChapter,
+} from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
@@ -394,7 +400,7 @@ function CategoryPage() {
     // element is actually visible once we scroll to it.
     const targetItem = data.items.find((i) => i.id === itemId);
     if (targetItem) {
-      const key = (targetItem.section ?? "").trim().toLowerCase() || "uncategorized";
+      const key = (targetItem.section ?? "").trim().toLowerCase() || OTHER_CONTENT_SECTION_KEY;
       setCollapsedSections((prev) => {
         if (!prev.has(key)) return prev;
         const next = new Set(prev);
@@ -987,41 +993,18 @@ function CategoryPage() {
                 // "uncategorized" — the Other Content bucket — anywhere, not
                 // just last), with any used-but-unlisted section appended
                 // alphabetically and Other Content defaulting to last only
-                // when the admin hasn't explicitly positioned it.
-                const byKey = new Map<string, typeof displayItems>();
-                for (const item of displayItems) {
-                  const key = (item.section ?? "").trim().toLowerCase() || "uncategorized";
-                  const bucket = byKey.get(key);
-                  if (bucket) bucket.push(item);
-                  else byKey.set(key, [item]);
-                }
-                const orderedSections = (data?.category.section_order ?? []).map((s) =>
-                  s.trim().toLowerCase(),
-                );
-                const seenKeys = new Set<string>();
-                const groups: { key: string; items: typeof displayItems }[] = [];
-                for (const k of orderedSections) {
-                  const bucket = byKey.get(k);
-                  if (bucket) {
-                    groups.push({ key: k, items: bucket });
-                    seenKeys.add(k);
-                  }
-                }
-                for (const k of Array.from(byKey.keys())
-                  .filter((k) => k !== "uncategorized" && !seenKeys.has(k))
-                  .sort((a, b) => a.localeCompare(b))) {
-                  groups.push({ key: k, items: byKey.get(k)! });
-                }
-                if (byKey.has("uncategorized") && !seenKeys.has("uncategorized")) {
-                  groups.push({ key: "uncategorized", items: byKey.get("uncategorized")! });
-                }
+                // when the admin hasn't explicitly positioned it. Shared with
+                // the admin content list via groupItemsBySection so both stay
+                // in sync.
+                const groups = groupItemsBySection(displayItems, data?.category.section_order);
                 // No item in the category has a section set — don't show any
                 // section UI at all, just the flat list (as if the feature
                 // didn't exist). Section headers only start appearing once at
                 // least one item actually has a section; from then on, the
                 // leftover unsectioned items get their own "Other Content"
                 // header instead of disappearing into an unlabeled group.
-                const noSectionsUsed = groups.length === 1 && groups[0].key === "uncategorized";
+                const noSectionsUsed =
+                  groups.length === 1 && groups[0].key === OTHER_CONTENT_SECTION_KEY;
                 const firstItemId = groups[0]?.items[0]?.id;
                 return (
                   <>
@@ -1057,7 +1040,7 @@ function CategoryPage() {
                         {groups.map(({ key, items }) => {
                           const isCollapsed = !noSectionsUsed && collapsedSections.has(key);
                           const sectionLabel =
-                            key === "uncategorized"
+                            key === OTHER_CONTENT_SECTION_KEY
                               ? t("category.otherContent")
                               : pickLang(lang, items[0].section, items[0].section_es) ||
                                 items[0].section ||

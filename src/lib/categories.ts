@@ -82,6 +82,54 @@ export type ContentItem = {
   section_es?: string | null;
 };
 
+/** The pseudo-section key for items with no `section` set — rendered as
+ * "Other Content" on the public category page. */
+export const OTHER_CONTENT_SECTION_KEY = "uncategorized";
+
+/**
+ * Groups items by their `section` field (case-insensitively, trimmed) in
+ * display order: sections listed in `sectionOrder` first (in that order,
+ * including the OTHER_CONTENT_SECTION_KEY pseudo-section wherever it's been
+ * explicitly placed), then any used-but-unlisted section appended
+ * alphabetically, then Other Content defaulting to last only when it wasn't
+ * explicitly positioned in `sectionOrder`.
+ *
+ * Shared by the public category page and the admin content list so both
+ * stay in sync — the admin list should show items in the same section
+ * grouping/order a resident actually sees.
+ */
+export function groupItemsBySection<T extends { section?: string | null }>(
+  items: T[],
+  sectionOrder: string[] | null | undefined,
+): { key: string; items: T[] }[] {
+  const byKey = new Map<string, T[]>();
+  for (const item of items) {
+    const key = (item.section ?? "").trim().toLowerCase() || OTHER_CONTENT_SECTION_KEY;
+    const bucket = byKey.get(key);
+    if (bucket) bucket.push(item);
+    else byKey.set(key, [item]);
+  }
+  const orderedKeys = (sectionOrder ?? []).map((s) => s.trim().toLowerCase());
+  const seenKeys = new Set<string>();
+  const groups: { key: string; items: T[] }[] = [];
+  for (const k of orderedKeys) {
+    const bucket = byKey.get(k);
+    if (bucket && !seenKeys.has(k)) {
+      groups.push({ key: k, items: bucket });
+      seenKeys.add(k);
+    }
+  }
+  for (const k of Array.from(byKey.keys())
+    .filter((k) => k !== OTHER_CONTENT_SECTION_KEY && !seenKeys.has(k))
+    .sort((a, b) => a.localeCompare(b))) {
+    groups.push({ key: k, items: byKey.get(k)! });
+  }
+  if (byKey.has(OTHER_CONTENT_SECTION_KEY) && !seenKeys.has(OTHER_CONTENT_SECTION_KEY)) {
+    groups.push({ key: OTHER_CONTENT_SECTION_KEY, items: byKey.get(OTHER_CONTENT_SECTION_KEY)! });
+  }
+  return groups;
+}
+
 export function slugify(s: string) {
   return s
     .toLowerCase()
