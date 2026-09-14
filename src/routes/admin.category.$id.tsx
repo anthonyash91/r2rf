@@ -1285,6 +1285,7 @@ function ContentManager({
   }, [facilitiesData]);
   const [editing, setEditing] = useState<ContentItem | "new" | null>(null);
   const [order, setOrder] = useState<ContentItem[]>([]);
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
   const editorRef = useRef<HTMLDivElement | null>(null);
   const [pendingScrollId, setPendingScrollId] = useState<string | null>(null);
   useEffect(() => {
@@ -2474,31 +2475,53 @@ function ContentManager({
                         group.key === OTHER_CONTENT_SECTION_KEY
                           ? "Other Content"
                           : (group.items[0]?.section ?? group.key);
+                      const isCollapsed = collapsedSections.has(group.key);
                       return (
                         <div key={group.key}>
-                          <div className="flex items-center gap-2 border-l-4 border-[var(--color-accent)] bg-muted/60 px-5 py-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCollapsedSections((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(group.key)) next.delete(group.key);
+                                else next.add(group.key);
+                                return next;
+                              })
+                            }
+                            className="flex w-full items-center gap-2 border-l-4 border-[var(--color-accent)] bg-muted/60 px-5 py-3 text-left"
+                          >
+                            <ChevronDown
+                              className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${isCollapsed ? "-rotate-90" : ""}`}
+                            />
                             <p className="font-display text-base font-semibold text-foreground">
                               {label}
                             </p>
                             <span className="text-sm text-muted-foreground">
                               ({group.items.length})
                             </span>
+                          </button>
+                          {/* Always rendered (never unmounted) — the
+                          pendingScrollId highlight effect looks items up via
+                          data-item-id regardless of collapse state. */}
+                          <div className={isCollapsed ? "hidden" : ""}>
+                            <Suspense fallback={null}>
+                              <SortableList
+                                className="divide-y divide-border"
+                                dragHandleClassName="pl-5"
+                                items={group.items}
+                                onReorder={(nextGroupItems) => {
+                                  const flattened = sectionGroups.flatMap((g) =>
+                                    g.key === group.key
+                                      ? (nextGroupItems as ContentItem[])
+                                      : g.items,
+                                  );
+                                  setOrder(flattened);
+                                  reorderMut.mutate(flattened);
+                                }}
+                                renderItem={(item) => renderItemRow(item as ContentItem)}
+                              />
+                            </Suspense>
                           </div>
-                          <Suspense fallback={null}>
-                            <SortableList
-                              className="divide-y divide-border"
-                              dragHandleClassName="pl-5"
-                              items={group.items}
-                              onReorder={(nextGroupItems) => {
-                                const flattened = sectionGroups.flatMap((g) =>
-                                  g.key === group.key ? (nextGroupItems as ContentItem[]) : g.items,
-                                );
-                                setOrder(flattened);
-                                reorderMut.mutate(flattened);
-                              }}
-                              renderItem={(item) => renderItemRow(item as ContentItem)}
-                            />
-                          </Suspense>
                         </div>
                       );
                     })}
