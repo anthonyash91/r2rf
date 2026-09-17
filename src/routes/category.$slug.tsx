@@ -86,6 +86,27 @@ import { useRatings } from "@/hooks/use-ratings";
 import { useAchievements } from "@/hooks/use-achievements";
 import { useKeyboardInput } from "@/components/OnScreenKeyboard";
 
+/**
+ * Header bar for the content modals — the item's section (when it has one)
+ * above the item's own title, so it's always clear what's open and where it
+ * sits in the category. Doubles as the Radix DialogTitle, so each modal has
+ * exactly one (no separate sr-only title alongside it).
+ */
+function MediaModalHeader({ section, title }: { section: string | null; title: string }) {
+  return (
+    <div className="flex-shrink-0 border-b border-border bg-card py-3 pl-6 pr-12">
+      {section && (
+        <p className="truncate text-xs font-semibold uppercase tracking-wide text-[var(--color-accent)]">
+          {section}
+        </p>
+      )}
+      <DialogTitle className="break-words font-display text-base font-semibold leading-snug text-foreground">
+        {title}
+      </DialogTitle>
+    </div>
+  );
+}
+
 function CategoryError({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="min-h-screen flex flex-col">
@@ -212,6 +233,9 @@ function CategoryPage() {
     url: string;
     title: string;
     itemId: string;
+    /** The item's section label, already language-picked, for the modal
+     * header bar. Null for items with no section (the "Other Content" bucket). */
+    section: string | null;
   } | null;
   const [activeMedia, setActiveMedia] = useState<ActiveMedia>(null);
   const videoPlayer = activeMedia?.type === "video" ? activeMedia : null;
@@ -1126,7 +1150,18 @@ function CategoryPage() {
 
                                   const openMedia = () => {
                                     if (!mediaKind) return;
-                                    const payload = { url: mediaSrc ?? "", title, itemId: item.id };
+                                    const sectionLabel =
+                                      (
+                                        pickLang(lang, item.section, item.section_es) ||
+                                        item.section ||
+                                        ""
+                                      ).trim() || null;
+                                    const payload = {
+                                      url: mediaSrc ?? "",
+                                      title,
+                                      itemId: item.id,
+                                      section: sectionLabel,
+                                    };
                                     if (mediaKind === "video")
                                       setActiveMedia({ type: "video", ...payload });
                                     else if (mediaKind === "audio") {
@@ -1970,15 +2005,20 @@ function CategoryPage() {
           }
         }}
       >
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
-          <DialogTitle className="sr-only">{videoPlayer?.title ?? "Video"}</DialogTitle>
+        <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
+          <MediaModalHeader
+            section={videoPlayer?.section ?? null}
+            title={videoPlayer?.title ?? "Video"}
+          />
+          {/* The header's height is subtracted from the player's own max
+              height so the two together still fit the dialog's max height. */}
           {videoPlayer && (
             <video
               ref={setVideoEl}
               key={videoPlayer.url}
               controls
               autoPlay
-              className="w-full h-auto max-h-[calc(100dvh-2rem)] bg-black"
+              className="w-full h-auto max-h-[calc(100dvh-2rem-4.5rem)] bg-black"
             />
           )}
         </DialogContent>
@@ -2002,6 +2042,11 @@ function CategoryPage() {
         <DialogContent className="max-w-xl p-0 max-h-[calc(100dvh-2rem)] overflow-hidden flex flex-col">
           {/* Sticky header: title + custom audio player */}
           <div className="flex-shrink-0 px-6 pt-[18px] pb-4 border-b space-y-3">
+            {audioPlayer?.section && (
+              <p className="-mb-1 truncate text-xs font-semibold uppercase tracking-wide text-[var(--color-accent)]">
+                {audioPlayer.section}
+              </p>
+            )}
             <DialogTitle className="text-base font-semibold pr-8 break-words">
               {audioPlayer?.title ?? "Audio"}
             </DialogTitle>
@@ -2269,10 +2314,13 @@ function CategoryPage() {
           }
         }}
       >
-        <DialogContent className="w-[95vw] min-w-0 max-w-[95vw] sm:max-w-[95vw] p-0 overflow-hidden max-h-[calc(100dvh-2rem)] top-[1rem] translate-y-0 sm:top-[50%] sm:translate-y-[-50%]">
-          <DialogTitle className="sr-only">{pdfViewer?.title ?? "PDF"}</DialogTitle>
+        <DialogContent className="flex h-[min(85dvh,calc(100dvh-2rem))] w-[95vw] min-w-0 max-w-[95vw] flex-col gap-0 overflow-hidden p-0 max-h-[calc(100dvh-2rem)] top-[1rem] translate-y-0 sm:max-w-[95vw] sm:top-[50%] sm:translate-y-[-50%]">
+          <MediaModalHeader
+            section={pdfViewer?.section ?? null}
+            title={pdfViewer?.title ?? "PDF"}
+          />
           {pdfViewer && (
-            <div className="flex h-[min(85dvh,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] min-h-0 flex-col">
+            <div className="flex min-h-0 flex-1 flex-col">
               <Suspense
                 fallback={
                   <div className="p-8 text-sm text-muted-foreground h-[calc(100dvh-4rem)]">
@@ -2336,14 +2384,17 @@ function CategoryPage() {
           }
         }}
       >
-        <DialogContent className="max-w-5xl w-[95vw] p-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
-          <DialogTitle className="sr-only">{imageViewer?.title ?? "Image"}</DialogTitle>
+        <DialogContent className="max-w-5xl w-[95vw] p-0 gap-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
+          <MediaModalHeader
+            section={imageViewer?.section ?? null}
+            title={imageViewer?.title ?? "Image"}
+          />
           {imageViewer && (
             <img
               key={imageViewer.url}
               src={imageViewer.url}
               alt={imageViewer.title}
-              className="w-full h-auto max-h-[calc(100dvh-2rem)] object-contain bg-black"
+              className="w-full h-auto max-h-[calc(100dvh-2rem-4.5rem)] object-contain bg-black"
             />
           )}
         </DialogContent>
