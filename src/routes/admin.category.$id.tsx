@@ -1558,6 +1558,12 @@ function ContentManager({
     onError: (e: any) => toast.error(e.message),
   });
 
+  // The four bulk-update mutations below deliberately leave the multi-select
+  // editor open with its selection intact: an admin fixing up a batch usually
+  // wants to change several things about the same set of items (type, then
+  // section, then source…), and closing the editor after each one meant
+  // reselecting everything every time. Only delete clears the selection —
+  // those rows no longer exist.
   const updateTypeMut = useMutation({
     mutationFn: async ({ ids, type }: { ids: string[]; type: string }) => {
       const { error } = await supabase.from("content_items").update({ type }).in("id", ids);
@@ -1567,8 +1573,6 @@ function ContentManager({
     onSuccess: ({ count, type }) => {
       toast.success(`Updated ${count} ${count === 1 ? "item" : "items"} to ${type}`);
       invalidate();
-      bulk.clear();
-      bulk.exitEditMode();
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -1587,8 +1591,6 @@ function ContentManager({
         `Updated ${count} ${count === 1 ? "item" : "items"} to ${section || "Uncategorized"}`,
       );
       invalidate();
-      bulk.clear();
-      bulk.exitEditMode();
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -1605,8 +1607,6 @@ function ContentManager({
     onSuccess: ({ count, source }) => {
       toast.success(`Updated ${count} ${count === 1 ? "item" : "items"} to "${source}"`);
       invalidate();
-      bulk.clear();
-      bulk.exitEditMode();
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -1625,8 +1625,6 @@ function ContentManager({
         `${count} ${count === 1 ? "item" : "items"} ${exempt ? "exempted from" : "no longer exempt from"} tracking`,
       );
       invalidate();
-      bulk.clear();
-      bulk.exitEditMode();
     },
     onError: (e: any) => toast.error(e.message),
   });
