@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -155,6 +156,52 @@ function deriveValue(siteId: string): string {
     .replace(/^_+|_+$/g, "")
     .slice(0, 64);
 }
+
+// Alphabet for generated Site IDs: digits and uppercase letters with the
+// visually ambiguous ones removed (no O/0, no I/1) — these get read off a
+// screen, typed into a platform config, and pasted into URLs, so a misread
+// character costs a support round trip.
+const SITE_ID_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+const SITE_ID_PREFIX = "RTR";
+const SITE_ID_BODY_LENGTH = 8;
+
+function randomSiteId(): string {
+  const bytes = randomBytes(SITE_ID_BODY_LENGTH);
+  let body = "";
+  for (let i = 0; i < SITE_ID_BODY_LENGTH; i++) {
+    body += SITE_ID_ALPHABET[bytes[i] % SITE_ID_ALPHABET.length];
+  }
+  return `${SITE_ID_PREFIX}${body}`;
+}
+
+/**
+ * Mints a Site ID that no facility is currently using. Generated rather than
+ * admin-typed so it can't collide with the platform-issued IDs (S002001041
+ * and friends) and can't accidentally be a guessable word.
+ *
+ * Deliberately alphanumeric-only: a facility's `value` primary key is derived
+ * from its Site ID by lowercasing and replacing every non-alphanumeric run
+ * with an underscore, so keeping the ID alphanumeric makes the derived value
+ * a plain lowercase copy rather than something with stray underscores.
+ */
+export const generateSiteId = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { data: existing } = await (supabaseAdmin as any)
+      .from("facilities")
+      .select("site_id_hmac");
+    const used = new Set(
+      (existing ?? []).map((r: any) => r.site_id_hmac as string).filter(Boolean),
+    );
+    // 32^8 keyspace — a collision is vanishingly unlikely, but retry rather
+    // than hand back an ID that would fail the uniqueness check on save.
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const candidate = randomSiteId();
+      if (!used.has(hashSiteId(candidate))) return { siteId: candidate };
+    }
+    throw new Error("Could not generate an unused Site ID. Please try again.");
+  });
 
 export const addFacilities = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

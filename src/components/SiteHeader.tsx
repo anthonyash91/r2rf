@@ -9,7 +9,12 @@ import { Languages, Menu, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
-import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
+import {
+  useActiveFacilitySlug,
+  setActiveFacilitySlug,
+  useActiveFacilitySiteId,
+  setActiveFacilitySiteId,
+} from "@/lib/facility-context";
 import { useActiveInmatePin, setActiveInmatePin } from "@/lib/inmate-pin-context";
 import { useAuthChecking } from "@/lib/auth-checking-context";
 import { QK } from "@/lib/query-keys";
@@ -76,20 +81,31 @@ export function SiteHeader() {
   });
   const userFacilitySlug = isUser || isFacilityUser ? (facilityData?.slug ?? null) : null;
 
-  // Session-persisted facility slug (survives navigation away from the facility page)
+  // Session-persisted facility context (survives navigation away from the
+  // facility page). The value is what data is attributed to; the Site ID is
+  // what `?site=` links are built from — see facility-context.ts for why
+  // those can't be the same string.
   const persistedFacilitySlug = useActiveFacilitySlug();
+  const persistedFacilitySiteId = useActiveFacilitySiteId();
   const persistedPin = useActiveInmatePin();
 
-  // Write to session storage whenever a real facility source is discovered
+  // Write to session storage whenever a real facility source is discovered.
+  // Only the signed-in user's facility is written here: it's the one source
+  // that carries the resolved `value` (facilityData.facility) alongside its
+  // Site ID. The /facility/$slug route writes its own pair from its loader,
+  // which has both — writing the route slug here would store a Site ID where
+  // the facility value belongs.
   useEffect(() => {
-    const source = facilityRouteSlug || userFacilitySlug;
-    if (source) setActiveFacilitySlug(source);
-  }, [facilityRouteSlug, userFacilitySlug]);
+    if (facilityData?.facility) setActiveFacilitySlug(facilityData.facility);
+    if (userFacilitySlug) setActiveFacilitySiteId(userFacilitySlug);
+  }, [facilityData?.facility, userFacilitySlug]);
 
-  // Priority: URL slug → user's facility → persisted (session) → default
-  // Admins only follow URL slug (not persisted), so they aren't globally stuck to a facility
+  // Priority: URL slug → user's facility → persisted (session) → default.
+  // Admins only follow URL slug (not persisted), so they aren't globally stuck
+  // to a facility. Every consumer of this builds a `?site=` URL, so each
+  // source here must be a Site ID, never a facility value.
   const activeFacility =
-    facilityRouteSlug || userFacilitySlug || (isAdminUser ? null : persistedFacilitySlug);
+    facilityRouteSlug || userFacilitySlug || (isAdminUser ? null : persistedFacilitySiteId);
 
   const handleSignOut = async () => {
     // PIN is intentionally kept in session so the sign-in form re-locks to

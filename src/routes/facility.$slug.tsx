@@ -7,7 +7,7 @@ import type { Category } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { HomePageView } from "@/components/HomePageView";
 import { SiteMessageBanner } from "@/components/SiteMessageBanner";
-import { setActiveFacilitySlug } from "@/lib/facility-context";
+import { setActiveFacilitySlug, setActiveFacilitySiteId } from "@/lib/facility-context";
 import { setActiveInmatePin } from "@/lib/inmate-pin-context";
 import { getFacilityBySiteId } from "@/lib/facilities.functions";
 
@@ -33,7 +33,11 @@ function FacilityPage() {
     const prevSlug =
       typeof window !== "undefined" ? window.sessionStorage.getItem("active-facility-slug") : null;
 
-    setActiveFacilitySlug(facilitySiteId);
+    // The facility's own `value`, not the URL's Site ID — see the comment in
+    // routes/index.tsx: the two diverge once a facility's Site ID is
+    // regenerated, and `value` is what every downstream record keys off.
+    setActiveFacilitySlug(facilityValue);
+    setActiveFacilitySiteId(facilitySiteId);
 
     const pin =
       typeof window !== "undefined"
@@ -43,13 +47,13 @@ function FacilityPage() {
     if (pin) {
       // Explicit PIN in URL — always store it.
       setActiveInmatePin(pin);
-    } else if (prevSlug !== null && prevSlug !== facilitySiteId) {
+    } else if (prevSlug !== null && prevSlug !== facilityValue) {
       // Navigated to a genuinely different facility with no PIN — clear.
       setActiveInmatePin(null);
     }
     // Same facility returning without ?user= (or first visit with no PIN):
     // leave whatever is already in session storage untouched.
-  }, [facilitySiteId]);
+  }, [facilitySiteId, facilityValue]);
 
   const { data: categories = [], isLoading } = useQuery({
     queryKey: QK.facilityCategories(facilityValue),

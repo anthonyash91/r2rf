@@ -12,7 +12,7 @@ import { SiteMessageBanner } from "@/components/SiteMessageBanner";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useServerFn } from "@tanstack/react-start";
-import { setActiveFacilitySlug } from "@/lib/facility-context";
+import { setActiveFacilitySlug, setActiveFacilitySiteId } from "@/lib/facility-context";
 import { setActiveInmatePin } from "@/lib/inmate-pin-context";
 import { setActiveFirstName, setActiveLastName } from "@/lib/signup-prefill-context";
 import { getFacilityBySiteId } from "@/lib/facilities.functions";
@@ -114,9 +114,18 @@ function IndexContent() {
     const prevSlug =
       typeof window !== "undefined" ? window.sessionStorage.getItem("active-facility-slug") : null;
 
-    setActiveFacilitySlug(site);
+    // Store the facility's own `value`, not the raw ?site= param. The two
+    // only coincide while a facility's value still matches the Site ID it was
+    // originally derived from — regenerating a Site ID for an existing
+    // facility breaks that, and `value` deliberately never changes because
+    // user_profiles, content restrictions and every analytics row key off it.
+    // Writing the raw param here would attribute engagement to a facility
+    // slug that doesn't exist.
+    const resolvedValue = siteFacility.value as string;
+    setActiveFacilitySlug(resolvedValue);
+    setActiveFacilitySiteId(site);
 
-    if (!inmatePin && prevSlug !== null && prevSlug !== site) {
+    if (!inmatePin && prevSlug !== null && prevSlug !== resolvedValue) {
       setActiveInmatePin(null);
     }
   }, [siteFacility, site, inmatePin]);

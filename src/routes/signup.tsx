@@ -12,7 +12,11 @@ import { getSignupChallenge, signupUser, checkInmatePin } from "@/lib/user-signu
 import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
 import { syntheticEmail } from "@/lib/user-signup";
 import { listFacilities, getFacilityBySiteId } from "@/lib/facilities.functions";
-import { useActiveFacilitySlug, setActiveFacilitySlug } from "@/lib/facility-context";
+import {
+  setActiveFacilitySlug,
+  useActiveFacilitySiteId,
+  setActiveFacilitySiteId,
+} from "@/lib/facility-context";
 import { useActiveInmatePin, setActiveInmatePin } from "@/lib/inmate-pin-context";
 import {
   useActiveFirstName,
@@ -88,7 +92,7 @@ function SignupPageContent() {
   // facility lock and PIN context work even without visiting the index page
   // first.
   useEffect(() => {
-    if (siteParam) setActiveFacilitySlug(siteParam);
+    if (siteParam) setActiveFacilitySiteId(siteParam);
     if (userParam) setActiveInmatePin(userParam);
     if (platformIdentity?.firstName) setActiveFirstName(platformIdentity.firstName);
     if (platformIdentity?.lastName) setActiveLastName(platformIdentity.lastName);
@@ -108,7 +112,9 @@ function SignupPageContent() {
   });
   const facilities = facilitiesQuery.data?.facilities ?? [];
 
-  const activeFacilitySlug = useActiveFacilitySlug();
+  // The Site ID (not the facility value): getFacilityBySiteId hashes this
+  // string and matches it against facilities.site_id_hmac.
+  const activeSiteId = useActiveFacilitySiteId();
   const activeInmatePin = useActiveInmatePin();
 
   const getFacilityFn = useServerFn(getFacilityBySiteId);
@@ -117,10 +123,10 @@ function SignupPageContent() {
   // server-side so it never touches the DB as plaintext, and correctly
   // returns null for invalid/unrecognised site IDs.
   const lockedFacilityQuery = useQuery({
-    queryKey: ["lockedFacility", activeFacilitySlug],
-    enabled: !!activeFacilitySlug,
+    queryKey: ["lockedFacility", activeSiteId],
+    enabled: !!activeSiteId,
     staleTime: 5 * 60 * 1000,
-    queryFn: () => getFacilityFn({ data: { siteId: activeFacilitySlug! } }),
+    queryFn: () => getFacilityFn({ data: { siteId: activeSiteId! } }),
   });
   // Map server result to the Facility shape the form expects
   const lockedFacility: Facility | null = lockedFacilityQuery.data
@@ -132,7 +138,14 @@ function SignupPageContent() {
         siteId: null,
       }
     : null;
-  const lockedFacilityResolved = !activeFacilitySlug || !lockedFacilityQuery.isLoading;
+  const lockedFacilityResolved = !activeSiteId || !lockedFacilityQuery.isLoading;
+
+  // Persist the resolved facility value for attribution once the Site ID
+  // lookup returns — the two are different strings whenever a facility's
+  // Site ID has been regenerated (see facility-context.ts).
+  useEffect(() => {
+    if (lockedFacilityQuery.data?.value) setActiveFacilitySlug(lockedFacilityQuery.data.value);
+  }, [lockedFacilityQuery.data?.value]);
 
   // Fires after sign-in or sign-up completes and auth state updates.
   useEffect(() => {
@@ -184,7 +197,7 @@ function SignupPageContent() {
             lockedFacility={lockedFacility}
             lockedFacilityResolved={lockedFacilityResolved}
             facilities={facilities}
-            activeFacilitySlug={activeFacilitySlug}
+            activeSiteId={activeSiteId}
             activeInmatePin={activeInmatePin}
             lockedFirstName={lockedFirstName}
             lockedLastName={lockedLastName}
@@ -206,7 +219,7 @@ function SignInSignUpForm({
   lockedFacility,
   lockedFacilityResolved,
   facilities,
-  activeFacilitySlug,
+  activeSiteId,
   activeInmatePin,
   lockedFirstName,
   lockedLastName,
@@ -216,7 +229,7 @@ function SignInSignUpForm({
   lockedFacility: Facility | null;
   lockedFacilityResolved: boolean;
   facilities: Facility[];
-  activeFacilitySlug: string | null;
+  activeSiteId: string | null;
   activeInmatePin: string | null;
   lockedFirstName: string | null;
   lockedLastName: string | null;
@@ -286,10 +299,16 @@ function SignInSignUpForm({
       checkPin({ data: { facilityValue: lockedFacility!.value, inmatePin: activeInmatePin! } }),
   });
 
-  const signupBlockReason: "no-facility" | "no-pin" | "pin-checking" | "pin-taken" | null =
+  const signupBlockReason:
+    | "no-facility"
+    | "no-pin"
+    | "pin-invalid"
+    | "pin-checking"
+    | "pin-taken"
+    | null =
     mode !== "sign-up"
       ? null
-      : !activeFacilitySlug
+      : !activeSiteId
         ? "no-facility"
         : !lockedFacilityResolved
           ? "pin-checking"
@@ -297,11 +316,18 @@ function SignInSignUpForm({
             ? "no-facility"
             : !activeInmatePin
               ? "no-pin"
-              : pinCheckQuery.isLoading
-                ? "pin-checking"
-                : pinCheckQuery.data?.available === false
-                  ? "pin-taken"
-                  : null;
+              : // A facility link carries `?user={{apin}}` for the platform to
+                // substitute. If it arrives unsubstituted (or otherwise
+                // non-numeric) the server would reject it at the very end with
+                // "Inmate PIN must be numbers only" — catch it up front with a
+                // message that points at the actual problem.
+                !/^\d+$/.test(activeInmatePin)
+                ? "pin-invalid"
+                : pinCheckQuery.isLoading
+                  ? "pin-checking"
+                  : pinCheckQuery.data?.available === false
+                    ? "pin-taken"
+                    : null;
 
   const challengeQuery = useQuery({
     queryKey: QK.signupChallenge,
@@ -419,6 +445,7 @@ function SignInSignUpForm({
           if (roleRow) {
             // Privileged — clear facility/PIN context so nav links don't use the shared-device flow.
             setActiveFacilitySlug(null);
+            setActiveFacilitySiteId(null);
             setActiveInmatePin(null);
           } else if (!lockedFacility) {
             await supabase.auth.signOut();
@@ -489,6 +516,12 @@ function SignInSignUpForm({
                 facility.
               </div>
             )}
+            {signupBlockReason === "pin-invalid" && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
+                This sign-up link isn't set up correctly — the PIN in the address is missing or
+                isn't a number. Please contact facility staff.
+              </div>
+            )}
             {signupBlockReason === "no-facility" && (
               <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive leading-snug">
                 {t("signup.noFacilityBlock")}
@@ -513,6 +546,7 @@ function SignInSignUpForm({
               (signupBlockReason === "pin-taken" ||
                 signupBlockReason === "no-facility" ||
                 signupBlockReason === "no-pin" ||
+                signupBlockReason === "pin-invalid" ||
                 signupBlockReason === "pin-checking")
             ) && (
               <>

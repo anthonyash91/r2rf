@@ -15,6 +15,9 @@ import {
   Link2,
   LayoutGrid,
   MessageSquare,
+  Copy,
+  Check,
+  Sparkles,
 } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
 import { PageHeader } from "@/components/PageHeader";
@@ -28,14 +31,24 @@ import {
   updateFacility,
   deleteFacility,
   deleteFacilities,
+  generateSiteId,
 } from "@/lib/facilities.functions";
 
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { IconButton } from "@/components/IconButton";
+import { IconButton, iconButtonClassName } from "@/components/IconButton";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { QK } from "@/lib/query-keys";
+
+// The link an admin hands to the tablet platform. `{{apin}}` is left in
+// literally — the platform substitutes each resident's own PIN into it at
+// runtime, which is why one link serves an entire facility. `language` is
+// included so the default is explicit and easy to switch to `es` by hand.
+function buildFacilityLink(siteId: string): string {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  return `${origin}/?site=${siteId}&user={{apin}}&language=en`;
+}
 
 export const Route = createFileRoute("/admin/facilities")({
   beforeLoad: requireStrictAdminBeforeLoad,
@@ -63,6 +76,37 @@ function AdminFacilitiesPage() {
   const [page, setPage] = useState(0);
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [generatingFor, setGeneratingFor] = useState<"add" | "edit" | null>(null);
+  const genSiteId = useServerFn(generateSiteId);
+
+  // Mints an unused Site ID server-side (uniqueness is checked against every
+  // facility's stored hash, which only the server can read) and drops it into
+  // whichever field asked for it.
+  async function handleGenerateSiteId(target: "add" | "edit") {
+    setGeneratingFor(target);
+    try {
+      const { siteId } = await genSiteId();
+      if (target === "add") setNewSiteId(siteId);
+      else setEditingSiteId(siteId);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not generate a Site ID");
+    } finally {
+      setGeneratingFor(null);
+    }
+  }
+
+  async function handleCopyLink(facilityId: string, siteId: string) {
+    const link = buildFacilityLink(siteId);
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedId(facilityId);
+      toast.success("Link copied");
+      window.setTimeout(() => setCopiedId((c) => (c === facilityId ? null : c)), 2000);
+    } catch {
+      toast.error("Couldn't copy — select the link and copy manually.");
+    }
+  }
 
   const facilitiesQuery = useQuery({
     queryKey: QK.facilitiesWithStats,
@@ -199,12 +243,28 @@ function AdminFacilitiesPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Site ID</label>
-                <input
-                  value={newSiteId}
-                  onChange={(e) => setNewSiteId(e.target.value)}
-                  placeholder="e.g. S002001041"
-                  className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-                />
+                <div className="flex gap-2">
+                  <input
+                    value={newSiteId}
+                    onChange={(e) => setNewSiteId(e.target.value)}
+                    placeholder="e.g. S002001041"
+                    className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+                  />
+                  <LoadingButton
+                    type="button"
+                    variant="secondary"
+                    onClick={() => handleGenerateSiteId("add")}
+                    pending={generatingFor === "add"}
+                    pendingText="…"
+                    icon={<Sparkles className="h-4 w-4" />}
+                    className="shrink-0 whitespace-nowrap"
+                  >
+                    Generate
+                  </LoadingButton>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Paste the facility's platform Site ID, or generate a custom one.
+                </p>
               </div>
             </div>
             <div className="flex gap-2 justify-end">
@@ -361,12 +421,25 @@ function AdminFacilitiesPage() {
                             className="flex-1 min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm"
                             autoFocus
                           />
-                          <input
-                            value={editingSiteId}
-                            onChange={(e) => setEditingSiteId(e.target.value)}
-                            placeholder="Site ID (e.g. S002001041)"
-                            className="flex-1 min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-                          />
+                          <div className="flex flex-1 min-w-0 gap-2">
+                            <input
+                              value={editingSiteId}
+                              onChange={(e) => setEditingSiteId(e.target.value)}
+                              placeholder="Site ID (e.g. S002001041)"
+                              className="flex-1 min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
+                            />
+                            <LoadingButton
+                              type="button"
+                              variant="secondary"
+                              onClick={() => handleGenerateSiteId("edit")}
+                              pending={generatingFor === "edit"}
+                              pendingText="…"
+                              icon={<Sparkles className="h-4 w-4" />}
+                              className="shrink-0 whitespace-nowrap"
+                            >
+                              Generate
+                            </LoadingButton>
+                          </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <LoadingButton variant="secondary" onClick={() => setEditingId(null)}>
                               Cancel
@@ -416,11 +489,45 @@ function AdminFacilitiesPage() {
                                     search={{ site: f.siteId }}
                                     className="hover:text-foreground hover:underline font-mono"
                                   >
-                                    /?site={f.siteId}
+                                    Open as this facility
                                   </Link>
                                 </span>
                               )}
                             </div>
+                            {f.siteId && (
+                              <div className="space-y-1 pt-1">
+                                <p className="text-xs font-medium text-foreground">Facility link</p>
+                                <div className="flex items-start gap-2">
+                                  <code className="min-w-0 flex-1 break-all rounded-md border border-border bg-muted/50 px-2.5 py-1.5 font-mono text-xs leading-relaxed text-foreground">
+                                    {buildFacilityLink(f.siteId)}
+                                  </code>
+                                  <button
+                                    type="button"
+                                    aria-label="Copy facility link"
+                                    title={copiedId === f.id ? "Copied" : "Copy link"}
+                                    onClick={() => handleCopyLink(f.id, f.siteId!)}
+                                    className={iconButtonClassName(
+                                      "default",
+                                      "shrink-0 cursor-pointer",
+                                    )}
+                                  >
+                                    {copiedId === f.id ? (
+                                      <Check className="h-4 w-4 text-[var(--color-accent)]" />
+                                    ) : (
+                                      <Copy className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                  Share as-is — the platform replaces{" "}
+                                  <code className="font-mono">{"{{apin}}"}</code> with each
+                                  resident's own PIN. Change{" "}
+                                  <code className="font-mono">language=en</code> to{" "}
+                                  <code className="font-mono">es</code> for Spanish.
+                                </p>
+                              </div>
+                            )}
+
                             {(f.customCategories?.length ?? 0) > 0 && (
                               <div className="pt-1 space-y-1">
                                 <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
