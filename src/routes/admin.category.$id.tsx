@@ -939,12 +939,15 @@ function SectionsPanel({
 type BulkReviewSavePayload = {
   id: string;
   title: string;
+  title_es: string;
   type: string;
   source: string;
+  source_es: string;
   duration: string;
   section: string | null;
   section_es: string | null;
   description: string;
+  description_es: string;
   published: boolean;
   exempt_from_progress: boolean;
 };
@@ -998,12 +1001,15 @@ function BulkReviewPanel({
         next[item.id] = {
           id: item.id,
           title: item.title,
+          title_es: item.title_es ?? "",
           type: item.type,
           source: item.source ?? "",
+          source_es: item.source_es ?? "",
           duration: item.duration ?? "",
           section: item.section ?? null,
           section_es: item.section_es ?? null,
           description: item.description ?? "",
+          description_es: item.description_es ?? "",
           published: true,
           exempt_from_progress: item.exempt_from_progress ?? false,
         };
@@ -1090,6 +1096,10 @@ function BulkReviewCard({
   const generateDesc = useServerFn(generateContentDescription);
   const [generatingDesc, setGeneratingDesc] = useState(false);
   const [durationEstimating, setDurationEstimating] = useState(false);
+  const { run: runTranslate, busy: translating } = useTranslateToSpanish();
+  const [showEs, setShowEs] = useState(
+    !!(draft.title_es || draft.description_es || draft.source_es),
+  );
   const canRecalculateDuration =
     extOf(url, null) === "pdf" ||
     !!extractStreamVideoId(url) ||
@@ -1214,6 +1224,49 @@ function BulkReviewCard({
           className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
         />
       </label>
+
+      <TranslationPanel
+        open={showEs}
+        onOpenChange={setShowEs}
+        busy={translating}
+        headingLevel="h4"
+        headingClassName="text-sm font-semibold"
+        addLabel="+ Add Spanish translation"
+        onTranslate={() => {
+          runTranslate(
+            { title: draft.title, description: draft.description, source: draft.source },
+            (t) => {
+              onChange({
+                ...(t.title ? { title_es: t.title } : {}),
+                ...(t.description ? { description_es: t.description } : {}),
+                ...(t.source ? { source_es: t.source } : {}),
+              });
+            },
+            "Content item metadata in a learning library",
+          );
+        }}
+      >
+        <LabeledInput
+          label="Title (ES)"
+          value={draft.title_es}
+          onChange={(v) => onChange({ title_es: v })}
+        />
+        <LabeledInput
+          label="Source (ES)"
+          value={draft.source_es}
+          onChange={(v) => onChange({ source_es: v })}
+        />
+        <label className="block">
+          <span className="text-sm font-medium">Description (ES)</span>
+          <textarea
+            rows={2}
+            value={draft.description_es}
+            onChange={(e) => onChange({ description_es: e.target.value })}
+            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+          />
+        </label>
+      </TranslationPanel>
+
       <label className="flex items-center gap-1.5 pt-1 text-sm">
         <input
           type="checkbox"
@@ -1815,12 +1868,15 @@ function ContentManager({
             .from("content_items")
             .update({
               title: d.title.trim() || d.title,
+              title_es: d.title_es,
               type: d.type,
               source: d.source,
+              source_es: d.source_es,
               duration: d.duration,
               section: d.section,
               section_es: d.section_es,
               description: d.description,
+              description_es: d.description_es,
               published: d.published,
               exempt_from_progress: d.exempt_from_progress,
             })
