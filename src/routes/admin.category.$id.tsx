@@ -1042,11 +1042,11 @@ function BulkReviewPanel({
   if (reviewItems.length === 0) return null;
 
   return (
-    <div className="mb-4 rounded-xl border border-border bg-muted/30 p-4">
+    <div className="mb-4 rounded-xl border border-border bg-muted/30 p-5">
       <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
         Review new uploads ({reviewItems.length})
       </p>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         {reviewItems.map((item) => {
           const draft = drafts[item.id];
           if (!draft) return null;
@@ -1164,7 +1164,7 @@ function BulkReviewCard({
   }
 
   return (
-    <div className="space-y-2 rounded-lg border border-border bg-card px-4 pt-4 pb-3">
+    <div className="space-y-3 rounded-lg border border-border bg-card px-5 pt-5 pb-4">
       <div className="flex items-center justify-between gap-2">
         <span className="truncate text-xs text-muted-foreground" title={fileName}>
           {fileName}
