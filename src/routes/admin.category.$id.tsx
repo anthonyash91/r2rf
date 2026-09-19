@@ -1046,27 +1046,34 @@ function BulkReviewPanel({
       <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
         Review new uploads ({reviewItems.length})
       </p>
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* CSS multi-column masonry, not grid: a plain grid stretches every
+          card in a row to match the tallest one, so opening one card's
+          Spanish translation panel visually inflated its row-mate too, even
+          though that card's own content hadn't changed. Columns give each
+          card an independent height — break-inside-avoid keeps a single
+          card from being split across the column break. */}
+      <div className="columns-1 gap-4 sm:columns-2">
         {reviewItems.map((item) => {
           const draft = drafts[item.id];
           if (!draft) return null;
           return (
-            <BulkReviewCard
-              key={item.id}
-              fileName={item.file_name ?? item.title}
-              url={item.url ?? ""}
-              itemFolder={item.storage_folder ?? item.id}
-              draft={draft}
-              onChange={(patch) => updateDraft(item.id, patch)}
-              categoryName={categoryName}
-              categorySlug={categorySlug}
-              typeOptions={typeOptions}
-              existingSections={existingSections}
-              sourceSuggestions={sourceSuggestions}
-              collectionId={collectionId}
-              onCollectionCreated={onCollectionCreated}
-              onDismiss={() => onDismiss(item.id)}
-            />
+            <div key={item.id} className="mb-4 break-inside-avoid">
+              <BulkReviewCard
+                fileName={item.file_name ?? item.title}
+                url={item.url ?? ""}
+                itemFolder={item.storage_folder ?? item.id}
+                draft={draft}
+                onChange={(patch) => updateDraft(item.id, patch)}
+                categoryName={categoryName}
+                categorySlug={categorySlug}
+                typeOptions={typeOptions}
+                existingSections={existingSections}
+                sourceSuggestions={sourceSuggestions}
+                collectionId={collectionId}
+                onCollectionCreated={onCollectionCreated}
+                onDismiss={() => onDismiss(item.id)}
+              />
+            </div>
           );
         })}
       </div>
