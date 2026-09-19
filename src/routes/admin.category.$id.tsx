@@ -948,6 +948,12 @@ type BulkReviewSavePayload = {
   section_es: string | null;
   description: string;
   description_es: string;
+  file_url_es: string | null;
+  file_name_es: string | null;
+  /** Old file_url_es values superseded by a new upload during this review
+   * session — deleted from storage only after this item's own save succeeds
+   * (see saveAllReviewMut), never written to the database itself. */
+  pendingDeleteUrls: string[];
   published: boolean;
   exempt_from_progress: boolean;
 };
@@ -964,9 +970,12 @@ function BulkReviewPanel({
   ids,
   items,
   categoryName,
+  categorySlug,
   typeOptions,
   existingSections,
   sourceSuggestions,
+  collectionId,
+  onCollectionCreated,
   onSaveAll,
   saving,
   onDismiss,
@@ -975,9 +984,12 @@ function BulkReviewPanel({
   ids: string[];
   items: ContentItem[];
   categoryName: string;
+  categorySlug: string;
   typeOptions: string[];
   existingSections: string[];
   sourceSuggestions: string[];
+  collectionId: string | null;
+  onCollectionCreated: (id: string) => void;
   onSaveAll: (payloads: BulkReviewSavePayload[]) => void;
   saving: boolean;
   onDismiss: (id: string) => void;
@@ -1010,6 +1022,9 @@ function BulkReviewPanel({
           section_es: item.section_es ?? null,
           description: item.description ?? "",
           description_es: item.description_es ?? "",
+          file_url_es: item.file_url_es ?? null,
+          file_name_es: item.file_name_es ?? null,
+          pendingDeleteUrls: [],
           published: true,
           exempt_from_progress: item.exempt_from_progress ?? false,
         };
@@ -1040,12 +1055,16 @@ function BulkReviewPanel({
               key={item.id}
               fileName={item.file_name ?? item.title}
               url={item.url ?? ""}
+              itemFolder={item.storage_folder ?? item.id}
               draft={draft}
               onChange={(patch) => updateDraft(item.id, patch)}
               categoryName={categoryName}
+              categorySlug={categorySlug}
               typeOptions={typeOptions}
               existingSections={existingSections}
               sourceSuggestions={sourceSuggestions}
+              collectionId={collectionId}
+              onCollectionCreated={onCollectionCreated}
               onDismiss={() => onDismiss(item.id)}
             />
           );
@@ -1075,22 +1094,30 @@ function BulkReviewPanel({
 function BulkReviewCard({
   fileName,
   url,
+  itemFolder,
   draft,
   onChange,
   categoryName,
+  categorySlug,
   typeOptions,
   existingSections,
   sourceSuggestions,
+  collectionId,
+  onCollectionCreated,
   onDismiss,
 }: {
   fileName: string;
   url: string;
+  itemFolder: string;
   draft: BulkReviewSavePayload;
   onChange: (patch: Partial<BulkReviewSavePayload>) => void;
   categoryName: string;
+  categorySlug: string;
   typeOptions: string[];
   existingSections: string[];
   sourceSuggestions: string[];
+  collectionId: string | null;
+  onCollectionCreated: (id: string) => void;
   onDismiss: () => void;
 }) {
   const generateDesc = useServerFn(generateContentDescription);
@@ -1264,6 +1291,37 @@ function BulkReviewCard({
             onChange={(e) => onChange({ description_es: e.target.value })}
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
           />
+        </label>
+        <label className="block">
+          <span className="text-sm font-medium">File (ES, optional)</span>
+          <MediaUploader
+            className="mt-1"
+            existingFileUrl={draft.file_url_es ?? undefined}
+            // Old file replaced during this review session — queued on the
+            // draft itself so saveAllReviewMut only deletes it once this
+            // specific item's own save has actually succeeded.
+            onPendingDelete={(oldUrl) =>
+              onChange({ pendingDeleteUrls: [...draft.pendingDeleteUrls, oldUrl] })
+            }
+            categorySlug={categorySlug}
+            itemFolder={itemFolder}
+            language="spanish"
+            itemTitle={`${draft.title || "Untitled"} (ES)`}
+            collectionName={categorySlug}
+            collectionId={collectionId}
+            onCollectionCreated={onCollectionCreated}
+            onUploaded={(u, name) => onChange({ file_url_es: u, file_name_es: name ?? null })}
+          >
+            <input
+              type="url"
+              placeholder="https://…"
+              value={draft.file_url_es ?? ""}
+              onChange={(e) =>
+                onChange({ file_url_es: e.target.value.trim() ? e.target.value : null })
+              }
+              className="min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+            />
+          </MediaUploader>
         </label>
       </TranslationPanel>
 
@@ -1877,11 +1935,22 @@ function ContentManager({
               section_es: d.section_es,
               description: d.description,
               description_es: d.description_es,
+              file_url_es: d.file_url_es,
+              file_name_es: d.file_name_es,
               published: d.published,
               exempt_from_progress: d.exempt_from_progress,
             })
             .eq("id", d.id);
           if (error) throw error;
+          // Only delete an old ES file once THIS item's own save has
+          // succeeded — a failed save leaves the row still pointing at the
+          // old file, so deleting it here would orphan a still-referenced
+          // URL. Fire-and-forget: a failed delete just wastes storage.
+          if (d.pendingDeleteUrls.length > 0) {
+            Promise.all(d.pendingDeleteUrls.map((url) => deleteOldFile({ data: { url } }))).catch(
+              () => {},
+            );
+          }
         }),
       );
       return {
@@ -2013,9 +2082,12 @@ function ContentManager({
         ids={bulkReviewIds}
         items={items}
         categoryName={categoryName}
+        categorySlug={categorySlug}
         typeOptions={bulkTypeOptions}
         existingSections={existingSections}
         sourceSuggestions={sourceSuggestions}
+        collectionId={categoryCollectionId}
+        onCollectionCreated={persistCategoryCollectionId}
         saving={saveAllReviewMut.isPending}
         onSaveAll={(payloads) => saveAllReviewMut.mutate(payloads)}
         onDismiss={(id) => setBulkReviewIds((prev) => prev.filter((x) => x !== id))}
