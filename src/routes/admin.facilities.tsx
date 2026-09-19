@@ -15,8 +15,6 @@ import {
   Link2,
   LayoutGrid,
   MessageSquare,
-  Copy,
-  Check,
   Sparkles,
 } from "lucide-react";
 import { LoadingButton } from "@/components/LoadingButton";
@@ -36,7 +34,7 @@ import {
 
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { IconButton, iconButtonClassName } from "@/components/IconButton";
+import { IconButton } from "@/components/IconButton";
 import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { QK } from "@/lib/query-keys";
@@ -497,25 +495,20 @@ function AdminFacilitiesPage() {
                             {f.siteId && (
                               <div className="space-y-1 pt-1">
                                 <p className="text-xs font-medium text-foreground">Facility link</p>
-                                <div className="flex items-start gap-2">
-                                  <code className="min-w-0 flex-1 break-all rounded-md border border-border bg-muted/50 px-2.5 py-1.5 font-mono text-xs leading-relaxed text-foreground">
+                                <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 py-1.5 pl-2.5 pr-1.5">
+                                  <code
+                                    className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-xs leading-relaxed text-foreground [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                                    title={buildFacilityLink(f.siteId)}
+                                  >
                                     {buildFacilityLink(f.siteId)}
                                   </code>
                                   <button
                                     type="button"
                                     aria-label="Copy facility link"
-                                    title={copiedId === f.id ? "Copied" : "Copy link"}
                                     onClick={() => handleCopyLink(f.id, f.siteId!)}
-                                    className={iconButtonClassName(
-                                      "default",
-                                      "shrink-0 cursor-pointer",
-                                    )}
+                                    className="shrink-0 cursor-pointer rounded border border-input bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted"
                                   >
-                                    {copiedId === f.id ? (
-                                      <Check className="h-4 w-4 text-[var(--color-accent)]" />
-                                    ) : (
-                                      <Copy className="h-4 w-4" />
-                                    )}
+                                    {copiedId === f.id ? "Copied" : "Copy"}
                                   </button>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
