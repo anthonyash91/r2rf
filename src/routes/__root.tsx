@@ -17,6 +17,7 @@ import { AuthCheckingProvider } from "@/lib/auth-checking-context";
 import { installGlobalErrorReporter, reportError } from "@/lib/client-error-reporter";
 import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useI18n } from "@/lib/i18n";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -30,22 +31,21 @@ function NotFoundComponent() {
   useLayoutEffect(() => {
     setActiveSite(window.sessionStorage.getItem("active-facility-slug"));
   }, []);
+  const { t } = useI18n();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">{t("notFound.title")}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t("notFound.body")}</p>
         <div className="mt-6">
           <Link
             to="/"
             search={activeSite ? { site: activeSite } : {}}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            {t("notFound.goHome")}
           </Link>
         </div>
       </div>
@@ -62,14 +62,22 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
   const router = useRouter();
 
+  // This is the root, catch-all error boundary — it can render for a crash
+  // that originated anywhere in the tree, including inside I18nProvider
+  // itself. Calling useI18n() here would throw a second error ("must be
+  // used inside I18nProvider") if that's ever what broke, defeating the
+  // point of a last-resort fallback. Showing both languages as static text
+  // is the one thing that can't itself fail this way.
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          This page didn't load / Esta página no cargó
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Something went wrong on our end. You can try refreshing or head back home.
+          <br />
+          Ocurrió un error de nuestra parte. Intenta actualizar la página o volver al inicio.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -79,13 +87,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Try again / Reintentar
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Go home / Ir al inicio
           </a>
         </div>
       </div>

@@ -421,6 +421,12 @@ export const DEFAULT_HERO: HomeHero = {
   heading_suffix: "of reentry and recovery.",
   subheading:
     "Pick a category to explore guides, videos, worksheets, and meetings — vetted and organized for the moments that matter.",
+  eyebrow_es: "Una biblioteca para el camino de regreso",
+  heading_prefix_es: "Recursos de confianza para",
+  heading_emphasis_es: "cada paso",
+  heading_suffix_es: "de la reinserción y la recuperación.",
+  subheading_es:
+    "Elige una categoría para explorar guías, videos, hojas de trabajo y reuniones, seleccionadas y organizadas para los momentos que importan.",
 };
 
 export type CertHero = {
@@ -447,6 +453,14 @@ export const DEFAULT_CERT: CertHero = {
     "The Reentry to Recovery Certificate Program offers coursework designed for incarcerated learners — recognized credentials that may help shorten sentences, satisfy probationary requirements, and build the skills that carry forward into recovery, work, and family life.",
   callout:
     "You can find the certificate program on your tablet home screen inside the Reentry to Recovery folder",
+  eyebrow_es: "Programa nuevo",
+  heading_prefix_es: "Obtén certificados que",
+  heading_emphasis_es: "cambian",
+  heading_suffix_es: "el camino por delante.",
+  subheading_es:
+    "El Programa de Certificación de Reentry to Recovery ofrece cursos diseñados para personas en centros correccionales — credenciales reconocidas que pueden ayudar a reducir condenas, cumplir con requisitos de libertad condicional y desarrollar habilidades para la recuperación, el trabajo y la familia.",
+  callout_es:
+    "Puedes encontrar el programa de certificación en la pantalla de inicio de tu tablet, dentro de la carpeta de Reentry to Recovery",
 };
 
 export function HomePageView({

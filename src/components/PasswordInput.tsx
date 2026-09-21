@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type Props = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> & {
   /** Extra classes for the wrapping container. */
@@ -15,6 +16,7 @@ type Props = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> & {
  */
 export const PasswordInput = React.forwardRef<HTMLInputElement, Props>(
   ({ className, wrapperClassName, ...rest }, ref) => {
+    const { t } = useI18n();
     const [visible, setVisible] = React.useState(false);
     return (
       <div className={cn("relative", wrapperClassName)}>
@@ -28,7 +30,7 @@ export const PasswordInput = React.forwardRef<HTMLInputElement, Props>(
           type="button"
           onClick={() => setVisible((v) => !v)}
           tabIndex={-1}
-          aria-label={visible ? "Hide password" : "Show password"}
+          aria-label={visible ? t("password.hide") : t("password.show")}
           aria-pressed={visible}
           className="absolute inset-y-0 right-0 flex items-center justify-center px-3 text-muted-foreground hover:text-foreground"
         >

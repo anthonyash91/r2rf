@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 type ConfirmOptions = {
   title?: string;
@@ -35,6 +36,7 @@ type ConfirmFn = (opts: ConfirmOptions) => Promise<boolean>;
 const ConfirmContext = createContext<ConfirmFn | null>(null);
 
 export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [opts, setOpts] = useState<ConfirmOptions>({});
   const [pending, setPending] = useState(false);
@@ -77,7 +79,8 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const pendingLabel = opts.pendingLabel ?? (opts.destructive ? "Deleting" : "Saving");
+  const pendingLabel =
+    opts.pendingLabel ?? (opts.destructive ? t("confirm.deleting") : t("confirm.saving"));
 
   return (
     <ConfirmContext.Provider value={confirm}>
@@ -91,7 +94,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{opts.title ?? "Are you sure?"}</AlertDialogTitle>
+            <AlertDialogTitle>{opts.title ?? t("confirm.areYouSure")}</AlertDialogTitle>
             {opts.description && (
               <AlertDialogDescription>{opts.description}</AlertDialogDescription>
             )}
@@ -108,7 +111,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
               disabled={pending}
               className="shadow-none"
             >
-              {opts.cancelLabel ?? "Cancel"}
+              {opts.cancelLabel ?? t("confirm.cancel")}
             </AlertDialogCancel>
             <button
               type="button"
@@ -120,7 +123,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
               )}
             >
               {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {pending ? `${pendingLabel}…` : (opts.confirmLabel ?? "Confirm")}
+              {pending ? `${pendingLabel}…` : (opts.confirmLabel ?? t("confirm.confirm"))}
             </button>
           </AlertDialogFooter>
         </AlertDialogContent>

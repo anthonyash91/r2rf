@@ -51,13 +51,13 @@ export function SiteHeader() {
     if (!locked) return;
     e.preventDefault();
     e.stopPropagation();
-    toast.error("Please set up your security questions before leaving this page.");
+    toast.error(t("dashboard.lockedNav"));
   };
   const handleLockedKey = (e: React.KeyboardEvent) => {
     if (!locked) return;
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      toast.error("Please set up your security questions before leaving this page.");
+      toast.error(t("dashboard.lockedNav"));
     }
   };
   // pointer-events-none blocks mouse/touch; onKeyDown blocks keyboard Enter/Space;
@@ -162,7 +162,7 @@ export function SiteHeader() {
               className={`hover:text-foreground transition-colors ${lockedLinkClass}`}
               activeProps={{ className: "text-foreground" }}
             >
-              Admin
+              {t("nav.admin")}
             </Link>
           )}
           {isUser && (
@@ -180,7 +180,7 @@ export function SiteHeader() {
               onClick={(e) => {
                 if (locked) {
                   e.preventDefault();
-                  toast.error("Please set up your security questions before leaving this page.");
+                  toast.error(t("dashboard.lockedNav"));
                   return;
                 }
                 handleSignOut();
@@ -213,7 +213,7 @@ export function SiteHeader() {
               toggleLang();
             }}
             aria-disabled={locked}
-            aria-label="Toggle language"
+            aria-label={t("nav.toggleLanguage")}
             className={`inline-flex items-center gap-1.5 rounded-[8px] border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors ${lockedLinkClass}`}
           >
             <Languages className="h-3.5 w-3.5" />
@@ -232,7 +232,7 @@ export function SiteHeader() {
               toggleLang();
             }}
             aria-disabled={locked}
-            aria-label="Toggle language"
+            aria-label={t("nav.toggleLanguage")}
             className={`inline-flex items-center gap-1.5 rounded-[8px] border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors ${lockedLinkClass}`}
           >
             <Languages className="h-3.5 w-3.5" />
@@ -240,7 +240,7 @@ export function SiteHeader() {
           </button>
           <button
             onClick={() => setOpen((v) => !v)}
-            aria-label="Toggle menu"
+            aria-label={t("nav.toggleMenu")}
             aria-expanded={open}
             className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-card text-foreground hover:border-[var(--color-accent)] transition-colors"
           >
@@ -283,7 +283,7 @@ export function SiteHeader() {
                 className={`py-2 hover:text-foreground transition-colors ${lockedLinkClass}`}
                 activeProps={{ className: "text-foreground" }}
               >
-                Admin
+                {t("nav.admin")}
               </Link>
             )}
             {isUser && (

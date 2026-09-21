@@ -406,7 +406,7 @@ function SignInSignUpForm({
         if (lockedFacility) {
           const input = signinPin.trim();
           if (!input) {
-            toast.error("PIN or email is required");
+            toast.error(t("signup.pinOrEmailRequired"));
             setBusy(false);
             return;
           }
@@ -555,7 +555,7 @@ function SignInSignUpForm({
                   lockedFacility ? (
                   <div>
                     <label htmlFor="signin-pin" className="text-sm font-medium">
-                      PIN or email
+                      {t("signup.pinOrEmailLabel")}
                     </label>
                     <input
                       id="signin-pin"
@@ -568,7 +568,7 @@ function SignInSignUpForm({
                       }}
                       {...kbSigninPin}
                       className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      placeholder="Enter your PIN or email"
+                      placeholder={t("signup.pinOrEmailPlaceholder")}
                       autoComplete="off"
                     />
                   </div>
@@ -720,7 +720,7 @@ function SignInSignUpForm({
                           <span className={cn(!facility && "text-muted-foreground")}>
                             {(() => {
                               const sel = facilities.find((f) => f.value === facility);
-                              if (!sel) return "Search and select your facility";
+                              if (!sel) return t("signup.facilitySearchSelect");
                               const k = `facility.${sel.value}`;
                               const tr = t(k as TranslationKey);
                               return tr === k ? sel.label : tr;
@@ -735,11 +735,11 @@ function SignInSignUpForm({
                       >
                         <Command>
                           <CommandInput
-                            placeholder="Search facilities..."
+                            placeholder={t("signup.facilitySearchPlaceholder")}
                             className="focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                           />
                           <CommandList>
-                            <CommandEmpty>No facility found.</CommandEmpty>
+                            <CommandEmpty>{t("signup.facilityNotFound")}</CommandEmpty>
                             <CommandGroup>
                               {facilities.map((f) => {
                                 const i18nKey = `facility.${f.value}`;

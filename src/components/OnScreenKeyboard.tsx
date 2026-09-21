@@ -215,7 +215,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
                 <button
                   type="button"
                   onClick={() => setHidden(true)}
-                  aria-label="Hide keyboard"
+                  aria-label={t("osk.hide")}
                   className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   <X className="h-4 w-4" />
@@ -229,7 +229,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
                       onPress={() => press("SHIFT")}
                       flexBasis={1.5}
                       active={shift}
-                      ariaLabel="Shift"
+                      ariaLabel={t("osk.shift")}
                     >
                       <ArrowBigUp className="h-5 w-5" />
                     </Key>
@@ -240,7 +240,7 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
                     </Key>
                   ))}
                   {i === rows.length - 1 && (
-                    <Key onPress={() => press("BACK")} flexBasis={1.5} ariaLabel="Backspace">
+                    <Key onPress={() => press("BACK")} flexBasis={1.5} ariaLabel={t("osk.backspace")}>
                       <Delete className="h-5 w-5" />
                     </Key>
                   )}
@@ -251,10 +251,10 @@ export function OnScreenKeyboardProvider({ children }: { children: React.ReactNo
                 <Key onPress={() => press("LAYOUT")} flexBasis={1.5}>
                   {layout === "letters" ? "123" : "ABC"}
                 </Key>
-                <Key onPress={() => press("SPACE")} flexBasis={5} ariaLabel="Space">
+                <Key onPress={() => press("SPACE")} flexBasis={5} ariaLabel={t("osk.space")}>
                   <span className="text-xs text-muted-foreground">space</span>
                 </Key>
-                <Key onPress={() => press("ENTER")} flexBasis={1.5} ariaLabel="Enter">
+                <Key onPress={() => press("ENTER")} flexBasis={1.5} ariaLabel={t("osk.enter")}>
                   <CornerDownLeft className="h-5 w-5" />
                 </Key>
               </div>

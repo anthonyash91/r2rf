@@ -68,7 +68,7 @@ export function SiteMessageBanner({
   /** For kind="facility": the facility slug. Omit to auto-detect from the logged-in user's profile. */
   facilityValue?: string;
 }) {
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
   const { session, isAdmin, isContributor } = useAuth();
   const userId = session?.user?.id ?? null;
   const qc = useQueryClient();
@@ -244,7 +244,7 @@ export function SiteMessageBanner({
         <button
           type="button"
           onClick={onDismiss}
-          aria-label="Dismiss message"
+          aria-label={t("banner.dismiss")}
           className={dismissClassName}
         >
           <X className="h-4 w-4" />
