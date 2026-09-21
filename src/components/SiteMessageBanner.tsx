@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { getCachedUserId } from "@/hooks/use-auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,13 +120,24 @@ export function SiteMessageBanner({
   const dismissalKind = messageKindForDismissal(kind, facilityValue ?? undefined);
   const dismissalQueryKey = ["site_message_dismissal", dismissalKind, userId] as const;
 
-  // Read dismissal from sessionStorage synchronously — no flash on mount or navigation.
-  // getCachedUserId() reads the user ID set by useAuth.loadRoles without waiting for
-  // the async session to resolve, so the cache lookup works on the very first render.
-  const [cachedDismissedAt] = useState<string | null>(() => {
+  // Both start at "not dismissed" (null) so the very first render is identical
+  // on the server (no sessionStorage) and the hydrating client — reading the
+  // cache straight into the initializer used to seed a real dismissed-at
+  // value into that first client render, which flips whether this banner
+  // renders at all. Server and client disagreeing on a whole element's
+  // presence is exactly what threw "Hydration failed" (React error #418)
+  // here. The layout effects below apply the cache right after that first
+  // paint-safe render, before the browser paints, so there's no visible
+  // flash of a banner that's actually already been dismissed.
+  const [cachedDismissedAt, setCachedDismissedAt] = useState<string | null>(null);
+  useLayoutEffect(() => {
     const uid = getCachedUserId();
-    return uid ? readDismissalCache(dismissalKind, uid) : null;
-  });
+    if (uid) {
+      const cached = readDismissalCache(dismissalKind, uid);
+      if (cached) setCachedDismissedAt(cached);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dismissalKind]);
 
   const { data: dbDismissedAt } = useQuery({
     queryKey: dismissalQueryKey,
@@ -147,11 +158,15 @@ export function SiteMessageBanner({
     },
   });
 
-  // Anonymous: read sessionStorage synchronously (not in useEffect) to avoid flash.
-  const [anonDismissedAt, setAnonDismissedAt] = useState<string | null>(() => {
-    if (typeof window === "undefined" || userId) return null;
-    return window.sessionStorage.getItem(sessionStorageKey(kind, facilityValue ?? undefined));
-  });
+  // Anonymous: same hydration-safety reasoning as cachedDismissedAt above —
+  // start at null, apply the real sessionStorage value in a layout effect.
+  const [anonDismissedAt, setAnonDismissedAt] = useState<string | null>(null);
+  useLayoutEffect(() => {
+    if (userId) return;
+    const stored = window.sessionStorage.getItem(sessionStorageKey(kind, facilityValue ?? undefined));
+    if (stored) setAnonDismissedAt(stored);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, kind, facilityValue]);
 
   // ALL hooks must be called before any conditional returns — Rules of Hooks
   const badgeStyles = useBadgeStyles();

@@ -8,7 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
 import { ConfirmDialogProvider } from "@/components/ConfirmDialog";
@@ -16,13 +16,20 @@ import { RoleSwitcher } from "@/components/RoleSwitcher";
 import { AuthCheckingProvider } from "@/lib/auth-checking-context";
 import { installGlobalErrorReporter, reportError } from "@/lib/client-error-reporter";
 import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   // Preserve ?site= so the "Go home" link keeps the user inside their facility's context
-  // rather than landing on the generic homepage.
-  const activeSite =
-    typeof window !== "undefined" ? window.sessionStorage.getItem("active-facility-slug") : null;
+  // rather than landing on the generic homepage. Starts null (matching the
+  // server, which has no sessionStorage) and is filled in by the layout
+  // effect below right after hydration — reading it directly during render
+  // made the link's href differ between server and client on first paint,
+  // the same "Hydration failed" (React error #418) class fixed elsewhere.
+  const [activeSite, setActiveSite] = useState<string | null>(null);
+  useLayoutEffect(() => {
+    setActiveSite(window.sessionStorage.getItem("active-facility-slug"));
+  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -150,13 +157,21 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthCheckingProvider>
         <I18nProvider>
-          <OnScreenKeyboardProvider>
-            <ConfirmDialogProvider>
-              <Outlet />
-              <Toaster />
-              <RoleSwitcher />
-            </ConfirmDialogProvider>
-          </OnScreenKeyboardProvider>
+          {/* App-wide, so every IconButton/TooltipWrap usage has a provider
+              ancestor regardless of where it's rendered — components used to
+              need their own local <TooltipProvider>, which was easy to forget
+              (that gap is what caused the "Tooltip must be used within
+              TooltipProvider" crashes logged from /admin/facilities). The
+              existing local wrappers are harmless now, just redundant. */}
+          <TooltipProvider delayDuration={150}>
+            <OnScreenKeyboardProvider>
+              <ConfirmDialogProvider>
+                <Outlet />
+                <Toaster />
+                <RoleSwitcher />
+              </ConfirmDialogProvider>
+            </OnScreenKeyboardProvider>
+          </TooltipProvider>
         </I18nProvider>
       </AuthCheckingProvider>
     </QueryClientProvider>

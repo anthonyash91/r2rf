@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useLayoutEffect, useReducer, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 import { setActiveFacilitySlug } from "@/lib/facility-context";
@@ -74,16 +74,32 @@ export function getSimulatedRole(): SimulatedRole | null {
 
 // ── Hook ────────────────────────────────────────────────────────────────────
 export function useAuth() {
-  // Initialize roles from sessionStorage cache so the first render already
-  // has the correct roles — no blank/loading flash between navigation and
-  // the async DB fetch completing.
+  // Both start at their "nothing cached yet" value so the very first render
+  // is identical on the server (which has no sessionStorage) and the client
+  // (hydrating). Reading the cache straight into a useState initializer used
+  // to seed real, signed-in-shaped values into that first client render —
+  // fine on its own, but every consumer (SiteHeader's nav links, admin
+  // guards, etc.) renders differently for a signed-in vs signed-out user, so
+  // hydration compared a signed-out server tree against a signed-in client
+  // tree and threw "Hydration failed" (React error #418) on almost every
+  // route for anyone with a cached session. The layout effect below applies
+  // the cache immediately after that first paint-safe render instead.
   const [session, setSession] = useState<Session | null>(null);
-  const [roles, setRoles] = useState<AppRole[]>(() => readCachedRoles());
+  const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
-  // If we have cached roles the user is effectively "loaded" — the background
-  // fetch will refresh them but there's no UX gap to hide.
-  const [rolesLoaded, setRolesLoaded] = useState(() => readCachedRoles().length > 0);
+  const [rolesLoaded, setRolesLoaded] = useState(false);
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+
+  // Fires synchronously after hydration commits but before the browser
+  // paints, so applying the cache here causes no visible flash — it just
+  // has to happen after hydration is done comparing trees, not during it.
+  useLayoutEffect(() => {
+    const cached = readCachedRoles();
+    if (cached.length > 0) {
+      setRoles(cached);
+      setRolesLoaded(true);
+    }
+  }, []);
 
   useEffect(() => {
     listeners.add(forceUpdate);
