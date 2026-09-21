@@ -389,7 +389,7 @@ function CategoryPage() {
   const [chapterOffset, setChapterOffset] = useState(0); // seconds of all fully-played chapters before the current one
 
   // Fetch chapters for the currently open audio item
-  const { data: audioChapters = [] } = useQuery<ContentChapter[]>({
+  const { data: rawAudioChapters = [] } = useQuery<ContentChapter[]>({
     queryKey: ["chapters", audioPlayer?.itemId ?? null],
     enabled: !!audioPlayer,
     staleTime: Infinity,
@@ -403,6 +403,22 @@ function CategoryPage() {
       return (data ?? []) as ContentChapter[];
     },
   });
+
+  // Some audiobooks are split into a different number of chapters per
+  // language (e.g. a 15-part English recording vs. an 8-part Spanish one) —
+  // chapter N in one language doesn't correspond to chapter N in the other,
+  // so once a book has ANY chapters dedicated to the active language, a
+  // chapter missing that language is hidden rather than silently falling
+  // back to playing the other language's audio under a chapter number that
+  // no longer means anything. Only falls back to the unfiltered list when
+  // literally none of the chapters have the active language at all —
+  // better to show the wrong-language chapters than an empty player.
+  const audioChapters = useMemo(() => {
+    const filtered = rawAudioChapters.filter((ch) =>
+      lang === "es" ? !!ch.file_url_es : !!ch.file_url,
+    );
+    return filtered.length > 0 ? filtered : rawAudioChapters;
+  }, [rawAudioChapters, lang]);
 
   const hasChapters = audioChapters.length > 0;
   const activeChapter = hasChapters ? (audioChapters[currentChapterIdx] ?? null) : null;
@@ -881,19 +897,41 @@ function CategoryPage() {
     queryFn: async () => {
       const { data: rows, error } = await (supabase as any)
         .from("content_chapters")
-        .select("content_item_id, duration_seconds")
+        .select("content_item_id, duration_seconds, file_url, file_url_es")
         .in("content_item_id", itemIds);
       if (error) return [];
-      return (rows ?? []) as { content_item_id: string; duration_seconds: number | null }[];
+      return (rows ?? []) as {
+        content_item_id: string;
+        duration_seconds: number | null;
+        file_url: string | null;
+        file_url_es: string | null;
+      }[];
     },
   });
+  // Same per-language filtering as `audioChapters` above (and the same
+  // fallback-to-everything-only-if-nothing-matches rule) — otherwise a book
+  // with language-dedicated chapters would sum BOTH languages' durations
+  // into one denominator, so finishing all of one language's chapters would
+  // never reach 100%.
   const itemTotalDurationMap = useMemo(() => {
+    const rows = chapterDurationsQuery.data ?? [];
+    const byItem = new Map<string, typeof rows>();
+    for (const r of rows) {
+      const bucket = byItem.get(r.content_item_id);
+      if (bucket) bucket.push(r);
+      else byItem.set(r.content_item_id, [r]);
+    }
     const map = new Map<string, number>();
-    for (const r of chapterDurationsQuery.data ?? []) {
-      map.set(r.content_item_id, (map.get(r.content_item_id) ?? 0) + (r.duration_seconds ?? 0));
+    for (const [itemId, chs] of byItem) {
+      const filtered = chs.filter((c) => (lang === "es" ? !!c.file_url_es : !!c.file_url));
+      const use = filtered.length > 0 ? filtered : chs;
+      map.set(
+        itemId,
+        use.reduce((s, c) => s + (c.duration_seconds ?? 0), 0),
+      );
     }
     return map;
-  }, [chapterDurationsQuery.data]);
+  }, [chapterDurationsQuery.data, lang]);
 
   // Derive which item is currently open and its media kind
   const activeItemId = activeMedia?.itemId ?? null;
