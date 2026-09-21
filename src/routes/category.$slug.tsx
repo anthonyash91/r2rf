@@ -2502,14 +2502,19 @@ function CategoryPage() {
               <div className="space-y-1">
                 {audioChapters.map((ch, idx) => {
                   const chTitle = pickLang(lang, ch.title, ch.title_es);
-                  const chSection = pickLang(lang, ch.section, ch.section_es);
+                  // Section headers deliberately don't fall back to the other
+                  // language like chTitle does — an untranslated section
+                  // shouldn't show its English grouping label under a
+                  // Spanish chapter list (same reasoning as chapter audio
+                  // itself not falling back). No section header at all is
+                  // the honest result when this chapter's section has no
+                  // translation, rather than a mislabeled one.
+                  const chSection = lang === "es" ? ch.section_es : ch.section;
                   const prevSection =
                     idx > 0
-                      ? pickLang(
-                          lang,
-                          audioChapters[idx - 1].section,
-                          audioChapters[idx - 1].section_es,
-                        )
+                      ? lang === "es"
+                        ? audioChapters[idx - 1].section_es
+                        : audioChapters[idx - 1].section
                       : null;
                   const showSectionHeader = !!chSection && chSection !== prevSection;
                   const isActive = idx === currentChapterIdx;
