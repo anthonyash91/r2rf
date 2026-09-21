@@ -21,7 +21,7 @@ import {
   type ContentChapter,
 } from "@/lib/categories";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
-import { useI18n, pickLang, translateType, translateDuration } from "@/lib/i18n";
+import { useI18n, pickLang, translateType, translateDuration, type Language } from "@/lib/i18n";
 import { useBadgeStyles } from "@/hooks/use-badge-styles";
 import { withActionWord, parseMinutes } from "@/lib/duration";
 import { fmtDateShort } from "@/lib/date-format";
@@ -51,6 +51,7 @@ import {
   RotateCcw,
   RotateCw,
   ChevronDown,
+  ArrowRight,
 } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
@@ -128,6 +129,31 @@ function CategoryError({ error, reset }: { error: Error; reset: () => void }) {
       <SiteFooter />
     </div>
   );
+}
+
+/**
+ * Resolves an item to its PDF viewing info, or null if it isn't a PDF —
+ * a narrower, standalone copy of the mediaKind detection inline in the item
+ * list below (which also has to handle video/audio/stream detection this
+ * doesn't need). Kept separate rather than factored out of that loop so this
+ * addition can't regress the existing list rendering; PDF detection itself
+ * is simple enough that duplicating just this part is low-risk.
+ * Used only to find "the next PDF in this section" for the in-modal
+ * continue-reading prompt — see nextPdfInSection below.
+ */
+function resolvePdfInfo(
+  item: ContentItem,
+  lang: Language,
+): { title: string; mediaSrc: string; section: string | null } | null {
+  const fileUrl = lang === "es" && item.file_url_es ? item.file_url_es : item.file_url;
+  const fileMedia = detectMedia(fileUrl);
+  const urlMedia = detectMedia(item.url);
+  if ((fileMedia ?? urlMedia) !== "pdf") return null;
+  const mediaSrc = fileMedia ? fileUrl : item.url;
+  if (!mediaSrc) return null;
+  const title = pickLang(lang, item.title, item.title_es) || item.title;
+  const section = (pickLang(lang, item.section, item.section_es) || item.section || "").trim();
+  return { title, mediaSrc, section: section || null };
 }
 
 export const Route = createFileRoute("/category/$slug")({
@@ -840,6 +866,37 @@ function CategoryPage() {
     setPdfCurrentPage(null);
     setPdfTotalPages(null);
   }, [pdfViewer?.itemId]);
+
+  // Section groups for the "continue to next lesson" prompt, computed from
+  // visibleItems (not the search-filtered displayItems used by the list
+  // below) — if someone found this PDF via search, the reading sequence
+  // should still be the section's real order, not the search results.
+  const sectionGroupsForNav = useMemo(
+    () => groupItemsBySection(visibleItems, data?.category.section_order),
+    [visibleItems, data?.category.section_order],
+  );
+
+  // The next PDF (if any) after the currently-open one within the same
+  // section. undefined = no PDF is open right now; null = this is the last
+  // PDF in its section (nothing to continue to).
+  const nextPdfInSection = useMemo(() => {
+    if (!pdfViewer) return undefined;
+    for (const group of sectionGroupsForNav) {
+      const idx = group.items.findIndex((i) => i.id === pdfViewer.itemId);
+      if (idx === -1) continue;
+      for (let i = idx + 1; i < group.items.length; i++) {
+        const resolved = resolvePdfInfo(group.items[i], lang);
+        if (resolved) return { itemId: group.items[i].id, ...resolved };
+      }
+      return null; // found the section, but no PDF after this one in it
+    }
+    return null; // current item isn't in any section group (shouldn't happen)
+  }, [pdfViewer, sectionGroupsForNav, lang]);
+
+  // True once the reader is on the PDF's last page — this is what reveals
+  // the continue/end-of-section area, not just having a next item queued.
+  const reachedEndOfPdf =
+    !!pdfViewer && !!pdfTotalPages && !!pdfCurrentPage && pdfCurrentPage === pdfTotalPages;
 
   // Engagement tracking hook: timer (all types) + media progress (video/audio) + PDF auto-mark
   const isMediaItem = !!(
@@ -2370,6 +2427,40 @@ function CategoryPage() {
                     </div>
                   );
                 })()}
+              {reachedEndOfPdf &&
+                (nextPdfInSection ? (
+                  <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-muted/40 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="text-xs text-muted-foreground">Up next in this section</p>
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {nextPdfInSection.title}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveMedia({
+                          type: "pdf",
+                          url: nextPdfInSection.mediaSrc,
+                          title: nextPdfInSection.title,
+                          itemId: nextPdfInSection.itemId,
+                          section: nextPdfInSection.section,
+                        });
+                        openedPdfsRef.current.add(nextPdfInSection.itemId);
+                      }}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                      style={{ backgroundColor: "var(--color-accent)" }}
+                    >
+                      Continue
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex shrink-0 items-center justify-center gap-2 border-t border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-[var(--color-accent)]" />
+                    You've reached the end of this section.
+                  </div>
+                ))}
             </div>
           )}
         </DialogContent>
