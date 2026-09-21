@@ -109,20 +109,21 @@ function MediaModalHeader({ section, title }: { section: string | null; title: s
 }
 
 function CategoryError({ error, reset }: { error: Error; reset: () => void }) {
+  const { t } = useI18n();
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
       <main className="flex-1 flex items-center justify-center px-6 py-20">
         <div className="max-w-sm text-center">
-          <p className="font-semibold text-foreground">This page didn't load</p>
+          <p className="font-semibold text-foreground">{t("error.pageTitle")}</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {error.message ?? "Something went wrong."}
+            {error.message ?? t("error.generic")}
           </p>
           <button
             onClick={reset}
             className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
           >
-            Try again
+            {t("error.tryAgain")}
           </button>
         </div>
       </main>
@@ -226,6 +227,7 @@ function SectionNavBar({
   nextTarget: SectionNavTarget | null | undefined;
   onJump: (target: SectionNavTarget) => void;
 }) {
+  const { t } = useI18n();
   const previousButton = previousTarget && (
     <button
       type="button"
@@ -233,7 +235,7 @@ function SectionNavBar({
       className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-input px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
     >
       <ArrowLeft className="h-4 w-4" />
-      Previous
+      {t("sectionNav.previous")}
     </button>
   );
 
@@ -252,7 +254,7 @@ function SectionNavBar({
   const endContent = nextTarget ? (
     <div className="flex min-w-0 items-center gap-3">
       <div className="min-w-0 text-right">
-        <p className="text-xs text-muted-foreground">Up next in this section</p>
+        <p className="text-xs text-muted-foreground">{t("sectionNav.upNext")}</p>
         <p className="truncate text-sm font-medium text-foreground">{nextTarget.title}</p>
       </div>
       <button
@@ -261,14 +263,14 @@ function SectionNavBar({
         className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
         style={{ backgroundColor: "var(--color-accent)" }}
       >
-        Continue
+        {t("sectionNav.continue")}
         <ArrowRight className="h-4 w-4" />
       </button>
     </div>
   ) : (
     <div className="flex items-center gap-2 text-sm text-muted-foreground">
       <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-[var(--color-accent)]" />
-      You've reached the end of this section.
+      {t("sectionNav.reachedEnd")}
     </div>
   );
 
@@ -1338,7 +1340,7 @@ function CategoryPage() {
                     {displayItems.length === 0 ? (
                       <p className="text-muted-foreground">
                         {searchLower.length > 0
-                          ? `No results for "${searchQuery.trim()}"`
+                          ? t("category.noSearchResults", { query: searchQuery.trim() })
                           : t("category.noContent")}
                       </p>
                     ) : (
@@ -1990,8 +1992,8 @@ function CategoryPage() {
                                                   ) {
                                                     const tipLabel =
                                                       mediaKind === "video"
-                                                        ? "Watch the video to track your progress"
-                                                        : "Listen to the audio to track your progress";
+                                                        ? t("category.trackProgressVideo")
+                                                        : t("category.trackProgressAudio");
                                                     return (
                                                       <TooltipProvider delayDuration={100}>
                                                         <Tooltip>
@@ -2290,7 +2292,7 @@ function CategoryPage() {
         <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
           <MediaModalHeader
             section={videoPlayer?.section ?? null}
-            title={videoPlayer?.title ?? "Video"}
+            title={videoPlayer?.title ?? t("media.video")}
           />
           {/* The header's height is subtracted from the player's own max
               height so the two together still fit the dialog's max height. */}
@@ -2338,7 +2340,7 @@ function CategoryPage() {
               </p>
             )}
             <DialogTitle className="text-base font-semibold pr-8 break-words">
-              {audioPlayer?.title ?? "Audio"}
+              {audioPlayer?.title ?? t("media.audio")}
             </DialogTitle>
             {hasChapters && activeChapter && (
               <p className="text-sm text-muted-foreground -mt-2 truncate">
@@ -2389,7 +2391,7 @@ function CategoryPage() {
                     max={playerDuration || 1}
                     value={playerTime}
                     step={0.1}
-                    aria-label="Seek"
+                    aria-label={t("player.seek")}
                     className="w-full h-1 cursor-pointer rounded-full appearance-none bg-border [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--color-accent)]"
                     style={{
                       background: `linear-gradient(to right, var(--color-accent) ${playerDuration ? (playerTime / playerDuration) * 100 : 0}%, var(--color-border) 0%)`,
@@ -2416,18 +2418,18 @@ function CategoryPage() {
                     type="button"
                     onClick={prevChapter}
                     disabled={!hasChapters || currentChapterIdx === 0}
-                    aria-label="Previous"
+                    aria-label={t("player.previous")}
                     className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
                   >
                     <SkipBack className="h-4 w-4" />
-                    <span className="text-[9px] font-medium">Prev</span>
+                    <span className="text-[9px] font-medium">{t("player.prev")}</span>
                   </button>
 
                   {/* Back 15s */}
                   <button
                     type="button"
                     onClick={() => seekTo(playerTime - 15)}
-                    aria-label="Back 15 seconds"
+                    aria-label={t("player.back15")}
                     className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   >
                     <RotateCcw className="h-4 w-4" />
@@ -2438,7 +2440,7 @@ function CategoryPage() {
                   <button
                     type="button"
                     onClick={togglePlay}
-                    aria-label={isPlaying ? "Pause" : "Play"}
+                    aria-label={isPlaying ? t("player.pause") : t("player.play")}
                     className="mx-2 h-12 w-12 rounded-full bg-[var(--color-accent)] text-white flex items-center justify-center shadow-sm hover:opacity-90 active:scale-95 transition-all"
                   >
                     {isPlaying ? (
@@ -2452,7 +2454,7 @@ function CategoryPage() {
                   <button
                     type="button"
                     onClick={() => seekTo(playerTime + 15)}
-                    aria-label="Forward 15 seconds"
+                    aria-label={t("player.forward15")}
                     className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   >
                     <RotateCw className="h-4 w-4" />
@@ -2464,24 +2466,24 @@ function CategoryPage() {
                     type="button"
                     onClick={nextChapter}
                     disabled={!hasChapters || currentChapterIdx === audioChapters.length - 1}
-                    aria-label="Next"
+                    aria-label={t("player.next")}
                     className="flex flex-col items-center gap-0.5 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-30 disabled:pointer-events-none"
                   >
                     <SkipForward className="h-4 w-4" />
-                    <span className="text-[9px] font-medium">Next</span>
+                    <span className="text-[9px] font-medium">{t("player.next")}</span>
                   </button>
 
                   {/* Playback speed — absolute so it doesn't shift the centered controls */}
                   <button
                     type="button"
                     onClick={cycleSpeed}
-                    aria-label={`Playback speed: ${playbackRate}×`}
+                    aria-label={t("player.playbackSpeed", { rate: playbackRate })}
                     className="absolute right-0 flex flex-col items-center gap-0.5 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   >
                     <span className="text-xs font-semibold tabular-nums leading-none">
                       {playbackRate}×
                     </span>
-                    <span className="text-[9px] font-medium">Speed</span>
+                    <span className="text-[9px] font-medium">{t("player.speed")}</span>
                   </button>
                 </div>
               </>
@@ -2661,7 +2663,7 @@ function CategoryPage() {
                           if (!isRead)
                             toggleRead.mutate({ itemId: pdfViewer.itemId, markRead: true });
                         }}
-                        title={waiting ? "Give it a moment before marking as read" : undefined}
+                        title={waiting ? t("category.readyToMarkRead") : undefined}
                         className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
                           isRead
                             ? "border-[var(--color-accent)]/30 bg-[var(--color-accent)]/10 text-[var(--color-accent)] cursor-default"
@@ -2703,7 +2705,7 @@ function CategoryPage() {
         <DialogContent className="max-w-5xl w-[95vw] p-0 gap-0 overflow-hidden bg-black border-0 max-h-[calc(100dvh-2rem)]">
           <MediaModalHeader
             section={imageViewer?.section ?? null}
-            title={imageViewer?.title ?? "Image"}
+            title={imageViewer?.title ?? t("media.image")}
           />
           {imageViewer && (
             <img

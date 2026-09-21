@@ -135,26 +135,29 @@ export const Route = createFileRoute("/dashboard")({
     }
   },
   component: DashboardRoute,
-  errorComponent: ({ error, reset }) => (
-    <div className="min-h-screen flex flex-col">
-      <SiteHeader />
-      <main className="flex-1 flex items-center justify-center px-6 py-20">
-        <div className="max-w-sm text-center">
-          <p className="font-semibold text-foreground">Dashboard didn't load</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {error.message ?? "Something went wrong."}
-          </p>
-          <button
-            onClick={reset}
-            className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Try again
-          </button>
-        </div>
-      </main>
-      <SiteFooter />
-    </div>
-  ),
+  errorComponent: ({ error, reset }) => {
+    const { t } = useI18n();
+    return (
+      <div className="min-h-screen flex flex-col">
+        <SiteHeader />
+        <main className="flex-1 flex items-center justify-center px-6 py-20">
+          <div className="max-w-sm text-center">
+            <p className="font-semibold text-foreground">{t("dashboard.errorTitle")}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {error.message ?? t("dashboard.errorGeneric")}
+            </p>
+            <button
+              onClick={reset}
+              className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              {t("dashboard.tryAgain")}
+            </button>
+          </div>
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  },
 });
 
 function DashboardRoute() {
@@ -519,11 +522,11 @@ function DashboardPage() {
   async function handleForcedReset(e: React.FormEvent) {
     e.preventDefault();
     if (resetPw.length < 8) {
-      toast.error("Password must be at least 8 characters");
+      toast.error(t("forcedReset.tooShort"));
       return;
     }
     if (resetPw !== resetPw2) {
-      toast.error("Passwords do not match");
+      toast.error(t("forcedReset.mismatch"));
       return;
     }
     setResetBusy(true);
@@ -534,12 +537,12 @@ function DashboardPage() {
       // are rejected by the server fn.
       await clearMustResetFn({ data: { newPassword: resetPw } });
       await supabase.auth.refreshSession();
-      toast.success("Password updated");
+      toast.success(t("forcedReset.success"));
       setResetPw("");
       setResetPw2("");
       setResetDone(true);
     } catch (err: any) {
-      toast.error(err.message ?? "Failed to update password");
+      toast.error(err.message ?? t("forcedReset.failed"));
     } finally {
       setResetBusy(false);
     }
@@ -884,9 +887,9 @@ function DashboardPage() {
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
           <DialogHeader>
-            <DialogTitle>Set a new password</DialogTitle>
+            <DialogTitle>{t("forcedReset.title")}</DialogTitle>
             <DialogDescription>
-              For security, please choose a new password before continuing.
+              {t("forcedReset.description")}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleForcedReset} className="mt-[-4px] space-y-3">
@@ -897,7 +900,7 @@ function DashboardPage() {
                 required
                 value={resetPw}
                 onChange={(e) => setResetPw(e.target.value)}
-                placeholder="New password (min 8 chars)"
+                placeholder={t("forcedReset.newPasswordPlaceholder")}
                 className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
               />
               <PasswordStrengthMeter password={resetPw} />
@@ -908,7 +911,7 @@ function DashboardPage() {
               required
               value={resetPw2}
               onChange={(e) => setResetPw2(e.target.value)}
-              placeholder="Confirm new password"
+              placeholder={t("forcedReset.confirmPlaceholder")}
               className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
             <div className="flex justify-end">
