@@ -203,25 +203,46 @@ function SectionNavBar({
   reachedEnd,
   target,
   onContinue,
+  dark = false,
 }: {
   reachedEnd: boolean;
   target: SectionNavTarget | null | undefined;
   onContinue: (target: SectionNavTarget) => void;
+  /** The video dialog's backdrop is solid black, with the native <video>
+   * controls themselves overlaying its bottom edge — the default light-card
+   * styling (a translucent muted background meant to sit on bg-card) blends
+   * into that into an unreadable dark-on-dark strip there. This swaps to a
+   * solid dark bar with light text instead. */
+  dark?: boolean;
 }) {
   if (!reachedEnd) return null;
   if (!target) {
     return (
-      <div className="flex shrink-0 items-center justify-center gap-2 border-t border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+      <div
+        className={`flex shrink-0 items-center justify-center gap-2 border-t px-4 py-3 text-sm ${
+          dark
+            ? "border-white/10 bg-neutral-900 text-white/70"
+            : "border-border bg-muted/40 text-muted-foreground"
+        }`}
+      >
         <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-[var(--color-accent)]" />
         You've reached the end of this section.
       </div>
     );
   }
   return (
-    <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-muted/40 px-4 py-3">
+    <div
+      className={`flex shrink-0 items-center justify-between gap-3 border-t px-4 py-3 ${
+        dark ? "border-white/10 bg-neutral-900" : "border-border bg-muted/40"
+      }`}
+    >
       <div className="min-w-0">
-        <p className="text-xs text-muted-foreground">Up next in this section</p>
-        <p className="truncate text-sm font-medium text-foreground">{target.title}</p>
+        <p className={`text-xs ${dark ? "text-white/60" : "text-muted-foreground"}`}>
+          Up next in this section
+        </p>
+        <p className={`truncate text-sm font-medium ${dark ? "text-white" : "text-foreground"}`}>
+          {target.title}
+        </p>
       </div>
       <button
         type="button"
@@ -2195,6 +2216,7 @@ function CategoryPage() {
             reachedEnd={videoEnded}
             target={nextItemInSection}
             onContinue={continueToNextLesson}
+            dark
           />
         </DialogContent>
       </Dialog>
