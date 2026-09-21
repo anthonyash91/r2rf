@@ -1579,6 +1579,7 @@ function ContentManager({
               file_url_es: ch.file_url_es || null,
               file_name_es: ch.file_name_es || null,
               duration_seconds: ch.duration_seconds,
+              duration_seconds_es: ch.duration_seconds_es,
               section: ch.section || null,
               section_es: ch.section_es || null,
             })),
@@ -2766,6 +2767,7 @@ type ChapterDraft = {
   file_url_es: string | null;
   file_name_es: string | null;
   duration_seconds: number | null;
+  duration_seconds_es: number | null;
   section: string;
   section_es: string;
 };
@@ -2985,6 +2987,7 @@ function ItemEditor({
         file_url_es: ch.file_url_es,
         file_name_es: ch.file_name_es,
         duration_seconds: ch.duration_seconds,
+        duration_seconds_es: ch.duration_seconds_es,
         section: ch.section ?? "",
         section_es: ch.section_es ?? "",
       })),
@@ -3075,6 +3078,7 @@ function ItemEditor({
       file_url_es: null,
       file_name_es: null,
       duration_seconds: null,
+      duration_seconds_es: null,
       ...inheritedSection,
     }));
     setChapters((prev) => [...prev, ...drafts]);
@@ -3717,6 +3721,7 @@ function ItemEditor({
                       file_url_es: null,
                       file_name_es: null,
                       duration_seconds: null,
+                      duration_seconds_es: null,
                       ...lastChapterSection(prev),
                     },
                   ]);
@@ -3776,7 +3781,10 @@ function ItemEditor({
                             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                               Audio File {idx + 1}
                               {ch.duration_seconds
-                                ? ` · ${formatMediaDuration(ch.duration_seconds)}`
+                                ? ` · EN ${formatMediaDuration(ch.duration_seconds)}`
+                                : ""}
+                              {ch.duration_seconds_es
+                                ? ` · ES ${formatMediaDuration(ch.duration_seconds_es)}`
                                 : ""}
                             </span>
                           </div>
@@ -4030,7 +4038,58 @@ function ItemEditor({
                         </label>
 
                         <label className="block">
-                          <span className="text-sm font-medium">Audio file (ES, optional)</span>
+                          <span className="flex items-center justify-between gap-2 text-sm font-medium">
+                            Audio file (ES, optional)
+                            {!!extractStreamVideoId(ch.file_url_es ?? "") && (
+                              <button
+                                type="button"
+                                disabled={recalcChapterIdx === idx}
+                                onClick={async () => {
+                                  setRecalcChapterIdx(idx);
+                                  try {
+                                    const videoId = extractStreamVideoId(ch.file_url_es ?? "");
+                                    const seconds = videoId
+                                      ? await getStreamDurationSeconds(videoId)
+                                      : null;
+                                    if (seconds && seconds > 0) {
+                                      setChapters((prev) =>
+                                        prev.map((c, i) =>
+                                          i === idx ? { ...c, duration_seconds_es: seconds } : c,
+                                        ),
+                                      );
+                                      if (ch.id) {
+                                        const { error } = await (supabase as any)
+                                          .from("content_chapters")
+                                          .update({ duration_seconds_es: seconds })
+                                          .eq("id", ch.id);
+                                        if (error)
+                                          console.error("Failed to patch chapter duration:", error);
+                                      }
+                                    } else {
+                                      toast.error(
+                                        "Bunny hasn't reported a duration for this video yet",
+                                      );
+                                    }
+                                  } finally {
+                                    setRecalcChapterIdx(null);
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-normal text-muted-foreground border border-transparent hover:border-input hover:bg-muted disabled:opacity-40 transition-colors"
+                                title={
+                                  recalcChapterIdx === idx
+                                    ? "Calculating duration…"
+                                    : "Recalculate duration"
+                                }
+                              >
+                                <RefreshCw
+                                  className={`h-3 w-3 ${recalcChapterIdx === idx ? "animate-spin" : ""}`}
+                                />
+                                {ch.duration_seconds_es
+                                  ? formatMediaDuration(ch.duration_seconds_es)
+                                  : "Recalculate"}
+                              </button>
+                            )}
+                          </span>
                           <StreamUploader
                             className="mt-1"
                             existingFileUrl={ch.file_url_es ?? undefined}
@@ -4039,15 +4098,37 @@ function ItemEditor({
                             collectionName={categorySlug}
                             collectionId={collectionId}
                             onCollectionCreated={onCollectionCreated}
-                            onUploaded={(playbackUrl, name) =>
+                            // The Spanish file is often a different recording
+                            // of a different length than the English one, not
+                            // a dub of it — so its duration is captured (and
+                            // patched by id, same reasoning as the EN
+                            // uploader above) into its own column rather than
+                            // reusing/overwriting duration_seconds.
+                            onUploaded={(playbackUrl, name, seconds) => {
                               setChapters((prev) =>
                                 prev.map((c, i) =>
                                   i === idx
-                                    ? { ...c, file_url_es: playbackUrl, file_name_es: name ?? null }
+                                    ? {
+                                        ...c,
+                                        file_url_es: playbackUrl,
+                                        file_name_es: name ?? null,
+                                        duration_seconds_es:
+                                          seconds && seconds > 0 ? seconds : null,
+                                      }
                                     : c,
                                 ),
-                              )
-                            }
+                              );
+                              if (seconds && seconds > 0 && ch.id) {
+                                (supabase as any)
+                                  .from("content_chapters")
+                                  .update({ duration_seconds_es: seconds })
+                                  .eq("id", ch.id)
+                                  .then(({ error }: any) => {
+                                    if (error)
+                                      console.error("Failed to patch chapter duration:", error);
+                                  });
+                              }
+                            }}
                           >
                             <input
                               type="url"
@@ -4060,6 +4141,18 @@ function ItemEditor({
                                   ),
                                 )
                               }
+                              onBlur={async (e) => {
+                                const v = e.target.value.trim();
+                                if (!v) return;
+                                const seconds = await probeMediaDuration(v, "audio");
+                                if (seconds > 0) {
+                                  setChapters((prev) =>
+                                    prev.map((c, i) =>
+                                      i === idx ? { ...c, duration_seconds_es: seconds } : c,
+                                    ),
+                                  );
+                                }
+                              }}
                               className="min-w-0 flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
                             />
                           </StreamUploader>
@@ -4101,6 +4194,7 @@ function ItemEditor({
                       file_url_es: null,
                       file_name_es: null,
                       duration_seconds: null,
+                      duration_seconds_es: null,
                       ...lastChapterSection(prev),
                     },
                   ])

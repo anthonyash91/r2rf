@@ -10,7 +10,12 @@ export type ContentChapter = {
   file_name: string | null;
   file_url_es: string | null;
   file_name_es: string | null;
+  /** Duration of `file_url` (the English file). */
   duration_seconds: number | null;
+  /** Duration of `file_url_es` — a separate field because the two files are
+   * often different recordings of different lengths, not a dub of the same
+   * audio. Null on chapters uploaded before this field existed. */
+  duration_seconds_es: number | null;
   section: string | null;
   section_es: string | null;
 };

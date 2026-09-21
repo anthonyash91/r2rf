@@ -1,0 +1,13 @@
+-- content_chapters had a single duration_seconds column shared by both the
+-- English and Spanish audio file on a row, even though the two files are
+-- often different recordings of different lengths — so the Spanish player,
+-- progress bar, and total-duration display all silently showed the English
+-- file's duration. Add a dedicated column so each language's file can carry
+-- its own real duration.
+--
+-- Existing Spanish files (Big Book, Daily Reflections, Living Sober) were
+-- uploaded before this column existed, so they're left NULL here — the app
+-- falls back to duration_seconds for those until each row is re-saved in
+-- the admin editor, which now probes/records the Spanish file's own
+-- duration on upload.
+ALTER TABLE content_chapters ADD COLUMN duration_seconds_es NUMERIC;

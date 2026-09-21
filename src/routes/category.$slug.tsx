@@ -192,6 +192,19 @@ function resolveSectionNavItem(item: ContentItem, lang: Language): SectionNavTar
 }
 
 /**
+ * A chapter's duration in the active language. `duration_seconds_es` is a
+ * separate column from `duration_seconds` because the two files are often
+ * different recordings of different lengths, not a dub of the same audio —
+ * falls back to the English duration only for chapters uploaded before that
+ * column existed (no `duration_seconds_es` yet despite having a Spanish
+ * file), not as a general substitute for a missing translation.
+ */
+function chapterDuration(ch: ContentChapter, language: Language): number {
+  const raw = language === "es" ? (ch.duration_seconds_es ?? ch.duration_seconds) : ch.duration_seconds;
+  return raw ?? 0;
+}
+
+/**
  * Shared "up next in this section" / "end of section" bar shown once a PDF,
  * video, or audio item is finished — reachedEnd gates whether it renders at
  * all, target is the next lesson to offer (or null when this was the last
@@ -434,7 +447,7 @@ function CategoryPage() {
       : activeChapter.file_url
     : null;
   const totalChapterDuration = hasChapters
-    ? audioChapters.reduce((s, ch) => s + (ch.duration_seconds ?? 0), 0)
+    ? audioChapters.reduce((s, ch) => s + chapterDuration(ch, lang), 0)
     : 0;
 
   // Tracks whether we've set the initial resume chapter for the currently open player.
@@ -794,7 +807,7 @@ function CategoryPage() {
 
     let offset = 0;
     for (let i = 0; i < audioChapters.length; i++) {
-      const dur = audioChapters[i].duration_seconds ?? 0;
+      const dur = chapterDuration(audioChapters[i], lang);
       if (resumePos < offset + dur || i === audioChapters.length - 1) {
         setCurrentChapterIdx(i);
         setChapterOffset(offset);
@@ -903,12 +916,13 @@ function CategoryPage() {
     queryFn: async () => {
       const { data: rows, error } = await (supabase as any)
         .from("content_chapters")
-        .select("content_item_id, duration_seconds, file_url, file_url_es")
+        .select("content_item_id, duration_seconds, duration_seconds_es, file_url, file_url_es")
         .in("content_item_id", itemIds);
       if (error) return [];
       return (rows ?? []) as {
         content_item_id: string;
         duration_seconds: number | null;
+        duration_seconds_es: number | null;
         file_url: string | null;
         file_url_es: string | null;
       }[];
@@ -934,7 +948,10 @@ function CategoryPage() {
       const filtered = chs.filter((c) => (lang === "es" ? !!c.file_url_es : !!c.file_url));
       map.set(
         itemId,
-        filtered.reduce((s, c) => s + (c.duration_seconds ?? 0), 0),
+        filtered.reduce((s, c) => {
+          const dur = lang === "es" ? (c.duration_seconds_es ?? c.duration_seconds) : c.duration_seconds;
+          return s + (dur ?? 0);
+        }, 0),
       );
     }
     return map;
@@ -981,12 +998,14 @@ function CategoryPage() {
   const prevChapter = () => {
     if (!hasChapters || currentChapterIdx <= 0) return;
     const i = currentChapterIdx - 1;
-    setChapterOffset(audioChapters.slice(0, i).reduce((a, c) => a + (c.duration_seconds ?? 0), 0));
+    setChapterOffset(
+      audioChapters.slice(0, i).reduce((a, c) => a + chapterDuration(c, lang), 0),
+    );
     setCurrentChapterIdx(i);
   };
   const nextChapter = () => {
     if (!hasChapters || currentChapterIdx >= audioChapters.length - 1) return;
-    setChapterOffset((prev) => prev + (activeChapter?.duration_seconds ?? 0));
+    setChapterOffset((prev) => prev + (activeChapter ? chapterDuration(activeChapter, lang) : 0));
     setCurrentChapterIdx(currentChapterIdx + 1);
   };
   // ---
@@ -2352,7 +2371,9 @@ function CategoryPage() {
                       // freshly-mounted <audio> element (new key) autoplays
                       // instead of just advancing to a paused state.
                       wantPlayRef.current = true;
-                      setChapterOffset((prev) => prev + (activeChapter?.duration_seconds ?? 0));
+                      setChapterOffset(
+                        (prev) => prev + (activeChapter ? chapterDuration(activeChapter, lang) : 0),
+                      );
                       setCurrentChapterIdx(nextIdx);
                     } else {
                       setAudioEnded(true);
@@ -2518,9 +2539,10 @@ function CategoryPage() {
                       : null;
                   const showSectionHeader = !!chSection && chSection !== prevSection;
                   const isActive = idx === currentChapterIdx;
+                  const chDur = chapterDuration(ch, lang);
                   const chOffset = audioChapters
                     .slice(0, idx)
-                    .reduce((s, c) => s + (c.duration_seconds ?? 0), 0);
+                    .reduce((s, c) => s + chapterDuration(c, lang), 0);
                   // Active chapter: live hook value. Others: max of session cache and DB map
                   // so chapters completed via auto-advance show immediately.
                   const furthest = isActive
@@ -2529,10 +2551,7 @@ function CategoryPage() {
                         getSessionChapterFurthest(ch.id),
                         perChapterProgressMap.get(ch.id) ?? 0,
                       );
-                  const chPct =
-                    ch.duration_seconds && ch.duration_seconds > 0
-                      ? Math.min(1, furthest / ch.duration_seconds)
-                      : 0;
+                  const chPct = chDur > 0 ? Math.min(1, furthest / chDur) : 0;
                   const chDone = chPct >= 0.9;
                   return (
                     <Fragment key={ch.id}>
@@ -2574,10 +2593,9 @@ function CategoryPage() {
                               /
                             </span>
                           ) : null}
-                          {ch.duration_seconds ? (
+                          {chDur > 0 ? (
                             <span className="text-xs tabular-nums">
-                              {Math.floor(ch.duration_seconds / 60)}:
-                              {String(Math.round(ch.duration_seconds % 60)).padStart(2, "0")}
+                              {Math.floor(chDur / 60)}:{String(Math.round(chDur % 60)).padStart(2, "0")}
                             </span>
                           ) : null}
                         </span>
