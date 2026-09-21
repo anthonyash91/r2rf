@@ -167,10 +167,11 @@ function useIsDesktop(query = "(min-width: 640px)"): boolean {
 }
 
 function itemTranslationStatus(item: ContentItem): "complete" | "partial" | "missing" {
+  // source is deliberately excluded — it's attribution/citation text, not
+  // translatable, so it never counts toward translation completeness.
   const pairs: Array<[string | null | undefined, string | null | undefined]> = [
     [item.title, item.title_es],
     [item.description?.trim() ? item.description : null, item.description_es],
-    [item.source?.trim() ? item.source : null, item.source_es],
   ];
   const required = pairs.filter(([en]) => !!en?.toString().trim());
   if (required.length === 0) return "complete";
@@ -964,7 +965,6 @@ type BulkReviewSavePayload = {
   title_es: string;
   type: string;
   source: string;
-  source_es: string;
   duration: string;
   section: string | null;
   section_es: string | null;
@@ -1038,7 +1038,6 @@ function BulkReviewPanel({
           title_es: item.title_es ?? "",
           type: item.type,
           source: item.source ?? "",
-          source_es: item.source_es ?? "",
           duration: item.duration ?? "",
           section: item.section ?? null,
           section_es: item.section_es ?? null,
@@ -1167,9 +1166,7 @@ function BulkReviewCard({
   const [generatingDesc, setGeneratingDesc] = useState(false);
   const [durationEstimating, setDurationEstimating] = useState(false);
   const { run: runTranslate, busy: translating } = useTranslateToSpanish();
-  const [showEs, setShowEs] = useState(
-    !!(draft.title_es || draft.description_es || draft.source_es),
-  );
+  const [showEs, setShowEs] = useState(!!(draft.title_es || draft.description_es));
   const canRecalculateDuration =
     extOf(url, null) === "pdf" ||
     !!extractStreamVideoId(url) ||
@@ -1304,12 +1301,11 @@ function BulkReviewCard({
         addLabel="+ Add Spanish translation"
         onTranslate={() => {
           runTranslate(
-            { title: draft.title, description: draft.description, source: draft.source },
+            { title: draft.title, description: draft.description },
             (t) => {
               onChange({
                 ...(t.title ? { title_es: t.title } : {}),
                 ...(t.description ? { description_es: t.description } : {}),
-                ...(t.source ? { source_es: t.source } : {}),
               });
             },
             "Content item metadata in a learning library",
@@ -1320,11 +1316,6 @@ function BulkReviewCard({
           label="Title (ES)"
           value={draft.title_es}
           onChange={(v) => onChange({ title_es: v })}
-        />
-        <LabeledInput
-          label="Source (ES)"
-          value={draft.source_es}
-          onChange={(v) => onChange({ source_es: v })}
         />
         <label className="block">
           <span className="text-sm font-medium">Description (ES)</span>
@@ -1530,7 +1521,6 @@ function ContentManager({
             file_name: itemValues.file_name ?? null,
             title_es: itemValues.title_es ?? null,
             description_es: itemValues.description_es ?? null,
-            source_es: itemValues.source_es ?? null,
             file_url_es: itemValues.file_url_es ?? null,
             file_name_es: itemValues.file_name_es ?? null,
             published: itemValues.published ?? true,
@@ -1973,7 +1963,6 @@ function ContentManager({
               title_es: d.title_es,
               type: d.type,
               source: d.source,
-              source_es: d.source_es,
               duration: d.duration,
               section: d.section,
               section_es: d.section_es,
@@ -2934,12 +2923,11 @@ function ItemEditor({
   const [facilities, setFacilities] = useState<string[]>(item?.facilities ?? []);
   const [titleEs, setTitleEs] = useState(item?.title_es ?? "");
   const [descriptionEs, setDescriptionEs] = useState(item?.description_es ?? "");
-  const [sourceEs, setSourceEs] = useState(item?.source_es ?? item?.source ?? "");
 
   const [fileUrlEs, setFileUrlEs] = useState<string | null>(item?.file_url_es ?? null);
   const [fileNameEs, setFileNameEs] = useState<string | null>(item?.file_name_es ?? null);
   const [showEs, setShowEs] = useState(
-    !!(item?.title_es || item?.description_es || item?.source_es || item?.file_url_es),
+    !!(item?.title_es || item?.description_es || item?.file_url_es),
   );
   const { run: runAddEs, busy: addEsBusy } = useTranslateToSpanish();
   const { run: runChapterTitleEs, busy: chapterTitleEsBusy } = useTranslateToSpanish();
@@ -3335,7 +3323,6 @@ function ItemEditor({
           facilities,
           title_es: titleEs.trim() || null,
           description_es: descriptionEs.trim() || null,
-          source_es: sourceEs.trim() || null,
           file_url_es: fileUrlEs,
           file_name_es: fileNameEs,
           section: section.trim() || null,
@@ -4264,11 +4251,10 @@ function ItemEditor({
         description="Leave blank to fall back to the English version when Spanish is selected."
         onTranslate={() => {
           runAddEs(
-            { title, description, source, section },
+            { title, description, section },
             (t) => {
               if (t.title) setTitleEs(t.title);
               if (t.description) setDescriptionEs(t.description);
-              if (t.source) setSourceEs(t.source);
               if (t.section) setSectionEs(t.section);
             },
             "Content item metadata in a learning library",
@@ -4276,7 +4262,6 @@ function ItemEditor({
         }}
       >
         <LabeledInput label="Title (ES)" value={titleEs} onChange={setTitleEs} />
-        <LabeledInput label="Source (ES)" value={sourceEs} onChange={setSourceEs} />
         <LabeledInput label="Section (ES)" value={sectionEs} onChange={setSectionEs} />
         <label className="block">
           <span className="text-sm font-medium">Description (ES)</span>

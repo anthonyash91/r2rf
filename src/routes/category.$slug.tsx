@@ -534,7 +534,7 @@ function CategoryPage() {
       const { data: items, error: e2 } = await (supabase as any)
         .from("content_items")
         .select(
-          "id, category_id, title, title_es, type, source, source_es, duration, description, description_es, url, file_url, file_url_es, file_name, file_name_es, sort_order, published, exempt_from_progress, section, section_es",
+          "id, category_id, title, title_es, type, source, duration, description, description_es, url, file_url, file_url_es, file_name, file_name_es, sort_order, published, exempt_from_progress, section, section_es",
         )
         .eq("category_id", cat.id)
         .eq("published", true)
@@ -1390,7 +1390,10 @@ function CategoryPage() {
                                     item.description,
                                     item.description_es,
                                   );
-                                  const source = pickLang(lang, item.source, item.source_es);
+                                  // Deliberately not pickLang — source is attribution/
+                                  // citation text (e.g. "Narcotics Anonymous"), not
+                                  // translatable, same in both languages.
+                                  const source = item.source;
                                   const fileUrl =
                                     lang === "es" && item.file_url_es
                                       ? item.file_url_es

@@ -58,6 +58,10 @@ export type ContentItem = {
   category_id: string;
   title: string;
   type: string;
+  /** Attribution/citation only (e.g. "Narcotics Anonymous") — deliberately
+   * not translatable. There is no source_es: the same value is shown in
+   * both languages, same as a facility or organization name. The DB column
+   * still exists for now but nothing in the app reads or writes it. */
   source: string;
   duration: string;
   description: string;
@@ -69,7 +73,6 @@ export type ContentItem = {
   exempt_from_progress?: boolean;
   title_es: string | null;
   description_es: string | null;
-  source_es: string | null;
   file_url_es: string | null;
   file_name_es: string | null;
   created_at?: string;
