@@ -286,6 +286,7 @@ const translations = {
     "audio.chapter": "Audio File {n}",
     "audio.nowPlaying": "Now Playing",
     "audio.nextChapter": "Next Audio File",
+    "audio.notAvailableInLanguage": "This audio isn't available in English yet.",
 
     "tutorial.skip": "Skip tour",
     "tutorial.showMeAround": "Show me around",
@@ -624,6 +625,7 @@ const translations = {
     "audio.chapter": "Archivo de audio {n}",
     "audio.nowPlaying": "Reproduciendo",
     "audio.nextChapter": "Siguiente archivo de audio",
+    "audio.notAvailableInLanguage": "Este audio todavía no está disponible en español.",
 
     "tutorial.skip": "Omitir recorrido",
     "tutorial.showMeAround": "Muéstrame cómo funciona",

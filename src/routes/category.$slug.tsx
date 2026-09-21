@@ -407,18 +407,24 @@ function CategoryPage() {
   // Some audiobooks are split into a different number of chapters per
   // language (e.g. a 15-part English recording vs. an 8-part Spanish one) —
   // chapter N in one language doesn't correspond to chapter N in the other,
-  // so once a book has ANY chapters dedicated to the active language, a
-  // chapter missing that language is hidden rather than silently falling
-  // back to playing the other language's audio under a chapter number that
-  // no longer means anything. Only falls back to the unfiltered list when
-  // literally none of the chapters have the active language at all —
-  // better to show the wrong-language chapters than an empty player.
-  const audioChapters = useMemo(() => {
-    const filtered = rawAudioChapters.filter((ch) =>
-      lang === "es" ? !!ch.file_url_es : !!ch.file_url,
-    );
-    return filtered.length > 0 ? filtered : rawAudioChapters;
-  }, [rawAudioChapters, lang]);
+  // so a chapter missing the active language is hidden rather than silently
+  // falling back to playing the other language's audio under a chapter
+  // number that no longer means anything. Unlike an earlier version of this,
+  // there's no fallback to the unfiltered list when nothing matches — an
+  // item that's 0% translated should say so (see noChaptersInLanguage
+  // below), not quietly hand a Spanish listener an all-English chapter list.
+  const audioChapters = useMemo(
+    () => rawAudioChapters.filter((ch) => (lang === "es" ? !!ch.file_url_es : !!ch.file_url)),
+    [rawAudioChapters, lang],
+  );
+
+  // True when the item has chapters, but none of them exist in the active
+  // language, and there's no plain top-level file to fall back to either
+  // (chaptered items keep all their audio on the chapter rows). Distinct
+  // from a genuinely non-chaptered item with no audio at all — that's an
+  // unrelated data problem, not a translation gap, so it isn't flagged here.
+  const noChaptersInLanguage =
+    !!audioPlayer && rawAudioChapters.length > 0 && audioChapters.length === 0 && !audioPlayer.url;
 
   const hasChapters = audioChapters.length > 0;
   const activeChapter = hasChapters ? (audioChapters[currentChapterIdx] ?? null) : null;
@@ -908,11 +914,13 @@ function CategoryPage() {
       }[];
     },
   });
-  // Same per-language filtering as `audioChapters` above (and the same
-  // fallback-to-everything-only-if-nothing-matches rule) — otherwise a book
+  // Same per-language filtering as `audioChapters` above — otherwise a book
   // with language-dedicated chapters would sum BOTH languages' durations
   // into one denominator, so finishing all of one language's chapters would
-  // never reach 100%.
+  // never reach 100%. No fallback to the other language's total when an
+  // item has none of its own, matching audioChapters/noChaptersInLanguage —
+  // an unfinished translation should show as 0 progress, not the other
+  // language's duration.
   const itemTotalDurationMap = useMemo(() => {
     const rows = chapterDurationsQuery.data ?? [];
     const byItem = new Map<string, typeof rows>();
@@ -924,10 +932,9 @@ function CategoryPage() {
     const map = new Map<string, number>();
     for (const [itemId, chs] of byItem) {
       const filtered = chs.filter((c) => (lang === "es" ? !!c.file_url_es : !!c.file_url));
-      const use = filtered.length > 0 ? filtered : chs;
       map.set(
         itemId,
-        use.reduce((s, c) => s + (c.duration_seconds ?? 0), 0),
+        filtered.reduce((s, c) => s + (c.duration_seconds ?? 0), 0),
       );
     }
     return map;
@@ -2319,7 +2326,12 @@ function CategoryPage() {
                 {pickLang(lang, activeChapter.title, activeChapter.title_es)}
               </p>
             )}
-            {audioPlayer && (
+            {audioPlayer && noChaptersInLanguage && (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                {t("audio.notAvailableInLanguage")}
+              </p>
+            )}
+            {audioPlayer && !noChaptersInLanguage && (
               <>
                 {/* Hidden audio element — engagement hook wires to this via ref */}
                 <audio
