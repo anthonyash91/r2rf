@@ -9,7 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 const PdfViewer = lazy(() => import("@/components/PdfViewer"));
 import { trackCategoryView, trackContentClick } from "@/lib/analytics";
 import { weightedCompletionPct } from "@/lib/content-progress";
-import { detectMedia, mediaKindFromType, type MediaKind } from "@/lib/read-status";
+import { detectMedia, detectMediaFor, mediaKindFromType, type MediaKind } from "@/lib/read-status";
 import { isStreamPlaybackUrl } from "@/lib/storage-url";
 import { useHlsSource } from "@/hooks/use-hls-source";
 import { supabase } from "@/integrations/supabase/client";
@@ -131,29 +131,109 @@ function CategoryError({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+type SectionNavTarget = {
+  itemId: string;
+  mediaKind: "pdf" | "video" | "audio";
+  /** "" for a chapter-only audio item — it has no single file on the item
+   * itself (its chapters carry their own URLs), same as ActiveMedia's own
+   * `url: mediaSrc ?? ""` convention when opening from the item list. */
+  mediaSrc: string;
+  title: string;
+  section: string | null;
+};
+
 /**
- * Resolves an item to its PDF viewing info, or null if it isn't a PDF —
- * a narrower, standalone copy of the mediaKind detection inline in the item
- * list below (which also has to handle video/audio/stream detection this
- * doesn't need). Kept separate rather than factored out of that loop so this
- * addition can't regress the existing list rendering; PDF detection itself
- * is simple enough that duplicating just this part is low-risk.
- * Used only to find "the next PDF in this section" for the in-modal
- * continue-reading prompt — see nextPdfInSection below.
+ * Resolves an item to what it would open as in a modal — pdf/video/audio
+ * only; image and non-media items (external links, "meeting" types) return
+ * null since they either have no natural "you've reached the end" moment or
+ * don't open in a modal at all. Used only to find "the next lesson after
+ * this one in its section" (see nextItemInSection below); kept as its own
+ * standalone resolver rather than factored out of the item list's inline
+ * detection so this addition can't regress that existing, more delicate
+ * logic — it does reuse detectMediaFor for the actual kind determination,
+ * the one part of that logic that's already a shared, tested helper.
  */
-function resolvePdfInfo(
-  item: ContentItem,
-  lang: Language,
-): { title: string; mediaSrc: string; section: string | null } | null {
+function resolveSectionNavItem(item: ContentItem, lang: Language): SectionNavTarget | null {
   const fileUrl = lang === "es" && item.file_url_es ? item.file_url_es : item.file_url;
+  let mediaKind = detectMediaFor({ url: item.url, file_url: fileUrl, type: item.type });
+  // detectMediaFor only falls back to the item's `type` string when a Bunny
+  // Stream URL is present. Chapter-only audio items have no url/file_url at
+  // all — their chapters carry their own — so that fallback never triggers
+  // there. Match the item list's own (broader) detection below, which
+  // treats a type containing "audio"/"podcast" as audio regardless of
+  // whether any URL is present on the item itself.
+  if (!mediaKind) {
+    const typeLower = (item.type ?? "").toLowerCase();
+    if (typeLower.includes("audio") || typeLower.includes("podcast")) mediaKind = "audio";
+  }
+  if (mediaKind !== "pdf" && mediaKind !== "video" && mediaKind !== "audio") return null;
+
   const fileMedia = detectMedia(fileUrl);
   const urlMedia = detectMedia(item.url);
-  if ((fileMedia ?? urlMedia) !== "pdf") return null;
-  const mediaSrc = fileMedia ? fileUrl : item.url;
-  if (!mediaSrc) return null;
+  const fileIsStream = isStreamPlaybackUrl(fileUrl);
+  const urlIsStream = isStreamPlaybackUrl(item.url);
+  const mediaSrc = fileMedia
+    ? fileUrl
+    : urlMedia
+      ? item.url
+      : fileIsStream
+        ? fileUrl
+        : urlIsStream
+          ? item.url
+          : null;
+  // Chapter-only audio has no direct source on the item itself — still a
+  // valid item to jump to (its chapters load once the player is open).
+  // Every other kind needs an actual source to be worth jumping to.
+  if (mediaKind !== "audio" && !mediaSrc) return null;
+
   const title = pickLang(lang, item.title, item.title_es) || item.title;
   const section = (pickLang(lang, item.section, item.section_es) || item.section || "").trim();
-  return { title, mediaSrc, section: section || null };
+  return { itemId: item.id, mediaKind, mediaSrc: mediaSrc ?? "", title, section: section || null };
+}
+
+/**
+ * Shared "up next in this section" / "end of section" bar shown once a PDF,
+ * video, or audio item is finished — reachedEnd gates whether it renders at
+ * all, target is the next lesson to offer (or null when this was the last
+ * one in its section). Deliberately not an auto-advance: this is educational
+ * content for a captive audience, not autoplay, so continuing is always an
+ * explicit click.
+ */
+function SectionNavBar({
+  reachedEnd,
+  target,
+  onContinue,
+}: {
+  reachedEnd: boolean;
+  target: SectionNavTarget | null | undefined;
+  onContinue: (target: SectionNavTarget) => void;
+}) {
+  if (!reachedEnd) return null;
+  if (!target) {
+    return (
+      <div className="flex shrink-0 items-center justify-center gap-2 border-t border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+        <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-[var(--color-accent)]" />
+        You've reached the end of this section.
+      </div>
+    );
+  }
+  return (
+    <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-muted/40 px-4 py-3">
+      <div className="min-w-0">
+        <p className="text-xs text-muted-foreground">Up next in this section</p>
+        <p className="truncate text-sm font-medium text-foreground">{target.title}</p>
+      </div>
+      <button
+        type="button"
+        onClick={() => onContinue(target)}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+        style={{ backgroundColor: "var(--color-accent)" }}
+      >
+        Continue
+        <ArrowRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
 }
 
 export const Route = createFileRoute("/category/$slug")({
@@ -309,6 +389,20 @@ function CategoryPage() {
   // would give null because the Portal renders asynchronously.
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
+
+  // Same idea as reachedEndOfPdf further down, driven by the video/audio
+  // elements' native "ended" event instead of a page count. Reset whenever a
+  // (possibly different) item opens, and also on "play" so manually
+  // replaying/rewinding after finishing hides the prompt again until it
+  // actually finishes again.
+  const [videoEnded, setVideoEnded] = useState(false);
+  useEffect(() => setVideoEnded(false), [videoPlayer?.itemId]);
+  // For chapter audio, only the FINAL chapter's end counts — advancing to the
+  // next chapter changes currentChapterIdx, which this already resets on, so
+  // the "ended" handler on the <audio> element only ever needs to set this
+  // true (never has to check "is this the last chapter" itself).
+  const [audioEnded, setAudioEnded] = useState(false);
+  useEffect(() => setAudioEnded(false), [audioPlayer?.itemId, currentChapterIdx]);
 
   // Transparently attaches hls.js when the URL is a Bunny Stream playlist;
   // a no-op passthrough (`el.src = url`) for direct-file URLs otherwise.
@@ -673,6 +767,7 @@ function CategoryPage() {
     const onPlay = () => {
       setIsPlaying(true);
       wantPlayRef.current = true;
+      setAudioEnded(false);
     };
     const onPause = () => {
       setIsPlaying(false);
@@ -869,29 +964,45 @@ function CategoryPage() {
 
   // Section groups for the "continue to next lesson" prompt, computed from
   // visibleItems (not the search-filtered displayItems used by the list
-  // below) — if someone found this PDF via search, the reading sequence
-  // should still be the section's real order, not the search results.
+  // below) — if someone found this item via search, the sequence should
+  // still be the section's real order, not the search results.
   const sectionGroupsForNav = useMemo(
     () => groupItemsBySection(visibleItems, data?.category.section_order),
     [visibleItems, data?.category.section_order],
   );
 
-  // The next PDF (if any) after the currently-open one within the same
-  // section. undefined = no PDF is open right now; null = this is the last
-  // PDF in its section (nothing to continue to).
-  const nextPdfInSection = useMemo(() => {
-    if (!pdfViewer) return undefined;
+  // The next lesson (if any) after the currently-open item within the same
+  // section — regardless of content type, so finishing a video can hand off
+  // to a PDF next, etc.; "lesson to lesson" means the section's real
+  // sequence, not "only the same type." undefined = nothing open right now;
+  // null = this is the last openable item in its section.
+  const nextItemInSection = useMemo(() => {
+    if (!activeItemId) return undefined;
     for (const group of sectionGroupsForNav) {
-      const idx = group.items.findIndex((i) => i.id === pdfViewer.itemId);
+      const idx = group.items.findIndex((i) => i.id === activeItemId);
       if (idx === -1) continue;
       for (let i = idx + 1; i < group.items.length; i++) {
-        const resolved = resolvePdfInfo(group.items[i], lang);
-        if (resolved) return { itemId: group.items[i].id, ...resolved };
+        const resolved = resolveSectionNavItem(group.items[i], lang);
+        if (resolved) return resolved;
       }
-      return null; // found the section, but no PDF after this one in it
+      return null; // found the section, but nothing openable after this item
     }
     return null; // current item isn't in any section group (shouldn't happen)
-  }, [pdfViewer, sectionGroupsForNav, lang]);
+  }, [activeItemId, sectionGroupsForNav, lang]);
+
+  // Opens the next lesson exactly the way clicking it in the list would —
+  // every per-item reset (engagement tracking, resume position, PDF
+  // pagination) already keys off activeMedia's itemId changing.
+  function continueToNextLesson(target: SectionNavTarget) {
+    setActiveMedia({
+      type: target.mediaKind,
+      url: target.mediaSrc,
+      title: target.title,
+      itemId: target.itemId,
+      section: target.section,
+    });
+    if (target.mediaKind === "pdf") openedPdfsRef.current.add(target.itemId);
+  }
 
   // True once the reader is on the PDF's last page — this is what reveals
   // the continue/end-of-section area, not just having a next item queued.
@@ -2075,9 +2186,16 @@ function CategoryPage() {
               key={videoPlayer.url}
               controls
               autoPlay
+              onEnded={() => setVideoEnded(true)}
+              onPlay={() => setVideoEnded(false)}
               className="w-full h-auto max-h-[calc(100dvh-2rem-4.5rem)] bg-black"
             />
           )}
+          <SectionNavBar
+            reachedEnd={videoEnded}
+            target={nextItemInSection}
+            onContinue={continueToNextLesson}
+          />
         </DialogContent>
       </Dialog>
 
@@ -2122,7 +2240,10 @@ function CategoryPage() {
                   }
                   className="hidden"
                   onEnded={() => {
-                    if (!hasChapters) return;
+                    if (!hasChapters) {
+                      setAudioEnded(true);
+                      return;
+                    }
                     const nextIdx = currentChapterIdx + 1;
                     if (nextIdx < audioChapters.length) {
                       // The browser fires "pause" right before "ended", which
@@ -2132,6 +2253,8 @@ function CategoryPage() {
                       wantPlayRef.current = true;
                       setChapterOffset((prev) => prev + (activeChapter?.duration_seconds ?? 0));
                       setCurrentChapterIdx(nextIdx);
+                    } else {
+                      setAudioEnded(true);
                     }
                   }}
                 />
@@ -2359,6 +2482,11 @@ function CategoryPage() {
               </div>
             </div>
           )}
+          <SectionNavBar
+            reachedEnd={audioEnded}
+            target={nextItemInSection}
+            onContinue={continueToNextLesson}
+          />
         </DialogContent>
       </Dialog>
 
@@ -2427,40 +2555,11 @@ function CategoryPage() {
                     </div>
                   );
                 })()}
-              {reachedEndOfPdf &&
-                (nextPdfInSection ? (
-                  <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-muted/40 px-4 py-3">
-                    <div className="min-w-0">
-                      <p className="text-xs text-muted-foreground">Up next in this section</p>
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {nextPdfInSection.title}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveMedia({
-                          type: "pdf",
-                          url: nextPdfInSection.mediaSrc,
-                          title: nextPdfInSection.title,
-                          itemId: nextPdfInSection.itemId,
-                          section: nextPdfInSection.section,
-                        });
-                        openedPdfsRef.current.add(nextPdfInSection.itemId);
-                      }}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                      style={{ backgroundColor: "var(--color-accent)" }}
-                    >
-                      Continue
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex shrink-0 items-center justify-center gap-2 border-t border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-                    <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-[var(--color-accent)]" />
-                    You've reached the end of this section.
-                  </div>
-                ))}
+              <SectionNavBar
+                reachedEnd={reachedEndOfPdf}
+                target={nextItemInSection}
+                onContinue={continueToNextLesson}
+              />
             </div>
           )}
         </DialogContent>
