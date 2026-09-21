@@ -200,38 +200,73 @@ function resolveSectionNavItem(item: ContentItem, lang: Language): SectionNavTar
  * explicit click.
  */
 function SectionNavBar({
+  previousTarget,
   reachedEnd,
-  target,
-  onContinue,
+  nextTarget,
+  onJump,
 }: {
+  previousTarget: SectionNavTarget | null | undefined;
+  /** True once the current item is actually finished (last PDF page, video
+   * or audio ended) — this is what reveals the continue/end-of-section
+   * side, not just having a next item queued. */
   reachedEnd: boolean;
-  target: SectionNavTarget | null | undefined;
-  onContinue: (target: SectionNavTarget) => void;
+  nextTarget: SectionNavTarget | null | undefined;
+  onJump: (target: SectionNavTarget) => void;
 }) {
-  if (!reachedEnd) return null;
-  if (!target) {
+  const previousButton = previousTarget && (
+    <button
+      type="button"
+      onClick={() => onJump(previousTarget)}
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-input px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+    >
+      <ArrowLeft className="h-4 w-4" />
+      Previous
+    </button>
+  );
+
+  // Before the item is finished, there's nothing to reveal on the "next"
+  // side yet — show just Previous (when there's somewhere to go back to),
+  // or nothing at all.
+  if (!reachedEnd) {
+    if (!previousButton) return null;
     return (
-      <div className="flex shrink-0 items-center justify-center gap-2 border-t border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-        <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-[var(--color-accent)]" />
-        You've reached the end of this section.
+      <div className="flex shrink-0 items-center border-t border-border bg-card px-4 py-3">
+        {previousButton}
       </div>
     );
   }
-  return (
-    <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-card px-4 py-3">
-      <div className="min-w-0">
+
+  const endContent = nextTarget ? (
+    <div className="flex min-w-0 items-center gap-3">
+      <div className="min-w-0 text-right">
         <p className="text-xs text-muted-foreground">Up next in this section</p>
-        <p className="truncate text-sm font-medium text-foreground">{target.title}</p>
+        <p className="truncate text-sm font-medium text-foreground">{nextTarget.title}</p>
       </div>
       <button
         type="button"
-        onClick={() => onContinue(target)}
+        onClick={() => onJump(nextTarget)}
         className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
         style={{ backgroundColor: "var(--color-accent)" }}
       >
         Continue
         <ArrowRight className="h-4 w-4" />
       </button>
+    </div>
+  ) : (
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-[var(--color-accent)]" />
+      You've reached the end of this section.
+    </div>
+  );
+
+  return (
+    <div
+      className={`flex shrink-0 items-center gap-3 border-t border-border bg-card px-4 py-3 ${
+        previousButton ? "justify-between" : "justify-center"
+      }`}
+    >
+      {previousButton}
+      {endContent}
     </div>
   );
 }
@@ -971,11 +1006,11 @@ function CategoryPage() {
     [visibleItems, data?.category.section_order],
   );
 
-  // The next lesson (if any) after the currently-open item within the same
-  // section — regardless of content type, so finishing a video can hand off
-  // to a PDF next, etc.; "lesson to lesson" means the section's real
-  // sequence, not "only the same type." undefined = nothing open right now;
-  // null = this is the last openable item in its section.
+  // The next/previous lesson (if any) relative to the currently-open item
+  // within the same section — regardless of content type, so finishing a
+  // video can hand off to a PDF next, etc.; "lesson to lesson" means the
+  // section's real sequence, not "only the same type." undefined = nothing
+  // open right now; null = there's nothing openable in that direction.
   const nextItemInSection = useMemo(() => {
     if (!activeItemId) return undefined;
     for (const group of sectionGroupsForNav) {
@@ -990,10 +1025,25 @@ function CategoryPage() {
     return null; // current item isn't in any section group (shouldn't happen)
   }, [activeItemId, sectionGroupsForNav, lang]);
 
-  // Opens the next lesson exactly the way clicking it in the list would —
-  // every per-item reset (engagement tracking, resume position, PDF
-  // pagination) already keys off activeMedia's itemId changing.
-  function continueToNextLesson(target: SectionNavTarget) {
+  const previousItemInSection = useMemo(() => {
+    if (!activeItemId) return undefined;
+    for (const group of sectionGroupsForNav) {
+      const idx = group.items.findIndex((i) => i.id === activeItemId);
+      if (idx === -1) continue;
+      for (let i = idx - 1; i >= 0; i--) {
+        const resolved = resolveSectionNavItem(group.items[i], lang);
+        if (resolved) return resolved;
+      }
+      return null; // found the section, but nothing openable before this item
+    }
+    return null;
+  }, [activeItemId, sectionGroupsForNav, lang]);
+
+  // Opens another lesson in the section exactly the way clicking it in the
+  // list would — every per-item reset (engagement tracking, resume
+  // position, PDF pagination) already keys off activeMedia's itemId
+  // changing. Shared by both the "Previous" and "Continue" controls.
+  function jumpToSectionItem(target: SectionNavTarget) {
     setActiveMedia({
       type: target.mediaKind,
       url: target.mediaSrc,
@@ -2192,9 +2242,10 @@ function CategoryPage() {
             />
           )}
           <SectionNavBar
+            previousTarget={previousItemInSection}
             reachedEnd={videoEnded}
-            target={nextItemInSection}
-            onContinue={continueToNextLesson}
+            nextTarget={nextItemInSection}
+            onJump={jumpToSectionItem}
           />
         </DialogContent>
       </Dialog>
@@ -2483,9 +2534,10 @@ function CategoryPage() {
             </div>
           )}
           <SectionNavBar
+            previousTarget={previousItemInSection}
             reachedEnd={audioEnded}
-            target={nextItemInSection}
-            onContinue={continueToNextLesson}
+            nextTarget={nextItemInSection}
+            onJump={jumpToSectionItem}
           />
         </DialogContent>
       </Dialog>
@@ -2556,9 +2608,10 @@ function CategoryPage() {
                   );
                 })()}
               <SectionNavBar
+                previousTarget={previousItemInSection}
                 reachedEnd={reachedEndOfPdf}
-                target={nextItemInSection}
-                onContinue={continueToNextLesson}
+                nextTarget={nextItemInSection}
+                onJump={jumpToSectionItem}
               />
             </div>
           )}
