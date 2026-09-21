@@ -260,12 +260,12 @@ function SectionNavBar({
   );
 
   return (
-    <div
-      className={`flex shrink-0 items-center gap-3 border-t border-border bg-card px-4 py-3 ${
-        previousButton ? "justify-between" : "justify-center"
-      }`}
-    >
-      {previousButton}
+    <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-card px-4 py-3">
+      {/* Always a left-hand child, even when empty, so justify-between
+          reliably pins endContent to the right edge regardless of whether
+          Previous is showing — a single flex child sits at the start, not
+          the end, so this can't just be `{previousButton}` on its own. */}
+      <div>{previousButton}</div>
       {endContent}
     </div>
   );
