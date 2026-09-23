@@ -162,7 +162,12 @@ export const translateToSpanish = createServerFn({ method: "POST" })
             type: "text",
             // User-supplied context and field values are in separate user turns so
             // injected instructions are treated as data, not commands.
-            text: 'You are a professional translator. Translate English text values into natural, polished Latin American Spanish. Preserve tone, punctuation, capitalization style, and approximate length. Do not translate proper nouns, brand names, or URLs. Respond with strict JSON of the form {"fields": { <sameKey>: <spanishTranslation>, ... }} using the exact same keys you received. No markdown, no commentary.',
+            // Explicitly NOT "preserve capitalization style" — English titles
+            // are conventionally Title Cased, but Spanish titles use sentence
+            // case (only the first word and real proper nouns capitalized),
+            // so mirroring the English pattern produces incorrect Spanish
+            // like "Preguntas Y Respuestas Sobre El Apadrinamiento".
+            text: 'You are a professional translator. Translate English text values into natural, polished Latin American Spanish. Preserve tone, punctuation, and approximate length. Use standard Spanish capitalization rules: capitalize only the first word of each title or sentence and genuine proper nouns (people, places, organizations) — do not capitalize every word the way English titles often do. Do not translate proper nouns, brand names, or URLs. Respond with strict JSON of the form {"fields": { <sameKey>: <spanishTranslation>, ... }} using the exact same keys you received. No markdown, no commentary.',
             cache_control: { type: "ephemeral" },
           },
         ],
