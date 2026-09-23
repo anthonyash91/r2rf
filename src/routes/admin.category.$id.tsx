@@ -991,6 +991,7 @@ type BulkReviewSavePayload = {
 function BulkReviewPanel({
   ids,
   items,
+  isNew,
   categoryName,
   categorySlug,
   typeOptions,
@@ -1005,6 +1006,11 @@ function BulkReviewPanel({
 }: {
   ids: string[];
   items: ContentItem[];
+  /** True for freshly bulk-uploaded items (Published defaults to checked so
+   * review-then-publish stays one step); false for existing items opened via
+   * "Edit" on a multi-selection (Published defaults to the item's own
+   * current state instead). */
+  isNew: boolean;
   categoryName: string;
   categorySlug: string;
   typeOptions: string[];
@@ -1023,9 +1029,12 @@ function BulkReviewPanel({
 
   const [drafts, setDrafts] = useState<Record<string, BulkReviewSavePayload>>({});
 
-  // Seed a draft for any reviewed item that doesn't have one yet — defaults
-  // Published to true (the common case: the admin is here specifically to
-  // finish and publish), not the item's actual just-created "false" state.
+  // Seed a draft for any reviewed item that doesn't have one yet. For fresh
+  // uploads, Published defaults to true (the common case: the admin is here
+  // specifically to finish and publish), not the item's actual just-created
+  // "false" state — for existing items opened via "Edit", it defaults to
+  // whatever the item is actually published as right now, since the admin's
+  // intent here is editing content, not necessarily changing its visibility.
   useEffect(() => {
     setDrafts((prev) => {
       const next = { ...prev };
@@ -1046,7 +1055,7 @@ function BulkReviewPanel({
           file_url_es: item.file_url_es ?? null,
           file_name_es: item.file_name_es ?? null,
           pendingDeleteUrls: [],
-          published: true,
+          published: isNew ? true : item.published,
           exempt_from_progress: item.exempt_from_progress ?? false,
         };
         changed = true;
@@ -1090,7 +1099,7 @@ function BulkReviewPanel({
   return (
     <div className="mb-4 rounded-xl border border-border bg-muted/30 p-5">
       <p className="mb-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-        Review new uploads ({reviewItems.length})
+        {isNew ? "Review new uploads" : "Editing"} ({reviewItems.length})
       </p>
       {/* Not a plain grid: a grid stretches every card in a row to match the
           tallest one, so opening one card's Spanish translation panel would
@@ -1118,7 +1127,7 @@ function BulkReviewPanel({
           onClick={onDismissAll}
           className="text-xs text-muted-foreground underline hover:text-foreground"
         >
-          Done reviewing
+          {isNew ? "Done reviewing" : "Close"}
         </button>
         <LoadingButton
           type="button"
@@ -1677,11 +1686,19 @@ function ContentManager({
   });
   // Bulk file->item upload: each selected file becomes its own unpublished
   // content_items row, then shows up as a review card below until the admin
-  // fills in details and publishes. bulkReviewIds tracks which ids (from
-  // this session's bulk uploads) still have a review card showing.
+  // fills in details and publishes. bulkReviewIds tracks which ids currently
+  // have a review card showing — either from this session's bulk uploads, or
+  // from an explicit "Edit" on a multi-selected batch of existing items (see
+  // the bulk-select toolbar below). bulkReviewIsNew distinguishes the two:
+  // it controls whether a card's Published checkbox defaults to checked
+  // (fresh uploads, so review-then-one-click-publish stays a single step)
+  // or to the item's real current state (existing items, where the admin's
+  // intent is editing content, not necessarily publishing it).
   const [bulkType, setBulkType] = useState("Article");
   const [bulkSource, setBulkSource] = useState("");
   const [bulkReviewIds, setBulkReviewIds] = useState<string[]>([]);
+  const [bulkReviewIsNew, setBulkReviewIsNew] = useState(true);
+  const bulkReviewPanelRef = useRef<HTMLDivElement | null>(null);
   const bulkUploadInputRef = useRef<HTMLInputElement>(null);
   // In-flight status for the (slower, transcode-wait) Stream files within a
   // bulk upload — Storage files are fast enough not to need this.
@@ -2111,21 +2128,24 @@ function ContentManager({
         onReordered={invalidate}
       />
 
-      <BulkReviewPanel
-        ids={bulkReviewIds}
-        items={items}
-        categoryName={categoryName}
-        categorySlug={categorySlug}
-        typeOptions={bulkTypeOptions}
-        existingSections={existingSections}
-        sourceSuggestions={sourceSuggestions}
-        collectionId={categoryCollectionId}
-        onCollectionCreated={persistCategoryCollectionId}
-        saving={saveAllReviewMut.isPending}
-        onSaveAll={(payloads) => saveAllReviewMut.mutate(payloads)}
-        onDismiss={(id) => setBulkReviewIds((prev) => prev.filter((x) => x !== id))}
-        onDismissAll={() => setBulkReviewIds([])}
-      />
+      <div ref={bulkReviewPanelRef} className="scroll-mt-24">
+        <BulkReviewPanel
+          ids={bulkReviewIds}
+          items={items}
+          isNew={bulkReviewIsNew}
+          categoryName={categoryName}
+          categorySlug={categorySlug}
+          typeOptions={bulkTypeOptions}
+          existingSections={existingSections}
+          sourceSuggestions={sourceSuggestions}
+          collectionId={categoryCollectionId}
+          onCollectionCreated={persistCategoryCollectionId}
+          saving={saveAllReviewMut.isPending}
+          onSaveAll={(payloads) => saveAllReviewMut.mutate(payloads)}
+          onDismiss={(id) => setBulkReviewIds((prev) => prev.filter((x) => x !== id))}
+          onDismissAll={() => setBulkReviewIds([])}
+        />
+      </div>
 
       {editing && (
         <div ref={editorRef} className="scroll-mt-24">
@@ -2185,6 +2205,23 @@ function ContentManager({
                 }
                 extraSelectionActions={(ids) => (
                   <>
+                    <LoadingButton
+                      variant="secondary"
+                      icon={<Pencil className="h-4 w-4" />}
+                      onClick={() => {
+                        setBulkReviewIds(ids);
+                        setBulkReviewIsNew(false);
+                        bulk.exitEditMode();
+                        setTimeout(() => {
+                          bulkReviewPanelRef.current?.scrollIntoView({
+                            behavior: "instant",
+                            block: "start",
+                          });
+                        }, 50);
+                      }}
+                    >
+                      Edit ({ids.length})
+                    </LoadingButton>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <LoadingButton
