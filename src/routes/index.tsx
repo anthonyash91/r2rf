@@ -26,6 +26,8 @@ export const Route = createFileRoute("/")({
       .optional()
       .transform((v) => v?.replace(/^"+|"+$/g, "") || undefined),
     language: z.coerce.string().optional(),
+    firstName: z.coerce.string().optional(),
+    lastName: z.coerce.string().optional(),
   }),
   loader: async () => readPlatformIdentity(),
   head: () => ({
@@ -75,7 +77,12 @@ function Index() {
 }
 
 function IndexContent() {
-  const { site: searchSite, user: searchUser } = Route.useSearch();
+  const {
+    site: searchSite,
+    user: searchUser,
+    firstName: searchFirstName,
+    lastName: searchLastName,
+  } = Route.useSearch();
   const platformIdentity = Route.useLoaderData();
   const site = platformIdentity?.facilityId ?? searchSite;
   const inmatePin = platformIdentity?.residentId ?? searchUser;
@@ -96,15 +103,18 @@ function IndexContent() {
     setActiveInmatePin(inmatePin);
   }, [site, inmatePin]);
 
-  // Same immediate capture for the platform-provided first/last name headers
-  // — these only ever arrive via the loader on whichever page is the true
+  // Same immediate capture for the platform-provided first/last name — these
+  // only ever arrive via the loader (headers) on whichever page is the true
   // first page load, so they must be persisted here too, not just read
   // fresh on /signup (which may be reached by client-side navigation, where
-  // the loader has nothing to read).
+  // the loader has nothing to read). Falls back to the URL when the header
+  // isn't present, same as site/inmatePin above.
+  const firstName = platformIdentity?.firstName ?? searchFirstName;
+  const lastName = platformIdentity?.lastName ?? searchLastName;
   useEffect(() => {
-    if (platformIdentity?.firstName) setActiveFirstName(platformIdentity.firstName);
-    if (platformIdentity?.lastName) setActiveLastName(platformIdentity.lastName);
-  }, [platformIdentity?.firstName, platformIdentity?.lastName]);
+    if (firstName) setActiveFirstName(firstName);
+    if (lastName) setActiveLastName(lastName);
+  }, [firstName, lastName]);
 
   // Set facility context once the server call resolves.
   useEffect(() => {

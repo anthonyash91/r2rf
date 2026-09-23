@@ -58,6 +58,8 @@ export const Route = createFileRoute("/signup")({
     redirect: typeof search.redirect === "string" ? search.redirect : undefined,
     site: typeof search.site === "string" ? search.site : undefined,
     user: typeof search.user === "string" ? search.user : undefined,
+    firstName: typeof search.firstName === "string" ? search.firstName : undefined,
+    lastName: typeof search.lastName === "string" ? search.lastName : undefined,
   }),
   loader: async () => readPlatformIdentity(),
   component: SignupPage,
@@ -81,10 +83,18 @@ function SignupPage() {
 function SignupPageContent() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { redirect: redirectTo, site: searchSite, user: searchUser } = Route.useSearch();
+  const {
+    redirect: redirectTo,
+    site: searchSite,
+    user: searchUser,
+    firstName: searchFirstName,
+    lastName: searchLastName,
+  } = Route.useSearch();
   const platformIdentity = Route.useLoaderData();
   const siteParam = platformIdentity?.facilityId ?? searchSite;
   const userParam = platformIdentity?.residentId ?? searchUser;
+  const firstNameParam = platformIdentity?.firstName ?? searchFirstName;
+  const lastNameParam = platformIdentity?.lastName ?? searchLastName;
   const { isChecking: checkingSignIn } = useAuthChecking();
 
   // If the signup page was opened directly with a platform header or
@@ -94,9 +104,9 @@ function SignupPageContent() {
   useEffect(() => {
     if (siteParam) setActiveFacilitySiteId(siteParam);
     if (userParam) setActiveInmatePin(userParam);
-    if (platformIdentity?.firstName) setActiveFirstName(platformIdentity.firstName);
-    if (platformIdentity?.lastName) setActiveLastName(platformIdentity.lastName);
-  }, [siteParam, userParam, platformIdentity?.firstName, platformIdentity?.lastName]);
+    if (firstNameParam) setActiveFirstName(firstNameParam);
+    if (lastNameParam) setActiveLastName(lastNameParam);
+  }, [siteParam, userParam, firstNameParam, lastNameParam]);
 
   const lockedFirstName = useActiveFirstName();
   const lockedLastName = useActiveLastName();
