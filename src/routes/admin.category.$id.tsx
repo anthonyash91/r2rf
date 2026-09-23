@@ -1000,6 +1000,7 @@ function BulkReviewPanel({
   collectionId,
   onCollectionCreated,
   onSaveAll,
+  onSaveOne,
   saving,
   onDismiss,
   onDismissAll,
@@ -1019,6 +1020,9 @@ function BulkReviewPanel({
   collectionId: string | null;
   onCollectionCreated: (id: string) => void;
   onSaveAll: (payloads: BulkReviewSavePayload[]) => void;
+  /** Persists one card's draft on its own — throws on failure so the card
+   * can show its own error and stay open to retry. */
+  onSaveOne: (payload: BulkReviewSavePayload) => Promise<void>;
   saving: boolean;
   onDismiss: (id: string) => void;
   onDismissAll: () => void;
@@ -1089,6 +1093,10 @@ function BulkReviewPanel({
         sourceSuggestions={sourceSuggestions}
         collectionId={collectionId}
         onCollectionCreated={onCollectionCreated}
+        onSave={async () => {
+          await onSaveOne(draft);
+          onDismiss(item.id);
+        }}
         onDismiss={() => onDismiss(item.id)}
       />
     );
@@ -1155,6 +1163,7 @@ function BulkReviewCard({
   sourceSuggestions,
   collectionId,
   onCollectionCreated,
+  onSave,
   onDismiss,
 }: {
   fileName: string;
@@ -1169,17 +1178,36 @@ function BulkReviewCard({
   sourceSuggestions: string[];
   collectionId: string | null;
   onCollectionCreated: (id: string) => void;
+  /** Saves just this card's draft and removes it from the panel — separate
+   * from the panel-wide "Save all" so an admin working through a big batch
+   * can finish and dismiss cards one at a time instead of saving everything
+   * at once. Throws on failure (caught below) so the card stays open and
+   * editable to retry. */
+  onSave: () => Promise<void>;
   onDismiss: () => void;
 }) {
   const generateDesc = useServerFn(generateContentDescription);
   const [generatingDesc, setGeneratingDesc] = useState(false);
   const [durationEstimating, setDurationEstimating] = useState(false);
+  const [savingOne, setSavingOne] = useState(false);
   const { run: runTranslate, busy: translating } = useTranslateToSpanish();
   const [showEs, setShowEs] = useState(!!(draft.title_es || draft.description_es));
   const canRecalculateDuration =
     extOf(url, null) === "pdf" ||
     !!extractStreamVideoId(url) ||
     !!mediaKindFor(draft.type, url, null);
+
+  async function handleSaveOne() {
+    setSavingOne(true);
+    try {
+      await onSave();
+      toast.success("Saved");
+      // onSave already dismisses the card on success — nothing left to do.
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to save");
+      setSavingOne(false);
+    }
+  }
 
   async function handleGenerateDesc() {
     const trimmed = draft.title.trim();
@@ -1394,6 +1422,20 @@ function BulkReviewCard({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+      </div>
+
+      <div className="flex items-center justify-end gap-3 pt-1">
+        <button
+          type="button"
+          onClick={onDismiss}
+          disabled={savingOne}
+          className="text-xs text-muted-foreground underline hover:text-foreground disabled:opacity-60"
+        >
+          Close
+        </button>
+        <LoadingButton type="button" pending={savingOne} pendingText="Saving…" onClick={handleSaveOne}>
+          Save
+        </LoadingButton>
       </div>
     </div>
   );
@@ -1964,6 +2006,41 @@ function ContentManager({
     onError: (e: any) => toast.error(e.message ?? "Bulk upload failed"),
   });
 
+  // Shared by saveAllReviewMut below and each card's own per-card Save
+  // button, so the two ways to persist a review draft can never drift apart.
+  // Throws on failure — callers decide how to surface that (one aggregate
+  // toast for "Save all", a per-card toast for an individual save).
+  async function saveOneReviewItem(d: BulkReviewSavePayload): Promise<void> {
+    const { error } = await (supabase as any)
+      .from("content_items")
+      .update({
+        title: d.title.trim() || d.title,
+        title_es: d.title_es,
+        type: d.type,
+        source: d.source,
+        duration: d.duration,
+        section: d.section,
+        section_es: d.section_es,
+        description: d.description,
+        description_es: d.description_es,
+        file_url_es: d.file_url_es,
+        file_name_es: d.file_name_es,
+        published: d.published,
+        exempt_from_progress: d.exempt_from_progress,
+      })
+      .eq("id", d.id);
+    if (error) throw error;
+    // Only delete an old ES file once THIS item's own save has succeeded —
+    // a failed save leaves the row still pointing at the old file, so
+    // deleting it here would orphan a still-referenced URL. Fire-and-forget:
+    // a failed delete just wastes storage.
+    if (d.pendingDeleteUrls.length > 0) {
+      Promise.all(d.pendingDeleteUrls.map((url) => deleteOldFile({ data: { url } }))).catch(
+        () => {},
+      );
+    }
+  }
+
   // Deliberately separate from saveMut — that mutation's onSuccess sets
   // pendingScrollId, which scrolls the page down to and highlights the
   // saved row (right, for a single-item edit; wrong here, since saving N
@@ -1971,38 +2048,7 @@ function ContentManager({
   // one happens to sit in the list). One summary toast instead of N.
   const saveAllReviewMut = useMutation({
     mutationFn: async (payloads: BulkReviewSavePayload[]) => {
-      const results = await Promise.allSettled(
-        payloads.map(async (d) => {
-          const { error } = await (supabase as any)
-            .from("content_items")
-            .update({
-              title: d.title.trim() || d.title,
-              title_es: d.title_es,
-              type: d.type,
-              source: d.source,
-              duration: d.duration,
-              section: d.section,
-              section_es: d.section_es,
-              description: d.description,
-              description_es: d.description_es,
-              file_url_es: d.file_url_es,
-              file_name_es: d.file_name_es,
-              published: d.published,
-              exempt_from_progress: d.exempt_from_progress,
-            })
-            .eq("id", d.id);
-          if (error) throw error;
-          // Only delete an old ES file once THIS item's own save has
-          // succeeded — a failed save leaves the row still pointing at the
-          // old file, so deleting it here would orphan a still-referenced
-          // URL. Fire-and-forget: a failed delete just wastes storage.
-          if (d.pendingDeleteUrls.length > 0) {
-            Promise.all(d.pendingDeleteUrls.map((url) => deleteOldFile({ data: { url } }))).catch(
-              () => {},
-            );
-          }
-        }),
-      );
+      const results = await Promise.allSettled(payloads.map(saveOneReviewItem));
       return {
         savedCount: results.filter((r) => r.status === "fulfilled").length,
         failedCount: results.filter((r) => r.status === "rejected").length,
@@ -2142,6 +2188,10 @@ function ContentManager({
           onCollectionCreated={persistCategoryCollectionId}
           saving={saveAllReviewMut.isPending}
           onSaveAll={(payloads) => saveAllReviewMut.mutate(payloads)}
+          onSaveOne={async (d) => {
+            await saveOneReviewItem(d);
+            invalidate();
+          }}
           onDismiss={(id) => setBulkReviewIds((prev) => prev.filter((x) => x !== id))}
           onDismissAll={() => setBulkReviewIds([])}
         />
