@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -54,12 +55,17 @@ import { useKeyboardInput } from "@/components/OnScreenKeyboard";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({ meta: [{ title: "Create your account — Reentry to Recovery" }] }),
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
-    site: typeof search.site === "string" ? search.site : undefined,
-    user: typeof search.user === "string" ? search.user : undefined,
-    firstName: typeof search.firstName === "string" ? search.firstName : undefined,
-    lastName: typeof search.lastName === "string" ? search.lastName : undefined,
+  // A zod schema (rather than a hand-rolled validator) so unset params are
+  // genuinely optional keys in the inferred search type — a plain object
+  // literal that always sets every key to `string | undefined` makes
+  // TanStack Router treat them as required, forcing every Link/navigate to
+  // /signup elsewhere in the app to pass all of them explicitly.
+  validateSearch: z.object({
+    redirect: z.coerce.string().optional(),
+    site: z.coerce.string().optional(),
+    user: z.coerce.string().optional(),
+    firstName: z.coerce.string().optional(),
+    lastName: z.coerce.string().optional(),
   }),
   loader: async () => readPlatformIdentity(),
   component: SignupPage,

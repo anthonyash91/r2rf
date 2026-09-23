@@ -39,14 +39,22 @@ import { useBulkSelect } from "@/hooks/use-bulk-select";
 import { BulkActionBar } from "@/components/BulkActionBar";
 import { QK } from "@/lib/query-keys";
 
-// The link an admin hands to the tablet platform. `{{apin}}` is left in
-// literally — the platform substitutes each resident's own PIN into it at
-// runtime, which is why one link serves an entire facility. `language` is
-// included so the default is explicit and easy to switch to `es` by hand.
+// The link an admin hands to the tablet platform. `{{apin}}`, `{{firstName}}`,
+// and `{{lastName}}` are left in literally — the platform substitutes each
+// resident's own PIN and name into them at runtime, which is why one link
+// serves an entire facility. `language` is included so the default is
+// explicit and easy to switch to `es` by hand.
 function buildFacilityLink(siteId: string): string {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return `${origin}/?site=${siteId}&user={{apin}}&language=en`;
+  return `${origin}/?site=${siteId}&user={{apin}}&firstName={{firstName}}&lastName={{lastName}}&language=en`;
 }
+
+// A single link that works across every facility: unlike buildFacilityLink,
+// `{{siteID}}` is ALSO left as a literal placeholder here rather than a
+// resolved Site ID, so the same URL can be handed to the platform once for
+// the whole fleet instead of configuring a unique link per facility.
+const UNIVERSAL_FACILITY_LINK =
+  "https://reentrytorecoverycontent.com/?site={{siteID}}&user={{apin}}&firstName={{firstName}}&lastName={{lastName}}&language=en";
 
 export const Route = createFileRoute("/admin/facilities")({
   beforeLoad: requireStrictAdminBeforeLoad,
@@ -75,6 +83,7 @@ function AdminFacilitiesPage() {
   const bulk = useBulkSelect();
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedUniversal, setCopiedUniversal] = useState(false);
   const [generatingFor, setGeneratingFor] = useState<"add" | "edit" | null>(null);
   const genSiteId = useServerFn(generateSiteId);
 
@@ -101,6 +110,17 @@ function AdminFacilitiesPage() {
       setCopiedId(facilityId);
       toast.success("Link copied");
       window.setTimeout(() => setCopiedId((c) => (c === facilityId ? null : c)), 2000);
+    } catch {
+      toast.error("Couldn't copy — select the link and copy manually.");
+    }
+  }
+
+  async function handleCopyUniversalLink() {
+    try {
+      await navigator.clipboard.writeText(UNIVERSAL_FACILITY_LINK);
+      setCopiedUniversal(true);
+      toast.success("Link copied");
+      window.setTimeout(() => setCopiedUniversal(false), 2000);
     } catch {
       toast.error("Couldn't copy — select the link and copy manually.");
     }
@@ -207,6 +227,35 @@ function AdminFacilitiesPage() {
             Bulk add
           </LoadingButton>
         </div>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-border bg-card p-4 sm:p-5 space-y-2">
+        <p className="text-sm font-medium text-foreground">Universal facility link</p>
+        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 py-1.5 pl-2.5 pr-1.5">
+          <code
+            className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-xs leading-relaxed text-foreground [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            title={UNIVERSAL_FACILITY_LINK}
+          >
+            {UNIVERSAL_FACILITY_LINK}
+          </code>
+          <button
+            type="button"
+            aria-label="Copy universal facility link"
+            onClick={handleCopyUniversalLink}
+            className="shrink-0 cursor-pointer rounded border border-input bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted"
+          >
+            {copiedUniversal ? "Copied" : "Copy"}
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          One link for every facility — the platform fills in{" "}
+          <code className="font-mono">{"{{siteID}}"}</code> for whichever facility the device
+          belongs to, plus <code className="font-mono">{"{{apin}}"}</code>,{" "}
+          <code className="font-mono">{"{{firstName}}"}</code>, and{" "}
+          <code className="font-mono">{"{{lastName}}"}</code> for the resident. Use a
+          facility's own link below only when a device needs to stay pinned to that one
+          facility.
+        </p>
       </div>
 
       <section className="mt-8">
@@ -513,8 +562,10 @@ function AdminFacilitiesPage() {
                                 </div>
                                 <p className="text-xs text-muted-foreground">
                                   Share as-is — the platform replaces{" "}
-                                  <code className="font-mono">{"{{apin}}"}</code> with each
-                                  resident's own PIN. Change{" "}
+                                  <code className="font-mono">{"{{apin}}"}</code>,{" "}
+                                  <code className="font-mono">{"{{firstName}}"}</code>, and{" "}
+                                  <code className="font-mono">{"{{lastName}}"}</code> with each
+                                  resident's own PIN and name. Change{" "}
                                   <code className="font-mono">language=en</code> to{" "}
                                   <code className="font-mono">es</code> for Spanish.
                                 </p>
