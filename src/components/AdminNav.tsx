@@ -40,6 +40,8 @@ type NavLink = {
   adminOnly?: boolean;
   /** Also show to facilityUser role (scoped to their facility). */
   facilityUserVisible?: boolean;
+  /** Also show to contributor role — contributors are content-only, so this is Categories alone. */
+  contributorVisible?: boolean;
 };
 
 const links: NavLink[] = [
@@ -50,6 +52,7 @@ const links: NavLink[] = [
     exact: true,
     matchPrefixes: ["/admin/category"],
     adminOnly: true,
+    contributorVisible: true,
   },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true, facilityUserVisible: true },
   { to: "/admin/facilities", label: "Facilities", icon: Building2, adminOnly: true },
@@ -100,10 +103,12 @@ export function AdminNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   // Filters the full link list down to what the current user is allowed to see:
-  // admins and contributors see everything, facilityUsers only see pages marked facilityUserVisible.
+  // admins see everything, contributors and facilityUsers are each scoped to
+  // just the pages marked visible for their role.
   const visible = links.filter((l) => {
     if (!l.adminOnly) return true; // always visible
-    if (isAdmin || isContributor) return true; // full admin access
+    if (isAdmin) return true; // full admin access
+    if (isContributor) return l.contributorVisible === true; // content-only
     if (isFacilityUser && l.facilityUserVisible) return true; // facility-scoped pages
     return false;
   });
