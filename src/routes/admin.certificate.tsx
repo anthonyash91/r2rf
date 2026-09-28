@@ -193,33 +193,37 @@ function AdminCertificatePage() {
                   Hidden — this section will not appear on the home page.
                 </p>
               )}
-              {hero.eyebrow && (
-                <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                  {hero.eyebrow}
-                </div>
-              )}
-              {(hero.heading_prefix || hero.heading_emphasis || hero.heading_suffix) && (
-                <h2 className="mt-4 font-display text-3xl font-bold tracking-tight">
-                  {hero.heading_prefix}
-                  {hero.heading_prefix && (hero.heading_emphasis || hero.heading_suffix) ? " " : ""}
-                  {hero.heading_emphasis && (
-                    <span className="italic text-[var(--color-accent)]">
-                      {hero.heading_emphasis}
-                    </span>
-                  )}
-                  {hero.heading_emphasis && hero.heading_suffix ? " " : ""}
-                  {hero.heading_suffix}
-                </h2>
-              )}
-              {hero.subheading && (
-                <p className="mt-3 text-muted-foreground">{hero.subheading}</p>
-              )}
-              {hero.callout && (
-                <div className="mt-4 rounded-2xl border border-border bg-card px-5 py-4 text-sm font-medium text-foreground">
-                  {hero.callout}
-                </div>
-              )}
+              <div className="flex flex-col gap-4">
+                {hero.eyebrow && (
+                  <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                    {hero.eyebrow}
+                  </div>
+                )}
+                {(hero.heading_prefix || hero.heading_emphasis || hero.heading_suffix) && (
+                  <h2 className="font-display text-3xl font-bold tracking-tight">
+                    {hero.heading_prefix}
+                    {hero.heading_prefix && (hero.heading_emphasis || hero.heading_suffix)
+                      ? " "
+                      : ""}
+                    {hero.heading_emphasis && (
+                      <span className="italic text-[var(--color-accent)]">
+                        {hero.heading_emphasis}
+                      </span>
+                    )}
+                    {hero.heading_emphasis && hero.heading_suffix ? " " : ""}
+                    {hero.heading_suffix}
+                  </h2>
+                )}
+                {hero.subheading && (
+                  <p className="text-muted-foreground">{hero.subheading}</p>
+                )}
+                {hero.callout && (
+                  <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm font-medium text-foreground">
+                    {hero.callout}
+                  </div>
+                )}
+              </div>
             </div>
 
             {showEs ? (
@@ -333,39 +337,41 @@ function AdminCertificatePage() {
                       Hidden — this section will not appear on the home page.
                     </p>
                   )}
-                  {(hero.eyebrow_es || hero.eyebrow) && (
-                    <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                      {hero.eyebrow_es || hero.eyebrow}
-                    </div>
-                  )}
-                  {(() => {
-                    const prefix = hero.heading_prefix_es || hero.heading_prefix;
-                    const emphasis = hero.heading_emphasis_es || hero.heading_emphasis;
-                    const suffix = hero.heading_suffix_es || hero.heading_suffix;
-                    if (!prefix && !emphasis && !suffix) return null;
-                    return (
-                      <h2 className="mt-4 font-display text-3xl font-bold tracking-tight">
-                        {prefix}
-                        {prefix && (emphasis || suffix) ? " " : ""}
-                        {emphasis && (
-                          <span className="italic text-[var(--color-accent)]">{emphasis}</span>
-                        )}
-                        {emphasis && suffix ? " " : ""}
-                        {suffix}
-                      </h2>
-                    );
-                  })()}
-                  {(hero.subheading_es || hero.subheading) && (
-                    <p className="mt-3 text-muted-foreground">
-                      {hero.subheading_es || hero.subheading}
-                    </p>
-                  )}
-                  {(hero.callout_es || hero.callout) && (
-                    <div className="mt-4 rounded-2xl border border-border bg-card px-5 py-4 text-sm font-medium text-foreground">
-                      {hero.callout_es || hero.callout}
-                    </div>
-                  )}
+                  <div className="flex flex-col gap-4">
+                    {(hero.eyebrow_es || hero.eyebrow) && (
+                      <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                        {hero.eyebrow_es || hero.eyebrow}
+                      </div>
+                    )}
+                    {(() => {
+                      const prefix = hero.heading_prefix_es || hero.heading_prefix;
+                      const emphasis = hero.heading_emphasis_es || hero.heading_emphasis;
+                      const suffix = hero.heading_suffix_es || hero.heading_suffix;
+                      if (!prefix && !emphasis && !suffix) return null;
+                      return (
+                        <h2 className="font-display text-3xl font-bold tracking-tight">
+                          {prefix}
+                          {prefix && (emphasis || suffix) ? " " : ""}
+                          {emphasis && (
+                            <span className="italic text-[var(--color-accent)]">{emphasis}</span>
+                          )}
+                          {emphasis && suffix ? " " : ""}
+                          {suffix}
+                        </h2>
+                      );
+                    })()}
+                    {(hero.subheading_es || hero.subheading) && (
+                      <p className="text-muted-foreground">
+                        {hero.subheading_es || hero.subheading}
+                      </p>
+                    )}
+                    {(hero.callout_es || hero.callout) && (
+                      <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm font-medium text-foreground">
+                        {hero.callout_es || hero.callout}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (

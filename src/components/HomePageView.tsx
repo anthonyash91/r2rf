@@ -608,7 +608,7 @@ export function HomePageView({
       {hero.enabled !== false && (
         <section className="border-b border-border/60">
           <div className="mx-auto max-w-6xl px-6 py-20">
-            <div>
+            <div className="flex flex-col gap-6">
               {heroEyebrow && (
                 <div className="inline-flex items-center gap-1 rounded-[8px] border border-border bg-card px-2.5 py-[5px] text-xs font-medium text-muted-foreground">
                   <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
@@ -616,7 +616,7 @@ export function HomePageView({
                 </div>
               )}
               {(heroPrefix || heroEmphasis || heroSuffix) && (
-                <h1 className="mt-6 font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+                <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
                   {heroPrefix}
                   {heroPrefix && (heroEmphasis || heroSuffix) ? " " : ""}
                   {heroEmphasis && (
@@ -627,9 +627,7 @@ export function HomePageView({
                 </h1>
               )}
               {heroSubheading && (
-                <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-                  {heroSubheading}
-                </p>
+                <p className="text-lg text-muted-foreground leading-relaxed">{heroSubheading}</p>
               )}
             </div>
           </div>
@@ -689,37 +687,37 @@ export function HomePageView({
 
         {cert.enabled !== false && (
           <section className="border-t border-border/60">
-            <div className="mx-auto max-w-6xl px-6 py-20">
-              <div>
-                {certEyebrow && (
-                  <div className="inline-flex items-center gap-1 rounded-[8px] border border-border bg-card px-2.5 py-[5px] text-xs font-medium text-muted-foreground">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                    {certEyebrow}
-                  </div>
-                )}
-                {(certPrefix || certEmphasis || certSuffix) && (
-                  <h2 className="mt-6 font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
-                    {certPrefix}
-                    {certPrefix && (certEmphasis || certSuffix) ? " " : ""}
-                    {certEmphasis && (
-                      <span className="italic text-[var(--color-accent)]">{certEmphasis}</span>
-                    )}
-                    {certEmphasis && certSuffix ? " " : ""}
-                    {certSuffix}
-                  </h2>
-                )}
-                {certSubheading && (
-                  <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-                    {certSubheading}
-                  </p>
-                )}
-              </div>
+            <div className="mx-auto max-w-6xl px-6 py-20 flex flex-col gap-10">
+              {(certEyebrow || certPrefix || certEmphasis || certSuffix || certSubheading) && (
+                <div className="flex flex-col gap-6">
+                  {certEyebrow && (
+                    <div className="inline-flex items-center gap-1 rounded-[8px] border border-border bg-card px-2.5 py-[5px] text-xs font-medium text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                      {certEyebrow}
+                    </div>
+                  )}
+                  {(certPrefix || certEmphasis || certSuffix) && (
+                    <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+                      {certPrefix}
+                      {certPrefix && (certEmphasis || certSuffix) ? " " : ""}
+                      {certEmphasis && (
+                        <span className="italic text-[var(--color-accent)]">{certEmphasis}</span>
+                      )}
+                      {certEmphasis && certSuffix ? " " : ""}
+                      {certSuffix}
+                    </h2>
+                  )}
+                  {certSubheading && (
+                    <p className="text-lg text-muted-foreground leading-relaxed">
+                      {certSubheading}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {certCallout && (
-                <div className="mt-10">
-                  <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm sm:text-base font-medium text-foreground">
-                    {certCallout}
-                  </div>
+                <div className="rounded-2xl border border-border bg-card px-5 py-4 text-sm sm:text-base font-medium text-foreground">
+                  {certCallout}
                 </div>
               )}
             </div>
