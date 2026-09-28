@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireAnalyticsAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireAnalyticsAdmin } from "@/hooks/use-require-role";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -170,6 +171,9 @@ function FacilityMessageSection({ preselectedFacility }: { preselectedFacility?:
 const DEFAULTS: SiteMessage = { enabled: false, message: "", message_es: "" };
 
 function AdminMessagesPage() {
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts.
+  const ready = useRequireAnalyticsAdmin();
   const { isFacilityUser, user } = useAuth();
   const fetchMyFacility = useServerFn(getMyFacilityValue);
   const { data: myFacilityData } = useQuery({
@@ -179,6 +183,8 @@ function AdminMessagesPage() {
     queryFn: () => fetchMyFacility(),
   });
   const myFacilityValue = isFacilityUser ? (myFacilityData?.facility ?? null) : null;
+
+  if (!ready) return null;
 
   return (
     <div>

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireAdmin } from "@/hooks/use-require-role";
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -501,6 +502,9 @@ function RunDetailView({ runId }: { runId: string }) {
 }
 
 function AdminTestResultsPage() {
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts.
+  const ready = useRequireAdmin();
   const fetchRuns = useServerFn(listAllTestRuns);
   const { data, isLoading } = useQuery({
     queryKey: QK.adminTestRuns,
@@ -511,6 +515,8 @@ function AdminTestResultsPage() {
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
 
   const selectedRun = runs.find((r: any) => r.id === selectedRunId);
+
+  if (!ready) return null;
 
   return (
     <div>

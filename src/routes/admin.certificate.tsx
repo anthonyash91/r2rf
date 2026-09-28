@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireAdmin } from "@/hooks/use-require-role";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +52,9 @@ const DEFAULTS: CertHero = {
 };
 
 function AdminCertificatePage() {
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts.
+  const ready = useRequireAdmin();
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: QK.adminSiteSettings("certificate_hero"),
@@ -100,6 +104,8 @@ function AdminCertificatePage() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  if (!ready) return null;
 
   return (
     <div>

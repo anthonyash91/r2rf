@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AlertOctagon, Filter, Server, Monitor, Trash2, BellRing } from "lucide-react";
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireAdmin } from "@/hooks/use-require-role";
 import { capFirst } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
 import { FilterField } from "@/components/FilterField";
@@ -124,6 +125,9 @@ function ErrorRow({ entry }: { entry: any }) {
 }
 
 function AdminErrorsPage() {
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts.
+  const ready = useRequireAdmin();
   const fetchErrors = useServerFn(listErrorLogs);
   const clearOld = useServerFn(clearOldErrorLogs);
   const deleteAll = useServerFn(deleteAllErrorLogs);
@@ -201,6 +205,8 @@ function AdminErrorsPage() {
       },
     });
   };
+
+  if (!ready) return null;
 
   return (
     <div>

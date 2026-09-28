@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { requireUserManagementAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireUserManagementAdmin } from "@/hooks/use-require-role";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -95,6 +96,9 @@ type UserRow = {
 };
 
 function AdminUsersPage() {
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts.
+  const ready = useRequireUserManagementAdmin();
   const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
   const { isFacilityUser, user } = useAuth();
@@ -334,6 +338,8 @@ function AdminUsersPage() {
     mutationFn: (input: { userId: string }) => clearSecFn({ data: input }),
     successMessage: "Security questions reset. User must set new ones on next sign-in.",
   });
+
+  if (!ready) return null;
 
   return (
     <div>

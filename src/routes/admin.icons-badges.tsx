@@ -31,6 +31,7 @@ import {
 import { toast } from "sonner";
 
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireAdmin } from "@/hooks/use-require-role";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
@@ -120,6 +121,9 @@ function pickAvoiding(count: number, excluded: Set<number>, startOffset: number)
 
 /** Distribute palette indices across N items without repeats (until palette is exhausted). */
 function AdminIconsBadgesPage() {
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts.
+  const ready = useRequireAdmin();
   const qc = useQueryClient();
   const translateFn = useServerFn(translateToSpanish);
   const [translatingTypes, setTranslatingTypes] = useState<Set<string>>(new Set());
@@ -468,6 +472,8 @@ function AdminIconsBadgesPage() {
     setCatDraft({ ...originalCatMap });
     setCatIconDraft({ ...originalCatIconMap });
   }
+
+  if (!ready) return null;
 
   return (
     <div>

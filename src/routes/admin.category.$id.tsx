@@ -1,8 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { requireContentAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireContentAdmin } from "@/hooks/use-require-role";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Fragment, lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -190,14 +190,12 @@ export const Route = createFileRoute("/admin/category/$id")({
 });
 
 function AdminCategoryPage() {
-  const { isFacilityUser, rolesLoaded } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (rolesLoaded && isFacilityUser) navigate({ to: "/admin/users" });
-  }, [isFacilityUser, rolesLoaded, navigate]);
-
-  if (!rolesLoaded || isFacilityUser) return null;
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts. Supersedes the
+  // isFacilityUser-only check this used to do inline: the hook covers that
+  // same redirect target plus the not-logged-in and any-other-role cases.
+  const ready = useRequireContentAdmin();
+  if (!ready) return null;
   return <AdminCategoryPageContent />;
 }
 

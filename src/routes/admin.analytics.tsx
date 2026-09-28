@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireAnalyticsAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireAnalyticsAdmin } from "@/hooks/use-require-role";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { getMyFacilityValue } from "@/lib/user-signup.functions";
@@ -26,6 +27,9 @@ export const Route = createFileRoute("/admin/analytics")({
 });
 
 function AdminReportsPage() {
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts.
+  const ready = useRequireAnalyticsAdmin();
   const { isFacilityUser, user } = useAuth();
   const fetchMyFacility = useServerFn(getMyFacilityValue);
   const { data: myFacilityData } = useQuery({
@@ -82,6 +86,8 @@ function AdminReportsPage() {
           : tab === "user" && selectedUserFacility
             ? `Reports > Users > ${selectedUserFacility.label}`
             : "Reports";
+
+  if (!ready) return null;
 
   return (
     <TooltipProvider delayDuration={200}>

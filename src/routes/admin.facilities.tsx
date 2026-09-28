@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireAdmin } from "@/hooks/use-require-role";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -62,6 +63,9 @@ export const Route = createFileRoute("/admin/facilities")({
 });
 
 function AdminFacilitiesPage() {
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts.
+  const ready = useRequireAdmin();
   const qc = useQueryClient();
   const confirmDelete = useConfirmDelete();
 
@@ -188,6 +192,8 @@ function AdminFacilitiesPage() {
     invalidate: facilitiesKey,
     onSuccess: () => bulk.clear(),
   });
+
+  if (!ready) return null;
 
   return (
     <div>

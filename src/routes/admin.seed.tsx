@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Sprout, Upload, CheckCircle2, AlertCircle } from "lucide-react";
 
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireAdmin } from "@/hooks/use-require-role";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionCard } from "@/components/SectionCard";
@@ -131,6 +132,9 @@ function normalizeRow(raw: Record<string, unknown>, slugMap: Map<string, string>
 }
 
 function AdminSeedPage() {
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts.
+  const ready = useRequireAdmin();
   const qc = useQueryClient();
   const [format, setFormat] = useState<"json" | "csv">("json");
   const [text, setText] = useState("");
@@ -247,6 +251,8 @@ function AdminSeedPage() {
   const loadExample = () => {
     setText(format === "json" ? JSON_EXAMPLE : CSV_EXAMPLE);
   };
+
+  if (!ready) return null;
 
   return (
     <div className="space-y-6">

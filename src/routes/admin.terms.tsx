@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireAdmin } from "@/hooks/use-require-role";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +34,9 @@ export const Route = createFileRoute("/admin/terms")({
 });
 
 function AdminTermsPage() {
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts.
+  const ready = useRequireAdmin();
   const qc = useQueryClient();
   const queryKey = ["admin", "site_settings", SETTINGS_KEY] as const;
 
@@ -75,6 +79,8 @@ function AdminTermsPage() {
     },
     onError: (e: any) => toast.error(e.message),
   });
+
+  if (!ready) return null;
 
   return (
     <div>

@@ -17,6 +17,7 @@ import {
   Filter,
 } from "lucide-react";
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
+import { useRequireAdmin } from "@/hooks/use-require-role";
 import { PageHeader } from "@/components/PageHeader";
 import { FilterField } from "@/components/FilterField";
 import { EmptyState } from "@/components/EmptyState";
@@ -104,6 +105,9 @@ function describeDetails(
 }
 
 function AdminAuditLogPage() {
+  // Backstop for a hard page load / refresh, which skips the route's
+  // beforeLoad guard entirely — see use-require-role.ts.
+  const ready = useRequireAdmin();
   const { isFacilityUser, user } = useAuth();
   const fetchMyFacility = useServerFn(getMyFacilityValue);
   const { data: myFacilityData } = useQuery({
@@ -175,6 +179,8 @@ function AdminAuditLogPage() {
       })
     : all;
   const visible = filtered.slice(page * 25, (page + 1) * 25);
+
+  if (!ready) return null;
 
   return (
     <div>

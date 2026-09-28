@@ -1,4 +1,5 @@
-import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
@@ -36,6 +37,21 @@ export const Route = createFileRoute("/admin")({
 
 function AdminLayout() {
   const { user, canAccessAdmin, loading, rolesLoaded } = useAuth();
+  const navigate = useNavigate();
+  const resolved = !loading && rolesLoaded;
+
+  // beforeLoad on this route only catches "no session" for in-app client
+  // navigation (clicking a <Link> while the app is already running) — it
+  // does not re-run for a hard page load or refresh landing directly on an
+  // /admin/* URL (TanStack Start doesn't re-invoke beforeLoad on the client
+  // for whichever route was matched during the initial server render). This
+  // effect is the backstop for that path: once auth state has genuinely
+  // resolved with no user, redirect instead of sitting on "Loading…" forever.
+  useEffect(() => {
+    if (resolved && !user) {
+      navigate({ to: "/signup", search: { redirect: window.location.href } });
+    }
+  }, [resolved, user, navigate]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -44,7 +60,7 @@ function AdminLayout() {
         {/* Wait for both the Supabase session AND the roles fetch before deciding
             which branch to show — avoids a flash of the "access required" card
             for legitimate admins whose roles haven't loaded yet. */}
-        {loading || !rolesLoaded || !user ? (
+        {!resolved || !user ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : !canAccessAdmin ? (
           <SectionCard as="div" padded={false} className="p-8">
