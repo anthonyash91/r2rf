@@ -193,7 +193,7 @@ function AdminCertificatePage() {
                   Hidden — this section will not appear on the home page.
                 </p>
               )}
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col items-start gap-4">
                 {hero.eyebrow && (
                   <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
@@ -337,7 +337,7 @@ function AdminCertificatePage() {
                       Hidden — this section will not appear on the home page.
                     </p>
                   )}
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col items-start gap-4">
                     {(hero.eyebrow_es || hero.eyebrow) && (
                       <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                         <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
