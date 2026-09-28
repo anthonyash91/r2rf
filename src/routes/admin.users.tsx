@@ -21,6 +21,8 @@ import {
   HelpCircle,
   Loader2,
   Wrench,
+  MailCheck,
+  Wand2,
 } from "lucide-react";
 import { Badge } from "@/components/Badge";
 import { BadgeGroup } from "@/components/BadgeGroup";
@@ -34,7 +36,7 @@ import { Pager } from "@/components/LoadMorePager";
 import { useToastMutation } from "@/hooks/use-toast-mutation";
 import { rowPending } from "@/hooks/use-row-pending";
 import { getLastSeenUsersAt, setLastSeenUsersAt } from "@/lib/new-users-tracker";
-import { capFirst, displayName } from "@/lib/utils";
+import { capFirst, displayName, generateSecurePassword } from "@/lib/utils";
 
 import {
   listAdminUsers,
@@ -45,6 +47,7 @@ import {
   setUserPassword,
   sendPasswordResetEmail,
   resendVerificationEmail,
+  verifyUserEmail,
   setUserRole,
   createUser,
   createTesterUser,
@@ -95,6 +98,33 @@ type UserRow = {
   } | null;
 };
 
+/** Fills a password field with a random secure password and copies it to
+ * the clipboard so the admin can hand it to the new user. Positioned inside
+ * the password input like PasswordInput's eye-toggle. */
+function GeneratePasswordButton({ onGenerate }: { onGenerate: (password: string) => void }) {
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-label="Generate secure password"
+      title="Generate secure password"
+      onClick={async () => {
+        const password = generateSecurePassword();
+        onGenerate(password);
+        try {
+          await navigator.clipboard.writeText(password);
+          toast.success("Password generated and copied to clipboard");
+        } catch {
+          toast.success("Password generated");
+        }
+      }}
+      className="absolute inset-y-0 right-0 flex items-center justify-center px-2.5 text-muted-foreground hover:text-foreground"
+    >
+      <Wand2 className="h-4 w-4" />
+    </button>
+  );
+}
+
 function AdminUsersPage() {
   // Backstop for a hard page load / refresh, which skips the route's
   // beforeLoad guard entirely — see use-require-role.ts.
@@ -124,6 +154,7 @@ function AdminUsersPage() {
   const upgradeTesterFn = useServerFn(upgradeTesterRoles);
   const createFacilityFn = useServerFn(createFacilityUser);
   const resendVerifyFn = useServerFn(resendVerificationEmail);
+  const verifyEmailFn = useServerFn(verifyUserEmail);
   const deleteFn = useServerFn(deleteUser);
   const deleteManyFn = useServerFn(deleteUsers);
   const clearSecFn = useServerFn(clearUserSecurityAnswers);
@@ -265,6 +296,11 @@ function AdminUsersPage() {
   const resendVerifyMut = useToastMutation({
     mutationFn: (input: { email: string; userId?: string }) => resendVerifyFn({ data: input }),
     successMessage: "Verification email resent",
+  });
+  const verifyEmailMut = useToastMutation({
+    mutationFn: (input: { userId: string }) => verifyEmailFn({ data: input }),
+    successMessage: "Email verified — user can sign in now",
+    invalidate: usersKey,
   });
   const roleMut = useToastMutation({
     mutationFn: (input: {
@@ -448,15 +484,18 @@ function AdminUsersPage() {
             placeholder="user@example.com"
             className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
           />
-          <input
-            type="text"
-            autoComplete="new-password"
-            required
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Password (min 8 chars)"
-            className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-          />
+          <div className="relative w-full min-w-0">
+            <input
+              type="text"
+              autoComplete="new-password"
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Password (min 8 chars)"
+              className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 pr-9 text-sm font-mono"
+            />
+            <GeneratePasswordButton onGenerate={setNewPassword} />
+          </div>
           <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "contributor")}>
             <SelectTrigger className="h-[38px] w-full sm:col-span-2 lg:col-span-1">
               <SelectValue placeholder="Role" />
@@ -500,15 +539,18 @@ function AdminUsersPage() {
             placeholder="username"
             className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
           />
-          <input
-            type="text"
-            autoComplete="new-password"
-            required
-            value={newTesterPassword}
-            onChange={(e) => setNewTesterPassword(e.target.value)}
-            placeholder="Password (min 8 chars)"
-            className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-          />
+          <div className="relative w-full min-w-0">
+            <input
+              type="text"
+              autoComplete="new-password"
+              required
+              value={newTesterPassword}
+              onChange={(e) => setNewTesterPassword(e.target.value)}
+              placeholder="Password (min 8 chars)"
+              className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 pr-9 text-sm font-mono"
+            />
+            <GeneratePasswordButton onGenerate={setNewTesterPassword} />
+          </div>
           <LoadingButton variant="secondary" onClick={closeAddForm}>
             Cancel
           </LoadingButton>
@@ -546,15 +588,18 @@ function AdminUsersPage() {
             placeholder="staff@facility.com"
             className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
           />
-          <input
-            type="text"
-            autoComplete="new-password"
-            required
-            value={newFacilityUserPassword}
-            onChange={(e) => setNewFacilityUserPassword(e.target.value)}
-            placeholder="Temp password (min 8 chars)"
-            className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-          />
+          <div className="relative w-full min-w-0">
+            <input
+              type="text"
+              autoComplete="new-password"
+              required
+              value={newFacilityUserPassword}
+              onChange={(e) => setNewFacilityUserPassword(e.target.value)}
+              placeholder="Temp password (min 8 chars)"
+              className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 pr-9 text-sm font-mono"
+            />
+            <GeneratePasswordButton onGenerate={setNewFacilityUserPassword} />
+          </div>
           <FacilityCombobox
             value={newFacilityUserFacility}
             onChange={(v) => setNewFacilityUserFacility(v ?? "")}
@@ -596,6 +641,7 @@ function AdminUsersPage() {
         const isPendingPw = rowPending<string>(pwMut, "userId");
         const isPendingResetEmail = rowPending<string>(resetMut, "email");
         const isPendingResendVerify = rowPending<string>(resendVerifyMut, "email");
+        const isPendingVerifyEmail = rowPending<string>(verifyEmailMut, "userId");
         const isPendingRole = rowPending<string>(roleMut, "userId");
         const isPendingDelete = rowPending<string>(deleteMut, "userId");
         const isPendingClearSec = rowPending<string>(clearSecMut, "userId");
@@ -611,6 +657,7 @@ function AdminUsersPage() {
             pendingPassword={isPendingPw(u.id)}
             pendingReset={isPendingResetEmail(u.email)}
             pendingResendVerify={isPendingResendVerify(u.email)}
+            pendingVerifyEmail={isPendingVerifyEmail(u.id)}
             pendingRole={isPendingRole(u.id)}
             pendingDelete={isPendingDelete(u.id)}
             pendingClearSec={isPendingClearSec(u.id)}
@@ -618,6 +665,7 @@ function AdminUsersPage() {
             onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
             onSendReset={() => resetMut.mutate({ email: u.email, userId: u.id })}
             onResendVerify={() => resendVerifyMut.mutate({ email: u.email, userId: u.id })}
+            onVerifyEmail={() => verifyEmailMut.mutate({ userId: u.id })}
             onToggleAdmin={async (enabled) => {
               await confirm({
                 title: enabled ? "Make admin?" : "Revoke admin?",
@@ -724,6 +772,7 @@ function AdminUsersPage() {
                         pendingPassword={isPendingPw(u.id)}
                         pendingReset={isPendingResetEmail(u.email)}
                         pendingResendVerify={isPendingResendVerify(u.email)}
+                        pendingVerifyEmail={isPendingVerifyEmail(u.id)}
                         pendingRole={isPendingRole(u.id)}
                         pendingDelete={isPendingDelete(u.id)}
                         pendingClearSec={isPendingClearSec(u.id)}
@@ -731,6 +780,7 @@ function AdminUsersPage() {
                         onSetPassword={(password) => pwMut.mutate({ userId: u.id, password })}
                         onSendReset={() => resetMut.mutate({ email: u.email })}
                         onResendVerify={() => resendVerifyMut.mutate({ email: u.email })}
+                        onVerifyEmail={() => verifyEmailMut.mutate({ userId: u.id })}
                         onToggleAdmin={async () => {}}
                         onToggleContributor={async () => {}}
                         onDelete={async () => {
@@ -904,6 +954,7 @@ function UserItem({
   pendingPassword = false,
   pendingReset = false,
   pendingResendVerify = false,
+  pendingVerifyEmail = false,
   pendingRole = false,
   pendingDelete = false,
   pendingClearSec = false,
@@ -911,6 +962,7 @@ function UserItem({
   onSetPassword,
   onSendReset,
   onResendVerify,
+  onVerifyEmail,
   onToggleAdmin,
   onToggleContributor,
   onDelete,
@@ -933,6 +985,7 @@ function UserItem({
   pendingPassword?: boolean;
   pendingReset?: boolean;
   pendingResendVerify?: boolean;
+  pendingVerifyEmail?: boolean;
   pendingRole?: boolean;
   pendingDelete?: boolean;
   pendingClearSec?: boolean;
@@ -940,6 +993,7 @@ function UserItem({
   onSetPassword: (password: string) => void;
   onSendReset: () => void;
   onResendVerify: () => void;
+  onVerifyEmail: () => void;
   onToggleAdmin: (enabled: boolean) => void;
   onToggleContributor: (enabled: boolean) => void;
   onDelete: () => void;
@@ -1200,6 +1254,15 @@ function UserItem({
                   icon={Mail}
                   pending={pendingResendVerify}
                   onClick={onResendVerify}
+                />
+              )}
+              {!isUsernameUser && !user.email_confirmed_at && (
+                <IconButton
+                  aria-label="Verify email now"
+                  tooltip="Verify email now (skip confirmation link)"
+                  icon={MailCheck}
+                  pending={pendingVerifyEmail}
+                  onClick={onVerifyEmail}
                 />
               )}
               {!isUsernameUser && user.email_confirmed_at && (

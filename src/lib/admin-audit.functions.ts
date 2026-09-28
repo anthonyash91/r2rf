@@ -25,6 +25,7 @@ const ACTIONS = [
   "user.create",
   "user.delete",
   "user.password_reset",
+  "user.email_verified",
   "user.role_grant",
   "user.role_revoke",
   "user.security_answers_clear",

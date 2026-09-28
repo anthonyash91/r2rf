@@ -908,6 +908,29 @@ export const resendVerificationEmail = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Marks a user's email as confirmed directly, skipping the confirmation-link
+ * flow entirely — for admin-created accounts (admin/contributor/facilityUser)
+ * that need immediate access without waiting on email delivery.
+ */
+export const verifyUserEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
+  .handler(async ({ context, data }) => {
+    await assertCanManageUser(context.userId, data.userId, { allowFacilityUserTarget: true });
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
+      email_confirm: true,
+    });
+    if (error) throw new Error(error.message);
+    await recordAdminAudit({
+      actorUserId: context.userId,
+      action: "user.email_verified",
+      targetUserId: data.userId,
+      details: { method: "admin_manual" },
+    });
+    return { ok: true };
+  });
+
 export const setUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>

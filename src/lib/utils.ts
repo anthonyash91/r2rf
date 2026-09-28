@@ -5,6 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Generates a random password via the Web Crypto API. Excludes visually
+ * ambiguous characters (0/O, 1/l/I) since admin-created passwords are often
+ * communicated to users on paper or read aloud.
+ */
+export function generateSecurePassword(length = 16): string {
+  const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%^&*-_";
+  const values = new Uint32Array(length);
+  crypto.getRandomValues(values);
+  return Array.from(values, (v) => charset[v % charset.length]).join("");
+}
+
 /** Capitalizes the first letter of a string; leaves the rest untouched. */
 export function capFirst(s: string | null | undefined): string {
   if (!s) return "";

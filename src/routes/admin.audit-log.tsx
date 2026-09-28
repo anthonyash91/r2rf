@@ -15,6 +15,7 @@ import {
   Trash2,
   HelpCircle,
   Filter,
+  MailCheck,
 } from "lucide-react";
 import { requireStrictAdminBeforeLoad } from "@/lib/admin-guards";
 import { useRequireAdmin } from "@/hooks/use-require-role";
@@ -35,6 +36,7 @@ type ActionType =
   | "user.create"
   | "user.delete"
   | "user.password_reset"
+  | "user.email_verified"
   | "user.role_grant"
   | "user.role_revoke"
   | "user.security_answers_clear"
@@ -44,6 +46,7 @@ const ACTION_OPTIONS: { value: ActionType; label: string }[] = [
   { value: "user.create", label: "User created" },
   { value: "user.delete", label: "User deleted" },
   { value: "user.password_reset", label: "Password reset" },
+  { value: "user.email_verified", label: "Email verified" },
   { value: "user.role_grant", label: "Role granted" },
   { value: "user.role_revoke", label: "Role revoked" },
   { value: "user.security_answers_clear", label: "Security answers cleared" },
@@ -54,6 +57,11 @@ const ACTION_META: Record<ActionType, { label: string; icon: typeof UserPlus; co
   "user.create": { label: "User created", icon: UserPlus, color: "oklch(0.52 0.12 165)" },
   "user.delete": { label: "User deleted", icon: Trash2, color: "oklch(0.55 0.15 25)" },
   "user.password_reset": { label: "Password reset", icon: KeyRound, color: "oklch(0.60 0.12 80)" },
+  "user.email_verified": {
+    label: "Email verified",
+    icon: MailCheck,
+    color: "oklch(0.52 0.12 165)",
+  },
   "user.role_grant": { label: "Role granted", icon: ShieldCheck, color: "oklch(0.52 0.12 165)" },
   "user.role_revoke": { label: "Role revoked", icon: ShieldOff, color: "oklch(0.55 0.15 25)" },
   "user.security_answers_clear": {
