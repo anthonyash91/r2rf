@@ -21,6 +21,28 @@ export function chunkIds(ids: string[], size = 500): string[][] {
   return out;
 }
 
+/**
+ * Runs a Supabase query in 1000-row pages via .range() until a page comes
+ * back short, so callers never silently hit PostgREST's default max-rows
+ * cap. `queryFactory` must build and return a *fresh* query on each call
+ * (Supabase query builders are single-use) with `.range(from, to)` applied
+ * last — pass it through unmodified from the two args given.
+ */
+export async function fetchAllRows<T>(
+  queryFactory: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<T[]> {
+  const PAGE = 1000;
+  const all: T[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await queryFactory(from, from + PAGE - 1);
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < PAGE) break;
+  }
+  return all;
+}
+
 /** Returns a display name from first/last, falling back to a username or other string. */
 export function displayName(
   firstName: string | null | undefined,

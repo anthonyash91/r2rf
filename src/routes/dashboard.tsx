@@ -29,6 +29,7 @@ import { getMySecurityQuestions, updateSecurityAnswers } from "@/lib/password-re
 import { clearMustResetPassword } from "@/lib/users.functions";
 import { getMyEngagementTier } from "@/lib/analytics-stats.functions";
 import { questionLabel } from "@/lib/security-questions";
+import { fetchAllRows } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -320,18 +321,21 @@ function DashboardPage() {
       if (itemsRes.error) throw itemsRes.error;
       if (readRes.error) throw readRes.error;
 
-      // Fetch facility restrictions so we can exclude items the user can't see
-      const allItemIds = (itemsRes.data ?? []).map((r: any) => r.id as string);
+      // Fetch facility restrictions so we can exclude items the user can't see.
+      // Unfiltered (no .in() over item ids) — content_item_facilities only
+      // holds rows for items that ARE restricted, so it stays small regardless
+      // of total content count and never risks the URL-length limit an .in()
+      // over hundreds of ids would hit.
       const facilityMap: Record<string, string[]> = {};
-      if (allItemIds.length > 0) {
-        const { data: cifData } = await (supabase as any)
-          .from("content_item_facilities")
-          .select("content_item_id, facility_value")
-          .in("content_item_id", allItemIds);
-        for (const row of (cifData ?? []) as Array<{
-          content_item_id: string;
-          facility_value: string;
-        }>) {
+      if ((itemsRes.data?.length ?? 0) > 0) {
+        const cifData = await fetchAllRows<{ content_item_id: string; facility_value: string }>(
+          (from, to) =>
+            (supabase as any)
+              .from("content_item_facilities")
+              .select("content_item_id, facility_value")
+              .range(from, to),
+        );
+        for (const row of cifData) {
           if (!facilityMap[row.content_item_id]) facilityMap[row.content_item_id] = [];
           facilityMap[row.content_item_id].push(row.facility_value);
         }

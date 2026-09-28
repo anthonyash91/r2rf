@@ -19,6 +19,7 @@ import { OnScreenKeyboardProvider } from "@/components/OnScreenKeyboard";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useI18n } from "@/lib/i18n";
 import appCss from "../styles.css?url";
+import favicon from "../assets/favicon.svg?url";
 
 function NotFoundComponent() {
   // Preserve ?site= so the "Go home" link keeps the user inside their facility's context
@@ -131,6 +132,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: favicon,
       },
     ],
   }),

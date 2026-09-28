@@ -31,19 +31,53 @@ process.on("unhandledRejection", (reason) => {
 // upload type, against the actual byte count as it streams.
 const MAX_BODY_BYTES = 10 * 1024 * 1024;
 
+// ── Client IP resolution ─────────────────────────────────────────────────────
+// Mirrors getClientIp() in src/lib/ip-allowlist.ts — duplicated (not imported)
+// because this file runs as a plain Node script directly, before/outside the
+// TanStack Start SSR bundle, and works with Node's raw lowercased
+// req.headers object rather than a Fetch Request. Keep in sync with
+// ip-allowlist.ts if the trusted-header logic ever changes there.
+function pickXffEntry(headerValue) {
+  const parts = headerValue
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!parts.length) return null;
+  const position = process.env.TRUSTED_IP_XFF_POSITION === "leftmost" ? "leftmost" : "rightmost";
+  return position === "rightmost" ? parts[parts.length - 1] : parts[0];
+}
+
+function getClientIpFromRawHeaders(headers) {
+  const firstValue = (v) => (Array.isArray(v) ? v[0] : v);
+  const trustedHeader = process.env.TRUSTED_IP_HEADER;
+  if (trustedHeader) {
+    const val = firstValue(headers[trustedHeader.toLowerCase()]);
+    if (val) return pickXffEntry(val);
+  }
+  const xff = firstValue(headers["x-forwarded-for"]);
+  if (xff) return pickXffEntry(xff);
+  const real = firstValue(headers["x-real-ip"]);
+  if (real) return real.trim();
+  return null;
+}
+
 // ── In-process token-bucket rate limiter (Issue 13 — scalability audit).
 // Rejects requests before they reach the DB rate-limit RPCs, preventing
 // bots from exhausting the Supabase connection pool at the first line of defense.
-// Tokens refill at 3/sec; bucket holds 120 tokens (40-second burst capacity).
 // Static assets bypass the limiter — they are served before this check.
-// Bumped from the original 2/sec-60-token budget after Bunny Stream uploads
-// introduced legitimate server-side traffic (session creation + processing-
-// status polling) that a single admin's batch upload could burst past — the
-// original budget was sized for a world where uploads never touched this
-// server at all (direct-to-storage). Still tight enough to deter bots.
+//
+// Bumped from 3/sec-120-token to 30/sec-600-token (deployment-readiness audit,
+// 2026-09-28): this bucket is keyed by IP, and every tablet at a given
+// correctional facility shares one public IP (facility NAT) — a facility can
+// run 100+ tablets. The original budget was sized assuming one IP ~= one
+// visitor, which is false here. Only same-origin traffic to this Node process
+// counts against this limiter (page navigations + _serverFn/* calls) —
+// regular content browsing and the engagement heartbeat query Supabase
+// directly from the browser and never touch this bucket. Still low enough to
+// meaningfully throttle a single scripted bad actor.
 const RATE_BUCKETS = new Map();
-const RATE_REFILL_PER_SEC = 3;
-const RATE_MAX_TOKENS = 120;
+const RATE_REFILL_PER_SEC = 30;
+const RATE_MAX_TOKENS = 600;
 const RATE_CLEANUP_INTERVAL_MS = 60_000;
 
 function checkRateLimit(ip) {
@@ -122,18 +156,7 @@ const server = createServer(async (req, res) => {
 
   // Rate limit check — runs after static assets (which are fast/cheap) but
   // before SSR handler (which triggers DB queries). Static assets already returned above.
-  // Which end of x-forwarded-for is the real client IP is host-dependent — see
-  // TRUSTED_IP_XFF_POSITION docs on getClientIp in src/lib/ip-allowlist.ts.
-  const xff = req.headers["x-forwarded-for"];
-  const clientIp = xff
-    ? process.env.TRUSTED_IP_XFF_POSITION === "rightmost"
-      ? xff
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
-          .pop()
-      : xff.split(",")[0].trim()
-    : req.socket.remoteAddress;
+  const clientIp = getClientIpFromRawHeaders(req.headers) || req.socket.remoteAddress;
   if (checkRateLimit(clientIp)) {
     res.writeHead(429, { "content-type": "text/plain", "retry-after": "1" });
     res.end("Too Many Requests");

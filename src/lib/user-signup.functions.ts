@@ -11,10 +11,14 @@ import { getClientIp } from "./ip-allowlist";
 const SIGNUP_WINDOW_MS = 24 * 60 * 60 * 1000;
 const SIGNUP_MAX_PER_IP = 5;
 
-// In-process rate limiter for checkInmatePin: 20 checks per minute per IP.
-// Prevents automated PIN-availability scanning without impacting normal signup flow.
+// In-process rate limiter for checkInmatePin: 300 checks per minute per IP.
+// Prevents automated PIN-availability scanning without impacting normal signup
+// flow. Raised from 20/min (deployment-readiness audit, 2026-09-28): every
+// tablet at a facility shares one public IP, and a facility can run 100+
+// tablets — a batch onboarding session with many people typing PINs at once
+// would otherwise trip this limit for the whole facility.
 const PIN_CHECK_WINDOW_MS = 60_000;
-const PIN_CHECK_MAX_PER_IP = 20;
+const PIN_CHECK_MAX_PER_IP = 300;
 type IpBucket = { count: number; windowStart: number };
 const pinCheckBuckets = new Map<string, IpBucket>();
 
@@ -79,6 +83,12 @@ function verifyChallenge(token: string, answer: number): boolean {
   }
 }
 
+// Raised from 10/min (deployment-readiness audit, 2026-09-28): every tablet
+// at a facility shares one public IP, and a facility can run 100+ tablets —
+// a batch onboarding session would otherwise trip this for the whole
+// facility well before 10 people got a challenge.
+const SIGNUP_CHALLENGE_MAX_PER_IP = 150;
+
 export const getSignupChallenge = createServerFn({ method: "GET" }).handler(async () => {
   // Rate-limit challenge generation using an advisory-lock RPC so concurrent
   // requests from the same IP cannot race past the limit (fixes check-then-insert race).
@@ -87,7 +97,7 @@ export const getSignupChallenge = createServerFn({ method: "GET" }).handler(asyn
     const since = new Date(Date.now() - 60_000).toISOString();
     const { error } = await (supabaseAdmin as any).rpc(
       "check_and_record_signup_challenge_attempt",
-      { p_ip: ip, p_since: since, p_max: 10 },
+      { p_ip: ip, p_since: since, p_max: SIGNUP_CHALLENGE_MAX_PER_IP },
     );
     if (error) {
       if (error.message.includes("rate_limited")) {

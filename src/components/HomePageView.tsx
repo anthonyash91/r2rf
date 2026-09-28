@@ -17,6 +17,7 @@ import { getMyFacilityValue } from "@/lib/user-signup.functions";
 import { useBookmarks } from "@/hooks/use-bookmarks";
 import { QK } from "@/lib/query-keys";
 import { useKeyboardInput } from "@/components/OnScreenKeyboard";
+import { fetchAllRows } from "@/lib/utils";
 
 type CategoryStats = { count: number; trackableCount: number; recentItemIds: Set<string> };
 
@@ -66,41 +67,46 @@ function useCategoryItemStats(categoryIds: string[], userFacility: string | null
     ),
     enabled: categoryIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_items")
-        .select("id, category_id, created_at, exempt_from_progress")
-        .eq("published", true)
-        .in("category_id", categoryIds);
-      if (error) throw error;
+      const data = await fetchAllRows<{
+        id: string;
+        category_id: string;
+        created_at: string;
+        exempt_from_progress?: boolean;
+      }>((from, to) =>
+        supabase
+          .from("content_items")
+          .select("id, category_id, created_at, exempt_from_progress")
+          .eq("published", true)
+          .in("category_id", categoryIds)
+          .range(from, to),
+      );
 
       // For non-admins, fetch facility restrictions so we can exclude items
-      // the current user isn't allowed to see.
+      // the current user isn't allowed to see. Unfiltered (no .in() on item
+      // ids) — content_item_facilities only holds rows for items that ARE
+      // restricted, so it stays small regardless of total content count and
+      // never risks the URL-length limit an .in() over hundreds of ids would
+      // hit (that limit is what silently broke this query before — Supabase
+      // returned a 400 that was swallowed, so restrictions were invisibly
+      // ignored for everyone).
       const facilityMap: Record<string, string[]> = {};
       if (userFacility !== undefined) {
-        const itemIds = (data ?? []).map((r: any) => r.id as string);
-        if (itemIds.length > 0) {
-          const { data: cifData } = await (supabase as any)
-            .from("content_item_facilities")
-            .select("content_item_id, facility_value")
-            .in("content_item_id", itemIds);
-          for (const row of (cifData ?? []) as Array<{
-            content_item_id: string;
-            facility_value: string;
-          }>) {
-            if (!facilityMap[row.content_item_id]) facilityMap[row.content_item_id] = [];
-            facilityMap[row.content_item_id].push(row.facility_value);
-          }
+        const cifData = await fetchAllRows<{ content_item_id: string; facility_value: string }>(
+          (from, to) =>
+            (supabase as any)
+              .from("content_item_facilities")
+              .select("content_item_id, facility_value")
+              .range(from, to),
+        );
+        for (const row of cifData) {
+          if (!facilityMap[row.content_item_id]) facilityMap[row.content_item_id] = [];
+          facilityMap[row.content_item_id].push(row.facility_value);
         }
       }
 
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const stats: Record<string, CategoryStats> = {};
-      for (const row of (data ?? []) as {
-        id: string;
-        category_id: string;
-        created_at: string;
-        exempt_from_progress?: boolean;
-      }[]) {
+      for (const row of data) {
         const facilities = facilityMap[row.id] ?? [];
         if (facilities.length > 0) {
           if (!userFacility || !facilities.includes(userFacility)) continue;
@@ -541,10 +547,11 @@ export function HomePageView({
       if (userFacility === undefined) return items;
       const itemIds = items.map((r: any) => r.id as string);
       if (itemIds.length === 0) return [];
-      const { data: cifData } = await (supabase as any)
+      const { data: cifData, error: cifError } = await (supabase as any)
         .from("content_item_facilities")
         .select("content_item_id, facility_value")
         .in("content_item_id", itemIds);
+      if (cifError) throw cifError;
       const facilityMap: Record<string, string[]> = {};
       for (const row of (cifData ?? []) as Array<{
         content_item_id: string;
