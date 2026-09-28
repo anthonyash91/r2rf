@@ -18,6 +18,15 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return chunks;
 }
 
+// Where Supabase sends the browser after a signup-confirmation or
+// password-reset email link is clicked — see src/routes/auth.confirmed.tsx.
+// Falls back to localhost only when APP_BASE_URL isn't set (local dev);
+// production always has it configured (see server-start.mjs / Heroku config).
+function confirmationRedirectUrl(): string {
+  const base = process.env.APP_BASE_URL ?? "http://localhost:3000";
+  return `${base.replace(/\/$/, "")}/auth/confirmed`;
+}
+
 /**
  * Validates that the caller can perform write actions on a specific user.
  * - admin/contributor: can manage anyone
@@ -454,6 +463,7 @@ export const createUser = createServerFn({ method: "POST" })
     const { error: resendErr } = await supabaseAdmin.auth.resend({
       type: "signup",
       email: data.email,
+      options: { emailRedirectTo: confirmationRedirectUrl() },
     });
     if (resendErr) {
       // Non-fatal: user is created. Surface the message so the admin knows.
@@ -521,6 +531,7 @@ export const createFacilityUser = createServerFn({ method: "POST" })
     const { error: resendErr } = await supabaseAdmin.auth.resend({
       type: "signup",
       email: data.email,
+      options: { emailRedirectTo: confirmationRedirectUrl() },
     });
     if (resendErr) console.warn("createFacilityUser: resend failed", resendErr.message);
     await recordAdminAudit({
@@ -859,7 +870,9 @@ export const sendPasswordResetEmail = createServerFn({ method: "POST" })
     } else {
       await assertUserManagementAdmin(context.userId);
     }
-    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email);
+    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email, {
+      redirectTo: confirmationRedirectUrl(),
+    });
     if (error) throw new Error(error.message);
     await recordAdminAudit({
       actorUserId: context.userId,
@@ -886,7 +899,11 @@ export const resendVerificationEmail = createServerFn({ method: "POST" })
     } else {
       await assertUserManagementAdmin(context.userId);
     }
-    const { error } = await supabaseAdmin.auth.resend({ type: "signup", email: data.email });
+    const { error } = await supabaseAdmin.auth.resend({
+      type: "signup",
+      email: data.email,
+      options: { emailRedirectTo: confirmationRedirectUrl() },
+    });
     if (error) throw new Error(error.message);
     return { ok: true };
   });

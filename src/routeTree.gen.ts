@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as FacilitySlugRouteImport } from './routes/facility.$slug'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
+import { Route as AuthConfirmedRouteImport } from './routes/auth.confirmed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiDebugHeadersRouteImport } from './routes/api/debug-headers'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
@@ -81,6 +82,11 @@ const FacilitySlugRoute = FacilitySlugRouteImport.update({
 const CategorySlugRoute = CategorySlugRouteImport.update({
   id: '/category/$slug',
   path: '/category/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthConfirmedRoute = AuthConfirmedRouteImport.update({
+  id: '/auth/confirmed',
+  path: '/auth/confirmed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -201,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/api/debug-headers': typeof ApiDebugHeadersRoute
   '/api/health': typeof ApiHealthRoute
+  '/auth/confirmed': typeof AuthConfirmedRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -230,6 +237,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/api/debug-headers': typeof ApiDebugHeadersRoute
   '/api/health': typeof ApiHealthRoute
+  '/auth/confirmed': typeof AuthConfirmedRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin': typeof AdminIndexRoute
@@ -261,6 +269,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/api/debug-headers': typeof ApiDebugHeadersRoute
   '/api/health': typeof ApiHealthRoute
+  '/auth/confirmed': typeof AuthConfirmedRoute
   '/category/$slug': typeof CategorySlugRoute
   '/facility/$slug': typeof FacilitySlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -293,6 +302,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/debug-headers'
     | '/api/health'
+    | '/auth/confirmed'
     | '/category/$slug'
     | '/facility/$slug'
     | '/admin/'
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/debug-headers'
     | '/api/health'
+    | '/auth/confirmed'
     | '/category/$slug'
     | '/facility/$slug'
     | '/admin'
@@ -352,6 +363,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/debug-headers'
     | '/api/health'
+    | '/auth/confirmed'
     | '/category/$slug'
     | '/facility/$slug'
     | '/admin/'
@@ -370,6 +382,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiDebugHeadersRoute: typeof ApiDebugHeadersRoute
   ApiHealthRoute: typeof ApiHealthRoute
+  AuthConfirmedRoute: typeof AuthConfirmedRoute
   CategorySlugRoute: typeof CategorySlugRoute
   FacilitySlugRoute: typeof FacilitySlugRoute
   ApiPublicLogErrorRoute: typeof ApiPublicLogErrorRoute
@@ -440,6 +453,13 @@ declare module '@tanstack/react-router' {
       path: '/category/$slug'
       fullPath: '/category/$slug'
       preLoaderRoute: typeof CategorySlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/confirmed': {
+      id: '/auth/confirmed'
+      path: '/auth/confirmed'
+      fullPath: '/auth/confirmed'
+      preLoaderRoute: typeof AuthConfirmedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -625,6 +645,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiDebugHeadersRoute: ApiDebugHeadersRoute,
   ApiHealthRoute: ApiHealthRoute,
+  AuthConfirmedRoute: AuthConfirmedRoute,
   CategorySlugRoute: CategorySlugRoute,
   FacilitySlugRoute: FacilitySlugRoute,
   ApiPublicLogErrorRoute: ApiPublicLogErrorRoute,
