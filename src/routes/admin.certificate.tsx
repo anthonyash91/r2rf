@@ -10,6 +10,7 @@ import { LabeledField } from "@/components/FormField";
 import { LoadingButton } from "@/components/LoadingButton";
 import { SectionCard } from "@/components/SectionCard";
 import { PageHeader } from "@/components/PageHeader";
+import { Switch } from "@/components/ui/switch";
 import { QK } from "@/lib/query-keys";
 
 export const Route = createFileRoute("/admin/certificate")({
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/admin/certificate")({
 });
 
 type CertHero = {
+  enabled: boolean;
   eyebrow: string;
   heading_prefix: string;
   heading_emphasis: string;
@@ -33,6 +35,7 @@ type CertHero = {
 };
 
 const DEFAULTS: CertHero = {
+  enabled: true,
   eyebrow: "",
   heading_prefix: "",
   heading_emphasis: "",
@@ -118,6 +121,19 @@ function AdminCertificatePage() {
               saveMut.mutate(hero);
             }}
           >
+            <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-4 py-3">
+              <div>
+                <p className="text-sm font-medium">Show this section on the home page</p>
+                <p className="text-xs text-muted-foreground">
+                  Turn off to hide the entire certificate program section.
+                </p>
+              </div>
+              <Switch
+                checked={hero.enabled}
+                onCheckedChange={(checked) => setHero({ ...hero, enabled: checked })}
+              />
+            </div>
+
             <LabeledField label="Eyebrow (small pill above headline)">
               <input
                 value={hero.eyebrow}
@@ -172,16 +188,33 @@ function AdminCertificatePage() {
                   EN
                 </span>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                {hero.eyebrow || "—"}
-              </div>
-              <h2 className="mt-4 font-display text-3xl font-bold tracking-tight">
-                {hero.heading_prefix}{" "}
-                <span className="italic text-[var(--color-accent)]">{hero.heading_emphasis}</span>{" "}
-                {hero.heading_suffix}
-              </h2>
-              <p className="mt-3 text-muted-foreground">{hero.subheading}</p>
+              {!hero.enabled && (
+                <p className="mb-3 text-xs font-medium text-destructive">
+                  Hidden — this section will not appear on the home page.
+                </p>
+              )}
+              {hero.eyebrow && (
+                <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                  {hero.eyebrow}
+                </div>
+              )}
+              {(hero.heading_prefix || hero.heading_emphasis || hero.heading_suffix) && (
+                <h2 className="mt-4 font-display text-3xl font-bold tracking-tight">
+                  {hero.heading_prefix}
+                  {hero.heading_prefix && (hero.heading_emphasis || hero.heading_suffix) ? " " : ""}
+                  {hero.heading_emphasis && (
+                    <span className="italic text-[var(--color-accent)]">
+                      {hero.heading_emphasis}
+                    </span>
+                  )}
+                  {hero.heading_emphasis && hero.heading_suffix ? " " : ""}
+                  {hero.heading_suffix}
+                </h2>
+              )}
+              {hero.subheading && (
+                <p className="mt-3 text-muted-foreground">{hero.subheading}</p>
+              )}
               {hero.callout && (
                 <div className="mt-4 rounded-2xl border border-border bg-card px-5 py-4 text-sm font-medium text-foreground">
                   {hero.callout}
@@ -295,20 +328,39 @@ function AdminCertificatePage() {
                       ES
                     </span>
                   </div>
-                  <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
-                    {hero.eyebrow_es || hero.eyebrow || "—"}
-                  </div>
-                  <h2 className="mt-4 font-display text-3xl font-bold tracking-tight">
-                    {hero.heading_prefix_es || hero.heading_prefix}{" "}
-                    <span className="italic text-[var(--color-accent)]">
-                      {hero.heading_emphasis_es || hero.heading_emphasis}
-                    </span>{" "}
-                    {hero.heading_suffix_es || hero.heading_suffix}
-                  </h2>
-                  <p className="mt-3 text-muted-foreground">
-                    {hero.subheading_es || hero.subheading}
-                  </p>
+                  {!hero.enabled && (
+                    <p className="mb-3 text-xs font-medium text-destructive">
+                      Hidden — this section will not appear on the home page.
+                    </p>
+                  )}
+                  {(hero.eyebrow_es || hero.eyebrow) && (
+                    <div className="inline-flex items-center gap-2 rounded-[8px] border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-gold)]" />
+                      {hero.eyebrow_es || hero.eyebrow}
+                    </div>
+                  )}
+                  {(() => {
+                    const prefix = hero.heading_prefix_es || hero.heading_prefix;
+                    const emphasis = hero.heading_emphasis_es || hero.heading_emphasis;
+                    const suffix = hero.heading_suffix_es || hero.heading_suffix;
+                    if (!prefix && !emphasis && !suffix) return null;
+                    return (
+                      <h2 className="mt-4 font-display text-3xl font-bold tracking-tight">
+                        {prefix}
+                        {prefix && (emphasis || suffix) ? " " : ""}
+                        {emphasis && (
+                          <span className="italic text-[var(--color-accent)]">{emphasis}</span>
+                        )}
+                        {emphasis && suffix ? " " : ""}
+                        {suffix}
+                      </h2>
+                    );
+                  })()}
+                  {(hero.subheading_es || hero.subheading) && (
+                    <p className="mt-3 text-muted-foreground">
+                      {hero.subheading_es || hero.subheading}
+                    </p>
+                  )}
                   {(hero.callout_es || hero.callout) && (
                     <div className="mt-4 rounded-2xl border border-border bg-card px-5 py-4 text-sm font-medium text-foreground">
                       {hero.callout_es || hero.callout}
