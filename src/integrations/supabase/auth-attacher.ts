@@ -6,7 +6,15 @@ import { supabase } from "./client";
 // the browser never attaches the bearer token to serverFn RPCs.
 export const attachSupabaseAuth = createMiddleware({ type: "function" }).client(
   async ({ next }) => {
-    const { data } = await supabase.auth.getSession();
+    let { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      // getSession() can transiently read null right after a sign-in or
+      // password change completes (the in-memory session hasn't synced yet)
+      // — refresh once before treating the caller as unauthenticated, rather
+      // than sending every RPC in that window with no Authorization header.
+      const refreshed = await supabase.auth.refreshSession();
+      if (refreshed.data.session) data = refreshed.data;
+    }
     const token = data.session?.access_token;
     // Pass an empty headers object (not null) for unauthenticated callers so the
     // server middleware can distinguish "no token" from a malformed request.
