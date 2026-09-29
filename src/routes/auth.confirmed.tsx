@@ -7,7 +7,7 @@ import { PasswordInput } from "@/components/PasswordInput";
 import { LoadingButton } from "@/components/LoadingButton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToastMutation } from "@/hooks/use-toast-mutation";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, createEphemeralSupabaseClient } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 
 // Destination for Supabase "Confirm signup" / "Reset password" email links
@@ -34,11 +34,16 @@ function AuthConfirmedPage() {
   const { user } = useAuth();
 
   // Supabase redirects here with either #access_token=...&type=signup|recovery
-  // (success — the client auto-consumes the session from the fragment) or
-  // #error=...&error_description=... (expired/invalid link).
+  // or #error=...&error_description=... (expired/invalid link). The shared
+  // client has detectSessionInUrl disabled (see client.ts) precisely so
+  // landing here never signs the browser in on its own — this route parses
+  // the fragment itself and decides explicitly per flow type below.
   const [hasError, setHasError] = useState<{ description: string | null } | null>(null);
   const [flowType, setFlowType] = useState<FlowType | null>(null);
   const [loginTimedOut, setLoginTimedOut] = useState(false);
+  const [tokens, setTokens] = useState<{ access_token: string; refresh_token: string } | null>(
+    null,
+  );
 
   useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -46,13 +51,27 @@ function AuthConfirmedPage() {
       setHasError({ description: hash.get("error_description") });
       return;
     }
+    const accessToken = hash.get("access_token");
+    const refreshToken = hash.get("refresh_token");
+    if (!accessToken || !refreshToken) {
+      setHasError({ description: null });
+      return;
+    }
+    setTokens({ access_token: accessToken, refresh_token: refreshToken });
     setFlowType(hash.get("type") === "recovery" ? "recovery" : "signup");
   }, []);
 
   // Signup confirmation: every account that lands here via email confirmation
   // (admin/contributor/facilityUser) belongs in the admin dashboard — go
-  // straight there once the client has picked up the session, instead of
-  // bouncing through the sign-in page it would just redirect away from anyway.
+  // straight there once signed in, instead of bouncing through the sign-in
+  // page it would just redirect away from anyway. Unlike recovery, signing
+  // in here is the whole point (confirming the email IS the proof of
+  // identity), so this flow explicitly signs the shared client in.
+  useEffect(() => {
+    if (flowType !== "signup" || !tokens) return;
+    supabase.auth.setSession(tokens);
+  }, [flowType, tokens]);
+
   useEffect(() => {
     if (flowType !== "signup" || hasError || !user) return;
     navigate({ to: "/admin" });
@@ -64,20 +83,39 @@ function AuthConfirmedPage() {
     return () => clearTimeout(timer);
   }, [flowType, hasError]);
 
-  // Password recovery: the click already established a session (that's how
-  // updateUser below can set a new password without asking for the old one)
-  // — but unlike signup, we can't skip straight to the dashboard, since the
-  // whole point of this link was to let them choose a new password.
+  // Password recovery: unlike signup, this flow never signs the shared
+  // client in at all. Otherwise the recovery-link session — indistinguishable
+  // from a real login to the rest of the app (SiteHeader, admin guards,
+  // etc.) — would grant full account access the instant the page loads,
+  // before anyone has proven a new password. Instead, an isolated, throwaway
+  // client (never touches localStorage, never fires the shared auth
+  // listeners) briefly authenticates only to make the updateUser call, then
+  // is discarded — signing in afterward requires the new password like any
+  // other login.
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const setPasswordMut = useToastMutation({
     mutationFn: async (password: string) => {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      if (!tokens) {
+        throw new Error(
+          lang === "es"
+            ? "El enlace ha expirado. Solicita uno nuevo."
+            : "This link has expired. Please request a new one.",
+        );
+      }
+      const ephemeral = createEphemeralSupabaseClient();
+      const { error: sessionError } = await ephemeral.auth.setSession(tokens);
+      if (sessionError) throw sessionError;
+
+      const { error: updateError } = await ephemeral.auth.updateUser({ password });
+      if (updateError) throw updateError;
     },
-    successMessage: lang === "es" ? "Contraseña actualizada" : "Password updated",
+    successMessage:
+      lang === "es"
+        ? "Contraseña actualizada. Inicia sesión con tu nueva contraseña."
+        : "Password updated. Please sign in with your new password.",
     onSuccess: () => {
-      navigate({ to: "/admin" });
+      navigate({ to: "/signup" });
     },
   });
 

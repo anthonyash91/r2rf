@@ -2,7 +2,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-function createSupabaseClient() {
+function getSupabaseCredentials() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -19,6 +19,12 @@ function createSupabaseClient() {
     throw new Error(message);
   }
 
+  return { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY };
+}
+
+function createSupabaseClient() {
+  const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } = getSupabaseCredentials();
+
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       // localStorage is only available in the browser; fall back to undefined
@@ -28,6 +34,29 @@ function createSupabaseClient() {
       // signed in across page reloads without manual token management.
       persistSession: true,
       autoRefreshToken: true,
+      // Off by default: /auth/confirmed parses #access_token itself and
+      // decides explicitly whether to sign the browser in (see that route).
+      // Auto-detection would sign the recovery link's session in globally
+      // the instant the page loads, before anyone has set a new password.
+      detectSessionInUrl: false,
+    },
+  });
+}
+
+/**
+ * A throwaway client that never touches localStorage or fires the shared
+ * app's onAuthStateChange listeners — used by the password-recovery flow to
+ * call updateUser without signing the browser into the account app-wide.
+ * Each call returns a fresh instance; discard it after use.
+ */
+export function createEphemeralSupabaseClient() {
+  const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } = getSupabaseCredentials();
+
+  return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
     },
   });
 }
