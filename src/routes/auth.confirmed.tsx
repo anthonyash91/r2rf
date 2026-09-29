@@ -4,6 +4,7 @@ import { CheckCircle2, AlertCircle, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader, SiteFooter } from "@/components/SiteHeader";
 import { PasswordInput } from "@/components/PasswordInput";
+import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
 import { LoadingButton } from "@/components/LoadingButton";
 import { useAuth } from "@/hooks/use-auth";
 import { useToastMutation } from "@/hooks/use-toast-mutation";
@@ -172,30 +173,35 @@ function AuthConfirmedPage() {
             </p>
             <div className="mt-8 rounded-lg border border-border bg-[#fffdf8] px-6 pt-4 pb-6 text-left">
               <form onSubmit={handleSetPassword} className="space-y-4">
-                <label className="block">
-                  <span className="text-sm font-medium">
+                <div>
+                  <label htmlFor="new-password" className="text-sm font-medium">
                     {lang === "es" ? "Nueva contraseña" : "New password"}
-                  </span>
+                  </label>
                   <PasswordInput
+                    id="new-password"
                     autoComplete="new-password"
                     required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                    wrapperClassName="mt-1"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-medium">
+                  <PasswordStrengthMeter password={newPassword} />
+                </div>
+                <div>
+                  <label htmlFor="confirm-new-password" className="text-sm font-medium">
                     {lang === "es" ? "Confirmar contraseña" : "Confirm password"}
-                  </span>
+                  </label>
                   <PasswordInput
+                    id="confirm-new-password"
                     autoComplete="new-password"
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                    wrapperClassName="mt-1"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
-                </label>
+                </div>
                 <LoadingButton
                   type="submit"
                   variant="primary"
