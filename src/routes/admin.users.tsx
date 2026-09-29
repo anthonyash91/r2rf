@@ -1354,14 +1354,17 @@ function UserItem({
           }}
           className="mt-3 flex flex-col sm:flex-row gap-2"
         >
-          <input
-            type="text"
-            autoComplete="new-password"
-            value={pw}
-            onChange={(e) => setPw(e.target.value)}
-            placeholder="New password (min 8 chars)"
-            className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
-          />
+          <div className="relative flex-1">
+            <input
+              type="text"
+              autoComplete="new-password"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              placeholder="New password (min 8 chars)"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 pr-9 text-sm font-mono"
+            />
+            <GeneratePasswordButton onGenerate={setPw} />
+          </div>
           <div className="flex justify-end gap-2">
             <LoadingButton
               variant="secondary"
