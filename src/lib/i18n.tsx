@@ -324,6 +324,10 @@ const translations = {
     "security.resetTitle": "Reset password",
     "security.resetStep1": "Enter your username or email to begin.",
     "security.resetStep2": "Answer your security questions and choose a new password.",
+    "security.resetEmailSentSubtitle":
+      "Check your email for a link to finish resetting your password.",
+    "security.resetEmailSentBody":
+      "If that email is registered, a password reset link is on its way. Click the link in that email to choose a new password.",
     "security.continue": "Continue",
     "security.newPassword": "New password",
     "security.resetSubmit": "Reset password",
@@ -722,6 +726,10 @@ const translations = {
     "security.resetTitle": "Restablecer contraseña",
     "security.resetStep1": "Ingrese su nombre de usuario o correo electrónico para comenzar.",
     "security.resetStep2": "Responda sus preguntas de seguridad y elija una nueva contraseña.",
+    "security.resetEmailSentSubtitle":
+      "Revise su correo electrónico para ver el enlace y terminar de restablecer su contraseña.",
+    "security.resetEmailSentBody":
+      "Si ese correo electrónico está registrado, le enviaremos un enlace para restablecer la contraseña. Haga clic en el enlace de ese correo para elegir una nueva contraseña.",
     "security.continue": "Continuar",
     "security.newPassword": "Nueva contraseña",
     "security.resetSubmit": "Restablecer contraseña",

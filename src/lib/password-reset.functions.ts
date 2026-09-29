@@ -5,6 +5,7 @@ import { createHash } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getClientIp } from "./ip-allowlist";
+import { confirmationRedirectUrl } from "./users.functions";
 import { SECURITY_QUESTION_KEYS } from "./security-questions";
 import { hashAnswer, verifyAnswer, verifyPin } from "./security-hash.server";
 
@@ -17,19 +18,16 @@ function syntheticEmailLocal(username: string): string {
   return `${username.toLowerCase()}@${USER_EMAIL_DOMAIN}`;
 }
 
-// Staff accounts (admin/contributor/facilityUser) only have a real email —
-// their auto-derived username isn't a valid sign-in identity — so the reset
-// flow's identifier field accepts either shape, matching the sign-in form's
-// existing "Username or email" field.
-const USERNAME_RE = /^[a-z0-9_]{3,32}$/;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const usernameOrEmailSchema = z
+// Security-questions reset is for regular/inmate accounts only — they have
+// no real email to send a link to, so this is their only self-service path.
+// Staff accounts (admin/contributor/facilityUser) never reach this: they use
+// requestPasswordResetEmail below, matching the same real-email link flow
+// admins already trigger for them from /admin/users.
+const usernameSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .min(3)
-  .max(254)
-  .refine((v) => USERNAME_RE.test(v) || EMAIL_RE.test(v), "Invalid username or email");
+  .regex(/^[a-z0-9_]{3,32}$/);
 
 const answersSchema = z
   .array(
@@ -46,26 +44,11 @@ const answersSchema = z
   .length(2)
   .refine((arr) => arr[0].key !== arr[1].key, "Choose two different questions");
 
-async function findUserIdByIdentifier(identifier: string): Promise<string | null> {
-  // Usernames are already stored lowercase at creation, so an exact match is
-  // fine. Emails aren't — admin-created staff accounts (createUser,
-  // createFacilityUser) store whatever case was typed — so this needs a
-  // case-insensitive match. ILIKE's own wildcard characters are escaped
-  // first so a literal "_" or "%" in someone's address can't turn into a
-  // pattern instead of an exact match.
-  if (identifier.includes("@")) {
-    const escaped = identifier.replace(/[%_\\]/g, (c) => `\\${c}`);
-    const { data } = await supabaseAdmin
-      .from("user_profiles")
-      .select("user_id")
-      .ilike("email", escaped)
-      .maybeSingle();
-    return data?.user_id ?? null;
-  }
+async function findUserIdByUsername(username: string): Promise<string | null> {
   const { data } = await supabaseAdmin
     .from("user_profiles")
     .select("user_id")
-    .eq("username", identifier)
+    .eq("username", username)
     .maybeSingle();
   return data?.user_id ?? null;
 }
@@ -98,7 +81,7 @@ export const getResetQuestions = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
-        username: usernameOrEmailSchema,
+        username: usernameSchema,
         inmatePin: z.string().optional(),
         facilityValue: z.string().optional(),
       })
@@ -121,7 +104,7 @@ export const getResetQuestions = createServerFn({ method: "POST" })
         throw new Error(probeErr.message);
       }
     }
-    const userId = await findUserIdByIdentifier(data.username);
+    const userId = await findUserIdByUsername(data.username);
 
     // Deterministically derive two distinct fake question keys from the username.
     // Using SHA-256 ensures the same username always returns the same pair,
@@ -164,7 +147,7 @@ export const resetPassword = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
-        username: usernameOrEmailSchema,
+        username: usernameSchema,
         answers: answersSchema,
         newPassword: z.string().min(8).max(72),
       })
@@ -177,7 +160,7 @@ export const resetPassword = createServerFn({ method: "POST" })
     // A single generic error for all failure modes (wrong user, wrong answers)
     // prevents an attacker from knowing whether the username exists.
     const genericError = "Username or security answers are incorrect.";
-    const userId = await findUserIdByIdentifier(data.username);
+    const userId = await findUserIdByUsername(data.username);
     if (!userId) throw new Error(genericError);
 
     const { data: rows } = await supabaseAdmin
@@ -203,6 +186,36 @@ export const resetPassword = createServerFn({ method: "POST" })
     }
 
     return { ok: true as const, email: syntheticEmailLocal(data.username) };
+  });
+
+/**
+ * Public self-service reset for staff accounts (admin/contributor/
+ * facilityUser) — they have a real email, so this sends Supabase's own
+ * recovery link instead of the security-questions flow above (that's for
+ * regular/inmate accounts, who have no real email to send a link to). The
+ * link lands on /auth/confirmed, which already has a "set a new password"
+ * step and redirects to /admin on success.
+ *
+ * Always returns ok:true regardless of whether the email is registered —
+ * resetPasswordForEmail already has this anti-enumeration property, and
+ * this stays consistent with it rather than checking existence itself.
+ */
+export const requestPasswordResetEmail = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z.object({ email: z.string().trim().toLowerCase().email().max(254) }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const ip = getClientIp(getRequest());
+    await checkAndRecordResetAttempt(ip, data.email);
+
+    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(data.email, {
+      redirectTo: confirmationRedirectUrl(),
+    });
+    if (error) {
+      // Logged server-side only — the client response stays generic either way.
+      console.error("[requestPasswordResetEmail] resetPasswordForEmail failed:", error.message);
+    }
+    return { ok: true as const };
   });
 
 export const getMySecurityQuestions = createServerFn({ method: "GET" })

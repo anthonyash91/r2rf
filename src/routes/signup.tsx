@@ -10,7 +10,11 @@ import { toast } from "sonner";
 import { useI18n, type TranslationKey } from "@/lib/i18n";
 import { QK } from "@/lib/query-keys";
 import { getSignupChallenge, signupUser, checkInmatePin } from "@/lib/user-signup.functions";
-import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
+import {
+  getResetQuestions,
+  resetPassword,
+  requestPasswordResetEmail,
+} from "@/lib/password-reset.functions";
 import { syntheticEmail, resolveLoginEmail } from "@/lib/user-signup";
 import { listFacilities, getFacilityBySiteId } from "@/lib/facilities.functions";
 import {
@@ -47,6 +51,7 @@ import {
   LogIn,
   UserPlus,
   ChevronDown,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter";
@@ -962,9 +967,14 @@ function ResetPasswordForm({
   const [resetConfirmPassword, setResetConfirmPassword] = useState("");
   const [resetErrorKey, setResetErrorKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Staff accounts (admin/contributor/facilityUser) reset via a real emailed
+  // link instead of security questions — set once that email is sent, and
+  // takes over the whole panel (no security-questions step for this path).
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   const fetchResetQuestions = useServerFn(getResetQuestions);
   const submitReset = useServerFn(resetPassword);
+  const sendResetEmail = useServerFn(requestPasswordResetEmail);
 
   const kbResetUsername = useKeyboardInput(resetUsername, setResetUsername);
   const kbResetA1 = useKeyboardInput(resetAnswer1, setResetAnswer1);
@@ -975,15 +985,30 @@ function ResetPasswordForm({
   async function handleResetStart(e: React.SyntheticEvent) {
     e.preventDefault();
     setResetErrorKey(null);
+    const looksLikeEmail = resetUsername.includes("@");
+
+    // Staff accounts (admin/contributor/facilityUser) have a real email —
+    // send them Supabase's own recovery link instead of the security
+    // questions below (those are for regular/inmate accounts, which have no
+    // real email to send a link to). No facility-tablet requirement here:
+    // the emailed link itself is what proves it's really them.
+    if (looksLikeEmail) {
+      setBusy(true);
+      try {
+        await sendResetEmail({ data: { email: resetUsername.trim().toLowerCase() } });
+        setResetEmailSent(true);
+      } catch (err: any) {
+        toast.error(err.message ?? t("signup.genericError"));
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     // Regular/inmate accounts only have a username to identify themselves
     // with, so the facility-tablet + PIN context is what proves it's really
-    // them — same as it's always been. Staff accounts (admin/contributor/
-    // facilityUser) have a real email, so an email-shaped identifier skips
-    // that requirement and can reset from any ordinary browser; the server
-    // only applies the PIN/facility check when inmatePin is actually sent
-    // (see getResetQuestions), so this mirrors what it already does.
-    const looksLikeEmail = resetUsername.includes("@");
-    if (!looksLikeEmail && (!lockedFacility || !activeInmatePin)) {
+    // them — unchanged from how this has always worked.
+    if (!lockedFacility || !activeInmatePin) {
       setResetErrorKey("signup.wrongLinkBlock");
       return;
     }
@@ -993,8 +1018,8 @@ function ResetPasswordForm({
       const { keys } = await fetchResetQuestions({
         data: {
           username: uname,
-          inmatePin: looksLikeEmail ? undefined : (activeInmatePin ?? undefined),
-          facilityValue: looksLikeEmail ? undefined : (lockedFacility?.value ?? undefined),
+          inmatePin: activeInmatePin ?? undefined,
+          facilityValue: lockedFacility?.value ?? undefined,
         },
       });
       setResetQuestionKeys(keys);
@@ -1057,12 +1082,21 @@ function ResetPasswordForm({
           {t("security.resetTitle")}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {resetStep === 1 ? t("security.resetStep1") : t("security.resetStep2")}
+          {resetEmailSent
+            ? t("security.resetEmailSentSubtitle")
+            : resetStep === 1
+              ? t("security.resetStep1")
+              : t("security.resetStep2")}
         </p>
       </div>
 
       <div className="rounded-lg border border-border bg-[#fffdf8] px-6 pt-4 pb-6">
-        {resetStep === 1 ? (
+        {resetEmailSent ? (
+          <div className="flex flex-col items-center gap-3 py-4 text-center">
+            <Mail className="h-10 w-10 text-[var(--color-accent)]" />
+            <p className="text-sm text-muted-foreground">{t("security.resetEmailSentBody")}</p>
+          </div>
+        ) : resetStep === 1 ? (
           <form onSubmit={handleResetStart} className="space-y-4">
             <div>
               <label htmlFor="reset-username" className="text-sm font-medium">

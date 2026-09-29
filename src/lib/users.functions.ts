@@ -22,7 +22,7 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 // password-reset email link is clicked — see src/routes/auth.confirmed.tsx.
 // Falls back to localhost only when APP_BASE_URL isn't set (local dev);
 // production always has it configured (see server-start.mjs / Heroku config).
-function confirmationRedirectUrl(): string {
+export function confirmationRedirectUrl(): string {
   const base = process.env.APP_BASE_URL ?? "http://localhost:3000";
   return `${base.replace(/\/$/, "")}/auth/confirmed`;
 }
