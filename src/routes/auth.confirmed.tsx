@@ -132,41 +132,43 @@ function AuthConfirmedPage() {
                 ? "Elige una contraseña nueva para tu cuenta."
                 : "Choose a new password for your account."}
             </p>
-            <form onSubmit={handleSetPassword} className="mt-8 space-y-4 text-left">
-              <label className="block">
-                <span className="text-sm font-medium">
-                  {lang === "es" ? "Nueva contraseña" : "New password"}
-                </span>
-                <PasswordInput
-                  autoComplete="new-password"
-                  required
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium">
-                  {lang === "es" ? "Confirmar contraseña" : "Confirm password"}
-                </span>
-                <PasswordInput
-                  autoComplete="new-password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
-                />
-              </label>
-              <LoadingButton
-                type="submit"
-                variant="primary"
-                pending={setPasswordMut.isPending}
-                pendingText={lang === "es" ? "Guardando…" : "Saving…"}
-                className="w-full justify-center"
-              >
-                {lang === "es" ? "Guardar contraseña" : "Save password"}
-              </LoadingButton>
-            </form>
+            <div className="mt-8 rounded-lg border border-border bg-[#fffdf8] px-6 pt-4 pb-6 text-left">
+              <form onSubmit={handleSetPassword} className="space-y-4">
+                <label className="block">
+                  <span className="text-sm font-medium">
+                    {lang === "es" ? "Nueva contraseña" : "New password"}
+                  </span>
+                  <PasswordInput
+                    autoComplete="new-password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-medium">
+                    {lang === "es" ? "Confirmar contraseña" : "Confirm password"}
+                  </span>
+                  <PasswordInput
+                    autoComplete="new-password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
+                  />
+                </label>
+                <LoadingButton
+                  type="submit"
+                  variant="primary"
+                  pending={setPasswordMut.isPending}
+                  pendingText={lang === "es" ? "Guardando…" : "Saving…"}
+                  className="w-full justify-center"
+                >
+                  {lang === "es" ? "Guardar contraseña" : "Save password"}
+                </LoadingButton>
+              </form>
+            </div>
           </>
         ) : loginTimedOut ? (
           <>
