@@ -11,7 +11,7 @@ import { useI18n, type TranslationKey } from "@/lib/i18n";
 import { QK } from "@/lib/query-keys";
 import { getSignupChallenge, signupUser, checkInmatePin } from "@/lib/user-signup.functions";
 import { getResetQuestions, resetPassword } from "@/lib/password-reset.functions";
-import { syntheticEmail } from "@/lib/user-signup";
+import { syntheticEmail, resolveLoginEmail } from "@/lib/user-signup";
 import { listFacilities, getFacilityBySiteId } from "@/lib/facilities.functions";
 import {
   setActiveFacilitySlug,
@@ -442,7 +442,7 @@ function SignInSignUpForm({
         } else {
           id = username.trim();
         }
-        const email = id.includes("@") ? id.toLowerCase() : syntheticEmail(id.toLowerCase());
+        const email = resolveLoginEmail(id);
         setCheckingSignIn(true);
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw new Error(t("signup.invalidLogin"));
@@ -1018,7 +1018,7 @@ function ResetPasswordForm({
         },
       });
       const { error } = await supabase.auth.signInWithPassword({
-        email: syntheticEmail(uname),
+        email: resolveLoginEmail(uname),
         password: resetNewPassword,
       });
       if (error) throw error;
@@ -1048,22 +1048,21 @@ function ResetPasswordForm({
           <form onSubmit={handleResetStart} className="space-y-4">
             <div>
               <label htmlFor="reset-username" className="text-sm font-medium">
-                {t("signup.username")}
+                {t("signup.usernameOrEmail")}
               </label>
               <input
                 id="reset-username"
                 type="text"
                 required
                 minLength={3}
-                maxLength={32}
-                pattern="[A-Za-z0-9_]{3,32}"
+                maxLength={254}
                 value={resetUsername}
                 onChange={(e) => {
                   setResetUsername(e.target.value);
                   setResetErrorKey(null);
                 }}
                 {...kbResetUsername}
-                autoComplete="username"
+                autoComplete="username email"
                 className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
             </div>

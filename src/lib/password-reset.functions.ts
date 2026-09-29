@@ -17,6 +17,20 @@ function syntheticEmailLocal(username: string): string {
   return `${username.toLowerCase()}@${USER_EMAIL_DOMAIN}`;
 }
 
+// Staff accounts (admin/contributor/facilityUser) only have a real email —
+// their auto-derived username isn't a valid sign-in identity — so the reset
+// flow's identifier field accepts either shape, matching the sign-in form's
+// existing "Username or email" field.
+const USERNAME_RE = /^[a-z0-9_]{3,32}$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const usernameOrEmailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(3)
+  .max(254)
+  .refine((v) => USERNAME_RE.test(v) || EMAIL_RE.test(v), "Invalid username or email");
+
 const answersSchema = z
   .array(
     z.object({
@@ -32,11 +46,26 @@ const answersSchema = z
   .length(2)
   .refine((arr) => arr[0].key !== arr[1].key, "Choose two different questions");
 
-async function findUserIdByUsername(username: string): Promise<string | null> {
+async function findUserIdByIdentifier(identifier: string): Promise<string | null> {
+  // Usernames are already stored lowercase at creation, so an exact match is
+  // fine. Emails aren't — admin-created staff accounts (createUser,
+  // createFacilityUser) store whatever case was typed — so this needs a
+  // case-insensitive match. ILIKE's own wildcard characters are escaped
+  // first so a literal "_" or "%" in someone's address can't turn into a
+  // pattern instead of an exact match.
+  if (identifier.includes("@")) {
+    const escaped = identifier.replace(/[%_\\]/g, (c) => `\\${c}`);
+    const { data } = await supabaseAdmin
+      .from("user_profiles")
+      .select("user_id")
+      .ilike("email", escaped)
+      .maybeSingle();
+    return data?.user_id ?? null;
+  }
   const { data } = await supabaseAdmin
     .from("user_profiles")
     .select("user_id")
-    .eq("username", username.toLowerCase())
+    .eq("username", identifier)
     .maybeSingle();
   return data?.user_id ?? null;
 }
@@ -69,11 +98,7 @@ export const getResetQuestions = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
-        username: z
-          .string()
-          .trim()
-          .toLowerCase()
-          .regex(/^[a-z0-9_]{3,32}$/),
+        username: usernameOrEmailSchema,
         inmatePin: z.string().optional(),
         facilityValue: z.string().optional(),
       })
@@ -96,7 +121,7 @@ export const getResetQuestions = createServerFn({ method: "POST" })
         throw new Error(probeErr.message);
       }
     }
-    const userId = await findUserIdByUsername(data.username);
+    const userId = await findUserIdByIdentifier(data.username);
 
     // Deterministically derive two distinct fake question keys from the username.
     // Using SHA-256 ensures the same username always returns the same pair,
@@ -139,11 +164,7 @@ export const resetPassword = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z
       .object({
-        username: z
-          .string()
-          .trim()
-          .toLowerCase()
-          .regex(/^[a-z0-9_]{3,32}$/),
+        username: usernameOrEmailSchema,
         answers: answersSchema,
         newPassword: z.string().min(8).max(72),
       })
@@ -156,7 +177,7 @@ export const resetPassword = createServerFn({ method: "POST" })
     // A single generic error for all failure modes (wrong user, wrong answers)
     // prevents an attacker from knowing whether the username exists.
     const genericError = "Username or security answers are incorrect.";
-    const userId = await findUserIdByUsername(data.username);
+    const userId = await findUserIdByIdentifier(data.username);
     if (!userId) throw new Error(genericError);
 
     const { data: rows } = await supabaseAdmin
