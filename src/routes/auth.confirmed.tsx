@@ -191,12 +191,10 @@ function AuthConfirmedPage() {
           <>
             <CheckCircle2 className="h-12 w-12 mx-auto text-[var(--color-accent)] animate-pulse" />
             <h1 className="mt-6 font-display text-2xl font-semibold">
-              {lang === "es" ? "Iniciando sesión…" : "Logging you in now…"}
+              {lang === "es" ? "Tu correo electrónico ha sido confirmado" : "Your email has been confirmed"}
             </h1>
             <p className="mt-3 text-muted-foreground">
-              {lang === "es"
-                ? "Tu correo electrónico ha sido confirmado."
-                : "Your email address has been confirmed."}
+              {lang === "es" ? "Iniciando sesión…" : "Logging you in now…"}
             </p>
           </>
         )}
