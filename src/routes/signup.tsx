@@ -975,7 +975,15 @@ function ResetPasswordForm({
   async function handleResetStart(e: React.SyntheticEvent) {
     e.preventDefault();
     setResetErrorKey(null);
-    if (!lockedFacility || !activeInmatePin) {
+    // Regular/inmate accounts only have a username to identify themselves
+    // with, so the facility-tablet + PIN context is what proves it's really
+    // them — same as it's always been. Staff accounts (admin/contributor/
+    // facilityUser) have a real email, so an email-shaped identifier skips
+    // that requirement and can reset from any ordinary browser; the server
+    // only applies the PIN/facility check when inmatePin is actually sent
+    // (see getResetQuestions), so this mirrors what it already does.
+    const looksLikeEmail = resetUsername.includes("@");
+    if (!looksLikeEmail && (!lockedFacility || !activeInmatePin)) {
       setResetErrorKey("signup.wrongLinkBlock");
       return;
     }
@@ -985,8 +993,8 @@ function ResetPasswordForm({
       const { keys } = await fetchResetQuestions({
         data: {
           username: uname,
-          inmatePin: activeInmatePin ?? undefined,
-          facilityValue: lockedFacility?.value ?? undefined,
+          inmatePin: looksLikeEmail ? undefined : (activeInmatePin ?? undefined),
+          facilityValue: looksLikeEmail ? undefined : (lockedFacility?.value ?? undefined),
         },
       });
       setResetQuestionKeys(keys);
