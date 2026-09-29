@@ -1025,13 +1025,23 @@ function ResetPasswordForm({
           newPassword: resetNewPassword,
         },
       });
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data: signInData } = await supabase.auth.signInWithPassword({
         email: resolveLoginEmail(uname),
         password: resetNewPassword,
       });
       if (error) throw error;
       toast.success(t("security.resetSuccess"));
-      navigate({ to: "/dashboard", search: {} as any });
+
+      // Staff accounts (admin/contributor/facilityUser) belong in the admin
+      // dashboard, same as everywhere else sign-in decides where to land —
+      // see the mirrored role check in SignupPageContent's post-auth effect.
+      const { data: roleRows } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", signInData.user.id)
+        .in("role", ["admin", "contributor", "facilityUser"]);
+      const goesAdmin = (roleRows ?? []).length > 0;
+      navigate(goesAdmin ? { to: "/admin" } : { to: "/dashboard", search: {} as any });
     } catch (err: any) {
       toast.error(err.message ?? t("signup.genericError"));
     } finally {
