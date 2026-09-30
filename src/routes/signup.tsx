@@ -424,6 +424,15 @@ function SignInSignUpForm({
       } else {
         // Facility context: derive username from facility value + typed PIN
         let id: string;
+        // Set when the typed value didn't match this device's locked PIN —
+        // rather than block outright (which would stop someone guessing a
+        // different inmate's PIN on a shared kiosk, the original intent of
+        // this check), we fall back to trying it as a plain username, since
+        // privileged accounts (e.g. testers) sign in with a username, not a
+        // PIN or email, and can legitimately do so even on a locked device.
+        // Only if that fallback ALSO fails to authenticate do we show the
+        // PIN-mismatch message.
+        let pinMismatchFallback = false;
         if (lockedFacility) {
           const input = signinPin.trim();
           if (!input) {
@@ -434,12 +443,10 @@ function SignInSignUpForm({
           if (input.includes("@")) {
             // Admin email login — bypass facility/PIN logic entirely
             id = input.toLowerCase();
+          } else if (activeInmatePin && input !== activeInmatePin) {
+            id = input;
+            pinMismatchFallback = true;
           } else {
-            if (activeInmatePin && input !== activeInmatePin) {
-              setFacilityErrorKey("signup.pinMismatch");
-              setBusy(false);
-              return;
-            }
             id = `${lockedFacility.value.slice(0, 20)}_${input}`
               .toLowerCase()
               .replace(/[^a-z0-9_]/g, "_");
@@ -450,7 +457,15 @@ function SignInSignUpForm({
         const email = resolveLoginEmail(id);
         setCheckingSignIn(true);
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw new Error(t("signup.invalidLogin"));
+        if (error) {
+          if (pinMismatchFallback) {
+            setCheckingSignIn(false);
+            setFacilityErrorKey("signup.pinMismatch");
+            setBusy(false);
+            return;
+          }
+          throw new Error(t("signup.invalidLogin"));
+        }
 
         const {
           data: { user: authedUser },
