@@ -3171,6 +3171,169 @@ export const QA_TESTS: QATest[] = [
   },
 ];
 
+// ── User Experience Check ───────────────────────────────────────────────────
+// A short, separate checklist covering only what a regular/inmate user
+// experiences (sign-up, sign-in, password reset, browsing content, the
+// dashboard, and general polish) — no admin features at all. Kept as its
+// own small list rather than a filtered view of QA_TESTS above, since that
+// list is written densely for exhaustive QA coverage; this one is meant to
+// be quick and simple. IDs are prefixed "Q" so they're never confused with
+// QA_TESTS ids even when both appear in the same admin results view.
+export const QA_QUICK_SECTIONS: QASection[] = [
+  { num: 1, title: "Getting Started" },
+  { num: 2, title: "Forgot Password" },
+  { num: 3, title: "Browsing & Completing Content" },
+  { num: 4, title: "Your Dashboard" },
+  { num: 5, title: "General Experience" },
+];
+
+export const QA_QUICK_TESTS: QATest[] = [
+  {
+    id: "Q1.1",
+    sectionNum: 1,
+    priority: "critical",
+    roles: ["Signed Out"],
+    title: "Sign up with your facility PIN",
+    description:
+      "Open the sign-up link provided by your facility (it includes your PIN). Fill in a username, password, and your name, then submit.\n\n✅ Pass: The form submits without errors and you land on your dashboard, signed in.",
+  },
+  {
+    id: "Q1.2",
+    sectionNum: 1,
+    priority: "critical",
+    roles: ["Signed Out"],
+    title: "Sign in",
+    description:
+      "Sign out if you're signed in, then sign back in with your username and password.\n\n✅ Pass: You're signed in and land on your dashboard with no errors.",
+  },
+  {
+    id: "Q1.3",
+    sectionNum: 1,
+    priority: "medium",
+    roles: ["Regular User"],
+    title: "Sign out and back in keeps your progress",
+    description:
+      "Mark an item as complete or bookmark something, sign out, then sign back in.\n\n✅ Pass: The item you completed/bookmarked is still shown that way after signing back in.",
+  },
+  {
+    id: "Q2.1",
+    sectionNum: 2,
+    priority: "critical",
+    roles: ["Signed Out"],
+    title: "Reset your password with security questions",
+    description:
+      "From the sign-in screen, click 'Forgot password?'. Answer your two security questions correctly, then set a new password.\n\n✅ Pass: The reset succeeds and you can sign in with the new password.",
+  },
+  {
+    id: "Q3.1",
+    sectionNum: 3,
+    priority: "critical",
+    roles: ["Regular User"],
+    title: "Browse categories from the home page",
+    description:
+      "Go to the home page. Verify categories are visible, and open one.\n\n✅ Pass: The home page loads with categories shown, and clicking one opens its content list without errors.",
+  },
+  {
+    id: "Q3.2",
+    sectionNum: 3,
+    priority: "high",
+    roles: ["Regular User"],
+    title: "Video or audio auto-completes",
+    description:
+      "Open a video or audio item and let it play through to near the end.\n\n✅ Pass: The item is automatically marked complete once you've watched/listened to most of it.",
+  },
+  {
+    id: "Q3.3",
+    sectionNum: 3,
+    priority: "high",
+    roles: ["Regular User"],
+    title: "PDF or article — mark as read",
+    description:
+      "Open a PDF or article item and use the 'Mark as read' option.\n\n✅ Pass: The item shows as complete after marking it read.",
+  },
+  {
+    id: "Q3.4",
+    sectionNum: 3,
+    priority: "medium",
+    roles: ["Regular User"],
+    title: "Bookmark an item and find it in Saved",
+    description:
+      "Bookmark any content item, then go to your dashboard's Saved tab.\n\n✅ Pass: The bookmarked item appears in the Saved tab.",
+  },
+  {
+    id: "Q3.5",
+    sectionNum: 3,
+    priority: "medium",
+    roles: ["Regular User"],
+    title: "Category completion celebration",
+    description:
+      "Complete every item in a small category.\n\n✅ Pass: A celebration modal appears once the last item in the category is completed.",
+  },
+  {
+    id: "Q4.1",
+    sectionNum: 4,
+    priority: "high",
+    roles: ["Regular User"],
+    title: "Dashboard greeting and progress",
+    description:
+      "Go to your dashboard.\n\n✅ Pass: The greeting shows your name, and the progress ring/stat cards reflect what you've actually completed.",
+  },
+  {
+    id: "Q4.2",
+    sectionNum: 4,
+    priority: "medium",
+    roles: ["Regular User"],
+    title: "Achievements tab",
+    description:
+      "Open the Achievements tab on your dashboard.\n\n✅ Pass: The tab loads without errors and shows any badges you've earned.",
+  },
+  {
+    id: "Q4.3",
+    sectionNum: 4,
+    priority: "high",
+    roles: ["Regular User"],
+    title: "Account Settings shows correct info",
+    description:
+      "Open Account Settings on your dashboard.\n\n✅ Pass: Your username and facility are shown correctly.",
+  },
+  {
+    id: "Q4.4",
+    sectionNum: 4,
+    priority: "medium",
+    roles: ["Regular User"],
+    title: "Update your security questions",
+    description:
+      "From Account Settings, change your security questions and answers, then save.\n\n✅ Pass: The update saves successfully with no errors.",
+  },
+  {
+    id: "Q5.1",
+    sectionNum: 5,
+    priority: "medium",
+    roles: ["Regular User"],
+    title: "Language toggle",
+    description:
+      "Switch the language toggle between English and Spanish on a couple of pages.\n\n✅ Pass: The visible text updates to the selected language with no untranslated placeholders or layout breaks.",
+  },
+  {
+    id: "Q5.2",
+    sectionNum: 5,
+    priority: "high",
+    roles: ["Regular User"],
+    title: "Mobile responsiveness",
+    description:
+      "Open the app at a phone-sized screen width (or resize your browser narrow).\n\n✅ Pass: The nav collapses to a mobile menu, and all buttons/links are easily tappable with no overlapping or cut-off content.",
+  },
+  {
+    id: "Q5.3",
+    sectionNum: 5,
+    priority: "low",
+    roles: ["Regular User"],
+    title: "'Are you still here?' idle prompt",
+    description:
+      "Open a PDF or article item and leave it untouched for about 90 seconds.\n\n✅ Pass: An 'Are you still here?' prompt appears with a countdown; confirming it dismisses the prompt and lets you continue normally.",
+  },
+];
+
 // Helper: tests grouped by section
 export function getTestsBySection(): Map<number, QATest[]> {
   const map = new Map<number, QATest[]>();

@@ -26,12 +26,19 @@ export async function assertRunOwner(runId: string, userId: string) {
 
 export const createTestRun = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ label: z.string().trim().min(1).max(200) }).parse(input))
+  .inputValidator((input) =>
+    z
+      .object({
+        label: z.string().trim().min(1).max(200),
+        suite: z.enum(["full", "quick"]).default("full"),
+      })
+      .parse(input),
+  )
   .handler(async ({ context, data }) => {
     await assertTester(context.userId);
     const { data: run, error } = await db
       .from("test_runs")
-      .insert({ tester_id: context.userId, label: data.label })
+      .insert({ tester_id: context.userId, label: data.label, suite: data.suite })
       .select("*")
       .single();
     if (error) throw new Error(error.message);
@@ -183,6 +190,7 @@ export const listAllTestRuns = createServerFn({ method: "GET" })
       runs: ((runs ?? []) as any[]).map((r: any) => ({
         id: r.id,
         label: r.label,
+        suite: r.suite,
         tester_id: r.tester_id,
         testerUsername: profileMap.get(r.tester_id) ?? r.tester_id,
         created_at: r.created_at,

@@ -67,14 +67,14 @@ import { uploadFile } from "@/lib/upload-client";
 import {
   QA_TESTS,
   QA_SECTIONS,
+  QA_QUICK_TESTS,
+  QA_QUICK_SECTIONS,
   PRIORITY_LABELS,
   STATUS_LABELS,
   STATUS_ICONS,
   STATUS_COLORS,
   type TestStatus,
 } from "@/lib/qa-test-plan";
-
-const TOTAL_TESTS = QA_TESTS.length;
 
 const STATUS_ICON_COMPONENTS: Record<TestStatus, typeof CheckCircle> = {
   pass: CheckCircle,
@@ -105,6 +105,7 @@ function TestingTab() {
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [newLabel, setNewLabel] = useState("");
+  const [newSuite, setNewSuite] = useState<"full" | "quick">("quick");
   const [saving, setSaving] = useState(false);
 
   const runsQuery = useQuery({
@@ -136,6 +137,10 @@ function TestingTab() {
 
   const activeRun = runs.find((r: any) => r.id === activeRunId);
   const isCompleted = !!activeRun?.completed_at;
+  const activeSuite: "full" | "quick" = activeRun?.suite === "quick" ? "quick" : "full";
+  const activeTests = activeSuite === "quick" ? QA_QUICK_TESTS : QA_TESTS;
+  const activeSections = activeSuite === "quick" ? QA_QUICK_SECTIONS : QA_SECTIONS;
+  const activeTotal = activeTests.length;
 
   // ── Local optimistic state for note editing ─────────────────────────────
   const [pendingNotes, setPendingNotes] = useState<Record<string, string>>({});
@@ -309,11 +314,12 @@ function TestingTab() {
     const label = newLabel.trim();
     if (!label) return;
     try {
-      const { run } = await createRunFn({ data: { label } });
+      const { run } = await createRunFn({ data: { label, suite: newSuite } });
       await qc.invalidateQueries({ queryKey: QK.myTestRuns });
       setActiveRunId((run as any).id);
       setCreating(false);
       setNewLabel("");
+      setNewSuite("quick");
       setOpenSections(new Set());
       setFilterStatus("all");
     } catch (e: any) {
@@ -347,13 +353,13 @@ function TestingTab() {
   }
 
   // ── Stats for the active run ───────────────────────────────────────────
-  const passCount = QA_TESTS.filter((t) => resultMap.get(t.id)?.status === "pass").length;
-  const failCount = QA_TESTS.filter((t) => resultMap.get(t.id)?.status === "fail").length;
-  const blockedCount = QA_TESTS.filter((t) => resultMap.get(t.id)?.status === "blocked").length;
-  const skippedCount = QA_TESTS.filter((t) => resultMap.get(t.id)?.status === "skipped").length;
+  const passCount = activeTests.filter((t) => resultMap.get(t.id)?.status === "pass").length;
+  const failCount = activeTests.filter((t) => resultMap.get(t.id)?.status === "fail").length;
+  const blockedCount = activeTests.filter((t) => resultMap.get(t.id)?.status === "blocked").length;
+  const skippedCount = activeTests.filter((t) => resultMap.get(t.id)?.status === "skipped").length;
   const actionedCount = passCount + failCount + blockedCount + skippedCount;
-  const progressPct = Math.round((actionedCount / TOTAL_TESTS) * 100);
-  const failures = QA_TESTS.filter((t) => resultMap.get(t.id)?.status === "fail");
+  const progressPct = Math.round((actionedCount / activeTotal) * 100);
+  const failures = activeTests.filter((t) => resultMap.get(t.id)?.status === "fail");
 
   // ── Run list view ─────────────────────────────────────────────────────
   if (!activeRunId) {
@@ -365,7 +371,8 @@ function TestingTab() {
               <ClipboardCheck className="h-7 w-7 text-[var(--color-accent)]" /> QA Test Runs
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {TOTAL_TESTS} test cases across {QA_SECTIONS.length} sections
+              {QA_QUICK_TESTS.length}-test User Experience Check, or the full {QA_TESTS.length}-test
+              QA suite across {QA_SECTIONS.length} sections
             </p>
           </div>
           <button
@@ -378,7 +385,7 @@ function TestingTab() {
         </div>
 
         {creating && (
-          <div className="mb-6 rounded-2xl border border-border bg-card p-5 flex items-center gap-3">
+          <div className="mb-6 rounded-2xl border border-border bg-card p-5 space-y-4">
             <input
               autoFocus
               type="text"
@@ -392,26 +399,59 @@ function TestingTab() {
                 }
               }}
               placeholder="Run label (e.g. Post-deploy June 3)"
-              className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm"
+              className="w-full rounded-md border border-input bg-background px-4 py-2 text-sm"
             />
-            <button
-              type="button"
-              onClick={handleCreateRun}
-              disabled={!newLabel.trim()}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-            >
-              Create
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setCreating(false);
-                setNewLabel("");
-              }}
-              className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-            >
-              Cancel
-            </button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  {
+                    value: "quick" as const,
+                    title: "User Experience Check",
+                    description: `${QA_QUICK_TESTS.length} tests covering only what a user/inmate experiences — sign-up, sign-in, password reset, browsing content, and the dashboard.`,
+                  },
+                  {
+                    value: "full" as const,
+                    title: "Full QA Suite",
+                    description: `${QA_TESTS.length} tests covering the entire app, including admin features.`,
+                  },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setNewSuite(opt.value)}
+                  className={`w-full rounded-md border px-4 py-3 text-left text-sm transition-colors ${
+                    newSuite === opt.value
+                      ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10"
+                      : "border-input bg-background hover:bg-muted"
+                  }`}
+                >
+                  <div className="font-medium">{opt.title}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{opt.description}</div>
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleCreateRun}
+                disabled={!newLabel.trim()}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              >
+                Create
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCreating(false);
+                  setNewLabel("");
+                  setNewSuite("quick");
+                }}
+                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
 
@@ -446,6 +486,8 @@ function TestingTab() {
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{run.label}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
+                      {run.suite === "quick" ? "User Experience Check" : "Full QA Suite"}
+                      {" · "}
                       {new Date(run.created_at).toLocaleDateString()}
                       {run.completed_at ? " · Completed" : " · In progress"}
                     </p>
@@ -498,6 +540,8 @@ function TestingTab() {
         <div className="flex-1 min-w-0">
           <h2 className="font-display text-xl font-semibold truncate">{activeRun?.label}</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
+            {activeSuite === "quick" ? "User Experience Check" : "Full QA Suite"}
+            {" · "}
             {new Date(activeRun?.created_at).toLocaleDateString()}
             {isCompleted ? " · Completed" : " · In progress"}
           </p>
@@ -526,14 +570,14 @@ function TestingTab() {
         <CircleProgress value={progressPct} size={64} stroke={6} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold mb-2">
-            {actionedCount} of {TOTAL_TESTS} tests actioned
+            {actionedCount} of {activeTotal} tests actioned
           </p>
           <div className="flex flex-wrap gap-3 text-xs">
             <span className="text-green-600 font-medium">{passCount} passed</span>
             <span className="text-red-600 font-medium">{failCount} failed</span>
             <span className="text-yellow-600 font-medium">{blockedCount} blocked</span>
             <span className="text-muted-foreground">{skippedCount} skipped</span>
-            <span className="text-muted-foreground">{TOTAL_TESTS - actionedCount} untested</span>
+            <span className="text-muted-foreground">{activeTotal - actionedCount} untested</span>
           </div>
         </div>
       </div>
@@ -713,8 +757,8 @@ function TestingTab() {
 
       {/* Section accordions — connected card list matching the dashboard category style */}
       <div className="flex flex-col [&>div]:rounded-none [&>div:first-child]:rounded-t-2xl [&>div:last-child]:rounded-b-2xl [&>div:not(:first-child)]:-mt-px">
-        {QA_SECTIONS.map((section) => {
-          const sectionTests = QA_TESTS.filter((t) => t.sectionNum === section.num);
+        {activeSections.map((section) => {
+          const sectionTests = activeTests.filter((t) => t.sectionNum === section.num);
           const filtered = sectionTests.filter((t) => {
             const statusMatch =
               filterStatus === "all" ||

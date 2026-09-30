@@ -39,6 +39,8 @@ import { listAllTestRuns, getAdminRunDetail } from "@/lib/test-runs.functions";
 import {
   QA_TESTS,
   QA_SECTIONS,
+  QA_QUICK_TESTS,
+  QA_QUICK_SECTIONS,
   STATUS_LABELS,
   STATUS_COLORS,
   type TestStatus,
@@ -53,7 +55,12 @@ export const Route = createFileRoute("/admin/test-results")({
   component: AdminTestResultsPage,
 });
 
-const TOTAL_TESTS = QA_TESTS.length;
+function testsForSuite(suite: string | undefined) {
+  return suite === "quick" ? QA_QUICK_TESTS : QA_TESTS;
+}
+function sectionsForSuite(suite: string | undefined) {
+  return suite === "quick" ? QA_QUICK_SECTIONS : QA_SECTIONS;
+}
 
 const STATUS_ICON_COMPONENTS: Record<TestStatus, typeof CheckCircle> = {
   pass: CheckCircle,
@@ -70,34 +77,41 @@ const PRIORITY_CONFIG = {
   low: { icon: ChevronDown, label: "Low", cls: "text-green-600 bg-green-50 border-green-200" },
 } as const;
 
-function RunSummaryBar({ counts }: { counts: Record<string, number> }) {
+function RunSummaryBar({
+  counts,
+  suite,
+}: {
+  counts: Record<string, number>;
+  suite: string | undefined;
+}) {
+  const total = testsForSuite(suite).length;
   const pass = counts.pass ?? 0;
   const fail = counts.fail ?? 0;
   const blocked = counts.blocked ?? 0;
   const skipped = counts.skipped ?? 0;
   const actioned = pass + fail + blocked + skipped;
-  const pct = Math.round((actioned / TOTAL_TESTS) * 100);
+  const pct = Math.round((actioned / total) * 100);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 flex items-center gap-5">
       <CircleProgress value={pct} size={64} stroke={6} />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold mb-2">
-          {actioned} of {TOTAL_TESTS} tests actioned
+          {actioned} of {total} tests actioned
         </p>
         <div className="flex flex-wrap gap-3 text-xs">
           <span className="text-green-600 font-medium">{pass} passed</span>
           <span className="text-red-600 font-medium">{fail} failed</span>
           <span className="text-yellow-600 font-medium">{blocked} blocked</span>
           <span className="text-muted-foreground">{skipped} skipped</span>
-          <span className="text-muted-foreground">{TOTAL_TESTS - actioned} untested</span>
+          <span className="text-muted-foreground">{total - actioned} untested</span>
         </div>
       </div>
     </div>
   );
 }
 
-function RunDetailView({ runId }: { runId: string }) {
+function RunDetailView({ runId, suite }: { runId: string; suite: string | undefined }) {
   const fetchDetail = useServerFn(getAdminRunDetail);
   const { data, isLoading } = useQuery({
     queryKey: QK.adminTestRunDetail(runId),
@@ -105,6 +119,8 @@ function RunDetailView({ runId }: { runId: string }) {
     staleTime: 30_000,
   });
   const results = data?.results ?? [];
+  const suiteTests = testsForSuite(suite);
+  const suiteSections = sectionsForSuite(suite);
 
   const resultMap = new Map<string, any>();
   for (const r of results) resultMap.set(r.test_id, r);
@@ -149,7 +165,7 @@ function RunDetailView({ runId }: { runId: string }) {
     });
   }
 
-  const failures = QA_TESTS.filter((t) => resultMap.get(t.id)?.status === "fail");
+  const failures = suiteTests.filter((t) => resultMap.get(t.id)?.status === "fail");
 
   // Connected pill renderer — identical to the tester dashboard
   const DEFAULT_ACTIVE =
@@ -326,8 +342,8 @@ function RunDetailView({ runId }: { runId: string }) {
       {/* Section accordions — connected card list matching the tester dashboard */}
       {!isLoading && (
         <div className="flex flex-col [&>div]:rounded-none [&>div:first-child]:rounded-t-2xl [&>div:last-child]:rounded-b-2xl [&>div:not(:first-child)]:-mt-px">
-          {QA_SECTIONS.map((section) => {
-            const sectionTests = QA_TESTS.filter((t) => t.sectionNum === section.num);
+          {suiteSections.map((section) => {
+            const sectionTests = suiteTests.filter((t) => t.sectionNum === section.num);
             const filtered = sectionTests.filter((t) => {
               const statusMatch =
                 filterStatus === "all" ||
@@ -542,6 +558,8 @@ function AdminTestResultsPage() {
                 {selectedRun?.label ?? "Run"}
               </p>
               <p className="text-sm text-muted-foreground mt-0.5">
+                {selectedRun?.suite === "quick" ? "User Experience Check" : "Full QA Suite"}
+                {" · "}
                 {capFirst(selectedRun?.testerUsername)} · {fmtDate(selectedRun?.created_at)}
                 {selectedRun?.completed_at ? " · Completed" : " · In progress"}
               </p>
@@ -549,10 +567,10 @@ function AdminTestResultsPage() {
           </div>
           {selectedRun && (
             <div className="mb-6">
-              <RunSummaryBar counts={selectedRun.statusCounts} />
+              <RunSummaryBar counts={selectedRun.statusCounts} suite={selectedRun.suite} />
             </div>
           )}
-          <RunDetailView runId={selectedRunId} />
+          <RunDetailView runId={selectedRunId} suite={selectedRun?.suite} />
         </div>
       ) : (
         <>
@@ -568,12 +586,13 @@ function AdminTestResultsPage() {
               <ul className="md:hidden divide-y divide-border">
                 {runs.map((run: any) => {
                   const counts: Record<string, number> = run.statusCounts ?? {};
+                  const total = testsForSuite(run.suite).length;
                   const actioned =
                     (counts.pass ?? 0) +
                     (counts.fail ?? 0) +
                     (counts.blocked ?? 0) +
                     (counts.skipped ?? 0);
-                  const pct = Math.round((actioned / TOTAL_TESTS) * 100);
+                  const pct = Math.round((actioned / total) * 100);
                   return (
                     <li
                       key={run.id}
@@ -601,6 +620,7 @@ function AdminTestResultsPage() {
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
+                        {run.suite === "quick" ? "User Experience Check" : "Full QA Suite"} ·{" "}
                         {capFirst(run.testerUsername)} · {fmtDate(run.created_at)}
                       </p>
                       <div className="flex items-center gap-2">
@@ -611,7 +631,7 @@ function AdminTestResultsPage() {
                           />
                         </div>
                         <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
-                          {actioned}/{TOTAL_TESTS}
+                          {actioned}/{total}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -670,6 +690,7 @@ function AdminTestResultsPage() {
                 <thead>
                   <tr className="border-b border-border text-left">
                     <th className="px-5 py-3 font-medium text-muted-foreground">Run label</th>
+                    <th className="px-5 py-3 font-medium text-muted-foreground">Suite</th>
                     <th className="px-5 py-3 font-medium text-muted-foreground">Tester</th>
                     <th className="px-5 py-3 font-medium text-muted-foreground">Date</th>
                     <th className="px-5 py-3 font-medium text-muted-foreground">Status</th>
@@ -680,12 +701,13 @@ function AdminTestResultsPage() {
                 <tbody>
                   {runs.map((run: any) => {
                     const counts: Record<string, number> = run.statusCounts ?? {};
+                    const total = testsForSuite(run.suite).length;
                     const actioned =
                       (counts.pass ?? 0) +
                       (counts.fail ?? 0) +
                       (counts.blocked ?? 0) +
                       (counts.skipped ?? 0);
-                    const pct = Math.round((actioned / TOTAL_TESTS) * 100);
+                    const pct = Math.round((actioned / total) * 100);
                     return (
                       <tr
                         key={run.id}
@@ -693,6 +715,9 @@ function AdminTestResultsPage() {
                         onClick={() => setSelectedRunId(run.id)}
                       >
                         <td className="px-5 py-4 font-medium">{run.label}</td>
+                        <td className="px-5 py-4 text-muted-foreground">
+                          {run.suite === "quick" ? "User Experience Check" : "Full QA Suite"}
+                        </td>
                         <td className="px-5 py-4 text-muted-foreground">
                           {capFirst(run.testerUsername)}
                         </td>
@@ -727,7 +752,7 @@ function AdminTestResultsPage() {
                               />
                             </div>
                             <span className="text-xs text-muted-foreground tabular-nums">
-                              {actioned}/{TOTAL_TESTS}
+                              {actioned}/{total}
                             </span>
                           </div>
                         </td>
