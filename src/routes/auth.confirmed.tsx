@@ -140,7 +140,13 @@ function AuthConfirmedPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader />
-      <main className="flex-1 mx-auto w-full max-w-md px-6 py-24 text-center">
+      <main
+        className={
+          flowType === "recovery" && !hasError
+            ? "flex-1 mx-auto w-full max-w-xl px-6 pt-16 pb-11"
+            : "flex-1 mx-auto w-full max-w-md px-6 py-24 text-center"
+        }
+      >
         {hasError ? (
           <>
             <AlertCircle className="h-12 w-12 mx-auto text-destructive" />
@@ -162,16 +168,18 @@ function AuthConfirmedPage() {
           </>
         ) : flowType === "recovery" ? (
           <>
-            <KeyRound className="h-12 w-12 mx-auto text-[var(--color-accent)]" />
-            <h1 className="mt-6 font-display text-2xl font-semibold">
-              {lang === "es" ? "Elige una nueva contraseña" : "Set a new password"}
-            </h1>
-            <p className="mt-3 text-muted-foreground">
-              {lang === "es"
-                ? "Elige una contraseña nueva para tu cuenta."
-                : "Choose a new password for your account."}
-            </p>
-            <div className="mt-8 rounded-lg border border-border bg-[#fffdf8] px-6 pt-4 pb-6 text-left">
+            <div className="mb-8">
+              <h1 className="font-display text-3xl font-semibold flex items-center gap-2">
+                <KeyRound className="h-7 w-7 text-[var(--color-accent)]" />
+                {lang === "es" ? "Elige una nueva contraseña" : "Set a new password"}
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {lang === "es"
+                  ? "Elige una contraseña nueva para tu cuenta."
+                  : "Choose a new password for your account."}
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-[#fffdf8] px-6 pt-4 pb-2">
               <form onSubmit={handleSetPassword} className="space-y-4">
                 <div>
                   <label htmlFor="new-password" className="text-sm font-medium">
@@ -202,15 +210,16 @@ function AuthConfirmedPage() {
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
-                <LoadingButton
-                  type="submit"
-                  variant="primary"
-                  pending={setPasswordMut.isPending}
-                  pendingText={lang === "es" ? "Guardando…" : "Saving…"}
-                  className="w-full justify-center"
-                >
-                  {lang === "es" ? "Guardar contraseña" : "Save password"}
-                </LoadingButton>
+                <div className="flex justify-end !mt-6">
+                  <LoadingButton
+                    type="submit"
+                    variant="primary"
+                    pending={setPasswordMut.isPending}
+                    pendingText={lang === "es" ? "Guardando…" : "Saving…"}
+                  >
+                    {lang === "es" ? "Guardar contraseña" : "Save password"}
+                  </LoadingButton>
+                </div>
               </form>
             </div>
           </>
