@@ -210,7 +210,11 @@ function AuthConfirmedPage() {
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   />
                 </div>
-                <div className="flex justify-end !mt-6">
+                {/* mb-4: matches the sign-in form's bottom gap, which gets its extra
+                    space from an invisible honeypot field after the button absorbing
+                    space-y-4's last-child exemption — this form has no honeypot, so
+                    the margin is added explicitly instead. */}
+                <div className="flex justify-end !mt-6 mb-4">
                   <LoadingButton
                     type="submit"
                     variant="primary"
