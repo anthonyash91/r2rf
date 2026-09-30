@@ -892,9 +892,7 @@ function DashboardPage() {
         >
           <DialogHeader>
             <DialogTitle>{t("forcedReset.title")}</DialogTitle>
-            <DialogDescription>
-              {t("forcedReset.description")}
-            </DialogDescription>
+            <DialogDescription>{t("forcedReset.description")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleForcedReset} className="mt-[-4px] space-y-3">
             <div>
@@ -939,10 +937,12 @@ function DashboardPage() {
             <div>
               {(() => {
                 const firstName = ((data as any)?.profile?.first_name ?? "").trim();
+                const username = ((data as any)?.profile?.username ?? "").trim();
+                const displayName = firstName || capFirst(username);
                 return (
                   <h1 className="font-display text-3xl font-semibold">
-                    {firstName
-                      ? t("dashboard.greeting", { name: firstName })
+                    {displayName
+                      ? t("dashboard.greeting", { name: displayName })
                       : t("dashboard.greetingNoName")}
                   </h1>
                 );
@@ -1652,10 +1652,12 @@ function DashboardPage() {
                   <div>
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                       <UserIcon className="h-3.5 w-3.5" />
-                      {profile.username.match(/\d+$/) ? "PIN" : t("signup.username")}
+                      {/^\d+$/.test(profile.username) ? "PIN" : t("signup.username")}
                     </dt>
                     <dd className="mt-1 font-medium font-mono">
-                      {profile.username.match(/\d+$/)?.[0] ?? capFirst(profile.username)}
+                      {/^\d+$/.test(profile.username)
+                        ? profile.username
+                        : capFirst(profile.username)}
                     </dd>
                   </div>
                   {((profile as any).first_name || (profile as any).last_name) && (
