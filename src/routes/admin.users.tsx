@@ -167,7 +167,7 @@ function AdminUsersPage() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "contributor">("admin");
-  const [newUsername, setNewUsername] = useState("");
+  const [newTesterEmail, setNewTesterEmail] = useState("");
   const [newTesterPassword, setNewTesterPassword] = useState("");
   const [newFacilityUserEmail, setNewFacilityUserEmail] = useState("");
   const [newFacilityUserPassword, setNewFacilityUserPassword] = useState("");
@@ -316,7 +316,7 @@ function AdminUsersPage() {
     setNewEmail("");
     setNewPassword("");
     setNewRole("admin");
-    setNewUsername("");
+    setNewTesterEmail("");
     setNewTesterPassword("");
     setNewFacilityUserEmail("");
     setNewFacilityUserPassword("");
@@ -333,7 +333,7 @@ function AdminUsersPage() {
     },
   });
   const createTesterMut = useToastMutation({
-    mutationFn: (input: { username: string; password: string }) => createTesterFn({ data: input }),
+    mutationFn: (input: { email: string; password: string }) => createTesterFn({ data: input }),
     successMessage: "Test user created",
     invalidate: usersKey,
     onSuccess: () => {
@@ -518,25 +518,25 @@ function AdminUsersPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            const uname = newUsername.trim().toLowerCase();
-            if (!/^[a-z0-9_]{3,32}$/.test(uname)) {
-              toast.error("Username must be 3–32 chars: letters, numbers, underscores");
+            const email = newTesterEmail.trim().toLowerCase();
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+              toast.error("Enter a valid email address");
               return;
             }
             if (newTesterPassword.length < 8) {
               toast.error("Password must be at least 8 characters");
               return;
             }
-            createTesterMut.mutate({ username: uname, password: newTesterPassword });
+            createTesterMut.mutate({ email, password: newTesterPassword });
           }}
           className="mt-4 rounded-2xl border-2 border-[var(--color-accent)] bg-[var(--color-accent)]/5 shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-accent)_12%,transparent)] p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto_auto] gap-2"
         >
           <input
-            type="text"
+            type="email"
             required
-            value={newUsername}
-            onChange={(e) => setNewUsername(e.target.value)}
-            placeholder="username"
+            value={newTesterEmail}
+            onChange={(e) => setNewTesterEmail(e.target.value)}
+            placeholder="user@example.com"
             className="w-full min-w-0 rounded-md border border-input bg-background px-4 py-2 text-sm font-mono"
           />
           <div className="relative w-full min-w-0">
@@ -652,6 +652,11 @@ function AdminUsersPage() {
             user={u}
             isNew={isNewUser(u)}
             facilityLabel={u.profile ? (facilityLabelMap[u.profile.facility] ?? "") : ""}
+            // Testers already get an all-in-one "Upgrade to full role set" action
+            // (they're granted every role at creation anyway) — the individual
+            // admin/contributor toggles would be redundant now that they're no
+            // longer treated as username-style accounts.
+            hideRoleToggles={isTester(u)}
             hideDelete={isFacilityUser}
             pendingEmail={isPendingEmail(u.id)}
             pendingPassword={isPendingPw(u.id)}
@@ -1012,7 +1017,10 @@ function UserItem({
 
   const isRegularUser =
     !!user.profile && !isAdmin && !isContributor && !isTester && !showFacilityUserBadge;
-  const isUsernameUser = !!user.profile && (isRegularUser || isTester);
+  // Testers sign in with a real email (like admin/contributor/facilityUser) —
+  // only regular/inmate accounts actually sign in with a username/PIN, so
+  // only they get the username-style identity display and behavior below.
+  const isUsernameUser = !!user.profile && isRegularUser;
 
   return (
     <li className="pt-6 sm:pt-[19px] pb-6 md:py-5 pr-[24px] pl-[24px]">

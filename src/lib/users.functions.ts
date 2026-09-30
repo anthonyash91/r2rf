@@ -556,51 +556,56 @@ export const createFacilityUser = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-import { syntheticEmail as userSyntheticEmail } from "@/lib/user-signup";
-
+/**
+ * Create a tester account. Same real-email flow as createUser/createFacilityUser
+ * (admin picks the password, a verification email is sent, first sign-in forces
+ * a password reset) — testers only differ in what roles/profile flags they get:
+ * all roles at once (so the Role Switcher can simulate anyone) and
+ * is_synthetic=true + facility=TESTER_FACILITY, which is what actually keeps
+ * their activity out of analytics (see reports.functions.ts / QA_TESTS section 19).
+ *
+ * user_profiles.username is still populated (derived from the email's local
+ * part) purely for display — audit logs, confirm dialogs, and the admin Test
+ * Results page all read it as a human-readable label — but it is no longer
+ * the sign-in credential; the real email is.
+ */
 export const createTesterUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
     z
       .object({
-        username: z
-          .string()
-          .trim()
-          .toLowerCase()
-          .regex(/^[a-z0-9_]{3,32}$/, "Username must be 3–32 chars, letters/numbers/underscore"),
+        email: z.string().trim().toLowerCase().email().max(255),
         password: z.string().min(8).max(72),
-        // Intentionally omitted — facility is always set to TESTER_FACILITY below
       })
       .parse(input),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
 
-    const { data: exists } = await supabaseAdmin.rpc("username_exists", {
-      _username: data.username,
-    });
-    if (exists) throw new Error("That username is already taken.");
-
-    const email = userSyntheticEmail(data.username);
-
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-      email,
+      email: data.email,
       password: data.password,
-      email_confirm: true,
-      user_metadata: { username: data.username, must_reset_password: true },
+      email_confirm: false,
+      user_metadata: { must_reset_password: true },
     });
     if (error || !created?.user) throw new Error(error?.message ?? "Failed to create tester");
     const userId = created.user.id;
 
+    const username = data.email
+      .split("@")[0]
+      .slice(0, 32)
+      .replace(/[^a-z0-9_]/gi, "_")
+      .toLowerCase();
+
     const { error: profErr } = await (supabaseAdmin as any).from("user_profiles").insert({
       user_id: userId,
-      username: data.username,
+      username,
       facility: TESTER_FACILITY,
       first_name: "",
       last_name: "",
       is_synthetic: true,
       is_staff: true,
-      email,
+      email: data.email,
     });
     if (profErr) {
       await supabaseAdmin.auth.admin.deleteUser(userId);
@@ -621,6 +626,16 @@ export const createTesterUser = createServerFn({ method: "POST" })
       await supabaseAdmin.auth.admin.deleteUser(userId);
       throw new Error(roleErr.message);
     }
+
+    // Send the real verification email — testers must confirm ownership of
+    // the address like every other staff-ish account (admin/contributor/
+    // facilityUser), unlike the old synthetic-email flow which needed none.
+    const { error: resendErr } = await supabaseAdmin.auth.resend({
+      type: "signup",
+      email: data.email,
+      options: { emailRedirectTo: confirmationRedirectUrl() },
+    });
+    if (resendErr) console.warn("createTesterUser: resend failed", resendErr.message);
 
     return { ok: true };
   });
