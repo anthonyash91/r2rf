@@ -1652,12 +1652,16 @@ function DashboardPage() {
                   <div>
                     <dt className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                       <UserIcon className="h-3.5 w-3.5" />
-                      {/^\d+$/.test(profile.username) ? "PIN" : t("signup.username")}
+                      {/* Regular/inmate accounts store their PIN as the username's
+                          trailing digits (facilityValue_PIN — see derivedUsername in
+                          signup.tsx); testers have a plain username that may coincidentally
+                          end in a digit too, so this must key off role, not username shape. */}
+                      {isTester ? t("signup.username") : "PIN"}
                     </dt>
                     <dd className="mt-1 font-medium font-mono">
-                      {/^\d+$/.test(profile.username)
-                        ? profile.username
-                        : capFirst(profile.username)}
+                      {isTester
+                        ? capFirst(profile.username)
+                        : (profile.username.match(/\d+$/)?.[0] ?? capFirst(profile.username))}
                     </dd>
                   </div>
                   {((profile as any).first_name || (profile as any).last_name) && (

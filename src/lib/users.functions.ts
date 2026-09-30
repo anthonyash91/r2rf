@@ -18,6 +18,16 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return chunks;
 }
 
+// Regular/inmate accounts sign up with a real PIN, but only the account's
+// username is ever stored (as `${facilityValue}_${pin}` — see
+// derivedUsername in signup.tsx); the PIN itself is only kept as a one-way
+// hash for verification (user_profiles.inmate_pin_hmac), never in plaintext.
+// The PIN is still recoverable for display, though: it's the trailing digit
+// run of the username, which nothing else in that format ends with.
+function extractPinFromUsername(username: string | null | undefined): string | null {
+  return username?.match(/\d+$/)?.[0] ?? null;
+}
+
 // Where Supabase sends the browser after a signup-confirmation or
 // password-reset email link is clicked — see src/routes/auth.confirmed.tsx.
 // Falls back to localhost only when APP_BASE_URL isn't set (local dev);
@@ -223,6 +233,9 @@ async function fetchRolesAndProfiles(userIds: string[]) {
       facility: p.facility,
       first_name: (p as any).first_name ?? "",
       last_name: (p as any).last_name ?? "",
+      // This function backs admin/contributor/tester/facilityUser listings —
+      // none of those account types have a PIN, unlike regular/inmate
+      // accounts (see listRegularUsers below), so this is always null here.
       inmatePin: null,
     });
   }
@@ -410,7 +423,7 @@ export const listRegularUsers = createServerFn({ method: "POST" })
           facility: p.facility,
           first_name: (p as any).first_name ?? "",
           last_name: (p as any).last_name ?? "",
-          inmatePin: null,
+          inmatePin: extractPinFromUsername(p.username),
         },
       };
     });
